@@ -136,7 +136,7 @@ class ServerMiniMetric extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      spacing: 2,
+      spacing: 3,
       children: [
         Text(
           label,
@@ -186,7 +186,7 @@ class ServerLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
     return Row(
-      spacing: 7,
+      spacing: 8,
       children: [
         Container(
           width: 7,

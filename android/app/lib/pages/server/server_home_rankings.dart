@@ -67,7 +67,7 @@ class _RankingCard extends StatelessWidget {
     return ServerSectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 10,
+        spacing: 14,
         children: [
           ServerCardHeader(glyph: glyph, title: title),
           if (items.isEmpty)
@@ -106,7 +106,7 @@ class _RankingRow extends StatelessWidget {
     final highlighted = rank == 1;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 10,
+      spacing: 12,
       children: [
         Container(
           width: 22,
@@ -131,10 +131,10 @@ class _RankingRow extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 5,
+            spacing: 7,
             children: [
               Row(
-                spacing: 8,
+                spacing: 10,
                 children: [
                   Expanded(
                     child: Text(
@@ -199,7 +199,7 @@ class ServerRecentQueries extends ConsumerWidget {
       onPressed: () => context.go(ServerRoutes.logs),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 8,
+        spacing: 12,
         children: [
           ServerCardHeader(
             glyph: AppGlyphs.logs,
@@ -218,7 +218,7 @@ class ServerRecentQueries extends ConsumerWidget {
             data: (result) => result.entries.isEmpty
                 ? Text(l10n.serverNoQueries, style: context.listSubtitleStyle)
                 : Column(
-                    spacing: 2,
+                    spacing: 4,
                     children: [
                       for (final record in result.entries)
                         _RecentQueryRow(record: record),
@@ -253,10 +253,10 @@ class _RecentQueryRow extends StatelessWidget {
       if (record.durationMs > 0) serverMs(record.durationMs),
     ].join('  ·  ');
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 10,
+        spacing: 11,
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5),
@@ -274,7 +274,7 @@ class _RecentQueryRow extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 2,
+              spacing: 3,
               children: [
                 Text(
                   record.domain,

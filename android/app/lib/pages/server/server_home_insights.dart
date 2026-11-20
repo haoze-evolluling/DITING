@@ -163,7 +163,7 @@ class ServerBlockingOverview extends StatelessWidget {
     return ServerSectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
+        spacing: 14,
         children: [
           ServerCardHeader(
             glyph: AppGlyphs.shield,
@@ -186,7 +186,7 @@ class ServerBlockingOverview extends StatelessWidget {
             )
           else ...[
             Row(
-              spacing: 16,
+              spacing: 18,
               children: [
                 ServerPercentRing(
                   progress: stats.blockedRate,
@@ -200,7 +200,7 @@ class ServerBlockingOverview extends StatelessWidget {
                 ),
                 Expanded(
                   child: Column(
-                    spacing: 10,
+                    spacing: 12,
                     children: [
                       ServerLegend(
                         label: l10n.serverBlocked,
@@ -220,13 +220,13 @@ class ServerBlockingOverview extends StatelessWidget {
             if (topBlocked != null) ...[
               Divider(height: 1, color: ServerHomeColors.divider(context)),
               Row(
-                spacing: 9,
+                spacing: 10,
                 children: [
                   const GlyphIcon(AppGlyphs.block, size: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 2,
+                      spacing: 3,
                       children: [
                         Text(
                           l10n.serverTopBlocked,
@@ -276,7 +276,7 @@ class ServerCacheOverview extends StatelessWidget {
     return ServerSectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
+        spacing: 14,
         children: [
           ServerCardHeader(
             glyph: AppGlyphs.database,
@@ -304,7 +304,7 @@ class ServerCacheOverview extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2,
+                    spacing: 4,
                     children: [
                       Text(
                         serverPercent(stats.cacheHitRate),
@@ -337,7 +337,7 @@ class ServerCacheOverview extends StatelessWidget {
               color: scheme.primary,
             ),
             Row(
-              spacing: 12,
+              spacing: 14,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
