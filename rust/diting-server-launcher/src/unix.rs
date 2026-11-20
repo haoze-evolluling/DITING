@@ -28,9 +28,6 @@ fn launch() -> Result<c_int, String> {
     let library_c = CString::new(library.as_os_str().as_bytes())
         .map_err(|_| format!("库路径包含空字节: {}", library.display()))?;
 
-    // The launcher runs from `nativeLibraryDir`, which is also where the fat library lives. Keep
-    // the file open: `android_dlopen_ext` loads from this descriptor, bypassing linker namespace
-    // path checks that otherwise reject absolute paths outside `/system`.
     let file =
         File::open(&library).map_err(|error| format!("无法打开 {}: {error}", library.display()))?;
     let handle = unsafe { open_library(&library_c, &file) }
@@ -52,9 +49,6 @@ fn launch() -> Result<c_int, String> {
     pointers.push(std::ptr::null());
     let entry: ServerMain = unsafe { std::mem::transmute(symbol) };
     let code = unsafe { entry(args.len() as c_int, pointers.as_ptr()) };
-    // Deliberately keep the library mapped until the process exits. Rust cdylibs can leave TLS
-    // destructors and runtime state behind; unloading them after `diting_server_main` returns has
-    // aborted on Android even though the process is about to exit anyway.
     let _ = handle;
     drop(file);
     Ok(code)
@@ -92,8 +86,6 @@ unsafe fn lookup(handle: *mut c_void, name: &[u8]) -> Option<*mut c_void> {
 
 #[cfg(target_os = "android")]
 unsafe fn open_library(path: &CString, file: &File) -> Result<*mut c_void, String> {
-    // `ANDROID_DLEXT_USE_LIBRARY_FD` avoids the namespace path checks that reject loading a file
-    // from an app's nativeLibraryDir in a process that is not an app zygote child.
     let mut info = AndroidDlExtInfo {
         flags: ANDROID_DLEXT_USE_LIBRARY_FD,
         reserved_addr: std::ptr::null_mut(),

@@ -27,21 +27,18 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-try:  # 作为 toolbox.core 包导入
+try:
     from .paths import DESKTOP_APP_DIR, ANDROID_APP_DIR, SERVICE_DIR, INSTALLER_DIR, ROOT_DIR
     from .paths import relative as rel_path
-except ImportError:  # 直接以脚本运行（python desktop/toolbox/core/version_manager.py）
+except ImportError:
     from paths import DESKTOP_APP_DIR, ANDROID_APP_DIR, SERVICE_DIR, INSTALLER_DIR, ROOT_DIR
     from paths import relative as rel_path
 
 GROUP_DESKTOP = "desktop"
 GROUP_ANDROID = "android"
 ALL_GROUPS = (GROUP_DESKTOP, GROUP_ANDROID)
-# 历史上的分组名（common 混装服务端与桌面端、flutter 混装两个 pubspec）仍可用，
-# 保证旧脚本与旧文档里的命令不至于直接报错。
 GROUP_ALIASES = {"common": GROUP_DESKTOP, "flutter": GROUP_ANDROID}
 
-# 唯一真源：桌面端 pubspec.yaml
 DESKTOP_PUBSPEC = os.path.join(DESKTOP_APP_DIR, "pubspec.yaml")
 ANDROID_PUBSPEC = os.path.join(ANDROID_APP_DIR, "pubspec.yaml")
 
@@ -162,13 +159,11 @@ def _derived_literal(item: Dict[str, str]) -> Optional[str]:
     content = read_file(path)
     ftype = item["type"]
     if ftype == "rs":
-        # build.rs 只允许引用 pubspec；出现硬编码版本字面量就说明派生链断了
         return None if "pubspec.yaml" in content else "build.rs 里的版本字面量"
     if ftype == "nsi":
         m = re.search(r'(?m)^\s*!define INFO_PRODUCTVERSION\s+"([^"]*)"', content)
         return m.group(1) if m else None
     if ftype == "sh":
-        # 构建脚本本身不存版本，但它若回去 grep 源码字面量就说明派生链断了
         return None if "pubspec.yaml" in content else "构建脚本里的版本字面量"
     return None
 

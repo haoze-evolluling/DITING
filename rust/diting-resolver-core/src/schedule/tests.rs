@@ -1,9 +1,3 @@
-//! The scheduler state machine, scenario by scenario.
-//!
-//! Every case is the shape the old Go loop produced: the attempt order, the clipped timeouts, the
-//! hedge and grace timers, and the race-log fields. Times are scripted nanoseconds, so nothing here
-//! waits on a real timer.
-
 use super::*;
 
 const MS: i64 = 1_000_000;
@@ -102,11 +96,9 @@ fn primary_backup_clips_each_attempt_to_the_budget_and_fails_over() {
     );
     input.query_budget_ns = 1_000 * MS;
     let mut schedule = Schedule::new(input).unwrap();
-    // Cold attempt timeout is 1.5 s, but the budget is only 1 s.
     assert_eq!(schedule.start().launches, vec![launch(0, 1_000)]);
 
     let step = schedule.result(0, false, 600 * MS, 600 * MS, false, Some("timeout"));
-    // The last attempt takes whatever is left of the budget.
     assert_eq!(step.launches, vec![launch(1, 400)]);
     let step = schedule.result(1, true, 2 * MS, 610 * MS, false, None);
     let event = outcome_event(&step);
@@ -130,7 +122,6 @@ fn primary_backup_attempt_timeout_is_capped_by_the_adaptive_value() {
     let mut schedule = Schedule::new(input).unwrap();
     assert_eq!(schedule.start().launches, vec![launch(0, 300)]);
     let step = schedule.result(0, false, 200 * MS, 200 * MS, false, Some("timeout"));
-    // The last attempt may use the whole remaining budget (`pos == len(order)-1`).
     assert_eq!(step.launches, vec![launch(1, 4_800)]);
 }
 
@@ -142,14 +133,12 @@ fn primary_backup_gives_up_when_the_budget_is_gone() {
     );
     input.query_budget_ns = 500 * MS;
     let mut schedule = Schedule::new(input).unwrap();
-    // The first attempt already clipped to the whole budget.
     assert_eq!(schedule.start().launches, vec![launch(0, 500)]);
     let step = schedule.result(0, false, 500 * MS, 500 * MS, false, Some("timeout"));
     let event = outcome_event(&step);
     assert!(!event.success);
     assert_eq!(event.error_message, "a: timeout");
 
-    // A failure with budget left fails over; the joined errors are the closing line.
     let mut schedule = Schedule::new(plan(
         Strategy::PrimaryBackup,
         vec![provider("a", false, 50), provider("b", false, 50)],
@@ -190,7 +179,6 @@ fn primary_backup_skips_a_tripped_circuit_first() {
         vec![broken, provider("b", false, 50)],
     ))
     .unwrap();
-    // The circuit-broken provider is the last resort, not the first attempt.
     assert_eq!(schedule.start().launches, vec![launch(1, 1_500)]);
     let step = schedule.result(1, true, 2 * MS, 10 * MS, false, None);
     let event = outcome_event(&step);
@@ -231,12 +219,10 @@ fn smart_prediction_ranks_by_score_and_staggers_the_next_candidate() {
     let hedge_delay = fast.hedge_delay_ns;
     let mut schedule = Schedule::new(plan(Strategy::SmartPrediction, vec![slow, fast])).unwrap();
 
-    // Lowest score first, so "fast" (index 1) is the primary.
     assert_eq!(schedule.start().launches, vec![launch(1, 0)]);
     let step = schedule.launched(1, true);
     assert_eq!(step.hedge, Hedge::Arm(hedge_delay));
 
-    // A failure advances immediately instead of waiting for the hedge timer.
     let step = schedule.result(1, false, 5 * MS, 6 * MS, false, Some("servfail"));
     assert_eq!(step.launches, vec![launch(0, 0)]);
     let step = schedule.launched(0, true);
@@ -264,12 +250,9 @@ fn smart_prediction_hedges_on_the_timer() {
     assert_eq!(schedule.start().launches, vec![launch(0, 0)]);
     assert_eq!(schedule.launched(0, true).hedge, Hedge::Arm(40 * MS));
 
-    // The hedge fires while the primary is still in flight.
     assert_eq!(schedule.hedge().launches, vec![launch(1, 0)]);
     assert_eq!(schedule.launched(1, true).hedge, Hedge::Disarm);
 
-    // The staggered attempt wins, and the censored primary keeps the "selected" elapsed at 0
-    // because its result never arrived.
     let step = schedule.result(1, true, 45 * MS, 50 * MS, false, None);
     let event = outcome_event(&step);
     assert_eq!(event.winner_id, "second");
@@ -318,11 +301,9 @@ fn parallel_race_cap_ranks_the_candidates_and_reports_the_configured_count() {
     );
     input.race_max_parallel = 2;
     let mut schedule = Schedule::new(input).unwrap();
-    // The top two by score; the 300 ms provider is not in the first batch.
     assert_eq!(schedule.start().launches, vec![launch(0, 0)]);
     assert_eq!(schedule.launched(0, true).launches, vec![launch(1, 0)]);
     schedule.launched(1, true);
-    // Errors advance to the capped-out candidate.
     assert_eq!(
         schedule
             .result(0, false, 5 * MS, 6 * MS, false, Some("servfail"))
@@ -347,17 +328,14 @@ fn a_mixed_race_holds_the_plain_answer_for_the_grace_window() {
     schedule.launched(0, true);
     schedule.launched(1, true);
 
-    // The plain answer arrives first: it is buffered, not returned.
     let step = schedule.result(0, true, MS, 2 * MS, false, None);
     assert_eq!(step.grace, Some(WINDOW * MS));
     assert!(step.outcome.is_none());
 
-    // The encrypted attempt answers inside the window and wins.
     let step = schedule.result(1, true, 8 * MS, 10 * MS, false, None);
     let event = outcome_event(&step);
     assert_eq!(event.winner_id, "doh");
 
-    // Without the encrypted answer the grace timer hands the buffered plain one the win.
     let mut schedule = Schedule::new(input).unwrap();
     schedule.start();
     schedule.launched(0, true);
@@ -430,7 +408,6 @@ fn a_retired_snapshot_is_reported_without_a_race_log_line() {
     ))
     .unwrap();
     assert_eq!(schedule.start().launches, vec![launch(0, 0)]);
-    // The first candidate is refused: the next one is requested in its place.
     assert_eq!(schedule.launched(0, false).launches, vec![launch(1, 0)]);
     assert_eq!(silent(&schedule.launched(1, false)), SNAPSHOT_RETIRED);
 }

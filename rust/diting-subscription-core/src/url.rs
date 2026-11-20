@@ -1,14 +1,7 @@
-//! Subscription URL rules: the frozen placeholder set, the Java `URLEncoder` spelling of
-//! `{urlEncoded}`, name/line derivations and the validation order.
-//!
-//! URI parsing stays in Dart (`Uri`): the caller passes the already-normalised components
-//! (`scheme` / `host` / `path` / `query`) and this module owns every rule applied on top of them.
-
 use serde_json::Value;
 
 use crate::payload;
 
-/// Placeholders a mirror template may use; the set is persisted, so it never grows silently.
 pub const PLACEHOLDERS: [&str; 6] = [
     "{url}",
     "{urlEncoded}",
@@ -18,7 +11,6 @@ pub const PLACEHOLDERS: [&str; 6] = [
     "{pathAndQuery}",
 ];
 
-/// Validation failures, mapped to l10n sentences by the Dart caller.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UrlError {
     Empty,
@@ -44,12 +36,9 @@ impl AsRef<str> for UrlError {
     }
 }
 
-/// Mirror-template failures.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MirrorError {
-    /// No known placeholder is present.
     Placeholder,
-    /// The built address does not start with `http://` or `https://`.
     Scheme,
 }
 
@@ -68,7 +57,6 @@ impl AsRef<str> for MirrorError {
     }
 }
 
-/// The components Dart's `Uri` resolved for one address.
 #[derive(Debug, Default, Clone)]
 pub struct UrlParts {
     pub parsed: bool,
@@ -101,7 +89,6 @@ impl UrlParts {
     }
 }
 
-/// The trimmed address is empty, not absolute, not HTTP(S), or has no host — in that order.
 pub fn validate(address: &str, parts: &UrlParts) -> Result<(), UrlError> {
     if address.trim().is_empty() {
         return Err(UrlError::Empty);
@@ -118,7 +105,6 @@ pub fn validate(address: &str, parts: &UrlParts) -> Result<(), UrlError> {
     Ok(())
 }
 
-/// File name of the last path segment, else the host, else the raw address.
 pub fn extract_name(address: &str, path: &str, host: &str) -> String {
     let file = match path.rfind('/') {
         Some(index) => &path[index + 1..],
@@ -133,7 +119,6 @@ pub fn extract_name(address: &str, path: &str, host: &str) -> String {
     address.to_owned()
 }
 
-/// Lexical effective lines: non-empty after trimming, and not a `!` / `#` / `//` comment.
 pub fn count_effective_lines(content: &str) -> i64 {
     let mut count = 0i64;
     for raw in content.split('\n') {
@@ -149,9 +134,6 @@ pub fn count_effective_lines(content: &str) -> i64 {
     count
 }
 
-/// Trims a template, requires one known placeholder, and proves it can build an address.
-///
-/// `None` means there is no template; a malformed one is an error the edit sheet shows.
 pub fn normalize_template(template: Option<&str>) -> Result<Option<String>, MirrorError> {
     let Some(trimmed) = template.map(str::trim).filter(|value| !value.is_empty()) else {
         return Ok(None);
@@ -174,9 +156,6 @@ pub fn normalize_template(template: Option<&str>) -> Result<Option<String>, Mirr
     Ok(Some(trimmed.to_owned()))
 }
 
-/// Replaces every placeholder in the legacy order: `{urlEncoded}`, `{url}`, `{scheme}`, `{host}`,
-/// `{pathAndQuery}`, `{path}`. The order is part of the contract because `{url}` may itself contain
-/// a later placeholder.
 pub fn build_mirror(
     template: &str,
     original: &str,
@@ -196,7 +175,6 @@ pub fn build_mirror(
     Ok(result)
 }
 
-/// A template that applies to this address, or `None` when it is absent, unparsable or malformed.
 pub fn mirror_url_of(template: Option<&str>, original: &str, parts: &UrlParts) -> Option<String> {
     let trimmed = template?.trim();
     if trimmed.is_empty() || !parts.parsed {
@@ -205,8 +183,6 @@ pub fn mirror_url_of(template: Option<&str>, original: &str, parts: &UrlParts) -
     build_mirror(trimmed, original, parts).ok()
 }
 
-/// `java.net.URLEncoder` with `+` replaced by `%20`: `A-Z a-z 0-9 - _ . *` pass through, every
-/// other UTF-8 byte becomes an uppercase `%XX`.
 pub fn encode_java_url_encoder(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
     for byte in value.as_bytes() {
@@ -251,7 +227,6 @@ mod tests {
 
     #[test]
     fn replacement_order_is_frozen() {
-        // `{url}` is substituted before `{path}`, so a URL containing `{path}` is rewritten again.
         let built = build_mirror(
             "https://m/{url}",
             "https://x/{path}",

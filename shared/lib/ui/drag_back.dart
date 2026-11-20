@@ -11,11 +11,6 @@ import 'package:diting_shared/ui/motion.dart';
 
 part 'drag_back_detector.dart';
 
-/// iOS 27's interactive pop, as measured on the simulator: the page trails
-/// the finger on a stiff spring, pops when the distance dragged plus the
-/// velocity over the 0.35 s left of the transition reaches 0.4665 of the
-/// width, and lets go on a spring a flick past 1.5 widths a second speeds
-/// up 4.25 times, ramping in from one.
 final _followSpring = SpringDescription.withDurationAndBounce(
   duration: const Duration(milliseconds: 80),
   bounce: 0.15,
@@ -40,9 +35,6 @@ final Animatable<Offset> _slideTween = Tween<Offset>(
 );
 const Animation<Offset> _noSlide = AlwaysStoppedAnimation(Offset.zero);
 
-/// Lets a press anywhere on the route drag it toward the reading end to pop.
-/// A horizontal scrollable, slider or text field under the pointer is deeper
-/// in the hit test, so it wins the arena and keeps the drag.
 mixin DragBackRouteMixin<T> on ModalRoute<T> {
   bool _dragBackActive = false;
   bool _dragBackHeld = false;
@@ -53,8 +45,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
   _DragFollower? _follower;
   FocusNode? _focusBeforeDragBack;
 
-  /// While true the route's own transition should follow the finger, through
-  /// the release until the route settles.
   bool get isDragBackActive => _dragBackActive;
 
   @protected
@@ -75,7 +65,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
   @protected
   AnimationController get dragBackController => controller!;
 
-  /// Whether a drag down dismisses too, locking to the axis it sets off on.
   @protected
   bool get dragBackDownward => false;
 
@@ -93,8 +82,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     };
   }
 
-  /// How far the page has been pulled past where it rests, as a share of the
-  /// width; iOS lets a drag toward the leading end stretch it there.
   ValueListenable<double> get dragBackOverdrag => _dragBackOverdrag;
   final _dragBackOverdrag = ValueNotifier(0.0);
 
@@ -132,7 +119,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
         _popReach * _dragBackExtent.width;
   }
 
-  /// Completes once the route rests after the release, or is null if it does.
   @protected
   Future<void>? settleDragBack({required bool pops, required Offset velocity}) {
     final controller = dragBackController;
@@ -184,7 +170,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     return _follower?.moveTo(target, spring);
   }
 
-  /// Completes in the frame [controller] stops in, or is null if it has.
   @protected
   Future<void>? whenStopped(AnimationController controller) {
     if (!controller.isAnimating) {
@@ -213,7 +198,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
   @protected
   void didStartDragBack() {}
 
-  /// Called once the route has settled after a drag back, popped or not.
   @protected
   void didEndDragBack() {}
 
@@ -221,10 +205,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     return _DragBackDetector(route: this, child: child);
   }
 
-  /// Follows the finger while a drag back is active and stays still
-  /// otherwise. A route keeps it in its tree either way: wrapping the page
-  /// only once the drag starts would move the page to a new parent, which
-  /// rebuilds all of it.
   Widget dragBackSlide(
     BuildContext context,
     Animation<double> animation,
@@ -246,9 +226,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     super.dispose();
   }
 
-  // popGestureEnabled no longer waits for the route to be fully uncovered or
-  // for another drag back to settle, and NavigatorResizable would settle on
-  // a pop still running under the drag.
   bool get _canDragBack =>
       isCurrent &&
       popGestureEnabled &&
@@ -308,7 +285,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     _refocusAfterDragBack();
   }
 
-  // ModalRoute unfocuses a route under a user gesture and refocuses nothing.
   void _refocusAfterDragBack() {
     final focus = _focusBeforeDragBack;
     _focusBeforeDragBack = null;

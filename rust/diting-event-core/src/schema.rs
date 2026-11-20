@@ -1,20 +1,6 @@
-//! The frozen event envelope (`diting.event/1`).
-//!
-//! ```json
-//! { "schema": "diting.event/1", "event": "state_changed", "ts": 1710000000000,
-//!   "source": "android",
-//!   "data": { "workMode": "normal", "running": true, "reclaiming": false, "persisted": true,
-//!             "startedAt": 1710000000000, "pausedUntil": 0, "error": null } }
-//! ```
-//!
-//! Bumping [`SCHEMA_VERSION`] is a breaking change for every external consumer, so it is frozen for
-//! the whole 2.5.x line: fields may be added, never renamed or removed.
-
 use serde_json::{json, Map, Value};
 
-/// Versioned envelope identifier; the `<prefix>/<n>` suffix is what consumers switch on.
 pub const SCHEMA_VERSION: &str = "diting.event/1";
-/// The state-change event name.
 pub const EVENT_STATE_CHANGED: &str = "state_changed";
 
 fn normalize_work_mode(work_mode: &str) -> &str {
@@ -24,10 +10,6 @@ fn normalize_work_mode(work_mode: &str) -> &str {
     }
 }
 
-/// Builds the frozen `state_changed` envelope. `started_at`/`paused_until` of `0` mean "not
-/// running" / "not paused"; negative inputs clamp to `0`.
-// Eight values mirror the seven JNI fields plus the injected timestamp; a struct would just move
-// the same fields around the boundary.
 #[allow(clippy::too_many_arguments)]
 pub fn state_changed(
     work_mode: &str,
@@ -56,7 +38,6 @@ pub fn state_changed(
     })
 }
 
-/// Validates an envelope against the frozen schema. Returns the first problem as a static string.
 pub fn validate(value: &Value) -> Result<(), &'static str> {
     let object = value.as_object().ok_or("envelope is not an object")?;
     if object.get("schema").and_then(Value::as_str) != Some(SCHEMA_VERSION) {

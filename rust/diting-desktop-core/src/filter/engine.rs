@@ -1,15 +1,3 @@
-//! Desktop rule/filter engine (the former Go service's `internal/core/rule_engine*.go`).
-//!
-//! The facade keeps what Go kept outside the Rust kernels: configuration ownership, subscription
-//! cache management, pause and weekly schedules, client-group rule selection, statistics and the
-//! service-level policy that turns a matcher verdict into a [`CheckHostResult`]. Which rule answers
-//! a query lives in `diting-filter-core`; rewrite values come from `diting-rewrite-core`; response
-//! alias chains are planned by `diting-response-core`; service selections expand through
-//! `diting-services-core`.
-//!
-//! Index rebuilds are published as one [`MatcherSnapshot`] swap. Fetching and CPU-bound rebuilds
-//! run through `tokio::spawn_blocking`, so the DNS hot path never parses a rule file.
-
 use super::ruleset::{
     apply_allowlist_only, count_service_rules, service_exists, service_group_exists,
 };
@@ -29,21 +17,16 @@ use diting_desktop_api::config::{BlockingSchedule, FilterConfig};
 use diting_go_compat::text::{go_lower, go_trim_space};
 use diting_response_core::chain::plan_strs;
 
-/// `MaxResponseAliasDepth`.
 pub const MAX_RESPONSE_ALIAS_DEPTH: usize = 8;
 
 const PERMANENT_PAUSE_MS: i64 = 100 * 365 * 24 * 3600 * 1000;
 
-/// Rule/filter engine facade.
-///
-/// Clone the handle freely: every clone shares the same runtime state.
 #[derive(Clone)]
 pub struct RuleEngine {
     pub(super) inner: Arc<Inner>,
 }
 
 impl RuleEngine {
-    /// Creates the engine, normalizes the config and builds the first index.
     pub fn new(config: FilterConfig) -> Self {
         let config = normalize_config(config);
         let engine = Self {
@@ -69,7 +52,6 @@ impl RuleEngine {
         engine
     }
 
-    /// Replaces the filter config, rebuilding the index only when matcher inputs changed.
     pub fn configure(&self, config: FilterConfig) {
         let old = self.inner.config.read().unwrap().clone();
         let next = normalize_config(config);
@@ -89,13 +71,11 @@ impl RuleEngine {
         self.inner.config.read().unwrap().clone()
     }
 
-    /// Whether request filtering is active right now: enabled, not paused, global window open.
     pub fn is_enabled(&self) -> bool {
         let now = Local::now();
         self.inner.switch_on() && self.inner.global_schedule_active(&now)
     }
 
-    /// Unix milliseconds of the active pause deadline, if the engine is paused.
     pub fn paused_until(&self) -> Option<i64> {
         self.inner.pause_state_at(now_ms()).until_ms
     }
@@ -104,7 +84,6 @@ impl RuleEngine {
         self.inner.pause_state_at(now_ms())
     }
 
-    /// `PauseFor` / `ResumePause`: `duration_sec <= 0` means pause until manually resumed.
     pub fn set_paused(&self, paused: bool, duration_sec: i64) {
         let until = if !paused {
             None
@@ -116,8 +95,6 @@ impl RuleEngine {
         *self.inner.paused_until_ms.write().unwrap() = until;
     }
 
-    /// Mirrors `MatchForGroup`: applies pause, schedules, allowlist-only and service schedules,
-    /// and records the query counters.
     pub fn check(&self, domain: &str, qtype: u16, group: &str) -> CheckHostResult {
         let now = Local::now();
         if !self.inner.switch_on() {
@@ -143,7 +120,6 @@ impl RuleEngine {
         result
     }
 
-    /// Pure, read-only check (`CheckHost`): no pause, schedule or counter side effects.
     pub fn check_host(&self, domain: &str, qtype: u16) -> CheckHostResult {
         let domain = normalize_domain(domain);
         if domain.is_empty() {
@@ -157,7 +133,6 @@ impl RuleEngine {
             .match_domain(&domain, qtype)
     }
 
-    /// Counts one already-decided verdict. `check` calls this; external pipelines may reuse it.
     pub fn record_verdict(&self, result: &CheckHostResult) {
         self.inner.total_queries.fetch_add(1, Ordering::Relaxed);
         if result.blocked {
@@ -167,7 +142,6 @@ impl RuleEngine {
         }
     }
 
-    /// Response-side alias-chain recheck (`MatchResponse`); does not touch query counters.
     pub fn check_response(
         &self,
         qname: &str,
@@ -199,7 +173,6 @@ impl RuleEngine {
         CheckHostResult::pass()
     }
 
-    /// Finds the first A/AAAA answer inside the configured bogus-NXDOMAIN set.
     pub fn bogus_nxdomain(&self, addresses: &[IpAddr]) -> Option<BogusNxDomainHit> {
         self.inner
             .bogus
@@ -271,7 +244,6 @@ impl RuleEngine {
         self.inner.blocking_active_for_group(group, &Local::now())
     }
 
-    /// `CurrentSchedule`: the first active global schedule, when the schedule switch is on.
     pub fn current_schedule(&self) -> Option<ScheduleView> {
         let config = self.inner.config.read().unwrap();
         if !config.schedule_enabled {
@@ -284,7 +256,6 @@ impl RuleEngine {
         })
     }
 
-    /// Replaces client groups and rebuilds every group matcher.
     pub fn set_groups(&self, groups: GroupConfig) {
         let groups = normalize_groups(groups);
         *self.inner.groups.write().unwrap() = groups.clone();
@@ -297,7 +268,6 @@ impl RuleEngine {
         self.inner.groups.read().unwrap().clone()
     }
 
-    /// Group block-mode override, or `None` when the group inherits the global mode.
     pub fn group_block_mode(&self, group: &str) -> Option<String> {
         self.inner
             .matchers
@@ -308,7 +278,6 @@ impl RuleEngine {
             .cloned()
     }
 
-    /// Effective block-response policy for a group.
     pub fn block_response_config(&self, group: &str) -> BlockResponseConfig {
         let config = self.inner.config.read().unwrap();
         let mode = self
@@ -321,12 +290,10 @@ impl RuleEngine {
         }
     }
 
-    /// Expands the selected services/groups, for the "N rules" UI counter.
     pub fn count_service_rules(&self, service_ids: &[String], group_ids: &[String]) -> usize {
         count_service_rules(service_ids, group_ids)
     }
 
-    /// Starts the hourly refresh loop; stop it with [`RuleEngine::close`].
     pub fn spawn_update_ticker(self: &Arc<Self>, period: Duration) -> tokio::task::JoinHandle<()> {
         let engine = Arc::clone(self);
         tokio::spawn(async move {
@@ -340,13 +307,11 @@ impl RuleEngine {
         })
     }
 
-    /// Stops the background ticker at its next wake-up.
     pub fn close(&self) {
         self.inner.stopped.store(true, Ordering::Relaxed);
     }
 }
 
-/// Extracts the CNAME/SVCB targets and A/AAAA/HTTPS/SVCB owner names to recheck.
 pub fn extract_response_check_names(qname: &str, records: &[ResponseRecord]) -> Vec<String> {
     let origin = normalize_domain(qname);
     let mut seen = HashSet::new();
@@ -442,7 +407,6 @@ fn dedup_trimmed(values: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-/// Go's query-name normalization: trim, lowercase, drop one trailing dot.
 pub fn normalize_domain(domain: &str) -> String {
     let lowered = go_lower(go_trim_space(domain));
     lowered
@@ -451,7 +415,6 @@ pub fn normalize_domain(domain: &str) -> String {
         .to_string()
 }
 
-/// Unix milliseconds.
 pub fn now_ms() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

@@ -68,7 +68,6 @@ fn configure_and_probe_go_through_the_abi() {
         },
         0
     );
-    // Unselected UIDs are unrestricted.
     assert_eq!(
         unsafe { diting_allowlist_domain_allowed(kernel, 99999, denied.as_ptr(), denied.len()) },
         1
@@ -107,7 +106,6 @@ fn remember_grants_through_the_abi() {
         },
         0
     );
-    // Another UID holds no grant.
     assert_eq!(unsafe { diting_allowlist_grant_count(kernel, 10200) }, 0);
 
     unsafe { diting_allowlist_free(kernel) };

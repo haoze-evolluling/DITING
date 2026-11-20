@@ -1,8 +1,3 @@
-/// The record-type blocks: ECH, ANY (with its answer mode) and IPv6 answers.
-///
-/// The old desktop console's `PrivacyPanel.vue` is the blueprint; these three switches left the
-/// protocol card because that card stacked two different ideas and grew taller than the window.
-/// Every switch saves on the spot and the page re-reads `/status`.
 library;
 
 import 'dart:async';

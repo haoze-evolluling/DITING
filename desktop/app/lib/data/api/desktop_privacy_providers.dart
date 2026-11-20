@@ -1,8 +1,3 @@
-/// The privacy page's state: one read of `/status` and the five write paths that each patch their
-/// own endpoint.
-///
-/// The service merges every patch over the config it holds, so a switch never rewrites an unrelated
-/// field; after each write the status is re-read so the page shows what the service kept.
 library;
 
 import 'dart:async';

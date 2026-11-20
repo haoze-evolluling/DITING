@@ -1,5 +1,3 @@
-/// AI analysis settings and call state under the 1.4.3 `AgentApiSettingsStore` keys in
-/// `dns_vpn_prefs`.
 library;
 
 import 'dart:convert';
@@ -10,7 +8,6 @@ import 'package:diting_android/data/agent/key_obfuscator.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// A configured AI provider; a non-empty `presetId` means it came from a preset.
 class AiProviderConfig {
   const AiProviderConfig({
     required this.id,
@@ -27,12 +24,10 @@ class AiProviderConfig {
   final String model;
   final String presetId;
 
-  /// Obfuscated key (`KeyObfuscator.seal`). Empty when unset.
   final String sealedKey;
 
   bool get hasKey => sealedKey.isNotEmpty;
 
-  /// Plain key for request headers only; never log or display it.
   String get apiKey => openApiKey(sealedKey);
 
   AiProviderConfig copyWith({
@@ -59,7 +54,6 @@ class AiProviderConfig {
     'presetId': presetId,
   };
 
-  /// Parses one provider leniently, like the legacy `decodeAiProviders`.
   static AiProviderConfig? fromJson(Object? raw) {
     if (raw is! Map) return null;
     final id = '${raw['id'] ?? ''}'.trim();
@@ -78,7 +72,6 @@ class AiProviderConfig {
   }
 }
 
-/// Built-in preset: name and base URL only; models are fetched online.
 class AiProviderPreset {
   const AiProviderPreset({
     required this.id,
@@ -93,8 +86,6 @@ class AiProviderPreset {
   final String baseUrl;
 }
 
-/// Mirrors the legacy `AiProviderPresets.all` (16 entries). The brand names are proper nouns, so
-/// only the Chinese ones change with the language.
 List<AiProviderPreset> aiProviderPresets(AppL10n l10n) => <AiProviderPreset>[
   AiProviderPreset(
     id: 'deepseek',
@@ -209,7 +200,6 @@ class AgentApiState {
   final String systemPrompt;
   final double temperature;
 
-  /// Active provider; falls back to the first entry like legacy `getActiveProvider`.
   AiProviderConfig? get activeProvider {
     if (providers.isEmpty) return null;
     for (final provider in providers) {
@@ -238,7 +228,6 @@ class AgentApiState {
   );
 }
 
-/// Reads the legacy keys plus provider JSON; missing JSON seeds a keyless example entry.
 AgentApiState loadAgentApiState(LegacySettings settings) {
   final providers = decodeAiProviders(settings.agentAiProvidersJson);
   var activeProviderId = settings.agentAiActiveProviderId;
@@ -254,7 +243,6 @@ AgentApiState loadAgentApiState(LegacySettings settings) {
   );
 }
 
-/// Decodes the provider JSON; an empty list means corrupt, so the caller decides whether to seed.
 List<AiProviderConfig> decodeAiProviders(String? raw) {
   if (raw == null || raw.trim().isEmpty) return const [];
   try {
@@ -271,8 +259,6 @@ List<AiProviderConfig> decodeAiProviders(String? raw) {
   }
 }
 
-/// A keyless placeholder showing what each field looks like, not a real vendor; AI entries stay
-/// hidden until the user fills in a key.
 List<AiProviderConfig> seedProviders() {
   return [
     AiProviderConfig(
@@ -289,7 +275,6 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
 
   @override
   AgentApiState build() {
-    // Rebuild when other pages or processes write the legacy settings.
     ref.watch(legacySettingsRevisionProvider);
     return loadAgentApiState(ref.watch(legacySettingsProvider));
   }
@@ -307,7 +292,6 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
     _bump();
   }
 
-  /// Legacy `syncProviderToConfig`: mirrors the active provider into the flat keys 1.4.3 reads.
   void _syncActiveToFlatKeys(
     List<AiProviderConfig> providers,
     String activeId,
@@ -353,7 +337,6 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
     _saveProviders(state.providers, id);
   }
 
-  /// Adds or updates a provider; a non-empty [plainKey] replaces the key, empty keeps it.
   void saveProvider(AiProviderConfig provider, {String? plainKey}) {
     final sealed = (plainKey == null || plainKey.trim().isEmpty)
         ? provider.sealedKey
@@ -377,7 +360,6 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
     _saveProviders(list, nextActive);
   }
 
-  /// Restores defaults by clearing providers, key, prompt and temperature.
   void reset() {
     final settings = _settings;
     final store = ref.read(legacyPrefsStoreProvider);
@@ -405,8 +387,6 @@ final agentApiProvider = NotifierProvider<AgentApiNotifier, AgentApiState>(
   AgentApiNotifier.new,
 );
 
-/// Whether the active provider has an API key; AI entry points outside the settings page show
-/// only when this is true.
 final agentKeyConfiguredProvider = Provider<bool>(
   (ref) => ref.watch(
     agentApiProvider.select((state) => state.activeProvider?.hasKey ?? false),

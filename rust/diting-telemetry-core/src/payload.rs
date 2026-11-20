@@ -1,32 +1,7 @@
-//! The binary layouts shared with `android/engine/telemetry_native*.go`.
-//!
-//! Log row (a push request, and one element of a drain response):
-//!
-//! ```text
-//! u8 blocked | u8 cached | i32 query_type | i64 response_time_ms | i64 timestamp_ms | i64 ttl
-//! text domain | text app_name | text resolved_ips | text blocked_by | text error_message
-//! ```
-//!
-//! Push request: `u8 layout` then one row. Drain response: `u8 layout | u32 count` then the rows.
-//! Tick response: `u8 layout | u32 count` then `(i32 uid | u64 tx | u64 rx)` per row.
-//!
-//! Flow key (lookup, and store with a trailing `i32 uid`):
-//!
-//! ```text
-//! u8 layout | u8 app_len | app bytes | u8 server_len | server bytes
-//! i32 app_port | i32 server_port | i32 protocol | i64 now_ns [| i32 uid]
-//! ```
-//!
-//! `text` is `u32 length | bytes`. Every field is little-endian, a drifted version byte, a length
-//! that disagrees with the payload or a trailing byte is a hard error, and text is decoded lossily:
-//! Go's `encoding/json` already replaced invalid UTF-8 with U+FFFD, so a lossy decode cannot change
-//! what Kotlin sees.
-
 use crate::logagg::LogItem;
 use crate::traffic::Delta;
 use crate::uidcache::{Addr, FlowKey};
 
-/// Must match `telemetryLogPayloadLayoutVersion` / `telemetryKeyPayloadLayoutVersion` in Go.
 pub const LAYOUT_VERSION: u8 = 1;
 
 struct Reader<'a> {
@@ -74,7 +49,6 @@ impl<'a> Reader<'a> {
         Some(i64::from_le_bytes(self.take(8)?.try_into().ok()?))
     }
 
-    /// `u32 length` then that many bytes, as UTF-8 with invalid sequences replaced.
     fn text(&mut self) -> Option<String> {
         let length = self.u32()? as usize;
         let bytes = self.take(length)?;
@@ -132,7 +106,6 @@ fn put_item(out: &mut Vec<u8>, item: &LogItem) {
     put_text(out, &item.error_message);
 }
 
-/// Decodes one push request (used by the FFI, and by the Go layout tests through the same shape).
 pub fn decode_log_push(payload: &[u8]) -> Option<LogItem> {
     let mut reader = Reader::new(payload)?;
     let item = reader.item()?;
@@ -142,7 +115,6 @@ pub fn decode_log_push(payload: &[u8]) -> Option<LogItem> {
     Some(item)
 }
 
-/// Encodes a push request; the Go layout tests build the same bytes.
 pub fn encode_log_push(item: &LogItem) -> Vec<u8> {
     let mut out = Vec::with_capacity(96);
     out.push(LAYOUT_VERSION);
@@ -150,7 +122,6 @@ pub fn encode_log_push(item: &LogItem) -> Vec<u8> {
     out
 }
 
-/// Encodes the rows a drain returned.
 pub fn encode_log_batch(items: &[LogItem]) -> Vec<u8> {
     let mut out = Vec::with_capacity(1 + 4 + items.len() * 96);
     out.push(LAYOUT_VERSION);
@@ -161,7 +132,6 @@ pub fn encode_log_batch(items: &[LogItem]) -> Vec<u8> {
     out
 }
 
-/// Decodes a drain response.
 pub fn decode_log_batch(payload: &[u8]) -> Option<Vec<LogItem>> {
     let mut reader = Reader::new(payload)?;
     let count = reader.u32()? as usize;
@@ -175,7 +145,6 @@ pub fn decode_log_batch(payload: &[u8]) -> Option<Vec<LogItem>> {
     Some(items)
 }
 
-/// Encodes one tick response.
 pub fn encode_traffic_tick(deltas: &[Delta]) -> Vec<u8> {
     let mut out = Vec::with_capacity(1 + 4 + deltas.len() * 20);
     out.push(LAYOUT_VERSION);
@@ -188,7 +157,6 @@ pub fn encode_traffic_tick(deltas: &[Delta]) -> Vec<u8> {
     out
 }
 
-/// Decodes one tick response.
 pub fn decode_traffic_tick(payload: &[u8]) -> Option<Vec<Delta>> {
     let mut reader = Reader::new(payload)?;
     let count = reader.u32()? as usize;
@@ -206,7 +174,6 @@ pub fn decode_traffic_tick(payload: &[u8]) -> Option<Vec<Delta>> {
     Some(deltas)
 }
 
-/// Decodes a flow lookup request: the key plus the caller's clock.
 pub fn decode_flow_lookup(payload: &[u8]) -> Option<(FlowKey, i64)> {
     let mut reader = Reader::new(payload)?;
     let app = read_addr(&mut reader)?;
@@ -224,7 +191,6 @@ pub fn decode_flow_lookup(payload: &[u8]) -> Option<(FlowKey, i64)> {
     ))
 }
 
-/// Decodes a flow store request: the lookup payload plus the resolved UID.
 pub fn decode_flow_store(payload: &[u8]) -> Option<(FlowKey, i64, i32)> {
     let mut reader = Reader::new(payload)?;
     let app = read_addr(&mut reader)?;
@@ -244,7 +210,6 @@ pub fn decode_flow_store(payload: &[u8]) -> Option<(FlowKey, i64, i32)> {
     ))
 }
 
-/// Encodes a flow lookup/store request; the Go layout tests build the same bytes.
 pub fn encode_flow_key(key: &FlowKey, now_ns: i64, uid: Option<i32>) -> Vec<u8> {
     let mut out = Vec::with_capacity(64);
     out.push(LAYOUT_VERSION);

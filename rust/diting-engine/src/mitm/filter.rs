@@ -1,20 +1,7 @@
-//! The MITM smart filter: `mitm_filter.go`'s log lines over the `diting-mitm-core` handle.
-//!
-//! Every decision already lives in the kernel: the per-UID allow list, the `path.Match` exclusion
-//! patterns, the sensitive-host heuristics (banking, payment, identity), the automatic blacklist
-//! with its failure streaks and the persistent `mitm_blacklist.txt` file. What Go kept was the
-//! handle lifecycle and the log lines, and that is exactly what is left here — the engine has no
-//! logcat bridge, so a line becomes a batch-log error row through `Engine::log_error`.
-//!
-//! The kernel is required for MITM: `Mitm::start` builds the filter before the session exists, and
-//! a filter that cannot be built fails `StartStackMitm`. Nothing gets decrypted without it, which is
-//! the conservative side of the old behaviour and loud instead of silent.
-
 use std::time::Duration;
 
 pub use diting_mitm_core::{BlacklistReport, FailureReport, Filter};
 
-/// `logMitmBlacklisted`: the entry line plus, when the file append failed, the durability warning.
 pub fn blacklist_lines(report: &BlacklistReport) -> Vec<String> {
     let mut lines = vec![format!(
         "MITM Filter: auto-blacklisted '{}' ({}, TTL={})",
@@ -31,7 +18,6 @@ pub fn blacklist_lines(report: &BlacklistReport) -> Vec<String> {
     lines
 }
 
-/// `MitmFilter.RecordFailure`'s logging: a new entry, or the streak that is not there yet.
 pub fn failure_lines(report: &FailureReport, error: &str) -> Vec<String> {
     if !report.recorded {
         return Vec::new();
@@ -40,7 +26,6 @@ pub fn failure_lines(report: &FailureReport, error: &str) -> Vec<String> {
         return blacklist_lines(added);
     }
     if report.blacklisted {
-        // A host that crossed the threshold earlier is already listed and already logged.
         return Vec::new();
     }
     vec![format!(
@@ -49,7 +34,6 @@ pub fn failure_lines(report: &FailureReport, error: &str) -> Vec<String> {
     )]
 }
 
-/// `time.Duration.String()` for the console cadence Go printed (`168h0m0s`).
 fn go_duration(millis: i64) -> String {
     let total = Duration::from_millis(millis.max(0) as u64);
     let seconds = total.as_secs();

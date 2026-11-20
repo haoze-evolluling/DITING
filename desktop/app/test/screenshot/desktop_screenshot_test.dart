@@ -1,12 +1,3 @@
-// The desktop app's self-screenshot entry point. Run it, then look at
-// `desktop/app/build/screenshots/*.png`:
-//
-//   DITING_SCREENSHOTS=1 flutter test test/screenshot/desktop_screenshot_test.dart --update-goldens
-//
-// Without the environment variable every case is skipped, so a plain `flutter test` stays clean.
-// The shots render `DesktopApp` as a Windows window, so the theme picks the Windows page
-// transitions and leaves text to the system fonts the product uses.
-
 import 'package:diting_desktop/app/desktop_app.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:diting_desktop/data/api/desktop_live_providers.dart';
@@ -21,7 +12,6 @@ import '../support/desktop_api_fakes.dart';
 import 'screenshot_harness.dart';
 
 void main() {
-  // Pin Chinese so the screenshots capture the shipped strings, exactly like the Android suites.
   setUp(() {
     final dispatcher = TestWidgetsFlutterBinding.ensureInitialized()
         .platformDispatcher;
@@ -29,7 +19,6 @@ void main() {
     addTearDown(dispatcher.clearLocalesTestValue);
   });
   setUpAll(loadHostFonts);
-  // `testWidgets` only takes a bool; the reason lives in the file header and the harness.
   final skip = !screenshotsEnabled;
 
   group('桌面', () {
@@ -43,8 +32,6 @@ void main() {
           legacyPrefsStoreProvider.overrideWithValue(
             MemoryLegacyPrefsStore({'dns_vpn_prefs': ?settings}),
           ),
-          // A deterministic backend: the shots must not depend on whether a service happens to be
-          // listening on this machine, and no test may open a socket.
           desktopPollingEnabledProvider.overrideWithValue(false),
           desktopLiveEnabledProvider.overrideWithValue(false),
           desktopApiClientProvider.overrideWithValue(
@@ -143,8 +130,6 @@ void main() {
       );
     }, skip: skip);
 
-    // The window can be dragged to a phone's width, where the shell falls back to the dock and
-    // every card is one narrow column: the densest forms have to survive it without overflowing.
     for (final location in ['/hub/client-access', '/hub/encrypted-dns']) {
       testWidgets('桌面极窄 ${_slug(location)}', (tester) async {
         await captureScreenshot(
@@ -199,8 +184,6 @@ void main() {
       );
     }, skip: skip);
 
-    // Dialogs are where the densest forms live, and a page shot never shows them. Each one is
-    // opened by the same tap a user makes, so the shot covers the real route into it.
     testWidgets('桌面重写规则弹窗', (tester) async {
       await captureScreenshot(
         tester,
@@ -258,8 +241,6 @@ void main() {
       );
     }, skip: skip);
 
-    // 外观页是唯一一张靠缩略图讲事的卡片：宽窗、默认窗和深色各一张，才能看出预览窗口与配色磁贴
-    // 是否真的在两种宽度下都成行。
     testWidgets('桌面外观宽窗', (tester) async {
       await captureScreenshot(
         tester,
@@ -287,9 +268,6 @@ void main() {
       );
     }, skip: skip);
 
-    // Every page at both sides of the two-column breakpoint. 1280 leaves a 1056-wide content
-    // column after the sidebar, which is the tightest two-column board; 700 drops to one column.
-    // This is the layout contract the screenshots exist to catch.
     const allPages = [
       '/',
       '/hub',
@@ -337,6 +315,5 @@ void main() {
   });
 }
 
-/// `/` → `home`, `/logs` → `logs`: one stable file name per branch.
 String _slug(String location) =>
     location == Routes.home ? 'home' : location.replaceAll('/', '');

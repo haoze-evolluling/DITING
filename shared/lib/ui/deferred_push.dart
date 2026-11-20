@@ -8,8 +8,6 @@ import 'package:diting_shared/ui/navigator.dart';
 
 const arrivalHoldLimit = Duration(milliseconds: 200);
 
-/// Starts a push transition one frame after the page is first built, so a long
-/// first build does not swallow the start of the transition.
 mixin DeferredPushRouteMixin<T> on TransitionRoute<T> {
   _TickerCapture? _vsync;
   var _takesHolds = false;
@@ -53,9 +51,6 @@ mixin DeferredPushRouteMixin<T> on TransitionRoute<T> {
   }
 }
 
-/// Holds the transition of its page's route, and of the sheets carrying it,
-/// until [ready], for at most [arrivalHoldLimit].
-/// Counts only in the first frame of a page its route pushed.
 class ArrivalHold extends StatefulWidget {
   const ArrivalHold({super.key, required this.ready, required this.child});
 
@@ -128,8 +123,6 @@ class _TickerCapture implements TickerProvider {
   Duration _lead = Duration.zero;
   Duration? _last;
 
-  // A run started between frames first ticks at zero, showing the frame on
-  // screen again; its start value stays, as the route below links to it.
   @override
   Ticker createTicker(TickerCallback onTick) {
     return ticker = _parent.createTicker((elapsed) {

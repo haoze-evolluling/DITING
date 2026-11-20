@@ -1,8 +1,3 @@
-/// The `hub` branch's rewrite page: the engine switch, the default lifetime and the rule table.
-///
-/// The old desktop console (`ResolveView.vue` and its `rules/RewritePanel.vue`) is the functional
-/// blueprint. The page owns no matching logic: it reads `/status` and `/dns/rewrite/rules`, posts a
-/// switch, a lifetime or one rule, and shows what the service re-reads.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

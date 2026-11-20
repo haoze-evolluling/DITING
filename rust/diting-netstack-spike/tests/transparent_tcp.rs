@@ -1,10 +1,3 @@
-//! The TCP half of the spike: does `smoltcp` accept a connection to an arbitrary destination?
-//!
-//! Every test feeds hand-crafted client packets. The stack is configured with the *unspecified*
-//! address (`0.0.0.0` / `::`, prefix 0), so any passing case proves that
-//! `Interface::set_any_ip(true)` plus a per-flow `listen(destination)` really is a transparent
-//! proxy: `smoltcp` answers for addresses it was never told about.
-
 mod support;
 
 use diting_netstack_spike::{Limits, Netstack};
@@ -21,8 +14,6 @@ fn interface_stays_transparent() {
     );
 }
 
-/// The negative control: without `set_any_ip` the same SYN is dropped on ingress by the address
-/// check, which is exactly the limitation that made this spike necessary.
 #[test]
 fn without_any_ip_foreign_destinations_are_dropped() {
     let mut harness = Harness::default();
@@ -37,8 +28,6 @@ fn without_any_ip_foreign_destinations_are_dropped() {
         harness.tcp_segments(&out).is_empty(),
         "an address the interface does not own never reaches the socket layer"
     );
-    // The socket is created by the SYN preprocessing, but the interface drops the packet, so it
-    // stays in `Listen` until the idle sweep reaps it. Nothing reaches the client.
     let flow = harness
         .net
         .tcp_flow(&client.key())
@@ -205,8 +194,6 @@ fn closed_flows_are_released() {
     client.connect(&mut harness);
     let key = client.key();
 
-    // The client's FIN moves the flow to CloseWait; the relay's close sends its own FIN, and the
-    // client's ACK of that FIN walks the socket to Closed, where the flow is released.
     harness.feed(client.fin());
     assert_eq!(
         harness.net.tcp_flow(&key).unwrap().state(),
@@ -322,7 +309,6 @@ fn non_syn_control_packets_never_create_flows() {
         endpoint_v4([1, 1, 1, 1], 22),
     );
 
-    // A bare FIN / RST from a client that never opened a connection: unanswered, uncounted.
     let fin = smoltcp::wire::TcpControl::Fin;
     let packet = diting_netstack_spike::wire::emit_tcp(
         client.local,

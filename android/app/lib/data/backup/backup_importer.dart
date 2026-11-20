@@ -1,5 +1,3 @@
-/// Backup import: the Rust core validates the document and decides every merge, this file only
-/// feeds it the local snapshot and carries out the resulting plan.
 library;
 
 import 'dart:convert';
@@ -33,7 +31,6 @@ class BackupGroupOutcome {
   final int skipped;
   final int updated;
 
-  /// Why the whole group failed; when set the counters are meaningless.
   final String? error;
 
   bool get failed => error != null;
@@ -51,7 +48,6 @@ class BackupImportResult {
     this.subscriptionCount = 0,
   });
 
-  /// The user cancelled file selection; this is not a failure.
   const BackupImportResult.cancelled()
     : outcomes = const [],
       sourceName = null,
@@ -60,7 +56,6 @@ class BackupImportResult {
       occurredAt = null,
       subscriptionCount = 0;
 
-  /// The whole file could not be parsed (not a backup, too new, bad JSON).
   const BackupImportResult.failed(String this.fatalError)
     : outcomes = const [],
       sourceName = null,
@@ -73,10 +68,8 @@ class BackupImportResult {
   final String? sourceName;
   final bool cancelled;
 
-  /// Why the whole file failed; when set, [outcomes] is empty.
   final String? fatalError;
 
-  /// Number of subscriptions touched, used to prompt a rule refresh.
   final int subscriptionCount;
 
   bool get failed => fatalError != null;
@@ -105,10 +98,8 @@ class BackupImportTarget {
 
   final LegacyPrefsStore store;
 
-  /// Null on a fresh install; rule and subscription groups then report failure.
   final Database? database;
 
-  /// Data set container the settings groups land in; null means the normal data set.
   final String? dnsContainer;
 
   LegacySettings get settings =>
@@ -118,8 +109,6 @@ class BackupImportTarget {
 class BackupImporter {
   const BackupImporter();
 
-  /// Reads the local snapshot, asks the core for a plan and applies it; errors become
-  /// [BackupImportResult.failed] instead of throwing, since the caller must explain the problem.
   Future<BackupImportResult> import(
     String content,
     BackupImportTarget target, {
@@ -141,8 +130,6 @@ class BackupImporter {
     try {
       await _applyPlan(answer, target, now);
     } catch (error) {
-      // Statements are applied in order; a database failure leaves the settings already written and
-      // is reported as a fatal error, exactly like a broken document.
       debugPrint('backup import failed while applying the plan: $error');
       return BackupImportResult.failed('$error');
     }
@@ -175,12 +162,10 @@ class BackupImporter {
     );
   }
 
-  /// Fatal errors are the only ones the user cannot work around, so each carries its own sentence.
   static String _fatalMessage(Object? fatal, String content) {
     final record = fatal is Map ? fatal : const {};
     return switch ('${record['kind']}') {
       'empty' => currentL10n.backupErrEmpty,
-      // The core refused the text; the decoder's own message explains where it gave up.
       'notJson' => currentL10n.backupErrInvalidJson(_jsonError(content)),
       'rootNotObject' => currentL10n.backupErrRootNotObject,
       'notBackup' => currentL10n.backupErrNotDiting,
@@ -203,7 +188,6 @@ class BackupImporter {
     }
   }
 
-  /// Why one group could not be imported, in the user's language.
   static String _errorMessage(String kind) => switch (kind) {
     'providersNotArray' => currentL10n.backupErrProvidersNotArray,
     'bootstrapNotObject' => currentL10n.backupErrBootstrapNotObject,

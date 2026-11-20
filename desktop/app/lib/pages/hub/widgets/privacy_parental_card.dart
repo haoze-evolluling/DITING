@@ -1,8 +1,3 @@
-/// Parental control: block adult-content domains from a third-party category list.
-///
-/// The old desktop console's `ParentalControlCard.vue` is the blueprint. It shares the malicious-site
-/// engine but not its switch, so it can be turned on alone; the warning is the only coupling the two
-/// cards have, and it is the service's own condition (reputation lookups off) rather than a guess.
 library;
 
 import 'dart:async';

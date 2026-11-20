@@ -1,7 +1,3 @@
-// Desktop hub encrypted DNS server (desktop parity): listeners,
-// certificate, DDR, reverse-proxy trust and the mobile profile. Every value comes from
-// `/encrypted/dns/status`; each write adopts the whole status the service answers with.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_encrypted_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_encrypted_page.dart';

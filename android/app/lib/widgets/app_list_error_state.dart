@@ -1,6 +1,3 @@
-/// The "cannot read the app list" state every picker shares. Its action asks the system for the
-/// app-list permission — MIUI/HyperOS, ColorOS and EMUI gate enumeration behind one — and reloads
-/// the inventory afterwards, because a bare retry would fail for the same reason.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -19,10 +16,8 @@ class AppListErrorState extends ConsumerStatefulWidget {
     this.minHeight = 260,
   });
 
-  /// Why enumeration failed, shown verbatim: the ROM's own wording is the best hint.
   final String error;
 
-  /// Floor height; the description length varies with the platform message.
   final double minHeight;
 
   @override
@@ -31,7 +26,6 @@ class AppListErrorState extends ConsumerStatefulWidget {
 
 class _AppListErrorStateState extends ConsumerState<AppListErrorState>
     with WidgetsBindingObserver {
-  /// Blocks a second tap while the system dialog or the settings screen is up.
   bool _requesting = false;
 
   @override
@@ -48,8 +42,6 @@ class _AppListErrorStateState extends ConsumerState<AppListErrorState>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // The grant happens outside the page (system dialog, or the settings screen the fallback
-    // opens), so re-read the inventory on return instead of leaving a stale error up.
     if (state == AppLifecycleState.resumed) {
       _reload();
     }
@@ -71,7 +63,6 @@ class _AppListErrorStateState extends ConsumerState<AppListErrorState>
     }
     setState(() => _requesting = false);
     if (snapshot.of(AppPermission.appList) != true) {
-      // No dialog exists on this ROM (or the user denied): only the settings screen can change it.
       await notifier.openSystemSettings(AppPermission.appList);
       if (!mounted) {
         return;
@@ -99,9 +90,6 @@ class _AppListErrorStateState extends ConsumerState<AppListErrorState>
   }
 }
 
-/// The "nothing to pick" state every app picker shares: an empty inventory, or a
-/// search/filter that matched no app. Kept beside [AppListErrorState] so the two states
-/// stay in one place and every picker renders them identically.
 class AppListEmptyState extends StatelessWidget {
   const AppListEmptyState({
     super.key,

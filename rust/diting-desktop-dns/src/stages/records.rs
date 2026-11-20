@@ -1,15 +1,8 @@
-//! Conversions between the decision kernels' record shapes and the wire builder.
-//!
-//! The filter/rewrite kernels deliberately keep their own record types (no wire dependency); this
-//! module is the single place where they become `diting-dns-wire` records, and where a parsed
-//! response becomes the flat record list the response recheck consumes.
-
 use diting_desktop_core::filter::{ResponseRecord, ResponseRecordKind};
 use diting_dns_wire::build::{ParsedMessage, RData, ResourceRecord, SvcParam, SvcbRData};
 use diting_rewrite_core::record::{Record as KernelRecord, SvcParam as KernelSvcParam};
 use diting_rewrite_core::ParsedRecord;
 
-/// Converts one kernel record (already carrying owner/TTL) to a wire record.
 pub fn to_wire_record(parsed: &ParsedRecord) -> Option<ResourceRecord> {
     Some(ResourceRecord::new(
         parsed.owner.clone(),
@@ -97,7 +90,6 @@ fn to_wire_svc_param(param: &KernelSvcParam) -> SvcParam {
     SvcParam { key, value }
 }
 
-/// Flattens the answer section into the response-recheck shape.
 pub fn response_records(message: &ParsedMessage) -> Vec<ResponseRecord> {
     message
         .answers

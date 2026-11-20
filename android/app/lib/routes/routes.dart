@@ -1,6 +1,3 @@
-/// Barrel for the per-domain route tables. Conventions: sub pages set `parentNavigatorKey:
-/// rootNavigatorKey`; routes use `pageBuilder: androidDefaultPage(...)`; path literals live in a
-/// per-domain `XxxPaths` class; a new domain adds `lib/routes/<domain>_routes.dart` and spreads it.
 library;
 
 export 'config_routes.dart';

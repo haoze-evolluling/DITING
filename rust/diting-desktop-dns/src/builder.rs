@@ -1,9 +1,3 @@
-//! Assembles the fixed pipeline from the engines the service owns.
-//!
-//! The order is not arbitrary (`PIPELINE_ORDER`): grouping must precede the cache, local authority
-//! must precede filtering, the response recheck must wrap the cache, and ECH/EDE must wrap every
-//! answer including cached ones. Stages whose engine is absent are simply not registered.
-
 use std::sync::Arc;
 
 use diting_desktop_core::access::AccessControl;
@@ -64,7 +58,6 @@ pub struct PipelineParts {
     pub ratelimit: Arc<RateLimiter>,
     pub metrics: Arc<MetricsTracker>,
     pub observer: Option<Arc<dyn QueryObserver>>,
-    /// `None` disables DDR even when the configuration asks for it (no encrypted listener).
     pub ddr: Option<Arc<dyn DdrProvider>>,
 }
 

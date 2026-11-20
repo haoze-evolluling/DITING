@@ -14,7 +14,6 @@ Duration frameIntervalOf(BuildContext context) {
       : Duration.zero;
 }
 
-/// Ends [simulation] at [end], where a controller would hold an overshoot.
 class ArrivingSimulation extends Simulation {
   ArrivingSimulation(this.simulation, {required this.end})
     : _start = simulation.x(0),
@@ -36,7 +35,6 @@ class ArrivingSimulation extends Simulation {
       (_start != end && (x(time) - end) * (_start - end) <= 0);
 }
 
-/// Plays [spring] for [seconds], easing out the residual so it ends at 1.
 class SpringCurve extends Curve {
   SpringCurve(SpringDescription spring, {required this.seconds})
     : _simulation = SpringSimulation(spring, 0, 1, 0);
@@ -57,7 +55,6 @@ final dropletSpring = SpringDescription.withDampingRatio(
   ratio: 0.8,
 );
 
-/// Rises to 1 at [peak] and back, as iOS 27's droplets overshoot and swell.
 double riseAndFall(double time, double peak, double sharpness) {
   if (time <= 0) {
     return 0;

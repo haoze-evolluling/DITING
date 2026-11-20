@@ -1,5 +1,3 @@
-/// Runtime dependencies and settings of the network tools; probes go through the native
-/// `DiagnosticsRunner`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,21 +6,16 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// `NetworkToolsSettingsStore.PREFS_NAME`
 const networkToolsContainer = 'network_tools_settings';
 
-/// Per-tool "resolve via tunnel" keys, copied verbatim from the Kotlin constants.
 const pingViaTunnelKey = 'ping_via_tunnel';
 const dnsLookupViaTunnelKey = 'dns_lookup_via_tunnel';
 const tracerouteViaTunnelKey = 'traceroute_via_tunnel';
 
-/// Native runner; `main.dart` overrides it with `GuardedDiagnosticsRunner`, the default reports
-/// failures.
 final diagnosticsRunnerProvider = Provider<DiagnosticsRunner>(
   (ref) => const GuardedDiagnosticsRunner(UnavailableDiagnosticsRunner()),
 );
 
-/// Turns platform exceptions into `success=false` results: the panel resets busy after the await.
 class GuardedDiagnosticsRunner implements DiagnosticsRunner {
   const GuardedDiagnosticsRunner(this._inner);
 
@@ -113,7 +106,6 @@ class GuardedDiagnosticsRunner implements DiagnosticsRunner {
   }
 }
 
-/// Default for hosts without the channel (desktop, unit tests): readable failures, never throws.
 class UnavailableDiagnosticsRunner implements DiagnosticsRunner {
   const UnavailableDiagnosticsRunner();
 
@@ -163,7 +155,6 @@ class UnavailableDiagnosticsRunner implements DiagnosticsRunner {
   );
 }
 
-/// Physical network snapshot read by the header bar; no mock constants.
 final networkInfoProvider = FutureProvider<NetworkInfoSnapshot>(
   (ref) => ref.watch(diagnosticsRunnerProvider).networkInfo(),
 );
@@ -190,8 +181,6 @@ class NetworkToolFlags {
   );
 }
 
-/// Reads `network_tools_settings`, defaulting false; watches the revision since prefs are
-/// unobservable.
 final networkToolFlagsProvider = Provider<NetworkToolFlags>((ref) {
   ref.watch(legacySettingsRevisionProvider);
   final store = ref.watch(legacyPrefsStoreProvider);
@@ -203,14 +192,11 @@ final networkToolFlagsProvider = Provider<NetworkToolFlags>((ref) {
   );
 });
 
-/// Writes one switch and invalidates every reader of `network_tools_settings`.
 void setNetworkToolFlag(WidgetRef ref, String key, bool value) {
   ref.read(legacyPrefsStoreProvider).putBool(networkToolsContainer, key, value);
   ref.read(legacySettingsRevisionProvider.notifier).bump();
 }
 
-/// Strips scheme, path, user info and port; `2001:db8::1` survives, only a `:` plus digits is a
-/// port.
 String sanitizeProbeHost(String input) {
   var value = input.trim();
   if (value.isEmpty) {
@@ -255,7 +241,6 @@ int _firstIndexOfAny(String value, List<String> needles) {
   return best;
 }
 
-/// Sanitises and validates the target; a non-null error is shown instead of probing.
 ({String host, String? error}) resolveProbeHost(String input) {
   final host = sanitizeProbeHost(input);
   if (host.isEmpty) {
@@ -275,12 +260,10 @@ String dnsSourceLabel(String source) => switch (source) {
   _ => currentL10n.diagnosticsAnswerFailed,
 };
 
-/// An empty interface name means there is no active network.
 String networkInterfaceLabel(NetworkInfoSnapshot snapshot) =>
     snapshot.interfaceName.isEmpty
     ? currentL10n.diagnosticsNoActiveNetwork
     : snapshot.interfaceName;
 
-/// Formats a latency value; null is rendered as a dash by the caller.
 String latencyText(double? value) =>
     value == null ? '—' : '${value.toStringAsFixed(1)} ms';

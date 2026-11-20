@@ -30,7 +30,6 @@ void main(List<String> args) {
     '// 按项目单文件 ≤550 行规范，从 $cls 拆出的构建方法（同库扩展，私有成员经库级可见性直接访问）。\n'
     'extension ${cls}Build on $cls {\n$body\n}\n',
   );
-  // register after the last import/export/part/library directive of the root
   final rootPath = '$dir$root';
   final rlines = File(rootPath).readAsLinesSync();
   var at = 0;

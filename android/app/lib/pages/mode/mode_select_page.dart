@@ -10,8 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Work mode selection: three large cards, expandable feature list, continue. No
-/// full-screen morph like upstream; AnimatedSize expands the card in place so it compares.
 class ModeSelectPage extends ConsumerStatefulWidget {
   const ModeSelectPage({super.key});
 
@@ -20,8 +18,6 @@ class ModeSelectPage extends ConsumerStatefulWidget {
 }
 
 class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
-  /// Currently expanded card, stored apart from workModeProvider: expanding is
-  /// browsing, writing is deciding.
   AppWorkMode? _expanded;
 
   @override
@@ -31,8 +27,6 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
   }
 
   void _select(AppWorkMode mode) {
-    // Tapping the selected card again confirms it, so the user does not have to hunt
-    // for the bottom button.
     if (_expanded == mode && ref.read(workModeProvider) == mode) {
       _confirm(mode);
       return;
@@ -44,8 +38,6 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
   void _confirm(AppWorkMode mode) {
     ref.read(workModeProvider.notifier).select(mode);
     ref.read(workModeSelectedProvider.notifier).markSelected();
-    // Enter onboarding when it is unfinished, otherwise the user lands on a home page
-    // whose permissions were never explained.
     if (ref.read(onboardingProvider)) {
       context.pop();
     } else {
@@ -95,8 +87,6 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
   }
 }
 
-/// One mode card: title, badge, summary, then the feature list when expanded. AnimatedSize
-/// rather than ExpansionTile, whose divider and tap semantics fight a tappable card.
 class _WorkModeCard extends StatelessWidget {
   const _WorkModeCard({
     required this.mode,
@@ -184,7 +174,6 @@ class _WorkModeCard extends StatelessWidget {
   };
 }
 
-/// Feature list shown when expanded, one line per feature.
 class _ModeFeatureList extends StatelessWidget {
   const _ModeFeatureList({required this.mode});
 

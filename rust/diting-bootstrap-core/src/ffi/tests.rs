@@ -218,8 +218,6 @@ fn cache_get_and_put_round_trip_through_the_abi() {
 
 #[test]
 fn an_omitted_id_is_the_empty_health_key() {
-    // A JSON config may leave `id` empty; the old Go health map keyed those under "". A null
-    // pointer with length 0 must therefore be accepted, not rejected as a bad argument.
     let kernel = diting_bootstrap_new();
     assert_eq!(
         unsafe { diting_bootstrap_record_result(kernel, ptr::null(), 0, 1, 10, T0) },

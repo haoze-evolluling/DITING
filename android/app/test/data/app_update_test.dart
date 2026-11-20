@@ -1,6 +1,3 @@
-// Release checking and the auto-update schedule: a mistake silently never updates or
-// re-downloads on every foreground.
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -15,17 +12,14 @@ void main() {
   group('订阅自动更新', _autoUpdate);
 }
 
-/// Pins the update check against a real HTTP server and 1.4.3's parsing rules.
 void _updateChecker() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // `flutter_test` installs an HttpOverrides answering 400; this file uses a loopback server
   setUpAll(() => HttpOverrides.global = null);
 
   late HttpServer server;
   late String url;
 
-  /// Status and body the fake GitHub endpoint should return.
   late int status;
   late String body;
   late List<String?> seenUserAgents;
@@ -74,7 +68,6 @@ void _updateChecker() {
 
   group('版本比较（旧版 isNewerVersion）', () {
     test('逐段整数比较，不是字符串比较', () {
-      // String comparison puts "1.4.10" below "1.4.9".
       expect(AppUpdateChecker.isNewerVersion('1.4.10', '1.4.9'), isTrue);
       expect(AppUpdateChecker.isNewerVersion('1.4.9', '1.4.10'), isFalse);
     });
@@ -86,7 +79,6 @@ void _updateChecker() {
     });
 
     test('看不懂的版本号不当作更新', () {
-      // Better to report no update than to treat an unparseable tag as one.
       expect(AppUpdateChecker.isNewerVersion('latest', '1.4.4'), isFalse);
       expect(AppUpdateChecker.isNewerVersion('1.4.x', '1.4.4'), isFalse);
       expect(AppUpdateChecker.isNewerVersion('', '1.4.4'), isFalse);
@@ -283,8 +275,6 @@ void _updateChecker() {
   });
 }
 
-/// Due-time logic for shipping a release; a mistake silently never updates or re-downloads each
-/// foreground
 void _autoUpdate() {
   SubscriptionRecord record({
     int id = 1,
@@ -385,7 +375,6 @@ void _autoUpdate() {
     test('隔天：从设定后的第一个时刻起每两天一次', () {
       final since = at(2025, 3, 3, 12);
       final alternate = plan(AutoUpdateSchedule.everyOtherDay, since);
-      // 3 号 04:00 已过，第一个时刻是 4 号，之后是 6 号。
       final ran = record(lastAttemptAt: at(2025, 3, 4, 4, 5));
       expect(alternate.isDue(ran, at(2025, 3, 5, 9)), isFalse);
       expect(alternate.nextDueAt([ran], at(2025, 3, 5, 9)), at(2025, 3, 6, 4));

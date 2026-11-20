@@ -11,7 +11,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rolling 24-hour traffic chart with peak, average and legend figures.
 class ServerTrafficOverview extends StatelessWidget {
   const ServerTrafficOverview({
     super.key,
@@ -146,7 +145,6 @@ class ServerTrafficOverview extends StatelessWidget {
   }
 }
 
-/// Blocked vs. allowed split plus the busiest blocked domain.
 class ServerBlockingOverview extends StatelessWidget {
   const ServerBlockingOverview({super.key, required this.stats});
 
@@ -260,7 +258,6 @@ class ServerBlockingOverview extends StatelessWidget {
   }
 }
 
-/// Cache hit rate with the cached, forwarded and failed counts behind it.
 class ServerCacheOverview extends StatelessWidget {
   const ServerCacheOverview({super.key, required this.stats});
 

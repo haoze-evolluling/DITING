@@ -1,5 +1,3 @@
-/// Building blocks shared by the request detail and DNS cache detail sheets, so the two sheets
-/// keep one look and one set of domain actions.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -17,7 +15,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Summary card: status badge, selectable host, one-line explanation and classifying chips.
 class DetailHeroCard extends StatelessWidget {
   const DetailHeroCard({
     super.key,
@@ -87,7 +84,6 @@ class DetailHeroCard extends StatelessWidget {
   }
 }
 
-/// Neutral chip for the hero card; a status chip passes its own colors to [TonalChip].
 class DetailMetaChip extends StatelessWidget {
   const DetailMetaChip({super.key, required this.label});
 
@@ -104,12 +100,9 @@ class DetailMetaChip extends StatelessWidget {
   }
 }
 
-/// Copy, blacklist and whitelist buttons for [host]. Domain rules match query names, so a literal
-/// IP can only be copied, and a note under the row says why the rule buttons are off.
 class DomainActionRow extends ConsumerWidget {
   const DomainActionRow({super.key, required this.host});
 
-  /// Bare host without port or trailing dot; null when the record has none.
   final String? host;
 
   Future<void> _copy(BuildContext context, String host) async {
@@ -199,7 +192,6 @@ class DomainActionRow extends ConsumerWidget {
   }
 }
 
-/// Icon over label in a card; disabled when [onPressed] is null.
 class _QuickAction extends StatelessWidget {
   const _QuickAction({
     required this.glyph,
@@ -249,7 +241,6 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-/// Rows of `KeyValueRow` on one card, the layout the traffic detail sheet uses.
 class DetailInfoCard extends StatelessWidget {
   const DetailInfoCard({super.key, required this.children});
 
@@ -268,7 +259,6 @@ class DetailInfoCard extends StatelessWidget {
   }
 }
 
-/// "AI analysis" section for detail sheets; renders nothing until an API key is configured.
 class AgentAnalysisSection extends ConsumerWidget {
   const AgentAnalysisSection({super.key, required this.domain, this.title});
 
@@ -286,7 +276,6 @@ class AgentAnalysisSection extends ConsumerWidget {
   }
 }
 
-/// Tappable card that opens the AI report for [domain] above the current sheet.
 class AgentAnalysisEntryCard extends StatelessWidget {
   const AgentAnalysisEntryCard({super.key, required this.domain, this.title});
 

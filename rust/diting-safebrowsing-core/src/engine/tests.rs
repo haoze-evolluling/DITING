@@ -1,6 +1,3 @@
-//! The two-service state: plan/apply per service, cache isolation and the
-//! "configuration changed -> rebuild" rule that `Configure` used to implement.
-
 use super::*;
 use crate::hash::hostname_to_hashes;
 
@@ -134,8 +131,6 @@ fn configure_rebuilds_both_caches_when_the_ttl_changes() {
 
 #[test]
 fn a_zero_sized_configuration_rebuilds_every_time() {
-    // The old `Configure` compared the live (defaulted) capacity against the raw configured size,
-    // so `CacheSize = 0` rebuilt on every call. Kept as-is: clearing a cache is the only effect.
     let engine = Engine::new(0, 60_000);
     let plan = engine
         .plan(SERVICE_SAFE_BROWSING, "host.com", NOW_MS)

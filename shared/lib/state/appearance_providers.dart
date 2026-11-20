@@ -1,5 +1,3 @@
-/// Appearance state: theme, palette, text scale, opacity, home text and bottom bar, under the 1.4.3
-/// keys.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -55,7 +53,6 @@ final pureBlackProvider = NotifierProvider<PureBlackNotifier, bool>(
   PureBlackNotifier.new,
 );
 
-/// Raw user text scale, before [clampTextScale].
 class TextScaleNotifier extends Notifier<double> {
   @override
   double build() => clampTextScale(_settings(ref).textScale);
@@ -70,8 +67,6 @@ final textScaleProvider = NotifierProvider<TextScaleNotifier, double>(
   TextScaleNotifier.new,
 );
 
-/// Opacity of the home blocks that are not dashboard cards (`home_*_opacity`). The provider and
-/// resolution blocks became cards, so their transparency is no longer configurable here.
 enum HomeLayer {
   powerButton('home_power_button_opacity'),
   poem('home_poem_opacity');
@@ -83,7 +78,6 @@ enum HomeLayer {
     HomeLayer.poem => l10n.homeLayerPoem,
   };
 
-  /// Legacy `AppearanceSettingsStore` key names.
   final String storageKey;
 }
 
@@ -119,7 +113,6 @@ final homeOpacityProvider =
       HomeOpacityNotifier.new,
     );
 
-/// Home sentence per run state (running / stopped); empty hides it.
 class HomeSentenceNotifier
     extends Notifier<({String running, String stopped})> {
   @override
@@ -149,7 +142,6 @@ final homeSentenceProvider =
       HomeSentenceNotifier.new,
     );
 
-/// Selectable bottom bar tabs: 2 to [maxDockDestinations].
 enum BottomBarDestination {
   home('home', AppGlyphs.dashboard),
   featureHub('feature_hub', AppGlyphs.puzzle),
@@ -169,7 +161,6 @@ enum BottomBarDestination {
     BottomBarDestination.settings => l10n.bottomBarSettings,
   };
 
-  /// Ids as stored in the legacy `bottom_bar_destinations` array.
   final String storageValue;
 
   final Glyph glyph;
@@ -206,7 +197,6 @@ class BottomBarNotifier extends Notifier<List<BottomBarDestination>> {
     ]);
   }
 
-  /// Keeps 2 to [maxDockDestinations] items; out-of-range edits are ignored.
   bool toggle(BottomBarDestination destination) {
     final current = state;
     if (current.contains(destination)) {
@@ -225,7 +215,6 @@ class BottomBarNotifier extends Notifier<List<BottomBarDestination>> {
     return true;
   }
 
-  /// Reorders the dock; [ReorderableListView.onReorderItem]'s `newIndex` is already adjusted.
   void move(int oldIndex, int newIndex) {
     final length = state.length;
     if (oldIndex < 0 ||
@@ -270,7 +259,6 @@ final hapticProvider = NotifierProvider<HapticNotifier, bool>(
   HapticNotifier.new,
 );
 
-/// Resolution mode: single resolver or race (upstream `ResolutionSettingsStore`).
 enum ResolutionMode {
   single('single'),
   smart('smart_prediction'),
@@ -286,7 +274,6 @@ enum ResolutionMode {
     ResolutionMode.primaryBackup => l10n.resolutionModePrimaryBackup,
   };
 
-  /// Legacy `dns_resolution_mode` values; enum names differ from stored values.
   final String storageValue;
 
   bool get isSingle => this == single;
@@ -300,8 +287,6 @@ enum ResolutionMode {
 class ResolutionModeNotifier extends Notifier<ResolutionMode> {
   @override
   ResolutionMode build() {
-    // DNS keys are data-set scoped: following the settings view is what makes a mode switch show
-    // that data set's mode instead of the previous one.
     ref.watch(legacySettingsProvider);
     return ResolutionMode.fromStorageValue(_settings(ref).resolutionModeRaw);
   }

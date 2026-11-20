@@ -1,7 +1,3 @@
-/// Dart side of `com.haoze.diting/db_health`: what the native log writers had to drop and why.
-///
-/// The 2.1.7 failure mode was silent — a locked log database left every log page empty and
-/// nothing said so. These counters make "no logs at all" visible from 故障排查.
 library;
 
 import 'package:flutter/services.dart';
@@ -22,33 +18,23 @@ class DbWriteHealthSnapshot {
     this.probeCause = '',
   });
 
-  /// Rows thrown away because they could not be buffered or persisted at all.
   final int droppedRows;
 
-  /// [droppedRows] split by native `DropReason` key: `overflow`, `tableMissing`, `noDatabase`,
-  /// `closed`. Zero entries are kept, so a missing key means an older native side.
   final Map<String, int> droppedByReason;
 
-  /// `table:reason` of the latest drop, e.g. `dns_log:overflow`.
   final String lastDrop;
 
-  /// How many times opening the database failed (a locked file, not a missing one).
   final int openFailures;
 
-  /// Last native failure, e.g. `SQLiteDatabaseLockedException: database is locked`.
   final String lastCause;
 
-  /// Whether the native side could open the database right now, and how it came up.
   final bool probeOk;
 
-  /// No database file yet (first run): not a failure, the Dart side creates the schema.
   final bool probeAbsent;
   final String probeJournalMode;
   final int probeBusyTimeoutMs;
   final String probeCause;
 
-  /// True when nothing was dropped, no open failed, and the connection answers right now.
-  /// An empty [probeCause] means the probe never ran (no native channel), not that it failed.
   bool get healthy =>
       droppedRows == 0 &&
       openFailures == 0 &&

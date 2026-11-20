@@ -1,26 +1,7 @@
-//! Parser behaviour, pinned by a corpus the Go parser produced before it was deleted.
-//!
-//! `fixtures/parse_corpus.tsv` is one row per input line: the line as hex bytes, then the expected
-//! result of `parse_line` in the same `pattern|flags|denyallow|to|rewrite` shape the migration used
-//! to diff Go against Rust. The last row (`ALL`) is the expected result of parsing the whole corpus
-//! as one document.
-//!
-//! The corpus itself was run through the Go parser (`rule_parser.go`) on the same text before this
-//! crate took over: 200 inputs covering comments, BOMs, hosts forms, `@@`, every modifier branch,
-//! the AdGuard domain forms, wildcards, trailing/leading separators and IDN. The one row where the
-//! two implementations disagree on purpose is `||xn--.test^` (see the "known boundary" notes in
-//! `rust/README.md`): Go's idna accepted a punycode prefix with an empty payload and produced an
-//! empty label, this crate rejects the rule.
-//!
-//! Deliberately *not* in the corpus: a `$dnsrewrite` value that fails to parse
-//! (`$dnsrewrite=NOERROR;NOTATYPE;x`). The kernel keeps such a rule and reports the raw value; Go
-//! drops it when it parses the value, which `rule_modifiers_rewrite_test.go` still covers.
-
 use super::*;
 
 const CORPUS: &str = include_str!("../../tests/fixtures/parse_corpus.tsv");
 
-/// One decoded corpus row.
 struct Row {
     input: String,
     expected: String,
@@ -55,7 +36,6 @@ fn decode_hex(hex: &str) -> String {
     String::from_utf8(bytes).expect("corpus rows are UTF-8")
 }
 
-/// The shape the corpus stores results in.
 fn describe(line: &ParsedLine) -> String {
     format!(
         "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
@@ -111,11 +91,8 @@ fn a_document_splits_lines_like_the_go_scanner() {
             .map(|line| line.pattern.clone())
             .collect()
     };
-    // `\r\n` loses its `\r`; a final line without a newline still counts.
     assert_eq!(patterns("||a.test^\r\n||b.test^\r\n"), ["a.test", "b.test"]);
     assert_eq!(patterns("||a.test^\n||b.test^"), ["a.test", "b.test"]);
-    // A lone `\r` is not a line terminator: it stays inside the line and makes it unparsable,
-    // exactly like `bufio.Scanner` without its `\r\n` fix-up.
     assert!(patterns("||a\rb.test^").is_empty());
 }
 
@@ -124,7 +101,6 @@ fn hosts_lines_expand_to_one_rule_per_name() {
     let parsed = parse_document("0.0.0.0 host1.com host2.com  host3.com # comment\n");
     let patterns: Vec<&str> = parsed.iter().map(|line| line.pattern.as_str()).collect();
     assert_eq!(patterns, ["host1.com", "host2.com", "host3.com"]);
-    // `Raw` is the whole line for every expanded rule, like the Go parser kept it.
     assert!(parsed
         .iter()
         .all(|line| line.raw == "0.0.0.0 host1.com host2.com  host3.com # comment"));
@@ -139,7 +115,6 @@ fn rewrite_values_travel_back_raw() {
     assert_eq!(bare.rewrite.as_deref(), Some(""));
     assert!(bare.is_allow);
 
-    // The comma inside a value does not split the modifier list.
     let comma =
         parse_line("||a.test^$dnsrewrite=NOERROR;HTTPS;1 . alpn=h3,h2,important").expect("parsed");
     assert_eq!(
@@ -158,7 +133,6 @@ fn idn_patterns_come_back_as_a_labels() {
         ("||почта.рф^", "xn--80a1acny.xn--p1ai"),
         ("||中国.中国^", "xn--fiqs8s.xn--fiqs8s"),
         ("||straße.de^", "xn--strae-oqa.de"),
-        // UTS 46 non-transitional: the sharp s is not folded to `ss` (Go's idna did the same).
         ("||STRASSE.DE^", "strasse.de"),
     ] {
         let line = parse_line(input).unwrap_or_else(|| panic!("{input} should parse"));
@@ -168,9 +142,7 @@ fn idn_patterns_come_back_as_a_labels() {
 
 #[test]
 fn the_punycode_empty_label_is_rejected() {
-    // The one deliberate difference: Go's idna turned `xn--` into an empty label and kept `.test`.
     assert_eq!(parse_line("||xn--.test^"), None);
-    // A real punycode label is passed through untouched.
     assert_eq!(
         parse_line("||xn--bcher-kva.test^").map(|line| line.pattern),
         Some("xn--bcher-kva.test".to_string())

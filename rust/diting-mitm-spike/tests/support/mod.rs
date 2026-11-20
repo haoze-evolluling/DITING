@@ -1,11 +1,3 @@
-//! The loopback harness the MITM spike is driven by: a test PKI, an HTTPS origin, the proxy and a
-//! client that actually speaks TLS + HTTP/1.1.
-//!
-//! Everything here is real I/O on 127.0.0.1: no mocked TLS, no injected HTTP parser. Only two seams
-//! are faked, and both are the TUN device's job in the engine: the proxy dials
-//! [`ProxyOptions::dial_override`] instead of a flow destination, and the two certificate authorities
-//! are generated per test instead of being loaded from `.go-mitm/ca.crt` / `ca.key`.
-
 #![allow(dead_code)]
 
 use std::net::SocketAddr;
@@ -30,10 +22,8 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::task::JoinHandle;
 use tokio_rustls::{TlsAcceptor, TlsConnector};
 
-/// The hostname the test origin presents. The proxy's `dial_override` points at its loopback port.
 pub const UPSTREAM_HOST: &str = "upstream.test";
 
-/// The two authorities a test needs: one for the proxy's leaves, one for the "real" server.
 pub struct Pki {
     origin: CertAuthority,
     store: Arc<CertStore>,
@@ -51,17 +41,14 @@ impl Pki {
         }
     }
 
-    /// The proxy's certificate store (the root CA the client has to trust).
     pub fn store(&self) -> Arc<CertStore> {
         self.store.clone()
     }
 
-    /// The PEM a client installs/injects to trust the proxy.
     pub fn mitm_ca_pem(&self) -> &str {
         self.store.authority().ca_pem()
     }
 
-    /// The origin's root CA: what the proxy's upstream trust store is built from.
     pub fn origin_ca_pem(&self) -> &str {
         self.origin.ca_pem()
     }
@@ -73,16 +60,12 @@ impl Pki {
     }
 }
 
-/// How the test origin should treat client certificates.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum OriginAuth {
-    /// No `CertificateRequest` at all.
     Plain,
-    /// Request a client certificate but accept none — the signal Go's `clientCertRequested` caught.
     RequestClientCert,
 }
 
-/// What the origin saw, so a test can assert on the request the proxy produced.
 #[derive(Debug, Clone, Default)]
 pub struct RecordedRequest {
     pub path: String,
@@ -98,7 +81,6 @@ impl RecordedRequest {
     }
 }
 
-/// A response body produced by the origin (the spike's own body type).
 pub type Body = ResponseBody;
 
 pub fn html(body: &str) -> Response<Body> {
@@ -128,7 +110,6 @@ pub fn respond(status: StatusCode, content_type: &str, body: Bytes) -> Response<
         .expect("build a response")
 }
 
-/// A response with no `Content-Length`, delivered in several chunks (HTTP/1.1 chunked framing).
 pub fn streamed(content_type: &str, chunks: Vec<Bytes>) -> Response<Body> {
     let frames = chunks
         .into_iter()
@@ -142,7 +123,6 @@ pub fn streamed(content_type: &str, chunks: Vec<Bytes>) -> Response<Body> {
         .expect("build a streaming response")
 }
 
-/// The HTTPS origin: a TLS listener plus one hyper connection task per client.
 pub struct Origin {
     pub addr: SocketAddr,
     pub requests: Arc<Mutex<Vec<RecordedRequest>>>,
@@ -150,7 +130,6 @@ pub struct Origin {
 }
 
 impl Origin {
-    /// The requests seen so far.
     pub fn seen(&self) -> Vec<RecordedRequest> {
         self.requests
             .lock()
@@ -165,7 +144,6 @@ impl Drop for Origin {
     }
 }
 
-/// Spawns a TLS origin on a loopback port.
 pub async fn spawn_origin(
     pki: &Pki,
     auth: OriginAuth,
@@ -264,15 +242,11 @@ fn origin_config(chain_pem: &str, key_pem: &str, pki: &Pki, auth: OriginAuth) ->
     }
 }
 
-/// The end of an HTTP/1.1 request head.
 const REQUEST_HEAD_END: &[u8] = b"\r\n\r\n";
 
-/// One complete HTTP/1.1 response, written by hand so it cannot be re-framed by hyper.
 const RAW_RESPONSE: &[u8] =
     b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\n\r\nok";
 
-/// A TLS origin that speaks one raw HTTP/1.1 response and then closes the socket, so the proxy's
-/// upstream connection dies between two keep-alive requests.
 pub struct RawOrigin {
     pub addr: SocketAddr,
     pub connections: Arc<std::sync::atomic::AtomicUsize>,
@@ -314,7 +288,6 @@ pub async fn spawn_raw_origin(pki: &Pki) -> RawOrigin {
                 };
                 let mut request = Vec::new();
                 let mut chunk = [0u8; 1024];
-                // Read the request head only: these tests never send a body.
                 loop {
                     match tls.read(&mut chunk).await {
                         Ok(0) => return,
@@ -341,7 +314,6 @@ pub async fn spawn_raw_origin(pki: &Pki) -> RawOrigin {
     }
 }
 
-/// A running proxy: its address, the instance (for events) and the accept task.
 pub struct RunningProxy {
     pub addr: SocketAddr,
     pub proxy: Proxy,
@@ -354,7 +326,6 @@ impl Drop for RunningProxy {
     }
 }
 
-/// Spawns the MITM proxy in front of `origin`.
 pub async fn spawn_proxy(
     pki: &Pki,
     origin: &Origin,
@@ -364,7 +335,6 @@ pub async fn spawn_proxy(
     spawn_proxy_at(pki, origin.addr, inject_css, trust_origin).await
 }
 
-/// The same proxy, dialling an arbitrary loopback address (`RawOrigin` uses this).
 pub async fn spawn_proxy_at(
     pki: &Pki,
     dial: SocketAddr,
@@ -393,7 +363,6 @@ pub async fn spawn_proxy_at(
     RunningProxy { addr, proxy, task }
 }
 
-/// A client that trusts the MITM CA and speaks HTTP/1.1 over one TLS connection.
 pub struct TestClient {
     send: hyper::client::conn::http1::SendRequest<Full<Bytes>>,
     task: JoinHandle<()>,
@@ -408,7 +377,6 @@ impl Drop for TestClient {
 }
 
 impl TestClient {
-    /// Connects with the given ALPN offer; `Err` is the handshake failure a pinning/h2-only client sees.
     pub async fn connect(
         addr: SocketAddr,
         sni: &str,
@@ -431,7 +399,6 @@ impl TestClient {
             .connect(server_name, tcp)
             .await?;
 
-        // The handshake facts have to be read before hyper takes the stream.
         let (_, session) = stream.get_ref();
         let peer_certificates = session
             .peer_certificates()
@@ -474,7 +441,6 @@ impl TestClient {
         self.request(request).await
     }
 
-    /// A GET with an `Accept` header, so the proxy's `Accept-Encoding` policy can be observed.
     pub async fn get_accepting(
         &mut self,
         path: &str,
@@ -493,7 +459,6 @@ fn with_host(builder: http::request::Builder) -> http::request::Builder {
     builder.header(http::header::HOST, UPSTREAM_HOST)
 }
 
-/// Reads a body to the end.
 pub async fn collect(response: Response<Incoming>) -> Vec<u8> {
     response
         .into_body()
@@ -506,7 +471,6 @@ pub async fn collect(response: Response<Incoming>) -> Vec<u8> {
         .expect("read the body")
 }
 
-/// Reads the body as text.
 pub async fn collect_text(response: Response<Incoming>) -> String {
     String::from_utf8(collect(response).await).expect("the body is UTF-8")
 }

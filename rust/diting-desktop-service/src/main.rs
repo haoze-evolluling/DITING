@@ -1,9 +1,3 @@
-//! `diting-service`: the pure-Rust replacement for the Go desktop service.
-//!
-//! The binary owns the process lifetime only. Engines live in `diting-desktop-core`, the data plane
-//! in `diting-desktop-dns`, the management API in `diting-desktop-ipc` and the OS work in
-//! `diting-desktop-platform`.
-
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 mod cli;
@@ -23,7 +17,6 @@ use diting_desktop_platform::paths;
 use diting_desktop_platform::state::FileStateStore;
 use diting_desktop_platform::traits::{DnsManager, Restorer, StateStore};
 
-/// Adapter that lets a manager serve as the state store's restorer on both platforms.
 struct ManagerRestorer(Arc<dyn DnsManager>);
 
 #[async_trait]
@@ -35,7 +28,6 @@ impl Restorer for ManagerRestorer {
 
 #[tokio::main]
 async fn main() {
-    // Must run before the first print: elevated and double-clicked launches have no console.
     #[cfg(windows)]
     windows_host::ensure_std_output();
     let cli = match cli::parse(std::env::args()) {
@@ -101,7 +93,6 @@ fn load_cli_config(cli: &Cli) -> diting_desktop_api::config::Config {
     config
 }
 
-/// Runs `-run` either under the SCM or in the foreground.
 async fn run_command(cli: &Cli) -> Result<(), String> {
     #[cfg(windows)]
     if let Some(result) = windows_host::try_run_as_service(cli) {
@@ -131,14 +122,12 @@ pub(crate) async fn run(
         Err(error) => eprintln!("[自愈检查] 异常: {error}"),
     }
 
-    // Share the same manager instance between the service lifecycle and the management runtime.
     let handles = platform_backend::platform_handles(store.clone(), Arc::clone(&manager));
     let runtime = Arc::new(AppRuntime::with_platform(
         config.clone(),
         config_path,
         handles,
     ));
-    // The cache is a pure performance facility: a corrupt file must not prevent startup.
     if let Err(error) = runtime.load_cache() {
         eprintln!("[缓存] 恢复缓存失败，将以空缓存启动: {error}");
     }
@@ -146,8 +135,6 @@ pub(crate) async fn run(
     runtime.set_observer(ipc.query_observer());
     let maintenance = diting_desktop_app::maintenance::Maintenance::spawn(Arc::clone(&runtime));
 
-    // Go logs a failed start and keeps the management API reachable so the user can diagnose the
-    // port conflict from the console; exiting here would make that impossible.
     match runtime.start_dns_checked().await {
         Ok(()) => {
             let (udp, tcp) =
@@ -178,16 +165,12 @@ pub(crate) async fn run(
 
     shutdown.await;
 
-    // Shutdown order matters: stop accepting management calls, stop background upkeep, then the
-    // data plane, then flush the cache and finally release any system DNS takeover.
     ipc.shutdown().await;
     maintenance.shutdown().await;
     runtime.stop_dns().await;
     if let Err(error) = runtime.save_cache() {
         eprintln!("[缓存] 保存失败: {error}");
     }
-    // Restore whenever a takeover is active, not only when auto-start was configured: a user may
-    // have enabled it by hand while the service was running.
     if manager.is_takeover_active() {
         if let Err(error) = manager.restore().await {
             eprintln!("[接管] 还原系统 DNS 失败: {error}");
@@ -269,8 +252,6 @@ async fn run_restore(cli: &Cli) -> Result<(), String> {
     Ok(())
 }
 
-/// Flags that must be baked into the registered service command line, mirroring the former Go
-/// service's `Arguments` list (`-run` plus the install-time overrides).
 fn service_install_args(cli: &Cli) -> Vec<String> {
     let mut args = Vec::new();
     if !cli.config_path.is_empty() {

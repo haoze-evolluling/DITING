@@ -1,16 +1,3 @@
-//! Port of `policy_wildcard_index.go`: the wildcard rules of one list, indexed so a lookup does
-//! not run every glob regex against every suffix of the queried domain.
-//!
-//! Layout, copied from the Go index so both pick the same first match in list order:
-//! - `*` -> matches everything, remembered by its list position;
-//! - `*.base` -> "domain == base or ends with .base", hashed by base;
-//! - other globs -> bucketed by the labels after the last `*`; only buckets that can be a suffix
-//!   of the domain are tried, then the regex confirms;
-//! - everything else -> scanned linearly behind a `HasSuffix` prefilter on the literal tail.
-//!
-//! Non-ASCII domains fall back to the linear scan because `(?i)` folding differs from
-//! `strings.ToLower` outside ASCII.
-
 use std::collections::HashMap;
 
 use crate::glob::WildcardMatcher;
@@ -28,7 +15,6 @@ struct Suffix {
     pattern: String,
 }
 
-/// `wildcardIndex`.
 pub struct WildcardIndex {
     ordered: Vec<std::sync::Arc<WildcardMatcher>>,
     all_order: usize,
@@ -39,7 +25,6 @@ pub struct WildcardIndex {
 }
 
 impl WildcardIndex {
-    /// `newWildcardIndex`: `None` when the list is empty (Go returns a nil index).
     pub fn new(ordered: Vec<std::sync::Arc<WildcardMatcher>>) -> Option<WildcardIndex> {
         if ordered.is_empty() {
             return None;
@@ -92,7 +77,6 @@ impl WildcardIndex {
             None => pattern.as_str(),
         };
         if tail.ends_with('.') {
-            // baseDomain trims a trailing dot, so the tail is not a safe prefilter.
             self.residual.push(Glob {
                 order,
                 tail: tail.to_string(),
@@ -118,8 +102,6 @@ impl WildcardIndex {
         });
     }
 
-    /// `match`: returns the first pattern, in original list order, that matches `domain`.
-    /// `domain` must already be lowercased and trimmed by the caller.
     pub fn matches(&self, domain: &str) -> Option<&str> {
         if !domain.is_ascii() {
             for matcher in &self.ordered {
@@ -207,7 +189,6 @@ mod tests {
             .map(|matcher| matcher.pattern.clone())
     }
 
-    /// The index must return exactly what the old first-match scan returns.
     #[test]
     fn index_equals_linear_scan() {
         let patterns = [
@@ -287,17 +268,11 @@ mod tests {
         }
     }
 
-    /// Patterns of the form `*.base.` keep Go's behaviour: the index files them behind a
-    /// `HasSuffix(".base.")` prefilter, so the bare base domain (which the matcher itself accepts
-    /// through `baseDomain`) is not found by the *index*, while the plain matcher does find it.
-    /// This is a quirk of the Go index, reproduced on purpose: the rules that reach the index are
-    /// pre-lowercased subscription patterns, and changing it here would change answers.
     #[test]
     fn trailing_dot_glob_keeps_the_go_prefilter_quirk() {
         let pattern = WildcardMatcher::new("*.foo.").unwrap();
         assert!(pattern.matches("foo"));
         let index = index(&["*.foo."]).unwrap();
-        // Trimmed domains never end with a dot, so the prefilter never lets the entry through.
         assert_eq!(index.matches("foo"), None);
         assert_eq!(index.matches("a.foo"), None);
     }

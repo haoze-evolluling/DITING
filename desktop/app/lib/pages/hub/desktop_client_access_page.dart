@@ -1,9 +1,3 @@
-/// The `hub` branch's client access page: who may resolve through this host, and how fast.
-///
-/// The page is the home board's old access cards, moved where a setting belongs: the dashboard only
-/// reports figures now, so the allow/block lists and the token bucket live here. Both are the old
-/// desktop console's `ClientsPanel.vue` → access and rate-limit cards; nothing is derived locally,
-/// and every save posts the whole document and shows what the service re-read.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

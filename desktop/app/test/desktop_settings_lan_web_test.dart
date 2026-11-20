@@ -1,6 +1,3 @@
-// Desktop settings branch, LAN console (desktop parity):
-// `/web/status` decides the address, the firewall backend and the credential state.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_web_models.dart';
 import 'package:diting_desktop/pages/settings/desktop_lan_web_page.dart';

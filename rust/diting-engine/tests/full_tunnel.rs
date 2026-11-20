@@ -1,18 +1,3 @@
-//! The TUN data plane end to end: real threads, real DNS pipeline, an in-memory link.
-//!
-//! This is the stage 3 gate, minus the device: the same `Session` the `VpnService` descriptor feeds
-//! is driven through [`MemoryLink`], so every hop is the production one —
-//!
-//! ```text
-//! client packet → MemoryLink → reader thread → Events → stack thread → smoltcp
-//!               → gate/DNS handler (tokio) → Events::Write → stack → Egress → writer thread
-//!               → MemoryLink → assertions
-//! ```
-//!
-//! The upstream is a real loopback UDP DNS server (the one `tests/support` already uses), so the
-//! answer bytes are the pipeline's, not a mock's. The tests are in their own binary on purpose:
-//! they install a process-wide engine each and would otherwise race the transport cases' dials.
-
 mod support;
 
 use std::net::SocketAddr;
@@ -62,8 +47,6 @@ fn engine_for(upstream: SocketAddr) -> Arc<Engine> {
     engine
 }
 
-/// A UDP query for `name` reaches the real upstream and the answer comes back from the original
-/// destination address and port, with the client's transaction id.
 #[test]
 fn a_udp_dns_query_crosses_the_tunnel() {
     let (upstream, queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -100,7 +83,6 @@ fn a_udp_dns_query_crosses_the_tunnel() {
     assert!(!engine.is_full_running());
 }
 
-/// TCP DNS: transparent accept on the destination, 2-byte framing, half-close from the client.
 #[test]
 fn a_tcp_dns_query_crosses_the_tunnel() {
     let (upstream, queries) = support::spawn_udp_upstream([5, 6, 7, 8], false);
@@ -135,7 +117,6 @@ fn a_tcp_dns_query_crosses_the_tunnel() {
     assert_eq!(i16::from_be_bytes([answer[0], answer[1]]), 7);
     assert_eq!(queries.load(Ordering::Relaxed), 1);
 
-    // The client half-closes: the handler sees EOF and sends its own FIN, which the stack emits.
     link.feed(client.fin());
     let fin = wait_tcp(&link, |segment| {
         segment.is_fin() && segment.src == remote && segment.dst == local
@@ -145,7 +126,6 @@ fn a_tcp_dns_query_crosses_the_tunnel() {
     engine.stop_full();
 }
 
-/// `:853` is refused when the switch is on, and the flow never reaches the upstream.
 #[test]
 fn encrypted_dns_is_blocked_at_853() {
     let (upstream, queries) = support::spawn_udp_upstream([9, 9, 9, 9], false);
@@ -156,9 +136,6 @@ fn encrypted_dns_is_blocked_at_853() {
         .start_full_with_link(link.clone())
         .expect("the session starts");
 
-    // `smoltcp` completes the handshake before the session can look at the flow (gVisor did the
-    // same), so the client may see a SYN-ACK; what must not happen is an upstream query or an
-    // answer. The session aborts the socket right after the gate says no.
     let mut client = Client::new(app(40001), server(853));
     link.feed(client.syn());
     std::thread::sleep(Duration::from_millis(200));
@@ -170,7 +147,6 @@ fn encrypted_dns_is_blocked_at_853() {
     engine.stop_full();
 }
 
-/// A blocked UID is refused before anything is dialed; the connection log shows it.
 #[test]
 fn a_blocked_uid_never_reaches_the_stack() {
     struct Uid(i32);
@@ -214,7 +190,6 @@ fn a_blocked_uid_never_reaches_the_stack() {
     engine.stop_full();
 }
 
-/// Non-DNS UDP is relayed out through the direct transport (stage 4a).
 #[test]
 fn non_dns_udp_is_relayed_and_the_answer_comes_back() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -246,8 +221,6 @@ fn non_dns_udp_is_relayed_and_the_answer_comes_back() {
     engine.stop_full();
 }
 
-/// Non-DNS TCP is relayed with half-close: the client sends, shuts down its write side, and still
-/// receives the echoed bytes.
 #[test]
 fn non_dns_tcp_is_relayed_with_half_close() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -282,7 +255,6 @@ fn non_dns_tcp_is_relayed_with_half_close() {
     engine.stop_full();
 }
 
-/// The configured SOCKS5 proxy is used for a flow, and it receives the original destination.
 #[test]
 fn a_proxied_tcp_flow_goes_through_socks5() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -319,7 +291,6 @@ fn a_proxied_tcp_flow_goes_through_socks5() {
     engine.stop_full();
 }
 
-/// An HTTP proxy has no datagram mode: the flow is counted as unavailable instead of vanishing.
 #[test]
 fn a_flow_through_an_http_proxy_cannot_use_udp() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -347,8 +318,6 @@ fn a_flow_through_an_http_proxy_cannot_use_udp() {
     engine.stop_full();
 }
 
-/// With an HTTP-CONNECT proxy scoped to other apps, an unproxied flow is direct and its UDP still
-/// works: only a flow that actually rides the proxy is refused for the missing datagram mode.
 #[test]
 fn an_unproxied_udp_flow_ignores_the_http_proxys_missing_datagram_mode() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -383,7 +352,6 @@ fn an_unproxied_udp_flow_ignores_the_http_proxys_missing_datagram_mode() {
     engine.stop_full();
 }
 
-/// `StartFull` reports the proxy state through `OutboundProxyStatusCallback`.
 #[test]
 fn the_proxy_status_is_reported_on_start() {
     struct Recorder(std::sync::Mutex<Vec<String>>);
@@ -424,7 +392,6 @@ fn the_proxy_status_is_reported_on_start() {
     engine.stop_full();
 }
 
-/// The traffic ticker reports the flow's UID as the Kotlin `TrafficIngest` expects.
 #[test]
 fn the_traffic_ticker_reports_the_flow_uid() {
     struct Uid(i32);
@@ -495,8 +462,6 @@ fn the_traffic_ticker_reports_the_flow_uid() {
     engine.stop_full();
 }
 
-/// The `getStats` document carries `total`/`blocked`/`dropped_logs` plus the tun counters, and the
-/// counters go away when the session stops.
 #[test]
 fn the_stats_document_gains_and_loses_the_tun_object() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
@@ -514,8 +479,6 @@ fn the_stats_document_gains_and_loses_the_tun_object() {
     assert!(!engine.stats_json().contains("\"tun\""));
 }
 
-/// Reporting the reader's and writer's thread names is not enough: the session must also survive a
-/// link that is closed underneath it (the VPN revoke path).
 #[test]
 fn stopping_survives_a_link_closed_by_the_service() {
     let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);

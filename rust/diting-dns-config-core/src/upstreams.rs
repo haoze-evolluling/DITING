@@ -1,9 +1,3 @@
-//! Server mode's upstream list: the preset rows plus the `custom_upstreams` records.
-//!
-//! Rows are stored with five fields (no `isCustom` — that came from the `preset_` prefix), and the
-//! same filter as the tunnel catalog drops unusable rows. Validation returns a *kind*: the sentence
-//! is localised by the Dart side, so nothing user-visible lives here.
-
 use serde::Serialize;
 
 use crate::protocol::{self, Protocol};
@@ -13,7 +7,6 @@ pub struct ServerUpstream {
     pub id: String,
     pub name: String,
     pub protocol: Protocol,
-    /// Bare host for PLAIN / DOT, the endpoint URL for DoH.
     pub address: String,
     pub port: i32,
 }
@@ -29,7 +22,6 @@ impl ServerUpstream {
         }
     }
 
-    /// `host:port` for the document; DoH has no `server` field, so it is empty there.
     pub fn host_port(&self) -> String {
         protocol::server_host_port(&self.address, self.port)
     }
@@ -45,7 +37,6 @@ struct UpstreamRecord<'a> {
     port: i32,
 }
 
-/// Why a custom upstream was rejected; the Dart side turns this into a sentence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UpstreamInvalid {
     NameRequired = 0,
@@ -58,10 +49,6 @@ pub enum UpstreamInvalid {
 
 pub const UPSTREAM_OK: u8 = 6;
 
-/// Reads `custom_upstreams`, dropping rows the editor could not have produced.
-///
-/// Note the protocol fallback: an unknown spelling becomes PLAIN here (server mode always had a
-/// protocol to write), while the tunnel catalog drops the row instead.
 pub fn parse_custom_upstreams(raw: Option<&str>) -> Vec<ServerUpstream> {
     let Some(raw) = raw else {
         return Vec::new();
@@ -105,7 +92,6 @@ pub fn parse_custom_upstreams(raw: Option<&str>) -> Vec<ServerUpstream> {
     upstreams
 }
 
-/// The prefs document: `[{id, name, protocol, address, port}]`.
 pub fn encode_custom_upstreams(upstreams: &[ServerUpstream]) -> String {
     let records: Vec<UpstreamRecord<'_>> = upstreams
         .iter()
@@ -120,7 +106,6 @@ pub fn encode_custom_upstreams(upstreams: &[ServerUpstream]) -> String {
     serde_json::to_string(&records).unwrap_or_else(|_| String::from("[]"))
 }
 
-/// The non-DoH address is stored bare, so a `[2001:db8::1]` paste keeps its brackets only in the UI.
 pub fn normalize_address(protocol: Protocol, address: &str) -> String {
     if protocol == Protocol::Doh {
         address.trim().to_string()
@@ -129,8 +114,6 @@ pub fn normalize_address(protocol: Protocol, address: &str) -> String {
     }
 }
 
-/// True when the text after `https://` names a host. A bracketed address must be a real IPv6
-/// literal; Dart's `Uri` parser was the original judge.
 fn https_host_present(address: &str) -> bool {
     let rest = &address["https://".len()..];
     let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
@@ -156,7 +139,6 @@ fn https_host_present(address: &str) -> bool {
     !host.is_empty() && !host.contains(char::is_whitespace)
 }
 
-/// The editor's gate: name, address, scheme, URL host, port range and a parseable IPv6 host.
 pub fn validate(
     name: &str,
     protocol: Protocol,

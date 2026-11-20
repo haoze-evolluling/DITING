@@ -1,24 +1,3 @@
-//! Rule text parsing: the desktop service's `rule_parser.go`, moved here wholesale.
-//!
-//! One line of an AdGuard/hosts list becomes at most one [`ParsedLine`]; a whole document becomes a
-//! `Vec<ParsedLine>` in list order. Everything the Go engine used to decide *while reading text*
-//! lives here now: comment and cosmetic-rule skipping, the hosts form, `@@` exceptions, the `$`
-//! modifier list (including the comma-splitting rules `$dnsrewrite` needs), `$dnstype`,
-//! `$denyallow=`/`$to=`, the AdGuard domain forms (`||`, `|x|`, `x|`, `|x`), wildcard patterns and
-//! the IDNA normalization every plain domain goes through.
-//!
-//! What stays in Go, deliberately:
-//!
-//! * The compiled regexes. Go compiles `(?i)` + a regex rule's source (dropping the rule when
-//!   `regexp` refuses) and derives the wildcard regex with `buildWildcardRegex`, then hands that
-//!   source to the matcher, so the pattern text travels back as-is.
-//! * The `$dnsrewrite` value. This crate returns the raw modifier value (and the bare flag); Go
-//!   parses it into `RewriteAction` and validates it through `buildRewriteRR`. Moving that means
-//!   moving the whole rewrite-record subsystem, which is its own round.
-//!
-//! The Go functions were the only implementation before this; the unit tests below pin the corpus
-//! that used to live in `rule_test.go`, and the Go tests now run through the FFI.
-
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::sync::OnceLock;
 
@@ -26,14 +5,10 @@ use diting_go_compat::dns_type::string_to_type;
 use diting_go_compat::text::{go_lower, go_trim_space};
 use idna::uts46::{AsciiDenyList, DnsLength, Hyphens, Uts46};
 
-/// `"\ufeff"`, the byte order mark `strings.TrimPrefix` removes from a line's head.
 const BOM: char = '\u{feff}';
 
-/// Reserved local names `normalizeDomain` refuses to turn into a rule.
 const RESERVED_DOMAINS: [&str; 4] = ["localhost", "local", "broadcasthost", "localdomain"];
 
-/// Browser-only modifiers: their rules only make sense for page filtering, so the DNS engine drops
-/// the rule instead of turning it into a whole-domain block.
 const WEB_ONLY_MODIFIERS: [&str; 19] = [
     "script",
     "image",
@@ -56,34 +31,20 @@ const WEB_ONLY_MODIFIERS: [&str; 19] = [
     "all",
 ];
 
-/// Browser-only modifier prefixes, checked with `strings.HasPrefix`.
 const WEB_ONLY_MODIFIER_PREFIXES: [&str; 5] = ["domain=", "app=", "~app=", "method=", "~method="];
 
-/// One parsed rule line.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedLine {
-    /// The line as it was read, before trimming: `ParsedRule.Raw` feeds the query log.
     pub raw: String,
-    /// Normalized pattern: a domain, a wildcard pattern (original case folding) or a regex source.
     pub pattern: String,
-    /// `@@` exception.
     pub is_allow: bool,
-    /// `$important`.
     pub important: bool,
-    /// `/regex/` rule, so `pattern` is a regex source rather than a domain.
     pub is_regex: bool,
-    /// `$dnstype=`, `0` when the rule matches every type.
     pub dns_type: u16,
-    /// The pattern contains `*`.
     pub is_wildcard: bool,
-    /// `|domain|` form: no subdomain inheritance.
     pub is_exact: bool,
-    /// `$denyallow=` (and `$to=`, which is the same thing at the DNS layer) exceptions.
     pub deny_allow: Vec<String>,
-    /// `$to=` exceptions.
     pub to: Vec<String>,
-    /// `$dnsrewrite` value when the modifier is present: `Some("")` for the bare form, `Some(raw)`
-    /// for `$dnsrewrite=<value>`, where `raw` keeps its original case for Go to parse.
     pub rewrite: Option<String>,
 }
 
@@ -105,11 +66,6 @@ impl ParsedLine {
     }
 }
 
-/// Parses a whole document, mirroring `ParseRules`.
-///
-/// Lines are split the way `bufio.Scanner` split them: on `'\n'`, with one trailing `'\r'` dropped
-/// per line. A line that does not parse is skipped, never reported: the caller counts rules, not
-/// errors, exactly like before.
 pub fn parse_document(text: &str) -> Vec<ParsedLine> {
     let mut out = Vec::new();
     for line in document_lines(text) {
@@ -118,10 +74,6 @@ pub fn parse_document(text: &str) -> Vec<ParsedLine> {
     out
 }
 
-/// Parses one line the way `ParseRules` did, appending zero or more rules.
-///
-/// The hosts form may carry several names (`0.0.0.0 a.test b.test`); the single-line entry point
-/// keeps only the first, which is why this is separate from [`parse_line`].
 fn parse_document_line(line: &str, out: &mut Vec<ParsedLine>) {
     let trimmed = go_trim_space(line.strip_prefix(BOM).unwrap_or(line));
     if trimmed.is_empty() || starts_with_comment(trimmed) {
@@ -149,13 +101,11 @@ fn parse_document_line(line: &str, out: &mut Vec<ParsedLine>) {
     }
 }
 
-/// `bufio.ScanLines` over the whole document.
 fn document_lines(text: &str) -> impl Iterator<Item = &str> {
     text.split_terminator('\n')
         .map(|line| line.strip_suffix('\r').unwrap_or(line))
 }
 
-/// Parses a single line, mirroring `ParseRuleLine`.
 pub fn parse_line(line: &str) -> Option<ParsedLine> {
     let raw = line;
     let mut rest = go_trim_space(line.strip_prefix(BOM).unwrap_or(line));
@@ -164,9 +114,6 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
         return None;
     }
 
-    // Element hiding / script rules must be recognised before the `#` comment split: in AdGuard
-    // syntax a `#` inside a line is a separator, not a comment, and cutting there would turn
-    // `youtube.com##.video-ads` into a whole-domain block rule.
     if is_cosmetic_or_script_rule(rest) {
         return None;
     }
@@ -183,7 +130,6 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
         if !is_sinkhole_ip(fields[0]) {
             return None;
         }
-        // Only the first host: `parse_document` expands the rest.
         let pattern = normalize_domain(fields[1])?;
         return Some(ParsedLine::new(raw, pattern));
     }
@@ -202,7 +148,6 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
 
     let mut modifier_part = "";
     if rest.starts_with('/') {
-        // `/regex/$modifier`: the modifiers sit after the closing slash.
         if let Some(last_slash) = last_index_byte(rest, b'/') {
             if last_slash > 0 && last_slash < rest.len() - 1 {
                 let remainder = &rest[last_slash + 1..];
@@ -219,13 +164,10 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
 
     if !modifier_part.is_empty() {
         for raw_modifier in split_modifiers(modifier_part) {
-            // Keywords and domains fold, record values do not: only the branch tests use the
-            // lowercased form, the value is taken from the original text.
             let modifier = go_lower(go_trim_space(&raw_modifier));
             if modifier == "important" {
                 important = true;
             } else if modifier == "badfilter" {
-                // `$badfilter` retires other rules; the DNS kernel never sees them.
                 return None;
             } else if let Some(type_token) = modifier.strip_prefix("dnstype=") {
                 if let Some(value) = string_to_type(&type_token.to_uppercase()) {
@@ -238,14 +180,12 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
             } else if modifier == "dnsrewrite" || modifier.starts_with("dnsrewrite=") {
                 rewrite = Some(dns_rewrite_value(&raw_modifier).to_string());
             } else if modifier.starts_with("~denyallow=") || modifier.starts_with("~to=") {
-                // Negated forms have no reliable DNS equivalent: keep the rule, drop the modifier.
             } else if is_web_only_modifier(&modifier) {
                 return None;
             }
         }
     }
 
-    // `/pattern/` regex rule.
     if rest.len() > 2 && rest.starts_with('/') && rest.ends_with('/') {
         let pattern = &rest[1..rest.len() - 1];
         let mut parsed = ParsedLine::new(raw, pattern.to_string());
@@ -259,7 +199,6 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
         return Some(parsed);
     }
 
-    // AdGuard domain matching forms.
     let mut is_exact = false;
     let domain_tail = if let Some(without_prefix) = rest.strip_prefix("||") {
         let stripped = without_prefix.strip_suffix('^').unwrap_or(without_prefix);
@@ -306,7 +245,6 @@ pub fn parse_line(line: &str) -> Option<ParsedLine> {
     Some(parsed)
 }
 
-/// `line == "" || line[0] == '!' || line[0] == '#' || line[0] == '['`.
 fn starts_with_comment(line: &str) -> bool {
     matches!(
         line.as_bytes().first(),
@@ -314,13 +252,11 @@ fn starts_with_comment(line: &str) -> bool {
     )
 }
 
-/// `isCosmeticOrScriptRule`: any `#`-infix marker means "not a DNS rule".
 fn is_cosmetic_or_script_rule(line: &str) -> bool {
     const MARKERS: [&str; 8] = ["##", "#@#", "#?#", "#@?#", "#$#", "#@$#", "#%#", "#@%#"];
     MARKERS.iter().any(|marker| line.contains(*marker))
 }
 
-/// `strings.SplitN(line, sep, 2)[0]` for an ASCII separator.
 fn split_once_byte(line: &str, separator: u8) -> (&str, &str) {
     match line.as_bytes().iter().position(|byte| *byte == separator) {
         Some(index) => (&line[..index], &line[index + 1..]),
@@ -328,12 +264,10 @@ fn split_once_byte(line: &str, separator: u8) -> (&str, &str) {
     }
 }
 
-/// `strings.LastIndexByte(line, '/')` for an ASCII separator.
 fn last_index_byte(line: &str, separator: u8) -> Option<usize> {
     line.as_bytes().iter().rposition(|byte| *byte == separator)
 }
 
-/// `splitModifiers`, including the comma handling `$dnsrewrite` values need.
 fn split_modifiers(modifier_part: &str) -> Vec<String> {
     let Some((head, tail)) = cut_rewrite_modifier(modifier_part) else {
         return modifier_part.split(',').map(str::to_string).collect();
@@ -347,7 +281,6 @@ fn split_modifiers(modifier_part: &str) -> Vec<String> {
             merged.push(current);
             current = segment.to_string();
         } else {
-            // `alpn=h3,h2` inside a value: glue it back instead of starting a new modifier.
             current.push(',');
             current.push_str(segment);
         }
@@ -356,7 +289,6 @@ fn split_modifiers(modifier_part: &str) -> Vec<String> {
     merged
 }
 
-/// `cutRewriteModifier`: splits the modifier list at `$dnsrewrite`, `None` when it is absent.
 fn cut_rewrite_modifier(modifier_part: &str) -> Option<(Vec<String>, &str)> {
     let mut offset = 0usize;
     loop {
@@ -383,7 +315,6 @@ fn cut_rewrite_modifier(modifier_part: &str) -> Option<(Vec<String>, &str)> {
     }
 }
 
-/// `looksLikeModifier`: does this comma-separated fragment start a new modifier?
 fn looks_like_modifier(segment: &str) -> bool {
     let modifier = go_lower(go_trim_space(segment));
     if modifier.is_empty() {
@@ -404,7 +335,6 @@ fn looks_like_modifier(segment: &str) -> bool {
     is_web_only_modifier(&modifier)
 }
 
-/// `dnsRewriteValue`: the text after the first `=`, empty for the bare form.
 fn dns_rewrite_value(raw_modifier: &str) -> &str {
     match raw_modifier.find('=') {
         Some(index) => &raw_modifier[index + 1..],
@@ -412,7 +342,6 @@ fn dns_rewrite_value(raw_modifier: &str) -> &str {
     }
 }
 
-/// `parseModifierDomains`: `|`-separated suffixes, lowercased, dots trimmed.
 fn parse_modifier_domains(raw: &str) -> Vec<String> {
     if raw.is_empty() {
         return Vec::new();
@@ -434,12 +363,10 @@ fn parse_modifier_domains(raw: &str) -> Vec<String> {
     out
 }
 
-/// `isLiteralIP`: `net.ParseIP(val) != nil || val == "0"`.
 fn is_literal_ip(value: &str) -> bool {
     value == "0" || parse_ip(value)
 }
 
-/// `net.ParseIP` for the inputs a hosts line can hold; `false` when it is not an address.
 fn parse_ip(value: &str) -> bool {
     if value.parse::<Ipv4Addr>().is_ok() {
         return true;
@@ -447,7 +374,6 @@ fn parse_ip(value: &str) -> bool {
     value.parse::<Ipv6Addr>().is_ok()
 }
 
-/// `isSinkholeIP`: the addresses that mean "block this name".
 fn is_sinkhole_ip(value: &str) -> bool {
     matches!(
         go_lower(value).as_ref(),
@@ -455,7 +381,6 @@ fn is_sinkhole_ip(value: &str) -> bool {
     )
 }
 
-/// `normalizeDomain`: lowercase, one trailing dot off, IDNA to ASCII, at most 253 bytes.
 fn normalize_domain(domain: &str) -> Option<String> {
     let lowered = go_lower(go_trim_space(domain));
     let candidate = lowered.strip_suffix('.').unwrap_or(&lowered);
@@ -483,7 +408,6 @@ fn normalize_domain(domain: &str) -> Option<String> {
     Some(lower)
 }
 
-/// `normalizeWildcardDomain`: ASCII labels only, `*` and `_` allowed, no dot required.
 fn normalize_wildcard_domain(pattern: &str) -> Option<String> {
     let lowered = go_lower(go_trim_space(pattern));
     let candidate = lowered.strip_suffix('.').unwrap_or(&lowered);
@@ -507,7 +431,6 @@ fn normalize_wildcard_domain(pattern: &str) -> Option<String> {
     Some(candidate.to_string())
 }
 
-/// `isWebOnlyModifier`: a page-filtering modifier, so the whole rule is dropped.
 fn is_web_only_modifier(modifier: &str) -> bool {
     if WEB_ONLY_MODIFIERS.contains(&modifier) {
         return true;
@@ -520,8 +443,6 @@ fn is_web_only_modifier(modifier: &str) -> bool {
 #[cfg(test)]
 mod tests;
 
-/// `idna.Lookup`: UTS 46, non-transitional, STD3 rules, hyphens and joiners checked, bidi enforced,
-/// no DNS length check (the 253-byte limit is applied by the caller, like the Go version did).
 fn uts46() -> &'static Uts46 {
     static LOOKUP: OnceLock<Uts46> = OnceLock::new();
     LOOKUP.get_or_init(Uts46::new)

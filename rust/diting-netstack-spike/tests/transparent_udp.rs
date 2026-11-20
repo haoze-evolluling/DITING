@@ -1,11 +1,3 @@
-//! The UDP half of the spike: the DNS server path (`engine_standalone.go`, `dns_packet.go`).
-//!
-//! UDP is the easier half but it has the same trap as TCP: the destination address is not known in
-//! advance. `bind()` to a port with no address accepts every destination, and
-//! `UdpMetadata::local_address` reports the address the datagram was actually sent to, so one
-//! socket can serve every upstream address a client queries. These tests pin that behaviour, since
-//! the DNS reply must leave from the upstream's address or the client's resolver rejects it.
-
 mod support;
 
 use diting_netstack_spike::wire;
@@ -13,7 +5,6 @@ use diting_netstack_spike::{Limits, UdpDatagram};
 use support::{endpoint_v4, endpoint_v6, Harness};
 
 fn query(id: u8) -> Vec<u8> {
-    // A DNS-shaped payload: the spike does not parse it, it only has to survive verbatim.
     let mut payload = vec![0u8, id, 0x01, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0];
     payload.extend_from_slice(b"\x07example\x04test\x00\x00\x01\x00\x01");
     payload

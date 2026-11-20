@@ -9,12 +9,6 @@
 
 #include "tray_icon.h"
 
-// The `diting/tray` method channel.
-//
-// Only localization crosses the channel: Dart pushes the strings of the active
-// locale via `configure` and native code owns everything else (menu structure,
-// SCM calls, balloons). That keeps the tray functional for a `--minimized`
-// start even before Flutter has produced its first frame.
 class TrayChannel {
  public:
   TrayChannel(flutter::BinaryMessenger* messenger, TrayIcon* tray);
@@ -32,4 +26,4 @@ class TrayChannel {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel_;
 };
 
-#endif  // RUNNER_TRAY_TRAY_CHANNEL_H_
+#endif

@@ -1,5 +1,3 @@
-/// Page state for 故障排查 → 日志管理. Native owns the files; this only mirrors the listing so a
-/// delete or a fresh capture is reflected after [TroubleshootingLogsNotifier.refresh].
 library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';

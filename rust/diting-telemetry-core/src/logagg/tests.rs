@@ -97,7 +97,6 @@ fn connection_rows_are_shed_above_the_high_water_mark() {
         aggregator.push(item(&format!("d{index}.example")));
     }
 
-    // Unblocked connection rows are the first to go.
     assert_eq!(
         aggregator.push(connection("dst.example")),
         PushOutcome::Dropped
@@ -105,7 +104,6 @@ fn connection_rows_are_shed_above_the_high_water_mark() {
     assert_eq!(aggregator.dropped(), 1);
     assert_eq!(aggregator.dropped_conn(), 1);
 
-    // Blocked connection rows, DNS rows and rows with another reason are still queued.
     for row in [
         LogItem {
             blocked: true,

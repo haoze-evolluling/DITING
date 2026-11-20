@@ -1,20 +1,11 @@
-/// A QR code for a LAN console address, drawn from the same encoder the old console used.
-///
-/// The old desktop console rendered this with npm `qrcode` (`LANWebCard.vue`): 160px, one module of
-/// margin, dark `#1A1A1C` on white. Those two colours are deliberately not theme colours — a scanner
-/// needs contrast, so an inverted dark-theme code is worse than useless. Kept here so the card cannot
-/// drift into a hand-rolled matrix.
 library;
 
 import 'package:material_ui/material_ui.dart';
 import 'package:qr/qr.dart';
 
-/// Module colours, matching the console's QR options.
 const _qrDark = Color(0xFF1A1A1C);
 const _qrLight = Color(0xFFFFFFFF);
 
-/// Quiet zone in modules; the QR spec asks for four, and the console's `margin: 1` plus its white
-/// padding came out near this after scaling.
 const _quietZone = 4;
 
 class DesktopQrCode extends StatelessWidget {
@@ -25,7 +16,6 @@ class DesktopQrCode extends StatelessWidget {
     this.semanticLabel,
   });
 
-  /// What the code encodes, e.g. `http://192.168.1.10:15353`.
   final String data;
   final double size;
   final String? semanticLabel;

@@ -1,12 +1,3 @@
-//! Per-host TLS certificate pins.
-//!
-//! The desktop service lets a provider pin `SHA-256(RawTBSCertificate)`; a matching pin replaces
-//! the CA-chain check for that host only, which is what the Go `PinAwareTLSConfig` did. Android
-//! never populates the map, so its verification path is untouched.
-//!
-//! The pin is checked against the end-entity certificate's TBS bytes, not the whole certificate:
-//! the exact bytes Go hashed (`x509.Certificate.RawTBSCertificate`).
-
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
@@ -20,7 +11,6 @@ use rustls::{DigitallySignedStruct, Error, SignatureScheme};
 use sha2::{Digest, Sha256};
 use x509_cert::Certificate;
 
-/// Parses one pin: hex, with optional `:`/space separators, case-insensitive.
 pub fn parse_pin(text: &str) -> Result<[u8; 32], String> {
     let cleaned: String = text
         .chars()
@@ -41,7 +31,6 @@ pub fn parse_pin(text: &str) -> Result<[u8; 32], String> {
     Ok(bytes)
 }
 
-/// `SHA-256(RawTBSCertificate)` of one DER certificate.
 pub fn certificate_pin(cert_der: &[u8]) -> Option<[u8; 32]> {
     let certificate = Certificate::from_der(cert_der).ok()?;
     let tbs = certificate.tbs_certificate.to_der().ok()?;
@@ -51,7 +40,6 @@ pub fn certificate_pin(cert_der: &[u8]) -> Option<[u8; 32]> {
     Some(pin)
 }
 
-/// The immutable host → pin map shared by every client config a resolver builds.
 #[derive(Default)]
 pub struct PinStore {
     pins: HashMap<String, [u8; 32]>,
@@ -66,15 +54,12 @@ impl PinStore {
         self.pins.get(&normalize_host(host)).copied()
     }
 
-    /// Parses and inserts one pin. An invalid pin is rejected so a configuration mistake is
-    /// visible instead of silently disabling verification.
     pub fn insert(&mut self, host: &str, text: &str) -> Result<(), String> {
         let pin = parse_pin(text)?;
         self.insert_hash(host, pin);
         Ok(())
     }
 
-    /// Inserts an already validated hash.
     pub fn insert_hash(&mut self, host: &str, pin: [u8; 32]) {
         self.pins.insert(normalize_host(host), pin);
     }
@@ -101,7 +86,6 @@ fn normalize_host(host: &str) -> String {
         .to_ascii_lowercase()
 }
 
-/// A verifier that accepts a pinned end-entity certificate, and otherwise delegates to webpki.
 struct PinnedVerifier {
     inner: Arc<WebPkiServerVerifier>,
     pins: Arc<PinStore>,
@@ -168,7 +152,6 @@ impl ServerCertVerifier for PinnedVerifier {
     }
 }
 
-/// Builds the client config: pinned verifier when the map is non-empty, plain webpki otherwise.
 pub(super) fn client_config(
     roots: &rustls::RootCertStore,
     provider: Arc<CryptoProvider>,

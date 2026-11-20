@@ -1,14 +1,5 @@
-//! Go's `%q` for strings, used by every error text this kernel returns.
-//!
-//! The messages reach the settings screen verbatim (`unsupported DNS mode "nope"`,
-//! `invalid DOH URL "dns.google"`), so the quoting has to be Go's: double quotes, the short escapes
-//! for `\a \b \f \n \r \t \v \\`, `\xNN` for other control bytes, and printable non-ASCII kept as
-//! itself. Go emits `\uNNNN` for a control rune it cannot spell otherwise, which is what the last arm
-//! does (a control rune outside the short list and above 0x7f).
-
 use std::fmt::Write as _;
 
-/// `fmt.Sprintf("%q", text)` for a string.
 pub fn go_quote(text: &str) -> String {
     let mut out = String::with_capacity(text.len() + 2);
     out.push('"');
@@ -26,7 +17,6 @@ pub fn go_quote(text: &str) -> String {
             c if (c as u32) < 0x20 || c as u32 == 0x7f => {
                 let _ = write!(out, "\\x{:02x}", c as u32);
             }
-            // Printable non-ASCII stays printable: `%q` keeps UTF-8 text as text.
             c if !c.is_control() => out.push(c),
             c => {
                 for unit in c.to_string().encode_utf16() {

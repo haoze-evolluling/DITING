@@ -1,10 +1,3 @@
-//! Test-only decoding for the migration fixtures under `tests/fixtures`.
-//!
-//! The generator wrote TSV with `\\` for a literal backslash, `\t` for a tab and `\n` for a
-//! newline; only the first row of the corpora (empty pattern, empty name) and the lone-backslash
-//! pattern actually need the escapes.
-
-/// Undoes the generator's escaping.
 pub(crate) fn unescape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut chars = text.chars();

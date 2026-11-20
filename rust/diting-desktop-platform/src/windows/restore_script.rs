@@ -1,9 +1,3 @@
-//! Offline `restore-dns.bat` generator.
-//!
-//! The script must work when the service cannot start, so it is plain batch file with no runtime
-//! dependency. Adapter names come from drivers and may contain cmd metacharacters (`&`, `%`, `^`);
-//! escaping is mandatory or the emergency restore either breaks or executes unintended commands.
-
 use std::path::Path;
 
 use diting_desktop_api::platform_types::AdapterState;
@@ -12,8 +6,6 @@ use crate::error::{PlatformError, PlatformResult};
 
 use super::adapter_native::clean_state_for_windows;
 
-/// Escapes text placed after `echo`. `%` must be doubled before cmd expands variables, and the
-/// redirection/grouping characters need a caret prefix.
 fn batch_echo_text(text: &str) -> String {
     let mut escaped = String::with_capacity(text.len());
     for character in text.chars() {
@@ -32,9 +24,6 @@ fn batch_echo_text(text: &str) -> String {
     escaped
 }
 
-/// Escapes an argument inside double quotes (`name="..."`). Only `%` needs doubling there; a
-/// quote or newline cannot be represented safely, so the name is rejected instead of emitting a
-/// script that will silently mis-parse.
 fn batch_quoted_arg(text: &str) -> PlatformResult<String> {
     if text.contains(['"', '\r', '\n']) {
         return Err(PlatformError::message(format!(
@@ -44,7 +33,6 @@ fn batch_quoted_arg(text: &str) -> PlatformResult<String> {
     Ok(text.replace('%', "%%"))
 }
 
-/// Writes the standalone emergency restore script.
 pub(crate) fn generate_restore_script(
     adapters: &[AdapterState],
     output_path: &Path,

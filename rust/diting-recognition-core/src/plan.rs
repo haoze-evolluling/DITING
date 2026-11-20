@@ -1,6 +1,3 @@
-//! The cache/transport constants shared with Dart; a second copy in Dart would let the cache keys
-//! or the size limits drift.
-
 use serde_json::{json, Value};
 
 pub fn plan() -> Value {

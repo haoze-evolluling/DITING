@@ -1,6 +1,3 @@
-/// Dart side of `com.haoze.diting/update`: downloads an update package and hands it to the system
-/// installer. Neither works from Dart: the private directory is the wrong location and installing
-/// needs a FileProvider `content://` URI.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,7 +5,6 @@ import 'package:flutter/services.dart';
 
 const _updateChannelName = 'com.haoze.diting/update';
 
-/// Download progress; [total] is -1 when the server sent no content length.
 class UpdateProgress {
   const UpdateProgress({required this.downloaded, required this.total});
 
@@ -44,8 +40,6 @@ class UpdateBridge {
 
   final MethodChannel _channel;
 
-  /// Downloads [url] into the app-private directory, reporting through [onProgress]. Only an
-  /// Android host downloads; elsewhere it fails so the caller can say "not supported".
   Future<UpdateDownloadResult> download({
     required String url,
     required String version,

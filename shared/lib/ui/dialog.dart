@@ -23,7 +23,6 @@ const double _actionHeight = 48;
 const double _textInset = 30;
 const double _alertWidth = 348;
 const double _contentMaxWidth = 300;
-// `AlertDialog` insets 40 a side; `_dialogInset` clamps a requested width to what still fits.
 const double _dialogInset = 40;
 const double _fieldInputGap = 4;
 const double _pressGrowth = 4;
@@ -31,7 +30,6 @@ const double _pressPull = 3;
 const double _pressedFillShare = 0.4;
 const double _pressedDarkDefaultShare = 0.5;
 
-// iOS 27 grows the alert in from 1.2x and only fades out, on one spring settling in 0.404 s.
 const _alertDuration = Duration(milliseconds: 404);
 const double _alertEntryScale = 1.2;
 final _alertSpring = SpringCurve(
@@ -46,7 +44,6 @@ Future<T?> showFloatingDialog<T>({
   required Widget child,
   bool dismissible = true,
 }) {
-  // Same host navigator as sheets: on a tab page the branch navigator puts the pane under the dock.
   return sheetNavigatorOf(context).push<T>(
     _AlertRoute<T>(
       barrierColor: context.colorScheme.alertScrim,
@@ -62,16 +59,10 @@ Future<T?> showFloatingDialog<T>({
   );
 }
 
-/// Closes the alert [context] opened, on the navigator that hosts it.
-///
-/// An alert is pushed on the outermost navigator ([sheetNavigatorOf]), but a page on a shell branch
-/// sits on a branch navigator. Popping the page's own navigator there would remove the page itself
-/// and leave go_router with an empty stack, which renders as a black screen.
 void popFloatingDialog<T>(BuildContext context, [T? result]) {
   sheetNavigatorOf(context).pop<T>(result);
 }
 
-/// A route whose navigator an alert raised from inside it opens on.
 mixin AlertHostRoute<T> on ModalRoute<T> {}
 
 class _AlertRoute<T> extends PopupRoute<T>
@@ -108,12 +99,9 @@ class _AlertRoute<T> extends PopupRoute<T>
   }
 }
 
-/// Moves a route, and its barrier, as UIKit moves an alert.
 mixin AlertMotionRouteMixin<T> on PopupRoute<T> {
   CurvedAnimation? _sprung;
 
-  // The barrier fades on the spring both ways; `barrierCurve` would replay it backwards on the way
-  // out.
   Animation<double> get _spring => _sprung ??= CurvedAnimation(
     parent: animation!,
     curve: _alertSpring,

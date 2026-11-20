@@ -6,13 +6,6 @@ import com.haoze.diting.automation.AutomationContract
 import com.haoze.diting.engine.TunnelEngine
 import com.haoze.diting.net.EngineAccess
 
-/// R4: push the pause deadline and allowlist-only flag from the shared automation prefs onto the
-/// engine that currently backs a mode.
-///
-/// Centralised so the notification action, the control receiver and the Dart bridge all take effect
-/// immediately on the live engine without knowing which service is up. `EngineAccess.current()` is
-/// null when no mode is running, in which case the values are simply persisted and replayed by each
-/// service at startup (`BlockPauseLink.apply` is called right after it starts its engine).
 internal object BlockPauseLink {
 
     fun prefs(context: Context): SharedPreferences =
@@ -23,8 +16,6 @@ internal object BlockPauseLink {
         applyTo(context, engine)
     }
 
-    /// Root DNS starts its engine before the service publishes it through [EngineAccess], so it
-    /// replays the values directly.
     fun applyTo(context: Context, engine: TunnelEngine) {
         val prefs = prefs(context)
         engine.setBlockPause(prefs.getLong(AutomationContract.KEY_PAUSED_UNTIL_MS, 0L))

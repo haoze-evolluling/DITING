@@ -1,9 +1,3 @@
-//! EDNS(0) options: encoding, decoding, padding and UDP truncation.
-//!
-//! The OPT pseudo-record is the only record this module writes: owner root, type 41, CLASS holds
-//! the advertised UDP payload size and TTL packs extended rcode, version, DO and the reserved
-//! bits (RFC 6891). Its rdata is a sequence of `(code, length, value)` TLVs.
-
 use std::net::IpAddr;
 
 use crate::bits::{read_u16, read_u32};
@@ -15,13 +9,11 @@ use crate::name::unpack_name;
 
 const FLAG_TC: u16 = 0x0200;
 
-/// Client Subnet option payload (RFC 7871).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EcsOption {
     pub family: u16,
     pub source_prefix: u8,
     pub scope_prefix: u8,
-    /// The significant address octets (already truncated to the source prefix length).
     pub address: Vec<u8>,
 }
 
@@ -35,7 +27,6 @@ impl EcsOption {
         }
     }
 
-    /// Builds an option from a full address, truncating it to the source prefix like resolvers do.
     pub fn from_ip(address: IpAddr, source_prefix: u8, scope_prefix: u8) -> Self {
         match address {
             IpAddr::V4(address) => {
@@ -56,7 +47,6 @@ impl EcsOption {
     }
 }
 
-/// Extended DNS Error payload (RFC 8914).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EdeOption {
     pub code: u16,
@@ -72,7 +62,6 @@ impl EdeOption {
     }
 }
 
-/// One EDNS TLV.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EdnsOption {
     Ecs(EcsOption),
@@ -84,12 +73,10 @@ pub enum EdnsOption {
 }
 
 impl EdnsOption {
-    /// A padding option of `len` zero octets (RFC 7830 requires zeros).
     pub fn padding(len: usize) -> Self {
         EdnsOption::Padding(vec![0; len])
     }
 
-    /// The option code written on the wire.
     pub fn code(&self) -> u16 {
         match self {
             EdnsOption::Ecs(_) => OPTION_ECS,
@@ -101,7 +88,6 @@ impl EdnsOption {
         }
     }
 
-    /// Appends the TLV (code, length, value) to `out`.
     pub fn encode(&self, out: &mut Vec<u8>) -> bool {
         let data = self.data();
         if data.len() > u16::MAX as usize {
@@ -137,18 +123,12 @@ impl EdnsOption {
     }
 }
 
-/// The OPT pseudo-record a message should carry.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OptBuilder {
-    /// Advertised UDP payload size, written into the CLASS field.
     pub udp_size: u16,
-    /// DNSSEC OK bit.
     pub do_bit: bool,
-    /// High eight bits of the extended rcode.
     pub ext_rcode: u8,
-    /// EDNS version (`0` for EDNS(0)).
     pub version: u8,
-    /// The remaining 15 reserved bits.
     pub z: u16,
     pub options: Vec<EdnsOption>,
 }
@@ -167,7 +147,6 @@ impl Default for OptBuilder {
 }
 
 impl OptBuilder {
-    /// A builder with `udp_size` and all other fields at their defaults.
     pub fn new(udp_size: u16) -> Self {
         Self {
             udp_size,
@@ -180,32 +159,26 @@ impl OptBuilder {
         self
     }
 
-    /// The advertised UDP payload size (CLASS field).
     pub fn udp_size(&self) -> u16 {
         self.udp_size
     }
 
-    /// The DNSSEC OK bit.
     pub fn do_bit(&self) -> bool {
         self.do_bit
     }
 
-    /// The high eight bits of the extended rcode.
     pub fn ext_rcode(&self) -> u8 {
         self.ext_rcode
     }
 
-    /// The EDNS version.
     pub fn version(&self) -> u8 {
         self.version
     }
 
-    /// The 15 reserved bits of the TTL.
     pub fn z(&self) -> u16 {
         self.z
     }
 
-    /// The EDNS option list.
     pub fn options(&self) -> &[EdnsOption] {
         &self.options
     }
@@ -215,7 +188,6 @@ impl OptBuilder {
         self
     }
 
-    /// Appends the complete OPT resource record to `out`.
     pub fn encode(&self, out: &mut Vec<u8>) -> bool {
         let mut rdata = Vec::new();
         for option in &self.options {
@@ -227,7 +199,7 @@ impl OptBuilder {
             return false;
         }
 
-        out.push(0); // root owner name
+        out.push(0);
         out.extend_from_slice(&TYPE_OPT.to_be_bytes());
         out.extend_from_slice(&self.udp_size.to_be_bytes());
         let ttl = (u32::from(self.ext_rcode) << 24)
@@ -241,7 +213,6 @@ impl OptBuilder {
     }
 }
 
-/// The decoded contents of an OPT record.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OptInfo {
     pub udp_size: u16,
@@ -252,7 +223,6 @@ pub struct OptInfo {
     pub options: Vec<EdnsOption>,
 }
 
-/// Reads the first OPT record from the additional section.
 pub fn parse_opt(wire: &[u8]) -> Option<OptInfo> {
     let walked = walk(wire)?;
     let opt = walked.opt?;
@@ -267,12 +237,6 @@ pub fn parse_opt(wire: &[u8]) -> Option<OptInfo> {
     })
 }
 
-/// Pads `message` with an EDNS Padding option so its total length is a multiple of `block`.
-///
-/// Any padding options already present are discarded and replaced by one option with the exact
-/// number of zero octets needed (RFC 7830/8467). The OPT RDLEN is rewritten; the record count is
-/// unchanged. Returns `false` when the message has no OPT record, `block` is zero, or the result
-/// would need a value that does not fit RDLEN.
 pub fn pad_to_block(message: &mut Vec<u8>, block: usize) -> bool {
     if block == 0 {
         return false;
@@ -286,7 +250,6 @@ pub fn pad_to_block(message: &mut Vec<u8>, block: usize) -> bool {
         None => return false,
     };
 
-    // Keep every option except padding, byte for byte.
     let mut rebuilt = Vec::new();
     let mut data = &message[opt.rdata_start..opt.rdata_end];
     while !data.is_empty() {
@@ -335,12 +298,6 @@ pub fn pad_to_block(message: &mut Vec<u8>, block: usize) -> bool {
     true
 }
 
-/// Truncates a UDP response to at most `max` bytes.
-///
-/// The TC bit is set and every answer, authority and additional record is dropped. The question
-/// is always kept; the OPT record is kept when it still fits. Returns `true` when the message was
-/// over `max` and was reduced to fit, `false` when it already fit or could not be parsed (or when
-/// even the header plus question is larger than `max`).
 pub fn truncate_udp(message: &mut Vec<u8>, max: usize) -> bool {
     if message.len() <= max {
         return false;
@@ -363,7 +320,6 @@ pub fn truncate_udp(message: &mut Vec<u8>, max: usize) -> bool {
         }
     }
     if out.len() > max {
-        // The question itself does not fit; truncating further would break DNS semantics.
         return false;
     }
 
@@ -377,12 +333,10 @@ pub fn truncate_udp(message: &mut Vec<u8>, max: usize) -> bool {
     true
 }
 
-/// Where the OPT record lives in a walked message.
 #[derive(Debug, Clone, Copy)]
 struct OptSpan {
     udp_size: u16,
     ttl: u32,
-    /// Offset of the two RDLEN octets.
     rdlen_offset: usize,
     rdata_start: usize,
     rdata_end: usize,
@@ -397,8 +351,6 @@ struct Walk {
     opt: Option<OptSpan>,
 }
 
-/// Walks the questions and every record, remembering the first OPT record in the additional
-/// section. Strict: a declared record that is not present makes the walk fail.
 fn walk(wire: &[u8]) -> Option<Walk> {
     let header = parse_header(wire)?;
     let mut offset = 12usize;

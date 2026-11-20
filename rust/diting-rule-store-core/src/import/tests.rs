@@ -43,7 +43,6 @@ fn an_import_queues_one_batch_per_family_and_chunk() {
         vec!["block", "allow", "rewrite", "urlBlock", "urlAllow"]
     );
 
-    // Two statements per rule: the conditional insert and the source link that is counted.
     let block = plan.batches[0]["steps"].as_array().unwrap();
     assert_eq!(block.len(), 2);
     assert_eq!(block[0]["changes"], json!(false));
@@ -52,13 +51,11 @@ fn an_import_queues_one_batch_per_family_and_chunk() {
         .as_str()
         .unwrap()
         .contains("WHERE NOT EXISTS (SELECT 1 FROM block_rule WHERE pattern = ?"));
-    // The key predicate is appended after the column values.
     let args = block[0]["args"].as_array().unwrap();
     assert_eq!(args[1], json!("@@a.test"));
     assert_eq!(args[4], json!("com.a"));
     assert_eq!(args[10], json!("a.test"), "key args come last");
 
-    // A `$app=` URL rule is skipped rather than stored as a global block.
     let url_block = plan.batches[3]["steps"].as_array().unwrap();
     assert_eq!(url_block.len(), 2);
     assert_eq!(url_block[1]["args"][0], json!("sub_4"));
@@ -88,7 +85,6 @@ fn chunks_split_a_family_without_changing_its_order() {
     assert_eq!(plan.batches.len(), 2);
     assert_eq!(plan.batches[0]["steps"].as_array().unwrap().len(), 4);
     assert_eq!(plan.batches[1]["steps"].as_array().unwrap().len(), 2);
-    // A disabled subscription still writes the rules, only the source rows start off.
     assert_eq!(
         plan.batches[0]["steps"][1]["args"][1],
         json!(0),
@@ -105,8 +101,6 @@ fn a_hosts_dataset_drops_the_families_its_table_cannot_hold() {
         .map(|batch| batch["family"].as_str().unwrap())
         .collect();
     assert_eq!(families, vec!["block", "rewrite"]);
-    // Allow and URL rules are parsed but cannot be stored: they are reported, not dropped silently.
-    // One allow rule plus two URL blocks and one URL allow.
     assert_eq!(plan.type_skipped, 4);
     assert_eq!(plan.cosmetic, 0);
 }
@@ -127,7 +121,6 @@ fn table_names_come_from_one_place() {
     assert_eq!(tables["rewrite"]["table"], json!("rewrite_rule"));
     assert_eq!(tables["url"]["table"], json!("go_url_rule"));
     assert_eq!(tables["url"]["sourceTable"], json!("go_url_rule_source"));
-    // A user sweep deletes these three; `preset` and `sub_*` survive it.
     assert_eq!(
         tables["userSources"],
         json!(["useradd", "local_import", "local_hosts"])

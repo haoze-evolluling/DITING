@@ -1,5 +1,3 @@
-/// Network-profile state (N1): the current context, the configured network profiles and the
-/// resolved effective profile.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
@@ -17,12 +15,10 @@ final netprofileCoreProvider = Provider<RustNetprofileCore>(
   (ref) => RustNetprofileCore.instance,
 );
 
-/// The live network context (Kotlin normalization of `ConnectivityManager`).
 final networkContextProvider = FutureProvider<Map<String, Object?>>(
   (ref) => ref.read(networkContextBridgeProvider).context(),
 );
 
-/// The configured network profiles, stored in `automation_profile` with `payload.kind == network`.
 final networkProfilesProvider = FutureProvider<List<AutomationProfile>>((ref) async {
   ref.watch(automationRevisionProvider);
   final db = await ref.read(automationDatabaseProvider.future);
@@ -34,7 +30,6 @@ final networkProfilesProvider = FutureProvider<List<AutomationProfile>>((ref) as
   ];
 });
 
-/// The effective profile for the current context, resolved by `diting-netprofile-core`.
 final networkProfileResolutionProvider =
     FutureProvider<Map<String, Object?>>((ref) async {
       final context = await ref.watch(networkContextProvider.future);
@@ -53,7 +48,6 @@ final networkProfileResolutionProvider =
       }
     });
 
-/// Maps a stored profile to the document `diting-netprofile-core` consumes.
 Map<String, Object?> networkProfileDoc(AutomationProfile profile) {
   final payload = profile.payload;
   return {

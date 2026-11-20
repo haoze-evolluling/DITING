@@ -2,7 +2,6 @@
 
 part of 'navigation_dock.dart';
 
-/// The pointer's highlight, drawn to the destination under it and leaning toward the cursor.
 class _HoverHighlight extends StatelessWidget {
   const _HoverHighlight({
     required this.start,
@@ -42,8 +41,6 @@ class _Lens extends StatelessWidget {
   final Rect rect;
   final double lift;
 
-  /// On glass the lens rests as a platter in the secondary hue, sunk in dark mode as iOS marks a
-  /// tab.
   final bool glass;
 
   @override
@@ -74,7 +71,6 @@ class _Lens extends StatelessWidget {
   }
 }
 
-/// The clear lens a lifted selection becomes on glass. The destinations stand on it.
 class _GlassLens extends StatelessWidget {
   const _GlassLens({required this.rect, required this.lift});
 
@@ -116,7 +112,6 @@ List<BoxShadow> _lensShadows(ColorScheme colorScheme, double lift) {
   ];
 }
 
-/// What a lifted lens on glass shows of the destinations under it, with a pane of its own.
 class _LensContent extends StatelessWidget {
   const _LensContent({
     required this.rect,
@@ -219,7 +214,6 @@ class _FloatingBarItem extends StatefulWidget {
   final bool selected;
   final int index;
 
-  /// Only [_LensPart.inside] is drawn bare: it stands over the lens that takes the presses.
   final _LensPart part;
   final _Spring lens;
   final double lensWidth;
@@ -263,7 +257,6 @@ class _FloatingBarItemState extends State<_FloatingBarItem> {
     }
     final content = _LensTint(
       part: widget.part,
-      // With no selection the lens rests at index 0, so tinting would read as selected; skip it.
       active: widget.selected || widget.part == _LensPart.inside,
       lens: widget.lens,
       lensWidth: widget.lensWidth,

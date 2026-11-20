@@ -1,8 +1,3 @@
-/// The reputation lookups: malicious-site checking, its switch and the counters behind it.
-///
-/// The old desktop console's `SafeBrowsingCard.vue` is the blueprint. The switch saves one field;
-/// the timeout and cache numbers beside it are [PrivacyReputationParamsCard], and parental control is
-/// [PrivacyParentalCard], so this card stays a reading of what the lookup is doing.
 library;
 
 import 'dart:async';

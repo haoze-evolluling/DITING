@@ -1,9 +1,3 @@
-/// The encrypted listeners' network parameters: bind address, TLS server name, the three ports and the
-/// DoH path.
-///
-/// The old desktop console's `EncryptedListenersCard.vue` keeps this form under the protocol switches;
-/// here it is its own card, because a five-field form plus three switch rows was one card too long.
-/// The fields are a draft that saves with the button, and a rejected save keeps what was typed.
 library;
 
 import 'dart:async';

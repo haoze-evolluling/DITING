@@ -1,35 +1,17 @@
-//! Runtime-event policy for the always-on "black box" of the app's own behaviour.
-//!
-//! The Kotlin `RuntimeEventLog` owns the file, the timestamps and the batching; what moves here is
-//! everything that must not drift: the level order, the single-line format, the value escaping and
-//! the de-duplication window that keeps a burst of the same warning from flooding the ring.
-//!
-//! A line reads `2026-01-02 03:04:05.123 INFO service engine.start ok=true mode=normal`; a value is
-//! quoted only when it contains whitespace, `"`, `=` or a backslash, so ordinary codes stay short.
-//! The format is deliberately the logcat-continuity kind: a human can `grep`/`tail` it and a script
-//! can split on the first four fields. It is not JSON because the file is read in a 512 KiB ring.
-
 use std::collections::HashMap;
 
-/// De-duplication table bound; past it the oldest entries are pruned first.
 pub const MAX_DEDUP_ENTRIES: usize = 1024;
 
-/// One event file's size budget before the writer rotates to the other slot.
 pub const EVENT_MAX_FILE_BYTES: i64 = 512 * 1024;
 
-/// Event files kept (a two-slot ring: `runtime-events.log` + `runtime-events.1.log`).
 pub const EVENT_MAX_FILES: usize = 2;
 
-/// Fields one event may carry; the writer drops the excess instead of growing a line without bound.
 pub const MAX_FIELDS: usize = 24;
 
-/// Longest single field value kept (in characters); longer text is truncated with an ellipsis.
 pub const MAX_FIELD_VALUE_CHARS: usize = 240;
 
-/// Longest module / event / field-name token kept.
 pub const MAX_TOKEN_CHARS: usize = 48;
 
-/// Severity order. The numbers are the JNI tags too, so `from_tag` is the wire contract.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum Level {
     Debug = 0,
@@ -41,7 +23,6 @@ pub enum Level {
 }
 
 impl Level {
-    /// The wire tag; unknown means drift, not a silent default.
     pub fn from_tag(tag: u8) -> Option<Self> {
         match tag {
             0 => Some(Self::Debug),
@@ -57,7 +38,6 @@ impl Level {
         self as u8
     }
 
-    /// The fixed four/three-letter label a reader greps for.
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Debug => "DEBUG",
@@ -69,15 +49,12 @@ impl Level {
     }
 }
 
-/// `level >= min`, the one comparison the UI's "minimum level" setting means.
 pub fn at_least(min: Level, level: Level) -> bool {
     level >= min
 }
 
-/// One decoded event, before formatting and the level/dedup gates.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Event {
-    /// `yyyy-MM-dd HH:mm:ss.SSS` in the device zone, formatted by Kotlin.
     pub time_text: String,
     pub level: Level,
     pub module: String,
@@ -85,7 +62,6 @@ pub struct Event {
     pub fields: Vec<(String, String)>,
 }
 
-/// Keeps a short token (`module`, `code`, field name) on one line and within [`MAX_TOKEN_CHARS`].
 fn sanitize_token(text: &str) -> String {
     let mut out = String::with_capacity(text.len().min(MAX_TOKEN_CHARS));
     for ch in text.chars() {
@@ -104,8 +80,6 @@ fn sanitize_token(text: &str) -> String {
     out
 }
 
-/// Keys whose value must never reach the black box: subscription URLs, proxy credentials, tokens.
-/// Matched case-insensitively as `key=value` pairs (URL query or `k=v` prose).
 const SENSITIVE_KEYS: &[&str] = &[
     "token",
     "access_token",
@@ -130,7 +104,6 @@ fn is_word_byte(byte: u8) -> bool {
     byte.is_ascii_alphanumeric() || byte == b'_'
 }
 
-/// A value ends at a query separator, whitespace or a closing bracket/quote.
 fn is_delim(byte: u8) -> bool {
     matches!(
         byte,
@@ -149,7 +122,6 @@ fn is_delim(byte: u8) -> bool {
     )
 }
 
-/// `Bearer <token>` -> `Bearer ***`.
 fn mask_bearer(input: &str) -> String {
     let lower = input.to_ascii_lowercase();
     let bytes = input.as_bytes();
@@ -184,7 +156,6 @@ fn mask_bearer(input: &str) -> String {
     out
 }
 
-/// `scheme://user:pass@host/...` -> `scheme://***@host/...`.
 fn mask_userinfo(input: &str) -> String {
     let Some(scheme_end) = input.find("://") else {
         return input.to_string();
@@ -204,7 +175,6 @@ fn mask_userinfo(input: &str) -> String {
     out
 }
 
-/// `token=abc123`, `password=x`, `sub=...` -> `token=***`, etc., preserving every other byte.
 fn mask_key_values(input: &str) -> String {
     let lower = input.to_ascii_lowercase();
     let bytes = input.as_bytes();
@@ -241,18 +211,12 @@ fn mask_key_values(input: &str) -> String {
     out
 }
 
-/// Masks the three shapes of secret that can leak into an event value: an `Authorization: Bearer`
-/// token, URL userinfo, and a sensitive `key=value`. Idempotent and purely textual, so it can run on
-/// every value without a regex dependency.
 pub fn redact(text: &str) -> String {
     let after_bearer = mask_bearer(text);
     let after_userinfo = mask_userinfo(&after_bearer);
     mask_key_values(&after_userinfo)
 }
 
-/// One field value: secret-masked, trimmed of line breaks, truncated, and quoted only when a bare
-/// token would misread. A newline inside an exception message becomes a space so the file stays
-/// line-oriented.
 fn render_value(text: &str) -> String {
     let redacted = redact(text);
     let mut cleaned = String::with_capacity(redacted.len().min(MAX_FIELD_VALUE_CHARS));
@@ -286,8 +250,6 @@ fn render_value(text: &str) -> String {
     quoted
 }
 
-/// The one-line rendering of [`Event`]. `time_text` is passed through (Kotlin formats it) but kept
-/// on one line so a bad timestamp cannot split a record.
 pub fn format_event(event: &Event) -> String {
     let time: String = event
         .time_text
@@ -311,7 +273,6 @@ pub fn format_event(event: &Event) -> String {
     line
 }
 
-/// De-duplication key: module + code + every field, never the timestamp.
 fn dedup_key(event: &Event) -> String {
     let mut key = String::with_capacity(64);
     key.push_str(&event.module);
@@ -326,11 +287,6 @@ fn dedup_key(event: &Event) -> String {
     key
 }
 
-/// Stateful gate: the minimum level plus the "same event within N ms" suppressor.
-///
-/// Kotlin keeps exactly one gate per process. A `dedup_window_ms` of 0 disables de-duplication
-/// (every admitted event is written); a positive window writes the first of a burst and swallows
-/// the repeats, so a retry storm costs one line, not thousands.
 #[derive(Debug)]
 pub struct Gate {
     min_level: Level,
@@ -355,8 +311,6 @@ impl Gate {
         self.min_level = level;
     }
 
-    /// `Some(line)` when the event should be written; `None` when the level filtered it or a repeat
-    /// fell inside the window.
     pub fn admit(&mut self, event: &Event, now_ms: i64) -> Option<String> {
         if !at_least(self.min_level, event.level) {
             return None;
@@ -365,7 +319,6 @@ impl Gate {
             let key = dedup_key(event);
             if let Some(&last) = self.last_seen.get(&key) {
                 if now_ms.saturating_sub(last) < self.dedup_window_ms {
-                    // Refresh the window so a continuous stream stays suppressed, not re-fires.
                     self.last_seen.insert(key, now_ms);
                     return None;
                 }
@@ -376,7 +329,6 @@ impl Gate {
         Some(format_event(event))
     }
 
-    /// Drops entries older than twice the window, then (if still over the bound) the oldest ones.
     fn prune(&mut self, now_ms: i64) {
         if self.last_seen.len() <= MAX_DEDUP_ENTRIES {
             return;
@@ -479,9 +431,7 @@ mod tests {
         assert!(gate.admit(&ev, 1_000).is_some());
         assert_eq!(gate.admit(&ev, 2_000), None);
         assert_eq!(gate.admit(&ev, 5_999), None);
-        // A suppressed repeat refreshes the window, so a continuous stream keeps one line.
         assert_eq!(gate.admit(&ev, 6_000), None);
-        // A full window of silence lets the next occurrence through again.
         assert!(gate.admit(&ev, 11_000).is_some());
     }
 
@@ -525,7 +475,6 @@ mod tests {
             redact("password=hunter2 host=1.1.1.1"),
             "password=*** host=1.1.1.1"
         );
-        // The key has to be a whole word: `apikeyx` is not `apikey`.
         assert_eq!(redact("apikeyx=keep"), "apikeyx=keep");
     }
 

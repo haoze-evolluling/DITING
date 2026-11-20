@@ -49,7 +49,6 @@ fn cooldown_expires_at_the_strict_boundary() {
             .score(1.0, T0 + COOLDOWN_DURATION_NS - 1)
             .cooling_down
     );
-    // `now.Before(cooldownUntil)` is strict: at the deadline the endpoint is eligible again.
     assert!(!health.score(1.0, T0 + COOLDOWN_DURATION_NS).cooling_down);
 }
 
@@ -90,9 +89,6 @@ fn elapsed_is_clamped_to_one_millisecond() {
 
 #[test]
 fn jitter_uses_the_new_ewma() {
-    // 10 ms then 40 ms: ewma after the second sample is 190 * 0.75 + 40 * 0.25 = 152.5, and the
-    // deviation is |40 - 152.5| = 112.5; the previous jitter (36) decays by 0.8, so
-    // 36 * 0.8 + 112.5 * 0.2 = 51.3, matching the Go ordering.
     let mut health = Health::new(T0);
     health.record_result(true, 10, T0);
     health.record_result(true, 40, T0);
@@ -105,7 +101,6 @@ fn jitter_uses_the_new_ewma() {
 fn zero_last_update_is_stamped_without_decay() {
     let mut health = Health::new(0);
     health.record_result(false, 10, T0);
-    // apply_decay sees a zero stamp, adopts `now`, and does not scale the counters.
     assert_eq!(health.snapshot().decayed_failures, 1.0);
     assert_eq!(health.snapshot().last_updated_ns, T0);
 }

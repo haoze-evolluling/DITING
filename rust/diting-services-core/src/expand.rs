@@ -1,10 +1,7 @@
-//! Selected service ids → the rule patterns a blocking (or allow) group is built from.
-
 use serde_json::Value;
 
 use crate::catalog::{find, CATALOG};
 
-/// One generated rule: the pattern a rule engine stores, the service it came from and the action.
 struct Rule {
     pattern: String,
     service_id: &'static str,
@@ -12,14 +9,6 @@ struct Rule {
     kind: String,
 }
 
-/// Expands `service_ids` into rule patterns.
-///
-/// `kind` is `block` or `allow` (`allow` produces an exception group). For every domain of every
-/// selected service the exact host and its wildcard sub-domain are emitted (`example.com`,
-/// `*.example.com`), which is what the policy snapshot's suffix rules expect. An unknown id is
-/// skipped rather than failing the whole expansion, so an older UI payload cannot break the
-/// caller; the answered `unknown` list lets the caller surface it. Duplicates are removed while
-/// preserving first-seen order.
 pub fn expand(service_ids: &[String], kind: &str) -> Value {
     let kind = if kind == "allow" { "allow" } else { "block" };
     let mut rules: Vec<Rule> = Vec::new();
@@ -73,7 +62,6 @@ pub fn expand(service_ids: &[String], kind: &str) -> Value {
     })
 }
 
-/// The number of catalog services, exposed so the UI can sanity check its own grouping.
 pub fn catalog_size() -> usize {
     CATALOG.len()
 }
@@ -89,7 +77,7 @@ mod tests {
     #[test]
     fn expands_both_host_and_wildcard() {
         let answer = expand(&ids(&["youtube"]), "block");
-        assert_eq!(answer["count"], 8); // 4 domains * 2 patterns
+        assert_eq!(answer["count"], 8);
         let patterns: Vec<String> = answer["rules"]
             .as_array()
             .unwrap()
@@ -103,7 +91,6 @@ mod tests {
 
     #[test]
     fn deduplicates_and_orders_by_input() {
-        // instagram has two domains → four patterns, no duplicates.
         let answer = expand(&ids(&["instagram"]), "block");
         assert_eq!(answer["count"], 4);
         let first = answer["rules"][0]["pattern"].as_str().unwrap();

@@ -1,10 +1,3 @@
-//! DNS over QUIC (RFC 9250).
-//!
-//! One bidirectional stream carries exactly one query and one answer, both framed with a 2-byte
-//! length prefix. The stream is finished after the answer; the connection stays open for further
-//! streams. A protocol violation (zero length, non-zero message ID) closes the connection, because
-//! a peer that keeps producing malformed streams would otherwise turn every stream into noise.
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -24,7 +17,6 @@ const IDLE_TIMEOUT: Duration = Duration::from_secs(60);
 const KEEP_ALIVE: Duration = Duration::from_secs(15);
 const MAX_INCOMING_STREAMS: u32 = 64;
 const DOQ_ALPN: &[u8] = b"doq";
-/// RFC 9250 §4.3: application error code for a peer that violates the protocol.
 const PROTOCOL_ERROR: u32 = 2;
 
 pub(super) async fn start(
@@ -33,8 +25,6 @@ pub(super) async fn start(
     config: Arc<EncryptedConfig>,
     shutdown: watch::Receiver<bool>,
 ) -> Result<(String, Endpoint, JoinHandle<()>), String> {
-    // The certificate manager builds a TLS 1.2/1.3 config; QUIC itself only ever negotiates TLS
-    // 1.3, so the transport requirement from RFC 9250 §4.1.1 is enforced by the protocol.
     let tls = cert.tls_config(vec![DOQ_ALPN.to_vec()])?;
     let crypto = quinn::crypto::rustls::QuicServerConfig::try_from(tls)
         .map_err(|error| format!("DoQ TLS 配置无效: {error}"))?;
@@ -185,7 +175,6 @@ async fn handle_stream(
         Ok(Err(ProtocolError::Incomplete)) => {
             let _ = send.finish();
         }
-        // A per-stream timeout only ends this stream; the connection can carry further queries.
         Err(_) => {
             let _ = send.finish();
         }

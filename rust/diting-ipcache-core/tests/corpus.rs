@@ -1,9 +1,3 @@
-//! Replays the LRU trace produced by the old Go `ipDomainCache`.
-//!
-//! The script covers in-place updates, `get` not promoting, eviction of the least-recently-written
-//! entry (not the least-recently-read one), re-putting the same value as a touch, and empty keys
-//! being ignored. The fixture was generated with a capacity of 3.
-
 use diting_ipcache_core::IpDomainCache;
 
 const TRACE: &str = include_str!("fixtures/lru_trace.tsv");

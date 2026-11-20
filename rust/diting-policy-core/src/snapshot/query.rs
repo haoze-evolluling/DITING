@@ -1,17 +1,9 @@
-//! Query entry points: normalization, the decision cache and prewarming.
-//!
-//! Split out of `snapshot.rs` (whose table building and priority walk are already long), but it is
-//! the same implementation: [`Snapshot::evaluate`] is the walk, [`Snapshot::answer`] adds the
-//! normalization and the cache the Go engine used to own.
-
 use super::Snapshot;
 #[cfg(test)]
 use crate::cache::DecisionCache;
 use crate::cache::Reason;
 use crate::text::{go_trim_space, normalize_domain};
 
-/// One query's verdict plus an owned reason, so the FFI can hand Go a pointer that outlives the
-/// cache entry that produced it.
 pub struct Answer {
     pub blocked: bool,
     pub reason: Reason,
@@ -32,8 +24,6 @@ impl Snapshot {
         self.cache.as_ref()
     }
 
-    /// The FFI entry point: normalizes the domain and the app name, answers from the decision cache
-    /// and only walks the tables on a miss.
     pub fn answer(&self, domain: &str, app: &str, qtype: u16) -> Answer {
         let Some(cache) = &self.cache else {
             return Answer::pass();
@@ -58,8 +48,6 @@ impl Snapshot {
         answer
     }
 
-    /// Same verdict without touching the cache: prewarming builds entries with it, and the test
-    /// suite uses it to prove a cache hit never changes an answer.
     pub fn answer_uncached(&self, domain: &str, app: &str, qtype: u16) -> Answer {
         if self.cache.is_none() {
             return Answer::pass();
@@ -71,9 +59,6 @@ impl Snapshot {
         self.verdict(&domain, go_trim_space(app), qtype)
     }
 
-    /// Re-evaluates the previous snapshot's hottest keys against this one, in the background of a
-    /// rule reload. Keys are only carried over when both snapshots agree on which dimensions the
-    /// cache key needs; hit counts are not carried over, so one reload cannot pin old hot keys.
     pub fn prewarm_from(&self, previous: &Snapshot) {
         if !self.filter_enabled || !self.has_rules {
             return;
@@ -99,7 +84,6 @@ impl Snapshot {
         }
     }
 
-    /// The raw walk: no normalization, no cache. `evaluateNormalized` used to do exactly this.
     fn verdict(&self, domain: &str, app: &str, qtype: u16) -> Answer {
         let decision = self.evaluate(domain, app, qtype);
         debug_assert!(

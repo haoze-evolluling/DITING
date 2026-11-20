@@ -1,8 +1,3 @@
-/// Dart-side facade over the always-on runtime-event black box.
-///
-/// Startup milestones and caught/uncaught Dart errors call [RuntimeEvents], which forwards to the
-/// Kotlin `RuntimeEventLog` over the `runtime_log` channel. Reporting is fire-and-forget and never
-/// throws: diagnostics must not change the behaviour they are meant to observe.
 library;
 
 import 'dart:async';
@@ -28,7 +23,6 @@ abstract final class RuntimeEvents {
     );
   }
 
-  /// One startup milestone and the time since the previous one.
   static void startup(String stage, int elapsedMs) =>
       report('startup', stage, fields: {'ms': elapsedMs});
 

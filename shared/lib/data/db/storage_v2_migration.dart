@@ -1,8 +1,3 @@
-/// One-time migration from the pre-V2 stores into the seven V2 databases.
-///
-/// The source files are opened read-only. New files stay disposable until the state marker is
-/// written, so an interrupted copy is retried from scratch on the next launch. The runtime never
-/// reads a legacy file; only this module and the cleanup pass know their names.
 library;
 
 import 'dart:convert';
@@ -68,8 +63,6 @@ class StorageV2Exception implements Exception {
   String toString() => message;
 }
 
-/// Native checks that cannot be done through sqflite: opening each new log database through the
-/// same connection pool the writers use, and clearing derived rule indexes.
 abstract class StorageV2Native {
   Future<void> closeConnections();
 
@@ -93,7 +86,6 @@ class MethodChannelStorageV2Native implements StorageV2Native {
     try {
       await channel.invokeMethod<void>('closeConnections');
     } on MissingPluginException {
-      // Tests and hosts without the Android engine have no native connections.
     }
   }
 
@@ -121,7 +113,6 @@ class MethodChannelStorageV2Native implements StorageV2Native {
     try {
       await channel.invokeMethod<void>('clearRuleIndexes');
     } on MissingPluginException {
-      // Tests and hosts without the Android engine have no index files.
     }
   }
 }
@@ -142,7 +133,6 @@ class NoopStorageV2Native implements StorageV2Native {
   Future<void> clearRuleIndexes() async {}
 }
 
-/// True when every V2 file exists and has the expected application id.
 Future<bool> storageV2FilesReady() async {
   for (final kind in DatabaseKind.values) {
     final db = await AppDatabase.open(kind.fileName, create: false);
@@ -152,13 +142,11 @@ Future<bool> storageV2FilesReady() async {
   return true;
 }
 
-/// True when at least one pre-V2 store is still on disk, i.e. this install may need a real copy.
 Future<bool> hasLegacyStores() async {
   final String directory;
   try {
     directory = await getDatabasesPath();
   } on StateError {
-    // No database directory on this host.
     return false;
   }
   for (final name in LegacyStorageSource.allOldDatabases) {
@@ -167,11 +155,6 @@ Future<bool> hasLegacyStores() async {
   return false;
 }
 
-/// Whether startup must show the migration gate instead of opening the stores silently.
-///
-/// Neither a fresh install (no marker, no V2 files, no old files) nor a marker lost while the V2
-/// files are intact has rows to copy, so both finish before the first frame. A real upgrade and an
-/// interrupted run keep the gate so the user sees progress, failures and the stop prompt.
 bool storageV2GateRequired({
   required int state,
   required bool filesReady,
@@ -184,8 +167,6 @@ bool storageV2GateRequired({
   return true;
 }
 
-/// Runs the copy and verification. Safe to call on every launch: a completed marker returns
-/// immediately. [dataPlaneRunning] defers the copy because the old files are still in use.
 Future<StorageV2Result> ensureStorageV2(
   LegacyPrefsStore store, {
   bool dataPlaneRunning = false,
@@ -199,8 +180,6 @@ Future<StorageV2Result> ensureStorageV2(
     await _removeStaleLock(settings);
     return const StorageV2Result.ready();
   }
-  // A preferences restore can lose the marker while the V2 files are intact. Treat them as
-  // verified instead of deleting and re-copying an already-migrated install.
   if (state < StorageContract.stateVerified && await storageV2FilesReady()) {
     await settings.commitStorageV2State(StorageContract.stateVerified);
     settings.setStorageV2CompletedAt(DateTime.now());
@@ -209,7 +188,6 @@ Future<StorageV2Result> ensureStorageV2(
     return const StorageV2Result.ready();
   }
   if (state != StorageContract.stateIdle) {
-    // A verified marker without usable files (partial restore) or a half-copied run both restart.
     settings.setStorageV2State(StorageContract.stateIdle);
   }
   if (dataPlaneRunning) {
@@ -313,7 +291,6 @@ Future<StorageV2Result> ensureStorageV2(
   }
 }
 
-/// Creates empty V2 stores after the user chose to discard unreadable source data.
 Future<StorageV2Result> discardStorageV2(
   LegacyPrefsStore store, {
   StorageV2Native native = const MethodChannelStorageV2Native(),
@@ -377,8 +354,6 @@ Future<StorageV2Result> discardStorageV2(
   }
 }
 
-/// Deletes the old stores after the new ones have run successfully. Only call when no data plane
-/// is alive; the caller supplies that answer from the native status channels.
 Future<StorageV2Result> cleanupStorageV2(
   LegacyPrefsStore store, {
   required bool dataPlaneRunning,
@@ -411,8 +386,6 @@ Future<StorageV2Result> cleanupStorageV2(
   }
 }
 
-/// Removes old files that reappear (Auto Backup restore, manual copy) while a V2 layout is active.
-/// Runtime code never opens them, so this is pure cleanup.
 Future<void> sweepLegacyDatabases({
   required bool dataPlaneRunning,
   StorageV2Native native = const MethodChannelStorageV2Native(),
@@ -468,6 +441,5 @@ Future<void> _removeStaleLock(LegacySettings settings) async {
     final directory = await getDatabasesPath();
     await _removeLock(directory);
   } on StateError {
-    // No database directory on this host.
   }
 }

@@ -1,27 +1,8 @@
-//! Policy groups and the fallback chain (N3).
-//!
-//! A resolver can expose more than one upstream. A policy group is the user-facing object that
-//! says *how* to choose among them: `select` (manual), `url-test` (lowest expected cost),
-//! `fallback` (first healthy, in order) and `load-balance` (round-robin over the healthy set). This
-//! module owns that selection as a pure function over a per-member reading. The reading is a plain
-//! snapshot — `score_ns` and `healthy` — taken by the caller from the existing
-//! [`crate::stats::ProviderStats`] (SRTT + failure ratio + decayed consecutive-failure penalty, and
-//! the circuit breaker's `allow_attempt`). No clock, no locks, no allocation on the hot path, so a
-//! selection is reproducible from a trace.
-//!
-//! The fallback chain is tried only when no primary member is healthy: the first healthy fallback
-//! wins. `None` means every candidate is down, which the caller reports as a resolve failure.
-
-/// How a group chooses among its members.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GroupType {
-    /// Manual: the first member, in configured order.
     Select,
-    /// Lowest expected cost among the healthy members.
     UrlTest,
-    /// First healthy member, in configured order.
     Fallback,
-    /// Round-robin over the healthy members, keyed by a caller-supplied sequence.
     LoadBalance,
 }
 
@@ -45,8 +26,6 @@ impl GroupType {
     }
 }
 
-/// One member's current reading. `healthy` is `ProviderStats::allow_attempt(now)`; `score_ns` is
-/// `ProviderStats::score(now)`. A member not present in the readings is treated as unknown/absent.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MemberReading {
     pub id: String,
@@ -54,7 +33,6 @@ pub struct MemberReading {
     pub healthy: bool,
 }
 
-/// A configured group: ordered members plus an optional fallback chain.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PolicyGroup {
     pub id: String,
@@ -63,12 +41,10 @@ pub struct PolicyGroup {
     pub fallback: Vec<String>,
 }
 
-/// The chosen member and why.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Selection {
     pub member: String,
     pub kind: GroupType,
-    /// True when the answer came from the fallback chain rather than the primary members.
     pub used_fallback: bool,
     pub reason: String,
 }
@@ -97,8 +73,6 @@ fn choose_from(
         return None;
     }
     let index = match kind {
-        // Manual mode takes the first *configured* member when it is known at all, else the first
-        // healthy one.
         GroupType::Select => {
             if reading(readings, &order[0]).is_some() {
                 0
@@ -138,7 +112,6 @@ fn choose_from(
     })
 }
 
-/// Selects the member for one group at one point in time.
 pub fn select(group: &PolicyGroup, readings: &[MemberReading], seq: u64) -> Option<Selection> {
     if let Some(selection) = choose_from(group.kind, &group.members, readings, seq, false) {
         return Some(selection);
@@ -147,7 +120,6 @@ pub fn select(group: &PolicyGroup, readings: &[MemberReading], seq: u64) -> Opti
 }
 
 impl Selection {
-    /// Stable display token of the strategy (`select` / `url-test` / …).
     pub fn kind_name(&self) -> &'static str {
         self.kind.as_str()
     }

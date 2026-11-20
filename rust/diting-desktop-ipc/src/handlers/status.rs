@@ -1,5 +1,3 @@
-//! `/api/v1/status`, DNS lifecycle, takeover, port diagnosis and service status.
-
 use hyper::http::Method;
 use serde_json::json;
 

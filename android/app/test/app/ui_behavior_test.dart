@@ -1,6 +1,3 @@
-// Layout and dialog regressions over every route at three sizes, the first-run
-// agreement, and the dialog field lifecycle.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/app/initial_agreement.dart';
@@ -25,7 +22,6 @@ void main() {
   group('分段控件标签', _segmentedLabels);
 }
 
-/// The card title row is 24 high; the select must fit its full text line inside it.
 void _popupSelect() {
   testWidgets('解析模式选项文字不被标题行裁切', (tester) async {
     await tester.pumpWidget(
@@ -62,7 +58,6 @@ void _popupSelect() {
   });
 }
 
-/// Long English labels used to be ellipsized to "Single re…" in the resolution card.
 void _segmentedLabels() {
   Future<void> pumpControl(
     WidgetTester tester,
@@ -115,11 +110,9 @@ void _segmentedLabels() {
   });
 }
 
-/// Layout regression over every route at three widths; overflow surfaces via `takeException()`
 void _layoutRegression() {
   installGlobalTestHooks();
 
-  /// Every route, including the rule, subscription and mode pages beyond the six tabs.
   final routes = <String>[
     Routes.hub,
     Routes.logs,
@@ -138,8 +131,6 @@ void _layoutRegression() {
     ...idRoutes.values,
   ];
 
-  /// (label, logical size): 320 iPhone SE, 412 mainstream Android, 834 iPad, crossing the 600
-  /// breakpoint
   const sizes = <(String, Size)>[
     ('se', Size(320, 568)),
     ('pixel', Size(412, 915)),
@@ -160,7 +151,6 @@ void _layoutRegression() {
         child: DitingApp(initialLocation: route),
       ),
     );
-    // The localization delegate loads async: pump once more for labels.
     await tester.pump();
     await tester.pumpAndSettle();
   }
@@ -178,7 +168,6 @@ void _layoutRegression() {
   }
 
   testWidgets('小屏 + 1.4 倍字号下所有路由无溢出', (tester) async {
-    // 1.4 is the `clampTextScale` upper bound, the largest size supported.
     tester.platformDispatcher.textScaleFactorTestValue = 1.4;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
@@ -189,7 +178,6 @@ void _layoutRegression() {
   });
 }
 
-/// One pump must neither throw nor fall through to the unregistered-route fallback page.
 void expectNoLayoutFailure(WidgetTester tester, String context) {
   expect(tester.takeException(), isNull, reason: '$context 布局异常');
   expect(
@@ -199,7 +187,6 @@ void expectNoLayoutFailure(WidgetTester tester, String context) {
   );
 }
 
-/// Guards the first-run agreement dialog: it blocks the page and its text must match 1.4.3 exactly
 void _initialAgreement() {
   installGlobalTestHooks(skipInitialAgreement: false);
 
@@ -234,7 +221,6 @@ void _initialAgreement() {
     await tester.pumpAndSettle();
 
     expect(find.byType(InitialAgreementDialog), findsNothing);
-    // accept() sets both memory and disk; the disk key is guarded in `settings_catalog_test.dart`
     final container = ProviderScope.containerOf(
       tester.element(find.byType(InitialAgreementGate)),
     );
@@ -243,7 +229,6 @@ void _initialAgreement() {
 
   test('条款正文含旧版三段结构与关键句', () {
     final message = lookupAppL10n(const Locale('zh')).agreementMessage;
-    // Three headings, separated by `\n\n` in 1.4.3; a missing one means the body changed.
     expect(message, contains('软件说明'));
     expect(message, contains('运行机制与注意事项'));
     expect(message, contains('免责条款'));
@@ -285,14 +270,12 @@ void _dialogField() {
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsOneWidget);
 
-    // Let the field really take focus; on a device this raises the keyboard.
     await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'api.example.com');
     await tester.pump();
 
     await tester.tap(find.text('提交'));
-    // One frame lets pop happen, then finish the exit animation: the crash is here.
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -301,9 +284,7 @@ void _dialogField() {
   });
 }
 
-// Regression: disposing the controller right after `showFloatingDialog` returns kills the field
 
-/// Minimal dialog shaped like production: the controller is owned by `State`.
 class _FieldDialog extends StatefulWidget {
   const _FieldDialog();
 

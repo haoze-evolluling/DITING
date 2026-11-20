@@ -2,7 +2,6 @@
 
 part of 'liquid_glass.dart';
 
-/// Redraws onto a capture what a pane's root holds below it, for the root's own effect too.
 class _Replay {
   _Replay(this.canvas, this.drawn, this.entry) : _toHost = [entry.rootToHost];
 
@@ -11,13 +10,11 @@ class _Replay {
   final _Behind entry;
   final List<Matrix4> _toHost;
 
-  // A layer's effects apply only once something under it draws.
   final _entered = <(ContainerLayer, Matrix4?, bool)>[];
   final _saves = <int>[];
 
   Color? _veil;
 
-  /// Replays the slot, answering the veil left for the shader to lay over it.
   Color run() {
     _walk(entry.root, root: true);
     return _veil ?? const Color(0x00000000);
@@ -97,8 +94,6 @@ class _Replay {
   }
 
   void _draw(ui.Picture picture) {
-    // What the canvas has applied so far lay over the veil too, and neither
-    // tints nor cuts it.
     if (_veil case final veil?) {
       canvas.drawPaint(Paint()..color = veil);
       drawn.add(veil);
@@ -201,7 +196,6 @@ class _Replay {
           ..clipPath(clipPath, doAntiAlias: clipBehavior != Clip.hardEdge);
         clip = clipPath;
       default:
-        // Lib clips to no rounded rect, so a package's clips by its bounds here.
         final bounds = layer.describeClipBounds();
         if (bounds == null) {
           return false;

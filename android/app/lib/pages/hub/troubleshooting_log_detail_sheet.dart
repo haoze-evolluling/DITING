@@ -1,6 +1,3 @@
-/// First level of one log file: file information, an entry card to its full text, and the
-/// per-file share/download/delete actions. Pops with a [TroubleshootLogSheetResult] so
-/// [TroubleshootingLogsPage] can toast, refresh, or open the text page once the sheet is gone.
 library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
@@ -12,11 +9,8 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// What the sheet did before it closed; the timeline turns it into a toast, a refresh or a push.
 enum TroubleshootLogSheetAction { content, shared, downloaded, deleted }
 
-/// The sheet's answer. [path] only carries a value for [TroubleshootLogSheetAction.downloaded],
-/// where it is the exact `Download/<name>` the file landed at (MediaStore may rename a duplicate).
 class TroubleshootLogSheetResult {
   const TroubleshootLogSheetResult._(this.action, this.path);
 
@@ -68,7 +62,6 @@ class _TroubleshootingLogDetailSheetState
     Navigator.of(context).pop(const TroubleshootLogSheetResult.shared());
   }
 
-  /// Writes the file into Download and hands the exact path back to the page for the toast.
   Future<void> _download() async {
     if (_busy) return;
     setState(() => _busy = true);

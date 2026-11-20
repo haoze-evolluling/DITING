@@ -1,9 +1,3 @@
-//! The DNS batch: counters for every row, `dns_log` rows for the ones the mode keeps.
-//!
-//! Both entry points share [`classify_dns_batch`], so the counters cannot see a different set of
-//! rows than the writer. [`dns_batch_submit`] exists so the classification and the writer queue
-//! happen in one crossing instead of handing every row back to Kotlin only to re-pack it.
-
 use crate::payload::{Reader, Writer};
 use crate::queue::Queue;
 use crate::row::{dns_row, DnsInput, DnsRow, LogMode};
@@ -26,11 +20,6 @@ fn decode_dns_input(reader: &mut Reader<'_>) -> Option<DnsInput> {
     })
 }
 
-/// Decodes one DNS batch, feeds the counters and classifies every row the mode keeps.
-///
-/// The counters are fed from every row *before* the mode filter, because the notification shows
-/// requests with logging switched off too. The rows are already in the layout the writer queue
-/// carries (`pack_dns_row`), so no caller has to decode and re-pack them.
 fn classify_dns_batch(
     stats: &Stats,
     mode: LogMode,
@@ -51,7 +40,6 @@ fn classify_dns_batch(
         stats.record_dns(input);
     }
     if mode == LogMode::Off {
-        // Counted, not logged: the notification still shows requests while logging is off.
         return Some(Vec::new());
     }
 
@@ -64,29 +52,11 @@ fn classify_dns_batch(
     )
 }
 
-/// `u32 count` then the rows; answers with the rows `dns_log` should receive, each one already in
-/// the layout the writer queue carries.
 pub fn dns_batch(stats: &Stats, mode: LogMode, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let rows = classify_dns_batch(stats, mode, payload, now_ms)?;
-    // `u32 count | rows(u32 length | bytes)`, the same packing the writer queues carry, so Kotlin
-    // only unpacks each blob into `dns_log` columns.
     Some(super::rows_payload(&rows))
 }
 
-/// Classify one DNS batch and enqueue it in a single call.
-///
-/// Kotlin used to call `dnsBatch` (answer: one blob per row), unpack every row into a `ByteArray`,
-/// hand the `List` back to `queueSubmitMany` for re-packing, and let this crate decode the blobs
-/// again. The rows never need to leave the kernel: this entry point classifies them and hands them
-/// to the writer queue directly, over one crossing.
-///
-/// Answers:
-///
-/// ```text
-/// u8 0  queue closed, nothing enqueued
-/// u8 1  nothing enqueued (logging off, or the mode hid every row)
-/// u8 2  u32 overflow | u8 batch_full | i64 flush_delay_ms
-/// ```
 pub fn dns_batch_submit(
     stats: &Stats,
     queue: &Queue,
@@ -103,7 +73,6 @@ fn pack_dns_row(row: &DnsRow) -> Vec<u8> {
     writer.i64(row.timestamp);
     writer.string(&row.query_name);
     writer.i32(row.query_type);
-    // The name, not the tag: these bytes are also the row the writer queue carries.
     writer.string(row.result.as_str());
     write_optional(&mut writer, row.message.as_deref());
     writer.u8(if row.cached { 1 } else { 0 });
@@ -117,7 +86,6 @@ mod tests {
     use super::*;
     use crate::api::read_optional;
 
-    /// Splits a `u32 count | rows(u32 length | bytes)` answer, the way Kotlin reads it.
     fn split_rows(payload: &[u8]) -> Vec<Vec<u8>> {
         let mut reader = Reader::new(payload);
         let count = reader.u32().unwrap() as usize;
@@ -137,7 +105,6 @@ mod tests {
         }
     }
 
-    /// Two rows: one passed query with a cache hit, one blocked by the firewall.
     fn two_row_batch() -> Vec<u8> {
         let mut writer = Writer::new();
         writer.u32(2);
@@ -201,7 +168,6 @@ mod tests {
         assert_eq!(read_optional(&mut reader), Some(None));
         assert!(reader.finish());
 
-        // Only the first row is a query: the counters keep `firewall:` lines out.
         assert_eq!(stats.request_snapshot().total, 1);
         assert_eq!(stats.request_snapshot().passed, 1);
         assert_eq!(stats.request_snapshot().cached, 1);
@@ -212,11 +178,8 @@ mod tests {
         let mut reader = Reader::new(&rows[0]);
         assert_eq!(reader.i64(), Some(100));
         assert_eq!(reader.string().as_deref(), Some("ads.example"));
-        // Same payload again: the counters are per batch, so the query counts once more.
         assert_eq!(stats.request_snapshot().total, 2);
 
-        // MODE_OFF still counts but logs nothing: the answer is an honest zero-count payload, not
-        // an empty one the Kotlin reader would trip over.
         let off = dns_batch(&stats, LogMode::Off, &payload, 7).unwrap();
         assert_eq!(off, vec![0, 0, 0, 0]);
         assert_eq!(stats.request_snapshot().total, 3);
@@ -240,7 +203,6 @@ mod tests {
         assert_eq!(queue.pending_len(), 2);
         assert_eq!(stats.request_snapshot().total, 1);
 
-        // The mode filter still applies inside the batch, and the counters still see every row.
         let answer =
             dns_batch_submit(&stats, &queue, LogMode::BlockedAndErrors, &payload, 5).unwrap();
         let mut reader = Reader::new(&answer);
@@ -248,7 +210,6 @@ mod tests {
         assert_eq!(queue.pending_len(), 3);
         assert_eq!(stats.request_snapshot().total, 2);
 
-        // Logging off feeds the counters and answers the "hidden" status; nothing is enqueued.
         let answer = dns_batch_submit(&stats, &queue, LogMode::Off, &payload, 5).unwrap();
         assert_eq!(answer, vec![1]);
         assert_eq!(queue.pending_len(), 3);

@@ -9,8 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Data cleanup (upstream `DataCleanupScreen`, 1.4.3 `DataCleanupManager`). All sixteen actions
-/// really run; confirmation copy is verbatim from the legacy `CleanupAction.message`.
 class DataCleanupPage extends ConsumerWidget {
   const DataCleanupPage({super.key});
 
@@ -55,8 +53,6 @@ class DataCleanupPage extends ConsumerWidget {
                           .copyWith(color: context.colorScheme.error),
                     ),
                     subtitle: Text(_descriptionOf(context.l10n, action)),
-                    // The whole list is disabled while running: two actions deleting the
-                    // same table block each other and make the counts meaningless.
                     onTap: running == null
                         ? () => _confirm(context, ref, action)
                         : null,
@@ -97,20 +93,13 @@ class DataCleanupPage extends ConsumerWidget {
     final result = await ref.read(cleanupRunnerProvider).run(action);
     if (!context.mounted) return;
 
-    // Failures and "nothing to clean" both explain themselves in a SnackBar: a silent
-    // success is the worst outcome, since the data would still be there next time.
     showAppSnack(context, result.message);
 
-    // The legacy version exits the app for these two: they clear the first-run agreement
-    // flag, and staying alive would split "running" from "must agree again".
     if (action.exitsApp) {
       await _exitApp(context);
     }
   }
 
-  /// Exits the app (legacy `onExitApp`). `SystemNavigator.pop()` rather than `exit(0)`: the
-  /// latter skips Android lifecycle callbacks, so foreground services keep running and a
-  /// stale notification stays.
   Future<void> _exitApp(BuildContext context) async {
     final confirmed = await showFloatingDialog<bool>(
       context: context,

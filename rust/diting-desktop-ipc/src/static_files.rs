@@ -1,5 +1,3 @@
-//! SPA asset serving with the Go handler's MIME and cache behaviour.
-
 use hyper::header::HeaderValue;
 use hyper::http::StatusCode;
 
@@ -26,7 +24,6 @@ fn placeholder() -> Resp {
     html(assets::PLACEHOLDER.to_vec(), StatusCode::OK)
 }
 
-/// Serves a static path, falling back to `index.html` for client-side routes.
 pub fn serve(path: &str) -> Resp {
     if path.starts_with("/api/") {
         return json_response(

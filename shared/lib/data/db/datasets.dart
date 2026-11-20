@@ -1,5 +1,3 @@
-/// The work-mode data sets: every mode owns one prefs container, one rules database and one logs
-/// database, so switching modes switches all three.
 library;
 
 import 'package:diting_shared/data/db/rule_index_bridge.dart';
@@ -27,19 +25,14 @@ enum DataSet {
     required this.ruleIndex,
   });
 
-  /// Container for every DNS-domain key (providers, resolution mode, cache, rules toggles…).
   final String prefsContainer;
 
-  /// Rules and subscriptions of this mode.
   final String ruleDatabase;
 
-  /// Runtime tables (logs, cache, traffic) of this mode.
   final String logsDatabase;
 
-  /// Native rule-trie namespace refreshed after writes to this data set.
   final RuleIndexDataset ruleIndex;
 
-  /// `app_work_mode` storage values: `normal` / `express`.
   static DataSet fromWorkModeValue(String value) => switch (value) {
     'express' => DataSet.express,
     _ => DataSet.normal,

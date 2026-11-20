@@ -6,7 +6,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
-/// Avatar disk cache outside the APK; Dart has no path_provider, writes use a `.part` file.
 class RecognitionAvatarBridge(private val context: Context) :
     MethodChannel.MethodCallHandler {
 
@@ -16,7 +15,6 @@ class RecognitionAvatarBridge(private val context: Context) :
         private const val DIR = "recognition_avatars"
         private const val MAX_BYTES = 1024 * 1024
 
-        /// Whitelist only; anything else is treated as missing
         private val NAME_PATTERN = Regex("^[a-z0-9_]+_avatar\\.jpg$")
     }
 

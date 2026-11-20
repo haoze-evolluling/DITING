@@ -1,9 +1,3 @@
-/// The cached names as a table: a server-side search over name and record type, a client-side
-/// state filter, and the TTL each entry has left.
-///
-/// The old desktop console's `CacheEntriesTable.vue` is the blueprint. The search goes to
-/// `/api/v1/cache/entries` (the service counts the total); the four chips only narrow the page that
-/// already came back, because that is what the console does and re-querying would change `total`.
 library;
 
 import 'dart:async';
@@ -23,7 +17,6 @@ const double _statusWidth = 96;
 const double _ttlWidth = 92;
 const double _hitsWidth = 64;
 
-/// Below this the initial TTL and the address column are dropped; the rest still fits.
 const double _wideBreakpoint = 760;
 
 class CacheEntriesCard extends ConsumerStatefulWidget {
@@ -34,8 +27,6 @@ class CacheEntriesCard extends ConsumerStatefulWidget {
 }
 
 class _CacheEntriesCardState extends ConsumerState<CacheEntriesCard> {
-  /// Every keystroke would otherwise issue a search against the service; 250 ms matches the log
-  /// page's own debounce.
   static const _searchDebounce = Duration(milliseconds: 250);
 
   final _search = TextEditingController();

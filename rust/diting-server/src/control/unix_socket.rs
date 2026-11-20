@@ -1,5 +1,3 @@
-//! Filesystem Unix-domain socket implementation.
-
 use std::ffi::CString;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::PermissionsExt;
@@ -17,8 +15,6 @@ pub struct BoundControlSocket {
     listener: std::os::unix::net::UnixListener,
 }
 
-/// Creates the private control socket before privileges are dropped. Ownership is transferred to
-/// the app UID so the Flutter process can talk to a process that is otherwise unprivileged.
 pub fn bind_socket(
     path: &Path,
     uid: Option<u32>,

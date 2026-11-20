@@ -1,9 +1,3 @@
-//! `TraceProbe`'s reading of one `ping -t <ttl>` run.
-//!
-//! Hop-by-hop traceroute borrows the system `ping` binary (no root, no `traceroute`), so one hop is
-//! one process run and one text blob. The process, its streaming reader, the first-response stamp
-//! and the loop stay in Kotlin; the kernel answers "what does this output say about this TTL".
-
 use std::sync::LazyLock;
 
 use regex::Regex;
@@ -12,7 +6,6 @@ const SPACE: &str = r"[ \t\n\x0B\f\r]";
 const NOT_SPACE: &str = r"[^ \t\n\x0B\f\r]";
 const ANY: &str = r"[^\n\r\x{85}\x{2028}\x{2029}]";
 
-/// `from\s+(\S+):\s+(?:icmp_seq|seq)=\d+.*?time=([0-9.]+)\s*ms`
 static REPLY: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(&format!(
         "from{SPACE}+({NOT_SPACE}+):{SPACE}+(?:icmp_seq|seq)=[0-9]+{ANY}*?time=([0-9.]+){SPACE}*ms"
@@ -20,7 +13,6 @@ static REPLY: LazyLock<Regex> = LazyLock::new(|| {
     .expect("trace reply pattern")
 });
 
-/// `From\s+(.+?)\s*:??\s*icmp_seq=\d+\s+(.*)`
 static FROM: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(&format!(
         "From{SPACE}+({ANY}+?){SPACE}*:??{SPACE}*icmp_seq=[0-9]+{SPACE}+({ANY}*)"
@@ -28,26 +20,18 @@ static FROM: LazyLock<Regex> = LazyLock::new(|| {
     .expect("trace from pattern")
 });
 
-/// What one hop's output means.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Hop {
-    /// The target itself answered.
     Reached {
         address: Option<String>,
         elapsed_ms: Option<f64>,
     },
-    /// A router answered, possibly with an ICMP unreachable.
     Answered { address: String, unreachable: bool },
-    /// No hop address, but the run says the network could not send a probe at all.
     NetUnreachable,
-    /// No pattern matched: the hop timed out.
     NoMatch,
-    /// The binary does not support `-t` (`Usage:` / `invalid option`).
     Unsupported,
 }
 
-/// `TraceProbe`'s per-hop parse. `resolved` is the address the caller resolved the target to; it
-/// fills in a reply line whose `from` group came back empty.
 pub fn parse_hop(text: &str, resolved: &str) -> Hop {
     if text.contains("Usage:") || text.contains("invalid option") {
         return Hop::Unsupported;
@@ -75,8 +59,6 @@ pub fn parse_hop(text: &str, resolved: &str) -> Hop {
         let unreachable = captures
             .get(2)
             .map(|m| {
-                // `contains("unreach", ignoreCase = true)`: Java compares character by character,
-                // a lowercase fold finds the same ASCII needle.
                 m.as_str().to_lowercase().contains("unreach")
             })
             .unwrap_or(false);
@@ -92,7 +74,6 @@ pub fn parse_hop(text: &str, resolved: &str) -> Hop {
     Hop::NoMatch
 }
 
-/// The streaming reader's stamp line: `contains("time=") || startsWith("From ")`.
 pub fn is_response_line(line: &str) -> bool {
     line.contains("time=") || line.starts_with("From ")
 }

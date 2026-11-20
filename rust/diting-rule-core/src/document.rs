@@ -1,9 +1,3 @@
-//! Per-line entry point and whole-document aggregation; a port of `rule_parser.dart`.
-//!
-//! `parse_document` collects `$badfilter` keys while it parses instead of scanning the text twice,
-//! which is what the Dart original did. Removal happens after every line is classified, so the two
-//! orders produce the same rules and the same counters.
-
 use std::collections::HashMap;
 
 use crate::fast_hash::FxBuildHasher;
@@ -13,7 +7,6 @@ use crate::keys::{allow_key_of, block_key_of, rewrite_key_of, url_key};
 use crate::line::{is_cosmetic_rule_line, parse_line_without_state};
 use crate::models::{CategorizedLine, CategorizedRules, ParsedCosmeticRule, ParsedRule};
 
-/// Parses one line without cross-line state (for streaming imports).
 pub fn parse_categorized_line(original_line: &str) -> CategorizedLine {
     let line = original_line.trim().trim_start_matches('\u{FEFF}');
     if line.is_empty()
@@ -36,11 +29,6 @@ pub fn parse_categorized_line(original_line: &str) -> CategorizedLine {
     parse_line_without_state(line, original_line, allow)
 }
 
-/// Insertion-ordered dedupe: first occurrence wins, later ones count as duplicates.
-///
-/// The map owns the keys and the vector only holds values, so inserting a rule allocates the key
-/// once. Removing a `$badfilter` key leaves a hole that [`Dedupe::into_values`] skips, which keeps
-/// the remaining rules in their original order without rebuilding the index.
 struct Dedupe<T> {
     index: HashMap<String, usize, FxBuildHasher>,
     entries: Vec<Option<T>>,
@@ -56,7 +44,6 @@ impl<T> Default for Dedupe<T> {
 }
 
 impl<T> Dedupe<T> {
-    /// Returns 1 when the key was already present, 0 on insert, to accumulate `duplicateCount`.
     fn add(&mut self, key: String, value: T) -> u32 {
         match self.index.entry(key) {
             std::collections::hash_map::Entry::Occupied(_) => 1,
@@ -204,7 +191,6 @@ mod tests {
 
     #[test]
     fn parses_dnsrewrite_targets() {
-        // `::1` is a sinkhole address, so that line becomes a block rule, not a rewrite.
         let parsed = parse_document(
             "||a.example.com^$dnsrewrite=1.2.3.4\n||b.example.com^$dnsrewrite=::2\n||c.example.com^$dnsrewrite=other.example.com\n||d.example.com^$dnsrewrite=NXDOMAIN",
         );

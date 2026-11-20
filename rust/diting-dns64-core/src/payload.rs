@@ -1,22 +1,7 @@
-//! The binary layouts shared with `desktop/service/internal/core/dns64_native.go`.
-//!
-//! Little endian, a layout byte first. Addresses travel as a one-byte width plus that many bytes,
-//! which is exactly how Go hands them over: 4 bytes for `IP.To4()`, 16 bytes for a parsed IPv6
-//! address, 0 for a nil one.
-//!
-//! ```text
-//! new:       u8 layout | u16 count | (u32 len | text) * count
-//! addresses: u8 layout | u16 count | (u8 width | bytes) * count
-//! result:    u8 layout | u8 count | 16-byte address * count
-//! ```
-
-/// Layout version of every payload below; `dns64PayloadLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// The widest address the layouts carry; anything longer is a corrupt payload.
 const MAX_WIDTH: usize = 16;
 
-/// Encodes the configured prefix list.
 pub fn encode_prefixes(prefixes: &[String]) -> Vec<u8> {
     let mut out = Vec::with_capacity(3);
     out.push(LAYOUT_VERSION);
@@ -27,7 +12,6 @@ pub fn encode_prefixes(prefixes: &[String]) -> Vec<u8> {
     out
 }
 
-/// Decodes [`encode_prefixes`]: this is how `diting_dns64_new` reads its argument.
 pub fn decode_prefixes(data: &[u8]) -> Result<Vec<String>, String> {
     let mut reader = Reader::new(data);
     reader.layout("prefixes")?;
@@ -40,7 +24,6 @@ pub fn decode_prefixes(data: &[u8]) -> Result<Vec<String>, String> {
     Ok(prefixes)
 }
 
-/// Encodes an address list for the AAAA check.
 pub fn encode_addresses(addresses: &[&[u8]]) -> Vec<u8> {
     let mut out = Vec::with_capacity(3 + addresses.len() * 17);
     out.push(LAYOUT_VERSION);
@@ -52,7 +35,6 @@ pub fn encode_addresses(addresses: &[&[u8]]) -> Vec<u8> {
     out
 }
 
-/// Decodes [`encode_addresses`].
 pub fn decode_addresses(data: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     let mut reader = Reader::new(data);
     reader.layout("addresses")?;
@@ -69,7 +51,6 @@ pub fn decode_addresses(data: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     Ok(addresses)
 }
 
-/// Encodes synthesized addresses for Go to wrap in `dns.AAAA`.
 pub fn encode_result(addresses: &[[u8; 16]]) -> Vec<u8> {
     let mut out = Vec::with_capacity(2 + addresses.len() * 16);
     out.push(LAYOUT_VERSION);

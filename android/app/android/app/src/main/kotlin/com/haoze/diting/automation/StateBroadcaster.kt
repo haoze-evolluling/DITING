@@ -10,24 +10,17 @@ import com.haoze.diting.normal.DitingVpnService
 import com.haoze.diting.root.RootDnsService
 import com.haoze.diting.server.ServerDnsService
 
-/// 状态广播器（A5）：把当前数据面状态整理后交给 EventNative 生成冻结 JSON，再以签名权限广播。
-///
-/// 广播故意不带 setPackage：接收方由 RECEIVE_EVENTS 签名权限限定，同一份事件既能被本应用内的
-/// Dart/native 监听者收到，也能被同签名的外部自动化应用（如 Tasker 插件）订阅。
 object StateBroadcaster {
     private const val TAG = "StateBroadcaster"
 
     fun broadcast(context: Context) {
         val appContext: Context = context.applicationContext
-        // 状态广播是“尽力而为”的可观测能力，任何异常都不能反噬触发它的控制/刷新流程。
         runCatching { broadcastInternal(appContext) }
             .onFailure { Log.w(TAG, "构建或发送状态广播失败", it) }
     }
 
     private fun broadcastInternal(context: Context) {
         val workMode: String = DataPlaneControl.workMode(context)
-        // 各数据面（普通、极速、服务器、Root DNS）各自持有 status()，字段名一致
-        // （running/reclaiming/persisted/error/startedAt）。
         val status: Map<String, Any?> = when {
             workMode == DataPlaneControl.WORK_MODE_SERVER -> ServerDnsService.status()
             workMode == DataPlaneControl.WORK_MODE_EXPRESS -> ExpressVpnService.status(context)

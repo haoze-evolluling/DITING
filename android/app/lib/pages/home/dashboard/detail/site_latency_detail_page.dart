@@ -13,9 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Site latency detail: every site grouped by category, each group probed on demand. Nothing runs
-/// on open — a page that probes 44 hosts on arrival both stalls and burns traffic — so the user
-/// picks a category, or asks for everything with the app-bar action.
 class SiteLatencyDetailPage extends ConsumerStatefulWidget {
   const SiteLatencyDetailPage({super.key});
 
@@ -145,8 +142,6 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
     );
   }
 
-  /// Probes one category, or every category when [category] is null. Groups already running are
-  /// skipped, so tapping another group's button while one is in flight does not restart it.
   Future<void> _probe(SiteCategory? category) async {
     final List<SiteCategory> pending;
     if (category == null) {

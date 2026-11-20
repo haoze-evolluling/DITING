@@ -1,13 +1,6 @@
-// Detail-panel sections of [AppRulesPage]: allowlisted domains and DNS-scoped rules.
-//
-// Split out only to keep the page file under 600 lines; an extension still sees the state's
-// private helpers. Both sections build their rows through lazy slivers so a package with
-// thousands of entries stays a flat first frame.
 part of 'app_rules_page.dart';
 
 extension _AppRulesDetail on _AppRulesPageState {
-  /// Same rationale as [_allowDomainSlivers]: a package can carry hundreds of scoped rules, and
-  /// they must not all be inflated before the first frame.
   List<Widget> _scopedRuleSlivers(InstalledApp app) {
     final actions = [
       IconButtonData(
@@ -57,7 +50,6 @@ extension _AppRulesDetail on _AppRulesPageState {
     );
   }
 
-  /// A single info row for the loading, unreadable and empty states of the scoped-rule section.
   List<Widget> _scopedNotice(
     List<IconButtonData> actions,
     String title,
@@ -80,8 +72,6 @@ extension _AppRulesDetail on _AppRulesPageState {
     ];
   }
 
-  /// Header-only when there is nothing to list; the rows themselves are built by a lazy sliver, so
-  /// an app with thousands of allowlisted domains no longer inflates them all in one frame.
   List<Widget> _allowDomainSlivers(
     AppRulesDraft draft,
     InstalledApp app,
@@ -127,7 +117,6 @@ extension _AppRulesDetail on _AppRulesPageState {
     );
   }
 
-  /// Trailing section of the detail panel: the outer-network switch for this package.
   Widget _detailFooter(InstalledApp app, AsyncValue<AppScopedRules> rules) {
     final fullBlock = rules.value?.fullBlock ?? false;
     return Column(

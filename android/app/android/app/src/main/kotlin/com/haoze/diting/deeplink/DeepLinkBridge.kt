@@ -6,12 +6,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Native half of `com.haoze.diting/deeplink`: hands Dart the `diting://install-config?url=...`
-/// link that opened the app.
-///
-/// A cold start carries the link on `Activity.intent`, which Dart pulls once with
-/// `consumeInitialLink`; a warm start arrives through `onNewIntent` and is pushed as `onLink`. The
-/// two paths never overlap, so one link is imported exactly once.
 class DeepLinkBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {
@@ -21,7 +15,6 @@ class DeepLinkBridge(private val activity: Activity) : MethodChannel.MethodCallH
 
     private var channel: MethodChannel? = null
 
-    /// Read during engine configuration, which runs after `onCreate` set the launch intent.
     private var initialLink: String? = extractLink(activity.intent)
 
     fun register(messenger: BinaryMessenger) {
@@ -41,7 +34,6 @@ class DeepLinkBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
     }
 
-    /// Called from `MainActivity.onNewIntent`; a non-deep-link intent is ignored.
     fun handleNewIntent(intent: Intent) {
         val link = extractLink(intent) ?: return
         channel?.invokeMethod("onLink", link)

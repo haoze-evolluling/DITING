@@ -1,10 +1,3 @@
-//! The data-plane skeleton end to end: reader thread, bounded queue, protected dial, callback thread.
-//!
-//! The packet source is the in-memory [`LoopbackSource`] (there is no Android TUN device on a host) and
-//! the upstream is a real loopback TCP server, so the ordering claims — protect before connect,
-//! packets written to the protected socket, callbacks from one thread, nothing after `stop` — are
-//! observed rather than asserted from a comment.
-
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -16,7 +9,6 @@ use diting_tun_spike::pipeline::{self, Config};
 use diting_tun_spike::protector::Protector;
 use diting_tun_spike::RawSocket;
 
-/// An upstream that drains whatever the pipeline writes and counts the bytes.
 struct Upstream {
     addr: SocketAddr,
     bytes: Arc<AtomicU64>,
@@ -62,7 +54,6 @@ fn drain(mut stream: TcpStream, counter: Arc<AtomicU64>) {
     }
 }
 
-/// A protector that records the calls and can be told to refuse.
 struct TestProtector {
     allow: AtomicBool,
     fd_positive: AtomicBool,
@@ -139,7 +130,6 @@ fn packets_reach_the_protected_upstream_and_the_callback_thread() {
         dispatcher.stats()
     );
 
-    // One protected dial for the whole flow, and every packet written to it.
     assert_eq!(protector.calls(), 1, "protect runs once per connection");
     assert!(protector.fd_positive.load(Ordering::SeqCst));
     assert_eq!(running.evidence.protect_calls.load(Ordering::SeqCst), 1);
@@ -164,8 +154,6 @@ fn packets_reach_the_protected_upstream_and_the_callback_thread() {
 
     running.stop();
     let delivered = dispatcher.stats().delivered;
-    // `stop` closed the source (push is refused) and joined the worker before closing the callback
-    // thread, so nothing can be delivered afterwards.
     assert!(!source.push(vec![0u8; 64]));
     std::thread::sleep(Duration::from_millis(100));
     assert_eq!(dispatcher.stats().delivered, delivered);
@@ -197,7 +185,6 @@ fn a_refused_protect_stops_the_pipeline_without_dialling() {
     assert_eq!(running.evidence.denied.load(Ordering::SeqCst), 1);
     assert_eq!(running.evidence.connects.load(Ordering::SeqCst), 0);
     assert_eq!(dispatcher.stats().delivered, 0);
-    // Fail closed: no connection ever reached the upstream.
     std::thread::sleep(Duration::from_millis(100));
     assert_eq!(upstream.connections.load(Ordering::SeqCst), 0);
 
@@ -209,7 +196,6 @@ fn a_full_queue_drops_packets_instead_of_blocking_the_reader() {
     let upstream = upstream();
     let source = LoopbackHandle::new();
     let protector = TestProtector::new(true);
-    // The worker is busy in `protect` for 150 ms; a queue of one cannot hold the burst.
     *protector
         .delay
         .lock()
@@ -229,7 +215,6 @@ fn a_full_queue_drops_packets_instead_of_blocking_the_reader() {
     for _ in 0..100 {
         source.push(vec![2u8; 64]);
     }
-    // Feeding must never block on the worker.
     assert!(started.elapsed() < Duration::from_secs(2));
     assert!(
         wait_until(Duration::from_secs(5), || {
@@ -260,7 +245,6 @@ fn stop_is_idempotent_and_joins_every_thread() {
 
     running.stop();
     running.stop();
-    // The callback thread is gone, so a dispatch is a counted drop rather than a hang.
     assert!(!dispatcher.dispatch("late".to_string()));
     assert_eq!(dispatcher.stats().dropped, 1);
 }

@@ -1,19 +1,3 @@
-//! The MITM configuration Kotlin pushes independently of the session: cosmetic rules, request rules
-//! and the HTTP event callback.
-//!
-//! All three were engine fields in Go (`SetCosmeticRules`, `SetRequestRules`, `httpLogCallback`) and
-//! are read on the relay's hot path, so they are published behind a lock as an `Arc` and cloned
-//! before use: a settings push during a page load changes nothing about the page in flight.
-//!
-//! The payload shapes are Kotlin's, so the JSON decode stays here (`encoding/json` did it in Go) and
-//! the compiled form is the kernel's:
-//!
-//! ```text
-//! cosmetic: {"globalHide":[…],"globalException":[…],
-//!            "domains":{"example.com":{"hide":[…],"exception":[…]}}}
-//! request : [{"pattern":"https://example.com/path","kind":"block"}]
-//! ```
-
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
@@ -22,13 +6,10 @@ use diting_cosmetic_core::{DomainRules, RuleSet, Rules};
 use diting_request_core::match_rule;
 use diting_request_core::rules::{normalize_all, Rule};
 
-/// `HttpLogCallback.onHttpEvent(String, String, String, String, String)`, installed by Kotlin.
 pub trait HttpLogSink: Send + Sync + 'static {
-    /// `(package, authority, protocol, outcome, matched rule)`.
     fn event(&self, package: &str, authority: &str, protocol: &str, outcome: &str, rule: &str);
 }
 
-/// The three pushed settings.
 pub struct MitmSettings {
     cosmetic: RwLock<Arc<RuleSet>>,
     cosmetic_payload_bytes: AtomicU64,
@@ -52,8 +33,6 @@ impl MitmSettings {
         }
     }
 
-    /// `SetCosmeticRules`: an empty payload disables injection, an undecodable one still injects the
-    /// `<link>` but serves the "invalid rules" sentinel stylesheet (that is the kernel's split).
     pub fn set_cosmetic_rules(&self, payload: &str) {
         let bytes = payload.len() as u64;
         let compiled = compile_cosmetic(payload);
@@ -64,7 +43,6 @@ impl MitmSettings {
         self.cosmetic_payload_bytes.store(bytes, Ordering::Release);
     }
 
-    /// `cosmeticRulesEmpty()`: injection is skipped entirely without a payload.
     pub fn cosmetic_rules_empty(&self) -> bool {
         self.cosmetic().is_empty()
     }
@@ -76,13 +54,10 @@ impl MitmSettings {
             .clone()
     }
 
-    /// `len(cosmeticCSS)`: the `/health` route reports it as `css_bytes`.
     pub fn cosmetic_payload_bytes(&self) -> u64 {
         self.cosmetic_payload_bytes.load(Ordering::Acquire)
     }
 
-    /// `SetRequestRules`: a malformed payload leaves the previous table in place, and the rules the
-    /// kernel cannot match are dropped silently.
     pub fn set_request_rules(&self, payload: &str) -> Result<(), String> {
         if payload.trim().is_empty() {
             *self
@@ -118,10 +93,6 @@ impl MitmSettings {
             .clone()
     }
 
-    /// `requestFilterDecision`: the URL rules first, then the domain fallback the caller runs.
-    ///
-    /// `None` means no rule matched, so the caller has to ask the domain-rules kernel about
-    /// `decision.domain_host` (which is the host with its default port stripped).
     pub fn request_decision(
         &self,
         scheme: &str,
@@ -135,7 +106,6 @@ impl MitmSettings {
         Some(match_rule::decide(&rules, scheme, host, path))
     }
 
-    /// `setHttpLogCallback`; a null stops reporting.
     pub fn set_http_log(&self, sink: Option<Arc<dyn HttpLogSink>>) {
         *self
             .http_log
@@ -150,7 +120,6 @@ impl MitmSettings {
             .clone()
     }
 
-    /// `logHTTPEvent`: one row per relay decision, `unknown` when the flow has no package.
     pub fn log_http(
         &self,
         package: &str,
@@ -171,7 +140,6 @@ impl MitmSettings {
     }
 }
 
-/// The cosmetic payload as the kernel wants it.
 fn compile_cosmetic(payload: &str) -> RuleSet {
     if payload.trim().is_empty() {
         return RuleSet::Empty;

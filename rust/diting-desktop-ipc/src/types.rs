@@ -1,14 +1,10 @@
-//! Request/response payloads that belong to the HTTP contract rather than the controllers.
-
 use serde::{Deserialize, Serialize};
 
-/// `ipc.MetaResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MetaResponse {
     pub os: String,
 }
 
-/// `ipc.AuthStatusResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthStatusResponse {
@@ -20,7 +16,6 @@ pub struct AuthStatusResponse {
     pub lockout_remaining_sec: i64,
 }
 
-/// `ipc.LoginRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginRequest {
@@ -30,7 +25,6 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-/// `ipc.LoginResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginResponse {
@@ -39,7 +33,6 @@ pub struct LoginResponse {
     pub expires_at: i64,
 }
 
-/// `ipc.SetupAuthRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SetupAuthRequest {
@@ -49,7 +42,6 @@ pub struct SetupAuthRequest {
     pub password: String,
 }
 
-/// `ipc.ChangePasswordRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangePasswordRequest {
@@ -61,7 +53,6 @@ pub struct ChangePasswordRequest {
     pub new_password: String,
 }
 
-/// `ipc.AutofixPortRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutofixPortRequest {
@@ -69,7 +60,6 @@ pub struct AutofixPortRequest {
     pub start_dns: bool,
 }
 
-/// `ipc.SetLoginBackgroundRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SetLoginBackgroundRequest {
@@ -85,7 +75,6 @@ pub struct SetLoginBackgroundRequest {
     pub admin_password: String,
 }
 
-/// `ipc.ParseStampRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParseStampRequest {
@@ -93,7 +82,6 @@ pub struct ParseStampRequest {
     pub stamp: String,
 }
 
-/// `ipc.StampProps`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StampProps {
@@ -105,7 +93,6 @@ pub struct StampProps {
     pub no_filter: bool,
 }
 
-/// `ipc.ParseStampResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ParseStampResponse {

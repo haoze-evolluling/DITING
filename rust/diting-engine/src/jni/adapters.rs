@@ -1,25 +1,3 @@
-//! The four data-plane callbacks Kotlin installs on the engine.
-//!
-//! They are the ones gomobile generated for the Go engine, with the same argument lists:
-//!
-//! | Kotlin | descriptor |
-//! |---|---|
-//! | `SocketProtector.protect(long): boolean` | `(J)Z` |
-//! | `UIDResolver.resolveUID(long, byte[], long, byte[], long): long` | `(J[BJ[BJ)J` |
-//! | `AppUidResolver.packageForUid(long): String` | `(J)Ljava/lang/String;` |
-//! | `TrafficCallback.onTrafficStatsTick(byte[])` | `([B)V` |
-//!
-//! # Threads
-//!
-//! * `protect` is called **on the thread that is about to dial** (a tokio worker or the stack
-//!   thread) and must stay synchronous: the socket is not connected until it returns.
-//! * the UID/package lookups run on the stack thread.
-//! * the traffic tick comes from the engine's ticker task.
-//!
-//! Each call attaches the calling thread permanently and clears a Java exception afterwards, so a
-//! throwing Kotlin callback degrades to "unknown"/"denied" instead of poisoning the JNI environment
-//! for the next call. This mirrors the log callbacks in [`super::callbacks`].
-
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
@@ -32,16 +10,11 @@ use crate::attribution::{AppUidResolver, UidResolver};
 use crate::engine::TrafficSink;
 use crate::protect::Protector;
 
-/// `SocketProtector.protect(long): boolean`.
 pub const PROTECT_SIGNATURE: &str = "(J)Z";
-/// `UIDResolver.resolveUID(long, byte[], long, byte[], long): long`.
 pub const UID_SIGNATURE: &str = "(J[BJ[BJ)J";
-/// `AppUidResolver.packageForUid(long): String`.
 pub const APP_SIGNATURE: &str = "(J)Ljava/lang/String;";
-/// `TrafficCallback.onTrafficStatsTick(byte[])`.
 pub const TRAFFIC_SIGNATURE: &str = "([B)V";
 
-/// Captures the JVM and one callback object.
 fn capture(
     env: &mut JNIEnv<'_>,
     callback: &JObject<'_>,
@@ -49,7 +22,6 @@ fn capture(
     Ok((env.get_java_vm()?, env.new_global_ref(callback)?))
 }
 
-/// Attaches the calling thread and clears a pending Java exception afterwards.
 fn with_env<R>(vm: &JavaVM, call: impl FnOnce(&mut JNIEnv<'_>) -> Option<R>, default: R) -> R {
     let mut env = match vm.attach_current_thread_permanently() {
         Ok(env) => env,
@@ -62,7 +34,6 @@ fn with_env<R>(vm: &JavaVM, call: impl FnOnce(&mut JNIEnv<'_>) -> Option<R>, def
     result
 }
 
-/// `VpnService.protect`, called before every outbound `connect`.
 pub struct JniProtector {
     vm: JavaVM,
     target: GlobalRef,
@@ -90,13 +61,11 @@ impl Protector for JniProtector {
                 .z()
                 .ok()
             },
-            // A throwing protector is a refusal: the dialer fails closed.
             false,
         )
     }
 }
 
-/// `ConnectivityManager.getConnectionOwnerUid` behind the optional kernel cache.
 pub struct JniUidResolver {
     vm: JavaVM,
     target: GlobalRef,
@@ -121,8 +90,6 @@ impl UidResolver for JniUidResolver {
         with_env(
             &self.vm,
             |env| {
-                // Raw wire bytes: the JVM builds `InetAddress.getByAddress(...)` from them, so the
-                // old format-to-String / parse-back pair on every miss is gone.
                 let app = JObject::from(env.byte_array_from_slice(app_ip).ok()?);
                 let server = JObject::from(env.byte_array_from_slice(server_ip).ok()?);
                 let uid = env
@@ -148,7 +115,6 @@ impl UidResolver for JniUidResolver {
     }
 }
 
-/// `PackageManager.getPackagesForUid` behind the optional kernel cache.
 pub struct JniAppUidResolver {
     vm: JavaVM,
     target: GlobalRef,
@@ -186,7 +152,6 @@ impl AppUidResolver for JniAppUidResolver {
     }
 }
 
-/// `TrafficCallback`, fed by the engine's per-UID ticker.
 pub struct JniTrafficSink {
     vm: JavaVM,
     target: GlobalRef,
@@ -219,17 +184,14 @@ impl TrafficSink for JniTrafficSink {
     }
 }
 
-/// Builds the shared `Arc` the engine stores; the caller installs it.
 pub fn protector(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Option<Arc<dyn Protector>> {
     JniProtector::new(env, callback)
         .ok()
         .map(|protector| Arc::new(protector) as Arc<dyn Protector>)
 }
 
-/// `OutboundProxyStatusCallback.onOutboundProxyStatus(String, String)`.
 pub const OUTBOUND_SIGNATURE: &str = "(Ljava/lang/String;Ljava/lang/String;)V";
 
-/// The proxy status events (`disabled` / `connecting` / `ready` / `error`).
 pub struct JniOutboundStatus {
     vm: JavaVM,
     target: GlobalRef,
@@ -263,19 +225,13 @@ impl crate::outbound::StatusSink for JniOutboundStatus {
     }
 }
 
-/// `HttpLogCallback.onHttpEvents(byte[])`.
 pub const HTTP_LOG_SIGNATURE: &str = "([B)V";
 
-/// Events one batch may carry before the flusher hands them to Kotlin.
 const HTTP_BATCH_SIZE: usize = 64;
-/// How long a partial batch waits for more relay decisions.
 const HTTP_FLUSH_INTERVAL: Duration = Duration::from_millis(200);
-/// Events the relay may buffer ahead of the flusher before rows start being dropped.
 const HTTP_CHANNEL_CAPACITY: usize = 1_024;
-/// `package`, `authority`, `protocol`, `outcome`, `rule`.
 const HTTP_FIELDS: usize = 5;
 
-/// One relay decision, buffered on the relay thread and batched on the flusher thread.
 struct HttpEvent {
     package: String,
     authority: String,
@@ -284,12 +240,6 @@ struct HttpEvent {
     rule: String,
 }
 
-/// The MITM relay's decision rows: `(package, authority, protocol, outcome, matched rule)`.
-///
-/// The relay produces dozens of decisions per page load, so the callback is fed through a
-/// dedicated flusher: each relay call only appends to a channel, and one JNI call carries a whole
-/// batch as a packed `byte[]`. That removes two crossings and five Java strings per decision while
-/// keeping [`crate::mitm::HttpLogSink`] unchanged for the engine and its host tests.
 pub struct JniHttpLog {
     sender: Option<SyncSender<HttpEvent>>,
     flusher: Mutex<Option<JoinHandle<()>>>,
@@ -316,7 +266,6 @@ impl crate::mitm::HttpLogSink for JniHttpLog {
         let Some(sender) = &self.sender else {
             return;
         };
-        // A full channel drops the row rather than stalling the TLS relay.
         let _ = sender.try_send(HttpEvent {
             package: package.to_string(),
             authority: authority.to_string(),
@@ -329,7 +278,6 @@ impl crate::mitm::HttpLogSink for JniHttpLog {
 
 impl Drop for JniHttpLog {
     fn drop(&mut self) {
-        // Closing the channel ends the flusher after its final batch.
         self.sender.take();
         let flusher = self
             .flusher
@@ -344,7 +292,6 @@ impl Drop for JniHttpLog {
 
 fn flush_http_events(vm: &Arc<JavaVM>, target: &GlobalRef, receiver: Receiver<HttpEvent>) {
     let mut batch = Vec::with_capacity(HTTP_BATCH_SIZE);
-    // Block until the first row of a batch, then drain everything already queued.
     while let Ok(event) = receiver.recv() {
         batch.push(event);
         let deadline = Instant::now() + HTTP_FLUSH_INTERVAL;
@@ -363,7 +310,6 @@ fn flush_http_events(vm: &Arc<JavaVM>, target: &GlobalRef, receiver: Receiver<Ht
     }
 }
 
-/// `u32 count` then, per event, the five `u32 length | UTF-8` fields.
 fn deliver_http_events(vm: &JavaVM, target: &GlobalRef, batch: &[HttpEvent]) {
     let mut payload = Vec::with_capacity(4 + batch.len() * HTTP_FIELDS * 16);
     payload.extend_from_slice(&(batch.len() as u32).to_be_bytes());

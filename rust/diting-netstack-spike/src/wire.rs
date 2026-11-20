@@ -1,22 +1,9 @@
-//! Packet crafting and parsing for the spike tests.
-//!
-//! The tests speak raw IP: they push the same bytes a TUN read would deliver, and they inspect the
-//! bytes the stack wants written back. Crafting by hand (rather than driving a second `smoltcp`
-//! interface as the client) keeps the setup honest in two ways: the client has no configured
-//! address at all, so a server that only accepted *its own* addresses could not answer, and the
-//! stack's egress is verified through the checksum-verifying parser instead of through a peer that
-//! shares the same bugs.
-//!
-//! These helpers are also the beginnings of the "golden corpus" the migration plan asks for in
-//! stage 0: each function is one fixed pcap-shaped conversation.
-
 use smoltcp::phy::ChecksumCapabilities;
 use smoltcp::wire::{
     IpAddress, IpEndpoint, IpProtocol, IpVersion, Ipv4Address, Ipv4Packet, Ipv4Repr, Ipv6Address,
     Ipv6Packet, Ipv6Repr, TcpControl, TcpPacket, TcpRepr, TcpSeqNumber, UdpPacket, UdpRepr,
 };
 
-/// One parsed TCP segment, flattened for assertions.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TcpSegment {
     pub src: IpEndpoint,
@@ -37,7 +24,6 @@ impl TcpSegment {
     }
 }
 
-/// One parsed UDP datagram.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UdpSegment {
     pub src: IpEndpoint,
@@ -45,17 +31,14 @@ pub struct UdpSegment {
     pub payload: Vec<u8>,
 }
 
-/// An IPv4 or IPv6 endpoint from octets; the tests use the octets they also assert on.
 pub fn endpoint_v4(octets: [u8; 4], port: u16) -> IpEndpoint {
     IpEndpoint::new(IpAddress::Ipv4(Ipv4Address::from(octets)), port)
 }
 
-/// An IPv6 endpoint from 16 octets.
 pub fn endpoint_v6(octets: [u8; 16], port: u16) -> IpEndpoint {
     IpEndpoint::new(IpAddress::Ipv6(Ipv6Address::from(octets)), port)
 }
 
-/// Emit one TCP segment, with the IP header, exactly as a host would send it.
 pub fn emit_tcp(
     src: IpEndpoint,
     dst: IpEndpoint,
@@ -90,7 +73,6 @@ pub fn emit_tcp(
     emit_ip(src.addr, dst.addr, IpProtocol::Tcp, &segment)
 }
 
-/// Emit one UDP datagram, with the IP header.
 pub fn emit_udp(src: IpEndpoint, dst: IpEndpoint, payload: &[u8]) -> Vec<u8> {
     let repr = UdpRepr {
         src_port: src.port,
@@ -145,7 +127,6 @@ fn emit_ip(src: IpAddress, dst: IpAddress, protocol: IpProtocol, payload: &[u8])
     }
 }
 
-/// Split an IP packet into its addressing information and the L4 payload.
 pub fn split_ip(packet: &[u8]) -> Option<(IpEndpoint, IpEndpoint, IpProtocol, &[u8])> {
     match IpVersion::of_packet(packet).ok()? {
         IpVersion::Ipv4 => {
@@ -169,8 +150,6 @@ pub fn split_ip(packet: &[u8]) -> Option<(IpEndpoint, IpEndpoint, IpProtocol, &[
     }
 }
 
-/// Parse an emitted TCP segment; `None` when the packet is malformed or the checksum does not
-/// verify against the default (software) capability set.
 pub fn parse_tcp(packet: &[u8]) -> Option<TcpSegment> {
     let (src_addr, dst_addr, protocol, payload) = split_ip(packet)?;
     if protocol != IpProtocol::Tcp {
@@ -194,7 +173,6 @@ pub fn parse_tcp(packet: &[u8]) -> Option<TcpSegment> {
     })
 }
 
-/// Parse an emitted UDP datagram.
 pub fn parse_udp(packet: &[u8]) -> Option<UdpSegment> {
     let (src_addr, dst_addr, protocol, payload) = split_ip(packet)?;
     if protocol != IpProtocol::Udp {

@@ -1,5 +1,3 @@
-//! The session-request decoder and the step-response encoder, byte for byte.
-
 use super::*;
 use crate::schedule::{PlanInput, Provider};
 
@@ -8,7 +6,6 @@ fn put_text(out: &mut Vec<u8>, text: &str) {
     out.extend_from_slice(text.as_bytes());
 }
 
-/// Builds a session request the way the Go encoder does.
 fn encode_plan(input: &PlanInput) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     let code = match input.strategy {
@@ -123,7 +120,6 @@ fn a_step_response_encodes_the_actions() {
         i64::from_le_bytes(encoded[39..47].try_into().unwrap()),
         250_000_000
     );
-    // Not terminal.
     assert_eq!(encoded[47], 0);
     assert_eq!(encoded.len(), 48);
 }
@@ -137,11 +133,10 @@ fn a_terminal_event_round_trips_through_the_shared_layout() {
     let step = schedule.result(0, true, 5_000_000, 6_000_000, false, None);
     let encoded = encode_step(&step);
     assert_eq!(encoded[0], LAYOUT_VERSION);
-    // The closing step carries no launches: the terminal block starts right after the header.
     let terminal_at = 23;
     assert_eq!(encoded[terminal_at], 1);
     assert_eq!(encoded[terminal_at + 1], OUTCOME_EVENT);
-    assert_eq!(encoded[terminal_at + 2], 1); // success
+    assert_eq!(encoded[terminal_at + 2], 1);
     let length = u32::from_le_bytes(
         encoded[terminal_at + 3..terminal_at + 7]
             .try_into()

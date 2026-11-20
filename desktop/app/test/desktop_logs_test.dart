@@ -1,8 +1,3 @@
-// Desktop logs (desktop parity): the service's 24-hour summary and rankings on the dashboard, and
-// the live query stream, the query log with the console's search conditions and offset paging, and
-// the retention policy on the hub's query-log page. Every figure and row must come from the API; a failed read says so
-// instead of showing an empty table, and a socket that is down says so instead of looking quiet.
-
 import 'dart:async';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -47,15 +42,11 @@ void main() {
     return tester.element(target).l10n;
   }
 
-  /// The live card has its own search field and type picker, so a filter test has to name the card
-  /// it means instead of matching text that appears twice on the page.
   Finder inTable(Finder matching) =>
       find.descendant(of: find.byType(LogQueryTable), matching: matching);
   Finder inLive(Finder matching) =>
       find.descendant(of: find.byType(LogLivePanel), matching: matching);
 
-  /// The log cards only. Home also draws the dashboard and the device list, and both repeat
-  /// figures the log section shows (a blocked count, a client named `laptop`).
   Finder inLogs(Finder matching) => find.descendant(
     of: find.byWidgetPredicate(
       (widget) =>
@@ -68,13 +59,9 @@ void main() {
     matching: matching,
   );
 
-  /// The table's own `/querylog/search` calls. The home page also reads this endpoint for its
-  /// recent-queries card, so `lastSearch` may belong to that card instead.
   Map<String, String> lastTableSearch(FakeDesktopBackend backend) =>
       backend.searches.where((query) => query['includeFile'] == '1').last;
 
-  /// The branch is taller than a window, so a control below the fold has to be scrolled to before
-  /// it can be tapped.
   Future<void> tapAt(WidgetTester tester, Finder finder) async {
     await tester.ensureVisible(finder);
     await tester.pumpAndSettle();
@@ -90,7 +77,6 @@ void main() {
     expect(inLogs(find.text(l10n.logRequestsOverview)), findsOneWidget);
     expect(inLogs(find.text(l10n.desktopLogWindow24h)), findsOneWidget);
 
-    // The summary is the service's own aggregate, not a recount of the three rows below.
     expect(inLogs(find.text('12,345')), findsWidgets);
     expect(inLogs(find.text('987')), findsOneWidget);
     expect(inLogs(find.text('8,000')), findsOneWidget);
@@ -106,14 +92,12 @@ void main() {
     final backend = await pumpLogs(tester);
     final l10n = l10nOf(tester);
 
-    // Rows come from the log endpoint, newest first, with the trailing dot stripped.
     expect(inTable(find.text('example1.com')), findsOneWidget);
     expect(inTable(find.text('example2.com')), findsOneWidget);
     expect(inTable(find.text('laptop')), findsOneWidget);
     expect(inTable(find.text(l10n.statusBlocked)), findsWidgets);
     expect(inTable(find.text(l10n.logRowCacheHit)), findsOneWidget);
 
-    // The table asked for one page of the log, not for the dashboard's little ring buffer.
     expect(lastTableSearch(backend)['limit'], '25');
     expect(lastTableSearch(backend)['offset'], '0');
     expect(lastTableSearch(backend)['includeFile'], '1');
@@ -172,7 +156,6 @@ void main() {
 
     await tapAt(tester, inTable(find.text(l10n.desktopLogClear)));
     expect(find.text(l10n.desktopLogClearBody), findsOneWidget);
-    // 取消不发出任何写请求。
     await tapAt(tester, find.text(l10n.configCancel));
     expect(backend.has('/api/v1/querylog/clear'), isFalse);
 
@@ -185,7 +168,6 @@ void main() {
       ),
     );
     expect(backend.has('/api/v1/querylog/clear'), isTrue);
-    // 服务把统计一并删了，所以表格与汇总都必须重读。
     expect(backend.searches.length, greaterThan(searches));
     expect(find.text(l10n.desktopLogClearDone), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -238,7 +220,6 @@ void main() {
     expect(inLogs(find.text('ads.example.com')), findsOneWidget);
     expect(inLogs(find.text('88')), findsOneWidget);
     expect(inLogs(find.text('45')), findsOneWidget);
-    // 排行是服务算好的，页面不补也不截。
     expect(find.text(l10n.commonNoData), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -275,7 +256,6 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    // First page: nothing before it.
     expect(find.text(l10n.desktopLogPageInfo('1', '3', '100')), findsOneWidget);
     await tapAt(tester, find.text(l10n.desktopLogPagePrev));
     expect(lastTableSearch(backend)['offset'], '0');
@@ -339,8 +319,6 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  /// One pushed query, as the panel receives it. The wire format itself is pinned in
-  /// `desktop_event_client_test.dart`; here only the list's behaviour matters.
   DesktopLiveQuery liveQueryOf({
     required String domain,
     String qtype = 'A',
@@ -372,7 +350,6 @@ void main() {
     await pumpLogs(tester, live: live.stream);
     final l10n = l10nOf(tester);
 
-    // 还没有连接时不说自己在监听。
     expect(find.text(l10n.desktopLiveDisconnected), findsOneWidget);
     expect(find.text(l10n.desktopLiveEmpty), findsOneWidget);
 
@@ -398,7 +375,6 @@ void main() {
     expect(find.text('first.example.com'), findsOneWidget);
     expect(find.text('ads.example.com'), findsOneWidget);
     expect(find.text('laptop (192.168.1.20)'), findsOneWidget);
-    // 缓冲区计数是页面自己数的，标签说明它是缓冲区。
     expect(find.text(l10n.desktopLiveCaptured), findsOneWidget);
     expect(find.text('2'), findsWidgets);
     expect(tester.takeException(), isNull);
@@ -431,7 +407,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('after.example.com'), findsOneWidget);
 
-    // 清空是卡片头部的图标按钮（文字按钮在窄卡片上会被挤到单独一行）。
     await tapAt(tester, find.byTooltip(l10n.desktopLiveClear));
     expect(find.text('kept.example.com'), findsNothing);
     expect(find.text(l10n.desktopLiveEmpty), findsOneWidget);
@@ -478,7 +453,6 @@ void main() {
     );
     expect(find.text('v6.example.com'), findsOneWidget);
     expect(find.text('plain.example.com'), findsNothing);
-    // 筛选只发生在缓冲区内，不去问服务端。
     expect(tester.takeException(), isNull);
   });
 
@@ -531,13 +505,10 @@ void main() {
   testWidgets('开关被服务拒绝时回到原值并说明原因', (tester) async {
     final backend = await pumpLogs(tester);
     final l10n = l10nOf(tester);
-    // 只让写操作失败：读仍然正常，否则连配置都读不到。
     backend.rejectWrites = true;
 
     await tapAt(tester, find.text(l10n.desktopLogConfigClients));
-    // 卡片内保留失败原因，同时弹一次提示。
     expect(find.textContaining(l10n.desktopActionFailed('')), findsWidgets);
-    // 开关保持服务端当前值，页面不假装已生效。
     expect(find.text(l10n.desktopLogConfigFile), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -546,7 +517,6 @@ void main() {
     final backend = await pumpLogs(tester);
     final l10n = l10nOf(tester);
 
-    // 首页同时画着限流卡，它也有数字输入框，所以这里只说留存策略卡里的那两个。
     final numbers = find.descendant(
       of: find.byType(LogConfigCard),
       matching: find.byType(TextFormField),

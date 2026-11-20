@@ -1,46 +1,27 @@
-//! Apple `.mobileconfig` generation, ported from `mobileconfig.go` and `plist.go`.
-//!
-//! The generated profile is unsigned on purpose: self-signed certificate deployments are expected
-//! to be marked "unverified" by iOS/macOS and confirmed manually. Signing with an enterprise
-//! certificate is not something this project holds.
-
 mod plist;
 
 use plist::{plist_array, plist_dict, plist_integer, plist_string, PlistEntry};
 
-/// DNS settings payload type identifier.
 pub const MOBILE_CONFIG_PAYLOAD_TYPE: &str = "com.apple.dnsSettings.managed";
-/// Media type Apple assigns to configuration profiles.
 pub const MOBILE_CONFIG_CONTENT_TYPE: &str = "application/x-apple-aspen-config";
-/// File extension Apple devices recognise.
 pub const MOBILE_CONFIG_FILE_EXT: &str = ".mobileconfig";
 
-/// Encrypted DNS protocol value for DNS-over-HTTPS.
 pub const PROTOCOL_HTTPS: &str = "HTTPS";
-/// Encrypted DNS protocol value for DNS-over-TLS.
 pub const PROTOCOL_TLS: &str = "TLS";
 
 const DEFAULT_DISPLAY_NAME: &str = "DITING 加密 DNS";
 const DEFAULT_DESCRIPTION: &str = "由 DITING 提供的加密 DNS 解析配置";
 
-/// Everything needed to build a configuration profile.
 #[derive(Debug, Clone, Default)]
 pub struct MobileConfigOptions {
-    /// Host name clients connect to; also the certificate validation target.
     pub server_name: String,
-    /// Full DoH URL; required in HTTPS mode.
     pub server_url: String,
-    /// See [`PROTOCOL_HTTPS`] and [`PROTOCOL_TLS`]; empty defaults to HTTPS.
     pub protocol: String,
-    /// Name shown in the device's Settings.
     pub display_name: String,
-    /// Profile description.
     pub description: String,
-    /// Stable profile identifier; a v4 UUID is generated when empty.
     pub uuid: String,
 }
 
-/// Build an unsigned Apple configuration profile.
 pub fn build_mobile_config(options: &MobileConfigOptions) -> Result<Vec<u8>, String> {
     let server_name = options.server_name.trim();
     if server_name.is_empty() {
@@ -66,7 +47,6 @@ pub fn build_mobile_config(options: &MobileConfigOptions) -> Result<Vec<u8>, Str
         if url.is_empty() {
             return Err("DoH 模式需要提供完整地址".to_string());
         }
-        // Apple silently ignores the whole payload when ServerURL is not an absolute URL.
         if !url.starts_with("https://") {
             return Err(format!("DoH 地址必须以 https:// 开头，实得 {url:?}"));
         }
@@ -74,7 +54,6 @@ pub fn build_mobile_config(options: &MobileConfigOptions) -> Result<Vec<u8>, Str
             key: "ServerURL".to_string(),
             value: plist_string(url),
         });
-        // ServerName is the certificate validation host here and must match the URL's host.
         dns_settings.push(PlistEntry {
             key: "ServerName".to_string(),
             value: plist_string(server_name),
@@ -106,7 +85,6 @@ pub fn build_mobile_config(options: &MobileConfigOptions) -> Result<Vec<u8>, Str
         description
     };
 
-    // One payload means one identifier; reusing the UUID keeps troubleshooting strings aligned.
     let payload_id = format!("com.diting.encrypted-dns.{uuid}");
 
     let payload = plist_dict(&[
@@ -180,7 +158,6 @@ pub fn build_mobile_config(options: &MobileConfigOptions) -> Result<Vec<u8>, Str
     Ok(document.into_bytes())
 }
 
-/// Random RFC 4122 version 4 UUID, lowercase with hyphens.
 fn new_uuid() -> String {
     let mut bytes = rand::random::<[u8; 16]>();
     bytes[6] = (bytes[6] & 0x0f) | 0x40;

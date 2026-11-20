@@ -2,7 +2,6 @@
 
 part of 'scaffold.dart';
 
-// App bar builders split out of CommonScaffoldState, under the file line cap.
 
 extension CommonScaffoldStateAppBar on CommonScaffoldState {
   Widget _buildAppBarWrap(Widget appBar, {required bool barSearch}) {
@@ -49,7 +48,6 @@ extension CommonScaffoldStateAppBar on CommonScaffoldState {
     final titleEndInset = appBarActionInset(
       _isCompactBar(context, isMobileView),
     );
-    // Under a sheet the bar drops its actions, so none reads as the sheet's.
     final uncovered = ReverseAnimation(sheetCoverOf(context));
     return PreferredSize(
       preferredSize: Size.fromHeight(
@@ -105,10 +103,6 @@ extension CommonScaffoldStateAppBar on CommonScaffoldState {
                 leading: hidesBar
                     ? null
                     : underField(searchLeading, _leadingUnderSearch),
-                // The leading slot already trails its button by a margin.
-                //
-                // A page without a leading button starts its title at the shell's content gutter,
-                // so the title and the cards underneath share one left edge.
                 titleSpacing: leading == null ? PageGutterScope.of(context) : 0,
                 title: hidesBar
                     ? null

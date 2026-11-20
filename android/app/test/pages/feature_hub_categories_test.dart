@@ -1,7 +1,3 @@
-// Guards the feature-hub taxonomy: six purpose-based sections of four cards plus the 应用流量统计,
-// 日志仪表盘 and 前后台行为 entries, and no card reachable from two places. Express mode keeps
-// only the sections that still apply.
-
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter/widgets.dart';
@@ -72,7 +68,6 @@ void main() {
         reason: '${category.title} 不应出现极速隐藏卡片',
       );
     }
-    // 应用与网络、高级与诊断两类在极速模式全部隐藏。
     final titles = visible.map((category) => category.title);
     expect(titles, isNot(contains('应用与网络')));
     expect(titles, isNot(contains('高级与诊断')));
@@ -81,7 +76,6 @@ void main() {
       cards.map((card) => card.featureKey),
       isNot(contains('connection_rate_limit')),
     );
-    // 极速模式没有隧道数据面，应用流量统计应隐藏；日志仪表盘记录的是 DNS 查询，仍然可见。
     expect(
       cards.map((card) => card.featureKey),
       isNot(contains('traffic_stats')),
@@ -102,7 +96,6 @@ void main() {
     ];
     expect(keys.toSet().length, keys.length, reason: '隐藏键必须唯一');
 
-    // 低频功能已下沉为父页面二级入口，不再占用一级卡片。
     const folded = {
       'bootstrap_settings',
       'dns64',

@@ -79,7 +79,6 @@ fn embed_net_takes_the_prefix_bytes_and_its_length() {
     assert_eq!(&out[..4], &[0x20, 0x01, 0x0d, 0xb8]);
     assert_eq!(&out[4..8], &v4);
 
-    // A 40-bit prefix keeps the low byte of the address out of the first word.
     assert_eq!(
         unsafe {
             diting_dns64_embed_net(prefix.as_ptr(), 40, v4.as_ptr(), v4.len(), out.as_mut_ptr())
@@ -90,7 +89,6 @@ fn embed_net_takes_the_prefix_bytes_and_its_length() {
     assert_eq!(out[8], 0);
     assert_eq!(out[9], v4[3]);
 
-    // Lengths outside the RFC 6052 set are refused, as the old `default: return nil` branch did.
     assert_eq!(
         unsafe {
             diting_dns64_embed_net(prefix.as_ptr(), 36, v4.as_ptr(), v4.len(), out.as_mut_ptr())
@@ -117,7 +115,6 @@ fn synthesize_returns_the_payload_go_decodes() {
     assert_eq!(payload.len(), 2 + 32);
     unsafe { diting_dns64_free_bytes(pointer, length) };
 
-    // A zero-length address is an A record without IPv4: an empty result, not an error.
     let empty = [0u8; 0];
     assert_eq!(
         unsafe { diting_dns64_synthesize(handle, empty.as_ptr(), 0, &mut pointer, &mut length) },

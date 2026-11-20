@@ -1,7 +1,3 @@
-/// The global time plan: what the service holds and the one write path that replaces it.
-///
-/// The service is the only source of truth. A save posts the switch and the whole window list, then
-/// re-reads the config so the "active now" badge reflects the service's own evaluation.
 library;
 
 import 'dart:async';
@@ -47,8 +43,6 @@ class DesktopScheduleNotifier extends Notifier<DesktopScheduleState> {
     }
   }
 
-  /// Saves the switch and the complete window list. Returns the failure for the page's snackbar; on
-  /// success the config is re-read, so an empty or invalid window is visible as the service kept it.
   Future<DesktopApiException?> save(DesktopScheduleConfig next) async {
     if (state.saving) return null;
     state = DesktopScheduleState(config: state.config, saving: true);

@@ -1,6 +1,3 @@
-// Site latency card and detail page: nothing probes on open, and each category
-// button touches only its own sites.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -24,7 +21,6 @@ void main() {
 }
 
 void _siteLatencyCard() {
-  // The card's auto-probe is skipped while the global flag is set, so turn it back off here.
   installGlobalTestHooks();
 
   testWidgets('自定义的四个站点测完后表头显示计数', (tester) async {
@@ -106,8 +102,6 @@ class _CardRunner implements DiagnosticsRunner {
   );
 }
 
-/// Pins the two behaviours the detail page was rewritten for: nothing probes on open, and each
-/// category has its own probe button that touches only its own sites.
 
 void _siteLatencyPage() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -138,7 +132,6 @@ void _siteLatencyPage() {
     expect(runner.pingCalls, isEmpty);
     expect(find.text('未测速'), findsOneWidget);
     expect(find.text('待测'), findsOneWidget);
-    // The page lists every category, in enum order; the list is lazy, so walk it.
     final l10n = lookupAppL10n(const Locale('zh'));
     for (final category in SiteCategory.values) {
       await tester.dragUntilVisible(
@@ -168,8 +161,6 @@ void _siteLatencyPage() {
 
     expect(runner.pingCalls, [for (final target in search) target.host]);
     expect(runner.pingCalls.length, lessThan(siteLatencyTargets.length));
-    // The probed group reports its own tally, in the same '$alive / $total 通畅' shape the card
-    // uses.
     expect(find.text('${search.length} / ${search.length} 通畅'), findsOneWidget);
   });
 }

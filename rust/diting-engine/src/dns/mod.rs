@@ -1,22 +1,3 @@
-//! One DNS query through the standalone pipeline.
-//!
-//! [`serve`] is `serveDNS` + `standaloneForward` with the Go branches in the same order, because the
-//! order is user-visible:
-//!
-//! 1. the local asset host answers from the kernel's synthesis (`local.pwhs.app`);
-//! 2. DDR (`_dns.resolver.arpa`) is refused with NXDOMAIN so Android 13+ and Chrome cannot pick an
-//!    encrypted resolver behind the user's back;
-//! 3. a rewrite rule answers A/AAAA directly, then a CNAME rewrite resolves the target and answers
-//!    with the CNAME plus the target's addresses;
-//! 4. `setFilterDNS(false)` skips the whole filtering pipeline — the policy walk included;
-//! 5. the policy snapshot decides block or pass;
-//! 6. the cache answers when it can, otherwise the upstream does, and the answer is inspected:
-//!    a null-block upstream answer is counted as blocked, and a CNAME/HTTPS chain target is
-//!    re-evaluated against the policy.
-//!
-//! Every branch logs exactly one row, and every branch that produces a reply counts exactly one
-//! query, which is what `getStats` reports.
-
 pub mod dns64;
 pub mod flight;
 pub mod forward;
@@ -30,24 +11,15 @@ use diting_telemetry_core::LogItem;
 
 use crate::engine::Engine;
 
-/// `LocalAssetHost`: the host the MITM side serves the local aesthetic assets from.
 pub const LOCAL_ASSET_HOST: &str = "local.pwhs.app";
-/// The app name the standalone path reports (`serveDNS`'s default; there is no UID attribution
-/// without a TUN and `/proc/net/udp`, so stage 1 keeps the constant).
 pub const APP_NAME: &str = "RootProxy";
-/// `_dns.resolver.arpa` and its `*.…` children.
 const DDR_HOST: &str = "_dns.resolver.arpa";
-/// `.{DDR_HOST}`, without building the format string on every query.
 const DDR_SUFFIX: &str = ".dns.resolver.arpa";
 
-/// Answers one query with the standalone app name. `None` means "drop it": a query that is not a
-/// query, or a kernel that could not build a reply at all. Everything else leaves a log row.
 pub async fn serve(engine: &Arc<Engine>, query: &[u8]) -> Option<Vec<u8>> {
     serve_for_app(engine, query, APP_NAME).await
 }
 
-/// The TUN variant: the row carries the package the flow belongs to instead of `RootProxy`, which
-/// is what `serveDNS(w, r, appOverride, uid)` did for the full-tunnel path.
 pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -> Option<Vec<u8>> {
     let started = Instant::now();
     let info = query_info(query);
@@ -106,13 +78,8 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         }
     }
 
-    // `setBlockIpv6`: the tunnel carries no usable IPv6, so answer AAAA with an empty NOERROR
-    // (NODATA) here instead of handing the client an address it cannot reach and letting the
-    // dual-stack retry stall the page/image load (the China Telecom WiFi regression).
     if engine.block_ipv6() && qtype == TYPE_AAAA {
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
-        // Filtered, not blocked: an AAAA NODATA is a normal (empty) answer, so it must not inflate
-        // the blocked counter the dashboard shows.
         engine.note_query(false);
         engine.log_row(
             row(&domain, false, qtype, started, app_name).blocked_by("ipv6_disabled".to_string()),
@@ -120,10 +87,6 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         return reply::render(query, &plan);
     }
 
-    // U10: the privacy suite suppresses selected record types (HTTPS / SVCB) with an empty NOERROR,
-    // so a client that would otherwise reveal browsing intent through those records gets nothing —
-    // the same shape as `block_ipv6`. It runs before the filter switch because it is not a domain
-    // rule.
     if engine.records_blocked(qtype) {
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
         engine.note_query(true);
@@ -154,8 +117,6 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
     forward::forward(engine, query, &domain, qtype, started, app_name).await
 }
 
-/// `standaloneRewrite`: resolve the CNAME target, then answer with the chain. `None` when the caller
-/// should keep going (wrong qtype, no answer records, resolution failure), which is the old `false`.
 async fn standalone_rewrite(
     engine: &Arc<Engine>,
     query: &[u8],
@@ -177,7 +138,6 @@ async fn standalone_rewrite(
     let response = match resolver.resolve(&target_query).await.0 {
         Ok(response) => response,
         Err(error) => {
-            // The old code logged and fell through to the forward path.
             engine.log_error(&format!(
                 "Rewrite target resolve failed for {target}: {error}"
             ));
@@ -200,7 +160,6 @@ async fn standalone_rewrite(
     Some(wire)
 }
 
-/// `standaloneBlock`: the configured (or dynamically escalated) block answer.
 pub fn block(
     engine: &Arc<Engine>,
     query: &[u8],
@@ -218,7 +177,6 @@ pub fn block(
     Some(wire)
 }
 
-/// The SERVFAIL answer used on the error paths; the row is pushed here so no caller can forget it.
 pub fn servfail(
     engine: &Arc<Engine>,
     query: &[u8],
@@ -235,7 +193,6 @@ pub fn servfail(
     Some(wire)
 }
 
-/// A log row builder, so every branch spells the fields once and the same way.
 fn row(domain: &str, blocked: bool, qtype: u16, started: Instant, app_name: &str) -> LogRow {
     LogRow {
         domain: domain.to_string(),
@@ -251,7 +208,6 @@ fn row(domain: &str, blocked: bool, qtype: u16, started: Instant, app_name: &str
     }
 }
 
-/// The row under construction; every field is set exactly once before it is pushed.
 pub struct LogRow {
     domain: String,
     blocked: bool,
@@ -291,7 +247,6 @@ impl LogRow {
         self
     }
 
-    /// An engine-level error line, shaped like a failed query so the log viewer renders it.
     pub fn error_row(message: &str, timestamp_ms: i64) -> LogItem {
         LogItem {
             domain: String::new(),
@@ -308,7 +263,6 @@ impl LogRow {
         }
     }
 
-    /// Stamps the push time, which is when the UI sees the row.
     pub fn build(self, timestamp_ms: i64) -> LogItem {
         LogItem {
             domain: self.domain,
@@ -326,7 +280,6 @@ impl LogRow {
     }
 }
 
-/// `firstAddressText`: the first A/AAAA rdata of a plan, printed the way `net.IP.String()` does.
 fn first_address_text(plan: &ReplyPlan, qtype: u16) -> String {
     for record in &plan.answers {
         if record.rrtype != qtype {
@@ -345,8 +298,6 @@ fn first_address_text(plan: &ReplyPlan, qtype: u16) -> String {
 mod tests {
     use super::*;
 
-    /// `setBlockIpv6` turns AAAA into a successful, answer-less reply so the client stops asking
-    /// (and stops trying to reach an IPv6 address the tunnel cannot carry).
     #[test]
     fn aaaa_is_nodata_when_ipv6_is_blocked() {
         let engine = Arc::new(Engine::new());
@@ -366,8 +317,6 @@ mod tests {
         );
     }
 
-    /// U10: the privacy suite answers a blocked record type (HTTPS) with an empty NOERROR and counts
-    /// it as blocked, regardless of the domain-filter switch.
     #[test]
     fn https_is_nodata_when_record_type_blocked() {
         let engine = Arc::new(Engine::new());
@@ -388,8 +337,6 @@ mod tests {
         assert_eq!(engine.blocked_queries(), 1);
     }
 
-    /// The policy walk must see the flow's app; passing a constant would make app-scoped rules
-    /// (`appRules` / `app=` special rules) match every app or none of them.
     #[test]
     fn app_scoped_block_uses_the_flow_app_name() {
         let engine = Arc::new(Engine::new());
@@ -406,8 +353,6 @@ mod tests {
             .expect("a blocked query answers without an upstream");
         assert_eq!(engine.blocked_queries(), 1, "the rule applies to its app");
 
-        // Another app falls through to forwarding; with no upstream it turns into SERVFAIL, but
-        // it must not be counted as blocked.
         engine
             .runtime()
             .block_on(serve_for_app(&engine, &query, "com.other"))

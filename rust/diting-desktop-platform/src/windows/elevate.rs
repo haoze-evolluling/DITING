@@ -1,9 +1,3 @@
-//! UAC elevation through `ShellExecuteExW` (`runas`).
-//!
-//! Non-elevated operations are run directly; the elevated branch waits for the child to exit and
-//! treats a non-zero exit code as failure. This mirrors the Go service, whose service-control
-//! commands are ordinary command-line verbs that must report their own errors.
-
 use std::mem::size_of;
 use std::ptr;
 use std::time::{Duration, Instant};
@@ -20,11 +14,8 @@ use windows_sys::Win32::UI::Shell::{ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SH
 use crate::error::{PlatformError, PlatformResult};
 use crate::traits::PrivilegedExecutor;
 
-/// The UAC prompt was dismissed; callers surface this verbatim.
 pub const ERR_UAC_CANCELLED: &str = "用户取消了管理员权限授权";
 
-/// Upper bound on one elevated operation. Service-control verbs are the slowest and still finish
-/// well inside this; a wedged child must not leave the caller waiting forever.
 const ELEVATED_TIMEOUT: Duration = Duration::from_secs(120);
 
 pub struct WindowsPrivilegedExecutor;
@@ -75,7 +66,6 @@ impl PrivilegedExecutor for WindowsPrivilegedExecutor {
 
         let exe = exe.to_string();
         let parameters = compose_command_line(args);
-        // ShellExecuteEx blocks until the prompt is accepted and the child exits.
         tokio::task::spawn_blocking(move || run_elevated_native(&exe, &parameters))
             .await
             .map_err(|error| PlatformError::message(format!("特权操作执行失败: {error}")))?
@@ -103,12 +93,10 @@ fn run_elevated_native(exe: &str, parameters: &str) -> PlatformResult<()> {
     info.lpParameters = parameters
         .as_ref()
         .map_or(ptr::null(), |value| value.as_ptr());
-    info.nShow = 0; // SW_HIDE
+    info.nShow = 0;
 
-    // SAFETY: `info` is fully initialized and its string pointers outlive the call.
     let success = unsafe { ShellExecuteExW(&mut info) };
     if success == 0 {
-        // SAFETY: GetLastError has no preconditions.
         let code = unsafe { GetLastError() };
         if code == ERROR_CANCELLED {
             return Err(PlatformError::message(ERR_UAC_CANCELLED));
@@ -124,7 +112,6 @@ fn run_elevated_native(exe: &str, parameters: &str) -> PlatformResult<()> {
 
     let deadline = Instant::now() + ELEVATED_TIMEOUT;
     loop {
-        // SAFETY: the handle came from ShellExecuteEx and is closed below.
         let event = unsafe { WaitForSingleObject(info.hProcess, 100) };
         if event == WAIT_OBJECT_0 {
             break;
@@ -136,9 +123,6 @@ fn run_elevated_native(exe: &str, parameters: &str) -> PlatformResult<()> {
             )));
         }
         if Instant::now() >= deadline {
-            // The elevated child is still running: terminate it before returning, otherwise it
-            // would keep changing system DNS after the caller already reported failure.
-            // SAFETY: the handle came from ShellExecuteEx and is closed below.
             let _ = unsafe { TerminateProcess(info.hProcess, 1) };
             unsafe { CloseHandle(info.hProcess) };
             return Err(PlatformError::message("特权操作执行超时，已终止提权进程"));
@@ -146,7 +130,6 @@ fn run_elevated_native(exe: &str, parameters: &str) -> PlatformResult<()> {
     }
 
     let mut exit_code = 0u32;
-    // SAFETY: the process handle is still valid and `exit_code` is a valid out-pointer.
     let read = unsafe { GetExitCodeProcess(info.hProcess, &mut exit_code) };
     unsafe { CloseHandle(info.hProcess) };
     if read != 0 && exit_code != 0 {
@@ -157,8 +140,6 @@ fn run_elevated_native(exe: &str, parameters: &str) -> PlatformResult<()> {
     Ok(())
 }
 
-/// Quotes one argument using the Windows command-line rules. Required whenever an argument can
-/// contain spaces, which adapter and installation paths routinely do.
 pub(crate) fn quote_argument(argument: &str) -> String {
     if !argument.is_empty() && !argument.contains([' ', '\t', '"']) {
         return argument.to_string();

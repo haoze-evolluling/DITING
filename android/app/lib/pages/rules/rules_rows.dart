@@ -1,7 +1,5 @@
 part of 'rules_page.dart';
 
-/// One rule row, organized like the upstream RuleItem: main line is the rule (rewrite shows
-/// `pattern -> target`), second line the source label, shown as text because names are long.
 class _RuleRow extends StatelessWidget {
   const _RuleRow({
     required this.rule,
@@ -16,7 +14,6 @@ class _RuleRow extends StatelessWidget {
   final MockRule rule;
   final RuleKind kind;
 
-  /// Read-only protection: a preset row while editing default whitelists is off.
   final bool protected;
   final ValueChanged<bool> onToggle;
   final VoidCallback onEdit;
@@ -26,8 +23,6 @@ class _RuleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    // Read-only rows drop to 0.75 opacity and disabled rows further still: the two
-    // "cannot press" states must be distinguishable, or the switch looks broken.
     final double opacity;
     if (protected) {
       opacity = 0.75;
@@ -55,8 +50,6 @@ class _RuleRow extends StatelessWidget {
               .of(context)
               .copyWith(fontFeatures: appTabularFigures),
         ),
-        // The subtitle holds four chips plus the source label, and ListTile leaves about 160px on
-        // a 320-wide device, while chips cannot shrink. A Row used to overflow here.
         subtitle: Wrap(
           spacing: 6,
           runSpacing: 4,

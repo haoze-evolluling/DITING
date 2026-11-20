@@ -1,16 +1,3 @@
-//! Domain normalization and literal-IP checks; a port of `rule_domain_utils.dart`.
-//!
-//! Anything undecidable returns `None` so the rule counts as invalid instead of never matching.
-//! The Dart original leans on `dart:io` (`InternetAddress`) and `Uri`; both are mimicked here with
-//! `std` only, including the quirks the unit tests lock down:
-//!
-//! * `InternetAddress.address` echoes the input text (no IPv6 compression, case preserved), so a
-//!   literal IP is returned trimmed and otherwise untouched.
-//! * A non-ASCII candidate goes through `Uri.parse`, which percent-encodes it and therefore makes
-//!   every label invalid — except when the non-ASCII part sits behind `#`, `?`, `\` (fragment /
-//!   query / terminator) or in the userinfo, which is what [`to_ascii_lower`] reproduces.
-
-/// Sinkhole addresses: these hosts targets mean "block", not "rewrite".
 pub const SINKHOLE_ADDRESSES: [&str; 5] = ["0", "0.0.0.0", "127.0.0.1", "::", "::1"];
 
 pub const VALID_DNS_TYPES: [&str; 15] = [
@@ -91,7 +78,6 @@ const WEB_ONLY_MODIFIER_TOKENS: &[&str] = &[
     "inline-font",
 ];
 
-/// `RegExp(r'^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$')` from the Dart original.
 fn is_valid_label(label: &str) -> bool {
     let bytes = label.as_bytes();
     let alnum = |c: u8| c.is_ascii_lowercase() || c.is_ascii_digit();
@@ -109,7 +95,6 @@ fn is_valid_label(label: &str) -> bool {
         .all(|&c| alnum(c) || c == b'-')
 }
 
-/// Length in UTF-16 code units, which is what `String.length` counts in Dart.
 pub fn utf16_len(value: &str) -> usize {
     if value.is_ascii() {
         return value.len();
@@ -117,7 +102,6 @@ pub fn utf16_len(value: &str) -> usize {
     value.encode_utf16().count()
 }
 
-/// Dart's `value.trim().replaceFirst(RegExp(r'\.+$'), '')`.
 fn trim_and_strip_dots(value: &str) -> &str {
     value.trim().trim_end_matches('.')
 }
@@ -126,8 +110,6 @@ fn has_rejected_separator(value: &str) -> bool {
     value.contains('/') || value.contains(':') || value.contains(' ')
 }
 
-/// `_toAsciiLower` without pulling in an IDNA crate: the percent-encoded result can never satisfy
-/// the label regex, so a non-ASCII host is always rejected.
 fn to_ascii_lower(value: &str) -> Option<String> {
     if value.is_ascii() {
         if value.bytes().any(|b| b < 0x21 || b == 0x7f) {
@@ -149,7 +131,6 @@ fn to_ascii_lower(value: &str) -> Option<String> {
     Some(host.to_ascii_lowercase())
 }
 
-/// Literal IPv4/IPv6, or an IPv6 literal with a numeric scope id (`fe80::1%1`).
 fn parses_as_ip(value: &str) -> bool {
     if value.parse::<std::net::Ipv4Addr>().is_ok() || value.parse::<std::net::Ipv6Addr>().is_ok() {
         return true;
@@ -175,8 +156,6 @@ pub fn looks_like_literal_ip(value: &str) -> bool {
     parses_as_ip(trimmed)
 }
 
-/// Literal IP text as Dart's `InternetAddress.address` would report it: the trimmed input with its
-/// original case and no IPv6 compression.
 pub fn parse_numeric_address_safe(value: &str) -> Option<String> {
     let trimmed = value.trim();
     if trimmed.is_empty() || utf16_len(trimmed) > 45 || !parses_as_ip(trimmed) {
@@ -241,8 +220,6 @@ pub fn is_valid_dns_type(value: &str) -> bool {
     VALID_DNS_TYPES.contains(&value)
 }
 
-/// Modifiers that only matter for HTTP(S), not for DNS; such lines are valid rules the DNS layer
-/// ignores.
 pub fn is_web_only_modifier(lower: &str) -> bool {
     if WEB_ONLY_MODIFIER_TOKENS.contains(&lower) {
         return true;
@@ -252,13 +229,6 @@ pub fn is_web_only_modifier(lower: &str) -> bool {
         .any(|prefix| lower.starts_with(prefix))
 }
 
-/// The subset of web-only modifiers that only constrain *which resource* of a host is targeted
-/// (content type / party / case), not *which host* or *what to rewrite*. For a block rule the host
-/// is the useful part at the DNS layer, so a rule carrying only these can be kept as a plain host
-/// block instead of being discarded whole — that is the coverage win. Modifiers that narrow by
-/// referrer/target/header (`domain=`, `to=`, `method=`, `header=`) or that rewrite the request
-/// (`removeparam=`, `redirect=`, …) are NOT here: dropping them would change a rule's meaning, so
-/// those lines stay ignored.
 pub fn is_content_type_web_token(lower: &str) -> bool {
     matches!(
         lower,
@@ -316,7 +286,6 @@ mod tests {
 
     #[test]
     fn mirrors_uri_host_extraction_for_non_ascii() {
-        // Dart returns the ASCII part when the non-ASCII text sits behind a fragment/query.
         assert_eq!(normalize_domain("a.com#é"), Some("a.com".to_string()));
         assert_eq!(normalize_domain("a.com?é"), Some("a.com".to_string()));
         assert_eq!(normalize_domain("a.com\\é"), Some("a.com".to_string()));
@@ -339,7 +308,6 @@ mod tests {
         );
         assert_eq!(normalize_wildcard_domain("a b.com"), None);
         assert_eq!(normalize_wildcard_domain("a..com"), None);
-        // Wildcards skip the literal-IP and label-shape checks the plain form applies.
         assert_eq!(
             normalize_wildcard_domain("127.0.0.1"),
             Some("127.0.0.1".to_string())
@@ -361,7 +329,6 @@ mod tests {
             parse_numeric_address_safe("1.2.3.4"),
             Some("1.2.3.4".to_string())
         );
-        // The address echoes the input, so case and the uncompressed form survive.
         assert_eq!(
             parse_numeric_address_safe("2001:DB8::1"),
             Some("2001:DB8::1".to_string())

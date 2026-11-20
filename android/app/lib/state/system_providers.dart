@@ -1,5 +1,3 @@
-/// System domain: disclaimer, developer mode, WebDAV, app updates and IP quality; access control
-/// lives in the pages.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -45,7 +43,6 @@ class DavState {
   final String path;
   final DavStatus status;
 
-  /// Failure reason; non-null only while [status] is [DavStatus.failed].
   final String? message;
 
   bool get isConfigured => server.isNotEmpty && username.isNotEmpty;
@@ -68,19 +65,16 @@ class DavState {
   );
 }
 
-/// WebDAV connection state machine; [DavNotifier.test] performs a real request.
 class DavNotifier extends Notifier<DavState> {
   @override
   DavState build() => const DavState();
 
-  /// Built per call so a UA change in `/config/user-agents` applies to the next request.
   DavClient get _client =>
       DavClient(userAgent: ref.read(requestUserAgentProvider));
 
   void update(DavState Function(DavState state) update) =>
       state = update(state);
 
-  /// Connects for real: `PROPFIND` probes, `MKCOL` creates; failures carry status and reason.
   Future<void> test() async {
     if (!state.isConfigured) {
       state = state.copyWith(
@@ -110,7 +104,6 @@ class DavNotifier extends Notifier<DavState> {
 
   void reset() => state = const DavState();
 
-  /// Fixed name, so an upload overwrites the previous copy: sync, not archive.
   static const remoteFileName = 'diting-config.json';
 
   DavCredentials get credentials => DavCredentials(
@@ -120,7 +113,6 @@ class DavNotifier extends Notifier<DavState> {
     path: state.path,
   );
 
-  /// Uploads with `PUT` to `<path>/diting-config.json`.
   Future<DavProbeResult> upload(String content) async {
     state = state.copyWith(status: DavStatus.connecting, clearMessage: true);
     final result = await _client.putText(
@@ -134,7 +126,6 @@ class DavNotifier extends Notifier<DavState> {
     return result;
   }
 
-  /// Downloads the cloud backup with `GET`; null when no file exists.
   Future<String?> download() async {
     state = state.copyWith(status: DavStatus.connecting, clearMessage: true);
     try {
@@ -152,7 +143,6 @@ class DavNotifier extends Notifier<DavState> {
 
 final davProvider = NotifierProvider<DavNotifier, DavState>(DavNotifier.new);
 
-/// Disclaimer stage; some pages require restating a passage before accepting.
 class DisclaimerNotifier extends Notifier<bool> {
   @override
   bool build() => false;
@@ -166,8 +156,6 @@ final disclaimerAcceptedProvider = NotifierProvider<DisclaimerNotifier, bool>(
   DisclaimerNotifier.new,
 );
 
-/// Developer-mode master switch; when off the option section is disabled. Persisted in the UI
-/// container so the switch survives a restart, like every other legacy boolean.
 class DeveloperModeNotifier extends Notifier<bool> {
   static const _key = 'developer_mode_enabled';
 
@@ -210,7 +198,6 @@ enum UpdateStage {
   bool get isBusy => this == checking || this == downloading;
 }
 
-/// App-update state machine; [UpdateNotifier.check] queries GitHub Releases.
 class UpdateState {
   const UpdateState({
     this.stage = UpdateStage.idle,
@@ -223,19 +210,14 @@ class UpdateState {
 
   final UpdateStage stage;
 
-  /// 0-1; meaningful only while [UpdateStage.downloading].
   final double progress;
 
-  /// New version found; set from [UpdateStage.available] onwards.
   final UpdateInfo? info;
 
-  /// Local version, for the "current x to latest y" label.
   final String? currentVersion;
 
-  /// Failure reason; non-null while idle means the last check failed.
   final String? error;
 
-  /// Absolute path of the downloaded package; set once downloaded.
   final String? apkPath;
 
   UpdateState copyWith({
@@ -262,7 +244,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
   @override
   UpdateState build() => const UpdateState();
 
-  /// Local version from `pubspec.yaml` ([appVersionProvider]), the only source.
   String get _currentVersion => ref.read(appVersionProvider).name;
 
   Future<void> check() async {
@@ -278,7 +259,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
     );
     final result = await ref.read(appUpdateCheckerProvider).check(current);
     if (result.failed) {
-      // Back to idle with the reason; staying "checking" spins forever.
       state = state.copyWith(stage: UpdateStage.idle, error: result.error);
       return;
     }
@@ -287,7 +267,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
         : state.copyWith(stage: UpdateStage.upToDate, clearInfo: true);
   }
 
-  /// Real download: the native side writes the APK and reports progress (`UpdateBridge`).
   Future<void> download() async {
     if (state.stage.isBusy) return;
     final info = state.info;
@@ -307,12 +286,10 @@ class UpdateNotifier extends Notifier<UpdateState> {
           url: url,
           version: info.version,
           onProgress: (progress) {
-            // The user may leave or re-check mid-download, so only update while still downloading.
             if (state.stage != UpdateStage.downloading) return;
             state = state.copyWith(progress: progress.fraction ?? 0);
           },
         );
-    // The global mirror goes first; a failed mirror retries the original address once.
     final mirrored = globalMirrorUrl(
       ref.read(globalMirrorTemplateProvider),
       info.downloadUrl,
@@ -339,7 +316,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
     );
   }
 
-  /// Launches the system installer for the downloaded package.
   Future<bool> install() async {
     final path = state.apkPath;
     if (path == null) {
@@ -357,7 +333,6 @@ class UpdateNotifier extends Notifier<UpdateState> {
   void reset() => state = const UpdateState();
 }
 
-/// Update checker; tests may override the endpoint.
 final appUpdateCheckerProvider = Provider<AppUpdateChecker>(
   (ref) => AppUpdateChecker(
     userAgent: ref.watch(requestUserAgentProvider),
@@ -365,7 +340,6 @@ final appUpdateCheckerProvider = Provider<AppUpdateChecker>(
   ),
 );
 
-/// Update download/install channel, replaceable in tests.
 final updateBridgeProvider = Provider<UpdateBridge>((ref) => UpdateBridge());
 
 final updateProvider = NotifierProvider<UpdateNotifier, UpdateState>(
@@ -395,7 +369,6 @@ class IpQualityState {
 
   final IpQualityStage stage;
 
-  /// Last successful report; kept on failure for comparison.
   final IpQualityReport? report;
 
   final String? error;
@@ -412,7 +385,6 @@ class IpQualityState {
   );
 }
 
-/// Address and stage shown by the IP-quality overlay, re-detected on each open.
 class IpQualityNotifier extends Notifier<IpQualityState> {
   @override
   IpQualityState build() => const IpQualityState();
@@ -435,7 +407,6 @@ class IpQualityNotifier extends Notifier<IpQualityState> {
   }
 }
 
-/// IP-quality checker; tests may override the endpoints.
 final ipQualityCheckerProvider = Provider<IpQualityChecker>(
   (ref) => IpQualityChecker(userAgent: ref.watch(requestUserAgentProvider)),
 );

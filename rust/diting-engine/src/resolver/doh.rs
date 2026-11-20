@@ -1,25 +1,3 @@
-//! DNS over HTTPS (RFC 8484): a POST of `application/dns-message` over the pooled HTTP client.
-//!
-//! `resolver_doh.go` used `net/http` with `ForceAttemptHTTP2`, idle-connection limits, a 90 s idle
-//! window and a five-second client timeout, protected sockets for the dial, a bootstrap override for
-//! the hostname, one retry when the transport failed with `EOF` (an HTTP/2 connection the server had
-//! already closed), a 403 read as "rate limited" and any other status as an error.
-//!
-//! Here:
-//!
-//! * the pool is `hyper-util`'s legacy client — the same shape as `http.Transport`'s pool, with an
-//!   idle window and a per-host cap. ALPN decides the protocol (`h2` first, `http/1.1` second), so a
-//!   provider that only speaks HTTP/2 is not a special case;
-//! * the dial is a [`DohConnector`]: bootstrap-resolved address, `rustls` with the platform roots,
-//!   then the ALPN result is handed to the pool so it can key the connection as HTTP/2 or HTTP/1.1;
-//! * the status table (`200` / `403` / other) and the one-shot `EOF` retry rule are the kernel's
-//!   ([`diting_upstream_core::doh`]), including the fact that the retry matches the *text* `EOF`:
-//!   `errors.Is(err, io.EOF)` would miss the wrapped `unexpected EOF` and change which failures retry.
-//!
-//! `http.Transport.MaxIdleConns` (5, global) has no counterpart — the hyper pool is per host, and
-//! with `MaxIdleConnsPerHost = 2` a global cap of 5 can only bind with three or more DoH providers
-//! configured; the per-host cap is the one that decides reuse in practice.
-
 use std::fmt;
 use std::io;
 use std::pin::Pin;
@@ -46,23 +24,15 @@ use tower_service::Service;
 use crate::resolver::dial::Dialer;
 use crate::resolver::trust::UpstreamTrust;
 
-/// `application/dns-message`, the only media type RFC 8484 defines.
 pub const DNS_MESSAGE: &str = "application/dns-message";
 
-/// The DoH transport: one pooled HTTP client per resolver.
 pub struct DohClient {
     client: Client<DohConnector, Full<Bytes>>,
-    /// Set once a response advertises an HTTP/3 endpoint (`Alt-Svc: h3=…`). N7's H3 upgrade and its
-    /// fallback consult this instead of re-parsing every response.
     doh3_advertised: std::sync::atomic::AtomicBool,
-    /// Consecutive failed H3 attempts; after [`H3_MAX_FAILURES`] the upgrade is abandoned so a broken
-    /// H3 path cannot keep adding latency to every query.
     h3_failures: std::sync::atomic::AtomicU32,
-    /// The port the last `Alt-Svc: h3=…` advertisement named, so the upgrade dials the right one.
     doh3_port: std::sync::atomic::AtomicU16,
 }
 
-/// How many consecutive H3 failures disable the upgrade for this client.
 const H3_MAX_FAILURES: u32 = 3;
 
 impl DohClient {
@@ -71,7 +41,6 @@ impl DohClient {
             tls: trust.client_config(&crate::resolver::trust::DOH_ALPN),
             dialer,
         };
-        // `buildDoHClient`'s pool settings, in `hyper-util` terms.
         let client = Client::builder(TokioExecutor::new())
             .pool_idle_timeout(Duration::from_nanos(
                 TUNING.doh_idle_conn_timeout_ns.max(1) as u64
@@ -86,27 +55,22 @@ impl DohClient {
         }
     }
 
-    /// Whether a DoH server has advertised an HTTP/3 endpoint and the upgrade has not been disabled
-    /// by repeated failures. The resolver uses this as N7's negotiation signal.
     pub fn doh3_ready(&self) -> bool {
         self.doh3_advertised
             .load(std::sync::atomic::Ordering::Relaxed)
             && self.h3_failures.load(std::sync::atomic::Ordering::Relaxed) < H3_MAX_FAILURES
     }
 
-    /// Records a successful H3 exchange, which resets the failure streak.
     pub fn note_h3_success(&self) {
         self.h3_failures
             .store(0, std::sync::atomic::Ordering::Relaxed);
     }
 
-    /// Records a failed H3 exchange; after [`H3_MAX_FAILURES`] the next query stays on HTTP/2.
     pub fn note_h3_failure(&self) {
         self.h3_failures
             .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
-    /// The HTTP/3 port from the last advertisement, if any.
     pub fn doh3_port(&self) -> Option<u16> {
         match self.doh3_port.load(std::sync::atomic::Ordering::Relaxed) {
             0 => None,
@@ -114,7 +78,6 @@ impl DohClient {
         }
     }
 
-    /// `queryDoHContext`: the request, the one-shot `EOF` retry, the status table and the body.
     pub async fn query(&self, uri: &Uri, query: &[u8]) -> Result<Vec<u8>, String> {
         let budget = Duration::from_nanos(TUNING.query_timeout_doh_ns.max(1) as u64);
         let retry_delay = Duration::from_nanos(TUNING.doh_retry_delay_ns.max(1) as u64);
@@ -151,7 +114,6 @@ impl DohClient {
             StatusKind::Other => return Err(format!("DoH status {}", response.status().as_u16())),
         }
 
-        // N7 negotiation: remember an HTTP/3 advertisement for the next query.
         if let Some(value) = response
             .headers()
             .get("alt-svc")
@@ -171,7 +133,6 @@ impl DohClient {
             .await
             .map_err(|error| format!("DoH read: {error}"))?
             .to_bytes();
-        // `io.LimitReader(resp.Body, maxReadBytes)`.
         let limit = TUNING.max_read_bytes.max(1) as usize;
         let body = if body.len() > limit {
             &body[..limit]
@@ -192,7 +153,6 @@ fn build_request(uri: &Uri, query: &[u8]) -> Result<Request<Full<Bytes>>, String
         .map_err(|error| format!("DoH request: {error}"))
 }
 
-/// The connector `buildDoHClient`'s `DialContext` was: bootstrap-resolved TCP, then TLS.
 #[derive(Clone)]
 struct DohConnector {
     tls: Arc<ClientConfig>,
@@ -231,7 +191,6 @@ impl Service<Uri> for DohConnector {
     }
 }
 
-/// The TLS stream plus the ALPN verdict the pool keys on.
 struct TlsIo {
     stream: TlsStream<TcpStream>,
     h2: bool,

@@ -1,9 +1,3 @@
-//! The long-lived application state and the DNS data plane lifecycle.
-//!
-//! Every engine is built once and updated in place on configuration changes so in-flight queries
-//! keep their snapshot. Starting DNS rebuilds the pipeline (engine handles are shared, so only the
-//! listener and cache wiring are new) and synchronizes the listener addresses with the config.
-
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
@@ -37,10 +31,6 @@ use crate::settings;
 
 mod encrypted;
 
-/// Platform capabilities composed by the service binary and consumed by the controllers.
-///
-/// The IPC layer never branches on the target OS: it only sees these trait objects. Optional
-/// fields let unit tests construct a runtime without touching the host.
 pub struct PlatformHandles {
     pub adapters: Option<Arc<dyn AdapterScanner>>,
     pub dns_manager: Option<Arc<dyn DnsManager>>,
@@ -49,7 +39,6 @@ pub struct PlatformHandles {
     pub firewall: Option<Arc<dyn FirewallManager>>,
     pub autostart: Option<Arc<dyn AutoStartManager>>,
     pub state_store: Option<Arc<dyn StateStore>>,
-    /// Local non-loopback addresses, as reported by the host adapter layer.
     pub lan_addresses: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     pub platform_name: String,
     pub firewall_backend: String,
@@ -87,9 +76,6 @@ impl PlatformHandles {
 pub struct AppRuntime {
     config: Arc<RwLock<Config>>,
     config_path: PathBuf,
-    /// Serializes config read-modify-apply-persist transactions. Without it two concurrent
-    /// management requests each build a snapshot from the same state and the later one silently
-    /// reverts the earlier change (and both write `config.json`).
     config_op: std::sync::Mutex<()>,
     platform: RwLock<Option<Arc<PlatformHandles>>>,
     pub resolver: Arc<DesktopResolver>,
@@ -109,9 +95,6 @@ pub struct AppRuntime {
     observer: RwLock<Option<Arc<dyn QueryObserver>>>,
     dns: Mutex<Option<Arc<DnsServer>>>,
     encrypted: Arc<RwLock<Option<Arc<EncryptedListeners>>>>,
-    /// Serializes DNS/encrypted listener lifecycle changes. Lock order is always
-    /// `dns_lifecycle` → `dns`; concurrent reloads otherwise interleave their stop/bind phases and
-    /// one can silently disable the listeners the other just bound.
     dns_lifecycle: Mutex<()>,
 }
 
@@ -161,14 +144,12 @@ impl AppRuntime {
         }
     }
 
-    /// Builds a runtime with an explicit config path and platform handles.
     pub fn with_platform(config: Config, config_path: PathBuf, platform: PlatformHandles) -> Self {
         let runtime = Self::with_paths(config, config_path);
         runtime.set_platform(platform);
         runtime
     }
 
-    /// Installs the platform capabilities after construction.
     pub fn set_platform(&self, platform: PlatformHandles) {
         *self
             .platform
@@ -193,13 +174,11 @@ impl AppRuntime {
         self.config_path.clone()
     }
 
-    /// Persists the current configuration snapshot to the configured path.
     pub fn persist_config(&self) -> Result<(), String> {
         let config = self.config();
         store::save_config(&self.config_path, &config).map_err(|error| error.to_string())
     }
 
-    /// Applies a mutation to the configuration, reconfigures every engine and persists it.
     pub fn update_config(&self, mutate: impl FnOnce(&mut Config)) -> Result<Config, String> {
         self.with_config_update(|next| {
             mutate(next);
@@ -207,7 +186,6 @@ impl AppRuntime {
         })
     }
 
-    /// Applies a mutation without persisting (runtime-only switches).
     pub fn update_config_in_memory(&self, mutate: impl FnOnce(&mut Config)) -> Config {
         let _op = self.lock_config_op();
         let mut next = self.config();
@@ -216,10 +194,6 @@ impl AppRuntime {
         next
     }
 
-    /// Runs one read-modify-apply-persist transaction under [`AppRuntime::config_op`].
-    ///
-    /// Callers that need to mutate a snapshot (instead of a blind `update_config`) use this so
-    /// their read cannot race another management request's write.
     pub fn with_config_update<T>(
         &self,
         update: impl FnOnce(&mut Config) -> Result<T, String>,
@@ -232,7 +206,6 @@ impl AppRuntime {
         Ok(outcome)
     }
 
-    /// Runs the same transaction without persisting to disk.
     pub fn with_config_update_in_memory<T>(
         &self,
         update: impl FnOnce(&mut Config) -> Result<T, String>,
@@ -250,7 +223,6 @@ impl AppRuntime {
             .unwrap_or_else(|error| error.into_inner())
     }
 
-    /// Installs the query-log/WebSocket observer before DNS starts.
     pub fn set_observer(&self, observer: Arc<dyn QueryObserver>) {
         *self
             .observer
@@ -276,10 +248,6 @@ impl AppRuntime {
         Arc::clone(&self.config)
     }
 
-    /// Applies a full configuration snapshot to every engine.
-    ///
-    /// Listener changes (addresses/ports) require a DNS restart and are left to the caller; the
-    /// certificate manager is always reconfigured because DoT/DoH/DoQ read it eagerly.
     pub fn apply_config(&self, config: Config) {
         *self
             .config
@@ -317,8 +285,6 @@ impl AppRuntime {
             .unwrap_or(false)
     }
 
-    /// Builds a fresh pipeline and starts the UDP/TCP and encrypted listeners. Replacing a running
-    /// server is a restart: shut down first so the sockets are free, then bind.
     pub async fn start_dns(&self) -> Result<(), String> {
         let _lifecycle = self.dns_lifecycle.lock().await;
         let config = self.config();
@@ -367,7 +333,6 @@ impl AppRuntime {
         .build()
     }
 
-    /// Persists the cache when the configuration asks for it.
     pub fn save_cache(
         &self,
     ) -> Result<Option<diting_desktop_core::cache::persist::PersistStatus>, String> {

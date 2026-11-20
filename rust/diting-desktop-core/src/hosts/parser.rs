@@ -1,25 +1,14 @@
-//! The hosts document parser and lookup table.
-//!
-//! This is a direct port of `rust/diting-hosts-core/src/hosts.rs` + `ip.rs` + `arpa.rs`. The
-//! desktop crate does not depend on the kernel crate, so the parser lives here instead; the
-//! observable behaviour (line comments, Unicode field splitting, the interface-zone cut, the
-//! address forms `net.ParseIP` accepts, first-entry-wins deduplication) is kept identical.
-
 use std::collections::BTreeMap;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 
-/// `bufio.MaxScanTokenSize`: a longer line ends the scan for good.
 const MAX_LINE_BYTES: usize = 64 * 1024;
 
-/// One thing a table is built from.
 #[derive(Debug, Clone)]
 pub(crate) enum Source {
-    /// Read as bytes; an unreadable path is skipped and remembered as the build error.
     File(PathBuf),
 }
 
-/// The parsed maps plus what happened while building them.
 #[derive(Debug, Default, Clone)]
 pub(crate) struct HostsTable {
     v4: BTreeMap<String, Vec<Ipv4Addr>>,
@@ -28,8 +17,6 @@ pub(crate) struct HostsTable {
 }
 
 impl HostsTable {
-    /// Builds a table from `sources`, in order. Returns the table, the paths that were read and
-    /// the last read failure (the kernel's `info()` semantics).
     pub(crate) fn build(sources: &[Source]) -> (Self, Vec<String>, Option<String>) {
         let mut table = HostsTable::default();
         let mut loaded = Vec::new();
@@ -52,7 +39,6 @@ impl HostsTable {
         (table, loaded, error)
     }
 
-    /// Builds a table from already-lightweight source paths, keeping the error for `reload`.
     pub(crate) fn build_paths(paths: &[String]) -> (Self, Vec<String>, Option<String>) {
         let sources: Vec<Source> = paths.iter().map(|path| Source::File(path.into())).collect();
         Self::build(&sources)
@@ -87,7 +73,6 @@ impl HostsTable {
         self.ptr.get(&addr).cloned().unwrap_or_default()
     }
 
-    /// Number of distinct names across the IPv4 and IPv6 maps.
     pub(crate) fn entry_count(&self) -> usize {
         let mut names = std::collections::BTreeSet::new();
         names.extend(self.v4.keys());
@@ -152,7 +137,6 @@ impl HostsTable {
     }
 }
 
-/// `strings.ToLower(strings.Trim(host, "."))`.
 pub(crate) fn normalize_host(host: &str) -> std::borrow::Cow<'_, str> {
     let trimmed = host.trim_matches('.');
     if trimmed.chars().any(|c| c.is_ascii_uppercase()) {
@@ -162,7 +146,6 @@ pub(crate) fn normalize_host(host: &str) -> std::borrow::Cow<'_, str> {
     }
 }
 
-/// `net.ParseIP` + `To4`, with the interface zone (`fe80::1%eth0`) cut first.
 fn parse_address(raw: &str) -> Option<IpAddr> {
     let raw = match raw.find('%') {
         Some(index) => &raw[..index],
@@ -178,7 +161,6 @@ fn parse_address(raw: &str) -> Option<IpAddr> {
     })
 }
 
-/// `ParseIPFromArpa`: `None` for anything that is not a well-formed reverse name.
 pub(crate) fn parse_arpa(name: &str) -> Option<IpAddr> {
     let lowered = name.to_lowercase();
     let trimmed = lowered.trim_end_matches('.').trim_start_matches('.');

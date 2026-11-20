@@ -1,5 +1,3 @@
-//! `/api/v1/clients*`.
-
 use hyper::http::Method;
 
 use diting_desktop_app::controller::clients::{

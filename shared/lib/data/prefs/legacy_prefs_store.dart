@@ -1,5 +1,3 @@
-/// Access to the SharedPreferences files written by the legacy DITING app. File names and keys are
-/// part of the upgrade contract, and only the platform API can open them.
 library;
 
 import 'dart:async';
@@ -28,16 +26,9 @@ abstract class LegacyPrefsStore {
 
   void remove(String container, String key);
 
-  /// Writes an int and completes only after the platform acknowledged it.
-  ///
-  /// Every other write is fire-and-forget, which is fine for UI settings: the in-memory snapshot
-  /// already changed. The storage-layout marker is different — native services resolve database
-  /// names from the same prefs file, so a dropped write would leave Dart on the old stores while
-  /// the tunnel keeps writing the new ones. Callers use this for that one commit point only.
   Future<void> putIntAwaiting(String container, String key, int value);
 }
 
-/// Used on non-Android hosts, in tests and when the channel is unavailable.
 class MemoryLegacyPrefsStore implements LegacyPrefsStore {
   MemoryLegacyPrefsStore([Map<String, Map<String, Object?>>? seed])
     : _values = {
@@ -92,7 +83,6 @@ class MemoryLegacyPrefsStore implements LegacyPrefsStore {
   }
 }
 
-/// Snapshot loaded at startup; every mutation is mirrored to the real file through the channel.
 class MethodChannelLegacyPrefsStore implements LegacyPrefsStore {
   MethodChannelLegacyPrefsStore(
     this._snapshot, {
@@ -120,8 +110,6 @@ class MethodChannelLegacyPrefsStore implements LegacyPrefsStore {
             'value': value,
           })
           .catchError((Object error) {
-            // A dropped write is data loss: this log is the only trace, so it must name the
-            // container and key.
             debugPrint('legacy prefs write failed: $container/$key ($error)');
           }),
     );
@@ -151,8 +139,6 @@ class MethodChannelLegacyPrefsStore implements LegacyPrefsStore {
   void putStringSet(String container, String key, Set<String> value) =>
       _write(container, key, 'string_set', value.toList());
 
-  /// Acknowledged variant used for the one-time layout marker. The snapshot changes only after the
-  /// platform accepted the value, so a thrown call leaves this store exactly as native sees it.
   @override
   Future<void> putIntAwaiting(String container, String key, int value) async {
     await channel.invokeMethod<void>('put', {
@@ -177,9 +163,6 @@ class MethodChannelLegacyPrefsStore implements LegacyPrefsStore {
   }
 }
 
-/// Loads every legacy container once before the first frame; without the bridge the app starts with
-/// defaults. One `readAllAll` round trip replaces the twelve serial `readAll` calls that used to
-/// sit on the startup path.
 Future<LegacyPrefsStore> loadLegacyPrefsStore({
   MethodChannel channel = legacyPrefsChannel,
 }) async {

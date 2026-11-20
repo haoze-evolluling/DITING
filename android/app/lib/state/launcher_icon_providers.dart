@@ -1,8 +1,3 @@
-/// Launcher icon style state and its labels.
-///
-/// The choice is mirrored into legacy preferences so the appearance page can show the selected
-/// tile synchronously and the app can restore it after an update reset the component flags. The
-/// authoritative switch still happens in `LauncherIconBridge` (activity-alias enable/disable).
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -28,9 +23,6 @@ class LauncherIconNotifier extends Notifier<LauncherIconStyle> {
     ref.watch(legacySettingsProvider).launcherIconStyleRaw,
   );
 
-  /// Persists the choice first (so it survives even if the platform call fails) and then asks the
-  /// platform to switch the launcher entry. False means the switch was rejected, but the tile
-  /// still reflects the user's pick so they can retry.
   Future<bool> select(LauncherIconStyle style) async {
     state = style;
     ref.read(legacySettingsProvider).setLauncherIconStyleRaw(style.storageValue);
@@ -44,8 +36,6 @@ final launcherIconProvider =
       LauncherIconNotifier.new,
     );
 
-/// Re-applies the persisted style on launch. Idempotent: it reads the platform's current alias and
-/// only writes when they differ, so a normal start makes no PackageManager changes.
 Future<void> reconcileLauncherIcon(
   LauncherIconBridge bridge,
   String storedRaw,

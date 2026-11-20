@@ -1,10 +1,3 @@
-/// The appearance page's left pane: the window as it will look, drawn with the chosen palette, and
-/// the day/night mode that decides which side of the scheme it is drawn in.
-///
-/// A desktop reader is choosing how the window they are looking at will be painted, so the preview
-/// is that window — caption bar, sidebar, toolbar, cards — and not a phone screenshot. The mode
-/// control sits under the picture it changes, so the effect of the choice is the next thing the eye
-/// reaches.
 library;
 
 import 'package:diting_desktop/pages/settings/widgets/appearance_scheme.dart';
@@ -41,9 +34,6 @@ class AppearancePreviewCard extends ConsumerWidget {
           DashboardCardHeader(
             glyph: AppGlyphs.devices,
             title: l10n.desktopSettingsPreview,
-            // Two chips, one per choice: the palette and the mode answer different questions, and
-            // a single "current: X · Y" line read as one long label that repeated itself whenever
-            // both sides followed the system.
             leading: [
               DashboardChip(
                 label: palette.label(l10n),
@@ -61,8 +51,6 @@ class AppearancePreviewCard extends ConsumerWidget {
             style: DashboardText.label(context),
           ),
           const SizedBox(height: AppGap.sm),
-          // The window sits on a recessed stage so a pale light scheme still reads as a window
-          // standing on the card instead of melting into the card's own tone.
           DecoratedBox(
             decoration: ShapeDecoration(
               color: DashboardColors.of(context).tone2,

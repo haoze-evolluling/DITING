@@ -1,9 +1,5 @@
-/// Fixtures for the desktop rewrite page: the engine config plus the rule list the service stores
-/// with it, so the fake answers `/status` and `/dns/rewrite/rules` from one source.
 library;
 
-/// A `GET /api/v1/status` payload's `rewrite` field and the answer of `/dns/rewrite/rules`. The
-/// service stores both in one config, so the fake does too.
 Map<String, Object?> rewritePayload({
   bool enabled = true,
   int ttl = 60,

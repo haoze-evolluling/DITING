@@ -5,7 +5,6 @@ import 'package:diting_shared/ui/context.dart';
 import 'package:flutter/rendering.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Switches the theme in one frame and fades the old frame out on top, no lerping per dependent.
 class ThemeCrossFade extends StatefulWidget {
   const ThemeCrossFade({
     super.key,
@@ -203,7 +202,6 @@ class _RenderThemeCrossFade extends RenderProxyBox {
     }
     final rect = offset & size;
     final fade = Color.fromRGBO(0, 0, 0, weight);
-    // dstOut then plus keeps a translucent window's opacity, where srcOver would raise it.
     context.canvas
       ..drawRect(
         rect,

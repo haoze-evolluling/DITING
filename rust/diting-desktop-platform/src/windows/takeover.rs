@@ -1,12 +1,3 @@
-//! Windows DNS takeover and restore.
-//!
-//! Ordering is the whole contract here:
-//! 1. snapshot and persist the original DNS before touching any adapter;
-//! 2. write the offline restore script while the machine still resolves;
-//! 3. apply takeover, rolling back on the first failure;
-//! 4. only clear the state file when rollback succeeded. Keeping a stale snapshot is always safer
-//!    than losing the only record of the user's static servers.
-
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -37,7 +28,6 @@ pub struct WindowsDnsManager {
     store: Arc<dyn StateStore>,
     version: String,
     inner: Mutex<DnsInner>,
-    /// Serializes mutating operations; the Go manager held its mutex for the whole call.
     op_lock: AsyncMutex<()>,
 }
 
@@ -96,8 +86,6 @@ impl WindowsDnsManager {
         directory.join("restore-dns.bat")
     }
 
-    /// Best effort: a missing emergency script does not block takeover, but it is never silent
-    /// because the UI tells the user to run this exact file when the service cannot start.
     fn write_restore_script(&self, adapters: &[AdapterState]) {
         let path = self.script_path();
         if let Err(error) = generate_restore_script(adapters, &path) {
@@ -146,8 +134,6 @@ impl WindowsDnsManager {
             }
         }
 
-        // A failed snapshot restore usually leaves the adapter on 127.0.0.1. Pulling it back to
-        // DHCP keeps the machine online; the snapshot stays on disk for a later retry.
         if !failed.is_empty() {
             if let Err(error) =
                 force_reset_loopback_adapters_to_dhcp(self.executor.as_ref(), &failed).await
@@ -236,8 +222,6 @@ impl DnsManager for WindowsDnsManager {
         let state = adapter_state_from_info(adapter);
         let (old_active, old_adapters) = self.snapshot();
 
-        // Match by GUID only: two USB adapters can share the display name "以太网", and matching
-        // by name would overwrite the first one's untouched snapshot.
         let mut adapters = old_adapters.clone();
         let mut found = false;
         for entry in &mut adapters {
@@ -260,9 +244,6 @@ impl DnsManager for WindowsDnsManager {
         self.write_restore_script(&adapters);
 
         if let Err(error) = self.apply_takeover_on_adapter(&state).await {
-            // A dual-stack apply can half-succeed. Restore this adapter before rolling back the
-            // bookkeeping, otherwise the state file claims "not taken over" while IPv4 is still
-            // pointed at 127.0.0.1.
             return match self.restore_single_adapter(&state).await {
                 Ok(()) => {
                     self.set_snapshot(old_active, old_adapters.clone());
@@ -312,8 +293,6 @@ impl DnsManager for WindowsDnsManager {
         };
 
         if let Err(error) = result {
-            // Keep both the in-memory snapshot and the state file: losing them makes the original
-            // static DNS unrecoverable if the fallback sweep turned the adapter into DHCP.
             let (_, current) = self.snapshot();
             self.set_snapshot(
                 true,
@@ -338,8 +317,6 @@ impl DnsManager for WindowsDnsManager {
         let _guard = self.op_lock.lock().await;
         let (_, current) = self.snapshot();
 
-        // GUID wins; display name is a fallback only when it uniquely identifies adapters, since
-        // two adapters may share a name.
         let mut targets: Vec<AdapterState> = current
             .iter()
             .filter(|adapter| adapter.id == adapter_id)
@@ -399,7 +376,6 @@ impl DnsManager for WindowsDnsManager {
         let _guard = self.op_lock.lock().await;
         let result = self.reset_residual_impl().await;
 
-        // Keep an offline restore script consistent with the snapshot that is still on disk.
         let (_, mut adapters) = self.snapshot();
         if adapters.is_empty() {
             if let Ok(Some(state)) = self.store.load() {
@@ -425,8 +401,6 @@ impl DnsManager for WindowsDnsManager {
     }
 }
 
-/// Crash recovery uses the narrower `Restorer` contract; delegate to the full manager so the
-/// rollback/failure-sweep behaviour is identical.
 #[async_trait]
 impl Restorer for WindowsDnsManager {
     async fn restore_adapters(&self, adapters: &[AdapterState]) -> PlatformResult<()> {

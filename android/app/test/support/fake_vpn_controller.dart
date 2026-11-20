@@ -1,6 +1,5 @@
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 
-/// Deterministic stand-in for the platform VPN channel.
 class FakeVpnController implements VpnController {
   FakeVpnController({
     this.prepared = true,
@@ -13,7 +12,6 @@ class FakeVpnController implements VpnController {
   final bool started;
   final String? error;
 
-  /// Lets widget tests observe the "starting" frame before the future lands.
   final Duration delay;
 
   int startCalls = 0;
@@ -21,7 +19,6 @@ class FakeVpnController implements VpnController {
   VpnStartRequest? lastRequest;
   VpnStatus statusValue = const VpnStatus(running: false, persisted: false);
 
-  /// Return value of the next [trafficRates] call; change it to test native rates.
   VpnTrafficRates ratesValue = const VpnTrafficRates.idle();
   int trafficRatesCalls = 0;
 

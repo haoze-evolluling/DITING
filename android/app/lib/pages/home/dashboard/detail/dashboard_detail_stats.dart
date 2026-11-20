@@ -1,10 +1,5 @@
 part of 'dashboard_detail_parts.dart';
 
-/// Metric tiles in a two-column grid, framed as its own card.
-///
-/// A single `StatStrip` row of four cells gave each value a quarter of the phone width, so
-/// `73.46 MB` was cut to `73.46 …`. Two columns always fit a binary byte figure, and the tile
-/// shrinks a still-too-long value instead of ellipsizing it.
 class DashboardDetailStats extends StatelessWidget {
   const DashboardDetailStats({
     super.key,
@@ -24,7 +19,6 @@ class DashboardDetailStats extends StatelessWidget {
   }
 }
 
-/// The tile grid itself, for pages that already own a card.
 class DashboardStatGrid extends StatelessWidget {
   const DashboardStatGrid({super.key, required this.stats, this.columns = 2});
 
@@ -120,7 +114,6 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
-/// One read-only `label: value` row inside a [DashboardDetailCard].
 class DashboardDetailRow {
   const DashboardDetailRow({
     required this.label,
@@ -132,15 +125,11 @@ class DashboardDetailRow {
   final String label;
   final String value;
 
-  /// Lining digits for addresses, ports and package names.
   final bool tabular;
 
-  /// Value colour for a state that needs to stand out (ok / error).
   final Color? color;
 }
 
-/// Rows with hairline separators; values wrap instead of truncating, so a long IPv6 address or a
-/// DNS reply stays readable.
 class DashboardDetailRows extends StatelessWidget {
   const DashboardDetailRows({super.key, required this.rows});
 
@@ -190,7 +179,6 @@ class DashboardDetailRows extends StatelessWidget {
   }
 }
 
-/// Page-bottom note: the standing explanation of where the numbers come from.
 class DashboardDetailNote extends StatelessWidget {
   const DashboardDetailNote({super.key, required this.text});
 

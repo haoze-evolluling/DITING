@@ -1,5 +1,3 @@
-/// Export wiring for the request log: the exporter, the outcome type and the action that opens the
-/// system save dialog and streams the CSV into it.
 library;
 
 import 'package:diting_android/data/export/request_log_csv_exporter.dart';
@@ -17,7 +15,6 @@ final requestLogExporterProvider = Provider<RequestLogCsvExporter>(
   (ref) => const RequestLogCsvExporter(),
 );
 
-/// What an export attempt ended up doing; the page only has to report it.
 class RequestLogExportOutcome {
   const RequestLogExportOutcome.saved(
     RequestLogExportResult this.result,
@@ -48,7 +45,6 @@ class RequestLogExportOutcome {
   final String? error;
 }
 
-/// The page calls this; tests replace it with a fake so no database or channel is needed.
 typedef RequestLogExportRunner = Future<RequestLogExportOutcome> Function(
   RequestLogExportOptions options,
 );
@@ -81,7 +77,6 @@ class RequestLogExportActions {
     try {
       final mode = _ref.read(workModeProvider);
       final dnsDb = await _ref.read(activeLogDatabaseProvider.future);
-      // Express mode keeps its own database without `http_request_log`.
       final httpDb = mode == AppWorkMode.normal
           ? await _ref.read(normalLogDatabaseProvider.future)
           : null;
@@ -120,7 +115,6 @@ class RequestLogExportActions {
     }
   }
 
-  /// `yyyyMMdd-HHmmss`, enough to keep two exports of one minute apart readable.
   static String _stampOf(DateTime time) {
     String two(int value) => value.toString().padLeft(2, '0');
     return '${time.year}${two(time.month)}${two(time.day)}'

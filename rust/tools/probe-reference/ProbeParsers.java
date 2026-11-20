@@ -1,19 +1,3 @@
-/// Reference implementation of the diagnostics parsers, lifted out of Kotlin so it can run on a
-/// desktop JVM: no Kotlin toolchain, no device.
-///
-/// <p>This half is the host text and DNS wire work: {@code NetHost.sanitize},
-/// {@code DnsLookupProbe.isIpLiteral}, the A/AAAA query builders, {@code DnsLatencyTester.isSuccess}
-/// and {@code DnsServerProbe}'s answer walk. Each method is a line-for-line port of the Kotlin it
-/// replaces, so the {@code DataInputStream} walk and the {@code Character} predicates are the same
-/// Java library calls the app made.
-///
-/// <p>Compile the four files together and run the corpus generator:
-///
-/// <pre>
-///   javac -d /tmp/probe-ref rust/tools/probe-reference/*.java
-///   java -cp /tmp/probe-ref ProbeReference --corpus rust/diting-probe-core/tests/fixtures
-/// </pre>
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -24,11 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Host text and DNS wire parsers; package-private so {@code ProbeReference} can call them.
 final class ProbeParsers {
-    // ---------------------------------------------------------------------------------------
-    // NetHost.sanitize
-    // ---------------------------------------------------------------------------------------
 
     static String sanitize(String input) {
         String value = input.trim();
@@ -72,9 +52,6 @@ final class ProbeParsers {
         return count;
     }
 
-    // ---------------------------------------------------------------------------------------
-    // DnsLookupProbe.isIpLiteral
-    // ---------------------------------------------------------------------------------------
 
     static boolean isIpLiteral(String value) {
         String text = value;
@@ -107,7 +84,6 @@ final class ProbeParsers {
         return true;
     }
 
-    /// `String.toIntOrNull` / `String.toDoubleOrNull`: the Kotlin the probes called.
     static Integer toIntOrNull(String value) {
         if (value == null) return null;
         try {
@@ -126,11 +102,7 @@ final class ProbeParsers {
         }
     }
 
-    // ---------------------------------------------------------------------------------------
-    // DnsServerProbe.buildQuery / DnsLatencyTester.buildQuery
-    // ---------------------------------------------------------------------------------------
 
-    /** Returns null when a label is empty or longer than 63 bytes (the Kotlin exception case). */
     static byte[] buildQuery(int id, int qtype, String domain) {
         String trimmed = domain;
         while (trimmed.startsWith(".")) trimmed = trimmed.substring(1);
@@ -160,9 +132,6 @@ final class ProbeParsers {
         return out.toByteArray();
     }
 
-    // ---------------------------------------------------------------------------------------
-    // DnsLatencyTester.isSuccess
-    // ---------------------------------------------------------------------------------------
 
     static boolean isSuccess(byte[] response) {
         if (response.length < 12) return false;
@@ -171,12 +140,9 @@ final class ProbeParsers {
         return qr && rcode == 0;
     }
 
-    // ---------------------------------------------------------------------------------------
-    // DnsServerProbe.lookup's answer walk
-    // ---------------------------------------------------------------------------------------
 
     static final class Record {
-        final int kind; // 1 = A, 2 = AAAA
+        final int kind;
         final long ttl;
         final String value;
 
@@ -187,7 +153,6 @@ final class ProbeParsers {
         }
     }
 
-    /** Status 0 = ok, 1 = invalid, 2 = truncated, 3 = rcode, 4 = incomplete answer section. */
     static byte[] parseServerReply(byte[] response, boolean ipv4) {
         ProbeWriter writer = new ProbeWriter();
         if (response.length < 12 || (response[0] & 0x80) == 0) {

@@ -1,8 +1,3 @@
-/// The hub's LAN console page: whether the web console is reachable from the LAN, on which
-/// port, and with which admin credential.
-///
-/// The old desktop console's `LanWebCard.vue` is the functional blueprint. The card never decides the
-/// listen address or whether a firewall rule is needed; `/web/status` reports both.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

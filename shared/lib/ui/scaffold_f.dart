@@ -2,12 +2,6 @@
 
 part of 'scaffold.dart';
 
-// iOS 27's bar search as the simulator shows it. Opening, its button group gives up the search
-// button while the field grows out of the remainder (about 3% overshoot at its peak 0.24s);
-// closing shrinks back in 0.15s and the group takes the button back with a swell. A back button
-// takes the field back, the group its cancel button; the glass swells through the change as under
-// a press. Each part starts as the last slows, where iOS pauses. A lone button takes a field at
-// the bar's end on a softer spring, then swells; past one, it re-forms out of a droplet.
 final _searchSpring = SpringDescription.withDampingRatio(
   mass: 1,
   stiffness: 390,
@@ -138,11 +132,8 @@ class _SearchFrame {
   final double flankScale;
 }
 
-/// How a closing bar's search gives its button back.
 enum _SearchReturn { group, morph, droplet, pinch }
 
-/// One opening or closing of a bar's search, in seconds from its start as
-/// iOS 27 times each part.
 class _SearchMove {
   _SearchMove({
     required this.opens,
@@ -390,7 +381,6 @@ class _SearchMotion {
         last.growthVelocityAt(time),
         snapToEnd: true,
       ),
-      // A field already moving turns back at once.
       delay: !last.growthSettledAt(time)
           ? 0
           : open

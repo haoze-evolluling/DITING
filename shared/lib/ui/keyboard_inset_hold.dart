@@ -5,8 +5,6 @@ import 'inherited.dart';
 
 typedef _BottomInset = ({double viewInset, double padding});
 
-/// Holds a page's bottom inset under another route or an inactive tab, which cannot use the
-/// keyboard.
 class KeyboardInsetHold extends StatefulWidget {
   const KeyboardInsetHold({super.key, required this.child});
 

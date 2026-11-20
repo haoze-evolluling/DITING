@@ -1,7 +1,3 @@
-//! End-to-end DoT smoke test on an ephemeral port with a freshly generated self-signed
-//! certificate. The client verifies signatures but accepts the ephemeral certificate, so the test
-//! exercises the real rustls handshake without needing a PKI fixture.
-
 use std::fs;
 use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
@@ -124,8 +120,6 @@ async fn dot_round_trip_on_ephemeral_port() {
     let temp = TempDir::new();
     let cert = CertManager::new(temp.path(), CertConfig::default());
     if let Err(error) = cert.ensure_self_signed(CertConfig::default()) {
-        // Certificate generation is deterministic but environment-dependent; a machine without a
-        // working crypto provider should skip rather than report a product failure.
         eprintln!("skip DoT integration test: {error}");
         return;
     }

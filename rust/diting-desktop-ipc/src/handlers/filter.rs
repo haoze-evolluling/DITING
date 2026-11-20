@@ -1,5 +1,3 @@
-//! `/api/v1/filter/*`: stats, configuration, lists, rules, schedules and services.
-
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -39,7 +37,6 @@ pub async fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
                     Err(error) => return bad_request(format!("解析配置失败: {error}")),
                 };
             let runtime = Arc::clone(server.runtime());
-            // Applying the config reparses every enabled rule list; keep that off the workers.
             match tokio::task::spawn_blocking(move || runtime.update_filter_config(config)).await {
                 Ok(Ok(())) => ok_message("过滤配置已更新生效"),
                 Ok(Err(error)) => internal_error(error.message),
@@ -207,7 +204,6 @@ pub fn handle_pause(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
 }
 
-/// `core.BlockedService`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct BlockedService {
@@ -220,7 +216,6 @@ struct BlockedService {
     source: String,
 }
 
-/// `core.BlockedServiceGroup`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct BlockedServiceGroup {
@@ -229,7 +224,6 @@ struct BlockedServiceGroup {
     count: usize,
 }
 
-/// `core.ServiceScheduleState`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ServiceScheduleState {
@@ -240,7 +234,6 @@ struct ServiceScheduleState {
     active_name: String,
 }
 
-/// `ipc.BlockedServicesResponse`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct BlockedServicesResponse {

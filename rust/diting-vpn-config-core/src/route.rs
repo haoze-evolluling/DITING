@@ -1,19 +1,11 @@
-//! TUN parameters and route plans for the two tunnel services.
-//!
-//! The Android side still owns `VpnService.Builder`, the interface label and the
-//! ConnectivityManager probe; this module owns every address, DNS server, route, MTU, blocking
-//! flag, IPv6 decision and the excluded-package union, so normal and express mode cannot drift.
-
 use serde_json::{json, Value};
 
-/// Both modes use the same TUN subnet and MTU; the engine's `DEFAULT_TUN_MTU` must match.
 pub const VPN_ADDRESS_V4: &str = "10.0.0.2";
 pub const DNS_SERVER_V4: &str = "10.0.0.1";
 pub const VPN_ADDRESS_V6: &str = "fd00:abcd::2";
 pub const DNS_SERVER_V6: &str = "fd00:abcd::1";
 pub const VPN_MTU: u16 = 1400;
 
-/// Private, loopback, link-local and CGNAT ranges kept outside the full tunnel.
 pub const IPV4_BYPASS_LAN_ROUTES: &[(&str, u8)] = &[
     ("1.0.0.0", 8),
     ("2.0.0.0", 7),
@@ -67,7 +59,6 @@ pub const IPV4_BYPASS_LAN_ROUTES: &[(&str, u8)] = &[
     ("208.0.0.0", 4),
 ];
 
-/// Public resolvers express mode hijacks into the DNS-only TUN.
 pub const IPV4_HIJACK_IPS: &[&str] = &[
     "8.8.8.8",
     "8.8.4.4",
@@ -104,12 +95,6 @@ pub const IPV6_HIJACK_IPS: &[&str] = &[
     "2400:3200:baba::1",
 ];
 
-/// Explicit modes win; anything else follows the physical-link probe.
-///
-/// The Flutter UI stores the three legacy values `auto` / `disable` / `prefer`, while the old
-/// Kotlin agent and exported 1.4.3 backups use `enabled` / `disabled`. Both spellings have to be
-/// understood here, otherwise `disable` silently falls through to the probe and re-enables IPv6 on
-/// a link that has a (possibly unusable) global address — the regression that made WiFi slow.
 pub fn ipv6_enabled(ipv6_mode: &str, physical_support: bool) -> bool {
     match ipv6_mode.trim().to_lowercase().as_str() {
         "enabled" | "prefer" => true,
@@ -118,7 +103,6 @@ pub fn ipv6_enabled(ipv6_mode: &str, physical_support: bool) -> bool {
     }
 }
 
-/// Whether the caller has to run the (expensive) ConnectivityManager probe at all.
 pub fn ipv6_probe_needed(ipv6_mode: &str) -> bool {
     !matches!(
         ipv6_mode.trim().to_lowercase().as_str(),
@@ -188,7 +172,6 @@ fn express_plan(enable_ipv6: bool) -> (Vec<Value>, Vec<&'static str>, Vec<Value>
     (addresses, dns_servers, routes)
 }
 
-/// Builds one plan; `None` means the mode is not `normal` or `express`.
 pub fn route_plan(
     mode: &str,
     ipv6_mode: &str,
@@ -239,7 +222,6 @@ mod tests {
         assert!(!ipv6_enabled("disabled", true));
         assert!(ipv6_enabled("auto", true));
         assert!(!ipv6_enabled("AUTO", false));
-        // The Flutter UI's own storage values must not fall through to the probe.
         assert!(!ipv6_enabled("disable", true));
         assert!(ipv6_enabled("prefer", false));
         assert!(ipv6_probe_needed("auto"));

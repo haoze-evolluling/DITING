@@ -1,25 +1,8 @@
-//! C ABI surface and the compact binary payload the Dart side decodes.
-//!
-//! One call per document instead of one per line: a subscription import is tens of thousands of
-//! lines, and crossing the FFI boundary per line would cost more than the parse itself.
-//!
-//! Wire format (all integers little-endian `u32`, strings are `u32 len` + UTF-8 bytes, missing
-//! optional strings are `u32::MAX`):
-//!
-//! ```text
-//! magic "DRC1" | abi | total | duplicate | invalid | unsupported | ignored | badfiltered
-//! block | allow | rewrite | urlBlock | urlAllow | cosmetic      (record counts)
-//! <records in that same order>
-//! ```
-
 use crate::document::parse_document;
 use crate::models::{
     CategorizedRules, ParsedCosmeticRule, ParsedRewriteRule, ParsedRule, ParsedUrlRule,
 };
 
-/// Bumped whenever the payload layout or the parsing semantics change; the Dart loader refuses a
-/// library whose value does not match what it was compiled against. `2` added the streaming parse
-/// entry points (`diting_rule_core_stream_*`) that hand the caller bounded DRC1 chunks.
 pub const ABI_VERSION: u32 = 2;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DRC1");
@@ -41,8 +24,6 @@ pub(crate) fn write_opt_str(buffer: &mut Vec<u8>, value: Option<&str>) {
     }
 }
 
-/// Hands `bytes` to the caller as a pointer/length pair that [`diting_rule_core_free`] can
-/// rebuild; shrinking to fit keeps the length enough to reconstruct the allocation.
 pub(crate) fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     let mut boxed = bytes.into_boxed_slice();
     let length = boxed.len();
@@ -143,14 +124,11 @@ pub fn encode(rules: &CategorizedRules) -> Vec<u8> {
     buffer
 }
 
-/// Payload layout version; the Dart loader compares it against its own constant.
 #[no_mangle]
 pub extern "C" fn diting_rule_core_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Allocates `size` zeroed bytes for the caller to fill with UTF-8 input. Needed because
-/// `dart:ffi` has no allocator of its own; release it with [`diting_rule_core_free`].
 #[no_mangle]
 pub extern "C" fn diting_rule_core_alloc(size: usize) -> *mut u8 {
     if size == 0 {
@@ -162,12 +140,6 @@ pub extern "C" fn diting_rule_core_alloc(size: usize) -> *mut u8 {
     pointer
 }
 
-/// Parses `len` UTF-8 bytes at `text` and returns a buffer the caller must release with
-/// [`diting_rule_core_free`]. `out_len` receives the buffer length; a null return means the input
-/// was not valid UTF-8 (the Dart caller turns that into an error).
-///
-/// # Safety
-/// `text` must point to `len` readable bytes and `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_parse(
     text: *const u8,
@@ -191,10 +163,6 @@ pub unsafe extern "C" fn diting_rule_core_parse(
     pointer
 }
 
-/// Releases a buffer returned by [`diting_rule_core_parse`].
-///
-/// # Safety
-/// `pointer`/`len` must be exactly what the parse call returned, released once.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_free(pointer: *mut u8, len: usize) {
     if pointer.is_null() {

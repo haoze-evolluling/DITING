@@ -1,8 +1,5 @@
-//! Record types and the small name/TTL grammar shared by the zone parser.
-
 use std::net::{Ipv4Addr, Ipv6Addr};
 
-/// Numeric record types the zone parser understands.
 pub const TYPE_A: u16 = 1;
 pub const TYPE_NS: u16 = 2;
 pub const TYPE_CNAME: u16 = 5;
@@ -15,7 +12,6 @@ pub const TYPE_SRV: u16 = 33;
 pub const TYPE_CAA: u16 = 257;
 pub const TYPE_ANY: u16 = 255;
 
-/// One typed zone record body.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ZoneRData {
     A(Ipv4Addr),
@@ -50,20 +46,14 @@ pub enum ZoneRData {
     },
 }
 
-/// One resource record stored in the zone index.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ZoneRecord {
-    /// Owner name, lowercased and fully qualified.
     pub owner: String,
-    /// Numeric record type.
     pub rtype: u16,
-    /// TTL in seconds.
     pub ttl: u32,
-    /// Typed record body.
     pub rdata: ZoneRData,
 }
 
-/// `dns.Fqdn`: one trailing dot; `.` for the empty name.
 pub(crate) fn fqdn(name: &str) -> String {
     if name.is_empty() {
         ".".to_string()
@@ -74,7 +64,6 @@ pub(crate) fn fqdn(name: &str) -> String {
     }
 }
 
-/// A pragmatic `dns.IsDomainName`: total length, label length and no control/space bytes.
 pub(crate) fn is_domain_name(name: &str) -> bool {
     if name == "." {
         return true;
@@ -83,7 +72,7 @@ pub(crate) fn is_domain_name(name: &str) -> bool {
     if body.is_empty() || body.len() > 253 {
         return false;
     }
-    let mut total = 1; // root label
+    let mut total = 1;
     for label in body.split('.') {
         if label.is_empty() || label.len() > 63 {
             return false;
@@ -96,7 +85,6 @@ pub(crate) fn is_domain_name(name: &str) -> bool {
     total <= 255
 }
 
-/// Lowercases and fully qualifies a zone origin, rejecting illegal names.
 pub(crate) fn normalize_origin(raw: &str) -> Result<String, String> {
     let name = fqdn(&raw.trim().to_lowercase());
     if !is_domain_name(&name) {
@@ -105,7 +93,6 @@ pub(crate) fn normalize_origin(raw: &str) -> Result<String, String> {
     Ok(name)
 }
 
-/// Resolves a relative name against `origin` and returns a lowercased FQDN.
 pub(crate) fn resolve_name(token: &str, origin: &str) -> Result<String, String> {
     if token == "@" {
         return Ok(origin.to_string());
@@ -124,7 +111,6 @@ pub(crate) fn resolve_name(token: &str, origin: &str) -> Result<String, String> 
     Ok(name)
 }
 
-/// `dns.CountLabel`: labels without the root dot.
 pub(crate) fn label_count(name: &str) -> usize {
     let body = name.strip_suffix('.').unwrap_or(name);
     if body.is_empty() {
@@ -134,7 +120,6 @@ pub(crate) fn label_count(name: &str) -> usize {
     }
 }
 
-/// A token that starts with a digit is tried as a TTL (miekg accepts `1h30m` style values).
 pub(crate) fn is_ttl_token(token: &str) -> bool {
     token
         .as_bytes()
@@ -143,7 +128,6 @@ pub(crate) fn is_ttl_token(token: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// `dns.StringToTTL` for the units BIND accepts.
 pub(crate) fn parse_ttl(text: &str) -> Option<u32> {
     if text.is_empty() {
         return None;
@@ -189,21 +173,18 @@ pub(crate) fn parse_ttl(text: &str) -> Option<u32> {
     }
 }
 
-/// Parses an unsigned decimal, rejecting signs (Go's `ParseUint` semantics).
 pub(crate) fn parse_u16(text: &str) -> Result<u16, String> {
     parse_unsigned(text)?
         .try_into()
         .map_err(|_| format!("{text:?} 不是 0-65535 之间的整数"))
 }
 
-/// See [`parse_u16`].
 pub(crate) fn parse_u8(text: &str) -> Result<u8, String> {
     parse_unsigned(text)?
         .try_into()
         .map_err(|_| format!("{text:?} 不是 0-255 之间的整数"))
 }
 
-/// See [`parse_u16`].
 pub(crate) fn parse_u32(text: &str) -> Result<u32, String> {
     parse_unsigned(text)?
         .try_into()
@@ -218,7 +199,6 @@ fn parse_unsigned(text: &str) -> Result<u64, String> {
         .map_err(|_| format!("{text:?} 数值超出范围"))
 }
 
-/// Maps a record type token, case-insensitively.
 pub(crate) fn record_type(token: &str) -> Option<u16> {
     match token.to_ascii_uppercase().as_str() {
         "A" => Some(TYPE_A),
@@ -235,7 +215,6 @@ pub(crate) fn record_type(token: &str) -> Option<u16> {
     }
 }
 
-/// A DNS class token (`IN` / `CH` / `HS` / `NONE` / `ANY`).
 pub(crate) fn is_class(token: &str) -> bool {
     matches!(
         token.to_ascii_uppercase().as_str(),

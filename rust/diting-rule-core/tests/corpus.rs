@@ -1,10 +1,3 @@
-//! Fixed classification cases for the rule document parser.
-//!
-//! These lines used to be compared step by step with the Dart parser; that parser is gone, so the
-//! corpus is pinned here instead: every branch of a line (comments, cosmetic delimiters, URL and
-//! regex forms, modifier families, hosts, dnsmasq and the awkward shapes around them) is covered by
-//! one fixed document, and the family counts plus a set of exact patterns are asserted.
-
 use diting_rule_core::parse_document;
 
 const CORPUS: &[&str] = &[
@@ -147,9 +140,6 @@ fn corpus_classification_is_pinned() {
     assert_eq!(parsed.duplicate_count, 22);
     assert_eq!(parsed.invalid_count, 23);
     assert_eq!(parsed.unsupported_count, 9);
-    // `||example.com/banner.js$script,badfilter` is a bad-filter declaration for a URL rule: the
-    // content-type modifier is demoted and the line registers a bad-filter key instead of being
-    // ignored, so it is no longer counted in `ignored_count` (it also emits no rule of its own).
     assert_eq!(parsed.ignored_count, 7);
 }
 
@@ -169,17 +159,13 @@ fn corpus_keeps_the_awkward_patterns() {
 ",
     ));
     let block = patterns(&parsed.block_rules);
-    // Hosts lines expand one address into every name on the line.
     assert!(block.contains(&"ads.example.com"));
     assert!(block.contains(&"tracker.example.com"));
-    // Case folding, regex bodies and the wildcard flag survive the document pass.
     assert!(block.contains(&"upper.case.com"));
     assert!(block.contains(&r"^ad[0-9]+\.example\.com$"));
     assert!(block.contains(&"*.wild.com"));
     assert!(block.contains(&"a{2,4}"));
-    // A UTF-8 BOM keeps its byte in `rawLine` and does not stop the rule.
     assert!(block.contains(&"bom.example.com"));
-    // Non-ASCII labels and `_` are rejected, exactly like the old parser.
     assert!(!block.contains(&"中文.cn"));
     assert!(!block.contains(&"a_b.com"));
 
@@ -191,7 +177,6 @@ fn corpus_keeps_the_awkward_patterns() {
     assert!(rewrite.contains(&"host1.example.com"));
     assert!(rewrite.contains(&"host2.example.com"));
     assert!(rewrite.contains(&"real.com"));
-    // Sinkhole dnsrewrite targets become block rules, not rewrites.
     assert!(!rewrite.contains(&"sink.com"));
     assert!(block.contains(&"sink.com"));
 

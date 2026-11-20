@@ -1,6 +1,3 @@
-/// Read/delete access to the legacy `dns_race_log` table; rows are written natively and provider
-/// names are resolved in Dart, since native code only knows the ids. The SQL, averages and row
-/// defaults live in `rust/diting-log-query-core`.
 library;
 
 import 'package:sqflite/sqflite.dart';
@@ -54,7 +51,6 @@ class RaceRankingEntry {
   final int wins;
   final int averageLatencyMs;
 
-  /// The shape the race aggregates consume.
   Map<String, Object?> toKernel() => {
     'providerId': providerId,
     'wins': wins,
@@ -62,7 +58,6 @@ class RaceRankingEntry {
   };
 }
 
-/// [primaryWins] only matters for `smart_prediction`: successful requests it won.
 class RaceStrategyStatRow {
   const RaceStrategyStatRow({
     required this.strategy,
@@ -149,7 +144,6 @@ class RaceLogSummary {
   final int failures;
   final int averageLatencyMs;
 
-  /// The shape the race aggregates consume.
   Map<String, Object?> toKernel() => {
     'requests': requests,
     'successes': successes,
@@ -172,8 +166,6 @@ class RaceLogRepository {
     ];
   }
 
-  /// Wins are rows where this provider produced the winning response; failures are not pinned on
-  /// the provider that happened to sort first.
   Future<List<RaceRankingEntry>> ranking({int limit = 20, int? since}) async {
     final plan = RustLogQueryCore.instance.plan('race.ranking', {
       'limit': limit,
@@ -223,8 +215,6 @@ class RaceLogRepository {
     ];
   }
 
-  /// `selectedSuccesses` requires no fallback, a win by the selected provider and success, so
-  /// queries rescued by the fallback do not count.
   Future<List<RaceSmartSelectionRow>> smartSelectionStats({
     int? since,
     String strategy = 'smart_prediction',

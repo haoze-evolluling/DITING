@@ -1,10 +1,7 @@
-//! The optional detail line under the running-text status.
-
 use std::collections::HashMap;
 
 use serde_json::Value;
 
-/// Request counters copied out of the log kernel for one rendering.
 #[derive(Clone, Copy, Default)]
 pub struct Stats {
     pub total: i64,
@@ -24,8 +21,6 @@ const FALLBACK_LABELS: [(&str, &str); 6] = [
     ("rewritten", "覆写"),
 ];
 
-/// Null when nothing is enabled, so the caller keeps the body to the status text alone.
-/// `with_speed` is false where no traffic monitor runs (express mode).
 pub fn compose(
     items: &str,
     labels_json: &str,
@@ -67,7 +62,6 @@ pub fn compose(
     }
 }
 
-/// `1234567` → `1,234,567`, matching `NumberFormat.getIntegerInstance(Locale.US)`.
 pub fn format_number(value: i64) -> String {
     let digits = value.unsigned_abs().to_string();
     let mut out = String::with_capacity(digits.len() + digits.len() / 3 + 1);
@@ -83,7 +77,6 @@ pub fn format_number(value: i64) -> String {
     out
 }
 
-/// `↑ 1.5 MB/s  ↓ 512 KB/s`: 1024-based, one decimal for MB, none for KB.
 pub fn format_rates(tx_bps: i64, rx_bps: i64) -> String {
     format!("↑ {}  ↓ {}", format_rate(tx_bps), format_rate(rx_bps))
 }

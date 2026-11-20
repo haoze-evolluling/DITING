@@ -1,7 +1,4 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-// Simplified brand marks drawn for this app: JD, Tmall, Pinduoduo, iQiyi, Youku and Toutiao have no
-// vector in Simple Icons, so these are hand-built approximations on the same 24x24 grid, not official
-// logos. The cut-out details rely on `fillType: PathFillType.evenOdd`.
 part of 'app_glyphs.dart';
 
 const _g_kuaishou_ = Glyph([

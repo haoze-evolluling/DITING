@@ -1,14 +1,9 @@
-/// Dart side of `com.haoze.diting/apps`: installed-app inventory, read-only, selection state in
-/// `SharedPreferences`. The migrated Manifest dropped `QUERY_ALL_PACKAGES`, so this channel
-/// restores the real list.
 library;
 
 import 'package:flutter/services.dart';
 
 const appsChannelName = 'com.haoze.diting/apps';
 
-/// Launcher icons are encoded as PNG at this many pixels per side; 192 px covers a 48 dp tile on a
-/// 4x screen with a little headroom.
 const appsIconPixels = 192;
 
 class InstalledApp {
@@ -22,11 +17,8 @@ class InstalledApp {
   final String packageName;
   final String label;
 
-  /// From `AppListFilter.SYSTEM`; pickers offer USER / SYSTEM / ALL / SELECTED.
   final bool isSystem;
 
-  /// Resolves names to UIDs with `getPackageUid`, since the engine needs UIDs (`setBlockedUIDs`,
-  /// `setMitmAllowedUIDs`); one round trip instead of one per toggle.
   final int uid;
 
   bool matches(String query) {
@@ -47,16 +39,10 @@ class InstalledApp {
 abstract class InstalledAppsSource {
   Future<List<InstalledApp>> list();
 
-  /// Package name to UID; missing packages are absent rather than -1, so callers can drop
-  /// uninstalled selections.
   Future<Map<String, int>> resolveUids(Iterable<String> packages);
 
-  /// True when [packageName] is this app. Blocking or proxying our own UID would cut the tunnel's
-  /// control plane.
   Future<bool> isSelf(String packageName);
 
-  /// Package name to encoded launcher icon (PNG). Missing entries mean "no icon available", which
-  /// the UI renders as a placeholder glyph. Batched so a list refresh is one channel round trip.
   Future<Map<String, Uint8List>> loadIcons(Iterable<String> packages);
 }
 
@@ -115,8 +101,6 @@ class MethodChannelInstalledAppsSource implements InstalledAppsSource {
   }
 }
 
-/// Empty device for widget tests and non-Android hosts, keeping pickers in their "no apps" state
-/// instead of crashing.
 class EmptyInstalledAppsSource implements InstalledAppsSource {
   const EmptyInstalledAppsSource();
 

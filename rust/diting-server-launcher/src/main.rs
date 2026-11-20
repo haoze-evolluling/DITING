@@ -1,6 +1,3 @@
-//! Minimal launcher for server mode. It keeps the DNS runtime inside `libditing_native.so` so the
-//! APK does not carry a second statically linked copy of the resolver/TLS/HTTP stack.
-
 #[cfg(unix)]
 mod unix;
 

@@ -1,8 +1,3 @@
-//! Login background storage and visual settings.
-//!
-//! Images are stored next to `config.json` under `login_bg.<ext>`; the configuration only keeps
-//! the URL and visual parameters, exactly like the Go controller.
-
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
@@ -17,7 +12,6 @@ const VALID_EXTENSIONS: [&str; 4] = [".webp", ".png", ".jpg", ".jpeg"];
 const MAX_IMAGE_BYTES: usize = 10 * 1024 * 1024;
 const MAX_URL_LEN: usize = 2048;
 
-/// `ipc.LoginBackgroundResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoginBackgroundResponse {
@@ -29,7 +23,6 @@ pub struct LoginBackgroundResponse {
     pub updated_at: i64,
 }
 
-/// Decoded request from the IPC layer (base64 data URLs become raw bytes).
 #[derive(Debug, Clone, Default)]
 pub struct SetLoginBackgroundInput {
     pub kind: String,
@@ -39,7 +32,6 @@ pub struct SetLoginBackgroundInput {
     pub image: Option<Vec<u8>>,
 }
 
-/// A stored background image.
 pub struct BackgroundImage {
     pub data: Vec<u8>,
     pub content_type: String,
@@ -117,7 +109,6 @@ fn response(
 }
 
 impl AppRuntime {
-    /// `GetLoginBackground`: falls back to `none` when the file backing `custom` vanished.
     pub fn login_background(&self) -> LoginBackgroundResponse {
         let background = self.config().web.background;
         let dir = storage_dir(self);
@@ -146,7 +137,6 @@ impl AppRuntime {
         }
     }
 
-    /// `SetLoginBackground`.
     pub fn set_login_background(
         &self,
         input: SetLoginBackgroundInput,
@@ -235,7 +225,6 @@ impl AppRuntime {
         Ok(self.login_background())
     }
 
-    /// `ResetLoginBackground`.
     pub fn reset_login_background(&self) -> Result<LoginBackgroundResponse, ControllerError> {
         clean_existing(&storage_dir(self));
         let updated_at = now_unix();
@@ -252,7 +241,6 @@ impl AppRuntime {
         Ok(self.login_background())
     }
 
-    /// `GetLoginBackgroundImage`.
     pub fn login_background_image(&self) -> Option<BackgroundImage> {
         let dir = storage_dir(self);
         let path = find_existing(&dir)?;

@@ -1,5 +1,3 @@
-//! Port 53 availability probe combining real socket binds with `/proc` listener diagnostics.
-
 mod autofix;
 mod owner;
 mod proc;
@@ -23,7 +21,6 @@ use proc::collect_port53_sockets;
 
 const DEFAULT_PORT53_ADDRESS: &str = "127.0.0.1:53";
 
-/// Linux 53-port conflict detector.
 pub struct LinuxPortChecker {
     executor: Arc<dyn CommandExecutor>,
 }
@@ -107,7 +104,6 @@ impl PortChecker for LinuxPortChecker {
             );
             return Ok(after);
         }
-        // The fix ran but the port is still occupied; report an error instead of claiming success.
         Err(PlatformError::message(
             "已关闭 systemd-resolved stub 监听器，但 53 端口仍不可用，请查看诊断信息",
         ))
@@ -128,7 +124,6 @@ fn with_default_addresses(
     }
 }
 
-/// Resolves the listening entities and produces the Chinese diagnostic, stub flag and conflicts.
 fn inspect_port53_listeners() -> PlatformResult<(Vec<PortConflict>, bool, String)> {
     let sockets = collect_port53_sockets().map_err(PlatformError::from)?;
     if sockets.is_empty() {
@@ -211,7 +206,6 @@ fn inspect_port53_listeners() -> PlatformResult<(Vec<PortConflict>, bool, String
     Ok((conflicts, has_stub, diagnostic_lines.join("\n")))
 }
 
-/// Aggregates the socket bind result and listener diagnostics, matching the Go availability rules.
 fn evaluate_linux_port_availability(
     sockets_free: bool,
     conflicts: &[PortConflict],

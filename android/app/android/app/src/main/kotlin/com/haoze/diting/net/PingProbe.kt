@@ -5,13 +5,6 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 
-/// ICMP ping probe. Preferred path: the system `ping` / `ping6` binary, parsed for
-/// per-reply latency, TTL and the summary block. Fallback when it is missing or unparsable:
-/// `InetAddress.isReachable` plus a TCP handshake on 53/443/80, sets `measuredWithFallback`.
-///
-/// The binary, the sockets and the clock are here; the output grammar, the per-sequence gap rows
-/// and the min/avg/max/jitter arithmetic live in `rust/diting-probe-core` (`ping.rs`), reached
-/// through [ProbeNative].
 internal object PingProbe {
 
     const val DEFAULT_COUNT = 4
@@ -35,19 +28,16 @@ internal object PingProbe {
         if (output != null) {
             parseSummary(output, host, resolved, family)?.let { return it }
         }
-        // Reaching here means no system ping or unknown output shape: measure with the fallback.
         return reachableFallback(address, host, family, clampedCount)
     }
 
     private fun runBinaryPing(address: InetAddress, count: Int, timeoutSeconds: Int): String? {
         val host = address.hostAddress ?: return null
-        // The reply wait plus process spawn and a slow readLine.
         val capMs = count * (timeoutSeconds + 2) * 1000L + 5_000L
         return if (address is Inet6Address) {
             ProcessProbe.runFirst(
                 listOf(
                     listOf("ping6", "-c", "$count", "-W", "$timeoutSeconds", host),
-                    // Newer toybox/iputils merged IPv6 into `ping` itself.
                     listOf("ping", "-6", "-c", "$count", "-W", "$timeoutSeconds", host),
                 ),
                 capMs = capMs,
@@ -60,7 +50,6 @@ internal object PingProbe {
         }
     }
 
-    /// Null when the kernel finds no `N% packet loss` line, which tells the caller to fall back.
     private fun parseSummary(
         output: String,
         target: String,

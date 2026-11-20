@@ -6,10 +6,6 @@ import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
 
-/// 把 `ConnectivityManager` 归一化成 `diting-netprofile-core` 消费的网络上下文（N1）。
-///
-/// 只读物理链路（VPN 传输单独标记为 vpn），字段与 Rust 侧 `NetworkContext` 一一对应。SSID/BSSID
-/// 需要定位权限，取不到时返回空串而不是抛异常——匹配逻辑把空串视为“不关心”。
 internal object NetworkContextProbe {
 
     fun snapshot(context: Context): Map<String, Any?> {
@@ -61,6 +57,5 @@ internal object NetworkContextProbe {
         "bssid" to "",
     )
 
-    /// Kept for callers that need to branch on the platform level; unused by matching itself.
     fun supportsSsid(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 }

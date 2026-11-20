@@ -22,15 +22,6 @@ import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.util.concurrent.atomic.AtomicLong
 
-/// Manual runtime-log capture: while it runs, `logcat` output for the app's main process is appended
-/// to [RuntimeLogStore]. It is a foreground service because a backgrounded app may not keep a plain
-/// thread alive, and the persistent notification doubles as the "recording" state the user can stop
-/// from outside. Nothing survives the user turning it off.
-///
-/// It runs in its own `:log` process (see the manifest). A capture living inside the app process
-/// dies with it, so the crash that matters most — the reason the user turned capture on — was the
-/// one thing it could never record: the 2026-10-31 export stopped mid-GC-thrash with no stack at
-/// all. From its own process it keeps reading until the app is gone.
 class RuntimeLogService : Service() {
 
     private val generation = AtomicLong(0)
@@ -38,23 +29,18 @@ class RuntimeLogService : Service() {
     @Volatile
     private var worker: Thread? = null
 
-    /// Written and read across threads; `generation` is what actually cancels a stale loop.
     @Volatile
     private var capturing = false
 
-    /// Main process the current loop follows; a different pid means the app restarted.
     @Volatile
     private var targetPid = 0
 
-    /// Standard (`--uid`) or detailed (`-b all`) capture.
     @Volatile
     private var detailed = false
 
-    /// Set by the watchdog once the followed process disappears.
     @Volatile
     private var targetGone = false
 
-    /// The running `logcat`, so a restart or a stop can unblock the reader.
     @Volatile
     private var logcat: java.lang.Process? = null
 
@@ -78,8 +64,6 @@ class RuntimeLogService : Service() {
             Log.i(TAG, "capture already running; ignoring duplicate start")
             return START_NOT_STICKY
         }
-        // A new pid (the app restarted) needs a new logcat: the old one is filtered to a dead
-        // process and will never print again.
         capturing = true
         targetPid = pid
         targetGone = false
@@ -91,10 +75,7 @@ class RuntimeLogService : Service() {
         return START_NOT_STICKY
     }
 
-    /// Reads until the user stops it, the app dies, or the file fills up; a rotated file restarts
-    /// the read, so one long session never unbounded-grows a single file.
     private fun captureLoop(token: Long, pid: Int) {
-        // The command attempts and the byte budget are the kernel's; the pid does not change here.
         val plan = LogNative.capturePlan(pid, Process.myUid(), detailed)
         while (capturing && generation.get() == token) {
             val file = RuntimeLogStore.newFile(this)
@@ -113,13 +94,10 @@ class RuntimeLogService : Service() {
                 while (capturing && generation.get() == token) {
                     val line = reader.readLine() ?: break
                     writer.println(line)
-                    // The kernel counts Kotlin's `String.length` plus the newline, exactly like
-                    // the old loop, and answers whether the file is full now.
                     if (LogNative.captureLine(session, line).rotate) break
                 }
             } catch (t: Throwable) {
                 Log.w(TAG, "logcat capture stopped", t)
-                // An exec failure would otherwise spin: back off, then retry while still on.
                 runCatching { Thread.sleep(1000) }
             } finally {
                 runCatching { watchdog?.interrupt() }
@@ -129,16 +107,12 @@ class RuntimeLogService : Service() {
                 if (session != 0L) LogNative.captureSessionFree(session)
             }
             if (targetGone) {
-                // Nothing else will arrive for a process that no longer exists, and leaving the
-                // foreground notification behind would only confuse the user.
                 stopCapture()
                 return
             }
         }
     }
 
-    /// Ends the loop once the followed process is gone. `logcat --pid` keeps waiting otherwise, and
-    /// the capture would hold a foreground notification forever.
     private fun startWatchdog(
         token: Long,
         pid: Int,
@@ -162,8 +136,6 @@ class RuntimeLogService : Service() {
         return thread
     }
 
-    /// The kernel's attempts in order: `--pid` first (less noise, a lower cost for the user), then
-    /// the unfiltered fallback for devices that refuse it.
     private fun launchLogcat(attempts: List<List<String>>): java.lang.Process {
         var last: Throwable? = null
         for (command in attempts) {
@@ -192,7 +164,6 @@ class RuntimeLogService : Service() {
         super.onDestroy()
     }
 
-    /// Unblocks the running `logcat` and joins the loop's resources; the callers own the flags.
     private fun release() {
         runCatching { logcat?.destroy() }
         logcat = null
@@ -216,7 +187,6 @@ class RuntimeLogService : Service() {
         }.onFailure { Log.e(TAG, "startForeground failed", it) }
     }
 
-    // `STOP_FOREGROUND_REMOVE` exists since API 24 and minSdk is 28, so no legacy branch is needed.
     private fun stopForegroundCompat() {
         runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
     }
@@ -272,8 +242,6 @@ class RuntimeLogService : Service() {
         private const val EXTRA_TARGET_PID = "target_pid"
         private const val EXTRA_DETAILED = "detailed"
 
-        /// Starts (or re-arms) the capture for [targetPid]: the app's main process, which is the one
-        /// whose logs the developer needs.
         fun start(context: Context, targetPid: Int, detailed: Boolean = false) {
             RuntimeLogStore.markCapturing(context, true)
             val intent = Intent(context, RuntimeLogService::class.java)
@@ -289,9 +257,6 @@ class RuntimeLogService : Service() {
         fun stop(context: Context) {
             RuntimeLogStore.markCapturing(context, false)
             val intent = Intent(context, RuntimeLogService::class.java).setAction(ACTION_STOP)
-            // Plain `startService`: a stop never needs the foreground promotion, and asking for one
-            // here would trip the "did not call startForeground" timeout when the service was not
-            // running at all.
             runCatching { context.startService(intent) }
         }
     }

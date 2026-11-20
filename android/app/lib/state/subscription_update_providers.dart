@@ -1,12 +1,8 @@
 part of 'subscription_providers.dart';
 
-/// Asks the user whether to import a subscription body over [maxSubscriptionBytes]. Returns true to
-/// proceed. Supplied by the UI so the notifier stays free of widget code; a null confirmer (e.g. a
-/// background auto-update with no screen) means the import proceeds without asking.
 typedef LargeSubscriptionConfirmer =
     Future<bool> Function(SubscriptionEntry entry, int byteLength);
 
-/// Update progress and busy flags in one notifier, so they change in the same frame.
 class SubscriptionUpdateState {
   const SubscriptionUpdateState({
     this.updatingIds = const {},
@@ -18,10 +14,8 @@ class SubscriptionUpdateState {
   final Set<int> updatingIds;
   final bool updatingAll;
 
-  /// 0..1, advanced by completed rows during update-all.
   final double progress;
 
-  /// Summary of the last bulk update, e.g. "3 updated, 1 unchanged, 1 failed".
   final String? lastMessage;
 
   bool get isBusy => updatingAll || updatingIds.isNotEmpty;
@@ -44,8 +38,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
   @override
   SubscriptionUpdateState build() => const SubscriptionUpdateState();
 
-  /// Updates one subscription; re-entry returns immediately. Reads a live snapshot, as `insert`
-  /// leaves the cache stale.
   Future<SubscriptionFetchResult?> updateOne(
     int id, {
     LargeSubscriptionConfirmer? confirmLarge,
@@ -59,8 +51,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
     state = state.copyWith(updatingIds: {id}, clearMessage: true);
     SubscriptionFetchResult? result;
-    // The busy flags are cleared in a `finally`: an update that throws used to leave the card
-    // spinning forever, and every entry point is disabled while busy, so only a restart helped.
     try {
       result = await _runSafely(entry, confirmLarge);
     } finally {
@@ -75,7 +65,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     return result;
   }
 
-  /// Loads one entry with its group name straight from the database.
   Future<SubscriptionEntry?> _loadEntry(int id) async {
     final repository = await ref.read(subscriptionRepositoryProvider.future);
     if (repository == null) {
@@ -93,7 +82,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     return SubscriptionEntry(record: record, groupName: groupName);
   }
 
-  /// Updates all serially like upstream's single WorkManager queue.
   Future<void> updateAll(
     List<SubscriptionEntry> targets, {
     LargeSubscriptionConfirmer? confirmLarge,
@@ -119,7 +107,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         );
       }
     } finally {
-      // Always settles, so a failure cannot strand the page at a frozen percentage.
       if (ref.mounted) {
         state = state.copyWith(
           updatingAll: false,
@@ -132,9 +119,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
   }
 
-  /// Reloads the list once the update settles. The repository reports every write, but a write
-  /// that throws reports nothing, and the update must still leave the page showing what the
-  /// database now holds.
   void _invalidateEntries() {
     if (!ref.mounted) {
       return;
@@ -142,8 +126,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     ref.read(subscriptionRevisionProvider.notifier).bump();
   }
 
-  /// `_runOne` with unexpected throws turned into failures: the user gets a failed row instead
-  /// of a silent stall.
   Future<SubscriptionFetchResult> _runSafely(
     SubscriptionEntry entry,
     LargeSubscriptionConfirmer? confirmLarge,
@@ -159,7 +141,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
   }
 
-  /// Runs one update and records the result; exceptions become failures so the UI never stays busy.
   Future<SubscriptionFetchResult> _runOne(
     SubscriptionEntry entry,
     LargeSubscriptionConfirmer? confirmLarge,
@@ -188,9 +169,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           lastModified: result.lastModified ?? entry.record.httpLastModified,
         );
       case SubscriptionFetchOutcome.content:
-        // The body is already downloaded (and streamed into the importer in chunks); before parsing
-        // an oversized one, ask the user — importing it may slow the app down or cause other
-        // problems. Declining leaves the previous rules untouched.
         if (await _skipLargeImport(entry, result.byteLength, confirmLarge, repository)) {
           return SubscriptionFetchResult.skipped(
             requestedUrl: entry.url,
@@ -204,7 +182,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           text: result.content,
         );
         if (imported == null) {
-          // A download that cannot be stored must report failure, not "updated".
           await repository.markUpdateFailed(
             entry.id,
             error: currentL10n.subscriptionRuleDbUnavailable,
@@ -232,9 +209,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     return result;
   }
 
-  /// Decides whether to skip a large import before parsing. Over [maxSubscriptionBytes] and with a
-  /// confirmer present, it asks the user; a decline restores the row so it is not left stuck
-  /// `importing`. A null confirmer (background auto-update, no screen) proceeds without asking.
   Future<bool> _skipLargeImport(
     SubscriptionEntry entry,
     int byteLength,
@@ -255,8 +229,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     return true;
   }
 
-  /// Re-imports a local rule file through its persisted SAF grant. The `url` column holds the
-  /// `content://` address for local rows, mirroring the legacy `sourceRef`.
   Future<SubscriptionFetchResult> _runLocal(
     SubscriptionEntry entry,
     SubscriptionRepository repository,
@@ -275,8 +247,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       );
       return SubscriptionFetchResult.failed(reason, requestedUrl: entry.url);
     }
-    // Local `.txt` is ASCII-heavy, so its length tracks byte size; the importer streams it in
-    // chunks, so a large file imports without the old whole-document blow-up.
     final content = read.text!;
     if (await _skipLargeImport(entry, content.length, confirmLarge, repository)) {
       return SubscriptionFetchResult.skipped(
@@ -298,7 +268,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       entry.id,
       ruleCount: imported.summary.insertedCount,
       lastUpdated: now,
-      // A local file has no ETag or Last-Modified to remember.
       etag: null,
       lastModified: null,
       ruleSetHash: imported.hash,
@@ -311,9 +280,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     );
   }
 
-  /// Parses and imports the body for `sub_<id>` only; null without a rule database. The document is
-  /// parsed and imported one bounded chunk at a time, so a large subscription never exists as a
-  /// whole-rule-object graph. On success also records an R6 version snapshot and returns its hash.
   Future<({RuleImportSummary summary, String hash})?> _importContent(
     SubscriptionEntry entry, {
     Uint8List? bytes,
@@ -326,8 +292,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     final source = subscriptionSourceTag(entry.id);
     final kind = entry.kind.storageValue;
     final enabled = entry.enabled;
-    // Raw download bytes go straight to the native parser; only local files (already a String) take
-    // the encode path.
     final stream = bytes != null
         ? streamParseCategorizedBytes(bytes)
         : streamParseCategorized(text ?? '');
@@ -342,8 +306,6 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         final lines = canonicalRules(chunk);
         hashState = ruleSetHashUpdate(hashState, lines);
         totalRules += lines.length;
-        // Keep the rollback snapshot only while it is small; past the cap the list is dropped so a
-        // huge subscription is never held in memory a second time.
         if (collectVersion) {
           if (totalRules > maxVersionSnapshotRules) {
             collectVersion = false;
@@ -379,12 +341,8 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     return (summary: summary, hash: hash);
   }
 
-  /// Rule sets above this many lines skip the full-text version snapshot: writing the whole body a
-  /// second time is exactly the duplication that made a large import exhaust memory, and the
-  /// snapshot is only a best-effort rollback aid. The import itself still records its hash.
   static const int maxVersionSnapshotRules = 60000;
 
-  /// Best-effort R6 snapshot; a version-history failure must never fail the import itself.
   Future<void> _recordVersion(
     SubscriptionEntry entry,
     List<String> rules,

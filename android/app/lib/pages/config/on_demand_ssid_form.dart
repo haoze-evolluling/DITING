@@ -2,7 +2,6 @@ part of 'on_demand_page.dart';
 
 const _ssidDelayOptions = [0, 500, 800, 1500, 3000];
 
-/// Add or edit an SSID rule; an empty [existing] means a new rule.
 Future<void> showSsidForm(
   BuildContext context,
   WidgetRef ref, {

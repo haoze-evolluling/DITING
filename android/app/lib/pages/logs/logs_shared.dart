@@ -5,11 +5,8 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:material_ui/material_ui.dart';
 
-// dnsTypeName now lives in data/dns_type_name.dart (the aggregate layer needs it
-// too); re-exported here so page imports stay unchanged.
 export 'package:diting_android/data/dns_type_name.dart' show dnsTypeName;
 
-/// Seconds to `57 min` / `3 h`. Truncates, does not round up.
 String remainingLabel(int seconds, AppL10n l10n) {
   if (seconds <= 0) return l10n.logsExpired;
   if (seconds >= 3600) return l10n.durationHours(seconds ~/ 3600);
@@ -19,8 +16,6 @@ String remainingLabel(int seconds, AppL10n l10n) {
 
 String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
-/// Millisecond timestamp to `MM-dd HH:mm:ss`. Hand-formatted rather than pulling in intl
-/// for the single place that needs it.
 String shortDateTimeOf(int milliseconds) {
   if (milliseconds <= 0) return currentL10n.obsNone;
   final time = DateTime.fromMillisecondsSinceEpoch(milliseconds);
@@ -41,7 +36,6 @@ String countOf(int value) {
   return buffer.toString();
 }
 
-/// Percent text: `12.3%`, no trailing `.0`.
 String percentOf(double ratio) {
   final rounded = (ratio.clamp(0.0, 1.0) * 1000).round() / 10;
   return rounded % 1 == 0 ? '${rounded.toInt()}%' : '$rounded%';
@@ -49,8 +43,6 @@ String percentOf(double ratio) {
 
 String millisOf(num milliseconds) => '${milliseconds.round()} ms';
 
-/// Full-page description block at the top of a log dashboard. Not a card: upstream draws
-/// it as two bare lines, and a card would merge with the first stats card below.
 class LogsDashboardHero extends StatelessWidget {
   const LogsDashboardHero({
     super.key,
@@ -62,7 +54,6 @@ class LogsDashboardHero extends StatelessWidget {
   final String title;
   final String description;
 
-  /// Inside the card column the column already supplies the side gutter.
   final EdgeInsets padding;
 
   @override
@@ -113,8 +104,6 @@ class LogsPageLoading extends StatelessWidget {
   }
 }
 
-/// Empty state shared by the log drill-down pages. Returns [NullStatus] rather than a
-/// wrapper widget because NullStatusSwitcher builds the illustration and action itself.
 NullStatus logsEmpty({
   required String label,
   String? description,
@@ -127,8 +116,6 @@ NullStatus logsEmpty({
   illustration: illustration,
 );
 
-/// Three-option time range selector used by the race, bootstrap and subscription pages.
-/// Carries no horizontal padding: callers place it in generateSection, which already pads 16.
 class LogStatsRangeSelector<T> extends StatelessWidget {
   const LogStatsRangeSelector({
     super.key,

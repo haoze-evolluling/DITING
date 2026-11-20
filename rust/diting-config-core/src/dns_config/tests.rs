@@ -1,5 +1,3 @@
-//! Error precedence and the normalized result.
-
 use super::*;
 use crate::dynamic::DynamicBlock;
 

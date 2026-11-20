@@ -1,8 +1,3 @@
-//! Per-client query rate limiting.
-//!
-//! A refused query is marked `ratelimit_blocked` so EDE explains it as Prohibited rather than as a
-//! generic access denial.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

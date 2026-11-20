@@ -1,6 +1,3 @@
-/// Network profiles (N1): show the live network context, the profile it resolves to, and the
-/// configurable profiles. Wi-Fi / cellular / roaming / metered can each carry a different upstream
-/// set, rule-group state and toggle set; the switch happens as the context changes.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
@@ -139,7 +136,6 @@ class NetProfilePage extends ConsumerWidget {
   }
 }
 
-/// A section that stays silent while loading and states the error in its place.
 Widget _asyncSection<T>(AsyncValue<T> value, Widget Function(T data) build) {
   return value.when(
     data: build,

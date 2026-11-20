@@ -1,9 +1,5 @@
-//! The static service directory. A flat table keeps the catalog reviewable in one screen and easy to
-//! diff; the `category` token is what the UI groups by.
-
 use serde_json::Value;
 
-/// One blockable service: an id, a display name, a category token and the domains it owns.
 pub struct Service {
     pub id: &'static str,
     pub name: &'static str,
@@ -11,9 +7,7 @@ pub struct Service {
     pub domains: &'static [&'static str],
 }
 
-/// The catalog, grouped by category at read time. Adding a service is a new row here only.
 pub const CATALOG: &[Service] = &[
-    // 社交
     Service {
         id: "facebook",
         name: "Facebook",
@@ -50,7 +44,6 @@ pub const CATALOG: &[Service] = &[
         category: "social",
         domains: &["weibo.com", "weibo.cn", "sinaimg.cn"],
     },
-    // 视频
     Service {
         id: "youtube",
         name: "YouTube",
@@ -75,7 +68,6 @@ pub const CATALOG: &[Service] = &[
         category: "video",
         domains: &["bilibili.com", "bilivideo.com", "hdslb.com"],
     },
-    // 通讯
     Service {
         id: "whatsapp",
         name: "WhatsApp",
@@ -94,7 +86,6 @@ pub const CATALOG: &[Service] = &[
         category: "messaging",
         domains: &["discord.com", "discordapp.com", "discord.gg"],
     },
-    // 游戏
     Service {
         id: "steam",
         name: "Steam",
@@ -107,7 +98,6 @@ pub const CATALOG: &[Service] = &[
         category: "gaming",
         domains: &["epicgames.com", "epicgames.dev", "unrealengine.com"],
     },
-    // 广告
     Service {
         id: "doubleclick",
         name: "DoubleClick",
@@ -122,7 +112,6 @@ pub const CATALOG: &[Service] = &[
     },
 ];
 
-/// The category tokens in display order.
 pub const CATEGORIES: &[&str] = &["social", "video", "messaging", "gaming", "ads"];
 
 fn service_json(service: &Service) -> Value {
@@ -134,7 +123,6 @@ fn service_json(service: &Service) -> Value {
     })
 }
 
-/// The whole catalog as JSON, ordered by [`CATEGORIES`] then table order.
 pub fn catalog_json() -> Value {
     let services: Vec<Value> = CATEGORIES
         .iter()
@@ -151,7 +139,6 @@ pub fn catalog_json() -> Value {
     })
 }
 
-/// Looks a service up by id.
 pub fn find(id: &str) -> Option<&'static Service> {
     CATALOG.iter().find(|service| service.id == id)
 }

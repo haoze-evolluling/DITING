@@ -1,6 +1,3 @@
-/// The configured upstream servers: each node's transport, address, weight, fingerprint state,
-/// latency probe and the add/edit/delete actions. Mirrors `UpstreamPanel.vue`; it never edits the
-/// running state, only the config the service re-reads after every save.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -28,7 +25,6 @@ class UpstreamNodesCard extends ConsumerWidget {
   final bool saving;
   final ValueChanged<DesktopUpstreamConfig> onChanged;
 
-  /// The page owns the save path; a failed probe reports here too.
   final void Function(String message) onSaveFailed;
 
   Future<void> _add(BuildContext context) async {

@@ -1,9 +1,3 @@
-//! RFC 8914 Extended DNS Errors.
-//!
-//! EDE explains why a query failed or was blocked without changing the rcode. It is only legal
-//! when the client sent an OPT record (RFC 8914 §3), so the stage checks the *request* first and
-//! then decorates whatever answer the deeper stages produced.
-
 use async_trait::async_trait;
 use diting_dns_wire::build::{parse_opt, ParsedMessage};
 
@@ -12,13 +6,9 @@ use crate::pipeline::{Stage, StageResult};
 use crate::stages::util::{add_ede, attr_is_true};
 use crate::stages::ConfigHandle;
 
-/// RFC 8914 "Blocked".
 pub const EDE_BLOCKED: u16 = 15;
-/// RFC 8914 "Prohibited".
 pub const EDE_PROHIBITED: u16 = 18;
-/// RFC 8914 "Cached Error".
 pub const EDE_CACHED_ERROR: u16 = 13;
-/// RFC 8914 "Network Error".
 pub const EDE_NETWORK_ERROR: u16 = 23;
 
 pub struct EdeStage {

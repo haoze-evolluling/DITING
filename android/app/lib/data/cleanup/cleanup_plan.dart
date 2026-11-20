@@ -1,8 +1,3 @@
-/// The parsed cleanup catalog returned by `rust/diting-cleanup-core`.
-///
-/// Every table list, source-table pair, WHERE clause, preference key and the `allData` order is read
-/// from the kernel once; a missing section or action throws instead of falling back to an empty
-/// cleanup that reports success without deleting anything.
 library;
 
 import 'package:diting_android/data/db/rust_cleanup_core.dart';

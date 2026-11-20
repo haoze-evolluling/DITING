@@ -13,13 +13,9 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Real-site latency card: the four sites the user picked for the board, defaulting to Baidu,
-/// Douyin, Bilibili and NetEase Music. Probes use ping with a TCP fallback marked
-/// measuredWithFallback; failures show as failed, never as a fake number.
 class SiteLatencyCard extends ConsumerStatefulWidget {
   const SiteLatencyCard({super.key, this.onDetail});
 
-  /// Detail target; only set when a drill-down page exists.
   final VoidCallback? onDetail;
 
   @override
@@ -27,12 +23,10 @@ class SiteLatencyCard extends ConsumerStatefulWidget {
 }
 
 class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
-  /// Latest result per site; a missing key means not probed yet.
   final Map<String, PingSummary> _results = {};
   var _probing = false;
   DateTime? _lastRunAt;
 
-  /// Probe once on first frame, skipped under tests where pumpAndSettle would never settle.
   var _autoRan = false;
 
   @override
@@ -53,8 +47,6 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
     final primary = ref.watch(primaryProviderProvider);
     final sites = ref.watch(dashboardSitesProvider);
 
-    // Both tallies only count the sites actually on the card: after the user swaps one out, a
-    // stale result left in `_results` must not inflate the header.
     final measured = sites
         .where((site) => _results.containsKey(site.id))
         .length;
@@ -146,8 +138,6 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
 
   static const _columns = 2;
 
-  /// Probe the card's four sites concurrently, three ICMP echoes each: serial awaits would make
-  /// the worst case 4 x 3 timeouts and look frozen.
   Future<void> _probe() async {
     if (_probing) return;
     final sites = ref.read(dashboardSitesProvider);
@@ -260,8 +250,6 @@ class _SiteCell extends StatelessWidget {
     );
   }
 
-  /// Average round trip. With measuredWithFallback the value comes from a TCP
-  /// handshake, so it gets a `*` suffix explained in the tooltip.
   static String _latencyLabel(PingSummary summary, AppL10n l10n) {
     final avg = summary.avgMs;
     if (avg == null) return l10n.siteLatencyNoReply;
@@ -297,7 +285,6 @@ class _Badge extends StatelessWidget {
             child: Center(
               child: GlyphIcon(
                 glyph,
-                // Brand glyphs sit near full size, slightly under the 15dp icon norm.
                 size: size * 0.6,
                 color: colorScheme.onSurfaceVariant,
               ),

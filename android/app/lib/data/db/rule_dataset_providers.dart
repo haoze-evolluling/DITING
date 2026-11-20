@@ -1,5 +1,3 @@
-/// Data-set-aware rule plumbing: which database the current work mode writes, and which native
-/// rule-trie namespace has to be recompiled after those writes.
 library;
 
 import 'dart:async';
@@ -10,14 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../vpn/vpn_bridge.dart';
 
-/// Rule-only SQLite file of the active data set.
 final activeRuleDatabaseProvider = Provider<String>((ref) {
   return ref.watch(activeDataSetProvider).ruleDatabase;
 });
 
-/// Recompiles the native rule tries of the active data set, then asks a running tunnel to re-apply
-/// its rule snapshot so the new rules take effect without a reconnect. Fire-and-forget like every
-/// other refresh: a missed call only costs one compile at the next service start.
 void refreshRuleIndexesForCurrentMode(Ref ref) {
   unawaited(refreshRuleIndexes(ref.read(activeDataSetProvider).ruleIndex));
   unawaited(requestVpnRuleReload());

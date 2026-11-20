@@ -13,9 +13,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Speed detail: the card draws two 60-point sparklines, no numbers beyond the instant rate. This
-/// page separates upload and download into full-height curves and names the numbers the card
-/// leaves to the eye — peak, average, sample window and today's cumulative totals.
 class NetworkSpeedDetailPage extends ConsumerWidget {
   const NetworkSpeedDetailPage({super.key});
 
@@ -133,7 +130,6 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
     );
   }
 
-  /// Why the curve is empty: one is a product decision, the other a missing host channel.
   static String _unsupportedHint(SpeedSource source, AppL10n l10n) =>
       switch (source) {
         SpeedSource.expressMode => l10n.speedExpressSource,
@@ -142,7 +138,6 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
       };
 }
 
-/// Download/upload split of today's traffic, in the same bar language as the memory page.
 class _TotalsBar extends StatelessWidget {
   const _TotalsBar({required this.totals, required this.colors});
 
@@ -193,7 +188,6 @@ class _TotalsBar extends StatelessWidget {
   }
 }
 
-/// One direction: a full-height curve plus its own peak and mean.
 class _CurveCard extends StatelessWidget {
   const _CurveCard({
     required this.title,
@@ -218,7 +212,6 @@ class _CurveCard extends StatelessWidget {
       values: unsupported ? const [] : values,
       revision: series.revision,
       capacity: speedSampleCapacity,
-      // 8 KB/s floor, same as the card: idle noise stays a flat line.
       minScale: 8 * 1024,
       emptyLabel: unsupported
           ? context.l10n.speedNoDataInMode
@@ -233,7 +226,6 @@ class _CurveCard extends StatelessWidget {
   }
 }
 
-/// Peak and mean over the visible window; an empty window is all zeros, never NaN.
 class _Stats {
   const _Stats({required this.peak, required this.average});
 

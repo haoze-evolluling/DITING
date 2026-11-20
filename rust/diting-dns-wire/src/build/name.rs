@@ -1,46 +1,23 @@
-//! Name encoding with the RFC 1035 compression map.
-//!
-//! [`NameWriter`] writes presentation names straight into the message buffer the caller is
-//! building. Because the buffer starts at the DNS header, every recorded offset is already
-//! message-relative, which is exactly what a compression pointer needs.
-
 use std::collections::HashMap;
 
-/// `maxDomainNameWireOctets` (RFC 1035).
 const MAX_NAME_WIRE_OCTETS: usize = 255;
-/// Longest label (RFC 1035).
 const MAX_LABEL_LEN: usize = 63;
-/// Largest offset a 14-bit compression pointer can name.
 const MAX_POINTER_OFFSET: usize = 0x3fff;
 
-/// A reusable compression map for one DNS message.
-///
-/// `write_name` appends the encoded name to the message buffer and registers every suffix it
-/// wrote, so a later name sharing that suffix is emitted as a two-byte pointer. The map
-/// lowercases suffixes for matching (DNS names are case-insensitive) but writes the labels with
-/// the casing the caller supplied.
 #[derive(Debug, Clone, Default)]
 pub struct NameWriter {
-    /// Lowercased, length-prefixed suffix (including the root zero) to absolute message offset.
     offsets: HashMap<Vec<u8>, u16>,
 }
 
 impl NameWriter {
-    /// A fresh map for a new message.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Drops every recorded offset, e.g. when reusing the writer for another message.
     pub fn clear(&mut self) {
         self.offsets.clear();
     }
 
-    /// Encodes `name` at the end of `out` (the whole message, not just the record).
-    ///
-    /// Returns `false` for a presentation name [`crate::unpack_name`] could not have produced or
-    /// one that would exceed 255 wire octets. On failure the buffer and the map are left
-    /// untouched, so a builder can abandon the message without cleaning up.
     pub fn write_name(&mut self, out: &mut Vec<u8>, name: &str) -> bool {
         let labels = match parse_labels(name) {
             Some(labels) => labels,
@@ -52,7 +29,6 @@ impl NameWriter {
             return false;
         }
 
-        // keys[i] is the wire suffix labels[i..] followed by the root zero, lowercased.
         let mut keys: Vec<Vec<u8>> = vec![Vec::new(); labels.len() + 1];
         keys[labels.len()].push(0);
         for index in (0..labels.len()).rev() {
@@ -63,8 +39,6 @@ impl NameWriter {
             keys[index] = key;
         }
 
-        // Find the longest suffix already present in the message. The root-only suffix is not a
-        // useful match (a two-byte pointer instead of a one-byte zero), so stop before it.
         let mut match_at = labels.len();
         let mut match_offset = None;
         for (index, key) in keys[..labels.len()].iter().enumerate() {
@@ -75,7 +49,6 @@ impl NameWriter {
             }
         }
 
-        // Remember where we started so a later failure can roll the buffer back.
         let start = out.len();
         for (index, label) in labels[..match_at].iter().enumerate() {
             if out.len() <= MAX_POINTER_OFFSET {
@@ -98,21 +71,16 @@ impl NameWriter {
         let written = out.len() - start;
         if written > MAX_NAME_WIRE_OCTETS {
             out.truncate(start);
-            // A name with no pointer that is too long cannot have registered a usable suffix;
-            // leaving the extra map entries only costs a little memory, never wire correctness.
             return false;
         }
         true
     }
 }
 
-/// Encodes one presentation name without compression (a fresh map cannot produce pointers).
 pub fn encode_name(out: &mut Vec<u8>, name: &str) -> bool {
     NameWriter::new().write_name(out, name)
 }
 
-/// Splits a presentation name the same way [`crate::pack_name`] does: `\DDD` names a byte, `\X`
-/// the literal `X`, `.` separates labels and a single trailing `.` is the root.
 fn parse_labels(name: &str) -> Option<Vec<Vec<u8>>> {
     if name == "." {
         return Some(Vec::new());
@@ -181,7 +149,6 @@ fn parse_labels(name: &str) -> Option<Vec<Vec<u8>>> {
     if !label.is_empty() {
         labels.push(label);
     } else if !closed {
-        // Only the root name "." has no labels and no trailing dot; empty input was rejected.
         return None;
     }
     Some(labels)
@@ -220,11 +187,10 @@ mod tests {
     #[test]
     fn compression_reuses_the_longest_suffix() {
         let mut writer = NameWriter::new();
-        let mut out = vec![0u8; 12]; // pretend header bytes
+        let mut out = vec![0u8; 12];
         assert!(writer.write_name(&mut out, "www.example.test."));
         let second = out.len();
         assert!(writer.write_name(&mut out, "mail.example.test."));
-        // "mail" followed by a pointer to the "example.test." suffix at header+4.
         assert_eq!(&out[second..second + 5], b"\x04mail");
         assert_eq!(out[second + 5], 0xc0);
         assert_eq!(out[second + 6], 0x10);

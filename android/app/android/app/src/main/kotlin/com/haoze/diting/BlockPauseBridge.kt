@@ -8,11 +8,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Dart-facing hook for R4 (temporary pause / allowlist-only).
-///
-/// The values live in the same `automation_prefs` the notification action and the control receiver
-/// use, so all three entry points agree, and the running engine is updated through [BlockPauseLink].
-/// Every mutation re-broadcasts state so the UI and any automation listener see the change.
 class BlockPauseBridge(
     private val context: Context,
     messenger: BinaryMessenger,

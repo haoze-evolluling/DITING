@@ -1,7 +1,3 @@
-//! Parity corpus generated from the old Go implementation (`internal/core/dns64.go`) just before it
-//! was replaced. Every row here was produced by running the Go code, not by re-deriving the RFC, so
-//! a divergence shows up as a failing row instead of a silently different answer.
-
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -14,7 +10,6 @@ fn load(name: &str) -> String {
     std::fs::read_to_string(&path).unwrap_or_else(|err| panic!("{}: {err}", path.display()))
 }
 
-/// Splits a fixture into its header and rows, dropping empty lines.
 fn rows(name: &str) -> Vec<Vec<String>> {
     let text = load(name);
     text.lines()
@@ -23,7 +18,6 @@ fn rows(name: &str) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// Undoes the generator's escaping (`\n`, `\r`, `\t`, `\\`).
 fn unescape(field: &str) -> String {
     let mut out = String::with_capacity(field.len());
     let mut chars = field.chars();
@@ -47,7 +41,6 @@ fn unescape(field: &str) -> String {
     out
 }
 
-/// `4:<hex>` / `16:<hex>` / `none`, the encoding the generator used for `net.IP`.
 fn address(spec: &str) -> Option<Vec<u8>> {
     if spec == "none" {
         return None;
@@ -116,8 +109,6 @@ fn prefixes_match_the_old_constructor() {
 
 #[test]
 fn cidr_parsing_keeps_go_family_and_width() {
-    // `length` above means "parsed but rejected by RFC 6052"; check that `parse_cidr` itself
-    // accepted exactly the rows the Go `net.ParseCIDR` accepted.
     for row in &rows("prefixes.tsv")[1..] {
         let (trimmed, kind) = (&row[1], &row[2]);
         if kind == "skip" {
@@ -156,8 +147,6 @@ fn exclusions_match_the_old_engine() {
             .or_insert_with(|| engine(&prefixes(prefix_list)));
         let expected = expected == "true";
         match address(address_spec) {
-            // Go's `IsExcluded(nil)` is true and never reaches the kernel; keep the corpus honest
-            // about which side answers that case.
             None => assert!(expected, "nil is always excluded"),
             Some(bytes) => assert_eq!(
                 engine.excluded(&bytes),
@@ -179,7 +168,6 @@ fn has_valid_aaaa_matches_the_old_engine() {
         let mut owned: Vec<Vec<u8>> = Vec::new();
         if address_specs != "-" {
             for spec in address_specs.split(',') {
-                // An AAAA record with a nil address is excluded before it is ever asked about.
                 if let Some(bytes) = address(spec) {
                     owned.push(bytes);
                 }

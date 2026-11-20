@@ -2,7 +2,6 @@ import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 
-/// The server process uses `PLAIN` for ordinary DNS; the tunnel UI calls it `DNS`.
 String serverProtocolForUi(ProviderProtocol protocol) => switch (protocol) {
   ProviderProtocol.dns => 'PLAIN',
   ProviderProtocol.doh => 'DOH',

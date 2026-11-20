@@ -7,16 +7,11 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Statistics card: request counts and data usage, each over its own window, with a
-/// proportional bar under each row of figures and a shortcut to the request log between them.
 class LogStatsCard extends StatelessWidget {
   const LogStatsCard({super.key, this.onRecentActivity, this.showData = true});
 
-  /// Opens the request log; null (edit mode) leaves the row inert.
   final VoidCallback? onRecentActivity;
 
-  /// Express mode only proxies DNS, so uploaded/downloaded bytes are meaningless there. The card
-  /// keeps the request figures and drops the traffic section instead of showing three zeroes.
   final bool showData;
 
   @override
@@ -104,7 +99,6 @@ class _DataSection extends ConsumerWidget {
     final window = ref.watch(logStatsWindowProvider(LogStatsSection.data));
     final stats = ref.watch(logStatsDataProvider(window)).value;
     final rest = colorScheme.onSurfaceVariant;
-    // Base 1000 with one decimal, like the traffic page: `88.2 MB` fits a third of the card.
     String figure(int? value) => value == null ? '—' : dashboardTraffic(value);
     return _Section(
       title: l10n.logStatsData,
@@ -141,7 +135,6 @@ class _DataSection extends ConsumerWidget {
 typedef _Cell = ({String value, String label, Color color});
 typedef _Segment = ({int value, Color color});
 
-/// Section title with its window picker, three centered figures, and the proportion bar.
 class _Section extends StatelessWidget {
   const _Section({
     required this.title,
@@ -155,7 +148,6 @@ class _Section extends StatelessWidget {
   final LogStatsSection section;
   final List<_Cell> cells;
 
-  /// Label color of the neutral (last) cell, which shows its figure in the text color.
   final Color label;
   final List<_Segment> segments;
 
@@ -186,8 +178,6 @@ class _Section extends StatelessWidget {
   }
 }
 
-/// Three centered figures sharing one font size: the widest value decides the shrink, so the
-/// baselines stay aligned and neighbors never touch.
 class _FigureRow extends StatelessWidget {
   const _FigureRow({required this.cells, required this.neutralLabel});
 
@@ -244,8 +234,6 @@ class _FigureRow extends StatelessWidget {
   }
 }
 
-/// Rounded segments sized by share, separated by gaps. A non-zero share keeps a minimum width
-/// so a single blocked request still shows; an all-zero bar draws the bare track.
 class _ProportionBar extends StatelessWidget {
   const _ProportionBar({required this.segments});
 
@@ -274,7 +262,6 @@ class _ProportionBar extends StatelessWidget {
     }
     return SizedBox(
       height: _height,
-      // Stretch: a childless box in a Row is otherwise laid out zero high.
       child: Row(
         spacing: _gap,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -343,7 +330,6 @@ class _WindowPicker extends ConsumerWidget {
   }
 }
 
-/// Three left-aligned lines of falling length, the list mark of the reference design.
 const _activityGlyph = Glyph([
   GlyphPolyline([
     GlyphVertex(4, 6.5),

@@ -1,6 +1,5 @@
 part of 'rust_dns_config_core.dart';
 
-/// Sequential little-endian writer over one call's request payload.
 class _PayloadWriter {
   final BytesBuilder _bytes = BytesBuilder(copy: false);
 
@@ -24,7 +23,6 @@ class _PayloadWriter {
     _bytes.add(encoded);
   }
 
-  /// `u32::MAX` marks an absent optional string, so no separate presence bit is needed.
   void optionalUtf8(String? value) {
     if (value == null) {
       u32(0xFFFFFFFF);
@@ -74,8 +72,6 @@ class _PayloadWriter {
   Uint8List finish() => _bytes.takeBytes();
 }
 
-/// Sequential little-endian reader over one call's answer payload. The payload is copied out of the
-/// native buffer before this is used, because the caller releases it.
 class _PayloadReader {
   _PayloadReader(Uint8List bytes)
     : _bytes = bytes,

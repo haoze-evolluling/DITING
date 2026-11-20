@@ -1,5 +1,3 @@
-//! The `{success,message,data,error,conflict}` envelope every JSON route answers with.
-
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -66,7 +64,6 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    /// Failure carrying a partial payload (`TestUpstream` does this in Go).
     pub fn failure_with(error: impl Into<String>, data: T) -> Self {
         Self {
             success: false,

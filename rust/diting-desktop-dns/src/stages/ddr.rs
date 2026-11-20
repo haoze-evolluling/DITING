@@ -1,10 +1,3 @@
-//! RFC 9462 Discovery of Designated Resolvers.
-//!
-//! `_dns.resolver.arpa.` SVCB answers advertise the encrypted endpoints that are actually
-//! listening. A port that failed to bind is never advertised — pointing a client at a dead port is
-//! worse than not advertising at all. The feature is opt-in (DDR makes clients lose DNS entirely
-//! when the certificate is untrusted but the config says otherwise).
-
 use async_trait::async_trait;
 use diting_dns_wire::build::{
     MessageBuilder, OptBuilder, RData, ResourceRecord, SvcParam, SvcbRData,
@@ -30,8 +23,6 @@ pub struct DdrAnswer {
     pub doh_port: u16,
     pub doq_port: u16,
     pub doh_path: String,
-    /// DoT clients take the address from the certificate's IP SANs; without one the advertisement
-    /// is useless and actively misleading.
     pub cert_has_ips: bool,
 }
 
@@ -41,8 +32,6 @@ impl DdrAnswer {
     }
 }
 
-/// Supplies the endpoints that are listening *now*. Recomputed per query so a listener restart is
-/// reflected immediately.
 pub trait DdrProvider: Send + Sync {
     fn answer(&self) -> DdrAnswer;
 }
@@ -143,7 +132,6 @@ fn svcb_record(target: &str, params: Vec<SvcParam>) -> ResourceRecord {
     )
 }
 
-/// RFC 9462 §4.2 requires the query placeholder; without it clients request the bare path.
 pub fn doh_path_template(path: &str) -> String {
     let path = normalize_doh_path(path);
     if path.contains("{?dns}") {
@@ -153,7 +141,6 @@ pub fn doh_path_template(path: &str) -> String {
     }
 }
 
-/// The DoH path as the encrypted listener will serve it.
 pub fn normalize_doh_path(path: &str) -> String {
     let trimmed = path.trim();
     if trimmed.is_empty() {
@@ -165,7 +152,6 @@ pub fn normalize_doh_path(path: &str) -> String {
     }
 }
 
-/// Kept for the encrypted-status DTO: whether any configured cert SAN parses as an IP.
 pub fn cert_has_ips(ips: &[String]) -> bool {
     ips.iter()
         .any(|ip| ip.trim().parse::<std::net::IpAddr>().is_ok())

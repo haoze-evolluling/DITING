@@ -1,16 +1,9 @@
-//! Behavioural tests for `diting-schedule-core`, pinning every cadence boundary.
-//!
-//! The wall-clock tests feed a synthetic `day → slot` table (a fixed `DAY` grid) so the rules are
-//! timezone-independent; the DST test feeds a 23-hour day to prove the kernel follows the injected
-//! slots rather than assuming a fixed day length. Cron/window/pause use real civil dates.
-
 use diting_schedule_core::{evaluate, evaluate_rules};
 use serde_json::{json, Value};
 
 const HOUR: i64 = 3_600_000;
 const DAY: i64 = 86_400_000;
 
-/// Slots at 04:00 for days in `[around-4, around+8]`, on the synthetic fixed grid.
 fn slots(around: i64) -> Value {
     let mut list = Vec::new();
     for day in (around - 4)..=(around + 8) {
@@ -138,8 +131,6 @@ fn no_records_means_no_next_time() {
 
 #[test]
 fn daily_across_a_short_dst_day_follows_the_injected_slot() {
-    // Spring forward: this day is 23 hours long, so the 04:00 slot lands one hour "early" in
-    // absolute terms. The kernel must follow the table, not assume 24-hour days.
     let day = 20_000i64;
     let dst_slot = day * DAY + 3 * HOUR;
     let next_slot = (day + 1) * DAY + 4 * HOUR;
@@ -180,10 +171,8 @@ fn cron_crosses_midnight_and_month_boundary() {
         "nowMs": now,
         "records": [],
     });
-    // Attempted the previous night: the 23:30 occurrence tonight makes it due.
     let due = evaluate_records(base.clone(), &[(1, civil_ms(2024, 1, 30, 23, 30))]);
     assert_eq!(due["due"], json!([1]));
-    // Already ran tonight: next is tomorrow, 2024-02-01 23:30.
     let fresh = evaluate_records(base, &[(1, now)]);
     assert_eq!(fresh["due"], json!([]));
     assert_eq!(fresh["nextDueAt"], json!(civil_ms(2024, 2, 1, 23, 30)));
@@ -203,14 +192,12 @@ fn window_activates_only_inside_the_interval() {
         "windowEndMinutes": 240,
         "records": [],
     });
-    // 03:00 inside [02:00, 04:00): active and never attempted → due.
     let mut inside = base.clone();
     inside["nowMs"] = json!(civil_ms(2024, 3, 1, 3, 0));
     let answer = evaluate_records(inside, &[(1, 0)]);
     assert_eq!(answer["windowActive"], json!(true));
     assert_eq!(answer["due"], json!([1]));
 
-    // 05:00 outside; the last attempt was during today's window → not due, next open is tomorrow.
     let mut outside = base;
     outside["nowMs"] = json!(civil_ms(2024, 3, 1, 5, 0));
     let answer = evaluate_records(outside, &[(1, civil_ms(2024, 3, 1, 3, 30))]);
@@ -266,7 +253,6 @@ fn pause_suppresses_until_expiry_then_runs_once() {
     let answer = evaluate_records(after.clone(), &[(1, until - HOUR)]);
     assert_eq!(answer["due"], json!([1]));
 
-    // Already ran after expiry: nothing more to schedule.
     let answer = evaluate_records(after, &[(1, civil_ms(2024, 4, 1, 12, 1))]);
     assert_eq!(answer["due"], json!([]));
     assert_eq!(answer["nextDueAt"], Value::Null);
@@ -284,7 +270,6 @@ fn evaluate_rules_aggregates_due_and_earliest_next() {
     });
     let answer = evaluate_rules(now, &document);
     assert_eq!(answer["due"], json!(["a"]));
-    // The due rule contributes `now`; the not-yet-due rule contributes now+1h; the earliest wins.
     assert_eq!(answer["nextDueAt"], json!(now));
     assert_eq!(answer["windowActive"], json!(false));
 }

@@ -36,13 +36,11 @@ void main() {
     await tester.pump();
     await tester.pumpAndSettle();
 
-    // 1 条 ERROR 触发异常横幅。
     expect(find.text('检测到 1 条异常'), findsOneWidget);
     expect(find.text('INFO · startup'), findsOneWidget);
     expect(find.text('ERROR · service'), findsOneWidget);
     expect(find.text('WARN · dns'), findsOneWidget);
 
-    // 切到“仅错误”后只剩 ERROR 行。
     await tester.tap(find.text('仅错误'));
     await tester.pumpAndSettle();
     expect(find.text('ERROR · service'), findsOneWidget);

@@ -1,23 +1,3 @@
-//! The rule-test simulator (R1): a stateless policy evaluation over a snapshot the caller builds.
-//!
-//! The tunnel engine already answers "which rule wins" through [`crate::policy::Policy`], but that
-//! snapshot only exists while a data plane is running. The simulator must answer the same question
-//! with the tunnel off, so this entry point builds its own [`Snapshot`] from the exact
-//! `applyRuleSnapshot` document the app builds for the engine (see `RuleSnapshotStore`) and the
-//! rewrite table from the `setRewriteRules` document. Nothing is forwarded and no engine handle is
-//! touched: the verdict is pure, so it stays the single implementation of the seven-level walk.
-//!
-//! The result is one JSON object the Kotlin bridge forwards to Dart:
-//!
-//! ```json
-//! {"action":"block|allow|pass","blocked":true,"reason":"ads.example.com",
-//!  "rewrite":{"cname":"","ip4":"1.2.3.4","ip6":""}}
-//! ```
-//!
-//! `action` distinguishes a normal pass (`pass`) from an explicit allow rule (`allow`, reason
-//! `__ALLOW__`); `reason` is the matched pattern exactly as the engine would log it; `rewrite` is
-//! `null` when no rewrite rule matches the domain.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JObject, JString};
@@ -31,21 +11,14 @@ use diting_policy_core::Snapshot;
 
 use super::{answer, text};
 
-/// The classification of one query, before it is turned into JSON.
 #[derive(Debug, PartialEq, Eq)]
 pub struct CheckOutcome {
-    /// `pass`, `allow` or `block`.
     pub action: &'static str,
     pub blocked: bool,
-    /// The matched pattern (or `__ALLOW__`), empty on a plain pass.
     pub reason: String,
-    /// A matching rewrite entry, rendered as JSON, or `None`.
     pub rewrite: Option<Value>,
 }
 
-/// Evaluates one query against freshly built tables. `qtype` is a DNS type number (A = 1,
-/// AAAA = 28); `0` means "no type restriction", matching the engine's own convention for a rule
-/// without a `dnsType` modifier.
 fn evaluate_check(
     snapshot_json: &str,
     rewrite_json: &str,
@@ -56,7 +29,6 @@ fn evaluate_check(
     let request = RuleSnapshot::parse(snapshot_json.as_bytes())
         .map_err(|error| format!("parse rule snapshot: {error}"))?;
     let snapshot = Snapshot::build(&request);
-    // Uncached: the simulator evaluates one off query and must not warm the engine's decision cache.
     let answer = snapshot.answer_uncached(domain, app, qtype);
     let action = if answer.reason.as_str() == "__ALLOW__" {
         "allow"
@@ -73,9 +45,6 @@ fn evaluate_check(
     })
 }
 
-/// The rewrite the pipeline would apply to `domain`, if any. A malformed rewrite document yields no
-/// entry rather than failing the whole verdict: rewriting is informative here, not the question
-/// being asked ("why blocked").
 fn rewrite_entry(rewrite_json: &str, domain: &str) -> Option<Value> {
     if rewrite_json.trim().is_empty() {
         return None;
@@ -103,10 +72,6 @@ fn outcome_json(outcome: &CheckOutcome) -> String {
     .to_string()
 }
 
-/// `RuleTestNative.check(snapshotJson, rewriteJson, domain, app, qtype): String?`
-///
-/// Returns the JSON verdict, or `null` after raising `IllegalStateException` when the snapshot
-/// document itself is malformed (the caller shows "规则快照构建失败" instead of a wrong verdict).
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_RuleTestNative_check(
     mut env: JNIEnv<'_>,
@@ -204,7 +169,6 @@ mod tests {
 
     #[test]
     fn out_of_range_qtype_is_no_restriction() {
-        // u16::try_from on the JNI side turns a bad jint into 0; a rule with a dnsType then passes.
         let outcome = evaluate_check(SNAPSHOT, "", "q.example.com", "", 0).expect("valid");
         assert_eq!(outcome.action, "pass");
     }

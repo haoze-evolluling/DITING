@@ -24,8 +24,6 @@ import com.haoze.diting.vpn.VpnPlanNative
 import com.haoze.diting.vpn.VpnServiceForeground
 import com.haoze.diting.watchdog.VpnReclaimer
 
-/// Express-mode VpnService on the Rust engine: the TUN only owns DNS routes, so the engine sees the
-/// DNS queries and nothing else. Normal mode lives in `normal.DitingVpnService`.
 class ExpressVpnService : VpnService() {
     private var tun: ParcelFileDescriptor? = null
     private var engine: Engine? = null
@@ -39,12 +37,8 @@ class ExpressVpnService : VpnService() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    /// Bumped by every accepted start. A stop hands its shutdown to a worker, and by the time it
-    /// comes back a new start may own the ticker, retention and foreground state; the generation
-    /// tells it so instead of tearing the new run down.
     private var tunnelGeneration = 0
 
-    /// Repaints the request counts; a no-op tick when no detail item is enabled.
     private val statsTicker = SpeedTicker(
         context = this,
         active = { isRunning && !stopping },
@@ -53,7 +47,6 @@ class ExpressVpnService : VpnService() {
         },
     )
 
-    /// Follows a revoke caused by another VPN and reconnects once that VPN lets go of the slot.
     private val reclaimer = VpnReclaimer(
         service = this,
         workMode = "express",
@@ -87,7 +80,6 @@ class ExpressVpnService : VpnService() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        // A start, manual or replayed by the watchdog, ends any wait for the slot.
         reclaimer.cancel()
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
         if (dnsConfig.isNullOrBlank()) {
@@ -101,8 +93,6 @@ class ExpressVpnService : VpnService() {
         val proxyAppPackage = intent.getStringExtra(EXTRA_PROXY_APP).orEmpty()
         val ipv6Mode = intent.getStringExtra(EXTRA_IPV6_MODE) ?: defaults.ipv6Mode
         val excludedPackages = intent.getStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES).orEmpty().toSet()
-        // Persisted so the quick settings tile can rebuild the same start intent: Dart computes
-        // the config, the intent extras do not survive anywhere else.
         ExpressStartConfig.remember(
             context = this,
             dnsConfig = dnsConfig,
@@ -182,11 +172,9 @@ class ExpressVpnService : VpnService() {
         }
 
         isRunning = true
-        // Authoritative start time: a recreated UI process must not restart the uptime counter.
         startedAt = System.currentTimeMillis()
         setPersistedRunning(this, true)
         statsTicker.start()
-        // Express has its own log file, so no HTTP or traffic tables.
         LogRetention.start(
             context = this,
             databaseName = RuleDataset.EXPRESS.logsDatabase(),
@@ -195,9 +183,6 @@ class ExpressVpnService : VpnService() {
         )
         worker = Thread({
             try {
-                // Rules are built here, off the main thread: a stale index means a trie compile
-                // that can take seconds, and onStartCommand would otherwise ANR the service.
-                // Applied before startFull so the tunnel comes up with filtering already armed.
                 try {
                     EngineRuleLoader.apply(this, rustEngine, RuleDataset.EXPRESS, TAG)
                 } catch (t: Throwable) {
@@ -215,9 +200,6 @@ class ExpressVpnService : VpnService() {
                 rustEngine.startFull(pfd.fd.toLong(), object : SocketProtector {
                     override fun protect(fd: Long): Boolean = protect(fd.toInt())
                 })
-                // `startFull` returns once the session is up (the old Go method blocked until `stop`).
-                // Waiting keeps this thread as the single place a self-terminated session is
-                // reported, which is what the "crashed" branch below used to cover.
                 while (!stopping && rustEngine.isFullRunning()) {
                     Thread.sleep(SESSION_POLL_MS)
                 }
@@ -236,9 +218,6 @@ class ExpressVpnService : VpnService() {
         }, "diting-express-tunnel").also { it.start() }
     }
 
-    /// Rebuilds the rule snapshot and re-applies it to the running engine so a newly imported or
-    /// updated subscription takes effect without dropping the tunnel. A failure keeps the previous
-    /// rules instead of killing the VPN.
     private fun reloadRules() {
         val current = engine
         if (current == null || !isRunning) {
@@ -260,19 +239,9 @@ class ExpressVpnService : VpnService() {
         }, "diting-rule-reload").start()
     }
 
-    /// Stops the tunnel without blocking the caller's thread for the shutdown.
-    ///
-    /// `engine.stop()` takes hundreds of ms and a service runs on the app's main thread - which is
-    /// also Flutter's UI thread. Doing it inline froze the whole UI, and an animation started by
-    /// the same tap (the power button's collapse) skipped straight to its end when the thread
-    /// resumed. So the resources are detached here and shut down on a throwaway worker.
     @Synchronized
     private fun stopTunnel() {
         reclaimer.cancel()
-        // Detached before handing off: nothing can append to the plane while it flushes, the poll
-        // loop on the tunnel thread sees `stopping` at once, and a start that races this stop
-        // cannot pick up half-dead resources. Re-entering here is harmless: a second call finds
-        // nulls and only repeats the service bookkeeping.
         stopping = true
         val generation = tunnelGeneration
         val current = engine
@@ -288,7 +257,6 @@ class ExpressVpnService : VpnService() {
             releaseTunnel(current, plane)
             runCatching { currentTun?.close() }
             mainHandler.post {
-                // A start that landed meanwhile owns the ticker, retention and foreground state.
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 setPersistedRunning(this@ExpressVpnService, false)
@@ -298,8 +266,6 @@ class ExpressVpnService : VpnService() {
         }, "diting-express-teardown").start()
     }
 
-    /// Stops the engine and frees the TUN; the service, its foreground state and the persisted
-    /// running flag are left to the caller.
     @Synchronized
     private fun teardown() {
         stopping = true
@@ -314,7 +280,6 @@ class ExpressVpnService : VpnService() {
         startedAt = 0L
     }
 
-    /// The blocking half of a shutdown. Already runs off the main thread on the `fail()` path.
     private fun releaseTunnel(engine: Engine?, plane: EngineDataPlane?) {
         runCatching { engine?.stop() }
             .onFailure { Log.w(TAG, "engine.stop failed", it) }
@@ -322,7 +287,6 @@ class ExpressVpnService : VpnService() {
         runCatching { plane?.close() }
     }
 
-    /// Drops the resolver callbacks; no log writers are attached in this mode
     private fun closeDataPlane() {
         val plane = dataPlane
         dataPlane = null
@@ -334,7 +298,6 @@ class ExpressVpnService : VpnService() {
         tun = null
         worker = null
         statsTicker.stop()
-        // Retention sweep is bound to the tunnel lifetime, not the process.
         LogRetention.stop()
     }
 
@@ -354,13 +317,10 @@ class ExpressVpnService : VpnService() {
     override fun onRevoke() {
         RuntimeEventLog.warn("express", "revoked")
         if (reclaimer.shouldFollow()) {
-            // Stays started and in the foreground until the slot frees up; the persisted flag
-            // keeps saying "the user wants this running".
             Log.w(TAG, "VPN revoked; waiting for the slot to free up")
             teardown()
             QuickSettingsTileUpdater.requestTileUpdate(this)
             reclaimer.begin()
-            // super.onRevoke() would stopSelf().
             return
         }
         Log.w(TAG, "VPN permission revoked")
@@ -392,19 +352,16 @@ class ExpressVpnService : VpnService() {
     companion object {
         private const val TAG = "ExpressVpnService"
 
-        /// Separate retention window; not shared with normal mode
         private const val LOG_PREFS = "diting_express_prefs"
 
         const val ACTION_START = "com.haoze.diting.express.START_VPN"
         const val ACTION_STOP = "com.haoze.diting.express.STOP_VPN"
 
-        /// Re-applies the rule snapshot to the already-running tunnel (no drop/reconnect).
         const val ACTION_RELOAD_RULES = "com.haoze.diting.express.RELOAD_RULES"
 
         const val EXTRA_DNS_CONFIG = "dns_config"
         const val EXTRA_OUTBOUND_PROXY = "outbound_proxy"
 
-        /// Package of the app that owns the loopback proxy port; excluded from the TUN.
         const val EXTRA_PROXY_APP = "proxy_app_package"
         const val EXTRA_IPV6_MODE = "ipv6_mode"
         const val EXTRA_EXCLUDED_PACKAGES = "excluded_packages"
@@ -416,16 +373,13 @@ class ExpressVpnService : VpnService() {
         private const val KEY_LOG_MODE = "dns_log_mode"
         private const val SETTINGS_PREFS = "diting_express_prefs"
 
-        // Last start configuration, replayed by the quick settings tile.
         internal const val KEY_LAST_DNS_CONFIG = "last_dns_config"
 
-        /// How often the tunnel thread checks whether the session it started is still running.
         private const val SESSION_POLL_MS = 200L
 
         @Volatile
         var isRunning: Boolean = false
 
-        /// Epoch millis of the last successful start; 0 while stopped.
         @Volatile
         var startedAt: Long = 0L
 
@@ -437,7 +391,6 @@ class ExpressVpnService : VpnService() {
         @Volatile
         var lastError: String? = null
 
-        /// Displaced by another VPN and waiting to reconnect; [isRunning] is false meanwhile.
         @Volatile
         var reclaiming: Boolean = false
 
@@ -450,7 +403,6 @@ class ExpressVpnService : VpnService() {
                 .edit()
                 .putBoolean(KEY_VPN_RUNNING, value)
                 .apply()
-            // The tile lives in another UI surface; it only repaints when told to re-read.
             QuickSettingsTileUpdater.requestTileUpdate(context)
         }
 
@@ -463,7 +415,6 @@ class ExpressVpnService : VpnService() {
             "stats" to EngineStats.snapshot(activeEngine),
         )
 
-        /// Rebuilds the posted notification after a settings change; false when nothing is posted
         fun refreshNotification(context: Context): Boolean =
             isRunning && ExpressNotification.rerender(context, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP)
 
@@ -486,7 +437,6 @@ class ExpressVpnService : VpnService() {
         fun stopIntent(context: Context): Intent =
             Intent(context, ExpressVpnService::class.java).setAction(ACTION_STOP)
 
-        /// Asks a running tunnel to rebuild its rules in place. A no-op when it is not running.
         fun requestReload(context: Context) {
             if (!isRunning) return
             runCatching { context.startService(reloadIntent(context)) }
@@ -495,8 +445,6 @@ class ExpressVpnService : VpnService() {
         fun reloadIntent(context: Context): Intent =
             Intent(context, ExpressVpnService::class.java).setAction(ACTION_RELOAD_RULES)
 
-        /// Rebuilds the last start intent so the tile can restart the tunnel without Dart, which
-        /// is where the DNS config is computed. Null until the service was started at least once.
         fun restoreIntent(context: Context): Intent? = ExpressStartConfig.restoreIntent(context)
     }
 }

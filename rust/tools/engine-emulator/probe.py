@@ -128,8 +128,6 @@ def main() -> int:
                 response, elapsed = exchange(args.port, args.name, qtype, args.timeout)
                 break
             except OSError as error:
-                # A server that is being restarted closes the socket before the length prefix; that
-                # is a startup race, not a transport failure, so give it a moment and try again.
                 attempt += 1
                 if attempt > args.retry:
                     print(f"[probe] query {index + 1} failed: {error}", file=sys.stderr)

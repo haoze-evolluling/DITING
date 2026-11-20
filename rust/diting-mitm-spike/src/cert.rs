@@ -1,22 +1,3 @@
-//! Dynamic MITM certificates: a leaf per host, minted by `diting-cert-core` inside the handshake.
-//!
-//! This is `CertManager.GetDynamicTLSConfigForHost` after migration. The Go version set
-//! `GetCertificate`, resolved the host from `ClientHelloInfo.ServerName` (falling back to the flow's
-//! hostname), read an LRU cache that treated a leaf as expired five minutes early, and minted
-//! behind a per-host single-flight wait group.
-//!
-//! The Rust version keeps the same shape with two substitutions:
-//!
-//! * `GetCertificate` becomes [`rustls::server::ResolvesServerCert`]. `resolve` is synchronous, so
-//!   minting happens inline exactly like Go did (P-256 signing plus one DER encode); the cache lock
-//!   *is* the single flight — a second handshake for the same host waits for the mutex instead of
-//!   waiting on a `sync.WaitGroup`.
-//! * the LRU becomes a bounded map pruned on insert, because the Go LRU only existed to cap memory
-//!   (256 leaves); entries expire at `NotAfter - 5min` and are dropped on the way out.
-//!
-//! ALPN is `http/1.1` only, like `NextProtos: []string{"http/1.1"}`: the relay speaks HTTP/1.1 and
-//! does not implement the HTTP/2 framing the browsers would otherwise negotiate.
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -27,11 +8,8 @@ use rustls::server::{ClientHello, ResolvesServerCert};
 use rustls::sign::CertifiedKey;
 use rustls::ServerConfig;
 
-/// `NextProtos: []string{"http/1.1"}`.
 pub const ALPN: &[u8] = b"http/1.1";
-/// `time.Now().Before(cached.expiresAt.Add(-5 * time.Minute))`.
 pub const RENEW_MARGIN_SECS: i64 = 5 * 60;
-/// The capacity `certCache` (an LRU) was created with.
 pub const MAX_CACHED_LEAVES: usize = 256;
 
 struct CachedLeaf {
@@ -39,7 +17,6 @@ struct CachedLeaf {
     not_after_unix: i64,
 }
 
-/// The root CA plus the cache of leaves already minted for a host.
 pub struct CertStore {
     authority: CertAuthority,
     leaves: Mutex<HashMap<String, CachedLeaf>>,
@@ -55,25 +32,19 @@ impl CertStore {
         }
     }
 
-    /// The root CA, for the export/inspection paths and for the client-side tests.
     pub fn authority(&self) -> &CertAuthority {
         &self.authority
     }
 
-    /// How many leaves are cached right now.
     pub fn cached_len(&self) -> usize {
         self.lock().len()
     }
 
-    /// How many leaves have been minted since the store was created.
     pub fn minted_count(&self) -> u64 {
         *self.minted.lock().unwrap_or_else(|err| err.into_inner())
     }
 
-    /// `getCertificateWithDedup`: reuse a leaf unless it is within [`RENEW_MARGIN_SECS`] of expiry.
     pub fn leaf_for(&self, host: &str, now_unix: i64) -> Result<Arc<CertifiedKey>, String> {
-        // Never mint a nameless certificate: a flow with neither SNI nor a known hostname must fail
-        // the handshake instead of presenting something no client can validate.
         if host.trim().is_empty() {
             return Err("cannot mint a certificate for an empty host".to_string());
         }
@@ -89,8 +60,6 @@ impl CertStore {
         let not_after_unix = issued.not_after_unix;
         let key = Arc::new(certified_key(&issued)?);
         if cache.len() >= MAX_CACHED_LEAVES {
-            // Coarse, but the Go LRU's only purpose was to cap memory; the expired entries are
-            // useless anyway and everything else is reminted in one signing operation on demand.
             let now = now_unix;
             cache.retain(|_, leaf| now < leaf.not_after_unix - RENEW_MARGIN_SECS);
             if cache.len() >= MAX_CACHED_LEAVES {
@@ -108,10 +77,6 @@ impl CertStore {
         Ok(key)
     }
 
-    /// The server config for one intercepted flow.
-    ///
-    /// `default_host` is Go's `defaultHost` argument: the hostname from the TUN flow, used when the
-    /// client sends no SNI (a literal IP address, for instance).
     pub fn server_config(self: &Arc<Self>, default_host: Option<&str>) -> ServerConfig {
         let mut config = ServerConfig::builder_with_provider(crate::provider())
             .with_safe_default_protocol_versions()
@@ -130,7 +95,6 @@ impl CertStore {
     }
 }
 
-/// The resolver handed to rustls; it carries the flow hostname as the SNI fallback.
 struct HostResolver {
     store: Arc<CertStore>,
     default_host: Option<String>,
@@ -155,7 +119,6 @@ impl ResolvesServerCert for HostResolver {
         match self.store.leaf_for(&host, crate::now_unix()) {
             Ok(key) => Some(key),
             Err(err) => {
-                // Failing here fails the handshake, which is what Go did when minting failed.
                 eprintln!("MITM: cannot mint a certificate for '{host}': {err}");
                 None
             }
@@ -163,7 +126,6 @@ impl ResolvesServerCert for HostResolver {
     }
 }
 
-/// The PEM pair `tls.X509KeyPair` consumed, as a rustls signing key.
 fn certified_key(issued: &IssuedLeaf) -> Result<CertifiedKey, String> {
     let chain = parse_certs(&issued.chain_pem)?;
     if chain.is_empty() {

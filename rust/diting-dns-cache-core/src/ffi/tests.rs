@@ -1,5 +1,3 @@
-//! The C ABI surface: handle lifecycle, payload layouts and rejection codes.
-
 use std::slice;
 
 use super::*;
@@ -83,7 +81,6 @@ unsafe fn payload_slice(pointer: *const u8, length: usize) -> &'static [u8] {
     slice::from_raw_parts(pointer, length)
 }
 
-/// Offset of the first answer's TTL in a response built by [`answer`].
 fn ttl_at(wire: &[u8], name: &str) -> u32 {
     let offset = 12 + name_wire(name).len() + 4 + name_wire(name).len() + 4;
     u32::from_be_bytes([
@@ -279,8 +276,8 @@ fn put_and_get_round_trip_through_the_boundary() {
     assert_eq!(status, GET_FRESH);
     let bytes = unsafe { payload_slice(payload, payload_len) };
     assert_eq!(bytes[0], LAYOUT_VERSION);
-    assert_eq!(bytes[1], 0); // not stale
-    assert_eq!(bytes[2], 0); // not negative
+    assert_eq!(bytes[1], 0);
+    assert_eq!(bytes[2], 0);
     let wire_len = u32::from_le_bytes([bytes[3], bytes[4], bytes[5], bytes[6]]) as usize;
     let wire = &bytes[7..7 + wire_len];
     assert_eq!(&wire[0..2], &[0xbe, 0xef]);
@@ -288,7 +285,6 @@ fn put_and_get_round_trip_through_the_boundary() {
     assert!((299..=300).contains(&ttl), "ttl was {ttl}");
     unsafe { diting_dns_cache_free_bytes(payload, payload_len) };
 
-    // A different query ID and an unknown name behave like the Go cache did.
     let miss = query_message("other.example.", TYPE_A);
     let status = unsafe {
         diting_dns_cache_get(
@@ -319,8 +315,6 @@ fn stale_status_and_refresh_slot() {
             response.len(),
         )
     };
-    // Push the deadline into the past by storing the entry with a zero TTL cache policy is not
-    // possible through the ABI; wait one second instead.
     std::thread::sleep(std::time::Duration::from_millis(1100));
 
     let mut payload: *mut u8 = std::ptr::null_mut();
@@ -395,7 +389,7 @@ fn stats_and_snapshot_reach_the_caller() {
     unsafe { diting_dns_cache_stats(handle.raw, &mut payload, &mut payload_len) };
     let bytes = unsafe { payload_slice(payload, payload_len) };
     assert_eq!(bytes[0], LAYOUT_VERSION);
-    assert_eq!(bytes[1], 1); // enabled
+    assert_eq!(bytes[1], 1);
     assert_eq!(
         u64::from_le_bytes(bytes[2..10].try_into().unwrap()),
         2,

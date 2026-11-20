@@ -12,8 +12,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Log dashboard board for one log mode: a plain column in view mode; drag handles, remove
-/// badges and an add row in edit mode. Mirrors the home board so both behave the same.
 class LogDashboardBoard extends ConsumerWidget {
   const LogDashboardBoard({super.key, required this.mode});
 
@@ -99,7 +97,6 @@ class _EditingBoard extends ConsumerWidget {
           )
         else
           ReorderableListView.builder(
-            // The page already scrolls; a nested scrollable would steal drag gestures.
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
@@ -165,7 +162,6 @@ class _EditingBoard extends ConsumerWidget {
   }
 }
 
-/// Cards of this mode that are not on the board yet. Tapping appends one and closes.
 class LogDashboardAddSheet extends ConsumerWidget {
   const LogDashboardAddSheet({super.key, required this.mode});
 
@@ -201,7 +197,6 @@ class LogDashboardAddSheet extends ConsumerWidget {
               ),
             )
           : ListView(
-              // The sheet title floats over the body, so this top padding is required.
               padding: EdgeInsets.only(
                 top: context.contentTopPadding,
                 bottom: 24,

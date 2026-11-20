@@ -1,5 +1,3 @@
-//! systemd unit management for the privileged core service (`diting-dnsservice`).
-
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -20,7 +18,6 @@ use super::{autostart, dnsstate, files, SERVICE_DISPLAY_NAME, SERVICE_NAME};
 const UNIT_NAME: &str = "diting-dnsservice.service";
 const UNIT_PATH: &str = "/etc/systemd/system/diting-dnsservice.service";
 
-/// Parsed subset of `systemctl show` fields.
 #[derive(Debug, Default, Clone)]
 struct ServiceStatus {
     load_state: String,
@@ -29,7 +26,6 @@ struct ServiceStatus {
     unit_file_state: String,
 }
 
-/// systemd-backed service lifecycle manager.
 pub struct LinuxServiceManager {
     executor: Arc<dyn CommandExecutor>,
     privileged: Arc<dyn PrivilegedExecutor>,
@@ -77,8 +73,6 @@ impl LinuxServiceManager {
     }
 
     async fn executable_from_unit(&self) -> Option<String> {
-        // Through the executor: `systemctl` may block (D-Bus, slow host), so it must not run on a
-        // runtime worker thread.
         let output = self
             .executor
             .run("systemctl", &["show", UNIT_NAME, "-p", "ExecStart", "--value"])
@@ -187,7 +181,6 @@ impl ServiceManager for LinuxServiceManager {
     }
 
     async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()> {
-        // An already-installed unit must not prevent the subsequent start attempt.
         let _ = self.install(exe_path).await;
         self.start().await
     }
@@ -224,7 +217,6 @@ impl ServiceManager for LinuxServiceManager {
             "build/bin/diting-service",
         ] {
             if files::file_exists(Path::new(candidate)) {
-                // systemd resolves ExecStart against `/`, so relative candidates must be absolute.
                 return Ok(abs_executable_path(candidate));
             }
         }
@@ -236,7 +228,6 @@ impl ServiceManager for LinuxServiceManager {
             return Ok(abs_executable_path("diting-service"));
         }
 
-        // On Linux the running binary is reachable through /proc/self/exe.
         if let Ok(executable) = std::env::current_exe() {
             return Ok(abs_executable_path(&executable.to_string_lossy()));
         }
@@ -282,7 +273,6 @@ fn abs_executable_path(path: &str) -> String {
     }
 }
 
-/// Parses the executable path out of a structured `ExecStart` value.
 fn parse_exec_start_path(output: &str) -> String {
     let trimmed = output.trim();
     if trimmed.is_empty() || trimmed == "unknown" {
@@ -299,7 +289,6 @@ fn parse_exec_start_path(output: &str) -> String {
     trimmed.split_whitespace().next().unwrap_or("").to_string()
 }
 
-/// Parses `systemctl show` Key=Value output.
 fn parse_systemctl_show(output: &str) -> ServiceStatus {
     let mut status = ServiceStatus::default();
     for line in output.split('\n') {

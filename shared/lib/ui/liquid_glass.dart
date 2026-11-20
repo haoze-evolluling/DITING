@@ -22,9 +22,7 @@ const _glowIn = Duration(milliseconds: 120);
 const _glowOut = Duration(milliseconds: 360);
 const double _glowSpread = 3;
 const _profileTurns = 64;
-// kLine in shaders/liquid_glass.frag.
 const double _hairlineWidth = 0.67;
-// In corner radii from the corner of the bounds.
 const _shineAround = [
   (along: 1.53, down: 0.0, lit: 0.68),
   (along: 1.0, down: 0.0, lit: 0.48),
@@ -44,7 +42,6 @@ const _shineBands = [
   (depth: 11 / 3, width: 2 / 3, lit: 0.045),
   (depth: 13 / 3, width: 2 / 3, lit: 0.035),
 ];
-// The size of uShineEnds in shaders/liquid_glass.frag.
 const _shineSlots = 12;
 final _noShine = List<double>.unmodifiable(
   List<double>.filled(2 * (_shineAround.length + 2) + 2 * _shineSlots, 0),
@@ -52,13 +49,11 @@ final _noShine = List<double>.unmodifiable(
 final _flatProfile = List<double>.unmodifiable(
   List<double>.filled(_profileTurns, 0),
 );
-// The size of uPills in shaders/liquid_glass.frag.
 const _gooPills = 6;
 final _noGoo = List<double>.unmodifiable(
   List<double>.filled(10 * _gooPills + 8, 0),
 );
 
-/// How much of iOS's glass the panes draw (.agents/architecture.md).
 enum LiquidGlassQuality { standard, ultra }
 
 class LiquidGlassScope extends InheritedWidget {
@@ -85,7 +80,6 @@ class LiquidGlassScope extends InheritedWidget {
       enabled != oldWidget.enabled || quality != oldWidget.quality;
 }
 
-/// Keeps the panes below on one level, as iOS's GlassEffectContainer does.
 class LiquidGlassGroup extends InheritedWidget {
   const LiquidGlassGroup({super.key, required super.child});
 
@@ -96,7 +90,6 @@ class LiquidGlassGroup extends InheritedWidget {
   bool updateShouldNotify(LiquidGlassGroup oldWidget) => false;
 }
 
-/// Lengths are dp. The shader shrinks [bevel] and [refraction] to fit a small pane.
 @immutable
 class LiquidGlass extends StatelessWidget {
   const LiquidGlass({
@@ -111,7 +104,6 @@ class LiquidGlass extends StatelessWidget {
 
   final LiquidGlassStyle style;
 
-  /// Shapes the pane to its path instead of the pill; the path must meet every ray once.
   final CustomClipper<Path>? clipper;
 
   final List<BoxShadow> shadows;
@@ -122,7 +114,6 @@ class LiquidGlass extends StatelessWidget {
 
   final Widget? child;
 
-  /// Builds the scenes of [capture] without panes, for a snapshot: offscreen a pane only tints.
   static T withoutPanes<T>(T Function() capture) {
     _LiquidGlassLayer._skipped++;
     try {
@@ -183,7 +174,6 @@ sealed class LiquidGlassShape {
   const LiquidGlassShape();
 }
 
-/// A rounded rectangle, no corner rounder than half the pane's short side.
 final class LiquidGlassCorners extends LiquidGlassShape {
   const LiquidGlassCorners(this.radius);
 
@@ -199,8 +189,6 @@ final class LiquidGlassOutline extends LiquidGlassShape {
   final Path path;
 }
 
-/// `GooSurface`'s pills, outlined by [path], each blending into the one before.
-/// With [firstRadius] the first is a rectangle rounded so, not a pill.
 final class LiquidGlassGoo extends LiquidGlassShape {
   const LiquidGlassGoo(this.path, this.pills, this.blends, {this.firstRadius})
     : assert(pills.length <= _gooPills);
@@ -244,7 +232,6 @@ final class LiquidGlassGoo extends LiquidGlassShape {
   }
 }
 
-/// A pane for a render object that shapes the glass itself, as a morph does.
 class LiquidGlassPane {
   LiquidGlassPane(this.onReady);
 
@@ -254,10 +241,6 @@ class LiquidGlassPane {
   Path? _profiled;
   List<double> _profile = _flatProfile;
 
-  /// A pane moving within [hold] keeps one capture, taken at [holdFrost] where
-  /// the shader frosts past it. A [steadyFrost] pane frosts by [style]'s blur
-  /// in the host's dp however it is scaled, so it keeps that capture as it
-  /// grows or shrinks.
   void paint(
     PaintingContext context,
     Rect rect, {
@@ -375,7 +358,6 @@ abstract final class _GlassProgram {
   static ui.FragmentProgram? _program;
   static Future<void>? _loading;
 
-  /// Final: a shader that failed once fails again, and every attempt loads on the UI isolate.
   static var _failed = false;
   static final _waiting = <VoidCallback>{};
 

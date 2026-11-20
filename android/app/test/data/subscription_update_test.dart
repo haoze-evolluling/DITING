@@ -1,6 +1,3 @@
-// 更新流程的收尾保证：任何一次更新结束后，忙碌标记必须复位，列表必须重新读库，
-// 否则页面会一直停在“正在更新”且卡片数据不刷新，所有入口又都因 busy 被禁用。
-
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
 import 'package:diting_android/data/subscriptions/subscription_fetcher.dart';
@@ -100,7 +97,6 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         subscriptionDatabaseProvider.overrideWith((ref) async => db),
-        // 没有 onChanged 钩子：写入不会通知列表，只能靠更新流程自己收尾。
         subscriptionRepositoryProvider.overrideWith(
           (ref) async => SubscriptionRepository(db),
         ),
@@ -145,7 +141,6 @@ void main() {
     expect(result?.isSkipped, isTrue);
     expect(result?.isFailure, isFalse);
     expect(container.read(subscriptionUpdateProvider).isBusy, isFalse);
-    // The row is restored, not left stuck `importing`, and no rules were written.
     final rows = await db.query(
       'subscription',
       where: 'id = ?',
@@ -174,8 +169,6 @@ class _NotModifiedFetcher implements SubscriptionFetcher {
   }) async => const SubscriptionFetchResult.notModified();
 }
 
-/// Reports a body just over the size cap without needing the native importer: a declined confirm
-/// must skip before parsing, so no rule database is touched.
 class _LargeContentFetcher implements SubscriptionFetcher {
   @override
   Future<SubscriptionFetchResult> fetch(

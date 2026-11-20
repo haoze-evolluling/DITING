@@ -1,8 +1,5 @@
 package com.haoze.diting.net
 
-/// Runs a system binary (`ping` / `ping6`) and returns its combined output. The timeout
-/// lives here because the bridge has no coroutine scope: a child that never closes
-/// stdout would park a diagnostics worker thread forever. Null means no binary started.
 internal object ProcessProbe {
 
     fun run(command: List<String>, capMs: Long): String? {
@@ -18,9 +15,6 @@ internal object ProcessProbe {
         }
         return try {
             ProcessSupport.waitOrKill(process, capMs)
-            // The reader can still be blocked in readLine after a kill; waiting
-            // briefly beats returning a half-built string the parser reads as "no
-            // replies".
             reader.join(READER_JOIN_MS)
             synchronized(output) { output.toString() }
         } catch (_: InterruptedException) {
@@ -32,7 +26,6 @@ internal object ProcessProbe {
         }
     }
 
-    /// Blank output counts as no answer, so a broken `ping6` falls through to `ping -6`.
     fun runFirst(candidates: List<List<String>>, capMs: Long): String? {
         for (command in candidates) {
             val output = run(command, capMs)

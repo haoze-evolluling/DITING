@@ -1,21 +1,3 @@
-//! The upstream trust store, byte-faithful to what the Go engine built with `x509.SystemCertPool()`.
-//!
-//! `mitm_trust.go` did exactly two things: take the platform pool and append the two bundled ISRG
-//! roots. On Android the platform pool is a directory of hashed PEM files, and Go's `crypto/x509`
-//! reads it from disk (`certDirectories` in `root_unix.go` lists `/system/etc/security/cacerts`
-//! with the comment "Android"). Nothing goes through JNI, and user-installed CAs are *not* part of
-//! it — that is the behaviour the migration has to keep, because "banking apps still verify after
-//! the upgrade" depends on it.
-//!
-//! Android 14 moved the live system store into the Conscrypt APEX, so two directories are read:
-//! `/system/etc/security/cacerts` and `/apex/com.android.conscrypt/cacerts`. Reading both is a
-//! superset of the Go list and cannot widen trust beyond what the platform itself trusts.
-//!
-//! `rustls-platform-verifier` is the alternative (it delegates to the JVM's `X509TrustManager`
-//! over JNI). It is not used here: it needs a `JavaVM` at init, follows the app's
-//! `NetworkSecurityConfig` (so it *does* start trusting user CAs), and would change verification
-//! results relative to the Go build.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -24,37 +6,24 @@ use rustls::RootCertStore;
 use x509_cert::ext::pkix::certpolicy::CertificatePolicies;
 use x509_cert::Certificate;
 
-/// The ISRG Root X1 PEM copied verbatim from `isrgRootX1PEM` in `mitm_trust.go`.
 pub const ISRG_ROOT_X1_PEM: &str = include_str!("res/isrg-root-x1.pem");
-/// The ISRG Root X2 PEM copied verbatim from `isrgRootX2PEM` in `mitm_trust.go`.
 pub const ISRG_ROOT_X2_PEM: &str = include_str!("res/isrg-root-x2.pem");
 
-/// The bundled roots, in the order the Go code appended them.
 pub const BUNDLED_ROOTS: [&str; 2] = [ISRG_ROOT_X1_PEM, ISRG_ROOT_X2_PEM];
 
-/// Where Android keeps the system CA store, oldest first.
 pub const ANDROID_CERT_DIRECTORIES: [&str; 2] = [
     "/system/etc/security/cacerts",
     "/apex/com.android.conscrypt/cacerts",
 ];
 
-/// What [`upstream_root_store`] ended up with, for the one log line Go printed.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct RootStoreReport {
-    /// Directory that existed and was read.
     pub directories: usize,
-    /// Files that were read (many are skipped: Android ships 150+ named hashes per directory).
     pub files: usize,
-    /// Certificates the directories contributed to the pool.
     pub system_certs: usize,
-    /// Bundled roots the pool accepted (Go logged this as `bundled roots added=%d`).
     pub bundled_certs: usize,
 }
 
-/// The platform trust store plus the bundled ISRG roots, i.e. `upstreamRootPool()`.
-///
-/// Unlike Go this never fails: a device with no readable CA directory simply ends up with the
-/// bundled roots, which is the same degradation `SystemCertPool()` produced when it errored.
 pub fn upstream_root_store() -> (RootCertStore, RootStoreReport) {
     let mut roots = RootCertStore::empty();
     let mut report = RootStoreReport::default();
@@ -70,7 +39,6 @@ pub fn upstream_root_store() -> (RootCertStore, RootStoreReport) {
     (roots, report)
 }
 
-/// `AppendCertsFromPEM` for every PEM in `pems`, returning how many were accepted.
 pub fn add_pem_roots(roots: &mut RootCertStore, pems: &[&str]) -> usize {
     let mut added = 0;
     for pem in pems {
@@ -82,17 +50,12 @@ pub fn add_pem_roots(roots: &mut RootCertStore, pems: &[&str]) -> usize {
     added
 }
 
-/// Reads every file in `directory` as PEM and adds whatever parses.
-///
-/// Returns `(files read, certificates added)`. A missing or unreadable directory is `(0, 0)` — on a
-/// host (or an old Android) the path simply does not exist, which is not an error worth failing on.
 pub fn load_directory(roots: &mut RootCertStore, directory: &Path) -> (usize, usize) {
     let Ok(entries) = fs::read_dir(directory) else {
         return (0, 0);
     };
     let mut files = 0;
     let mut certs = 0;
-    // Sorted so two runs against the same directory build the same pool.
     let mut paths: Vec<PathBuf> = entries
         .filter_map(Result::ok)
         .map(|entry| entry.path())
@@ -112,10 +75,6 @@ pub fn load_directory(roots: &mut RootCertStore, directory: &Path) -> (usize, us
     (files, certs)
 }
 
-/// The upstream leaf's certificate-policy OIDs as dotted decimals.
-///
-/// `isExtendedValidation` in Go walked `x509.Certificate.PolicyIdentifiers`; rustls hands out DER,
-/// so the extension is decoded here and the table stays in `diting-cert-core`.
 pub fn policy_identifiers(cert_der: &[u8]) -> Vec<String> {
     let Ok(cert) = Certificate::from_der(cert_der) else {
         return Vec::new();
@@ -138,7 +97,6 @@ pub fn policy_identifiers(cert_der: &[u8]) -> Vec<String> {
     identifiers
 }
 
-/// `isExtendedValidation(leaf)` over a DER leaf certificate.
 pub fn is_extended_validation(cert_der: &[u8]) -> bool {
     let identifiers = policy_identifiers(cert_der);
     let borrowed: Vec<&str> = identifiers.iter().map(String::as_str).collect();
@@ -175,7 +133,6 @@ mod tests {
     fn a_directory_of_pem_files_becomes_a_pool() {
         let ca = diting_cert_core::ca::CertAuthority::generate(now()).expect("mint a CA");
         let dir = temp_dir("dir");
-        // Android names its files by subject hash; the loader must not care about the name.
         fs::write(dir.join("9aae4af1.0"), ca.authority.ca_pem()).expect("write the certificate");
         fs::write(dir.join("not-a-cert.pem"), "garbage\n").expect("write junk");
         fs::create_dir_all(dir.join("nested")).expect("create a nested directory");
@@ -199,8 +156,6 @@ mod tests {
         assert!(roots.is_empty());
     }
 
-    /// The point of the trust store: a chain signed by a loaded root verifies, one signed by an
-    /// unknown root does not. This is the "fail closed" half of the design.
     #[test]
     fn only_a_loaded_root_verifies_an_upstream_chain() {
         let trusted = diting_cert_core::ca::CertAuthority::generate(now()).expect("mint a CA");

@@ -1,14 +1,6 @@
-//! Clipboard recognition for the "paste an API config" field: JSON blob, `URL + key` pair, bare URL
-//! or bare key, in that order.
-//!
-//! The four steps, the two patterns and the sanitising rule are the 1.4.x shapes; both apps accept
-//! the same pastes, so the token order is part of the contract. The user-facing sentence is *not*
-//! here: the kernel reports which shape matched and the Dart side localises it.
-
 use regex::Regex;
 use std::sync::OnceLock;
 
-/// Which of the four shapes matched; the Dart side maps it to the localised sentence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PasteKind {
     Empty = 0,
@@ -42,7 +34,6 @@ fn url_regex() -> &'static Regex {
     PATTERN.get_or_init(|| Regex::new(r#"https?://[^\s,;"'\(\)]+"#).expect("url pattern"))
 }
 
-/// `sk-` keys first, then any long token, optionally behind `Bearer `.
 fn key_regex() -> &'static Regex {
     static PATTERN: OnceLock<Regex> = OnceLock::new();
     PATTERN.get_or_init(|| {
@@ -51,7 +42,6 @@ fn key_regex() -> &'static Regex {
     })
 }
 
-/// Strips what a single-line field or a soft keyboard leaves behind.
 pub fn sanitize(input: &str) -> String {
     let cleaned: String = input
         .chars()
@@ -60,7 +50,6 @@ pub fn sanitize(input: &str) -> String {
     cleaned.trim().to_string()
 }
 
-/// Java/Dart `String.replaceFirst` with a literal needle: the first occurrence only.
 fn replace_first(haystack: &str, needle: &str, replacement: &str) -> String {
     match haystack.find(needle) {
         Some(index) => {
@@ -74,7 +63,6 @@ fn replace_first(haystack: &str, needle: &str, replacement: &str) -> String {
     }
 }
 
-/// Trailing slashes are dropped so the derived endpoint never doubles them.
 fn strip_trailing_slashes(value: &str) -> &str {
     value.trim_end_matches('/')
 }
@@ -85,14 +73,12 @@ pub fn parse(raw: &str) -> PasteResult {
         return PasteResult::new(PasteKind::Empty);
     }
 
-    // 1. A JSON config, the shape every provider's docs paste.
     if text.starts_with('{') && text.ends_with('}') {
         if let Some(parsed) = parse_json_config(text) {
             return parsed;
         }
     }
 
-    // 2. Both a URL and a key somewhere in the paste.
     let found_url = url_regex()
         .find(text)
         .map(|found| strip_trailing_slashes(found.as_str()).to_string());
@@ -117,8 +103,6 @@ pub fn parse(raw: &str) -> PasteResult {
         }
     }
 
-    // 3. Only a server address. Two lines is the cap: a longer paste without `sk-` is more likely a
-    // key that happens to contain a URL, so it falls through to step 4.
     if let Some(url) = &found_url {
         let lines = text.matches('\n').count() + 1;
         if lines <= 2 && !text.contains("sk-") {
@@ -131,7 +115,6 @@ pub fn parse(raw: &str) -> PasteResult {
         }
     }
 
-    // 4. Treat the whole thing as a key, joining lines the field would have cut off.
     PasteResult {
         kind: PasteKind::Key,
         base_url: None,
@@ -191,7 +174,6 @@ mod tests {
         assert_eq!(parsed.base_url.as_deref(), Some("https://x.test"));
         assert_eq!(parsed.model, None);
 
-        // `{}` and a JSON with unrelated fields are not a config: the paste falls through.
         assert_eq!(parse("{}").kind, PasteKind::Key);
         assert_eq!(parse(r#"{"a":1}"#).kind, PasteKind::Key);
     }
@@ -232,7 +214,6 @@ mod tests {
 
     #[test]
     fn long_url_paste_without_sk_is_a_key() {
-        // Three lines: step 3 refuses, so the whole paste becomes the key (1.4.3 behaviour).
         let parsed = parse("https://a.test\nx\n y");
         assert_eq!(parsed.kind, PasteKind::Key);
         assert_eq!(parsed.api_key.as_deref(), Some("https://a.testxy"));

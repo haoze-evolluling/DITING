@@ -1,12 +1,3 @@
-//! Document writer: the app hands over a snapshot of its settings and rows, this crate decides
-//! what a backup of the selected groups looks like.
-//!
-//! Input  `{nowMs, groups: [key], fields: {<key>: <snapshot>}}`
-//! Output `{content, included: [key], counts: {key: n}, skipped: [{group, reason}]}`
-//!
-//! `content` is the whole file text (`{format, version, exportedAt, data, selection}`); the file
-//! name stays in the app because it is a local-time stamp.
-
 use serde_json::{json, Map, Value};
 
 use crate::groups::{ordered_keys, skip_entry, Group, ORDER};
@@ -14,7 +5,6 @@ use crate::value::{as_object, get, integer};
 
 mod values;
 
-/// Highest document version this build writes and the highest it accepts.
 pub const FORMAT: &str = "diting-backup";
 pub const VERSION: i64 = 2;
 
@@ -48,8 +38,6 @@ pub fn run(input: &Value) -> Value {
                 data.insert(String::from(group.key()), value);
                 included.push(Value::String(String::from(group.key())));
             }
-            // A group whose local snapshot cannot be read is reported, not silently dropped: the
-            // user has to know the file is missing that group.
             Err(reason) => skipped.push(skip_entry(group, reason)),
         }
     }
@@ -71,15 +59,12 @@ pub fn run(input: &Value) -> Value {
     })
 }
 
-/// Indented like `JsonEncoder.withIndent('  ')`; the file is meant to be readable and diffable.
 pub fn serialize(document: &Value) -> String {
     let mut text = serde_json::to_string_pretty(document).unwrap_or_default();
     text.push('\n');
     text
 }
 
-/// `null` → 0, list/map → their length, anything else → 1 (the "result" column of the export
-/// summary tells the user how much of each group landed in the file).
 fn count_of(value: &Value) -> u64 {
     match value {
         Value::Null => 0,
@@ -89,7 +74,6 @@ fn count_of(value: &Value) -> u64 {
     }
 }
 
-/// Reads `{format, version}` and says why a file is not ours; used by the importer.
 pub fn check_envelope(text: &str) -> Result<Map<String, Value>, Envelope> {
     let trimmed = text.trim();
     if trimmed.is_empty() {
@@ -118,7 +102,6 @@ pub fn check_envelope(text: &str) -> Result<Map<String, Value>, Envelope> {
     }
 }
 
-/// Why a file cannot be imported at all (a fatal error, not a per-group one).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Envelope {
     Empty,
@@ -151,8 +134,6 @@ impl Envelope {
     }
 }
 
-/// Groups present in `data`, in declaration order (the exporter's own order is trusted only as a
-/// hint; an edited file may list them any way it likes).
 pub fn present_groups(data: &Map<String, Value>) -> Vec<Group> {
     let keys: Vec<String> = data.keys().cloned().collect();
     ordered_keys(&keys)
@@ -171,7 +152,6 @@ mod tests {
             check_envelope("{\"foo\":1}").unwrap_err(),
             Envelope::NotBackup
         );
-        // A 1.4.3 flat file has no `format` at all.
         assert_eq!(
             check_envelope("{\"formatVersion\":10}").unwrap_err(),
             Envelope::NotBackup
@@ -189,7 +169,6 @@ mod tests {
             check_envelope("{\"format\":\"diting-backup\",\"version\":1}").unwrap_err(),
             Envelope::NoData
         );
-        // Version 1 group files still import.
         assert!(check_envelope("{\"format\":\"diting-backup\",\"version\":1,\"data\":{}}").is_ok());
     }
 

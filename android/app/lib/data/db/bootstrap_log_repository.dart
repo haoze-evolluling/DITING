@@ -1,5 +1,3 @@
-/// Read access to the legacy `bootstrap_log` table; rows are written natively when a bootstrap IP
-/// is probed. The statement and row defaults live in `rust/diting-log-query-core`.
 library;
 
 import 'package:sqflite/sqflite.dart';
@@ -36,7 +34,6 @@ class BootstrapIpStat {
   final int failures;
   final double? averageElapsedMs;
 
-  /// The shape the overview/statistics aggregates consume.
   Map<String, Object?> toKernel() => {
     'name': name,
     'ip': ip,

@@ -1,9 +1,3 @@
-/// The log branch's data: the service's 24-hour summary, and one page of its query log behind the
-/// filters and paging the page owns.
-///
-/// Separate from `desktop_api_providers.dart` because these reads answer a page, not a snapshot of
-/// the core: a log outage must not blank the dashboard, and a dashboard poll must not re-read the
-/// log. Both still share the one [desktopApiClientProvider].
 library;
 
 import 'dart:async';
@@ -13,8 +7,6 @@ import 'package:diting_desktop/data/api/desktop_api_models.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// One `/api/v1/querylog/stats` answer. A failed poll keeps the last figures, exactly like the
-/// dashboard's own snapshot: real numbers marked stale beat an empty card.
 class DesktopQueryStatsSnapshot {
   const DesktopQueryStatsSnapshot({this.stats, this.error});
 
@@ -63,8 +55,6 @@ final desktopQueryStatsProvider =
       DesktopQueryStatsNotifier.new,
     );
 
-/// What the query table asks the service for. Offset paging because `querylog.SearchQuery` is
-/// offset based; the page number is derived, never stored, so it cannot drift from the offset.
 class DesktopLogQuery {
   const DesktopLogQuery({
     this.domain = '',
@@ -79,7 +69,6 @@ class DesktopLogQuery {
   final String domain;
   final String client;
 
-  /// A record type from [desktopLogQTypes]; empty means every type.
   final String qtype;
 
   final DesktopLogStatus status;
@@ -110,8 +99,6 @@ class DesktopLogQueryNotifier extends Notifier<DesktopLogQuery> {
   @override
   DesktopLogQuery build() => const DesktopLogQuery();
 
-  /// A new search starts again at the first page: keeping the offset would ask for page 4 of a
-  /// result set that just became much smaller.
   void setDomain(String value) {
     final domain = value.trim();
     if (domain == state.domain) return;
@@ -124,7 +111,6 @@ class DesktopLogQueryNotifier extends Notifier<DesktopLogQuery> {
     state = state.copyWith(client: client, offset: 0);
   }
 
-  /// Empty selects every record type, which is what the service does when `qtype` is absent.
   void setQType(String value) {
     if (value == state.qtype) return;
     state = state.copyWith(qtype: value, offset: 0);
@@ -137,8 +123,6 @@ class DesktopLogQueryNotifier extends Notifier<DesktopLogQuery> {
 
   void reset() => state = const DesktopLogQuery();
 
-  /// Stops at the last page: the service reports the total, so both ends are known without
-  /// reading past them.
   void nextPage(int total) {
     final next = state.offset + DesktopLogQuery.pageSize;
     if (next >= total) return;
@@ -157,8 +141,6 @@ final desktopLogQueryProvider =
       DesktopLogQueryNotifier.new,
     );
 
-/// The page the current query names. Watching the query makes any filter or page change re-read;
-/// a failed read surfaces as an error the table renders with a retry, never as an empty table.
 final desktopLogFeedProvider = FutureProvider<QueryLogPage>((ref) async {
   final query = ref.watch(desktopLogQueryProvider);
   return ref
@@ -173,8 +155,6 @@ final desktopLogFeedProvider = FutureProvider<QueryLogPage>((ref) async {
       );
 });
 
-/// `POST /api/v1/querylog/clear`, which also drops the aggregate the summary card shows. A success
-/// re-reads both, because the service, not this app, decides what is left.
 class DesktopLogClearNotifier extends Notifier<DesktopLogClearState> {
   @override
   DesktopLogClearState build() => const DesktopLogClearState();
@@ -217,8 +197,6 @@ class DesktopLogConfigState {
   bool get isLoading => config == null && error == null;
 }
 
-/// `GET` / `POST /api/v1/querylog/config`. Switches save on the spot, the two numbers save with the
-/// button, exactly as the old console's `QueryLogConfigCard` does.
 class DesktopLogConfigNotifier extends Notifier<DesktopLogConfigState> {
   @override
   DesktopLogConfigState build() {
@@ -239,8 +217,6 @@ class DesktopLogConfigNotifier extends Notifier<DesktopLogConfigState> {
     }
   }
 
-  /// Applies [next] and adopts the config the service reports afterwards. A rejection leaves the
-  /// previous config in place, so a switch that did not take effect flips back instead of lying.
   Future<DesktopApiException?> save(DesktopQueryLogConfig next) async {
     if (state.saving) return null;
     state = DesktopLogConfigState(config: state.config, saving: true);

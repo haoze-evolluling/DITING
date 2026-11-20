@@ -1,8 +1,3 @@
-/// The 53-port diagnosis: run the probe, read its report, and let it stop the system listener it
-/// knows how to stop.
-///
-/// The old desktop console's `DiagnosticsPanel.vue` port block is the blueprint. The probe is
-/// on demand only, and its diagnostic text is shown as the probe wrote it.
 library;
 
 import 'dart:async';

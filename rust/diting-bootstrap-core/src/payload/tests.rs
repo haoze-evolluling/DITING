@@ -54,7 +54,6 @@ fn a_count_beyond_the_payload_is_rejected() {
 #[test]
 fn invalid_utf8_in_an_id_is_rejected() {
     let mut encoded = encode_plan_entries(&[("ab".to_string(), 1.0)]);
-    // The id starts after the layout (1) + count (4) + id_len (4), so at byte 9.
     encoded[9] = 0xff;
     assert_eq!(decode_plan_entries(&encoded), None);
 }

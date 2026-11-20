@@ -21,9 +21,6 @@ part 'subscriptions_groups_sheet.dart';
 part 'subscriptions_sheet.dart';
 part 'subscriptions_sheet_widgets.dart';
 
-/// Pre-import confirmation for a subscription body over `maxSubscriptionBytes`. The import is
-/// allowed but may slow the app down or cause other problems, so the user decides. Returns false
-/// when there is no usable context (nothing to ask on), so the caller skips the import.
 Future<bool> _confirmLargeSubscription(
   BuildContext? context,
   int byteLength,
@@ -58,8 +55,6 @@ Future<bool> _confirmLargeSubscription(
   return confirmed ?? false;
 }
 
-/// Destructive confirmation shared by the subscription cards and group management. Only `true`
-/// proceeds, since there is no undo.
 Future<bool> _confirm(
   BuildContext context, {
   required String title,
@@ -88,7 +83,6 @@ Future<bool> _confirm(
   return confirmed ?? false;
 }
 
-/// Prompts for a group name, either when creating or renaming.
 Future<String?> _askGroupName(
   BuildContext context, {
   required String title,
@@ -106,9 +100,6 @@ Future<String?> _askGroupName(
   );
 }
 
-/// Subscriptions page: group filter, summary and card list. Groups sit at the top because
-/// users usually watch one group; data comes from the legacy `subscription_group` table
-/// ordered by `addedAt`.
 class SubscriptionsPage extends ConsumerStatefulWidget {
   const SubscriptionsPage({super.key});
 
@@ -120,15 +111,12 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
   @override
   void initState() {
     super.initState();
-    // The deep link set the pending address before navigating here, so the initial value is not a
-    // state change `ref.listen` would report; read it once after the first frame instead.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final url = ref.read(pendingSubscriptionImportProvider);
       if (url != null) _openPendingImport(url);
     });
   }
 
-  /// Opens the add-subscription sheet with the deep-linked address filled in.
   Future<void> _openPendingImport(String url) async {
     if (!mounted) return;
     ref.read(pendingSubscriptionImportProvider.notifier).clear();
@@ -202,7 +190,6 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // A link that arrives while this page is already mounted changes the provider instead.
     ref.listen(pendingSubscriptionImportProvider, (_, url) {
       if (url != null) _openPendingImport(url);
     });
@@ -353,8 +340,6 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
           ),
           if (entries.isEmpty && !asyncEntries.isLoading)
             SliverToBoxAdapter(
-              // Minimum height only, never a fixed 300: the description wraps to two lines
-              // and the button sits below, so a fixed height clips them.
               child: EmptyStateBox(
                 minHeight: 300,
                 child: NullStatus(
@@ -372,9 +357,6 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
               ),
             )
           else
-            // Lazily built cards: one card per subscription, and the list grows with every
-            // import, so building all of them up front stalls the page the same way bulk rule
-            // tables did.
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverPrismList(
@@ -505,7 +487,6 @@ class _GroupChips extends StatelessWidget {
                   selected: groupId == value,
                   onPressed: () => onSelect(groupId),
                 ),
-              // The create chip is a management entry, not a filter, so it is never selected.
               TonalChip(
                 label: context.l10n.subsGroupShort,
                 color: context.raisedSurfaceLevel.colorOf(colorScheme),
@@ -515,8 +496,6 @@ class _GroupChips extends StatelessWidget {
             ],
           ),
         ),
-        // Pinned outside the scrolling row: group management must stay reachable no matter how
-        // many groups push the chips off-screen.
         if (groups.isNotEmpty)
           TextButton(
             onPressed: onManage,
@@ -541,8 +520,6 @@ class _GroupChips extends StatelessWidget {
   }
 }
 
-/// Thousands separators: the rule count is the only large number here and `48,213` reads
-/// faster than `48213`.
 String _formatCount(int value) {
   final digits = value.abs().toString();
   final buffer = StringBuffer(value < 0 ? '-' : '');

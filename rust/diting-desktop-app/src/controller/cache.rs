@@ -1,5 +1,3 @@
-//! Cache inspection and configuration (`/api/v1/cache/*`).
-
 use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::CacheConfig;
@@ -8,7 +6,6 @@ use diting_desktop_core::cache::CacheEntryItem;
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `core.CacheStats` wire shape.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheStats {
@@ -24,7 +21,6 @@ pub struct CacheStats {
     pub prefetch_count: u64,
 }
 
-/// `core.CacheEntryItem` wire shape.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheEntry {
@@ -43,7 +39,6 @@ pub struct CacheEntry {
     pub ip_list: Vec<String>,
 }
 
-/// `core.CacheDomainStat` wire shape.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheDomainStat {
@@ -53,7 +48,6 @@ pub struct CacheDomainStat {
     pub last_hit_at: i64,
 }
 
-/// `CacheEntriesResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheEntriesResponse {
@@ -61,7 +55,6 @@ pub struct CacheEntriesResponse {
     pub entries: Vec<CacheEntry>,
 }
 
-/// `CachePersistResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CachePersistResponse {
@@ -100,7 +93,6 @@ fn project(item: &CacheEntryItem) -> CacheEntry {
 }
 
 impl AppRuntime {
-    /// `GetCacheStats`.
     pub fn cache_stats(&self) -> CacheStats {
         let metrics = self.cache.metrics();
         let stats = metrics.stats;
@@ -119,7 +111,6 @@ impl AppRuntime {
         }
     }
 
-    /// `GetCacheEntries`. `total` mirrors the number of entries scanned before the limit.
     pub fn cache_entries(&self, query: &str, limit: i32) -> CacheEntriesResponse {
         let limit = limit.max(1);
         let entries: Vec<CacheEntry> = self
@@ -134,7 +125,6 @@ impl AppRuntime {
         }
     }
 
-    /// `GetCacheTopDomains`.
     pub fn cache_top_domains(&self, limit: i32) -> Vec<CacheDomainStat> {
         self.cache
             .top_domains(limit.max(1) as u32)
@@ -148,13 +138,11 @@ impl AppRuntime {
             .collect()
     }
 
-    /// `ClearCache`.
     pub fn clear_cache(&self) -> Result<(), ControllerError> {
         self.cache.clear();
         Ok(())
     }
 
-    /// `GetCacheConfig`.
     pub fn cache_config(&self) -> CacheConfig {
         self.config().cache
     }
@@ -170,7 +158,6 @@ impl AppRuntime {
         }
     }
 
-    /// `UpdateCacheConfig`.
     pub fn update_cache_config(&self, mut config: CacheConfig) -> Result<(), ControllerError> {
         config.normalize();
         if config.persist_enabled && config.persist_path.trim().is_empty() {
@@ -181,7 +168,6 @@ impl AppRuntime {
             .map_err(ControllerError::new)
     }
 
-    /// `CachePersistStatus`.
     pub fn cache_persist_status(&self) -> CachePersistResponse {
         let config = self.config();
         let stats = self.cache_stats();
@@ -197,7 +183,6 @@ impl AppRuntime {
         }
     }
 
-    /// `DumpCache`.
     pub fn dump_cache(&self) -> Result<CachePersistResponse, ControllerError> {
         let config = self.config();
         let path = std::path::PathBuf::from(self.cache_persist_path(&config.cache));
@@ -205,7 +190,6 @@ impl AppRuntime {
         Ok(self.cache_persist_status())
     }
 
-    /// `LoadCache`.
     pub fn load_cache_from_disk(&self) -> Result<CachePersistResponse, ControllerError> {
         let config = self.config();
         let path = std::path::PathBuf::from(self.cache_persist_path(&config.cache));

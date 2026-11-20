@@ -1,6 +1,3 @@
-/// The 24-hour request summary: the figures the old desktop console shows in its statistics panel
-/// (`frontend/src/components/overview/QueryStatsPanel.vue`), read from the service's own aggregate
-/// instead of being recounted from a page of rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -76,8 +73,6 @@ class _Figures extends StatelessWidget {
         colorScheme.success,
       ),
     ];
-    // Four equal cells per row: seven figures then sit as 4 + 3 instead of 3 + 3 + a lone
-    // last cell, and the grid narrows to two columns on its own when the text is scaled up.
     return DashboardMetricGrid(
       maxColumns: 4,
       runGap: 16,
@@ -89,8 +84,6 @@ class _Figures extends StatelessWidget {
   }
 }
 
-/// Before the first answer, and after a failed one. A summary that cannot be read says so in
-/// place, so the table below it does not look like the whole story.
 class _Unavailable extends StatelessWidget {
   const _Unavailable({required this.snapshot, required this.onRetry});
 

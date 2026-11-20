@@ -11,8 +11,6 @@ import 'package:diting_shared/ui/l10n.dart';
 import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/navigator.dart';
 import 'package:diting_shared/ui/typography.dart';
-// The shape names below come from material_new_shapes (which still owns `Morph` and
-// `toPath`); hide material_ui's built-in copies so the import stays unambiguous.
 import 'package:material_new_shapes/material_new_shapes.dart';
 import 'package:material_ui/material_ui.dart'
     hide CornerRounding, MaterialShapes, RoundedPolygon;
@@ -119,7 +117,6 @@ class _NullStatusSwitcherState extends State<NullStatusSwitcher> {
           alignment: Alignment.center,
           child: Stack(
             alignment: Alignment.center,
-            // Fill only with a bounded height: `StackFit.expand` forces infinite height otherwise.
             fit: constraints.hasBoundedHeight
                 ? StackFit.expand
                 : StackFit.loose,

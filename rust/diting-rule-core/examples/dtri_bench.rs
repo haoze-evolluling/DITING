@@ -1,15 +1,3 @@
-//! DTRI compile timing, for comparing the Rust writer with the Kotlin/JVM reference.
-//!
-//! ```bash
-//! # same corpus for both sides:
-//! java rust/tools/dtri-reference/DTRIReference.java --generate 100000 /tmp/rules.txt
-//! java rust/tools/dtri-reference/DTRIReference.java /tmp/rules.txt /tmp/ref.dtri
-//! cargo run --release --example dtri_bench -- /tmp/rules.txt /tmp/rust.dtri
-//!
-//! # no corpus: synthetic 100k rules
-//! cargo run --release --example dtri_bench
-//! ```
-
 use std::fs;
 use std::time::Instant;
 

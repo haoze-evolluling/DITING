@@ -1,19 +1,3 @@
-//! Socket dialing for the four upstream transports — and the single place that protects a socket.
-//!
-//! Every encrypted-transport dial in the Go engine opened with the same five steps: split the
-//! configured `host:port`, ask the bootstrap resolver for an address, join the two, dial with the
-//! connect budget `TUNING.connect_timeout`, and let a failed bootstrap lookup fall through to the
-//! system resolver (Go's `net.Dial` did that implicitly, and `queryPlainContext` only overrode the
-//! address when `ResolveHost` *succeeded*).
-//!
-//! Stage 3 adds the sixth step that makes the data plane correct: the socket is created, passed to
-//! `VpnService.protect`, and only then connected. Keeping that in one [`Dialer`] is what makes the
-//! TUN's upstream queries (and, in stage 4, the proxied flows) unable to forget it. A refused
-//! `protect` aborts the dial: the socket is never connected, so nothing leaks around the tunnel.
-//!
-//! Server mode installs no protector ([`crate::protect::ProtectorHandle`] is empty), which is the
-//! same no-op the Go engine got from a nil `protectFn`.
-
 use std::io;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::{Arc, RwLock};
@@ -31,19 +15,14 @@ use crate::outbound::{Outbound, Route};
 use crate::protect::ProtectorHandle;
 use crate::resolver::bootstrap::Bootstrap;
 
-/// `connectTimeout`, the dial budget of every protocol.
 pub fn connect_timeout() -> Duration {
     Duration::from_nanos(TUNING.connect_timeout_ns.max(1) as u64)
 }
 
-/// The bootstrap resolver plus the protector: everything a dial needs.
 #[derive(Clone)]
 pub struct Dialer {
     bootstrap: Arc<Bootstrap>,
     protector: ProtectorHandle,
-    /// The engine's outbound transport, read per dial so `configure_outbound_proxy` applies to the
-    /// next query instead of the next tunnel start. `None` in server mode and in the dial-only
-    /// tests, where every upstream is direct.
     outbound: Option<Arc<RwLock<Outbound>>>,
 }
 
@@ -56,17 +35,11 @@ impl Dialer {
         }
     }
 
-    /// Installs the outbound transport the DNS upstream dials should follow (Go's
-    /// `resolverOutbound`).
     pub fn with_outbound(mut self, outbound: Option<Arc<RwLock<Outbound>>>) -> Self {
         self.outbound = outbound;
         self
     }
 
-    /// The proxy route for the engine's own upstream dials, if any.
-    ///
-    /// `scope:"apps"` keeps them direct — the resolver's queries have no owner UID, and Go's
-    /// `resolverOutbound()` returned the direct transport for the per-app scope for the same reason.
     fn resolver_route(&self) -> Option<Outbound> {
         let outbound = self
             .outbound
@@ -85,12 +58,6 @@ impl Dialer {
         &self.protector
     }
 
-    /// Every address a configured endpoint can be reached at, in the resolver's order.
-    ///
-    /// An IP literal is used as configured. Otherwise the bootstrap resolver is asked, and a failed
-    /// or disabled bootstrap falls through to the system resolver — the same visible behaviour as
-    /// Go, where a bootstrap error simply left the hostname in the dial address and `net.Dial`
-    /// resolved it.
     pub async fn addresses(&self, host: &str, port: &str) -> Result<Vec<SocketAddr>, String> {
         let mut resolved = host.to_string();
         if host.parse::<IpAddr>().is_err() {
@@ -106,8 +73,6 @@ impl Dialer {
             return Ok(vec![address]);
         }
 
-        // The endpoint is still a name: the system resolver, with the same connect budget a dial
-        // gets.
         let Ok(port) = port.parse::<u16>() else {
             return Err(format!("invalid upstream port {port}"));
         };
@@ -125,7 +90,6 @@ impl Dialer {
         }
     }
 
-    /// The first address, for the protocols whose socket is unconnected until it is used (UDP).
     pub async fn resolve(&self, host: &str, port: &str) -> Result<SocketAddr, String> {
         let addresses = self.addresses(host, port).await?;
         addresses
@@ -134,11 +98,6 @@ impl Dialer {
             .ok_or_else(|| format!("upstream {host} resolved to no address"))
     }
 
-    /// Connects with the connect budget, trying every resolved address in order.
-    ///
-    /// `net.Dial` walked the address list the same way, which is what makes `localhost` work when
-    /// the platform resolver returns `::1` before `127.0.0.1` (the case a TLS loopback test hits on
-    /// Windows).
     pub async fn connect_tcp(&self, host: &str, port: &str) -> Result<TcpStream, String> {
         let addresses = self.addresses(host, port).await?;
         let route = self.resolver_route();
@@ -156,18 +115,10 @@ impl Dialer {
         Err(last_error)
     }
 
-    /// Connects one resolved address: create → protect → connect.
-    ///
-    /// `protect` happens after the socket exists and before `connect`, which is the platform's
-    /// requirement (`VpnService.protect` binds the socket to the underlying network, so it must
-    /// still be unconnected). The refusal path returns an error and never dials.
     pub async fn tcp(&self, target: SocketAddr) -> io::Result<TcpStream> {
         connect_protected(target, &self.protector, connect_timeout()).await
     }
 
-    /// Whether the resolver's own upstream queries can carry UDP. False when `scope:"all"` points
-    /// them at an HTTP CONNECT proxy: Go's `queryPlainContext` then fell back to TCP framing, which
-    /// is the only way plain DNS stays usable behind such a proxy.
     pub fn resolver_udp_supported(&self) -> bool {
         match self.resolver_route() {
             Some(outbound) => outbound.supports_udp(),
@@ -175,8 +126,6 @@ impl Dialer {
         }
     }
 
-    /// A datagram transport to `target`: a protected direct socket, or SOCKS5 UDP ASSOCIATE when
-    /// the resolver's upstream dials follow the proxy.
     pub async fn udp_transport(&self, target: SocketAddr) -> Result<UdpTransport, String> {
         match self.resolver_route() {
             Some(outbound) => outbound.dial_udp(Route::Proxy, target).await,
@@ -185,11 +134,6 @@ impl Dialer {
     }
 }
 
-/// Creates a socket, protects it, then connects — the order the platform requires.
-///
-/// Shared by the resolver dialer and the stage 4a outbound transports (direct flow dials and the
-/// proxy handshake), because a second copy of this order is exactly how a routing loop sneaks back
-/// in.
 pub async fn connect_protected(
     target: SocketAddr,
     protector: &ProtectorHandle,
@@ -204,17 +148,10 @@ pub async fn connect_protected(
     let stream = timeout(budget, socket.connect(target))
         .await
         .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "connect timed out"))??;
-    // The Go side relied on `net.Dial`'s default; DNS queries are one small exchange and Nagle
-    // would add a 40 ms stall to a framed request that is always followed by a read.
     stream.set_nodelay(true)?;
     Ok(stream)
 }
 
-/// A protected, unconnected, non-blocking UDP socket bound to the wildcard of `target`'s family.
-///
-/// The DoQ endpoint and the bootstrap queries both start from this: quinn wants a
-/// `std::net::UdpSocket` and the bootstrap resolver only needs an unconnected socket, so the
-/// protect-then-bind order is shared here instead of being repeated.
 pub fn bind_udp(
     target: SocketAddr,
     protector: &ProtectorHandle,
@@ -225,7 +162,6 @@ pub fn bind_udp(
         Domain::IPV4
     };
     let socket = Socket::new(domain, Type::DGRAM, Some(Protocol::UDP))?;
-    // Before `connect` and before any traffic can leave: the socket is still local-only here.
     protect_socket(&socket, protector)?;
     let bind = if target.is_ipv6() {
         SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), 0)
@@ -237,11 +173,6 @@ pub fn bind_udp(
     Ok(socket.into())
 }
 
-/// Hands one socket to `VpnService.protect`, or fails the dial.
-///
-/// Host builds (and the Windows CI) have no `protect` at all; the descriptor is only meaningful on
-/// unix, where the callback is installed. A host test that wants to observe the refusal installs a
-/// protector and gets it consulted through the same call.
 fn protect_socket(socket: &impl SocketFd, protector: &ProtectorHandle) -> io::Result<()> {
     if !protector.is_installed() {
         return Ok(());
@@ -257,7 +188,6 @@ fn protect_socket(socket: &impl SocketFd, protector: &ProtectorHandle) -> io::Re
     }
 }
 
-/// The descriptor of a socket, for the two socket types the dialer creates.
 trait SocketFd {
     fn raw_fd(&self) -> Option<i64>;
 }
@@ -274,8 +204,6 @@ impl SocketFd for TcpSocket {
     }
 }
 
-/// `AsRawFd` on unix, `AsRawSocket` on the Windows host (where the JVM smoke hands the same value
-/// to its `protect(long)`). Both reach Kotlin as the `long` gomobile generated.
 fn raw_descriptor<T>(socket: &T) -> i64
 where
     T: RawDescriptor,
@@ -344,7 +272,6 @@ mod tests {
 
     #[tokio::test]
     async fn a_tcp_connect_walks_the_whole_address_list() {
-        // A listener on 127.0.0.1 only: `localhost` resolves to `::1` first on some hosts.
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
             .await
             .expect("bind");
@@ -381,7 +308,6 @@ mod tests {
         }
     }
 
-    /// A refused `protect` must not connect: the listener never sees a connection.
     #[tokio::test]
     async fn a_refused_protect_never_dials() {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
@@ -392,7 +318,6 @@ mod tests {
         dialer.protector().install(Arc::new(Refusing));
         let error = dialer.tcp(address).await.expect_err("refused");
         assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
-        // Nothing connected: a second, permissive dial is the only one the listener can accept.
         assert!(
             tokio::time::timeout(Duration::from_millis(100), listener.accept())
                 .await

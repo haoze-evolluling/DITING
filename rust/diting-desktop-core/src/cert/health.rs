@@ -1,47 +1,30 @@
-//! Certificate lifecycle health, mirroring `cert_health.go`.
-
 use serde::{Deserialize, Serialize};
 
 use super::CERT_RENEW_BEFORE_DAYS;
 
-/// Lifecycle state of the certificate currently backing the encrypted listeners.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct CertHealth {
-    /// Whether certificate material was loaded successfully.
     pub loaded: bool,
-    /// Whether the configured source is the service's own self-signed certificate.
     pub self_signed: bool,
-    /// The certificate is past its `notAfter`.
     pub expired: bool,
-    /// The certificate's `notBefore` is still in the future (usually a clock rollback).
     pub not_yet_valid: bool,
-    /// The certificate expires inside the renewal window.
     pub expires_soon: bool,
-    /// Whole days until expiry; negative once expired.
     pub days_remaining: i64,
-    /// `notAfter` as Unix seconds (0 when nothing is loaded).
     pub not_after: i64,
 }
 
 impl CertHealth {
-    /// Whether a self-signed certificate should be reissued.
-    ///
-    /// Imported certificates are never renewed here: replacing them with a self-signed certificate
-    /// would hide an operator's configuration problem behind a certificate clients do not trust.
     pub fn needs_renewal(&self) -> bool {
         self.self_signed
             && (!self.loaded || self.expired || self.not_yet_valid || self.expires_soon)
     }
 }
 
-/// Whole days between `not_after` (Unix seconds) and `now`, truncating towards zero like Go's
-/// `int(time.Until(notAfter).Hours() / 24)`.
 pub(crate) fn days_remaining(not_after: i64, now: i64) -> i64 {
     (not_after - now) / 86_400
 }
 
-/// Seconds left until `not_after`, as computed by [`CERT_RENEW_BEFORE_DAYS`] windows.
 pub(crate) fn within_renewal_window(not_after: i64, now: i64) -> bool {
     let remaining = not_after - now;
     remaining > 0 && remaining <= CERT_RENEW_BEFORE_DAYS * 86_400

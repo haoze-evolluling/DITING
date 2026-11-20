@@ -1,9 +1,3 @@
-/// Discovery and the mobile profile: DDR, plus the Apple configuration profile clients can fetch.
-///
-/// The old desktop console's `DDRCard.vue` and `MobileConfigCard.vue` are the blueprint. DDR asks
-/// before it is switched on, because a client that does not trust the certificate loses DNS entirely.
-/// The reverse-proxy trust that used to share this card is [EncryptedProxyCard]: two independent
-/// switches and a text editor made one card needlessly tall.
 library;
 
 import 'dart:async';

@@ -1,49 +1,26 @@
-//! Rule-version diff and bounded history.
-//!
-//! Both functions are pure and deterministic. [`diff`] compares two rule sets as ordered unique
-//! lists; [`record`] maintains a newest-first history capped at [`DEFAULT_MAX_VERSIONS`]. A version
-//! is identified by the rule-set hash the caller already computes (`ruleSetHash`), so a re-download
-//! that did not change the set does not create a new version.
-
-/// How many versions the history keeps by default.
 pub const DEFAULT_MAX_VERSIONS: usize = 10;
 
-/// Upper bound on versions a caller may ask to keep.
 pub const MAX_VERSIONS_LIMIT: usize = 50;
 
-/// Upper bound on the sample rules returned per side of a diff, so a huge update stays cheap to
-/// render; `added_count` / `removed_count` always carry the full totals.
 pub const SAMPLE_LIMIT: usize = 200;
 
-/// One stored rule-set version.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VersionEntry {
-    /// The rule-set hash (`ruleSetHash`), the version identity.
     pub hash: String,
-    /// Number of rules in the snapshot.
     pub rule_count: i64,
-    /// When the snapshot was recorded (epoch ms).
     pub created_at: i64,
 }
 
-/// The difference between two rule sets.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RuleDiff {
-    /// Rules present in `new` but not `old`, in `new` order (sampled at [`SAMPLE_LIMIT`]).
     pub added: Vec<String>,
-    /// Rules present in `old` but not `new`, in `old` order (sampled at [`SAMPLE_LIMIT`]).
     pub removed: Vec<String>,
-    /// Full count of added rules.
     pub added_count: i64,
-    /// Full count of removed rules.
     pub removed_count: i64,
-    /// Rules present in both.
     pub unchanged_count: i64,
-    /// `old.len() - new.len()` (positive when the new set shrank).
     pub delta: i64,
 }
 
-/// Ordered unique view of a rule list: drops blanks and later duplicates, keeps first occurrence.
 fn unique(list: &[String]) -> Vec<&str> {
     let mut seen = std::collections::HashSet::new();
     let mut out = Vec::new();
@@ -59,7 +36,6 @@ fn unique(list: &[String]) -> Vec<&str> {
     out
 }
 
-/// `diff`: what changed between `old` and `new`.
 pub fn diff(old: &[String], new: &[String]) -> RuleDiff {
     let old_unique = unique(old);
     let new_unique = unique(new);
@@ -98,10 +74,6 @@ pub fn diff(old: &[String], new: &[String]) -> RuleDiff {
     }
 }
 
-/// `record`: prepend a snapshot to a newest-first history.
-///
-/// A snapshot identical to the current head is not recorded again (unchanged re-download). The
-/// history is capped at `max` (defaulting to [`DEFAULT_MAX_VERSIONS`], clamped to a sane range).
 pub fn record(
     existing: &[VersionEntry],
     hash: &str,

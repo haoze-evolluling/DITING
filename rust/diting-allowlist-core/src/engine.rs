@@ -1,5 +1,3 @@
-//! The allowlist state: allowed-domain sets per UID and TTL-bounded IP grants.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
@@ -7,19 +5,14 @@ use diting_go_compat::ip::{equals_ipv4_zero, equals_ipv6_zero, go_ip_string, is_
 
 use crate::domain::{domain_matches, normalize_entry, normalize_query_name};
 
-/// `rememberAppAllowlistResponse` prunes expired entries once a UID holds more than this many.
 pub const MAX_GRANTS: usize = 256;
 
 #[derive(Default)]
 struct State {
-    /// UID -> normalized allowed domains. A UID with an empty set is *selected*: it may resolve
-    /// nothing and may connect nowhere (the Go code kept the same distinction).
     domains: HashMap<i32, HashSet<String>>,
-    /// UID -> IP text -> unix-nanosecond expiry.
     ips: HashMap<i32, HashMap<String, i64>>,
 }
 
-/// One resolver-wide allowlist state. The engine owns one instance for its lifetime.
 #[derive(Default)]
 pub struct AllowlistKernel {
     state: RwLock<State>,
@@ -30,9 +23,6 @@ impl AllowlistKernel {
         Self::default()
     }
 
-    /// `SetAppAllowlist`: replace the domain sets with `(uid, raw domains)` entries and drop every
-    /// IP grant. Entries are normalized here; a later entry for the same UID replaces the earlier
-    /// one, mirroring the Go `rules[uid] = domMap` assignment.
     pub fn configure(&self, entries: &[(i32, Vec<String>)]) {
         let mut domains: HashMap<i32, HashSet<String>> = HashMap::with_capacity(entries.len());
         for (uid, raw_domains) in entries {
@@ -50,13 +40,10 @@ impl AllowlistKernel {
         state.ips.clear();
     }
 
-    /// `hasAppAllowlistUIDs`: any UID at all is under strict mode.
     pub fn has_uids(&self) -> bool {
         !self.read().domains.is_empty()
     }
 
-    /// `appAllowlistDomainAllowed`: an unselected UID may resolve anything; a selected UID only
-    /// what its set covers (an empty set covers nothing).
     pub fn domain_allowed(&self, uid: i32, domain: &str) -> bool {
         let state = self.read();
         match state.domains.get(&uid) {
@@ -65,8 +52,6 @@ impl AllowlistKernel {
         }
     }
 
-    /// `appAllowlistConnectionAllowed`: loopback is always allowed, an unselected UID may connect
-    /// anywhere, and a selected UID needs a live grant for this address.
     pub fn connection_allowed(&self, uid: i32, address: &[u8], now_ns: i64) -> bool {
         if is_loopback(address) {
             return true;
@@ -83,11 +68,6 @@ impl AllowlistKernel {
             .is_some_and(|expiry| now_ns < *expiry)
     }
 
-    /// `rememberAppAllowlistResponse`: grant the live A/AAAA records of one answer to every UID
-    /// whose allowlist covers the question (or to the answering UID when the question is empty).
-    ///
-    /// `records` are `(address bytes, TTL seconds)`; zero TTL, unspecified addresses and empty
-    /// addresses never grant anything, exactly like the Go filter.
     pub fn remember(&self, uid: i32, question_name: &str, records: &[(Vec<u8>, u32)], now_ns: i64) {
         if records.is_empty() {
             return;
@@ -123,14 +103,12 @@ impl AllowlistKernel {
                 let grants = state.ips.entry(*target_uid).or_default();
                 grants.insert(key.clone(), expiry);
                 if grants.len() > MAX_GRANTS {
-                    // `now.After(exp)` in Go deletes anything whose expiry is already behind.
                     grants.retain(|_, grant_expiry| *grant_expiry >= now_ns);
                 }
             }
         }
     }
 
-    /// Number of stored grants for a UID (the old test's `len(ips[uid])`).
     pub fn grant_count(&self, uid: i32) -> u32 {
         self.read()
             .ips

@@ -1,8 +1,3 @@
-//! Certificate material loading, parsing and private file writing.
-//!
-//! Split out of `manager.rs` to keep both files within the project's 600-line limit; it mirrors
-//! the helpers at the bottom of Go's `cert_manager.go`.
-
 use std::fs;
 use std::io::{BufReader, Write};
 use std::net::{Ipv4Addr, Ipv6Addr};
@@ -25,7 +20,6 @@ use x509_cert::Certificate as X509Certificate;
 
 use super::{SELF_SIGNED_CERT_FILE, SELF_SIGNED_KEY_FILE};
 
-/// Parsed view of the end-entity certificate.
 #[derive(Debug, Clone)]
 pub(crate) struct Leaf {
     pub subject: String,
@@ -42,7 +36,6 @@ pub(crate) struct Leaf {
     pub fingerprint: String,
 }
 
-/// Validated PEM pair plus its summary.
 #[derive(Debug, Clone)]
 pub(crate) struct Material {
     pub cert_pem: Vec<u8>,
@@ -55,7 +48,6 @@ pub(crate) struct ResolvedPaths {
     pub key: PathBuf,
 }
 
-/// Read the configured pair from disk and validate it.
 pub(crate) fn load_material(dir: &Path, config: &CertConfig) -> Result<Material, String> {
     let paths = resolve_paths(dir, config)?;
     let (cert_pem, key_pem) = if config.source == CERT_SOURCE_PKCS12 {
@@ -76,8 +68,6 @@ pub(crate) fn load_material(dir: &Path, config: &CertConfig) -> Result<Material,
     })
 }
 
-/// Decrypts a PKCS#12 archive into a PEM certificate (leaf only, like the former Go service) and
-/// a PKCS#8 PEM private key.
 pub(crate) fn decode_pkcs12(data: &[u8], password: &str) -> Result<(Vec<u8>, Vec<u8>), String> {
     let store = KeyStore::from_pkcs12(data, password, Pkcs12ImportPolicy::Strict)
         .map_err(|error| format!("解析 PKCS#12 失败（口令是否正确）: {error}"))?;
@@ -105,7 +95,6 @@ pub(crate) fn pem_encode(label: &str, der: &[u8]) -> Vec<u8> {
     pem
 }
 
-/// Derive the effective certificate/key paths from the configuration.
 pub(crate) fn resolve_paths(dir: &Path, config: &CertConfig) -> Result<ResolvedPaths, String> {
     let source = config.source.as_str();
     if source.is_empty() || source == CERT_SOURCE_SELF_SIGNED {
@@ -136,7 +125,6 @@ pub(crate) fn resolve_paths(dir: &Path, config: &CertConfig) -> Result<ResolvedP
     Ok(ResolvedPaths { cert, key })
 }
 
-/// Parse and validate a PEM pair, returning the certificate chain.
 pub(crate) fn parse_pair(
     cert_pem: &[u8],
     key_pem: &[u8],
@@ -144,7 +132,6 @@ pub(crate) fn parse_pair(
     let chain = parse_chain(cert_pem)?;
     let key = parse_private_key(key_pem)?;
 
-    // `CertifiedKey::from_der` loads the private key and verifies it matches the leaf's SPKI.
     let provider = rustls::crypto::ring::default_provider();
     let certified = rustls::sign::CertifiedKey::from_der(chain, key, &provider)
         .map_err(|error| format!("证书与私钥不匹配或格式无效: {error}"))?;
@@ -237,7 +224,6 @@ fn format_ip(bytes: &[u8]) -> Option<String> {
     }
 }
 
-/// Compare the raw issuer and subject TBS bytes, like Go's `isSelfSigned`.
 fn is_self_signed(certificate: &X509Certificate) -> bool {
     match (
         certificate.tbs_certificate.issuer.to_der(),
@@ -272,8 +258,6 @@ fn rfc3339(seconds: i64) -> String {
         .unwrap_or_default()
 }
 
-/// Compare two paths ignoring relative-path noise and ASCII case differences (Go's
-/// `sameFilePath`).
 pub(crate) fn same_file_path(a: &Path, b: &Path) -> bool {
     if a.as_os_str().is_empty() || b.as_os_str().is_empty() {
         return false;
@@ -295,7 +279,6 @@ pub(crate) fn same_file_path(a: &Path, b: &Path) -> bool {
     normalize(a).eq_ignore_ascii_case(&normalize(b))
 }
 
-/// Atomically write `data` to `path` with owner-only permissions.
 pub(crate) fn write_private(path: &Path, data: &[u8]) -> Result<(), String> {
     let parent = path
         .parent()
@@ -318,8 +301,6 @@ pub(crate) fn write_private(path: &Path, data: &[u8]) -> Result<(), String> {
         let _ = fs::remove_file(&temporary);
         return Err(format!("写入 {} 失败: {error}", file_name(path)));
     }
-    // Re-apply after the rename: an existing destination replaced by `rename` keeps the new
-    // file's mode, but being explicit also covers platforms/paths where it does not.
     set_file_mode_private(path);
     Ok(())
 }
@@ -345,8 +326,6 @@ fn set_dir_mode_private(path: &Path) {
 
 #[cfg(not(unix))]
 fn set_dir_mode_private(_path: &Path) {
-    // Windows has no POSIX mode. Tightening the ACL needs the platform crate, which is not a
-    // dependency of this crate yet; the directory still inherits the data directory's ACL.
 }
 
 #[cfg(unix)]
@@ -357,5 +336,4 @@ fn set_file_mode_private(path: &Path) {
 
 #[cfg(not(unix))]
 fn set_file_mode_private(_path: &Path) {
-    // See `set_dir_mode_private`: no ACL hardening on Windows in this crate.
 }

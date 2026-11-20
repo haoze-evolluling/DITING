@@ -1,5 +1,3 @@
-/// Maps a database row to a [LogRecentRequest]. Kept as pure functions away from the DB because
-/// these rules are easy to "simplify" away.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -9,7 +7,6 @@ import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_android/data/dns_type_name.dart';
 import 'package:diting_android/data/log_dashboard_models.dart';
 
-/// Millisecond timestamp to `HH:mm:ss`; 0 renders `--:--:--` rather than the clock.
 String dashboardClockOf(int milliseconds) {
   if (milliseconds <= 0) return '--:--:--';
   final time = DateTime.fromMillisecondsSinceEpoch(milliseconds);
@@ -30,8 +27,6 @@ bool isConnectionLog({
         as bool? ??
     false;
 
-/// Result label. The trailing `else` returns unknown results unchanged, and that fallback must not
-/// move into `DnsLogRepository.dailyStats`.
 String dnsResultLabelOf(String result, {required bool isConnection}) =>
     switch (result) {
       'PASSED' =>
@@ -42,8 +37,6 @@ String dnsResultLabelOf(String result, {required bool isConnection}) =>
       _ => result,
     };
 
-/// Result status. Legacy `rewritten` has no [LogRowStatus] entry, so the label stays while the
-/// color follows passed.
 LogRowStatus dnsRowStatusOf(
   String result, {
   required bool isConnection,
@@ -151,7 +144,6 @@ LogRecentRequest logRecentRequestOfHttp(HttpRequestRecord row) {
   );
 }
 
-/// HTTPS `outcome` to overview status. Unlike DNS, `rewritten` counts as passed.
 LogRowStatus httpRowStatusOf(String outcome) => _logRowStatus(
   RustLogQueryCore.instance.classify('httpLogStatus', {
         'outcome': outcome,
@@ -159,7 +151,6 @@ LogRowStatus httpRowStatusOf(String outcome) => _logRowStatus(
       as String?,
 );
 
-/// Whether this status counts as passed; "blocks and errors only" kept the rest.
 bool httpOutcomeIsPassed(String outcome) =>
     RustLogQueryCore.instance.classify('httpPassed', {
           'outcome': outcome,

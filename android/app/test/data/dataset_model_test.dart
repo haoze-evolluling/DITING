@@ -1,5 +1,3 @@
-// The data set model: one prefs container, one rules database and one logs database per work mode.
-
 import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';

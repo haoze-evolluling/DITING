@@ -4,9 +4,6 @@ import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
-/// The four probe tools, pushed as full pages over the tools tab. Their routes live here rather
-/// than under the tab's `GoRoute` so the bottom dock disappears and the title bar gains a back
-/// arrow.
 List<RouteBase> toolsRoutes() => [
   GoRoute(
     path: ToolPaths.speedTest,

@@ -21,8 +21,6 @@ import com.haoze.diting.vpn.VpnPlanNative
 import com.haoze.diting.vpn.VpnServiceForeground
 import com.haoze.diting.watchdog.VpnReclaimer
 
-/// Full-tunnel VpnService on the Rust engine: applies the config, then hands the TUN fd to
-/// `Engine.startFull`. HTTPS inspection (MITM) runs inside the same engine since stage 4b.
 class DitingVpnService : VpnService() {
     private var tun: ParcelFileDescriptor? = null
     private var engine: Engine? = null
@@ -36,9 +34,6 @@ class DitingVpnService : VpnService() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
-    /// Bumped by every accepted start. A stop hands its shutdown to a worker, and by the time it
-    /// comes back a new start may own the ticker, retention and foreground state; the generation
-    /// tells it so instead of tearing the new run down.
     private var tunnelGeneration = 0
 
     private val speedTicker = SpeedTicker(
@@ -47,7 +42,6 @@ class DitingVpnService : VpnService() {
         onTick = { VpnNotification.refresh(this, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP) },
     )
 
-    /// Follows a revoke caused by another VPN and reconnects once that VPN lets go of the slot.
     private val reclaimer = VpnReclaimer(
         service = this,
         workMode = "normal",
@@ -81,7 +75,6 @@ class DitingVpnService : VpnService() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        // A start, manual or replayed by the watchdog, ends any wait for the slot.
         reclaimer.cancel()
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
         if (dnsConfig.isNullOrBlank()) {
@@ -100,8 +93,6 @@ class DitingVpnService : VpnService() {
         val inspectionPackages = intent.getStringArrayListExtra(EXTRA_INSPECTION_PACKAGES).orEmpty().toSet()
         val inspectionEnabled =
             intent.getBooleanExtra(EXTRA_INSPECTION_ENABLED, defaults.inspectionEnabled)
-        // Persisted so the quick settings tile (and a future reboot restore) can rebuild the same
-        // start intent: Dart computes the config, the extras do not survive elsewhere.
         VpnStartConfig.remember(
             context = this,
             dnsConfig = dnsConfig,
@@ -201,13 +192,10 @@ class DitingVpnService : VpnService() {
         }
 
         isRunning = true
-        // Authoritative start time: the UI is a separate process and loses its own clock when
-        // Android recreates it, which used to restart the uptime counter at zero.
         startedAt = System.currentTimeMillis()
         setPersistedRunning(this, true)
         speedTicker.start()
         FloatingLogOverlay.setVpnRunning(this, true)
-        // The window only matters while logs are written, and this service outlives the UI.
         LogRetention.start(
             context = this,
             databaseName = RuleDataset.NORMAL.logsDatabase(),
@@ -223,8 +211,6 @@ class DitingVpnService : VpnService() {
         )
     }
 
-    /// Rebuilds the rule snapshot and re-applies it to the running engine without dropping the
-    /// tunnel. See [NormalTunnelRunner.reload] for the failure semantics.
     private fun reloadRules() {
         val current = engine
         if (current == null || !isRunning) {
@@ -234,20 +220,9 @@ class DitingVpnService : VpnService() {
         NormalTunnelRunner.reload(this, current)
     }
 
-    /// Stops the tunnel without blocking the caller's thread for the shutdown.
-    ///
-    /// `engine.stop()` alone takes 200 ms and more (plus the queued-row flush), and a service
-    /// runs on the app's main thread - which is also Flutter's UI thread. Doing it inline froze
-    /// the whole UI for that long, and an animation started by the same tap (the power button's
-    /// collapse) skipped straight to its end when the thread resumed. So the resources are
-    /// detached here, on the caller's thread, and shut down on a throwaway worker.
     @Synchronized
     private fun stopTunnel() {
         reclaimer.cancel()
-        // Detached before handing off: nothing can append to the plane while it flushes, the
-        // poll loop on the tunnel thread sees `stopping` at once, and a start that races this
-        // stop cannot pick up half-dead resources. Re-entering here is harmless: a second call
-        // finds nulls and only repeats the service bookkeeping.
         stopping = true
         val generation = tunnelGeneration
         val current = engine
@@ -264,7 +239,6 @@ class DitingVpnService : VpnService() {
             releaseTunnel(current, plane)
             runCatching { currentTun?.close() }
             mainHandler.post {
-                // A start that landed meanwhile owns the ticker, retention and foreground state.
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 setPersistedRunning(this@DitingVpnService, false)
@@ -274,8 +248,6 @@ class DitingVpnService : VpnService() {
         }, "diting-teardown").start()
     }
 
-    /// Stops the engine and frees the TUN; the service, its foreground state and the persisted
-    /// running flag are left to the caller.
     @Synchronized
     private fun teardown() {
         stopping = true
@@ -291,8 +263,6 @@ class DitingVpnService : VpnService() {
         FloatingLogOverlay.setVpnRunning(this, false)
     }
 
-    /// The blocking half of a shutdown: engine threads, the TUN hand-off and the row flush that
-    /// `EngineDataPlane.close` performs. Already runs off the main thread on the `fail()` path.
     private fun releaseTunnel(engine: Engine?, plane: EngineDataPlane?) {
         runCatching { engine?.stop() }
             .onFailure { Log.w(TAG, "engine.stop failed", it) }
@@ -301,7 +271,6 @@ class DitingVpnService : VpnService() {
         runCatching { plane?.close() }
     }
 
-    /// Flushes buffered traffic / HTTP rows; runs after the engine stopped, so nothing appends
     private fun closeDataPlane() {
         val plane = dataPlane
         dataPlane = null
@@ -312,12 +281,9 @@ class DitingVpnService : VpnService() {
         runCatching { tun?.close() }
         tun = null
         worker = null
-        // Stopped too: the failure path returns before `isRunning` is set, leaking a ticker.
         speedTicker.stop()
-        // Covers the failure paths, which never reach teardown().
         FloatingLogOverlay.setVpnRunning(this, false)
         TrafficRateMonitor.reset()
-        // The sweep belongs to the tunnel's lifetime; otherwise it outlives the service.
         LogRetention.stop()
     }
 
@@ -337,13 +303,10 @@ class DitingVpnService : VpnService() {
     override fun onRevoke() {
         RuntimeEventLog.warn("vpn", "revoked")
         if (reclaimer.shouldFollow()) {
-            // The service stays started and in the foreground so it is alive when the slot
-            // frees up; the persisted flag keeps saying "the user wants this running".
             Log.w(TAG, "VPN revoked; waiting for the slot to free up")
             teardown()
             QuickSettingsTileUpdater.requestTileUpdate(this)
             reclaimer.begin()
-            // super.onRevoke() would stopSelf().
             return
         }
         Log.w(TAG, "VPN permission revoked")
@@ -368,7 +331,6 @@ class DitingVpnService : VpnService() {
             NOTIFICATION_ID,
             VpnNotification.build(this, CHANNEL_ID, ACTION_STOP),
         ) ?: return
-        // Android 12+ requires foreground promotion inside onStartCommand; failing is a crash.
         Log.e(TAG, "startForeground failed", error)
         RuntimeEventLog.error("vpn", "foreground.fail", "error" to (error.message ?: error.javaClass.simpleName))
     }
@@ -376,31 +338,25 @@ class DitingVpnService : VpnService() {
     companion object {
         private const val TAG = "DitingVpnService"
 
-        /// `RuleDataset.NORMAL.prefsName()`: `log_retention_days` is dataset-scoped
         private const val LOG_PREFS = "dns_vpn_prefs"
 
         const val ACTION_START = "com.haoze.diting.START_VPN"
         const val ACTION_STOP = "com.haoze.diting.STOP_VPN"
 
-        /// Re-applies the rule snapshot to the already-running tunnel (no drop/reconnect).
         const val ACTION_RELOAD_RULES = "com.haoze.diting.RELOAD_RULES"
 
         const val EXTRA_DNS_CONFIG = "dns_config"
         const val EXTRA_OUTBOUND_PROXY = "outbound_proxy"
 
-        /// Package of the app that owns the loopback proxy port; excluded from the TUN.
         const val EXTRA_PROXY_APP = "proxy_app_package"
         const val EXTRA_BYPASS_LAN = "bypass_lan"
         const val EXTRA_IPV6_MODE = "ipv6_mode"
         const val EXTRA_EXCLUDED_PACKAGES = "excluded_packages"
 
-        /// `blocked_app_packages`: converted to UIDs for `setBlockedUIDs`
         const val EXTRA_BLOCKED_PACKAGES = "blocked_packages"
 
-        /// `http_inspection_app_packages`: converted to UIDs for `setMitmAllowedUIDs`
         const val EXTRA_INSPECTION_PACKAGES = "inspection_packages"
 
-        /// Precomputed by Dart: without the CA every HTTPS request in those apps breaks
         const val EXTRA_INSPECTION_ENABLED = "inspection_enabled"
 
         private const val CHANNEL_ID = "diting_vpn"
@@ -409,14 +365,10 @@ class DitingVpnService : VpnService() {
         internal const val PREFS_NAME = NormalVpnRuntime.PREFS_NAME
         private const val KEY_LOG_MODE = "dns_log_mode"
 
-        // Last start configuration, replayed by the quick settings tile.
         internal const val KEY_LAST_DNS_CONFIG = "last_dns_config"
 
-        /// `https_bypass_rules` in `dns_vpn_prefs`: the custom MITM bypass list, one suffix per row
         private const val KEY_HTTPS_BYPASS_RULES = "https_bypass_rules"
 
-        /// Runtime state lives in [NormalVpnRuntime]; these accessors keep external call sites
-        /// (`DitingVpnService.isRunning` and friends) stable.
         var isRunning: Boolean
             get() = NormalVpnRuntime.isRunning
             set(value) {
@@ -435,7 +387,6 @@ class DitingVpnService : VpnService() {
                 NormalVpnRuntime.engine = value
             }
 
-        /// Read-only handle for the diagnostics channel
         internal fun engineForDiagnostics(): Engine? = activeEngine
 
         var lastError: String?
@@ -444,7 +395,6 @@ class DitingVpnService : VpnService() {
                 NormalVpnRuntime.lastError = value
             }
 
-        /// Displaced by another VPN and waiting to reconnect; [isRunning] is false meanwhile.
         var reclaiming: Boolean
             get() = NormalVpnRuntime.reclaiming
             set(value) {
@@ -457,13 +407,11 @@ class DitingVpnService : VpnService() {
         fun setPersistedRunning(context: Context, value: Boolean) =
             NormalVpnRuntime.setPersistedRunning(context, value)
 
-        /// Rebuilds the posted notification after a settings change; false when nothing is posted
         fun refreshNotification(context: Context): Boolean =
             isRunning && VpnNotification.rerender(context, CHANNEL_ID, NOTIFICATION_ID, ACTION_STOP)
 
         fun status(context: Context): Map<String, Any?> = NormalVpnRuntime.status(context)
 
-        /// Second-resolution TX/RX rates; zeros while stopped, or the last tick if racing the stop
         fun trafficRates(): Map<String, Any?> = NormalVpnRuntime.trafficRates()
 
         fun startIntent(
@@ -493,8 +441,6 @@ class DitingVpnService : VpnService() {
         fun stopIntent(context: Context): Intent =
             Intent(context, DitingVpnService::class.java).setAction(ACTION_STOP)
 
-        /// Asks a running tunnel to rebuild its rules in place. A no-op when it is not running:
-        /// starting the service just to reload would post a foreground notification with no tunnel.
         fun requestReload(context: Context) {
             if (!isRunning) return
             runCatching { context.startService(reloadIntent(context)) }
@@ -503,8 +449,6 @@ class DitingVpnService : VpnService() {
         fun reloadIntent(context: Context): Intent =
             Intent(context, DitingVpnService::class.java).setAction(ACTION_RELOAD_RULES)
 
-        /// Rebuilds the last start intent so the tile can restart the tunnel without Dart, which
-        /// is where the DNS config is computed. Null until the service was started at least once.
         fun restoreIntent(context: Context): Intent? = VpnStartConfig.restoreIntent(context)
     }
 }

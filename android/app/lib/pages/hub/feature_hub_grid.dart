@@ -1,8 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One card in the feature-hub grid, keeping the two-column layout and press feedback consistent
-/// across categories.
 class FeatureHubCardData {
   const FeatureHubCardData({
     required this.title,
@@ -19,11 +17,9 @@ class FeatureHubCardData {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
-  /// Small caption at the card's top-right (for example "可长按"); null hides it.
   final String? hint;
 }
 
-/// A titled group of cards; categories render in the order the caller supplies them.
 class FeatureHubCategoryData {
   const FeatureHubCategoryData({required this.title, required this.cards});
 
@@ -31,7 +27,6 @@ class FeatureHubCategoryData {
   final List<FeatureHubCardData> cards;
 }
 
-/// One titled category: heading plus a two-column grid of cards.
 class FeatureHubCategorySection extends StatelessWidget {
   const FeatureHubCategorySection({super.key, required this.category});
 
@@ -62,14 +57,10 @@ class _CardGrid extends StatelessWidget {
 
   static const _gap = 10.0;
 
-  /// Base card height at text scale 1.0; it scales with the text because icon, title and
-  /// subtitle exceed 92dp by about 6dp at 1.4x. A linear `textScaler` matches `clampTextScale`.
   static const _cardHeight = 92.0;
 
   @override
   Widget build(BuildContext context) {
-    // Two equal columns via Row/Column rather than GridView: a handful of cards, and
-    // GridView inside a Column needs shrinkWrap.
     return Column(
       children: [for (var i = 0; i < cards.length; i += 2) _row(i)],
     );
@@ -87,7 +78,6 @@ class _CardGrid extends StatelessWidget {
           if (right != null)
             Expanded(child: _FeatureCard(card: right))
           else
-            // Keep the lone card at column width instead of stretching it across the row.
             const Spacer(),
         ],
       ),
@@ -107,8 +97,6 @@ class _FeatureCard extends StatefulWidget {
 class _FeatureCardState extends State<_FeatureCard> {
   bool _pressed = false;
 
-  /// Widens the card height with the text scale; `MediaQuery.textScalerOf` is already
-  /// clamped globally, so it is used as is.
   static double _heightScale(BuildContext context) =>
       MediaQuery.textScalerOf(context).scale(_CardGrid._cardHeight) /
       _CardGrid._cardHeight;

@@ -1,9 +1,5 @@
 package com.haoze.diting.vpn;
 
-/// Host-JVM smoke test for the VPN plan kernel's JNI boundary.
-///
-/// It proves the three exported symbols match the signatures `VpnPlanNative.kt` declares and that
-/// the route/start payloads round trip. The plan rules themselves belong to the Rust tests.
 public final class VpnPlanNative {
     private static int checks;
 

@@ -1,5 +1,3 @@
-//! Small JSON accessors over the payload maps; every aggregate reads through these.
-
 use std::cmp::Ordering;
 
 use serde_json::{Map, Value};
@@ -41,8 +39,6 @@ pub(crate) fn resolved_name(request: &Value, id: &str) -> String {
     payload::text_in_or_empty(names(request), id)
 }
 
-/// Dart's `String.compareTo` compares UTF-16 code units, which differs from Rust's byte order for
-/// characters outside the BMP.
 pub(crate) fn dart_cmp(left: &str, right: &str) -> Ordering {
     left.encode_utf16().cmp(right.encode_utf16())
 }

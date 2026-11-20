@@ -1,5 +1,3 @@
-/// Data side of the floating log window: one merged read of `dns_log` and `http_request_log`,
-/// plus the cheap count behind the ball's "new blocked" badge.
 library;
 
 import 'package:diting_android/data/db/dns_query_repository.dart';
@@ -9,29 +7,23 @@ import 'package:diting_android/state/observability_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Rows the panel keeps; counts on the filter chips are taken over this window.
 const floatingLogWindowSize = 200;
 
-/// Result of one read. [available] is false when the database could not be opened at all.
 @immutable
 class FloatingLogSnapshot {
   const FloatingLogSnapshot({required this.items, this.available = true});
 
   const FloatingLogSnapshot.unavailable() : items = const [], available = false;
 
-  /// Newest first.
   final List<ObservedRequest> items;
   final bool available;
 }
 
-/// Reads one mode's log database. The handle is shared with the app through sqflite's
-/// single-instance map, so it is never closed here: closing it would close the app's too.
 class FloatingLogSource {
   FloatingLogSource({required this.databaseName, this.httpEnabled = true});
 
   final String databaseName;
 
-  /// Only normal mode's log database has `http_request_log`.
   final bool httpEnabled;
 
   Database? _db;
@@ -42,7 +34,6 @@ class FloatingLogSource {
     if (_opening) return null;
     _opening = true;
     try {
-      // Never create: the app owns the schema, and a fresh install has nothing to show yet.
       _db = await AppDatabase.open(databaseName, create: false);
       return _db;
     } finally {
@@ -50,8 +41,6 @@ class FloatingLogSource {
     }
   }
 
-  /// Latest rows of both tables, filtered by [query] in SQL; status filtering is left to the
-  /// caller so the chip counts and the list come from the same rows.
   Future<FloatingLogSnapshot> load({
     String query = '',
     RequestSource source = RequestSource.all,
@@ -62,7 +51,6 @@ class FloatingLogSource {
       try {
         return await read();
       } on DatabaseException catch (error) {
-        // A missing table (fresh install) or a short lock: show what the other table has.
         debugPrint('floating log read failed: $error');
         return <T>[];
       }
@@ -93,7 +81,6 @@ class FloatingLogSource {
     );
   }
 
-  /// Blocked requests newer than [since]; both counts ride the timestamp indexes.
   Future<int> blockedSince(int since) async {
     final db = await _open();
     if (db == null) return 0;
@@ -110,14 +97,12 @@ class FloatingLogSource {
         final rows = await db.rawQuery(sql, [since]);
         total += (rows.firstOrNull?['n'] as num?)?.toInt() ?? 0;
       } on DatabaseException {
-        // Same as [load]: one missing table must not hide the other's count.
       }
     }
     return total;
   }
 }
 
-/// Counts per status bucket, `all` included, over [items].
 Map<RequestStatus, int> floatingLogCounts(List<ObservedRequest> items) {
   final counts = {for (final status in RequestStatus.values) status: 0};
   for (final item in items) {

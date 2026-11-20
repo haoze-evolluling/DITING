@@ -1,7 +1,5 @@
 part of 'mock_data.dart';
 
-/// Service stats shared by the home and log overview, filled only from the real engine
-/// counters by `ServiceStatsNotifier.applyNative`.
 class ServiceStats {
   const ServiceStats({
     required this.queries,
@@ -19,8 +17,6 @@ class ServiceStats {
 
   double get cacheHitRate => queries == 0 ? 0 : cacheHits / queries;
 
-  /// Always carries seconds: the status card polls every second, and a label that drops the
-  /// second field after the first hour would look frozen.
   String get uptimeLabel {
     final hours = uptime.inHours;
     final minutes = uptime.inMinutes % 60;

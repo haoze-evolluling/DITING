@@ -1,67 +1,11 @@
-//! The binary layout the record entry points share with Go
-//! (`desktop/service/internal/core/rewrite_native.go`).
-//!
-//! Everything is little endian and every payload starts with a layout byte, so a mismatched
-//! Go/Rust pair is a loud rejection instead of a misread field. Strings are `u32`-length prefixed:
-//! the record path runs once per rule build and once per matched query, and an SVCB value can be
-//! longer than the `u16` the matcher payload uses.
-//!
-//! ```text
-//! request:  u8 layout | u16 qtype | u32 ttl | text name | text type | text value
-//! reply:    u8 layout | u8 has_record
-//!           has_record: u16 rrtype | text owner | u32 ttl | body
-//! types:    u8 layout | u16 count | count × text name
-//! rejection: the message as UTF-8, without a layout byte (same shape the other kernels use)
-//!
-//! The `$dnsrewrite` action entry points add:
-//!
-//! ```text
-//! action parse request: u8 layout | text value
-//! action fields:        u8 layout | u8 bare | u16 rcode | u16 rrtype | text value
-//! action reply:         u8 layout | u8 bare | u16 rcode | u16 rrtype | text value
-//! action key reply:     u8 layout | text key
-//! ```
-//!
-//! The rewrite-engine entry points add their own payloads (same layout byte):
-//!
-//! ```text
-//! engine config: u8 layout | u8 enabled | u32 default ttl | u32 rule count
-//!                rule: text domain | u32 ttl | u32 ip count | ip texts
-//!                      | text cname | u32 txt count | txt texts
-//!                      | u32 record count | (text type | text value)×
-//!                      | text rcode
-//! engine build reply: u8 layout | u32 warning count | warning texts
-//! engine lookup reply: u8 layout | u8 matched | u16 rcode | u32 count
-//!                      count × (u16 rrtype | text owner | u32 ttl | body)
-//! engine ptr reply:    u8 layout | u32 count | count × text domain
-//! engine reverse reply: u8 layout | u8 present | text domain
-//! ```
-//!
-//! Body of a record, by type (`A` 1, `NS` 2, `CNAME` 5, `PTR` 12, `MX` 15, `TXT` 16, `AAAA` 28,
-//! `SRV` 33, `SVCB` 64, `HTTPS` 65):
-//!
-//! ```text
-//! A      | 4 bytes                     AAAA  | 16 bytes
-//! CNAME/NS/PTR | text                  TXT   | u32 count | count × text
-//! MX     | u16 preference | text exchange
-//! SRV    | u16 priority | u16 weight | u16 port | text target
-//! SVCB/HTTPS | u16 priority | text target | u16 param count | params
-//! ```
-//!
-//! Parameters are `u16 key` followed by their data: `mandatory` u16 count + u16 keys, `alpn` u16
-//! count + texts, `no-default-alpn` nothing, `port` u16, `ipv4hint` u16 count + 4-byte addresses,
-//! `ech` u32 length + bytes, `ipv6hint` u16 count + 16-byte addresses, `dohpath` text.
-
 use std::fmt;
 
 use crate::action::Action;
 use crate::engine::{Config, LookupResult, RecordSpec, RuleConfig};
 use crate::record::{ParsedRecord, Record, SvcParam};
 
-/// Layout version of every payload below; `rewritePayloadLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// Why a request could not be decoded; the message is surfaced to the Go caller.
 #[derive(Debug)]
 pub struct DecodeError(pub String);
 
@@ -81,22 +25,15 @@ impl DecodeError {
     }
 }
 
-/// One record build request.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Request {
-    /// The query name the record is attached to; Go passes it as the query spelled it.
     pub owner: String,
-    /// The query type the record has to answer.
     pub qtype: u16,
-    /// TTL the caller wants on the record.
     pub ttl: u32,
-    /// Configured type name (`MX`, `HTTPS`, ...).
     pub type_name: String,
-    /// Configured value text.
     pub value: String,
 }
 
-/// Decodes a build request.
 pub fn decode_request(data: &[u8]) -> Result<Request, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -120,7 +57,6 @@ pub fn decode_request(data: &[u8]) -> Result<Request, DecodeError> {
     })
 }
 
-/// Encodes the reply: either "no record for this query type" or one typed record.
 pub fn encode_reply(record: Option<&ParsedRecord>) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     let Some(record) = record else {
@@ -135,7 +71,6 @@ pub fn encode_reply(record: Option<&ParsedRecord>) -> Vec<u8> {
     out
 }
 
-/// Decodes the parse request: the raw text after `$dnsrewrite=`, case preserved.
 pub fn decode_action_text(data: &[u8]) -> Result<String, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -149,7 +84,6 @@ pub fn decode_action_text(data: &[u8]) -> Result<String, DecodeError> {
     Ok(value)
 }
 
-/// Decodes the fields of one parsed action (`$dnsrewrite` key requests).
 pub fn decode_action(data: &[u8]) -> Result<Action, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -179,7 +113,6 @@ pub fn decode_action(data: &[u8]) -> Result<Action, DecodeError> {
     })
 }
 
-/// Encodes one parsed action for the Go side.
 pub fn encode_action(action: &Action) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION, u8::from(action.bare)];
     out.extend_from_slice(&action.rcode.to_le_bytes());
@@ -188,14 +121,12 @@ pub fn encode_action(action: &Action) -> Vec<u8> {
     out
 }
 
-/// Encodes the normalized key [`Action::key`] produced.
 pub fn encode_action_key(key: &str) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     push_text(&mut out, key);
     out
 }
 
-/// Encodes the reply of the type-list entry point.
 pub fn encode_type_names(names: &[&str]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&(names.len() as u16).to_le_bytes());
@@ -292,7 +223,6 @@ fn push_text(out: &mut Vec<u8>, value: &str) {
     out.extend_from_slice(value.as_bytes());
 }
 
-/// Decodes the engine configuration `rewrite_engine_native.go` encodes.
 pub fn decode_engine_config(data: &[u8]) -> Result<Config, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -304,8 +234,6 @@ pub fn decode_engine_config(data: &[u8]) -> Result<Config, DecodeError> {
     let enabled = reader.u8("enabled")? != 0;
     let default_ttl = reader.u32("default ttl")?;
     let rule_count = reader.u32("rule count")?;
-    // Counts are bounded by the payload itself: every iteration below has to read at least one
-    // field, so a bogus count fails on the first missing byte instead of allocating for it.
     let mut rules = Vec::new();
     for _ in 0..rule_count {
         rules.push(decode_engine_rule(&mut reader)?);
@@ -351,7 +279,6 @@ fn decode_engine_rule(reader: &mut Reader<'_>) -> Result<RuleConfig, DecodeError
     })
 }
 
-/// Encodes the engine build reply: the warnings Go still logs.
 pub fn encode_engine_build(warnings: &[String]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&(warnings.len() as u32).to_le_bytes());
@@ -361,7 +288,6 @@ pub fn encode_engine_build(warnings: &[String]) -> Vec<u8> {
     out
 }
 
-/// Encodes one lookup result, records included.
 pub fn encode_engine_lookup(result: &LookupResult) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.push(u8::from(result.matched));
@@ -376,7 +302,6 @@ pub fn encode_engine_lookup(result: &LookupResult) -> Vec<u8> {
     out
 }
 
-/// Encodes the PTR targets of one address.
 pub fn encode_engine_domains(domains: &[String]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&(domains.len() as u32).to_le_bytes());
@@ -386,7 +311,6 @@ pub fn encode_engine_domains(domains: &[String]) -> Vec<u8> {
     out
 }
 
-/// Encodes the first PTR target (reverse-name lookup).
 pub fn encode_engine_reverse(domain: Option<&str>) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     match domain {

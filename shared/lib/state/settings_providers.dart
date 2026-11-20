@@ -1,4 +1,3 @@
-/// Settings-domain state; writes go back to the same `LegacySettings` keys.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,7 +10,6 @@ LegacySettings _settings(Ref ref) => ref.read(legacySettingsProvider);
 
 void _bump(Ref ref) => ref.read(legacySettingsRevisionProvider.notifier).bump();
 
-/// Log recording mode, the three 1.4.3 `DnsLogModeScreen` values; swaps the dashboard body.
 enum LegacyLogMode {
   all('all'),
   blockedAndErrors('blocked_and_errors'),
@@ -42,7 +40,6 @@ enum LegacyLogMode {
 class LogModeNotifier extends Notifier<LegacyLogMode> {
   @override
   LegacyLogMode build() {
-    // `dns_log_mode` lives in the active data set's container.
     ref.watch(legacySettingsProvider);
     return LegacyLogMode.fromStorageValue(_settings(ref).dnsLogModeRaw);
   }
@@ -58,11 +55,9 @@ final logModeProvider = NotifierProvider<LogModeNotifier, LegacyLogMode>(
   LogModeNotifier.new,
 );
 
-/// Log retention in days (1-30, default 7).
 class LogRetentionNotifier extends Notifier<int> {
   @override
   int build() {
-    // `log_retention_days` is stored per data set, like `dns_log_mode`.
     ref.watch(legacySettingsProvider);
     return _settings(ref).logRetentionDays;
   }
@@ -125,7 +120,6 @@ final floatingLogOpacityProvider =
       FloatingLogOpacityNotifier.new,
     );
 
-/// IPv6 mode; `VpnRouteConfig` only distinguishes `auto` from the rest.
 enum LegacyIpv6Mode {
   auto('auto'),
   disable('disable'),
@@ -147,8 +141,6 @@ enum LegacyIpv6Mode {
     LegacyIpv6Mode.prefer => l10n.ipv6PreferDescription,
   };
 
-  /// Reads the stored value; only the current spellings are accepted, anything else falls back to
-  /// [auto]. The legacy Kotlin / 1.4.3 `enabled` / `disabled` spellings are no longer adapted.
   static LegacyIpv6Mode fromStorageValue(String? value) {
     switch (value?.trim().toLowerCase()) {
       case 'prefer':
@@ -164,7 +156,6 @@ enum LegacyIpv6Mode {
 class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
   @override
   ForegroundBackgroundState build() {
-    // Bypass-LAN and IPv6 are DNS-domain keys; hide-from-recents stays global but shares the state.
     ref.watch(legacySettingsProvider);
     final settings = _settings(ref);
     return ForegroundBackgroundState(
@@ -220,9 +211,6 @@ final foregroundBackgroundProvider =
       ForegroundBackgroundNotifier.new,
     );
 
-/// Interface language. The storage values are the legacy `app_language_mode` ones, so a
-/// configuration written by an older build keeps working. Adding a language is one entry here
-/// plus its `lib/l10n/app_<code>.arb` file.
 enum AppLanguageMode {
   system('system'),
   chinese('chinese'),
@@ -232,10 +220,6 @@ enum AppLanguageMode {
 
   final String storageValue;
 
-  /// `null` lets the platform decide (`MaterialApp.locale`). For a language the app ships no
-  /// resources for — and while the engine has not reported the device locale yet — the default
-  /// resolver falls back to the first of [AppL10n.supportedLocales], which
-  /// `preferred-supported-locales` in `l10n.yaml` pins to Chinese.
   Locale? get locale => switch (this) {
     AppLanguageMode.system => null,
     AppLanguageMode.chinese => const Locale('zh'),
@@ -269,7 +253,6 @@ class LanguageNotifier extends Notifier<AppLanguageMode> {
 final languageModeProvider =
     NotifierProvider<LanguageNotifier, AppLanguageMode>(LanguageNotifier.new);
 
-/// The locale handed to `MaterialApp.locale`; `null` follows the device language.
 final appLocaleProvider = Provider<Locale?>(
   (ref) => ref.watch(languageModeProvider).locale,
 );
@@ -307,8 +290,6 @@ class NotificationSettingsNotifier extends Notifier<NotificationSettingsState> {
   }
 }
 
-/// Notification switch and texts; an empty string means the default text. The detail items live
-/// in `notificationStatsProvider`.
 class NotificationSettingsState {
   const NotificationSettingsState({
     required this.persistent,
@@ -353,7 +334,6 @@ class CustomBackgroundNotifier extends Notifier<CustomBackgroundState> {
     _bump(ref);
   }
 
-  /// Adds a wallpaper, writing the history list before the current entry (legacy order).
   void add(String uri) {
     if (uri.trim().isEmpty) return;
     final uris = [...state.uris, uri];
@@ -365,7 +345,6 @@ class CustomBackgroundNotifier extends Notifier<CustomBackgroundState> {
     _bump(ref);
   }
 
-  /// Selects an existing wallpaper as the current one.
   void select(String uri) {
     if (!state.uris.contains(uri)) return;
     state = state.copyWith(currentUri: uri);
@@ -373,7 +352,6 @@ class CustomBackgroundNotifier extends Notifier<CustomBackgroundState> {
     _bump(ref);
   }
 
-  /// Removes one wallpaper; removing the current one falls back to the last remaining.
   void remove(String uri) {
     final uris = [
       for (final item in state.uris)
@@ -390,17 +368,14 @@ class CustomBackgroundNotifier extends Notifier<CustomBackgroundState> {
     } else {
       settings.setCustomBackgroundUri(nextCurrent);
     }
-    // Drop this image's decode cache so the private directory does not grow.
     ref.read(backgroundBridgeProvider).release(uri);
     _bump(ref);
   }
 
   void _storeRemoveCurrent(LegacySettings settings) {
-    // No delete-key API: an empty string means "unset", as in the legacy store.
     settings.setCustomBackgroundUri('');
   }
 
-  /// Opens the system image picker; null on success or cancel, else the reason.
   Future<String?> pickAndAdd() async {
     final result = await ref.read(backgroundBridgeProvider).pick();
     if (result.ok) {
@@ -439,7 +414,6 @@ final customBackgroundProvider =
       CustomBackgroundNotifier.new,
     );
 
-/// Background picker channel, replaceable in tests.
 final backgroundBridgeProvider = Provider<BackgroundBridge>(
   (ref) => BackgroundBridge(),
 );
@@ -448,7 +422,6 @@ class StartupUpdateCheckNotifier extends Notifier<bool> {
   @override
   bool build() => _settings(ref).disableStartupUpdateCheck;
 
-  /// Takes the "disable startup check" value; key and switch agree to avoid inversion.
   void toggle(bool value) {
     state = value;
     _settings(ref).setDisableStartupUpdateCheck(value);
@@ -461,8 +434,6 @@ final startupUpdateCheckProvider =
       StartupUpdateCheckNotifier.new,
     );
 
-/// Settings page switch: the VPN services follow a slot taken by another app and reconnect once
-/// it is free. Read natively, so it only needs persisting.
 class VpnWatchdogNotifier extends Notifier<bool> {
   @override
   bool build() => _settings(ref).vpnWatchdogEnabled;
@@ -478,7 +449,6 @@ final vpnWatchdogProvider = NotifierProvider<VpnWatchdogNotifier, bool>(
   VpnWatchdogNotifier.new,
 );
 
-/// Settings page switch: the next launch restarts a tunnel that was still meant to run.
 class AutoStartOnLaunchNotifier extends Notifier<bool> {
   @override
   bool build() => _settings(ref).autoStartOnLaunchEnabled;

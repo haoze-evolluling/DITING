@@ -1,8 +1,3 @@
-//! Local hosts-file authority.
-//!
-//! A name present in hosts but without the queried record type gets an authoritative NODATA:
-//! forwarding an internal name to a public resolver leaks the name and often returns an ISP page.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

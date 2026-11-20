@@ -1,26 +1,3 @@
-//! The upstream half of the MITM: `upstreamTLSConfig` from `mitm_trust.go`.
-//!
-//! Go's config was small but each line mattered:
-//!
-//! ```text
-//! ServerName: serverName, RootCAs: upstreamRootPool(), MinVersion: tls.VersionTLS12,
-//! ClientSessionCache: tls.NewLRUClientSessionCache(256),
-//! GetClientCertificate: func(...) { *clientCertRequested = true; return &tls.Certificate{}, nil }
-//! ```
-//!
-//! `mitm_relay.go` then refused to intercept when `clientCertRequested` was set or the upstream leaf
-//! carried an EV policy OID: banking and identity endpoints pin their chain or expect EV treatment.
-//!
-//! rustls has no `GetClientCertificate`; [`ResolvesClientCert`] plays that role and is only called
-//! when the server actually sent a `CertificateRequest` — the exact signal Go observed, so the flag
-//! keeps its meaning. `has_certs()` returns `true` and `resolve` returns `None`, which produces the
-//! same empty `Certificate` message as Go's `&tls.Certificate{}`.
-//!
-//! The root pool is the one the resolver already built ([`crate::resolver::UpstreamTrust`]): the
-//! platform CA directories plus the bundled ISRG roots, i.e. what `x509.SystemCertPool()` gave Go.
-//! EV detection decodes the leaf's certificate-policies extension here (`crypto/x509` did it for
-//! free) and asks `diting-cert-core::ev` for the verdict.
-
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
@@ -37,25 +14,18 @@ use x509_cert::Certificate;
 
 use crate::resolver::UpstreamTrust;
 
-/// What the relay needs to know about a finished upstream handshake.
 pub struct UpstreamFacts {
-    /// The TLS stream the HTTP client speaks over.
     pub stream: TlsStream<TcpStream>,
-    /// The server sent a `CertificateRequest` (mTLS): do not intercept, blacklist the host.
     pub client_cert_requested: bool,
-    /// The upstream leaf carries an EV policy OID: do not intercept.
     pub extended_validation: bool,
-    /// The upstream leaf, for logging and for the CA-inspection screen.
     pub peer_leaf: Option<CertificateDer<'static>>,
 }
 
-/// The upstream `ClientConfig`, built once per MITM session and shared by every flow.
 pub struct UpstreamTls {
     config: Arc<ClientConfig>,
 }
 
 impl UpstreamTls {
-    /// `upstreamTLSConfig("")` over the engine's platform trust pool.
     pub fn new(trust: &UpstreamTrust) -> UpstreamTls {
         let mut config = ClientConfig::builder_with_provider(trust.provider())
             .with_protocol_versions(&[&rustls::version::TLS12, &rustls::version::TLS13])
@@ -64,7 +34,6 @@ impl UpstreamTls {
             .with_client_cert_resolver(Arc::new(NoClientCertificate {
                 requested: Arc::new(AtomicBool::new(false)),
             }));
-        // Go never set NextProtos on the upstream config, so the relay keeps speaking HTTP/1.1.
         config.alpn_protocols = Vec::new();
         config.resumption = rustls::client::Resumption::in_memory_sessions(256);
         UpstreamTls {
@@ -72,17 +41,13 @@ impl UpstreamTls {
         }
     }
 
-    /// The config itself, for a caller that needs to build its own connector (the tests do).
     pub fn config(&self) -> Arc<ClientConfig> {
         Arc::clone(&self.config)
     }
 
-    /// `tls.Client(rawServer, upstreamTLSConfig(hostname, &clientCertRequested)).Handshake()`.
     pub async fn connect(&self, host: &str, tcp: TcpStream) -> Result<UpstreamFacts, String> {
         let server_name = ServerName::try_from(host.to_string())
             .map_err(|error| format!("upstream host '{host}' is not a TLS server name: {error}"))?;
-        // Go passed a `*bool` private to this flow; the flag must not be shared, or one connection's
-        // `store(false)` erases another connection's `CertificateRequest` while both handshakes run.
         let requested = Arc::new(AtomicBool::new(false));
         let mut config = (*self.config).clone();
         config.client_auth_cert_resolver = Arc::new(NoClientCertificate {
@@ -110,7 +75,6 @@ impl UpstreamTls {
     }
 }
 
-/// `GetClientCertificate` that never has a certificate but remembers being asked.
 #[derive(Debug)]
 struct NoClientCertificate {
     requested: Arc<AtomicBool>,
@@ -126,13 +90,11 @@ impl ResolvesClientCert for NoClientCertificate {
         None
     }
 
-    /// Keep `true` so rustls sends an empty `Certificate` message, like Go's `&tls.Certificate{}`.
     fn has_certs(&self) -> bool {
         true
     }
 }
 
-/// `isExtendedValidation(leaf)`: decode the certificate-policies extension and ask the kernel.
 pub fn is_extended_validation(cert_der: &[u8]) -> bool {
     let Ok(certificate) = Certificate::from_der(cert_der) else {
         return false;
@@ -188,7 +150,6 @@ mod tests {
         assert!(!is_extended_validation(&der));
     }
 
-    /// The first certificate of a PEM chain, as DER.
     fn leaf_der(chain_pem: &str) -> Vec<u8> {
         rustls_pemfile::certs(&mut std::io::BufReader::new(chain_pem.as_bytes()))
             .filter_map(Result::ok)

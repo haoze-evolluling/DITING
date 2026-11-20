@@ -1,14 +1,3 @@
-//! Single-line rule parsing: cosmetic, URL, modifier and domain forms. A port of
-//! `adblock_line_parser.dart`; the dedupe keys live in [`crate::keys`] and the `$modifier` handling
-//! in [`crate::modifiers`].
-//!
-//! The check order is semantic and must not be reordered: cosmetic delimiters before comments,
-//! regex/URL forms before the domain fallback, and `$badfilter` keys after the modifiers.
-//!
-//! Indices are byte-based. Every delimiter this parser slices on is ASCII, so byte offsets stay
-//! char boundaries; the only place UTF-16 units decide anything (the comment-scan guard) goes
-//! through [`crate::domain::utf16_len`] to stay identical to Dart's `String.length`.
-
 use crate::domain::{normalize_domain, normalize_wildcard_domain, utf16_len};
 use crate::keys::{rule_key, url_key};
 use crate::models::{
@@ -16,20 +5,14 @@ use crate::models::{
 };
 use crate::modifiers::{apply_modifiers, is_valid_regex, ModifierRejection, ModifierState};
 
-/// Element-hiding delimiters, longest first: `#$@#` is the exception form of `#$#`, so the short
-/// one first would demote the rule.
 const COSMETIC_DELIMITERS: [&str; 5] = ["#$@#", "#@#", "##", "#?#", "#$#"];
 
-/// Whether the line uses an element-hiding delimiter. Must run before comment filtering: a `#`
-/// line may be a comment or a rule.
 pub fn is_cosmetic_rule_line(line: &str) -> bool {
     COSMETIC_DELIMITERS
         .iter()
         .any(|delimiter| line.contains(delimiter))
 }
 
-/// Index where a trailing `#` comment may start, or 0. A regex may contain `#` (`/foo#bar/`), so
-/// the scan starts after the closing `/`.
 fn comment_search_start(line: &str, allow: bool) -> usize {
     let offset = if allow && line.starts_with("@@") {
         2
@@ -51,9 +34,6 @@ fn comment_search_start(line: &str, allow: bool) -> usize {
     }
 }
 
-/// Case-insensitive ASCII prefix test that allocates nothing: `is_url_or_path_rule` runs for every
-/// line that reaches the domain branch, so a `to_ascii_lowercase()` there would be one string
-/// allocation per imported line.
 fn starts_with_ignore_ascii_case(value: &str, prefix: &str) -> bool {
     value.len() >= prefix.len()
         && value.as_bytes()[..prefix.len()].eq_ignore_ascii_case(prefix.as_bytes())
@@ -134,8 +114,6 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
         return cosmetic;
     }
 
-    // Only a `#` that starts a trailing comment may be dropped: truncating at a `#` glued to the
-    // pattern would widen the rule to a whole domain block.
     let search_start = comment_search_start(line, allow);
     let hash_index = line[search_start..]
         .find('#')
@@ -199,8 +177,6 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
             };
         }
     }
-    // A content-type/party modifier was dropped to keep the host rule (a coverage win for block
-    // rules). For an allow rule the same widening would loosen blocking, so still ignore it.
     if state.demoted && allow {
         return CategorizedLine::ignored();
     }
@@ -246,9 +222,6 @@ pub fn parse_line_without_state(line: &str, original: &str, allow: bool) -> Cate
         if let Some(rest) = candidate.strip_prefix("||") {
             candidate = rest.trim_end_matches('^');
         } else if candidate.starts_with('|') || candidate.ends_with('|') {
-            // A single-`|` ABP anchor on a bare host (`|host|`, `|host`, `host|`) is still a
-            // host-level rule; strip the anchors and keep the host. A remaining `/` means it is
-            // really a URL rule, which stays unsupported here.
             let anchored = candidate
                 .trim_start_matches('|')
                 .trim_end_matches(['|', '^'])
@@ -363,7 +336,6 @@ mod coverage_tests {
 
     #[test]
     fn referrer_modifier_is_still_dropped() {
-        // `$domain=` narrows by referrer; ignoring it would change meaning, so the line stays ignored.
         let parsed = block("||ads.example^$domain=foo.com");
         assert!(parsed.block_rules.is_empty());
         assert!(parsed.allow_rules.is_empty());

@@ -9,7 +9,5 @@ extension TextStyleExtension on TextStyle {
 
   TextStyle get toLighter => copyWith(color: color?.opacity60);
 
-  /// Lining figures in the current family; the app never overrides the family itself, so an
-  /// imported font stays in effect for numbers too.
   TextStyle get toTabular => copyWith(fontFeatures: appTabularFigures);
 }

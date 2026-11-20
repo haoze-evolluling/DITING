@@ -10,9 +10,6 @@ import java.net.URL
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
-/// Measures round-trip latency of one DNS provider using only JDK APIs: DoH via
-/// HttpURLConnection, plain DNS and DoT over sockets. Host resolution happens before the
-/// clock starts, so it is not counted.
 object DnsLatencyTester {
 
     data class Spec(
@@ -21,7 +18,6 @@ object DnsLatencyTester {
         val host: String,
         val port: Int,
         val protocol: Protocol,
-        /// Full DoH query URL; some providers do not serve `/dns-query`. Empty for DNS and DoT
         val url: String = "",
     )
 
@@ -64,7 +60,6 @@ object DnsLatencyTester {
     private const val DEFAULT_PORT = 53
     private const val DEFAULT_DOT_PORT = 853
 
-    /// Averages the successful samples; if all fail, one `success = false` sample keeps the error
     fun probeAverage(spec: Spec, domain: String, attempts: Int): Sample {
         val safeAttempts = attempts.coerceAtLeast(1)
         val single = (1..safeAttempts).map { probeOnce(spec, domain) }
@@ -97,7 +92,6 @@ object DnsLatencyTester {
         )
     }
 
-    /// One probe. Never throws: failures come back as `success = false`
     private fun probeOnce(spec: Spec, domain: String): Sample {
         val query = buildQuery(domain)
         val started = System.currentTimeMillis()
@@ -158,7 +152,6 @@ object DnsLatencyTester {
             it.soTimeout = TIMEOUT_MS
             it.connect(InetSocketAddress(spec.host, port), TIMEOUT_MS)
             it.startHandshake()
-            // DNS-over-TCP framing: a two-byte big-endian length prefix.
             val out = DataOutputStream(it.outputStream)
             out.writeShort(query.size)
             out.write(query)
@@ -171,7 +164,6 @@ object DnsLatencyTester {
         }
     }
 
-    /// DNS-over-HTTPS (RFC 8484): POST the raw query, defaulting to `https://<host>/dns-query`
     private fun queryDoh(spec: Spec, query: ByteArray): ByteArray {
         val endpoint = ProbeNative.dohEndpoint(spec.url, spec.host)
         val connection = URL(endpoint).openConnection() as java.net.HttpURLConnection
@@ -193,14 +185,12 @@ object DnsLatencyTester {
         }
     }
 
-    /// Minimal A query with RD, built by the kernel; the 16-bit id is the only clock-derived part.
     private fun buildQuery(domain: String): ByteArray {
         val id = (System.nanoTime() and 0xFFFF).toInt()
         return ProbeNative.buildDnsQueryOrNull(id, ipv4 = true, domain = domain)
             ?: throw IllegalArgumentException("域名标签非法: $domain")
     }
 
-    /// True when QR = 1 and RCODE = 0; the kernel reads the fixed header.
     private fun isSuccess(response: ByteArray): Boolean =
         ProbeNative.dnsResponseSucceeded(response)
 

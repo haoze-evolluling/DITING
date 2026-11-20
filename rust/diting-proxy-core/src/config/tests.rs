@@ -1,5 +1,3 @@
-//! The normalization rules, including the error texts the UI shows verbatim.
-
 use super::*;
 
 fn config(protocol: &str, host: &str, port: i64) -> ProxyConfig {
@@ -50,7 +48,6 @@ fn host_is_stored_in_ip_string_form() {
 
 #[test]
 fn rejects_invalid_fields_in_the_original_order() {
-    // Protocol first, so a bad protocol hides a bad host.
     assert_eq!(
         normalize(config("socks4", "8.8.8.8", 0)).unwrap_err(),
         "unsupported outbound proxy protocol \"socks4\""

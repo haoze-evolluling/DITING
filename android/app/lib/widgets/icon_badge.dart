@@ -1,10 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A glyph on a rounded tile: the leading mark of a hero card, a mode option or a dashboard stat.
-///
-/// The callers differ in side, corner and fill, not in structure, so those are parameters. [shape]
-/// defaults to the product's standard corner; callers that need another outline pass it explicitly.
 class IconBadge extends StatelessWidget {
   const IconBadge({
     super.key,
@@ -18,10 +14,8 @@ class IconBadge extends StatelessWidget {
 
   final Glyph glyph;
 
-  /// Tile fill.
   final Color color;
 
-  /// Glyph colour; `null` keeps the ambient `IconTheme`, which is what a card's leading mark wants.
   final Color? foregroundColor;
 
   final double size;

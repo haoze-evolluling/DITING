@@ -1,10 +1,3 @@
-//! Request-side rule filtering.
-//!
-//! The engine already owns matching, group policies, schedules and counters. This stage adds the
-//! DNS semantics: a `$dnsrewrite` verdict answers locally (an empty NOERROR is authoritative
-//! NODATA), a block verdict becomes the configured block response, and an allow verdict only
-//! annotates the context.
-
 use async_trait::async_trait;
 use diting_desktop_core::filter::{
     CheckHostResult, RuleEngine, VerdictAction, REASON_SCHEDULE_INACTIVE,

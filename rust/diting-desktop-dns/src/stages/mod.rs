@@ -1,14 +1,3 @@
-//! The DNS pipeline stages.
-//!
-//! Each stage ports one Go middleware. Shared rules:
-//! * `before` either passes (`Continue`), produces the whole answer (`Stop`), or fails;
-//! * `after` runs in reverse order and only inspects or rewrites the finished response;
-//! * attributes use the same string keys as the Go context so the query log, EDE and metrics see
-//!   identical labels.
-//!
-//! Stages that consult hot-reloaded configuration hold a [`ConfigHandle`] and copy only the
-//! fields they need while holding the read lock — never across an `.await`.
-
 pub mod access;
 pub mod any;
 pub mod block;

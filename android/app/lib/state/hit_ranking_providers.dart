@@ -1,7 +1,3 @@
-/// R2 命中统计/归因的数据层：把 `dns_log` 里被拦截的记录按域名、按命中原因聚合出 Top N。
-///
-/// 聚合 SQL（含从 `message` 的 `blocked_by=` 抽原因）在 `rust/diting-log-query-core` 里，
-/// 这里只取数并映射成模型，避免第二份归类逻辑。因为不新建表，对既有库升级是安全的。
 library;
 
 import 'package:diting_android/data/db/rust_log_query_core.dart';
@@ -9,7 +5,6 @@ import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 复用 [LogStatsRange] 的今日 / 近 7 天 / 全部时间窗。
 class HitRankingRangeNotifier extends Notifier<LogStatsRange> {
   @override
   LogStatsRange build() => LogStatsRange.today;
@@ -25,7 +20,6 @@ final hitRankingRangeProvider =
       HitRankingRangeNotifier.new,
     );
 
-/// 一行排行：标签（域名或原因）与命中次数。
 class HitRankRow {
   const HitRankRow({required this.label, required this.count});
 
@@ -48,7 +42,6 @@ class HitRankingSnapshot {
   final List<HitRankRow> domains;
   final List<HitRankRow> reasons;
 
-  /// 同一时间窗内的总拦截数（排行的分母）。
   final int totalBlocked;
 
   bool get isEmpty => domains.isEmpty && reasons.isEmpty;

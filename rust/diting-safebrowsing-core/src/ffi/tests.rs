@@ -1,6 +1,3 @@
-//! The C ABI surface the Go loader drives: null handles, skip, apply statuses and the payload
-//! round trip through raw pointers.
-
 use super::*;
 use crate::engine::{SAFE_BROWSING_SUFFIX, SERVICE_SAFE_BROWSING};
 use crate::payload::decode_plan;
@@ -76,7 +73,6 @@ fn handle_round_trip_blocks_a_listed_host() {
     assert!(plan.question.ends_with(SAFE_BROWSING_SUFFIX));
     let queried: Vec<[u8; 32]> = plan.need_query.clone();
 
-    // The third party answers with the full digest of "host.com".
     let listed = plan.need_query[0];
     let hex: String = listed.iter().map(|byte| format!("{byte:02x}")).collect();
     let request = apply_request(SERVICE_SAFE_BROWSING, &queried, &[hex.as_str()]);

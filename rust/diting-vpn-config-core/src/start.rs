@@ -1,11 +1,5 @@
-//! Defaults the quick-settings tile replays when it has never seen a start.
-//!
-//! The outbound-proxy document is deliberately the disabled legacy form: it stops the engine from
-//! logging a parse failure while the user has never configured a proxy.
-
 use serde_json::{json, Value};
 
-/// Kept byte-for-byte identical to the legacy Kotlin constant.
 pub const DEFAULT_OUTBOUND_PROXY: &str = r#"{"enabled":false,"protocol":"SOCKS5","host":"127.0.0.1","port":7890,"username":"","password":""}"#;
 
 pub fn start_defaults() -> Value {

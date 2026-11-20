@@ -1,8 +1,3 @@
-/// The blocking schedule: the global time plan (`/filter/schedule`) and the per-service weekly plans
-/// carried inside `/filter/services`.
-///
-/// One row is a named window: a start and an end `HH:MM` (end earlier than start crosses midnight)
-/// and the weekdays it applies to. An empty weekday list means every day, as the service documents.
 library;
 
 const List<String> desktopWeekdays = [
@@ -52,7 +47,6 @@ class DesktopSchedule {
   final String start;
   final String end;
 
-  /// A row with no times is not a window; the console drops those before saving.
   bool get isComplete => start.isNotEmpty && end.isNotEmpty;
 
   DesktopSchedule copyWith({
@@ -81,7 +75,6 @@ class DesktopSchedule {
   };
 }
 
-/// `GET /api/v1/filter/schedule`.
 class DesktopScheduleConfig {
   const DesktopScheduleConfig({
     required this.enabled,
@@ -108,10 +101,8 @@ class DesktopScheduleConfig {
   final bool enabled;
   final List<DesktopSchedule> schedules;
 
-  /// Whether blocking is inside a window right now (always true when no plan is on).
   final bool active;
 
-  /// The window that matched, or empty.
   final String activeId;
 
   int get enabledCount => schedules.where((row) => row.enabled).length;
@@ -137,7 +128,6 @@ List<DesktopSchedule> desktopSchedules(Object? value) => [
     if (item is Map) DesktopSchedule.fromJson(item.cast<String, Object?>()),
 ];
 
-/// One service's plan state, as `/filter/services` reports it under `scheduleStates`.
 class DesktopServiceScheduleState {
   const DesktopServiceScheduleState({
     required this.serviceId,
@@ -155,6 +145,5 @@ class DesktopServiceScheduleState {
   final String serviceId;
   final bool hasSchedule;
 
-  /// False means the plan exists but this instant is outside its window.
   final bool active;
 }

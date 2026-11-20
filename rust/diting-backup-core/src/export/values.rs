@@ -1,8 +1,3 @@
-//! One builder per group: snapshot in, document value out.
-//!
-//! Snapshot fields are read with the same fallbacks the app used (`enabled` as an int or a bool,
-//! `null` for "not set"), so a group never fails for a reason the app would not have failed on.
-
 use std::collections::BTreeMap;
 
 use serde_json::{json, Map, Value};
@@ -40,7 +35,6 @@ pub(super) fn build(group: Group, source: &Value) -> Result<Value, &'static str>
     })
 }
 
-/// `enabled` / `important` / `appInverted`: stored as ints, written as bools.
 fn flag(value: &Value, key: &str, default: bool) -> bool {
     match get(value, key) {
         Some(Value::Bool(flag)) => *flag,
@@ -56,7 +50,6 @@ fn providers(source: &Value) -> Result<Value, &'static str> {
     let items = if raw.trim().is_empty() {
         Value::Array(Vec::new())
     } else {
-        // Corrupt local JSON is reported: a restore must not look like it lost the providers.
         let decoded: Value = serde_json::from_str(raw).map_err(|_| "providersInvalidJson")?;
         match decoded {
             Value::Array(_) => decoded,
@@ -79,8 +72,6 @@ fn provider_catalog(source: &Value) -> Catalog {
     catalog
 }
 
-/// A provider reference carries `name` and `protocol` so it resolves on another device, where ids
-/// of user providers are regenerated.
 fn provider_ref(catalog: &Catalog, id: &str) -> Value {
     let (name, protocol) = match catalog.get(id) {
         Some((name, protocol)) => (name.clone(), protocol.clone()),
@@ -155,7 +146,6 @@ fn cache(source: &Value) -> Value {
     })
 }
 
-/// Protocol, host, port and target app only; credentials are excluded and the file says so.
 fn outbound(source: &Value) -> Value {
     json!({
         "enabled": boolean(source, "enabled").unwrap_or(false),
@@ -276,7 +266,6 @@ fn address_rules(source: &Value) -> Value {
     )
 }
 
-/// Per-app domains: `{package: [domain]}` with sorted domains.
 fn allowlist(source: &Value) -> Value {
     let mut rules = Map::new();
     if let Some(record) = get(source, "rules").and_then(as_object) {
@@ -291,8 +280,6 @@ fn allowlist(source: &Value) -> Value {
 }
 
 fn appearance(source: &Value) -> Value {
-    // One opacity slider now; the per-widget keys fall back to it, so a device that only ever moved
-    // the shared slider still exports five consistent values.
     let component = get(source, "componentOpacity").and_then(Value::as_f64);
     let opacity = |key: &str| {
         get(source, key)
@@ -311,7 +298,6 @@ fn appearance(source: &Value) -> Value {
         "hapticEnabled": boolean(source, "hapticEnabled").unwrap_or(false),
         "bottomBarIds": array(source, "bottomBarIds"),
         "customBackgroundEnabled": boolean(source, "customBackgroundEnabled").unwrap_or(false),
-        // One opacity slider now; the per-widget keys are still written for older builds.
         "homePowerButtonOpacity": opacity("homePowerButtonOpacity"),
         "homeProviderSelectorOpacity": opacity("homeProviderSelectorOpacity"),
         "homeModeButtonOpacity": opacity("homeModeButtonOpacity"),

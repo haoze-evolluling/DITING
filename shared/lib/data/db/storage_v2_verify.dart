@@ -1,4 +1,3 @@
-/// Verification for the one-time V2 migration.
 library;
 
 import 'package:diting_shared/data/db/database_schema.dart';
@@ -15,7 +14,6 @@ class StorageVerifyException implements Exception {
   String toString() => message;
 }
 
-/// Verifies one freshly copied target. [copy] carries the source and inserted counts.
 Future<Map<String, Object?>> verifyStorageDatabase(
   Database db,
   StorageCopyResult copy,

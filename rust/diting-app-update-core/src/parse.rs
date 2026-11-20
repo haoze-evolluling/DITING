@@ -1,9 +1,5 @@
-//! The legacy `AppUpdateChecker` rules: trim the tag, drop one leading `v`, compare each dotted
-//! segment as an integer, tolerate missing fields but never guess a version or a download URL.
-
 use serde_json::{json, Map, Value};
 
-/// Dart's `'${value ?? ''}'`: strings pass through, scalars use their JSON text, null is empty.
 fn text(value: Option<&Value>) -> String {
     match value {
         None | Some(Value::Null) => String::new(),
@@ -25,7 +21,6 @@ fn components(value: &str) -> Option<Vec<i64>> {
         .collect()
 }
 
-/// Component-wise integer comparison; anything unparseable counts as "not newer".
 pub fn is_newer_version(remote: &str, current: &str) -> bool {
     let (Some(remote_parts), Some(current_parts)) = (components(remote), components(current))
     else {
@@ -59,7 +54,6 @@ fn error(code: &str) -> Value {
     json!({ "kind": "error", "code": code })
 }
 
-/// Parses one `releases/latest` body; `current_version` is echoed for the up-to-date result.
 pub fn parse_latest_release(payload: &str, current_version: &str) -> Value {
     let Ok(decoded) = serde_json::from_str::<Value>(payload) else {
         return error("responseNotJson");

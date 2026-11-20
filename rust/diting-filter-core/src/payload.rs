@@ -1,10 +1,3 @@
-//! The compact binary layout shared with the Go side (`desktop/service/internal/core/filter_native.go`).
-//!
-//! Everything is little endian, strings are `u16`-length prefixed, and every payload starts with a
-//! layout byte so a mismatched Go/Rust pair is a loud error instead of a misread field. The rule
-//! payload carries only what a decision needs: Go keeps the rule text, the list name and the
-//! `$dnsrewrite` record construction.
-
 use std::fmt;
 
 use diting_go_compat::regex::compile_rule_regex;
@@ -14,12 +7,9 @@ use crate::rule::{RewriteAction, Rule, KNOWN_FLAGS};
 
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// `NO_REASON` in a decision payload.
 pub const NO_CODE: u8 = 0xFF;
-/// `NO_RULE` in a decision payload.
 pub const NO_INDEX: u32 = u32::MAX;
 
-/// Why a payload could not be decoded; the message is surfaced to the Go caller.
 #[derive(Debug)]
 pub struct DecodeError(pub String);
 
@@ -101,14 +91,12 @@ impl<'a> Reader<'a> {
         Ok(out)
     }
 
-    /// Long text: `u32` length, for payloads that carry whole documents (the parser request).
     pub(crate) fn text32(&mut self, field: &str) -> Result<String, DecodeError> {
         let slice = self.bytes32(field)?;
         String::from_utf8(slice.to_vec())
             .map_err(|_| DecodeError::invalid(format!("{field} is not valid UTF-8")))
     }
 
-    /// Long bytes: `u32` length, no encoding requirement.
     pub(crate) fn bytes32(&mut self, field: &str) -> Result<&'a [u8], DecodeError> {
         let length = self.u32(field)? as usize;
         if self.remaining() < length {
@@ -131,7 +119,6 @@ impl<'a> Reader<'a> {
     }
 }
 
-/// Decodes the rule payload Go builds from its parsed rules.
 pub fn decode_rules(data: &[u8]) -> Result<Vec<Rule>, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -167,7 +154,6 @@ fn decode_rule(reader: &mut Reader<'_>) -> Result<Rule, DecodeError> {
     rule.deny_allow = reader.texts("rule denyallow")?;
     rule.to = reader.texts("rule to")?;
     if !regex_source.is_empty() {
-        // `None` means the pattern never matches; Go logs a count of these at build time.
         rule.regex = compile_rule_regex(&regex_source).ok();
     }
     if rule.has_rewrite() {
@@ -185,7 +171,6 @@ fn decode_rule(reader: &mut Reader<'_>) -> Result<Rule, DecodeError> {
     Ok(rule)
 }
 
-/// Encodes one decision for the Go caller.
 pub fn encode_decision(decision: &Decision) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION, decision.action.code()];
     out.push(decision.reason.map_or(NO_CODE, |reason| reason.code()));
@@ -204,7 +189,6 @@ pub fn encode_decision(decision: &Decision) -> Vec<u8> {
     out
 }
 
-/// Encodes the build report Go needs after an index is built.
 pub fn encode_stats(index: &FilterIndex) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&index.total_rules().to_le_bytes());
@@ -214,7 +198,6 @@ pub fn encode_stats(index: &FilterIndex) -> Vec<u8> {
 }
 
 impl Action {
-    /// Stable code for the decision payload; Go maps it back to its action strings.
     pub fn code(self) -> u8 {
         match self {
             Action::Pass => 0,

@@ -1,7 +1,3 @@
-//! XOR masks plus Base64, byte-compatible with the legacy `KeyObfuscator.kt`: `agent_ai_providers_json`
-//! holds ciphertext written by 1.4.3, so an upgrade install must decrypt it. Obfuscation, not
-//! encryption -- the three masks are as public as the format.
-
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
 
@@ -13,8 +9,6 @@ fn mix(index: usize, byte: u8) -> u8 {
     byte ^ KA[index % KA.len()] ^ KB[index % KB.len()] ^ KC[index % KC.len()]
 }
 
-/// Seals a plaintext key. Blank input stays blank, so "no key configured" is an empty string
-/// rather than a ciphertext of nothing.
 pub fn seal(plain: &str) -> String {
     if plain.trim().is_empty() {
         return String::new();
@@ -28,14 +22,10 @@ pub fn seal(plain: &str) -> String {
     STANDARD.encode(mixed)
 }
 
-/// Restores a sealed key. Undecodable input (bad Base64 or non-UTF-8 plaintext) yields an empty
-/// string instead of an error: one bad row must not blank the whole provider list.
 pub fn open(sealed: &str) -> String {
     if sealed.trim().is_empty() {
         return String::new();
     }
-    // `dart:convert`'s decoder accepts the URL-safe alphabet but insists on correct padding, so
-    // translate the two letters and keep the strict decoder.
     let normalized: String = sealed
         .chars()
         .map(|character| match character {
@@ -70,9 +60,6 @@ mod tests {
 
     #[test]
     fn ciphertext_matches_the_legacy_masks() {
-        // Hand-computed with the Kotlin algorithm: changing it strands keys saved by upgraders.
-        // The mixed bytes for "sk-abc" are a9 29 53 52 00 da; Base64 of those six bytes is
-        // asserted separately so a mask change fails here with the raw bytes, not a string.
         let mixed = STANDARD
             .decode(seal("sk-abc"))
             .expect("sealed key is Base64");
@@ -88,9 +75,7 @@ mod tests {
     #[test]
     fn bad_ciphertext_is_empty_rather_than_an_error() {
         assert_eq!(open("!!!not-base64!!!"), "");
-        // Valid Base64 from another encoder decodes to invalid UTF-8.
         assert_eq!(open("YWJj"), "");
-        // Dart's decoder rejects missing padding, and so does this one.
         assert_eq!(open("YWJjZA"), "");
         assert_eq!(open("YWJjZA==="), "");
     }

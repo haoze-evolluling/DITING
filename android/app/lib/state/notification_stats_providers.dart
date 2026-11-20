@@ -1,6 +1,3 @@
-/// Notification detail items: which request counts (and the speed readout) the running service
-/// shows under its status line, in the user's order. Stored in `notification_settings_prefs`
-/// (`stats_items`) and read natively by `NotificationStatsLine`.
 library;
 
 import 'dart:convert';
@@ -21,7 +18,6 @@ enum NotificationStatItem {
 
   const NotificationStatItem(this.id, this.glyph);
 
-  /// Native id; renaming one silently drops it from the notification.
   final String id;
   final Glyph glyph;
 
@@ -49,7 +45,6 @@ enum NotificationStatItem {
   };
 }
 
-/// The enabled items, in display order.
 class NotificationStatsNotifier extends Notifier<List<NotificationStatItem>> {
   @override
   List<NotificationStatItem> build() {
@@ -64,7 +59,6 @@ class NotificationStatsNotifier extends Notifier<List<NotificationStatItem>> {
     _save();
   }
 
-  /// [newIndex] is already adjusted, as `ReorderableListView.onReorderItem` passes it.
   void move(int oldIndex, int newIndex) {
     if (oldIndex < 0 ||
         oldIndex >= state.length ||
@@ -87,8 +81,6 @@ class NotificationStatsNotifier extends Notifier<List<NotificationStatItem>> {
   }
 }
 
-/// Stores the labels in the current language for the native notification. Written whenever the
-/// items change and when the page opens, so a language switch is picked up on the next visit.
 void writeNotificationStatLabels(LegacySettings settings, AppL10n l10n) {
   settings.setNotificationStatsLabelsJson(
     jsonEncode({

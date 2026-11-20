@@ -1,5 +1,3 @@
-/// User-Agent management (upstream `views/config/user_agents.dart`), reached directly from the
-/// feature hub after the former 自定义资源 wrapper was removed.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -14,7 +12,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'user_agents_dialog.dart';
 
-/// How the summary names the selected entry: builtin, custom, or no override at all.
 String _agentKindLabel(MockUserAgent? agent, AppL10n l10n) {
   if (agent == null) return l10n.uaNoOverrideBody;
   return agent.isDefault ? l10n.uaBuiltin : l10n.uaCustom;
@@ -45,7 +42,6 @@ class UserAgentsConfigPage extends ConsumerWidget {
     final agents = resources.userAgents;
     final selected = resources.selectedUserAgent;
     final notifier = ref.read(configResourcesProvider.notifier);
-    // The selected row is looked up once so the summary and the list agree on the label.
     MockUserAgent? selectedAgent;
     for (final agent in agents) {
       if (agent.value == selected) {
@@ -64,8 +60,6 @@ class UserAgentsConfigPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          // A read-only summary first: it answers "what is being sent right now" without the user
-          // having to scan the whole candidate list for the selected row.
           generateSection(
             title: context.l10n.uaCurrent,
             items: [

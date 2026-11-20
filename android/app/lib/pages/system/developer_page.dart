@@ -1,5 +1,3 @@
-/// Developer options hub, which has no 1.4.3 counterpart. Every action here talks to the real
-/// database, native channels or the cleanup service; nothing is simulated.
 library;
 
 import 'dart:io';
@@ -24,10 +22,8 @@ import 'package:sqflite/sqflite.dart' show getDatabasesPath;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rows in the stress action; one batch, so the UI never freezes mid-way.
 const _stressRowCount = 1000;
 
-/// The four actions that do real work. `title` doubles as the running indicator.
 enum _DeveloperAction {
   stressLogs(glyphName: 'logs'),
   reportError(glyphName: 'error'),
@@ -62,17 +58,12 @@ class DeveloperPage extends ConsumerStatefulWidget {
 }
 
 class _DeveloperPageState extends ConsumerState<DeveloperPage> {
-  /// Non-null while an action runs; disables the whole list instead of only one row.
   _DeveloperAction? _running;
 
-  /// Bumped after every action. The storage card re-stats the files, and a `const` child would be
-  /// skipped by the element tree's identical-widget fast path, leaving the old sizes on screen.
   int _storageRevision = 0;
 
   Future<void> _handle(_DeveloperAction action) async {
     if (_running != null) return;
-    // Captured before the dialogs: the l10n lookup is still valid after `await`, while the
-    // analyzer cannot tell that `context` stays mounted across the async gaps.
     final l10n = context.l10n;
     if (action.destructive) {
       final confirmed = await showFloatingDialog<bool>(
@@ -116,14 +107,11 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     }
     if (!mounted) return;
     showAppSnack(context, message);
-    // "Clear all data" also wipes the first-run agreement, so the app must restart; staying alive
-    // would leave "running" split from "must agree again" (same rule as the cleanup page).
     if (action == _DeveloperAction.clearAllData) {
       await _offerRestart();
     }
   }
 
-  /// Writes real rows into the active `dns_log`; the revision bump makes the log pages re-query.
   Future<String> _stressLogs() async {
     final l10n = context.l10n;
     final fileName = ref.read(activeLogDatabaseFileProvider);
@@ -148,8 +136,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     return l10n.devStressDone('$inserted', fileName);
   }
 
-  /// Goes through the same handler the framework uses, so it exercises a real error path without
-  /// tearing the app down.
   String _reportError() {
     FlutterError.reportError(
       FlutterErrorDetails(
@@ -168,7 +154,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     return result.message;
   }
 
-  /// `VACUUM` on every existing database file; the difference in file size is the real gain.
   Future<String> _vacuum() async {
     final l10n = context.l10n;
     var freed = 0;
@@ -218,11 +203,7 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
     final enabled = ref.watch(developerModeProvider);
     return CommonScaffold(
       title: context.l10n.devOptions,
-      // Avoids `PageBody` (a lazy ListView): this is a directory, and never-built entries stay
-      // invisible to the a11y tree and screenshot review. Building them all is cheap.
       body: AppBarClearance(
-        // The rows are built eagerly; a boundary under the scroll view lets scrolling move one
-        // layer instead of re-recording every row each frame.
         child: SingleChildScrollView(
           child: RepaintBoundary(
             child: Column(
@@ -256,7 +237,6 @@ class _DeveloperPageState extends ConsumerState<DeveloperPage> {
   }
 }
 
-/// When off the actions are disabled, not hidden, so the user sees where to enable them.
 class _DeveloperModeCard extends ConsumerWidget {
   const _DeveloperModeCard();
 
@@ -314,11 +294,9 @@ class _DeveloperModeCard extends ConsumerWidget {
   }
 }
 
-/// Read-only summary of the V2 stores.
 class _StorageCard extends ConsumerWidget {
   const _StorageCard({required this.revision});
 
-  /// Changes after every action so the size probe runs again.
   final int revision;
 
   @override

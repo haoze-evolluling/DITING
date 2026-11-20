@@ -10,12 +10,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Opens the provider picker. Shared by the home provider card and the provider management
-/// entry points, so the two cannot drift apart.
 void showProviderSheet(BuildContext context) =>
     showSheet<void>(context: context, builder: (_) => const ProviderSheet());
 
-/// The sheet keeps the active provider even after it left the catalog.
 class ProviderSheet extends ConsumerStatefulWidget {
   const ProviderSheet({super.key});
 
@@ -37,7 +34,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
     if (ref.read(raceProvidersProvider.notifier).toggle(id)) {
       return;
     }
-    // The last two providers stay selected; say why instead of dropping the tap silently.
     showAppSnack(context, context.l10n.resolutionMinProviders);
   }
 
@@ -77,7 +73,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
           ? context.l10n.providerSheetSingleTitle
           : context.l10n.providerSheetRaceTitle,
       body: ListView(
-        // The sheet title floats over the body, so this top padding is required.
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
           if (!single) _RaceSummary(count: raceIds.length),
@@ -96,8 +91,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
                   : UiLocalizations.of(context).noSearchResults,
             )
           else
-            // Providers keep the arranged display order inside each protocol, the same
-            // grouping the visibility page edits.
             for (final (protocol, providers) in groups)
               if (providers.isNotEmpty)
                 generateSection(
@@ -112,8 +105,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
                       ),
                   ],
                 ),
-          // Two action items share the list and position with the providers. Close the
-          // sheet before pushing, otherwise returning shows it again and looks stuck.
           const ListSectionGap(),
           generateSection(
             title: context.l10n.providerSheetActions,
@@ -170,7 +161,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
         ? selectedId == provider.id
         : raceIds.contains(provider.id);
     return ListItem(
-      // The provider mark is 36dp; pin the column so the action rows match it.
       leading: const LeadingSlot(child: _ProviderMark()),
       title: Text(provider.name),
       subtitle: Text(
@@ -182,8 +172,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
         mainAxisSize: MainAxisSize.min,
         spacing: 4,
         children: [
-          // Racing picks the fastest resolver, so the last measured latency helps here. A
-          // provider that was never probed would only add "未测速" noise to every row.
           if (!single && provider.latencyMs >= 0)
             Text(
               providerLatencyLabel(provider),
@@ -214,7 +202,6 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
   }
 }
 
-/// Why the race list asks for two providers, with the current count and whether it is met.
 class _RaceSummary extends StatelessWidget {
   const _RaceSummary({required this.count});
 
@@ -246,8 +233,6 @@ class _RaceSummary extends StatelessWidget {
   }
 }
 
-/// The neutral well an identifying glyph sits on; built inside the row so it takes the block
-/// level above the card instead of the card's own fill.
 class _ProviderMark extends StatelessWidget {
   const _ProviderMark();
 

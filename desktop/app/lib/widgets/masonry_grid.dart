@@ -1,9 +1,3 @@
-/// A waterfall grid for desktop pages: every child keeps its natural height and lands in the
-/// shortest column, so a short card never leaves a hole under a tall neighbour.
-///
-/// Columns are fixed by the caller (the pages own their breakpoints); this widget only decides
-/// which column each child goes into and how tall the whole board is. Children are laid out at the
-/// column width, which means cards may be measured once and then placed without a second frame.
 library;
 
 import 'dart:math' as math;
@@ -20,13 +14,10 @@ class MasonryGrid extends MultiChildRenderObjectWidget {
     required super.children,
   });
 
-  /// Number of columns; at least one is always laid out.
   final int columns;
 
-  /// Horizontal gap between two columns.
   final double spacing;
 
-  /// Vertical gap between two children in the same column.
   final double runSpacing;
 
   @override
@@ -115,9 +106,6 @@ class _RenderMasonry extends RenderBox
     size = _layout(constraints, ChildLayoutHelper.layoutChild, place: true);
   }
 
-  /// Lays every child out at the column width, assigns it to the shortest column and, when
-  /// [place] is true, records its offset. Dry layout and real layout share the arithmetic so a
-  /// dry pass can never predict a different height than the painted one.
   Size _layout(
     BoxConstraints constraints,
     ChildLayouter layoutChild, {

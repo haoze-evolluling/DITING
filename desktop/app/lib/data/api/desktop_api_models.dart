@@ -1,7 +1,3 @@
-/// Immutable models of what the desktop pages read from the local service.
-///
-/// Only the fields a card shows are parsed. Every parser tolerates a missing or mistyped value,
-/// because the service answers with `omitempty` fields and an older build must not crash the UI.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -26,7 +22,6 @@ List<String> _strings(Object? value) => switch (value) {
 Map<String, Object?> _map(Object? value) =>
     value is Map ? value.cast<String, Object?>() : const {};
 
-/// `GET /api/v1/status`.
 class DesktopStatus {
   const DesktopStatus({
     required this.version,
@@ -98,7 +93,6 @@ class DnsServiceState {
   final List<String> lanAddresses;
   final String mode;
 
-  /// `127.0.0.1:5353`, or empty when the listener is down.
   String get listenSummary => listenAddresses.join(' · ');
 }
 
@@ -125,7 +119,6 @@ class QueryMetrics {
   final double qps;
 }
 
-/// `core.CacheStats`.
 class CacheStats {
   const CacheStats({
     required this.enabled,
@@ -156,7 +149,6 @@ class CacheStats {
   final int evictions;
 }
 
-/// `core.FilterStats`.
 class FilterStats {
   const FilterStats({
     required this.enabled,
@@ -190,7 +182,6 @@ class FilterStats {
   final Duration pausedRemaining;
 }
 
-/// `GET /api/v1/service/status` — the host service, not the DNS listener.
 class CoreServiceState {
   const CoreServiceState({
     required this.installed,
@@ -214,11 +205,9 @@ class CoreServiceState {
   final bool running;
   final String stateText;
 
-  /// Null when an older service does not report auto-start at all.
   final bool? autoStart;
 }
 
-/// One `querylog.Record` from `GET /api/v1/querylog/search`.
 class QueryLogEntry {
   const QueryLogEntry({
     required this.timestamp,
@@ -257,12 +246,10 @@ class QueryLogEntry {
   final bool blocked;
   final bool cached;
 
-  /// The service stores the trailing dot of the queried name; it reads as noise in a table.
   String get displayDomain =>
       domain.endsWith('.') ? domain.substring(0, domain.length - 1) : domain;
 }
 
-/// `querylog.SearchResult`: the total count plus the page the limit asked for.
 class QueryLogPage {
   const QueryLogPage({required this.total, required this.entries});
 
@@ -278,8 +265,6 @@ class QueryLogPage {
   final List<QueryLogEntry> entries;
 }
 
-/// `GET /api/v1/querylog/stats` — the service's own 24-hour rolling window: the summary, plus the
-/// three top-N lists the console's statistics panel ranks.
 class DesktopQueryStats {
   const DesktopQueryStats({
     required this.summary,
@@ -300,14 +285,11 @@ class DesktopQueryStats {
 
   final QueryStatsSummary summary;
 
-  /// Most queried names, most blocked names, busiest clients — each already ranked and capped by
-  /// the service; the page neither re-sorts nor extends them.
   final List<QueryNameCount> topDomains;
   final List<QueryNameCount> topBlocked;
   final List<QueryNameCount> topClients;
 }
 
-/// One `querylog.NameCount`.
 class QueryNameCount {
   const QueryNameCount({required this.name, required this.count});
 
@@ -325,7 +307,6 @@ List<QueryNameCount> _counts(Object? value) => [
     if (item is Map) QueryNameCount.fromJson(item.cast<String, Object?>()),
 ];
 
-/// `querylog.Summary`.
 class QueryStatsSummary {
   const QueryStatsSummary({
     required this.queries,
@@ -365,18 +346,13 @@ class QueryStatsSummary {
   final int errors;
   final double averageResponseMs;
 
-  /// 0..1.
   final double cacheHitRate;
 
-  /// Everything the window saw that was not blocked, including cache hits.
   int get passed => (queries - blocked).clamp(0, queries);
 }
 
-/// The record types the console offers as one-tap filters, in the order the old desktop console
-/// lists them (`frontend/src/components/overview/QueryHistoryPanel.vue`). Empty means no filter.
 const List<String> desktopLogQTypes = ['A', 'AAAA', 'HTTPS', 'CNAME', 'PTR', 'TXT'];
 
-/// `GET /api/v1/querylog/config` — what the service records and for how long.
 class DesktopQueryLogConfig {
   const DesktopQueryLogConfig({
     required this.enabled,
@@ -399,19 +375,14 @@ class DesktopQueryLogConfig {
 
   final bool enabled;
 
-  /// Entries kept in the in-memory ring the dashboard and the live search read.
   final int maxEntries;
 
-  /// Whether history is written to JSON-Lines files under [dataDir].
   final bool fileEnabled;
 
-  /// Days of on-disk history the service keeps before pruning.
   final int retentionDays;
 
-  /// Whether each record carries the client IP and host name.
   final bool logClients;
 
-  /// Read-only here: the directory belongs to the service's data layout, not to this page.
   final String dataDir;
 
   DesktopQueryLogConfig copyWith({
@@ -429,8 +400,6 @@ class DesktopQueryLogConfig {
     dataDir: dataDir,
   );
 
-  /// The service merges what it receives over its current config, so every field travels; `dataDir`
-  /// stays out because the service owns it.
   Map<String, Object?> toJson() => {
     'enabled': enabled,
     'maxEntries': maxEntries,
@@ -440,10 +409,6 @@ class DesktopQueryLogConfig {
   };
 }
 
-/// The `status` values `querylog.SearchQuery` accepts; the empty one means "no filter".
-///
-/// The words the filter shows are the log page's own ARB keys, so this enum carries only the
-/// value the service understands.
 enum DesktopLogStatus {
   all(''),
   passed('allowed'),

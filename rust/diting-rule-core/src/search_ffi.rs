@@ -1,27 +1,3 @@
-//! C ABI for the rule-list search index (`filteredRulesProvider` on the rules page).
-//!
-//! Unlike the parse entry point, this surface is stateful: the rules page builds one index per
-//! table snapshot and queries it once per keystroke. Sending the whole table across the boundary on
-//! every key would cost more than the Dart filter it replaces, so the handle pattern is used
-//! instead:
-//!
-//! ```text
-//! build(rows)  -> u64 handle      (0 = failed, the Dart side keeps its own filter)
-//! query(handle, needle) -> hits   (freed with `diting_rule_core_free`)
-//! free_index(handle)
-//! ```
-//!
-//! Wire format (all integers little-endian `u32`, strings are `u32 len` + UTF-8 bytes, a missing
-//! optional string is `u32::MAX`):
-//!
-//! ```text
-//! build  : magic "DRS1" | abi | rows  | rows * (pattern, target?)
-//! result : magic "DRQ1" | abi | hits  | hits * row index
-//! ```
-//!
-//! Every failure returns 0 / null instead of raising: the Dart side turns that into an error, so a
-//! missing symbol, a stale `.so` or a malformed payload fails loudly instead of scanning in Dart.
-
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
@@ -29,20 +5,15 @@ use std::sync::{Arc, Mutex, OnceLock};
 use crate::ffi::{into_buffer, write_u32, NONE_LEN};
 use crate::search::RuleSearchIndex;
 
-/// Layout version of the build/result payloads; the Dart loader refuses a library that does not
-/// speak it. Kept separate from [`crate::ffi::ABI_VERSION`] so the two payloads can move
-/// independently.
 pub const SEARCH_ABI_VERSION: u32 = 1;
 
 const BUILD_MAGIC: u32 = u32::from_le_bytes(*b"DRS1");
 const RESULT_MAGIC: u32 = u32::from_le_bytes(*b"DRQ1");
 
-/// A build payload holds at least two length prefixes per row.
 const MIN_ROW_BYTES: usize = 8;
 
 type Index = Arc<RuleSearchIndex>;
 
-/// Process-wide handle table. Handles are opaque to Dart and `0` is never handed out.
 static REGISTRY: OnceLock<Mutex<HashMap<u64, Index>>> = OnceLock::new();
 static NEXT_HANDLE: AtomicU64 = AtomicU64::new(1);
 
@@ -50,7 +21,6 @@ fn registry() -> &'static Mutex<HashMap<u64, Index>> {
     REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
-/// Registers `index` and returns its handle, or `0` when the table is unusable.
 pub fn register(index: RuleSearchIndex) -> u64 {
     let handle = NEXT_HANDLE.fetch_add(1, Ordering::Relaxed);
     match registry().lock() {
@@ -62,7 +32,6 @@ pub fn register(index: RuleSearchIndex) -> u64 {
     }
 }
 
-/// Runs `body` against the index behind `handle`, or returns `None` for an unknown handle.
 fn with_index<R>(handle: u64, body: impl FnOnce(&RuleSearchIndex) -> R) -> Option<R> {
     let index = registry().lock().ok()?.get(&handle).cloned()?;
     Some(body(&index))
@@ -75,13 +44,11 @@ pub fn unregister(handle: u64) -> bool {
     }
 }
 
-/// Handles currently registered: the tests use it to prove a rebuild and a dispose both release.
 #[cfg(test)]
 fn live_handles() -> usize {
     registry().lock().map(|indexes| indexes.len()).unwrap_or(0)
 }
 
-/// Sequential little-endian reader over the build payload.
 struct Reader<'a> {
     bytes: &'a [u8],
     offset: usize,
@@ -103,8 +70,6 @@ impl<'a> Reader<'a> {
         self.text(length as usize)
     }
 
-    /// `Some(None)` for the `u32::MAX` marker, `Some(Some(text))` for a string, `None` when the
-    /// payload is malformed.
     fn optional_str(&mut self) -> Option<Option<&'a str>> {
         let length = self.u32()?;
         if length == NONE_LEN {
@@ -121,7 +86,6 @@ impl<'a> Reader<'a> {
     }
 }
 
-/// Build payload -> search index. `None` for a truncated, misnumbered or non-UTF-8 payload.
 pub fn decode_build_payload(payload: &[u8]) -> Option<RuleSearchIndex> {
     let mut reader = Reader {
         bytes: payload,
@@ -131,8 +95,6 @@ pub fn decode_build_payload(payload: &[u8]) -> Option<RuleSearchIndex> {
         return None;
     }
     let rows = reader.u32()? as usize;
-    // A row cannot be smaller than its two length prefixes, so a larger count is malformed: this
-    // keeps `with_capacity` from reserving a size the payload could never describe.
     if rows > payload.len() / MIN_ROW_BYTES {
         return None;
     }
@@ -156,10 +118,6 @@ pub fn encode_hits(hits: &[u32]) -> Vec<u8> {
     buffer
 }
 
-/// Borrows the caller's buffer; an empty input is a valid empty slice.
-///
-/// # Safety
-/// `pointer` must be null or point to `len` readable bytes.
 unsafe fn input<'a>(pointer: *const u8, len: usize) -> &'a [u8] {
     if pointer.is_null() || len == 0 {
         &[]
@@ -168,17 +126,11 @@ unsafe fn input<'a>(pointer: *const u8, len: usize) -> &'a [u8] {
     }
 }
 
-/// Sequence number of this file's payload layout; must match `_searchAbiVersion` in
-/// `rust_rule_core.dart`.
 #[no_mangle]
 pub extern "C" fn diting_rule_core_search_abi_version() -> u32 {
     SEARCH_ABI_VERSION
 }
 
-/// Builds an index from a build payload and returns its handle, or `0` on any failure.
-///
-/// # Safety
-/// `payload` must point to `len` readable bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_search_build(payload: *const u8, len: usize) -> u64 {
     let built = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -191,11 +143,6 @@ pub unsafe extern "C" fn diting_rule_core_search_build(payload: *const u8, len: 
     }
 }
 
-/// Queries `handle` for `needle` and returns a result payload the caller must release with
-/// [`crate::ffi::diting_rule_core_free`], or null when the handle is unknown or the call failed.
-///
-/// # Safety
-/// `needle` must point to `needle_len` readable bytes and `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_search_query(
     handle: u64,
@@ -222,7 +169,6 @@ pub unsafe extern "C" fn diting_rule_core_search_query(
     }
 }
 
-/// Releases `handle` and its folded rows; returns 1 when it was there, 0 when it was not.
 #[no_mangle]
 pub extern "C" fn diting_rule_core_search_free_index(handle: u64) -> u32 {
     u32::from(unregister(handle))
@@ -278,7 +224,6 @@ mod tests {
         let good = build_payload(&[("||ads.example.com^", None)]);
         assert!(decode_build_payload(&good).is_some());
 
-        // Wrong magic, wrong abi, truncated record, count larger than the payload can describe.
         let mut wrong_magic = good.clone();
         wrong_magic[0] ^= 0xFF;
         assert!(decode_build_payload(&wrong_magic).is_none());

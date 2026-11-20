@@ -1,5 +1,3 @@
-//! `/api/v1/web/*` — the remote console's own status and firewall.
-
 use hyper::http::Method;
 
 use diting_desktop_app::controller::web::{ConfigureFirewallRequest, ConfigureWebRequest};

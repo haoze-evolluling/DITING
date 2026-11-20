@@ -1,10 +1,5 @@
-//! One public IP-intelligence reply in, one source row out. The row keeps the legacy status tokens
-//! (`命中`, `失败`, `超时`, `限流`) because the result page maps them directly, and every rule that
-//! decides one lives here.
-
 use serde_json::{json, Map, Value};
 
-/// The three endpoints the checker queries, in report order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Source {
     IpApi,
@@ -33,7 +28,6 @@ fn text_like(value: Option<&Value>) -> String {
     }
 }
 
-/// Dart's `a ?? b ?? ''`: a present empty string wins over the next key.
 fn first_present(object: &Map<String, Value>, keys: &[&str]) -> String {
     for key in keys {
         if let Some(value) = object.get(*key) {
@@ -69,9 +63,6 @@ fn invalid_json() -> Value {
     failure(Some("响应不是合法 JSON"))
 }
 
-/// Infers the connection type from the ISP/organization text with the legacy keyword table. Mobile
-/// is checked first, datacenter second; unknown stays business so a labelled datacenter is never
-/// presented as a clean residential address.
 fn classify(text: &str) -> &'static str {
     let lower = text.to_lowercase();
     const MOBILE: &[&str] = &[
@@ -127,7 +118,6 @@ fn classify(text: &str) -> &'static str {
     "商业"
 }
 
-/// First `AS<digits>` anywhere in the text.
 fn asn_of(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut index = 0;
@@ -146,7 +136,6 @@ fn asn_of(text: &str) -> String {
     String::new()
 }
 
-/// `AS<digits>` plus its following whitespace at the very start, then trim.
 fn org_name_of(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut rest = text;
@@ -255,8 +244,6 @@ fn ip_info(body: &str) -> Value {
     )
 }
 
-/// Parses one source answer after the HTTP layer has seen the status code. Timeouts and socket
-/// errors never reach here: those are transport facts and stay in Dart.
 pub fn source_result(source: Source, http_status: i64, body: &str) -> Value {
     if http_status == 429 {
         return row("限流", None, None, None, None);

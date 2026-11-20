@@ -34,7 +34,6 @@ fn lookup_walks_parent_suffixes() {
     let child = table.lookup("WWW.Example.COM").expect("child");
     assert_eq!(child.ip4, "1.2.3.4");
 
-    // The tld entry only applies once the longer suffix misses.
     let parent = table.lookup("other.com").expect("parent");
     assert_eq!(parent.ip4, "9.9.9.9");
     assert_eq!(table.lookup("notgithub.com").expect("tld").ip4, "9.9.9.9");

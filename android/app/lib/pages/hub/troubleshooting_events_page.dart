@@ -1,6 +1,3 @@
-/// 故障排查 → 运行事件: the always-on structured timeline, with level/module filters and an export
-/// of exactly what is shown. The black box itself is native (`RuntimeEventLog`); this page only
-/// reads the tail and lets the user narrow it down.
 library;
 
 import 'package:diting_android/data/native/runtime_event.dart';
@@ -186,8 +183,6 @@ class _TroubleshootingEventsPageState
   }
 }
 
-/// The two chip filters. A caption over each row keeps the page's grouped look while the app-wide
-/// [FilterPill] replaces the Material `ChoiceChip` used nowhere else.
 class _FilterPanel extends StatelessWidget {
   const _FilterPanel({
     required this.levelLabel,
@@ -207,7 +202,6 @@ class _FilterPanel extends StatelessWidget {
 
   final String moduleLabel;
 
-  /// `null` when the timeline only has one module, so the second row is hidden.
   final List<MapEntry<String, String?>>? moduleChoices;
   final String? module;
   final ValueChanged<String?> onModule;
@@ -273,7 +267,6 @@ class _FilterCaption extends StatelessWidget {
   }
 }
 
-/// Shown when the filters hide every event: a quiet card rather than a blank stretch of page.
 class _NoMatch extends StatelessWidget {
   const _NoMatch({required this.message});
 
@@ -315,8 +308,6 @@ class _EventRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    // The leading glyph mirrors severity; the time column drops the milliseconds the log line
-    // carries but a timeline reader never needs.
     final (glyph, color) = event.isError
         ? (AppGlyphs.error, colorScheme.error)
         : event.isWarnOrAbove

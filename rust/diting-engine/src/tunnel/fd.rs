@@ -1,24 +1,3 @@
-//! The `VpnService` descriptor: `dup` twice, non-blocking, errno-classified.
-//!
-//! Kotlin hands the engine the `detachFd()` of a `ParcelFileDescriptor`. That descriptor belongs to
-//! the `VpnService`; closing the service would close it under the reader. Two dups solve that:
-//!
-//! * **one for the reader, one for the writer**, so a write never blocks behind a read and
-//!   `VpnService` teardown of the original does not strand the tunnel;
-//! * both are `O_NONBLOCK` and the reader uses `poll(2)` with a 250 ms timeout, so the reader notices
-//!   `stop` (and the closed dup) without a permanently blocked `read(2)`.
-//!
-//! `stop` closes both dups; `poll` then returns immediately and the read fails with `EBADF`, which
-//! [`LinkFault::Fatal`] turns into "reader exits". This is the mechanism the `diting-tun-spike`
-//! prototype validated; the only device-side unknown is how the kernel's packet queue behaves during
-//! a handover, which surfaces as [`LinkFault::Backoff`].
-//!
-//! # Host builds
-//!
-//! The fd path is unix-only. On the Windows host the type still exists (so the JNI entry points and
-//! `Engine::start_full` compile) but [`TunFd::open`] reports "unsupported"; the host tests drive the
-//! same session through [`crate::tunnel::link::MemoryLink`] instead.
-
 use crate::tunnel::link::{LinkFault, PacketLink};
 
 #[cfg(unix)]
@@ -30,7 +9,6 @@ mod unix {
 
     use super::{LinkFault, PacketLink};
 
-    /// How long the reader parks in `poll(2)` before it re-checks `stop`.
     const POLL_INTERVAL_MS: i32 = 250;
 
     pub struct TunFd {
@@ -41,7 +19,6 @@ mod unix {
     }
 
     impl TunFd {
-        /// Duplicates both directions and makes them non-blocking.
         pub fn open(fd: i32, mtu: usize) -> io::Result<Self> {
             let reader = duplicate(fd)?;
             let writer = match duplicate(fd) {
@@ -85,7 +62,6 @@ mod unix {
             }
             match poll_readable(self.reader, POLL_INTERVAL_MS) {
                 Ok(true) => {}
-                // No packet this interval; the reader checks `stop` and comes back.
                 Ok(false) => return Err(LinkFault::Again),
                 Err(error) => return Err(classify(error.raw_os_error())),
             }
@@ -120,8 +96,6 @@ mod unix {
                 return Err(classify(io::Error::last_os_error().raw_os_error()));
             }
             if written as usize != packet.len() {
-                // A TUN write is one packet or nothing; a partial write means the descriptor is not
-                // the device we think it is.
                 return Err(LinkFault::Fatal);
             }
             Ok(())
@@ -132,8 +106,6 @@ mod unix {
         }
 
         fn close(&self) {
-            // `swap` makes this idempotent, which `stop` + `Drop` rely on. Closing from another
-            // thread is what wakes the reader's `poll`: there is no portable way to interrupt it.
             if !self.closed.swap(true, Ordering::AcqRel) {
                 close_fd(self.reader);
                 close_fd(self.writer);
@@ -166,7 +138,6 @@ mod unix {
         }
     }
 
-    /// `poll(2)` for readability: `true` when a packet is waiting, `false` on the timeout.
     fn poll_readable(fd: RawFd, timeout_ms: i32) -> io::Result<bool> {
         let mut descriptor = libc::pollfd {
             fd,
@@ -180,12 +151,9 @@ mod unix {
         if ready == 0 {
             return Ok(false);
         }
-        // `POLLNVAL`/`POLLERR` show up as "readable"; the following `read` reports the real errno,
-        // which is where an `EBADF` from `stop` needs to land.
         Ok(true)
     }
 
-    /// The errno table from [`crate::tunnel::link`].
     fn classify(errno: Option<i32>) -> LinkFault {
         match errno {
             Some(code)
@@ -206,12 +174,10 @@ mod unix {
         }
     }
 
-    /// Keeps the classification table honest: the reader's retry policy is derived from it.
     pub fn classify_errno(errno: i32) -> LinkFault {
         classify(Some(errno))
     }
 
-    /// `poll`'s interval, exposed so the session's docs and tests use the same number.
     pub fn poll_interval() -> Duration {
         Duration::from_millis(POLL_INTERVAL_MS as u64)
     }
@@ -226,7 +192,6 @@ mod other {
 
     use super::{LinkFault, PacketLink};
 
-    /// The fd path needs unix; the type exists so the JNI facade compiles on the Windows host.
     pub struct TunFd;
 
     impl TunFd {
@@ -263,7 +228,6 @@ mod tests {
     use super::*;
     use std::os::fd::{AsRawFd, IntoRawFd};
 
-    /// A `socketpair` stands in for the TUN device: the same read/write/close semantics.
     fn socket_pair() -> (
         std::os::unix::net::UnixStream,
         std::os::unix::net::UnixStream,
@@ -278,10 +242,8 @@ mod tests {
         assert_ne!(tun.reader_fd(), left.as_raw_fd());
         assert_ne!(tun.writer_fd(), left.as_raw_fd());
         assert_ne!(tun.reader_fd(), tun.writer_fd());
-        // The dup is non-blocking: an idle read reports Again instead of parking the thread.
         let mut buffer = [0u8; 64];
         assert_eq!(tun.recv(&mut buffer), Err(LinkFault::Again));
-        // The original descriptor still works and is untouched by the dups.
         use std::io::Write;
         (&right).write_all(&[7, 7]).expect("write");
         assert_eq!(tun.recv(&mut buffer), Ok(2));
@@ -301,7 +263,6 @@ mod tests {
         tun.close();
         assert_eq!(tun.recv(&mut [0u8; 16]), Err(LinkFault::Fatal));
         assert_eq!(tun.send(&[1]), Err(LinkFault::Fatal));
-        // Idempotent, as `stop` + `Drop` call it twice.
         tun.close();
     }
 
@@ -334,7 +295,6 @@ mod tests {
         let _dup = left.as_raw_fd();
         let tun = TunFd::open(_dup, 1400).expect("dup");
         tun.close();
-        // `left` is still open: `TunFd` only closes its own dups.
         assert!(right.as_raw_fd() >= 0);
         drop(right);
         drop(left.into_raw_fd());

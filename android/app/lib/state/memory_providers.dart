@@ -1,5 +1,3 @@
-/// Live memory sampling shaped like [speedSeriesProvider]; 2 s period, since it crosses Binder into
-/// `ActivityManager`.
 library;
 
 import 'dart:async';
@@ -47,10 +45,7 @@ class ProcessMemoryNotifier extends Notifier<ProcessMemory> {
     _timer = null;
   }
 
-  /// Samples memory once; without the channel the snapshot is unavailable and the card shows a
-  /// dash.
   Future<void> tick() async {
-    // The figure repaints its card; sample after the fling instead of inside it.
     if (ScrollActivityGate.isScrolling) {
       if (!_queuedForIdle) {
         _queuedForIdle = true;
@@ -72,8 +67,6 @@ class ProcessMemoryNotifier extends Notifier<ProcessMemory> {
       _inFlight = false;
     }
     if (!ref.mounted) return;
-    // The card is a full-width tile with a shadow; re-emitting an identical snapshot repainted it
-    // for nothing. PSS moves in 4 KB steps, so most 2 s ticks used to be no-ops that still drew.
     if (state == next) return;
     state = next;
   }

@@ -1,17 +1,3 @@
-//! The datagram side of an outbound transport: a connected UDP socket, or SOCKS5 UDP ASSOCIATE.
-//!
-//! Go modelled both as `net.PacketConn`; here the connection is always to one destination (the TUN
-//! flow's `5-tuple` fixes it), so a connected transport is enough and the relay loop stays simple.
-//!
-//! # SOCKS5 framing
-//!
-//! A proxied datagram is `RSV(0,0,0) | ATYP | address | port | payload`, and the reply the same
-//! shape. [`diting_proxy_core::socks5::datagram`] builds the request and `parse_datagram` returns the
-//! payload offset, so this module only owns the socket and the control connection.
-//!
-//! The control TCP connection from `UDP ASSOCIATE` must stay open for the lifetime of the
-//! association (closing it ends the relay), which is why [`Socks5Udp`] keeps it.
-
 use std::net::SocketAddr;
 
 use diting_proxy_core::socks5;
@@ -22,11 +8,8 @@ use crate::outbound::DIAL_TIMEOUT;
 use crate::protect::ProtectorHandle;
 use crate::resolver::dial;
 
-/// The ceiling `ReadFrom` adds on top of a payload: three reserved bytes, an address type, a length
-/// byte, a 255-byte domain and the port.
 pub const DATAGRAM_HEADER_MAX: usize = 3 + 1 + 1 + 255 + 2;
 
-/// One connected datagram transport.
 pub enum UdpTransport {
     Direct(UdpSocket),
     Socks5(Socks5Udp),
@@ -34,13 +17,11 @@ pub enum UdpTransport {
 
 pub struct Socks5Udp {
     socket: UdpSocket,
-    /// Kept alive: closing it makes the proxy drop the association (and its relay port).
     _control: TcpStream,
     target: String,
 }
 
 impl UdpTransport {
-    /// The direct transport: a protected socket connected to `target`.
     pub async fn direct(target: SocketAddr, protector: &ProtectorHandle) -> Result<Self, String> {
         let socket = dial::bind_udp(target, protector)
             .map_err(|error| format!("udp dial {target}: {error}"))?;
@@ -53,7 +34,6 @@ impl UdpTransport {
         Ok(Self::Direct(socket))
     }
 
-    /// `OpenPacket`: a control connection, `UDP ASSOCIATE`, then a datagram socket to the relay.
     pub async fn socks5(
         target: SocketAddr,
         proxy_address: String,
@@ -89,7 +69,6 @@ impl UdpTransport {
         }))
     }
 
-    /// Sends one payload; the returned count is the payload's length, not the framed length.
     pub async fn send(&self, payload: &[u8]) -> Result<usize, String> {
         match self {
             Self::Direct(socket) => socket
@@ -108,7 +87,6 @@ impl UdpTransport {
         }
     }
 
-    /// Receives one payload into `buffer`, returning how many bytes of payload it holds.
     pub async fn recv(&self, buffer: &mut [u8]) -> Result<usize, String> {
         match self {
             Self::Direct(socket) => socket
@@ -134,14 +112,11 @@ impl UdpTransport {
         }
     }
 
-    /// Whether the transport speaks SOCKS5 framing (telemetry/tests).
     pub fn is_proxied(&self) -> bool {
         matches!(self, Self::Socks5(_))
     }
 }
 
-/// `net.ResolveUDPAddr` for the relay address, with Go's "an unspecified relay means the proxy
-/// itself" rule.
 async fn resolve_relay(relay: &str, proxy: SocketAddr) -> Result<SocketAddr, String> {
     let parsed: Option<SocketAddr> = relay.parse().ok();
     let mut address = match parsed {

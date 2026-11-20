@@ -33,8 +33,6 @@ class ServerHubPage extends ConsumerWidget {
               onRetry: () =>
                   ref.read(serverControllerProvider.notifier).refresh(),
             ),
-          // Cards follow the setup order: providers first, then scheduling and cache, bootstrap,
-          // filtering and finally the query log that records the result.
           FeatureHubCategorySection(
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubDataPlane,

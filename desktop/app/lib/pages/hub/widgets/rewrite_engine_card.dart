@@ -1,8 +1,3 @@
-/// The rewrite engine switch and its default lifetime. The switch saves the moment it moves; the
-/// number saves with the button next to it, exactly like `RewritePanel.vue`.
-///
-/// Both writes go through the page's provider, which re-reads the service afterwards, so a rejected
-/// value leaves the switch where the service still has it.
 library;
 
 import 'dart:async';
@@ -19,7 +14,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Wide enough for `86400`; a desktop window never needs it to shrink.
 const double _numberWidth = 190;
 
 class RewriteEngineCard extends ConsumerStatefulWidget {
@@ -37,8 +31,6 @@ class RewriteEngineCard extends ConsumerStatefulWidget {
 }
 
 class _RewriteEngineCardState extends ConsumerState<RewriteEngineCard> {
-  /// The TTL as typed. Empty until the first answer arrives, so a later re-read never overwrites a
-  /// number that is being edited.
   String _ttl = '';
   bool _invalid = false;
 

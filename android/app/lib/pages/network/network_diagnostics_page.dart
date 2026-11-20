@@ -1,7 +1,3 @@
-/// N6 网络诊断：DNS 泄漏检测与 Captive Portal 识别。
-///
-/// The verdicts are Rust kernels ([RustLeakCore], [RustCaptiveCore]); this page only runs the
-/// probes, shows the three-state result and, for a portal, offers to open the login page.
 library;
 
 import 'package:diting_android/routes/system_routes.dart';
@@ -122,11 +118,6 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
       };
 }
 
-/// A diagnostics block: a section header, the optional verdict card, then the run action.
-///
-/// The action is a **sibling** of the rows — never an item inside the card. A non-row child in a
-/// card group leaves the preceding rows with square bottom corners and a stray divider, which is
-/// what made the old layout look like a clipped card with a button floating below it.
 class _DiagnosticsSection extends StatelessWidget {
   const _DiagnosticsSection({
     required this.title,
@@ -181,8 +172,6 @@ class _VerdictItem extends StatelessWidget {
   }
 }
 
-/// A full-width section action. Kept outside the card group so the card keeps its rounded shape;
-/// the tonal fill matches the actions on the other tool pages.
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.label,
@@ -210,7 +199,6 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-/// A page-level failure, in the error palette rather than the neutral intro card surface.
 class _ErrorNotice extends StatelessWidget {
   const _ErrorNotice({required this.text});
 

@@ -3,13 +3,6 @@ package com.haoze.diting.log
 import android.content.Context
 import android.database.sqlite.SQLiteStatement
 
-/// Writes the engine's packed race batches into `dns_race_log`; provider names stay null, Dart
-/// resolves ids.
-///
-/// The rows are shaped in the log kernel (`rust/diting-log-core/src/row.rs`) and queued, not written
-/// here: this callback runs on an engine thread, and a locked database used to fail the open
-/// (dropping the row) or, worse, park the DNS hot path. One batch is two JNI calls (classify, then
-/// enqueue) instead of one pair per race result.
 object RaceLogWriter {
     private const val TABLE = "dns_race_log"
 
@@ -19,14 +12,11 @@ object RaceLogWriter {
         "winnerProviderName, winnerElapsedMs, fallbackUsed, fallbackSuccess, message) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-    /// `packed` is `u32 count | rows(race input)`; the kernel classifies the batch and enqueues
-    /// the `dns_race_log` rows itself, so no row crosses the boundary twice.
     fun writeBatch(context: Context, databaseName: String, packed: ByteArray) {
         LogTableWriters.of(context, databaseName, TABLE, "diting-race-log", INSERT_SQL, ::bindRow)
             .submitKernelBatch(packed) { queue, rows -> LogNative.raceRowsSubmit(queue, rows) }
     }
 
-    /// The kernel's row layout, bound straight into the compiled statement.
     private fun bindRow(statement: SQLiteStatement, row: ByteArray) {
         val reader = LogPayload.Reader(row)
         statement.bindLong(1, reader.i64())
@@ -37,7 +27,6 @@ object RaceLogWriter {
         statement.bindLong(6, if (reader.u8() != 0) 1 else 0)
         statement.bindLong(7, reader.i64())
         bindOptionalString(statement, 8, reader.optionalString())
-        // Provider names are resolved by Dart from the ids above.
         statement.bindNull(9)
         bindOptionalLong(statement, 10, reader.optionalLong())
         bindOptionalString(statement, 11, reader.optionalString())

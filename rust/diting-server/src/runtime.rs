@@ -1,5 +1,3 @@
-//! Long-lived server state and control operations.
-
 use std::path::Path;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};

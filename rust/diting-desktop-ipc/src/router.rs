@@ -1,20 +1,13 @@
-//! The exact `/api/v1/*` route table from the Go `routes.go`.
-
 use crate::handlers::{self, Ctx, Resp};
 use crate::server::Server;
 
-/// Authentication policy for one path.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Auth {
-    /// No token needed (health/meta/login/setup/background image).
     Public,
-    /// Bearer/session/loopback token required.
     Required,
-    /// The handler performs its own check (events, mobileconfig, background writes).
     SelfHandled,
 }
 
-/// Mirrors Go's routing split: unknown `/api/` paths fall through unauthenticated to a JSON 404.
 pub fn auth_requirement(path: &str) -> Auth {
     match path {
         "/api/v1/health"
@@ -107,7 +100,6 @@ fn known(path: &str) -> bool {
     )
 }
 
-/// Dispatches one authenticated request.
 pub async fn dispatch(server: &Server, ctx: &Ctx<'_>, path: &str) -> Resp {
     match path {
         "/api/v1/health" => handlers::status::handle_health(ctx),

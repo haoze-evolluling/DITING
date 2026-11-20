@@ -125,5 +125,4 @@ void main() {
 
 }
 
-/// The board's inner gap, restated here so the test fails if the constant drifts.
 const dashboardGap = 16.0;

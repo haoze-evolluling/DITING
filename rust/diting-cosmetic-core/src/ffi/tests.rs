@@ -1,10 +1,7 @@
-//! Tests through the C ABI, the way `android/engine/mitm_cosmetic_native.go` drives it.
-
 use super::*;
 use crate::inject::Upstream;
 use crate::payload::decode_text;
 
-/// Reads the payload `diting_cosmetic_link_tag` returned and frees it, as Go must.
 unsafe fn take_link_tag(host: &str, asset_host: &str) -> String {
     let mut pointer: *mut u8 = std::ptr::null_mut();
     let mut length = 0usize;
@@ -33,7 +30,6 @@ unsafe fn open_reader(link_tag: &str) -> *mut Injector {
     handle
 }
 
-/// One `Read`: the queued bytes first, then the upstream chunk, exactly like the Go wrapper.
 unsafe fn read(
     handle: *mut Injector,
     buffer: &mut [u8],
@@ -68,7 +64,6 @@ fn abi_version_is_pinned() {
     assert_eq!(diting_cosmetic_abi_version(), ABI_VERSION);
 }
 
-/// Reads the payload `diting_cosmetic_normalize_host` returned and frees it, as Go must.
 unsafe fn take_normalized(host: &str) -> String {
     let mut pointer: *mut u8 = std::ptr::null_mut();
     let mut length = 0usize;
@@ -142,7 +137,6 @@ fn a_reader_splices_the_tag_over_two_reads() {
     let mut buffer = [0u8; 64];
     let mut out = Vec::new();
 
-    // `<he` is a prefix of `<head`, so the tail waits for the next read.
     let (n, keep) = unsafe { read(handle, &mut buffer, b"<html><he", Upstream::NONE) };
     out.extend_from_slice(&buffer[..n]);
     assert!(keep);
@@ -150,7 +144,6 @@ fn a_reader_splices_the_tag_over_two_reads() {
 
     let (n, keep) = unsafe { read(handle, &mut buffer, b"ad><body>", Upstream::EOF) };
     out.extend_from_slice(&buffer[..n]);
-    // Everything fit, so the EOF travels with the last chunk.
     assert!(keep);
     unsafe { diting_cosmetic_free(handle) };
 
@@ -160,7 +153,6 @@ fn a_reader_splices_the_tag_over_two_reads() {
 #[test]
 fn a_queued_tag_clears_before_the_eof_travels() {
     let handle = unsafe { open_reader("0123456789") };
-    // `<head>` + the ten-byte tag does not fit, so the tail is queued and the EOF waits for it.
     let mut buffer = [0u8; 8];
     let mut out = Vec::new();
     let mut reads = Vec::new();
@@ -170,7 +162,6 @@ fn a_queued_tag_clears_before_the_eof_travels() {
     reads.push((n, keep));
     assert!(!keep, "the queue drains before the EOF travels");
 
-    // The Go loop keeps calling Read until an error comes back; the queue empties first.
     for _ in 0..8 {
         let (n, keep) = unsafe { read(handle, &mut buffer, b"", Upstream::EOF) };
         out.extend_from_slice(&buffer[..n]);
@@ -185,7 +176,6 @@ fn a_queued_tag_clears_before_the_eof_travels() {
     assert_eq!(reads, vec![(8, false), (8, false), (0, true)]);
 }
 
-// --- the local asset server and the rule set ---------------------------------
 
 use crate::payload::{decode_response, decode_text_list, encode_rules};
 use crate::rules::{DomainRules, RuleSet, Rules};

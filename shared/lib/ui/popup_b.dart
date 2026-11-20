@@ -13,16 +13,12 @@ typedef _PlatterGlass = ({
   bool coarse,
 });
 
-/// The press that opened a popup on its control's pointer down. Its events
-/// keep reaching the control, which hands them on for the menu to follow.
 class _CarriedPress {
   ValueSetter<Offset>? onMove;
   ValueSetter<Offset>? onRelease;
   VoidCallback? onCancel;
 }
 
-/// The part of the popup's box that returns into its control, when not all
-/// of it: a menu returns its open sub menu alone, as iOS does.
 class _PopupSurface {
   Rect? Function(RenderBox popup)? rectIn;
 }
@@ -75,8 +71,6 @@ class _PopupMorph extends SingleChildRenderObjectWidget {
   final Color surfaceColor;
   final List<BoxShadow> shadows;
 
-  /// The platter's glass as it leaves the anchor and as it lands on the card,
-  /// or null for a [surfaceColor] fill.
   final _PlatterGlass? glass;
 
   @override
@@ -121,10 +115,6 @@ typedef _Opening = ({
   double progress,
 });
 
-/// Grows the popup out of its anchor the way iOS 27 menus leave their button,
-/// and returns it into its control, as one drop of glass with it, the content
-/// blurring out first; with no control to return into, the popup shrinks
-/// toward its anchor as it fades.
 class _RenderPopupMorph extends RenderProxyBox {
   _RenderPopupMorph({
     required Rect anchor,
@@ -190,7 +180,6 @@ class _RenderPopupMorph extends RenderProxyBox {
     _closingSurface = hasSize ? surface.rectIn?.call(this) : null;
   }
 
-  /// Where the opening stands, or null once it has settled.
   _MorphFrame? _frame() {
     if (_animation.value >= 1) {
       return null;
@@ -295,8 +284,6 @@ class _RenderPopupMorph extends RenderProxyBox {
   @override
   bool get alwaysNeedsCompositing => child != null;
 
-  /// The anchor in this box's coordinates; it comes in those of the layout
-  /// box that places this one.
   Rect get _localAnchor =>
       _anchor.shift(-(parentData! as BoxParentData).offset);
 
@@ -356,15 +343,10 @@ class _RenderPopupMorph extends RenderProxyBox {
     );
     final sourceImage = _sourceImage;
     final image = sourceImage?.value;
-    // The source control stays visible until its snapshot exists, so the
-    // platter would only cover it.
     if (sourceImage != null && image == null) {
       return;
     }
     final content = _contentTransform(platter, platter.width / size.width);
-    // The card paints the same surface and shadow as the platter, so once a
-    // sub menu leaves the root's bounds, the platter steps aside instead of
-    // clipping the levels until the springs settle.
     if (!frame.platter) {
       _pane.clear();
       context.pushTransform(
@@ -397,7 +379,6 @@ class _RenderPopupMorph extends RenderProxyBox {
     final path = outline.shift(offset);
     if (glass != null) {
       final shape = outline.getBounds();
-      // Frosted as the card and shadowed after, so one capture serves the morph.
       _pane.paint(
         context,
         (merged ? platter : shape).shift(offset),

@@ -1,7 +1,3 @@
-/// Sponsor page, aligned with `ui/SponsorScreen.kt`; QR codes come from the README.
-///
-/// The sponsor list is not repeated here: the about page's support group links it directly, so the
-/// list has exactly one entry point.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -67,8 +63,6 @@ class SponsorPage extends StatelessWidget {
   }
 }
 
-/// Header card: icon, title, description and tags. A card rather than bare text keeps the
-/// header consistent with the app info page.
 class _SponsorHero extends StatelessWidget {
   const _SponsorHero();
 
@@ -171,7 +165,6 @@ class _PaymentSection extends StatelessWidget {
   }
 }
 
-/// One QR code card: white background, since a code needs a light surround to scan, plus its name.
 class _PaymentCard extends StatelessWidget {
   const _PaymentCard({required this.asset, required this.label});
 
@@ -192,8 +185,6 @@ class _PaymentCard extends StatelessWidget {
               aspectRatio: 1,
               child: ClipRRect(
                 borderRadius: AppRadius.standard,
-                // A code needs a static light background and must not follow dark theme
-                // inversion, or it cannot be scanned.
                 child: ColoredBox(
                   color: Colors.white,
                   child: Image.asset(
@@ -258,7 +249,6 @@ class _PaymentCard extends StatelessWidget {
   }
 }
 
-/// A bulleted list row matching the legacy `SponsorList`.
 class _BulletRow extends StatelessWidget {
   const _BulletRow({required this.text});
 

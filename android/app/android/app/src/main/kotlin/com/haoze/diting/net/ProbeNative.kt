@@ -4,12 +4,6 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.ByteBuffer
 
-/// Native diagnostics kernel, the JNI face of `rust/diting-probe-core`.
-///
-/// The payload layouts are documented in `rust/diting-probe-core/src/api.rs`; every request is one
-/// packed `ByteArray` and every answer is one packed `ByteArray`, both big-endian. The library is
-/// required: a build that forgot `python rust/build_android.py` fails the probe with an
-/// [IllegalStateException] instead of running a second parser in Kotlin.
 internal class ProbeNative private constructor() {
     external fun sanitizeHost(input: String): String?
     external fun isIpLiteral(input: String): Boolean
@@ -36,29 +30,22 @@ internal class ProbeNative private constructor() {
             }
         }
 
-        /// `NetHost.sanitize`; never null.
         fun sanitizeHost(input: String): String =
             requireNotNull(instance.sanitizeHost(input)) { "native sanitize returned no value" }
 
-        /// `DnsLookupProbe.isIpLiteral`.
         fun isIpLiteral(input: String): Boolean = instance.isIpLiteral(input)
 
-        /// `TraceProbe`'s streaming stamp: `time=` anywhere or a `From ` prefix.
         fun isResponseLine(line: String): Boolean = instance.traceResponseLine(line)
 
-        /// `DnsLatencyTester`'s DoH endpoint.
         fun dohEndpoint(url: String, host: String): String =
             requireNotNull(instance.dohEndpoint(url, host)) { "native DoH endpoint returned no value" }
 
-        /// One A/AAAA query wire image; null when a label was empty or longer than 63 bytes.
         fun buildDnsQueryOrNull(id: Int, ipv4: Boolean, domain: String): ByteArray? =
             instance.buildDnsQuery(ProbePayload.query(id, ipv4, domain))
 
-        /// `DnsLatencyTester.isSuccess`.
         fun dnsResponseSucceeded(response: ByteArray): Boolean =
             instance.dnsResponseSucceeded(response)
 
-        /// The custom resolver's answer walk.
         fun parseDnsServerReply(response: ByteArray, ipv4: Boolean): ProbeDnsReply =
             decodeDnsReply(
                 requireNotNull(instance.parseDnsServerReply(ProbePayload.reply(response, ipv4))) {
@@ -66,9 +53,6 @@ internal class ProbeNative private constructor() {
                 },
             )
 
-        /// `PingProbe.parseSummary`; null means the output carried no `N% packet loss` line.
-        ///
-        /// A null *payload* is different: the kernel rejected the request, which is a hard error.
         fun pingSummary(output: String): ProbePingSummary? {
             val payload = requireNotNull(instance.pingSummary(ProbePayload.text(output))) {
                 "native ping summary rejected the payload"
@@ -109,7 +93,6 @@ internal class ProbeNative private constructor() {
             }
         }
 
-        /// Min/avg/max/jitter of the probe samples plus the rounded millisecond value.
         fun latencyStats(samples: List<Double>): ProbeLatencyStats {
             val reader = ProbePayload.Reader(
                 requireNotNull(instance.latencyStats(ProbePayload.samples(samples))) {
@@ -126,7 +109,6 @@ internal class ProbeNative private constructor() {
             )
         }
 
-        /// One hop of a `ping -t <ttl>` run.
         fun traceHop(resolved: String, text: String): ProbeHop =
             decodeHop(
                 requireNotNull(instance.traceHop(ProbePayload.hop(resolved, text))) {
@@ -136,7 +118,6 @@ internal class ProbeNative private constructor() {
     }
 }
 
-/// One row of `PingSummary.replies`.
 internal data class ProbeReplyRow(
     val sequence: Int,
     val elapsedMs: Double?,
@@ -144,7 +125,6 @@ internal data class ProbeReplyRow(
     val timeout: Boolean,
 )
 
-/// The parsed half of a `PingSummary`.
 internal data class ProbePingSummary(
     val transmitted: Int,
     val received: Int,
@@ -156,7 +136,6 @@ internal data class ProbePingSummary(
     val replies: List<ProbeReplyRow>,
 )
 
-/// Sample statistics shared by the latency tester and the TCP fallback.
 internal data class ProbeLatencyStats(
     val minMs: Double?,
     val avgMs: Double?,
@@ -165,10 +144,8 @@ internal data class ProbeLatencyStats(
     val roundedAverageMs: Long,
 )
 
-/// One A/AAAA answer of a custom resolver.
 internal data class ProbeDnsAnswer(val ipv4: Boolean, val ttl: Long, val value: String)
 
-/// Outcome of reading one custom resolver's reply; the failure kinds print different messages.
 internal sealed interface ProbeDnsReply {
     data class Ok(val answers: List<ProbeDnsAnswer>) : ProbeDnsReply
     data object Invalid : ProbeDnsReply
@@ -177,7 +154,6 @@ internal sealed interface ProbeDnsReply {
     data object Incomplete : ProbeDnsReply
 }
 
-/// What one hop's output means, mirroring `trace::Hop`.
 internal sealed interface ProbeHop {
     data class Reached(val address: String?, val elapsedMs: Double?) : ProbeHop
     data class Answered(val address: String, val unreachable: Boolean) : ProbeHop
@@ -226,7 +202,6 @@ private fun decodeHop(payload: ByteArray): ProbeHop {
     }
 }
 
-/// Payload builders and the big-endian reader the decoders share.
 private object ProbePayload {
     fun query(id: Int, ipv4: Boolean, domain: String): ByteArray = pack { out ->
         out.writeShort(id)
@@ -288,7 +263,6 @@ private object ProbePayload {
             return String(bytes, Charsets.UTF_8)
         }
 
-        /// `u8` presence bits followed by four `Double`s; a clear bit means the value is padding.
         fun optionals(): ProbeOptionals {
             val flags = u8()
             val values = List(4) { f64() }
@@ -302,7 +276,6 @@ private object ProbePayload {
     }
 }
 
-/// The four optional latencies one presence byte describes.
 internal data class ProbeOptionals(
     val minMs: Double?,
     val avgMs: Double?,

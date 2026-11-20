@@ -1,4 +1,3 @@
-/// Traffic stats: time window plus per-app ranking, read from `app_traffic_daily`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -30,14 +29,12 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
     with PageVisibilityMixin<TrafficPage> {
   final _search = TextEditingController();
 
-  /// Grab the notifier on entry: dispose() cannot call ref.read.
   SpeedSeriesNotifier? _speed;
   bool _polling = false;
 
   @override
   void initState() {
     super.initState();
-    // Shares the same rate series as the home page; the provider ref-counts it.
     _speed = ref.read(speedSeriesProvider.notifier);
   }
 
@@ -124,7 +121,6 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
 
     return AppListScrollView(
       slivers: [
-        // The header is a box adapter, which gets no repaint boundary of its own.
         SliverToBoxAdapter(
           child: RepaintBoundary(
             child: Column(
@@ -156,8 +152,6 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  // Range chips go through ChipRow: a bare Wrap gives no cross-axis constraint
-                  // and wraps, pushing every card below it down.
                   child: ChipRow(
                     children: [
                       for (final option in _rangeOptions(context.l10n))
@@ -269,7 +263,6 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
     );
   }
 
-  /// Empty-state text, distinguishing no data from filtered-out and hidden-system.
   static String _emptyDescription({
     required AppL10n l10n,
     required String search,
@@ -294,7 +287,6 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
     );
   }
 
-  /// Disabled option explanation. A hint bar rather than silence: a tap must answer.
   void _explainUnavailable(String label, String? reason) {
     showAppSnack(
       context,
@@ -305,8 +297,6 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
     );
   }
 
-  /// Clear history: the confirmation wording is copied verbatim from upstream. The async
-  /// guard uses the passed context.mounted, which pairs with the context the analyzer sees.
   Future<void> _confirmClear(BuildContext context) async {
     final confirmed = await showFloatingDialog<bool>(
       context: context,
@@ -348,9 +338,6 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
   }
 }
 
-/// Sort, keyword filter and system-app hiding, all in Dart rather than a second SQL pass: a
-/// month of history is a few hundred rows, and one sort definition avoids disagreeing with
-/// the ranking query's ORDER BY.
 List<AppTrafficDaily> _ranked(
   List<AppTrafficDaily> rows,
   TrafficSort sort,
@@ -372,7 +359,6 @@ List<AppTrafficDaily> _ranked(
       TrafficSort.download => a.rxBytes.compareTo(b.rxBytes),
       TrafficSort.upload => a.txBytes.compareTo(b.txBytes),
     };
-    // Descending, matching the SQL: ascending would put the least-used app first.
     return -result;
   });
   return filtered;

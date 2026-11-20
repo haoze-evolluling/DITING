@@ -1,10 +1,3 @@
-//! Replays the key corpus and the dedupe trace produced by the old Go implementation.
-//!
-//! `keys.tsv` pins `connLogKey` byte for byte (empty fields, unicode, `|` inside a field, negative
-//! numbers). `dedup_trace.tsv` pins the set semantics: first sighting new, repeat duplicate, the
-//! blocked prefix/reason being part of the key, and a reset dropping the entries while keeping the
-//! overflow counter.
-
 use diting_connlog_core::{build_key, ConnLogDedup};
 
 const KEYS: &str = include_str!("fixtures/keys.tsv");

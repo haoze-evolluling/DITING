@@ -1,17 +1,9 @@
-//! Weekly blocking windows (`BlockingSchedule`) ported from Go's `schedule.go`.
-//!
-//! The API model is only the textual form (`weekdays`, `start`, `end`); this module compiles it to
-//! "weekday bitmask + two minute offsets" once per configuration update and evaluates it without
-//! allocating. `start == end` is a zero-length window and never active; `start > end` is an
-//! overnight window whose weekday belongs to the day it starts on.
-
 use chrono::{DateTime, Datelike, Local, Timelike, Weekday};
 use diting_desktop_api::config::BlockingSchedule;
 
 const ALL_WEEKDAYS: u8 = 0x7F;
 const WEEKDAY_KEYS: [&str; 7] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
-/// One compiled weekly window.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct CompiledSchedule {
     pub(crate) id: String,
@@ -23,7 +15,6 @@ pub(crate) struct CompiledSchedule {
 }
 
 impl CompiledSchedule {
-    /// `NormalizeSchedule`: validates `HH:MM` clocks and weekday keys.
     pub(crate) fn compile(raw: &BlockingSchedule) -> Result<Self, String> {
         let start_min = parse_clock(&raw.start)?;
         let end_min = parse_clock(&raw.end)?;
@@ -38,12 +29,10 @@ impl CompiledSchedule {
         })
     }
 
-    /// `BlockingSchedule.IsActive`.
     pub(crate) fn is_active(&self, now: &DateTime<Local>) -> bool {
         if !self.enabled || self.weekday_mask == 0 {
             return false;
         }
-        // A zero-length window is valid configuration but never active.
         if self.start_min == self.end_min {
             return false;
         }
@@ -52,13 +41,11 @@ impl CompiledSchedule {
         let today = weekday_bit(now.weekday());
 
         if self.start_min < self.end_min {
-            // Same-day window [start, end).
             return now_min >= self.start_min
                 && now_min < self.end_min
                 && self.weekday_mask & today != 0;
         }
 
-        // Overnight window: today's [start, 24:00) or tomorrow's [00:00, end).
         if now_min >= self.start_min {
             return self.weekday_mask & today != 0;
         }
@@ -70,7 +57,6 @@ impl CompiledSchedule {
     }
 }
 
-/// Compiles every entry, dropping invalid ones (Go's normalization does the same).
 pub(crate) fn compile_all(schedules: &[BlockingSchedule]) -> Vec<CompiledSchedule> {
     schedules
         .iter()
@@ -78,17 +64,14 @@ pub(crate) fn compile_all(schedules: &[BlockingSchedule]) -> Vec<CompiledSchedul
         .collect()
 }
 
-/// `HasEnabledSchedule`.
 pub(crate) fn has_enabled(schedules: &[CompiledSchedule]) -> bool {
     schedules.iter().any(|schedule| schedule.enabled)
 }
 
-/// `ActiveSchedule`.
 pub(crate) fn any_active(schedules: &[CompiledSchedule], now: &DateTime<Local>) -> bool {
     schedules.iter().any(|schedule| schedule.is_active(now))
 }
 
-/// `FirstActiveSchedule`.
 pub(crate) fn first_active<'a>(
     schedules: &'a [CompiledSchedule],
     now: &DateTime<Local>,
@@ -139,7 +122,6 @@ fn parse_weekdays(days: &[String]) -> Result<u8, String> {
     Ok(mask)
 }
 
-/// `time.Weekday` bit position: Sunday is 0, Saturday is 6.
 fn weekday_bit(weekday: Weekday) -> u8 {
     1 << weekday.num_days_from_sunday()
 }
@@ -175,18 +157,18 @@ mod tests {
     #[test]
     fn same_day_window_respects_weekday() {
         let window = schedule("09:00", "17:00", &["mon"]);
-        assert!(window.is_active(&local(2024, 1, 1, 10, 0))); // Monday
+        assert!(window.is_active(&local(2024, 1, 1, 10, 0)));
         assert!(!window.is_active(&local(2024, 1, 1, 8, 59)));
         assert!(!window.is_active(&local(2024, 1, 1, 17, 0)));
-        assert!(!window.is_active(&local(2024, 1, 2, 10, 0))); // Tuesday
+        assert!(!window.is_active(&local(2024, 1, 2, 10, 0)));
     }
 
     #[test]
     fn overnight_window_belongs_to_its_start_day() {
         let window = schedule("22:00", "06:00", &["mon"]);
-        assert!(window.is_active(&local(2024, 1, 1, 23, 0))); // Monday evening
-        assert!(window.is_active(&local(2024, 1, 2, 5, 0))); // Tuesday early
-        assert!(!window.is_active(&local(2024, 1, 2, 23, 0))); // Tuesday evening
+        assert!(window.is_active(&local(2024, 1, 1, 23, 0)));
+        assert!(window.is_active(&local(2024, 1, 2, 5, 0)));
+        assert!(!window.is_active(&local(2024, 1, 2, 23, 0)));
         assert!(!window.is_active(&local(2024, 1, 1, 6, 0)));
     }
 

@@ -1,17 +1,9 @@
-//! The upstream protocol as the app stores it, and the two spellings the engine reads.
-//!
-//! 1.4.3 stored `DNS` / `DOH` / `DOT` in the prefs, while `ApplyDNSConfig` reads `PLAIN` / `DOH` /
-//! `DOT`. The go-side table already lives in `diting-config-core` (the engine validates pushed
-//! configs against it), so this module only adds the storage spelling on top instead of a second
-//! copy of the engine's names.
-
 pub use diting_config_core::protocol::Protocol;
 
 pub const STORAGE_DNS: &str = "DNS";
 pub const STORAGE_DOH: &str = "DOH";
 pub const STORAGE_DOT: &str = "DOT";
 
-/// `DnsProtocol.fromStorage`: case-insensitive, anything else is not a protocol at all.
 pub fn from_storage(value: &str) -> Option<Protocol> {
     match value.to_uppercase().as_str() {
         STORAGE_DNS => Some(Protocol::Plain),
@@ -21,22 +13,18 @@ pub fn from_storage(value: &str) -> Option<Protocol> {
     }
 }
 
-/// The prefs spelling, for `user_providers_json` and `custom_upstreams`.
 pub fn storage_value(protocol: Protocol) -> &'static str {
     match protocol {
         Protocol::Doh => STORAGE_DOH,
         Protocol::Dot => STORAGE_DOT,
-        // `Plain` is `DNS` in the prefs and `PLAIN` in the document; `Doq` never reaches the app.
         _ => STORAGE_DNS,
     }
 }
 
-/// The document spelling (`PLAIN` / `DOH` / `DOT`).
 pub fn go_value(protocol: Protocol) -> &'static str {
     protocol.name()
 }
 
-/// Plain DNS falls back to 53, DoT to 853.
 pub fn default_port(protocol: Protocol) -> i32 {
     if protocol == Protocol::Dot {
         853
@@ -45,9 +33,6 @@ pub fn default_port(protocol: Protocol) -> i32 {
     }
 }
 
-/// `block_response_mode` (`nxdomain` / `nodata` / `refused` / `zero_address`) to the document's
-/// `blockResponse`. An unknown value is the 1.4.3 default, `NXDOMAIN` — note this is *not* the
-/// engine's own table, where unknown means `CUSTOM_IP`.
 pub fn block_response(storage: &str) -> &'static str {
     match storage {
         "nodata" => "NODATA",
@@ -57,7 +42,6 @@ pub fn block_response(storage: &str) -> &'static str {
     }
 }
 
-/// `joinHostPort`: bracketing a bare IPv6 host so the engine can parse the result.
 pub fn join_host_port(host: &str, port: i32) -> String {
     if host.contains(':') && !host.starts_with('[') {
         format!("[{host}]:{port}")
@@ -66,8 +50,6 @@ pub fn join_host_port(host: &str, port: i32) -> String {
     }
 }
 
-/// `ServerUpstream.hostPort`: the server-mode address is a bare host, so an address that already
-/// carries a colon is bracketed — including the odd `host:port` input this inherits from 1.4.3.
 pub fn server_host_port(address: &str, port: i32) -> String {
     if address.contains(':') {
         let bare = strip_brackets(address);
@@ -77,7 +59,6 @@ pub fn server_host_port(address: &str, port: i32) -> String {
     }
 }
 
-/// Drops one leading `[` and one trailing `]`.
 pub fn strip_brackets(value: &str) -> String {
     let mut result = value;
     if let Some(rest) = result.strip_prefix('[') {

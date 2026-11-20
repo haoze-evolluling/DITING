@@ -1,19 +1,15 @@
 part of 'legacy_settings.dart';
 
-/// Keys for app behaviour, language, notifications, log mode, background and update checks. Names
-/// are verbatim; writing to the wrong container stores a value the legacy app never reads.
 extension LegacySettingsParity on LegacySettings {
   String get _ui => LegacySettings.uiContainer;
 
   String get _notification => LegacySettings.notificationContainer;
 
-  /// One of `all` / `blocked_and_errors` / `off`.
   String get dnsLogModeRaw => _string(dnsContainer, 'dns_log_mode') ?? 'all';
 
   void setDnsLogModeRaw(String storageValue) =>
       _store.putString(dnsContainer, 'dns_log_mode', storageValue);
 
-  /// Dataset-scoped: the native retention sweep reads this key from the data set's own container.
   int get logRetentionDays => _int(dnsContainer, 'log_retention_days', 7);
 
   void setLogRetentionDays(int days) =>
@@ -24,34 +20,29 @@ extension LegacySettingsParity on LegacySettings {
   void setFloatingLogEnabled(bool value) =>
       _store.putBool(_ui, 'floating_log_enabled', value);
 
-  /// Panel size of the floating log window: 0 small, 1 medium, 2 large (legacy key and values).
   int get floatingLogPanelSize =>
       _int(_ui, 'floating_log_panel_size', 1).clamp(0, 2);
 
   void setFloatingLogPanelSize(int value) =>
       _store.putInt(_ui, 'floating_log_panel_size', value.clamp(0, 2));
 
-  /// Expanded-panel opacity, read natively when the panel opens; the ball stays opaque.
   double get floatingLogOpacity =>
       _double(_ui, 'floating_log_opacity', 1).clamp(0.3, 1).toDouble();
 
   void setFloatingLogOpacity(double value) =>
       _store.putFloat(_ui, 'floating_log_opacity', value.clamp(0.3, 1));
 
-  /// Applied natively on activity create and resume, where it also disables the recents screenshot.
   bool get hideFromRecentsEnabled =>
       _bool(_ui, 'hide_from_recents_enabled', false);
 
   void setHideFromRecentsEnabled(bool value) =>
       _store.putBool(_ui, 'hide_from_recents_enabled', value);
 
-  /// Read natively by the VPN services when another app takes the slot; on by default.
   bool get vpnWatchdogEnabled => _bool(_ui, 'vpn_watchdog_enabled', true);
 
   void setVpnWatchdogEnabled(bool value) =>
       _store.putBool(_ui, 'vpn_watchdog_enabled', value);
 
-  /// Restart the tunnel on launch when it was still meant to run (normal and express only).
   bool get autoStartOnLaunchEnabled =>
       _bool(_ui, 'auto_start_on_launch_enabled', false);
 
@@ -61,12 +52,9 @@ extension LegacySettingsParity on LegacySettings {
   void setBypassLanEnabled(bool value) =>
       _store.putBool(_ui, 'bypass_lan_enabled', value);
 
-  /// `auto` / `disable` / `prefer`; the route config supports only `auto`.
   void setIpv6ModeRaw(String storageValue) =>
       _store.putString(dnsContainer, 'ipv6_mode', storageValue);
 
-  /// `system` / `chinese` / `english`; `system` hands the choice to the platform, which keeps
-  /// the interface Chinese unless the device language is English (see `AppLanguageMode`).
   String get appLanguageModeRaw =>
       _string(_ui, 'app_language_mode') ?? 'system';
 
@@ -79,14 +67,12 @@ extension LegacySettingsParity on LegacySettings {
   void setInitialAgreementAccepted(bool value) =>
       _store.putBool(_ui, 'initial_agreement_accepted', value);
 
-  /// Inverted on purpose: the default `true` means the startup check is off.
   bool get disableStartupUpdateCheck =>
       _bool(_ui, 'disable_startup_update_check', true);
 
   void setDisableStartupUpdateCheck(bool value) =>
       _store.putBool(_ui, 'disable_startup_update_check', value);
 
-  /// The `_uri` key is the image in effect, `_uris` the full history list.
   bool get customBackgroundEnabled =>
       _bool(_ui, 'custom_background_enabled', false);
 
@@ -122,8 +108,6 @@ extension LegacySettingsParity on LegacySettings {
     ]),
   );
 
-  /// The foreground service reads `notification_settings_prefs`, so writing these keys elsewhere
-  /// has no effect.
   bool get notificationPersistent => _bool(_notification, 'persistent', true);
 
   void setNotificationPersistent(bool value) =>
@@ -131,8 +115,6 @@ extension LegacySettingsParity on LegacySettings {
 
   bool get notificationSpeed => _bool(_notification, 'speed', false);
 
-  /// Keeps an existing item list in step, so an old backup that only carries the speed switch
-  /// still shows or hides the readout.
   void setNotificationSpeed(bool value) {
     _store.putBool(_notification, 'speed', value);
     if (_string(_notification, 'stats_items') == null) return;
@@ -141,9 +123,6 @@ extension LegacySettingsParity on LegacySettings {
     _store.putString(_notification, 'stats_items', items.join(','));
   }
 
-  /// Ordered ids of the notification detail items (`total`, `passed`, `filtered`, `failed`,
-  /// `cached`, `rewritten`, `speed`). Without the key, older installs fall back to the speed
-  /// switch, the only item they had; the native reader does the same.
   List<String> get notificationStatsItems {
     final raw = _string(_notification, 'stats_items');
     if (raw == null) return notificationSpeed ? const ['speed'] : const [];
@@ -153,13 +132,11 @@ extension LegacySettingsParity on LegacySettings {
     ];
   }
 
-  /// Also writes the legacy speed switch, which 1.4.3 backups and older builds read.
   void setNotificationStatsItems(List<String> ids) {
     _store.putString(_notification, 'stats_items', ids.toSet().join(','));
     _store.putBool(_notification, 'speed', ids.contains('speed'));
   }
 
-  /// Item labels as JSON, so the native notification follows the in-app language.
   void setNotificationStatsLabelsJson(String value) =>
       _store.putString(_notification, 'stats_labels', value);
 
@@ -176,15 +153,12 @@ extension LegacySettingsParity on LegacySettings {
     _store.putString(_notification, 'custom_stopped_text', stopped);
   }
 
-  /// Legacy-style bodies composed by Dart (`notification_status_text.dart`): the services cannot
-  /// see the provider catalog, so the default is persisted next to the custom text.
   void setNotificationDefaultRunningText(String value) =>
       _store.putString(_notification, 'default_running_text', value);
 
   void setNotificationDefaultExpressText(String value) =>
       _store.putString(_notification, 'default_express_text', value);
 
-  /// Dataset container: one shared switch would make the modes change together.
   bool get subscriptionAutoUpdateEnabled => _bool(
     dnsContainer,
     LegacySettings.subscriptionAutoUpdateEnabledKey,
@@ -218,7 +192,6 @@ extension LegacySettingsParity on LegacySettings {
     ),
   );
 
-  /// Raw schedule id; unknown values read as `interval`, the only mode older builds had.
   String get subscriptionAutoUpdateScheduleRaw {
     final value = _string(
       dnsContainer,
@@ -261,14 +234,11 @@ extension LegacySettingsParity on LegacySettings {
     epochMs,
   );
 
-  /// The nine AI analysis keys are global and shared by the log, domain and parameter pages.
   bool get agentApiEnabled => _bool(_ui, 'agent_api_enabled', true);
 
   void setAgentApiEnabled(bool value) =>
       _store.putBool(_ui, 'agent_api_enabled', value);
 
-  /// Plain text, as the legacy store wrote it; only the keys inside the providers list are
-  /// obfuscated.
   String get agentApiKey => _string(_ui, 'agent_api_key') ?? '';
 
   void setAgentApiKey(String value) =>
@@ -290,8 +260,6 @@ extension LegacySettingsParity on LegacySettings {
   void setAgentApiModel(String value) =>
       _store.putString(_ui, 'agent_api_model', value.trim());
 
-  /// The legacy app stored a string, so early installs may hold either form; unparsable values fall
-  /// back to 0.7.
   double get agentApiTemperature {
     final raw = _store.read(_ui, 'agent_api_temperature');
     if (raw is num) return raw.toDouble();
@@ -311,7 +279,6 @@ extension LegacySettingsParity on LegacySettings {
   void setAgentApiSystemPrompt(String value) =>
       _store.putString(_ui, 'agent_api_system_prompt', value);
 
-  /// Null on first launch, where a keyless example provider is seeded.
   String? get agentAiProvidersJson => _string(_ui, 'agent_ai_providers_json');
 
   void setAgentAiProvidersJson(String value) =>

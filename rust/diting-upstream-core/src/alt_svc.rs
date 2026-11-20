@@ -1,41 +1,22 @@
-//! HTTP `Alt-Svc` negotiation for DoH3 (N7).
-//!
-//! A DoH response may advertise an HTTP/3 endpoint through `Alt-Svc: h3=":443"; ma=86400`. Acting on
-//! it means two decisions applied on every query, so they live here as one pure implementation:
-//! parse the header into an [`AltSvc`], and decide whether the next query should prefer HTTP/3 or
-//! stay on HTTP/2 (with a bounded failure count so a broken H3 path cannot pin every query).
-
-/// An HTTP/3 alternative endpoint advertised by a DoH server.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AltSvc {
-    /// The HTTP/3 ALPN token that matched (`h3`, `h3-29`, …). Only the `h3` family is accepted.
     pub protocol: String,
-    /// The advertised authority port (defaults to 443 when the value is just `:port`).
     pub port: u16,
-    /// `ma=` lifetime in seconds; 0 when absent (the caller then treats it as a one-shot hint).
     pub max_age: u64,
 }
 
-/// Whether to attempt HTTP/3 or fall back to DoH/HTTP-2 for the next query.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Transport {
     Doh3,
     Doh,
 }
 
-/// The chosen primary transport and the one to use when it fails.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Plan {
     pub prefer: Transport,
     pub fallback: Transport,
 }
 
-/// Parses an `Alt-Svc` header value, returning the first advertised `h3` endpoint.
-///
-/// Entries are comma-separated; each looks like `h3=":443"` or `h3="alt.example:443"; ma=86400`. A
-/// protocol other than the `h3` family (`h2`, `h3-29` is accepted as `h3`) is ignored. A relative
-/// value (`":443"`, meaning "same host, this port") is accepted; an absolute authority keeps only its
-/// port here (the host is the DoH host).
 pub fn parse_alt_svc(header: &str) -> Option<AltSvc> {
     for entry in header.split(',') {
         let mut parts = entry.split(';');
@@ -71,11 +52,6 @@ pub fn parse_alt_svc(header: &str) -> Option<AltSvc> {
     None
 }
 
-/// Chooses the next transport.
-///
-/// HTTP/3 is preferred only when it is enabled, the server advertised it, and it has not failed more
-/// than `max_failures` times in a row. The fallback is always DoH/HTTP-2, so a bad advertisement can
-/// never make a provider unusable.
 pub fn plan(
     enabled: bool,
     alt: Option<&AltSvc>,
@@ -93,8 +69,6 @@ pub fn plan(
     }
 }
 
-/// DoH3 and DoH must return the same DNS message for the same query; the caller compares the wire
-/// bytes and, on mismatch, keeps the DoH answer (the proven transport).
 pub fn answers_agree(doh3: &[u8], doh: &[u8]) -> bool {
     doh3 == doh
 }
@@ -145,7 +119,6 @@ mod tests {
         assert_eq!(plan(false, Some(&alt), 0, 3).prefer, Transport::Doh);
         assert_eq!(plan(true, None, 0, 3).prefer, Transport::Doh);
         assert_eq!(plan(true, Some(&alt), 3, 3).prefer, Transport::Doh);
-        // The fallback is always DoH so a bad H3 path cannot brick the provider.
         assert_eq!(plan(true, Some(&alt), 0, 3).fallback, Transport::Doh);
     }
 

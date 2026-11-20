@@ -1,6 +1,3 @@
-// Desktop hub, network-toolbox half (desktop parity): the port
-// probe and its autofix. The probe runs on demand; both calls adopt the service's answer.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_tools_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';

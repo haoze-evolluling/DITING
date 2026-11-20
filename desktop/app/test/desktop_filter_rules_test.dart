@@ -1,7 +1,3 @@
-// Desktop hub custom rules (desktop parity): the AdGuard syntax
-// guide beside the editor that replaces the whole rule list. The text is a local draft; only the
-// save button posts it, and the page then adopts the list the service re-reads.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/pages/hub/desktop_filter_rules_page.dart';
 import 'package:diting_desktop/pages/hub/widgets/filter_custom_rules_card.dart';

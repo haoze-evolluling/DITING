@@ -1,29 +1,3 @@
-//! The transparent-proxy stack: the piece gVisor used to provide.
-//!
-//! `smoltcp` is not a transparent proxy by default: an interface drops ingress packets whose
-//! destination is not one of its configured addresses, and a TCP socket only takes SYNs for its own
-//! listening endpoint. gVisor has no listener table at all, so it accepted any destination.
-//!
-//! Two `smoltcp` 0.14 capabilities close the gap (both pinned by `rust/diting-netstack-spike`):
-//!
-//! 1. [`Interface::set_any_ip(true)`](smoltcp::iface::Interface::set_any_ip) makes
-//!    `InterfaceInner::has_ip_addr` return `true` unconditionally, so ingress for any destination
-//!    address reaches the socket layer.
-//! 2. A `tcp::Socket` trained with `listen()` on a *fully specified* endpoint accepts SYNs for that
-//!    endpoint only — exactly what the engine wants: one socket per SYN, bound to the destination
-//!    the client asked for. The SYN-ACK then leaves with that destination as its source address and
-//!    no NAT bookkeeping is needed.
-//!
-//! UDP needs less: `bind()` to a port with no address accepts datagrams for every destination, and
-//! `UdpMetadata::local_address` reports the address the datagram was actually sent to. One socket
-//! per destination *port* therefore serves every destination address.
-//!
-//! # What this layer does not own
-//!
-//! The TUN threads, the bounded egress queue, the poll timer and the flow handlers live in
-//! [`crate::tunnel`]. This struct only turns packets into flow events and back, and enforces the
-//! resource bounds ([`Limits`]) that keep a mobile process from growing without a GC.
-
 use std::collections::{BTreeMap, VecDeque};
 
 use smoltcp::iface::{Config as IfaceConfig, Interface, SocketSet};
@@ -37,26 +11,18 @@ use smoltcp::wire::{
 use crate::netstack::device::IpDevice;
 use crate::netstack::flow::{FlowOutput, Stats, TcpFlow, TcpKey, UdpBinding, UdpDatagram};
 
-/// The resource bounds from section 5.2 of the migration plan.
 #[derive(Clone, Copy, Debug)]
 pub struct Limits {
-    /// TUN MTU. Android uses 1400 so that the VPN's own headers still fit the carrier MTU.
     pub mtu: usize,
-    /// Hard caps on the two flow tables; a SYN or a first datagram past the cap is dropped.
     pub max_tcp_flows: usize,
     pub max_udp_bindings: usize,
-    /// Per-socket smoltcp buffers. These are allocated when the flow is created.
     pub tcp_rx_bytes: usize,
     pub tcp_tx_bytes: usize,
     pub udp_rx_bytes: usize,
     pub udp_tx_bytes: usize,
-    /// Cap on the bytes buffered for the handler in one flow; overflow aborts the flow rather than
-    /// growing the heap: there is no GC.
     pub flow_buffer_bytes: usize,
     pub udp_slots: usize,
-    /// Idle TCP flows are torn down after this long, mirroring `set_timeout`.
     pub tcp_idle: Duration,
-    /// Keepalive interval, mirroring the Go engine's `28 * time.Second`.
     pub keepalive: Option<Duration>,
 }
 
@@ -91,8 +57,6 @@ pub struct Netstack {
 }
 
 impl Netstack {
-    /// Builds the stack. The configured address is the unspecified address on purpose: with
-    /// `any_ip` the socket layer ignores it.
     pub fn new(limits: Limits) -> Self {
         let mut device = IpDevice::new(limits.mtu);
         let mut iface = Interface::new(
@@ -135,14 +99,10 @@ impl Netstack {
         self.stats
     }
 
-    /// Whether the interface is in transparent mode. The whole data plane rests on this flag, so a
-    /// refactor that drops it fails loudly here rather than silently dropping packets.
     pub fn any_ip(&self) -> bool {
         self.iface.any_ip()
     }
 
-    /// Hand one packet, exactly as read from the TUN fd, to the stack. The stack is polled for as
-    /// long as it has work, so the caller only has to drain [`Netstack::egress`] afterwards.
     pub fn ingress(&mut self, packet: &[u8], now: Instant) {
         self.stats.packets_in += 1;
         self.stats.bytes_in += packet.len() as u64;
@@ -177,14 +137,11 @@ impl Netstack {
         self.poll(now);
     }
 
-    /// Polls the interface, then collects the socket side effects: received bytes, closed flows,
-    /// received datagrams.
     pub fn poll(&mut self, now: Instant) {
         self.iface.poll(now, &mut self.device, &mut self.sockets);
         self.collect();
     }
 
-    /// Everything the stack wants written to the TUN fd.
     pub fn egress(&mut self) -> Vec<Vec<u8>> {
         let packets = self.device.drain_tx();
         for packet in &packets {
@@ -194,13 +151,10 @@ impl Netstack {
         packets
     }
 
-    /// The next deadline the stack needs a `poll` for (retransmission, keepalive, delayed ACK, FIN
-    /// timers). The session turns this into one shared timer instead of polling at a fixed rate.
     pub fn poll_delay(&mut self, now: Instant) -> Option<Duration> {
         self.iface.poll_delay(now, &self.sockets)
     }
 
-    /// The flows a SYN created since the last call; the session hands each to a handler.
     pub fn take_opened(&mut self) -> Vec<TcpKey> {
         self.opened.drain(..).collect()
     }
@@ -217,13 +171,10 @@ impl Netstack {
         self.udp.len()
     }
 
-    /// Bytes read out of every TCP flow since the last call, with the end-of-stream signals.
     pub fn take_tcp_output(&mut self) -> Vec<FlowOutput> {
         let mut output = Vec::new();
         for flow in self.tcp.values_mut() {
             let data: Vec<u8> = flow.recv.drain(..).collect();
-            // `may_recv` is also false during the handshake, so EOF is the peer's FIN (or a torn
-            // down socket), reported exactly once.
             let eof = flow.recv_closed && !flow.eof_reported;
             if eof {
                 flow.eof_reported = true;
@@ -241,9 +192,6 @@ impl Netstack {
         output
     }
 
-    /// Queue bytes towards the client. Returns how many were accepted: a short write means the
-    /// smoltcp send buffer is full and the caller must retry after a poll, exactly like the Go
-    /// engine's `Write` on the stack connection.
     pub fn tcp_write(&mut self, key: &TcpKey, data: &[u8], now: Instant) -> usize {
         let Some(flow) = self.tcp.get_mut(key) else {
             return 0;
@@ -259,8 +207,6 @@ impl Netstack {
         written
     }
 
-    /// Sends the client FIN (`CloseWrite` in Go): the read half stays open, which is what a DNS
-    /// client that shut down its write side and still waits for the answer needs.
     pub fn tcp_close_write(&mut self, key: &TcpKey, now: Instant) {
         if let Some(flow) = self.tcp.get_mut(key) {
             if !flow.closed {
@@ -270,7 +216,6 @@ impl Netstack {
         self.poll(now);
     }
 
-    /// Tears a connection down with RST: used when the gate blocks it or the handler gives up.
     pub fn tcp_abort(&mut self, key: &TcpKey, now: Instant) {
         if let Some(flow) = self.tcp.get_mut(key) {
             if !flow.closed {
@@ -280,7 +225,6 @@ impl Netstack {
         self.poll(now);
     }
 
-    /// Forgets a flow once the session is done with it, releasing its socket and buffers.
     pub fn tcp_remove(&mut self, key: &TcpKey) {
         if let Some(flow) = self.tcp.remove(key) {
             if !flow.closed {
@@ -289,13 +233,10 @@ impl Netstack {
         }
     }
 
-    /// The next datagram the engine has to answer, if any.
     pub fn udp_take(&mut self) -> Option<UdpDatagram> {
         self.datagrams.pop_front()
     }
 
-    /// Sends one datagram back to the client, addressed from the original destination it was sent
-    /// to. This is what keeps `resolver_plain.go`'s "answer from the queried upstream" shape.
     pub fn udp_send(
         &mut self,
         local: IpEndpoint,
@@ -324,7 +265,6 @@ impl Netstack {
         Ok(())
     }
 
-    /// Drops flows whose client went away without a FIN (radio loss, app killed, Doze).
     pub fn expire_idle(&mut self, now: Instant) {
         let idle = self.limits.tcp_idle;
         let expired: Vec<TcpKey> = self
@@ -400,8 +340,6 @@ impl Netstack {
         }
     }
 
-    /// The SYN preprocessing step: one socket per flow, listening on the destination the client
-    /// actually asked for.
     fn open_tcp(&mut self, key: TcpKey, now: Instant) {
         if self.tcp.len() >= self.limits.max_tcp_flows {
             self.stats.tcp_rejected += 1;
@@ -500,7 +438,6 @@ impl Netstack {
             }
 
             if flow.recv.len() > limits.flow_buffer_bytes {
-                // Nothing is draining this flow: drop it instead of buffering without bound.
                 socket.abort();
                 flow.recv.clear();
                 flow.closed = true;
@@ -536,12 +473,9 @@ impl Netstack {
     }
 }
 
-/// Why a datagram could not be queued for the client.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UdpSendError {
-    /// No datagram was ever received on that port, so no socket is bound to it.
     NotBound,
-    /// The socket's transmit buffer is full; the caller must retry after a poll.
     Full,
 }
 

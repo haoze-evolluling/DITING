@@ -1,5 +1,3 @@
-//! `/api/v1/auth/*`: status, login/logout, credentials and the login background.
-
 use base64::engine::general_purpose::{STANDARD, URL_SAFE};
 use base64::Engine;
 use hyper::header::HeaderValue;
@@ -34,7 +32,6 @@ pub fn handle_status(server: &Server, ctx: &Ctx<'_>) -> Resp {
     ok(AuthStatusResponse {
         initialized: server.auth().is_initialized(),
         web_enabled: server.runtime().config().web.enabled,
-        // Go's status endpoint deliberately does not reflect the calling token.
         authenticated: false,
         username: server.auth().username(),
         locked,

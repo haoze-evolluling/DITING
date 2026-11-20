@@ -1,9 +1,3 @@
-/// Desktop upstream state: the authoritative resolver config, its write path and the per-node
-/// latency probes.
-///
-/// The service is the only source of truth. A save re-reads the config instead of writing the
-/// expected result into the form, and a failed read keeps the last form while reporting the error,
-/// so an editing session is not lost because one poll failed.
 library;
 
 import 'dart:async';
@@ -23,7 +17,6 @@ class DesktopUpstreamState {
 
   final DesktopUpstreamConfig? config;
 
-  /// The last load failure. A non-null [config] together with this is the "stale" shape.
   final DesktopApiException? error;
   final bool isLoading;
   final bool saving;
@@ -53,8 +46,6 @@ class DesktopUpstreamNotifier extends Notifier<DesktopUpstreamState> {
     }
   }
 
-  /// Saves the whole form. Returns the failure for the page's snackbar; on success the config is
-  /// re-read, so the form shows what the service actually kept.
   Future<DesktopApiException?> save(DesktopUpstreamConfig next) async {
     if (state.saving) return null;
     state = DesktopUpstreamState(config: state.config, saving: true);
@@ -80,10 +71,8 @@ final desktopUpstreamProvider =
 class DesktopUpstreamProbeState {
   const DesktopUpstreamProbeState({this.busyId, this.results = const {}});
 
-  /// The node whose probe is in flight; its button shows a spinner.
   final String? busyId;
 
-  /// Keyed by provider id. A failed probe is stored as an error result, not as a page error.
   final Map<String, DesktopUpstreamProbe> results;
 
   bool isBusy(String id) => busyId == id;

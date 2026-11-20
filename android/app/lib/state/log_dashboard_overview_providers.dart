@@ -1,5 +1,3 @@
-/// Real aggregates for the overview cards; one snapshot, or separate providers show contradictory
-/// totals.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -19,7 +17,6 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Legacy `RECENT_LOG_LIMIT`, `RECENT_CACHE_LIMIT`, `TOP_LIST_LIMIT`, `SUBSCRIPTION_LIST_LIMIT`.
 const _recentLogLimit = 5;
 const _recentCacheLimit = 5;
 const _topListLimit = 8;
@@ -39,7 +36,6 @@ class LogDashboardSnapshot {
     required this.subscriptionBlocks,
   });
 
-  /// Empty snapshot for a fresh install: genuine "no requests today" values, not placeholders.
   const LogDashboardSnapshot.empty()
     : breakdown = const LogTrafficBreakdown.empty(),
       quality = const LogDnsQuality.empty(),
@@ -54,7 +50,6 @@ class LogDashboardSnapshot {
 
   final LogTrafficBreakdown breakdown;
 
-  /// DNS quality (average latency, cache hit rate) from the same `dns_log` rows.
   final LogDnsQuality quality;
   final LogRaceSummary race;
   final LogBootstrapSummary bootstrap;
@@ -65,10 +60,8 @@ class LogDashboardSnapshot {
   final List<LogBootstrapIp> bootstrapIps;
   final List<LogSubscriptionBlock> subscriptionBlocks;
 
-  /// Highlighted total: blocked plus failed (legacy `FilteredModeDashboard`).
   int get highlightedTotal => breakdown.blocked + breakdown.error;
 
-  // The overview re-queries every 10 s; equal snapshots let the cards skip the rebuild.
   @override
   bool operator ==(Object other) =>
       other is LogDashboardSnapshot &&
@@ -98,7 +91,6 @@ class LogDashboardSnapshot {
   );
 }
 
-/// Milliseconds at local midnight, matching the legacy `dayStartMillis()`.
 int _dayStartMillis() {
   final now = DateTime.now();
   return DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
@@ -144,9 +136,7 @@ LogRecentRequest _recentOfKernel(Map<String, Object?> row) {
   );
 }
 
-/// Overview data. Empty tables yield [LogDashboardSnapshot.empty], never demo values.
 final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
-  // Refresh and "clear logs" both bump this, or the overview goes stale.
   ref.watch(dnsLogRevisionProvider);
   final mode = ref.watch(logModeProvider);
   final normal = ref.watch(workModeProvider) == AppWorkMode.normal;
@@ -157,7 +147,6 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
 
   final db = await ref.watch(activeLogDatabaseProvider.future);
   if (db == null) return const LogDashboardSnapshot.empty();
-  // Logs live in the mode's logs store; the subscription catalog lives in its rules store.
   final subscriptionDb = off
       ? null
       : await ref.watch(subscriptionDatabaseProvider.future);
@@ -174,7 +163,6 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
         : DnsLogDailyStats.fromParsed(parsed.first);
   }
 
-  // Express mode, off mode, a missing database and an older schema all mean no HTTPS rows.
   var httpStats = const HttpRequestDailyStats.empty();
   Database? mainDb;
   if (!off && normal) {
@@ -206,7 +194,6 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
     await _raw(db, 'race.ranking', {'since': sinceMs, 'limit': _topListLimit}),
   );
 
-  // Share the catalog with the race page, or one provider appears under two names.
   final names = providerDisplayNames(ref.watch(legacySettingsProvider));
 
   final bootstrapRows = core.rows(
@@ -223,7 +210,6 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
     nowMs: nowMs,
   );
 
-  // Blocked-and-errors mode filters in SQL (legacy `recentLogs(limit, mode)`).
   final recentDns = core.rows(
     'dns.record',
     await _raw(db, filteredMode ? 'dns.blockedErrors.recent' : 'dns.recent', {
@@ -409,12 +395,6 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
   );
 });
 
-/// Per-card slices of the overview snapshot.
-///
-/// The snapshot is one object so no two cards can disagree, but reading it whole meant every card
-/// rebuilt on the 10 s refresh even when only one slice had changed — the measured cost was an
-/// 11–13 ms build spike for a screen where nothing visible moved. Each slice is compared with the
-/// model's own `==`, so a card rebuilds only when its own figures differ.
 final logOverviewBreakdownProvider = Provider<LogTrafficBreakdown?>(
   (ref) =>
       ref.watch(logDashboardProvider.select((async) => async.value?.breakdown)),
@@ -480,12 +460,10 @@ final logOverviewSubscriptionBlocksProvider =
       ),
     );
 
-/// `null` until the first read lands, which is what the cards use to show a dash instead of `0`.
 final logOverviewReadyProvider = Provider<bool>(
   (ref) => ref.watch(logDashboardProvider.select((async) => async.hasValue)),
 );
 
-/// Highlighted total (blocked + failed), shared by the traffic-structure card.
 final logOverviewHighlightedTotalProvider = Provider<int>(
   (ref) => ref.watch(
     logDashboardProvider.select((async) => async.value?.highlightedTotal ?? 0),

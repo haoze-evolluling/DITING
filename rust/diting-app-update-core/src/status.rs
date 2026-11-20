@@ -1,6 +1,3 @@
-//! HTTP status classification for a failed release query; the code maps back to the localized
-//! message in Dart.
-
 use serde_json::{json, Value};
 
 pub fn status_message(status: i64, body: &str) -> Value {

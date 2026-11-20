@@ -17,18 +17,13 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Where dashboard cards navigate to. One callback taking the card, so every card opens its own
-/// second-level page instead of all of them sharing the request page; `null` means no detail
-/// button (edit mode, or a card that has no drill-down page yet).
 class DashboardCardActions {
   const DashboardCardActions({this.onOpenDetail});
 
-  /// No targets (edit mode): no card shows a detail button.
   static const none = DashboardCardActions();
 
   final ValueChanged<DashboardWidget>? onOpenDetail;
 
-  /// Detail callback for one card, or null when that card has no page.
   VoidCallback? detailOf(DashboardWidget widget) {
     final open = onOpenDetail;
     if (open == null) return null;
@@ -36,8 +31,6 @@ class DashboardCardActions {
   }
 }
 
-/// Dashboard card registry. Each card owns a distinct second-level page, so the board shows five
-/// different devices' worth of detail rather than five doors into the request list.
 Widget buildDashboardCard(
   DashboardWidget widget,
   DashboardCardActions actions,
@@ -61,8 +54,6 @@ Widget buildDashboardCard(
   };
 }
 
-/// Dashboard card board: one column in dashboardWidgetsProvider order, plus a remove
-/// badge, drag reordering and an add row in edit mode. Single column: Android has no room.
 class DashboardBoard extends ConsumerWidget {
   const DashboardBoard({super.key, this.actions = DashboardCardActions.none});
 
@@ -70,8 +61,6 @@ class DashboardBoard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Express mode has no traffic stats, so the speed card is filtered out here; the stored
-    // layout keeps it, which is why reordering goes through moveVisible.
     final widgets = ref.watch(visibleDashboardWidgetsProvider);
     final editing = ref.watch(dashboardEditingProvider);
     final side = dashboardMobileSideOf(MediaQuery.sizeOf(context).width);
@@ -153,7 +142,6 @@ class _EditingBoard extends ConsumerWidget {
             )
           else
             ReorderableListView.builder(
-              // The outer scrollable already exists; nesting one would steal drag gestures.
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
@@ -173,8 +161,6 @@ class _EditingBoard extends ConsumerWidget {
                 return Padding(
                   key: ValueKey(widget),
                   padding: const EdgeInsets.only(bottom: 12),
-                  // Injected inside the card so the badge does not compete with the title and
-                  // trailing action. The card dims the body only, keeping the bar at full color.
                   child: DashboardEditBar(
                     bar: Row(
                       children: [
@@ -190,7 +176,6 @@ class _EditingBoard extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    // No target in edit mode: navigating away mid-drag reads as a lost drag.
                     child: buildDashboardCard(
                       widget,
                       DashboardCardActions.none,
@@ -206,7 +191,6 @@ class _EditingBoard extends ConsumerWidget {
   }
 }
 
-/// Remove badge of an edit-mode card, shared by home and the log dashboard.
 class DashboardRemoveBadge extends StatelessWidget {
   const DashboardRemoveBadge({super.key, required this.onPressed});
 
@@ -235,7 +219,6 @@ class DashboardRemoveBadge extends StatelessWidget {
   }
 }
 
-/// Drag handle badge of an edit-mode card.
 class DashboardDragBadge extends StatelessWidget {
   const DashboardDragBadge({super.key});
 

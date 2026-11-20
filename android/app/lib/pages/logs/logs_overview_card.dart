@@ -2,7 +2,6 @@ import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One figure of a [LogsOverviewCard].
 class LogsOverviewTile {
   const LogsOverviewTile({
     required this.label,
@@ -14,15 +13,11 @@ class LogsOverviewTile {
   final String label;
   final String value;
 
-  /// Mark left of the label; it carries the tile's colour, so a row of tiles reads as
-  /// success / failure / latency without a second legend.
   final Glyph? glyph;
 
-  /// Value and glyph colour; `null` keeps the plain on-surface tone.
   final Color? color;
 }
 
-/// A proportion line under the tiles of a [LogsOverviewCard].
 class LogsRatioBar {
   const LogsRatioBar({
     required this.label,
@@ -30,22 +25,13 @@ class LogsRatioBar {
     required this.segments,
   });
 
-  /// e.g. 成功率.
   final String label;
 
-  /// Already formatted, e.g. `93.8%` or `—`.
   final String value;
 
-  /// Parts of the whole; values are weights, not percentages.
   final List<({int value, Color color})> segments;
 }
 
-/// The `概览` block of a log drill-down page: figures in a two-column tile grid, framed as one
-/// card, with an optional proportion bar underneath.
-///
-/// The bare `StatStrip` this replaces gave every figure a quarter of the phone width, so a count
-/// in the millions, `132 ms` and the success count all ended up truncated, and with no card the
-/// section read as text floating on the page background.
 class LogsOverviewCard extends StatelessWidget {
   const LogsOverviewCard({super.key, required this.tiles, this.ratio});
 
@@ -99,7 +85,6 @@ class _Tile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
       decoration: ShapeDecoration(
-        // One step above the card, so the grid stays visible in both themes.
         color: context.raisedSurfaceLevel.colorOf(colorScheme),
         shape: AppShape.standard,
       ),
@@ -125,8 +110,6 @@ class _Tile extends StatelessWidget {
               ),
             ],
           ),
-          // Shrink a figure that still does not fit instead of ellipsizing it: `132 ms` cut to
-          // `132 …` is a wrong number, not a shortened one.
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
@@ -145,8 +128,6 @@ class _Tile extends StatelessWidget {
   }
 }
 
-/// Label and share on one line, the segments below: a single row of colour never needs a legend
-/// when the tiles above already name both sides.
 class _Ratio extends StatelessWidget {
   const _Ratio({required this.ratio});
 
@@ -155,7 +136,6 @@ class _Ratio extends StatelessWidget {
   static const _height = 8.0;
   static const _gap = 6.0;
 
-  /// A non-zero share keeps a minimum width, so one failure in a thousand still shows.
   static const _minShare = 0.02;
 
   @override
@@ -225,9 +205,6 @@ class _Ratio extends StatelessWidget {
   }
 }
 
-/// Section-level empty state: a badged glyph, a title and one line of explanation, in the same
-/// card shape as the tiles above. A lone `ListItem` under a header read as a missing row rather
-/// than as "nothing to show yet".
 class LogsSectionEmpty extends StatelessWidget {
   const LogsSectionEmpty({
     super.key,
@@ -253,8 +230,6 @@ class LogsSectionEmpty extends StatelessWidget {
           Center(
             child: IconBadge(
               glyph: glyph,
-              // A tinted disc instead of the adjacent surface: on a card the next level up is
-              // nearly the same colour, and the mark disappeared into the empty state.
               color: colorScheme.surfaceContainerHighest,
               foregroundColor: colorScheme.onSurfaceVariant,
               shape: AppShape.standard,

@@ -1,11 +1,5 @@
 part of 'subscriptions_page.dart';
 
-/// A titled card in the add sheet: header, one card, then an optional footer note.
-///
-/// The card carries no padding of its own. A pressed row has to reach the card's edge, or its
-/// highlight stops short of it as a square rectangle inside the card's rounded shape, so rows
-/// take the inset themselves ([ListItem.padding]) and the card's other content does the same
-/// ([_SheetField], [_PreviewBox], the notices).
 class _SheetCard extends StatelessWidget {
   const _SheetCard({required this.title, required this.children, this.footer});
 
@@ -35,7 +29,6 @@ class _SheetCard extends StatelessWidget {
   }
 }
 
-/// Label above a field; `FilledInputTheme` turns floating labels off, so this label lives outside.
 class _SheetField extends StatelessWidget {
   const _SheetField({required this.label, required this.child, this.hint});
 
@@ -46,7 +39,6 @@ class _SheetField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hint = this.hint;
-    // The card has no padding (see [_SheetCard]), so a field brings its own.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -63,7 +55,6 @@ class _SheetField extends StatelessWidget {
   }
 }
 
-/// The address a mirror template would request, in the field's own inset fill.
 class _PreviewBox extends StatelessWidget {
   const _PreviewBox({required this.url});
 

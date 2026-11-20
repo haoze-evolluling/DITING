@@ -2,7 +2,6 @@
 
 part of 'popup.dart';
 
-/// Opens a popup out of the button [targetBuilder] builds; a press opens it at once, as iOS does.
 class CommonPopupBox extends StatefulWidget {
   const CommonPopupBox({
     super.key,
@@ -119,7 +118,6 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     _pressMoved = false;
     _releaseFromNavigator(event.pointer);
     _open();
-    // A press around the button may hear this down after the box does.
     scheduleMicrotask(() {
       if (mounted) {
         ElasticPress.maybeOf(context)?.release();
@@ -127,7 +125,6 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     });
   }
 
-  // A navigator cancels the presses it tracks as it navigates (flutter#4770).
   void _releaseFromNavigator(int pointer) {
     final listener = Navigator.maybeOf(context)?.context.findRenderObject();
     if (listener is RenderPointerListener) {
@@ -135,7 +132,6 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
     }
   }
 
-  // The popup covers the button, so releasing where it went down leaves it open.
   void _handlePointerMove(PointerMoveEvent event) {
     if (event.pointer != _pointer) {
       return;
@@ -203,7 +199,6 @@ class _CommonPopupBoxState extends State<CommonPopupBox> {
       snapshot.value?.dispose();
       snapshot.dispose();
     });
-    // The control repaints its ink when tapped, so capture after that frame.
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _captureSource(route, snapshot),
     );
@@ -284,7 +279,6 @@ class PopupValueText extends StatelessWidget {
         switchInCurve: const Interval(0.3, 1, curve: Curves.easeOut),
         switchOutCurve: const Interval(0.6, 1, curve: Curves.easeIn),
         transitionBuilder: _transition,
-        // The old value takes no room, so the button sizes to the new one as AnimatedSize eases it.
         layoutBuilder: (current, previous) => Stack(
           alignment: alignment,
           clipBehavior: Clip.none,
@@ -309,7 +303,6 @@ class PopupValueText extends StatelessWidget {
   }
 }
 
-/// Opens a popup on its button pointer down and carries the press in; a scroll view waits [delay].
 class _PopupPressRecognizer extends OneSequenceGestureRecognizer {
   _PopupPressRecognizer({super.debugOwner});
 
@@ -434,8 +427,6 @@ class CommonPopupMenuItem {
   final bool danger;
   final bool? checked;
 
-  /// Sets this item and those after it apart from the items above, as an
-  /// inline section of an iOS menu does.
   final CommonPopupMenuSection? section;
   final List<CommonPopupMenuItem> subItems;
 }

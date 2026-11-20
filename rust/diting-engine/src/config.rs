@@ -1,20 +1,3 @@
-//! The `ApplyDNSConfig` payload: its JSON model, its normalization and the cache policy mapping.
-//!
-//! Go decoded the document with `encoding/json` + `DisallowUnknownFields`, then handed the mode,
-//! the block response, the dynamic-block block and the provider list to
-//! `diting_config_core`'s `normalize`, and finally mapped the cache block onto the cache kernel's
-//! policy. The same three steps happen here, in the same order and with the same error texts:
-//!
-//! * [`DnsConfigJson`] is the document. Every field defaults (Go's zero values) and unknown fields
-//!   are rejected (Go's `DisallowUnknownFields`), including inside `bootstrap` and `cache`.
-//! * [`DnsConfig::parse`] reports the decode failure as `parse DNS config: …` and a trailing
-//!   document as `parse DNS config: trailing data`, exactly like the two decode calls did.
-//! * [`DnsConfig::normalize`] returns the kernel's first error unchanged: the mode, the provider
-//!   count and each provider are checked in that order.
-//!
-//! `bootstrap` is decoded and carried but not used yet: stage 1 only speaks plain UDP, which needs
-//! no name resolution for the endpoint. Stage 2 wires it into the DoH/DoT/DoQ dialer.
-
 use serde::Deserialize;
 
 use diting_config_core::dns_config::{normalize, NormalizedProvider, Provider as ConfigProvider};
@@ -26,7 +9,6 @@ use diting_dns_core::block::BlockConfig;
 use crate::connection_limit::Config as ConnectionRateLimitConfig;
 use crate::error::{EngineError, EngineResult};
 
-/// One provider entry of the payload.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ProviderJson {
@@ -40,15 +22,12 @@ pub struct ProviderJson {
     pub url: String,
     #[serde(default)]
     pub weight: i64,
-    /// Desktop-only: `SHA-256(RawTBSCertificate)` hex pin. Android never sends it.
     #[serde(default)]
     pub pin: String,
-    /// Desktop-only: use HTTP/3 for this DoH provider instead of the opportunistic upgrade.
     #[serde(default)]
     pub force_h3: bool,
 }
 
-/// `dynamicBlockConfig`.
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DynamicResponseJson {
@@ -62,7 +41,6 @@ pub struct DynamicResponseJson {
     pub nx_domain_duration_seconds: i64,
 }
 
-/// `dnsCacheConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CacheJson {
@@ -88,7 +66,6 @@ pub struct CacheJson {
     pub negative_ttl_seconds: i64,
 }
 
-/// `bootstrapIPConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct BootstrapIpJson {
@@ -102,7 +79,6 @@ pub struct BootstrapIpJson {
     pub weight: f64,
 }
 
-/// `privacy` block (U10): the privacy suite carried in the DNS document.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PrivacyJson {
@@ -112,7 +88,6 @@ pub struct PrivacyJson {
     pub rebinding_protection: bool,
 }
 
-/// `dns64` block (N8): the IPv6-only AAAA synthesizer switch.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Dns64Json {
@@ -120,7 +95,6 @@ pub struct Dns64Json {
     pub enabled: bool,
 }
 
-/// `rateLimit` block (N9): LAN client throttling. `rate` is requests per second.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RateLimitJson {
@@ -138,7 +112,6 @@ pub struct RateLimitJson {
     pub exempt: Vec<String>,
 }
 
-/// `connectionRateLimit` block: the normal tunnel's per-app limiter.
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ConnectionRateLimitJson {
@@ -150,7 +123,6 @@ pub struct ConnectionRateLimitJson {
     pub burst: i64,
 }
 
-/// `bootstrapConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct BootstrapJson {
@@ -160,7 +132,6 @@ pub struct BootstrapJson {
     pub ips: Vec<BootstrapIpJson>,
 }
 
-/// `dnsEngineConfig`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DnsConfigJson {
@@ -188,7 +159,6 @@ pub struct DnsConfigJson {
     pub race_max_parallel: Option<i64>,
 }
 
-/// One provider after normalization.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
     pub id: String,
@@ -196,9 +166,7 @@ pub struct Provider {
     pub server: String,
     pub url: String,
     pub weight: i64,
-    /// Desktop-only certificate pin, kept as the user's text until the resolver parses it.
     pub pin: String,
-    /// Desktop-only: this DoH provider is DoH3-only.
     pub force_h3: bool,
 }
 
@@ -216,39 +184,28 @@ impl Provider {
     }
 }
 
-/// The published DNS configuration: what `ApplyDNSConfig` leaves behind for the query path.
 #[derive(Debug, Clone)]
 pub struct DnsConfig {
     pub mode: &'static str,
     pub providers: Vec<Provider>,
-    /// The `ResponseType` code the block path answers with (`diting_config_core`'s table).
     pub block_response: u32,
     pub dynamic_response: BlockConfig,
     pub cache: CacheConfig,
     pub bootstrap: BootstrapJson,
-    /// U10: which query types to suppress and whether to reject private-address answers.
     pub privacy: PrivacyPolicy,
-    /// N8: whether DNS64 synthesizes AAAA for IPv6-only clients.
     pub dns64: bool,
-    /// N9: the LAN client rate limiter configuration.
     pub rate_limit: diting_ratelimit_core::Config,
-    /// Connection rate limiting for the normal tunnel data plane.
     pub connection_rate_limit: ConnectionRateLimitConfig,
-    /// `raceMaxParallel`, zero when the payload did not set it.
     pub race_max_parallel: i64,
 }
 
-/// The privacy suite after mapping the document's record-type names onto qtypes.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct PrivacyPolicy {
-    /// Query types answered with an empty NOERROR (`HTTPS`=65, `SVCB`=64).
     pub blocked_qtypes: Vec<u16>,
     pub rebinding_protection: bool,
 }
 
 impl DnsConfig {
-    /// Decodes the payload. The decode errors keep the `parse DNS config: ` prefix the Go side used,
-    /// so `RuntimeDnsConfig` shows the same hint in the settings tile.
     pub fn parse(payload: &str) -> EngineResult<DnsConfigJson> {
         let mut stream = serde_json::Deserializer::from_str(payload).into_iter::<DnsConfigJson>();
         let document = match stream.next() {
@@ -275,7 +232,6 @@ impl DnsConfig {
         }
     }
 
-    /// `ApplyDNSConfig`: decode, normalize, and map the cache block.
     pub fn from_json(payload: &str) -> EngineResult<DnsConfig> {
         let document = Self::parse(payload)?;
         Self::from_document(&document)
@@ -352,8 +308,6 @@ fn connection_rate_limit_config(
     .normalized()
 }
 
-/// Maps the document's record-type names onto qtypes, dropping anything else. Names are the ones
-/// the config kernel writes (`HTTPS` / `SVCB`); numeric spellings are accepted for robustness.
 fn privacy_policy(document: &PrivacyJson) -> PrivacyPolicy {
     let mut blocked_qtypes: Vec<u16> = document
         .block_record_types
@@ -372,8 +326,6 @@ fn privacy_policy(document: &PrivacyJson) -> PrivacyPolicy {
     }
 }
 
-/// Maps the `rateLimit` block onto the kernel's config. Zero/absent numeric fields fall back to the
-/// kernel defaults during its own normalisation.
 fn rate_limit_config(document: &RateLimitJson) -> diting_ratelimit_core::Config {
     diting_ratelimit_core::Config {
         enabled: document.enabled,
@@ -385,8 +337,6 @@ fn rate_limit_config(document: &RateLimitJson) -> diting_ratelimit_core::Config 
     }
 }
 
-/// Maps `dnsCacheConfig` onto the cache kernel's policy. The TTL mode is parsed by the kernel, so an
-/// unknown spelling keeps the historical default instead of failing the whole config.
 fn cache_config(document: &CacheJson) -> CacheConfig {
     CacheConfig {
         enabled: document.enabled,

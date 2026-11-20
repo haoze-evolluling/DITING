@@ -30,7 +30,6 @@ fn providers_keep_items_and_resolvable_selection() {
     let selection = &value["selection"];
     assert_eq!(selection["selectedProvider"]["name"], json!("我的 DoH"));
     assert_eq!(selection["selectedProvider"]["isPreset"], json!(false));
-    // An unknown id still produces a reference: dropping it would hide a broken selection.
     assert_eq!(
         selection["raceProviderRefs"][1],
         json!({"id": "ghost", "name": "ghost", "protocol": "DOH", "isPreset": false})
@@ -40,7 +39,6 @@ fn providers_keep_items_and_resolvable_selection() {
         json!("PLAIN"),
         "preset protocol must come from the catalog"
     );
-    // Sorted and de-duplicated, so two equal backups are byte-identical.
     assert_eq!(
         selection["homeProviderVisibility"]["visibleProtocols"],
         json!(["DOH", "PLAIN"])
@@ -57,10 +55,8 @@ fn corrupt_local_json_is_reported_per_group() {
         build(Group::Bootstrap, &json!({"customJson": "{"})).unwrap_err(),
         "bootstrapInvalidJson"
     );
-    // Valid JSON of the wrong shape is not an error, just nothing to export.
     let value = build(Group::Providers, &json!({"itemsJson": "42"})).unwrap();
     assert_eq!(value["items"], json!([]));
-    // Blank means "not set", not "corrupt".
     let value = build(Group::Bootstrap, &json!({"customJson": "  "})).unwrap();
     assert_eq!(value["custom"], json!(null));
 }
@@ -101,7 +97,6 @@ fn rules_turn_stored_ints_into_bools() {
     assert_eq!(rules[0]["appInverted"], json!(true));
     assert_eq!(rules[0]["appScope"], json!("com.a"));
     assert_eq!(rules[0]["group"], json!("我的"));
-    // Missing columns fall back to the table defaults (enabled, not important).
     assert_eq!(rules[1]["kind"], json!("allow"));
     assert_eq!(rules[1]["enabled"], json!(true));
     assert_eq!(rules[1]["important"], json!(false));
@@ -156,7 +151,6 @@ fn subscriptions_name_groups_and_normalise_enums() {
     assert_eq!(items[0]["mirrorFallback"], json!(false));
     assert_eq!(items[0]["groupName"], json!("订阅A"));
     assert_eq!(items[0]["scope"], json!("dns"));
-    // Unknown enum spells and dangling group ids never leak into the file.
     assert_eq!(items[1]["kind"], json!("domain"));
     assert_eq!(items[1]["sourceType"], json!("remote"));
     assert_eq!(items[1]["groupName"], json!(null));
@@ -173,7 +167,6 @@ fn outbound_never_carries_credentials() {
         Group::Outbound,
         &json!({
             "enabled": true, "protocol": "socks5", "host": "h.test", "port": 1080,
-            // A snapshot that still contains credentials must not leak them.
             "username": "u", "password": "p",
         }),
     )
@@ -244,7 +237,6 @@ fn appearance_rounds_float_opacity() {
     .unwrap();
     assert_eq!(value["componentOpacity"], json!(0.8));
     assert_eq!(value["homePoemOpacity"], json!(0.56));
-    // A slider that was never moved falls back to the shared value, not to "fully opaque".
     assert_eq!(value["homeDnsDetailOpacity"], json!(0.8));
     assert_eq!(value["bottomBarIds"], json!(["home", "settings"]));
     assert_eq!(value["homeSentenceRunning"], json!("跑着"));
@@ -266,7 +258,6 @@ fn system_keeps_traffic_defaults_and_the_nested_dynamic_block() {
     )
     .unwrap();
     assert_eq!(value["bypassLan"], json!(true));
-    // `app_traffic_stats_enabled` defaults to on and retention to 30 days.
     assert_eq!(value["appTrafficStatsEnabled"], json!(true));
     assert_eq!(value["trafficStatsRetentionDays"], json!(30));
     assert_eq!(value["trafficStatsHideSystemApps"], json!(false));

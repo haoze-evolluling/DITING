@@ -9,8 +9,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'dashboard_detail_stats.dart';
 
-/// Shared frame of a home card's second-level page: same scaffold, body and spacing as the log
-/// drill-downs, so a detail page never looks like a different app section.
 class DashboardDetailScaffold extends StatelessWidget {
   const DashboardDetailScaffold({
     super.key,
@@ -27,21 +25,15 @@ class DashboardDetailScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return CommonScaffold(
       title: title,
-      // Always show the back button. Relying on the route to imply it leaves the bar without
-      // one whenever the page is reached by a deep link or `go`, where nothing is left to pop.
       backAction: () => _back(context),
       actions: actions.isEmpty ? null : actions,
       body: PageBody(
-        // A wider top gap: every page starts with a card, and a card flush against the toolbar
-        // reads as part of the chrome.
         padding: const EdgeInsets.only(top: 4),
         children: children,
       ),
     );
   }
 
-  /// Pop when this page was pushed onto the board, otherwise fall back to the board itself, so a
-  /// deep link still has somewhere to go back to.
   static void _back(BuildContext context) {
     final router = GoRouter.maybeOf(context);
     if (router != null && router.canPop()) {
@@ -59,9 +51,6 @@ class DashboardDetailScaffold extends StatelessWidget {
   }
 }
 
-/// Card shared by every detail section: tone fill, dashboard radius and the same elevation as the
-/// home cards, so a second-level page keeps the board's visual language instead of falling back to
-/// the flat list style of the deeper pages.
 class DashboardDetailCard extends StatelessWidget {
   const DashboardDetailCard({
     super.key,
@@ -158,8 +147,6 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// Headline block: the one number the card could only hint at, with its label, an optional status
-/// pill and a one-line hint. Replaces a bare floating figure, which read as unanchored text.
 class DashboardDetailHero extends StatelessWidget {
   const DashboardDetailHero({
     super.key,
@@ -181,11 +168,9 @@ class DashboardDetailHero extends StatelessWidget {
   final String? hint;
   final Color? color;
 
-  /// Small pill next to the value, e.g. the core state or the sample count.
   final String? chipLabel;
   final Color? chipColor;
 
-  /// Addresses and other machine text: lining digits.
   final bool tabular;
 
   @override

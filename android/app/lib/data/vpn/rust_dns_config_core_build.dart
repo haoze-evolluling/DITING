@@ -1,10 +1,6 @@
 part of 'rust_dns_config_core.dart';
 
-/// The two document builders. They live in a part so the FFI loader file stays within the
-/// 600-line repository limit; an extension in the same library can read the private op handles and
-/// `_call`, so the split is purely mechanical.
 extension DocumentBuilders on RustDnsConfigCore {
-  /// Builds the tunnel's `ApplyDNSConfig` document plus the rows the UI shows.
   TunnelDocument buildTunnel({
     required String modeRaw,
     required String selectedProviderId,

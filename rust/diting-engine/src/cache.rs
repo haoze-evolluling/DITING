@@ -1,28 +1,13 @@
-//! The DNS cache the standalone server answers from, plus the two JSON projections the UI reads.
-//!
-//! The container, the TTL policy, the negative cache, the stale window, the sweeper and the
-//! projection are [`diting_dns_cache_core::Cache`]. What lives here is only what the Go engine kept:
-//! the policy hand-off from `ApplyDNSConfig`, the `getDNSCacheStats` document (its field names are
-//! read directly by `EngineStats.kt`, so they cannot change), the packed snapshot the cache mirror
-//! consumes (`entries_packed`), and the single-flight shape (`begin_stale_refresh` /
-//! `refresh_done`).
-//!
-//! Single flight itself stays in [`crate::dns`]: coalescing needs an async wait, which the cache
-//! kernel deliberately does not have.
-
 use std::sync::Arc;
 
 use diting_dns_cache_core::policy::Config;
 use diting_dns_cache_core::{Cache, Hit, SnapshotEntry, Stats};
 
-/// One engine's cache handle.
 pub struct DnsCache {
     cache: Arc<Cache>,
 }
 
 impl DnsCache {
-    /// A disabled cache. `ApplyDNSConfig` publishes the real policy, so the engine can be built
-    /// before any config arrives and still answer.
     pub fn new() -> Self {
         Self {
             cache: Cache::new(Config::default()),
@@ -49,7 +34,6 @@ impl DnsCache {
         self.cache.config().stale_fallback_enabled
     }
 
-    /// A lookup that counts: the served path (`dnsCache.getFast`).
     pub fn get(&self, query: &[u8]) -> Option<Hit> {
         self.cache.get(query, true)
     }
@@ -58,7 +42,6 @@ impl DnsCache {
         self.cache.put(query, response)
     }
 
-    /// Claims the one background refresh a stale hit is allowed to start.
     pub fn begin_stale_refresh(&self, query: &[u8]) -> bool {
         self.cache.refresh_begin(query)
     }
@@ -82,7 +65,6 @@ impl Default for DnsCache {
     }
 }
 
-/// `getDNSCacheStats`: the document `EngineStats.kt` reads with `optLong`/`optInt`/`optDouble`.
 pub fn stats_json(stats: Stats) -> String {
     let total = stats.total_hits + stats.total_misses;
     let hit_ratio = if total > 0 {
@@ -104,12 +86,6 @@ pub fn stats_json(stats: Stats) -> String {
     document.to_string()
 }
 
-/// `getDNSCacheSnapshot`: the hot entries in the packed layout `LogNative.mirrorRows` decodes.
-///
-/// This is the mirror's path. It used to be `entries_json` → `JSONArray` on the JVM → one
-/// `LogMirrorEntry` per row → a re-packed request to the log kernel: four conversions and a JSON
-/// document per snapshot. The bytes below are the log kernel's own mirror input, so Kotlin forwards
-/// them untouched and the kernel projects them into `dns_cache` rows.
 pub fn entries_packed(entries: &[SnapshotEntry]) -> Vec<u8> {
     let mut out = Vec::with_capacity(4 + entries.len() * 64);
     out.extend_from_slice(&(entries.len() as u32).to_be_bytes());
@@ -128,17 +104,11 @@ pub fn entries_packed(entries: &[SnapshotEntry]) -> Vec<u8> {
     out
 }
 
-/// `u32 length | bytes`, the string framing the log payloads use.
 fn push_bytes(out: &mut Vec<u8>, value: &[u8]) {
     out.extend_from_slice(&(value.len() as u32).to_be_bytes());
     out.extend_from_slice(value);
 }
 
-/// `getDNSCacheEntries`: the array `DnsCacheMirror.kt` writes into the `dns_cache` table.
-///
-/// The names are the ones the old Go projection used, so the mirror keeps working unchanged;
-/// names that are not valid UTF-8 (they came out of the wire that way) are replaced, which is what
-/// `json.Marshal` did to an invalid `string`.
 pub fn entries_json(entries: &[SnapshotEntry]) -> String {
     let document: Vec<serde_json::Value> = entries
         .iter()
@@ -165,7 +135,6 @@ mod tests {
     use super::*;
     use diting_dns_cache_core::policy::TtlMode;
 
-    /// A one-question query wire, enough for the cache key builder.
     fn query(name: &str, qtype: u16) -> Vec<u8> {
         let mut out = vec![0x12, 0x34, 0x01, 0x00, 0, 1, 0, 0, 0, 0, 0, 0];
         for label in name.trim_end_matches('.').split('.') {
@@ -267,7 +236,6 @@ mod tests {
         let query_class = i32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap());
         assert_eq!(query_class, 1);
         offset += 4;
-        // The five timestamps/counters plus `responseSize` stay in the order the kernel decodes.
         offset += 8 * 5;
         let response_size = i32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap());
         assert_eq!(response_size, 46);

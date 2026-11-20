@@ -22,7 +22,6 @@ class ConfigTransferWebdavPage extends ConsumerStatefulWidget {
 
 class _ConfigTransferWebdavPageState
     extends ConsumerState<ConfigTransferWebdavPage> {
-  /// Upload or download in flight; both buttons are disabled so the file is never written twice.
   bool _busy = false;
 
   @override
@@ -144,8 +143,6 @@ class _ConfigTransferWebdavPageState
     );
   }
 
-  /// The password controller lives outside the provider: a `TextEditingController` is
-  /// mutable, so rebuilding it resets the caret. The provider-scoped wrapper caches it.
   TextEditingController _passwordController() {
     final cached = ref.watch(_passwordControllerProvider);
     final password = ref.read(davProvider).password;
@@ -158,7 +155,6 @@ class _ConfigTransferWebdavPageState
     return cached;
   }
 
-  /// Runs one transfer with [_busy] set, clearing it when the action finishes.
   Future<void> _run(Future<void> Function() action) async {
     setState(() => _busy = true);
     try {
@@ -168,8 +164,6 @@ class _ConfigTransferWebdavPageState
     }
   }
 
-  /// Generates the JSON with the backup page's generator, then `PUT`s it. One generator
-  /// keeps file export and cloud upload byte-equivalent.
   Future<void> _upload() => _run(() async {
     final actions = ref.read(backupActionsProvider);
     final export = await actions.export(BackupGroup.values.toSet());
@@ -287,8 +281,6 @@ final _passwordControllerProvider = Provider<TextEditingController>((ref) {
   return controller;
 });
 
-/// Connection badge (upstream `_DavConnectionIndicator`). Each of the three states has its
-/// own color and glyph: color alone cannot separate "connecting" from "not connected".
 class _DavStatusCard extends StatelessWidget {
   const _DavStatusCard({required this.status, this.message});
 

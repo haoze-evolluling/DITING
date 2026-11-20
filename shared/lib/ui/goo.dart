@@ -11,17 +11,10 @@ import 'navigation_dock.dart';
 
 part 'goo_a.dart';
 
-// At rest no closer than buttons stand in a bar, so none bulges toward its
-// neighbor until a press swells it, as iOS 27 merges a search field it swells
-// with its cancel button.
 const double _restBlend = 8;
 const double _pressBlend = 8;
 const double _neckStep = 0.5;
 
-/// Draws the [GooPane]s below, pills in rows, as one surface that flows
-/// together where two neighbors in a row come close, as iOS 27 draws controls
-/// whose glass shares a container. `TonalButtonTheme` and `TonalButtonGroup`
-/// below put their buttons on panes.
 class GooSurface extends StatelessWidget {
   const GooSurface({
     super.key,
@@ -34,7 +27,6 @@ class GooSurface extends StatelessWidget {
   final LiquidGlassStyle? glass;
   final Color color;
 
-  /// Cast only outside the surface, as one under glass would show through.
   final List<BoxShadow> shadows;
   final Widget child;
 
@@ -72,7 +64,6 @@ class _GooScope extends InheritedWidget {
   bool updateShouldNotify(_GooScope oldWidget) => false;
 }
 
-/// A pill of the [GooSurface] above, swelling with the presses around it.
 class GooPane extends SingleChildRenderObjectWidget {
   const GooPane({super.key, super.child});
 
@@ -267,7 +258,6 @@ class _RenderGooSurface extends RenderProxyBox {
   static bool _inRow(Rect a, Rect b) =>
       (a.center.dy - b.center.dy).abs() < math.min(a.height, b.height) / 2;
 
-  /// [panes] in rows from the top, each from the left.
   static List<_Placed> _rows(List<_Placed> panes) {
     final rows = <List<_Placed>>[];
     for (final pane
@@ -322,8 +312,6 @@ class _RenderGooSurface extends RenderProxyBox {
   }
 }
 
-/// The outline of [pills], as gooGeometry in shaders/liquid_glass.frag blends
-/// their distances.
 @visibleForTesting
 Path gooOutline(List<Rect> pills, List<double> blends) {
   var outline = Path();
@@ -344,8 +332,6 @@ Path gooOutline(List<Rect> pills, List<double> blends) {
   return outline;
 }
 
-/// [a], rounded by [radius], and the pill [b] flowing together either way
-/// they lie, as gooGeometry blends a first pill given that radius.
 Path gooPairOutline(
   Rect a,
   double radius,
@@ -380,8 +366,6 @@ Path gooPairOutline(
         );
 }
 
-/// How far inside [a], rounded by [radius], all of [b] lies past where
-/// [blend] still swells [a]'s outline toward it; negative while it does.
 double gooPairDepth(Rect a, double radius, Rect b, double blend) {
   final outermost = [
     b.topLeft,

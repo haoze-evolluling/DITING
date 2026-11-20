@@ -7,14 +7,12 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 
-/// Native side of `com.haoze.diting/diagnostics`; probes run on a worker pool.
 class DiagnosticsBridge(private val context: Context) :
     MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "com.haoze.diting/diagnostics"
 
-        /// Unbounded pool; the UI disables the run button, so four panels bound it in practice
         private val workers = Executors.newCachedThreadPool { runnable ->
             Thread(runnable, "diting-diagnostics").apply { isDaemon = true }
         }
@@ -24,7 +22,6 @@ class DiagnosticsBridge(private val context: Context) :
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
     }
 
-    /// Runs one blocking probe on the pool; a throwing probe is reported as an error result.
     private fun runProbe(
         result: MethodChannel.Result,
         errorCode: String,
@@ -53,10 +50,8 @@ class DiagnosticsBridge(private val context: Context) :
                 val domain = call.argument<String>("domain").orEmpty()
                 val viaTunnel = call.argument<Boolean>("viaTunnel") ?: false
                 val ipv4 = call.argument<Boolean>("ipv4") ?: true
-                // Empty = system resolver, non-empty = custom server: one argument serves both.
                 val server = call.argument<String>("server").orEmpty().trim()
                 runProbe(result, "lookup_failed") {
-                    // A bad domain never throws: failures come back as source=error.
                     if (!viaTunnel && server.isNotEmpty()) {
                         DnsLookupProbe.customServerLookup(domain, server, ipv4)
                     } else {
@@ -64,7 +59,6 @@ class DiagnosticsBridge(private val context: Context) :
                     }
                 }
             }
-            // One synchronous ConnectivityManager read; no pool hop needed.
             "networkInfo" -> {
                 val value = runCatching { NetInfoProbe.snapshot(context) }
                 ChannelResults.ship(result, value, "network_info_failed")

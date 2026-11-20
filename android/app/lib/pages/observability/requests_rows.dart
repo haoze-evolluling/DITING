@@ -1,7 +1,5 @@
 part of 'requests_page.dart';
 
-/// Six status tiers, not three: rewritten and bypassed are not failures, and both color
-/// and glyph carry the meaning so color-blind users can tell them apart.
 (Color, Glyph) requestStatusStyle(BuildContext context, RequestStatus status) {
   final colorScheme = context.colorScheme;
   return switch (status) {
@@ -16,14 +14,12 @@ part of 'requests_page.dart';
 
 String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
-/// Time of day as `HH:mm:ss`; the date belongs to the header card.
 String _timeOfDay(int timestamp) {
   final time = DateTime.fromMillisecondsSinceEpoch(timestamp);
   return '${_twoDigits(time.hour)}:${_twoDigits(time.minute)}:'
       '${_twoDigits(time.second)}';
 }
 
-/// Full timestamp as `yyyy-MM-dd HH:mm:ss`, same format as upstream.
 String _stampOf(int timestamp) {
   final time = DateTime.fromMillisecondsSinceEpoch(timestamp);
   return '${time.year}-${_twoDigits(time.month)}-${_twoDigits(time.day)} '
@@ -44,8 +40,6 @@ class RequestRow extends StatelessWidget {
       context,
       request.status,
     );
-    // authority can be null when TLS fails early, and title is then an empty string.
-    // An empty Text renders as a hole, so fall back to a dash.
     final title = request.title.isEmpty ? '—' : request.title;
 
     return ListItem(

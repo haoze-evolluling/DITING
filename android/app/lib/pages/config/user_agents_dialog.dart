@@ -1,7 +1,5 @@
 part of 'user_agents_page.dart';
 
-/// Add or edit a User-Agent. Both the display name and the UA string are edited
-/// together; an empty [existing] means a new entry.
 Future<void> showUserAgentDialog(
   BuildContext context,
   WidgetRef ref, {
@@ -28,12 +26,9 @@ Future<void> showUserAgentDialog(
   }
 }
 
-/// Name + UA string editor. The controllers live in the dialog: disposing them
-/// from `whenComplete` fires on `pop` while the fields still animate out.
 class _UserAgentDialog extends StatefulWidget {
   const _UserAgentDialog({required this.agents, this.initial});
 
-  /// Existing rows, used to reject a name or value already taken.
   final List<MockUserAgent> agents;
   final MockUserAgent? initial;
 
@@ -56,7 +51,6 @@ class _UserAgentDialogState extends State<_UserAgentDialog> {
 
   String get _valueText => _value.text.trim();
 
-  /// A name or value is taken when another row already holds it.
   bool get _nameTaken =>
       _nameText.isNotEmpty &&
       widget.agents.any(
@@ -75,7 +69,6 @@ class _UserAgentDialogState extends State<_UserAgentDialog> {
       !_nameTaken &&
       !_valueTaken;
 
-  /// Shown once the user started filling one field but left the other empty.
   bool get _partiallyEmpty =>
       (_nameText.isNotEmpty && _valueText.isEmpty) ||
       (_valueText.isNotEmpty && _nameText.isEmpty);

@@ -1,6 +1,3 @@
-// Desktop tools branch, rule simulator (desktop parity):
-// `/filter/check` judges one domain and the page repeats its verdict.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_rule_check_models.dart';
 import 'package:diting_desktop/pages/tools/desktop_rule_check_page.dart';

@@ -1,11 +1,3 @@
-/// The log cards the home page spreads into its one board: the service's 24-hour summary and
-/// rankings over the retained query log.
-///
-/// The blueprint is the old desktop console (`OverviewView`'s `QueryStatsPanel.vue`), not Android.
-/// Nothing is derived locally: totals and rankings come from `/api/v1/querylog/stats`.
-///
-/// Only readings live on the dashboard. The live stream, searchable history and retention policy
-/// are settings/queries and live on `hub/query-log`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -16,7 +8,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The summary and the three rankings, in reading order.
 List<Widget> desktopLogCards(BuildContext context, WidgetRef ref) {
   final snapshot = ref.watch(desktopQueryStatsProvider);
   void refreshStats() =>

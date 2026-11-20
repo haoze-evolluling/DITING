@@ -1,6 +1,5 @@
 part of 'request_export_page.dart';
 
-/// Opens the app multi-select picker; returns the chosen packages, or null when dismissed.
 Future<Set<String>?> showRequestLogExportAppPicker(
   BuildContext context, {
   required Set<String> initial,
@@ -63,7 +62,6 @@ class _RequestLogExportAppPickerState
     return CommonScaffold(
       title: l10n.obsExportAppPickerTitle,
       body: ListView(
-        // The sheet title floats over the body, so this top padding is required.
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
           if (asyncApps.isLoading && !asyncApps.hasValue)
@@ -90,7 +88,6 @@ class _RequestLogExportAppPickerState
               title: _selected.isEmpty ? l10n.obsExportApps : null,
               items: [
                 ListItem(
-                  // Same column as the app rows below it, which are led by a 40dp icon.
                   leading: const LeadingSlot(
                     child: GlyphIcon(AppGlyphs.clearAll, size: 20),
                   ),

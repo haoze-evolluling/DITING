@@ -1,6 +1,5 @@
 part of 'traffic_page.dart';
 
-/// Ranges with no data source stay visible but disabled, so upstream parity stays visible.
 class _RangeOption {
   const _RangeOption({
     required this.label,
@@ -10,14 +9,11 @@ class _RangeOption {
 
   final String label;
 
-  /// null means this option is unavailable in this build (see [unavailableReason]).
   final TrafficWindow? window;
 
   final String? unavailableReason;
 }
 
-/// The five upstream TrafficTimeRange values. "This session" has no source here: the daily
-/// table stores one row per app per day, with no in-process running total.
 List<_RangeOption> _rangeOptions(AppL10n l10n) => <_RangeOption>[
   _RangeOption(
     label: l10n.trafficSessionRange,
@@ -29,7 +25,6 @@ List<_RangeOption> _rangeOptions(AppL10n l10n) => <_RangeOption>[
   _RangeOption(label: l10n.trafficAllHistory, window: TrafficWindow.all),
 ];
 
-/// The four upstream TrafficSortMode values, matching AppTrafficStatsModels.kt.
 List<_SortOption> _sortOptions(AppL10n l10n) => <_SortOption>[
   _SortOption(label: l10n.trafficSortTotal, sort: TrafficSort.total),
   _SortOption(label: l10n.trafficSortDownload, sort: TrafficSort.download),
@@ -48,8 +43,6 @@ class _SortOption {
   final String? unavailableReason;
 }
 
-/// Filter bar: search, sort, hide system apps (upstream TrafficFilterBar.kt). Search sits
-/// in the body rather than the app bar, matching upstream's inline RuleSearchField.
 class _TrafficFilterBar extends StatelessWidget {
   const _TrafficFilterBar({
     required this.searchController,
@@ -83,8 +76,6 @@ class _TrafficFilterBar extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          // Same ChipRow shape as the range row above: a bare Wrap leaves TonalChip at its
-          // 18dp text height, and it wraps to a second line on narrow screens.
           child: ChipRow(
             children: [
               for (final option in _sortOptions(context.l10n))
@@ -99,9 +90,6 @@ class _TrafficFilterBar extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          // The row has to fill the card: a card padding would inset the row's pressed
-          // state, leaving a square highlight inside the rounded card. The card's 12/4
-          // inset is therefore folded into the row's own content padding.
           child: CommonCard(
             child: ListItem.toggle(
               padding: const EdgeInsets.fromLTRB(28, 4, 20, 4),
@@ -118,8 +106,6 @@ class _TrafficFilterBar extends StatelessWidget {
   }
 }
 
-/// Live rate block: show the native rate when available, otherwise say so. The monitor only
-/// covers the current session, so the label must say "this session".
 class _LiveRateCard extends ConsumerWidget {
   const _LiveRateCard({required this.windowLabel});
 
@@ -174,8 +160,6 @@ class _LiveRateCard extends ConsumerWidget {
   }
 }
 
-/// Package-prefix fallback for system apps. The traffic table has no isSystem column, so
-/// upstream also falls back to this list (AppTrafficStatsViewModel.isSystemApp).
 const _knownSystemPrefixes = <String>[
   'android',
   'com.android.',

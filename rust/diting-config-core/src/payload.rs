@@ -1,37 +1,9 @@
-//! The binary layout shared with `android/engine/config_native_payload.go`.
-//!
-//! Request (Go -> kernel):
-//!
-//! ```text
-//! | u8 op | body |
-//! ```
-//!
-//! Response (kernel -> Go):
-//!
-//! ```text
-//! | u8 status (0 ok, 1 error) | body |
-//! ```
-//!
-//! `str` is `u32 length | bytes` (UTF-8 required) and every integer is `i64` (Go's `int` is 64 bits
-//! wide, and the dynamic-block values arrive unvalidated). A length that disagrees with the payload,
-//! trailing bytes or an unknown opcode is a hard error, never a misread.
-//!
-//! | op | name | request body | ok body |
-//! | --- | --- | --- | --- |
-//! | 0 | dns config | mode, block response, `i64` enabled, `i64` threshold, `i64` window, `i64` nxdomain, `i64` provider count, then per provider: id, protocol, server, url, `i64` weight | mode, `i64` block code, `i64` enabled, `i64` threshold, `i64` window, `i64` nxdomain, `i64` provider count, then per provider: id, protocol name, server, url, `i64` weight |
-//! | 1 | protocol | text | `i64` code |
-//! | 2 | response type | text | `i64` code |
-//! | 3 | doq url | url | host, port |
-//! | 4 | domain | domain | normalized domain |
-//! | 5 | rewrite | `i64` target count, then the targets | cname, ip4, ip6 |
-
 use crate::dns_config::{normalize, NormalizedConfig, Provider};
 use crate::dynamic::DynamicBlock;
 use crate::endpoint::parse_doq_url;
 use crate::protocol::{parse_protocol, parse_response_type};
 use crate::rewrite;
 
-/// Must match `configPayloadLayoutVersion` in `android/engine/config_native_payload.go`.
 pub const LAYOUT_VERSION: u8 = 1;
 
 pub const OP_DNS_CONFIG: u8 = 0;
@@ -44,7 +16,6 @@ pub const OP_REWRITE: u8 = 5;
 const STATUS_OK: u8 = 0;
 const STATUS_ERROR: u8 = 1;
 
-/// One decoded request.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
     DnsConfig {
@@ -73,7 +44,6 @@ pub enum Request {
     },
 }
 
-/// A response: either the op's own body or the message Go reports to the UI.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Response {
     Ok(Vec<u8>),
@@ -123,8 +93,6 @@ impl<'a> Reader<'a> {
             return None;
         }
         let count = count as usize;
-        // Every element costs at least `stride` bytes, so an inflated count cannot make the caller
-        // allocate a huge vector before the reads fail.
         if count.saturating_mul(stride) > self.body.len() - self.position {
             return None;
         }
@@ -153,7 +121,6 @@ fn ok_i64(value: i64) -> Response {
     Response::Ok(body)
 }
 
-/// Decodes one request payload; `None` means the payload is malformed.
 pub fn decode_request(payload: &[u8]) -> Option<Request> {
     let mut reader = Reader::new(payload);
     let op = reader.u8()?;
@@ -218,7 +185,6 @@ pub fn decode_request(payload: &[u8]) -> Option<Request> {
     Some(request)
 }
 
-/// Runs one decoded request.
 pub fn handle(request: Request) -> Response {
     match request {
         Request::DnsConfig {
@@ -282,7 +248,6 @@ fn encode_config(config: &NormalizedConfig) -> Vec<u8> {
     body
 }
 
-/// Wraps a response in the status envelope.
 pub fn encode_response(response: Response) -> Vec<u8> {
     match response {
         Response::Ok(body) => {

@@ -1,5 +1,3 @@
-/// Dart side of `com.haoze.diting/background`: `pick` returns a system picker URI, `resolve`
-/// decodes it to `filesDir/background/bg_<hash>.png`, `release` drops a deleted wallpaper.
 library;
 
 import 'package:flutter/services.dart';
@@ -22,7 +20,6 @@ class BackgroundPickResult {
 
   final String? uri;
 
-  /// Decoded local cache path; null when decoding failed but the URI is valid.
   final String? path;
   final bool cancelled;
 
@@ -43,7 +40,6 @@ class BackgroundBridge {
 
   final MethodChannel _channel;
 
-  /// Opens the system image picker and caches the choice; null when cancelled.
   Future<BackgroundPickResult> pick() async {
     try {
       final raw = await _channel.invokeMethod<Object?>('pick');

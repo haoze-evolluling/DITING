@@ -3,7 +3,6 @@ import 'package:material_ui/material_ui.dart';
 
 import 'server_home_style.dart';
 
-/// Standard header for a server-home dashboard card.
 class ServerCardHeader extends StatelessWidget {
   const ServerCardHeader({
     super.key,
@@ -30,7 +29,6 @@ class ServerCardHeader extends StatelessWidget {
   }
 }
 
-/// Quiet placeholder used by a card that has no samples yet.
 class ServerEmptyPanel extends StatelessWidget {
   const ServerEmptyPanel({
     super.key,
@@ -87,7 +85,6 @@ class ServerEmptyPanel extends StatelessWidget {
   }
 }
 
-/// Compact window label used by dashboard section headers.
 class ServerWindowChip extends StatelessWidget {
   const ServerWindowChip({super.key, required this.label});
 
@@ -112,7 +109,6 @@ class ServerWindowChip extends StatelessWidget {
   }
 }
 
-/// Compact label/value pair under a chart.
 class ServerMiniMetric extends StatelessWidget {
   const ServerMiniMetric({
     super.key,
@@ -166,7 +162,6 @@ class ServerMiniMetric extends StatelessWidget {
   }
 }
 
-/// Colored dot plus label, shared by chart legends.
 class ServerLegend extends StatelessWidget {
   const ServerLegend({
     super.key,

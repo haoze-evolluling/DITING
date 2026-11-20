@@ -1,5 +1,3 @@
-//! Raw SQLite rows to typed records, with the legacy defaults applied here and only here.
-
 use serde_json::{json, Map, Value};
 
 use crate::classify;
@@ -220,7 +218,6 @@ fn http_daily(rows: &[Value]) -> Value {
     json!({ "total": total, "byOutcome": by_outcome })
 }
 
-/// Parses a page of rows; `kind` decides the shape. `nowMs` is only read by cache rows.
 pub fn rows(request: &Value) -> Option<Value> {
     let kind = request.get("kind")?.as_str()?;
     let now = payload::integer_or(request, "nowMs", 0);

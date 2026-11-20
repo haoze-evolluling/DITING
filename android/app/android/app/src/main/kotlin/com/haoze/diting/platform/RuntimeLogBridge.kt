@@ -14,12 +14,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 
-/// Troubleshooting logs: the on-demand `logcat` capture (on/off, live state, export, clear) and the
-/// always-on structured event black box (append from Dart, read back, clear).
-///
-/// The capture itself runs in the `:log` process, so its state lives in [RuntimeLogStore]'s marker
-/// file rather than in a static field this process cannot see; the event writer runs in this (app)
-/// process, so [Dart] errors and Kotlin events share one file.
 class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallHandler {
 
     companion object {
@@ -27,9 +21,6 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
         private const val PREFS = "diting_runtime_log"
         private const val KEY_DETAILED = "detailed"
 
-        /// Re-arms a capture the user left running before a process restart. Called from the
-        /// Activity's engine setup, where the app is foreground, so the foreground-service start is
-        /// allowed; any platform restriction simply leaves the switch off.
         fun restore(context: Context) {
             if (!RuntimeLogStore.isCapturing(context)) return
             val detailed = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -55,7 +46,6 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
                 RuntimeLogService.stop(context)
                 result.success(false)
             }
-            // Cheap enough for the page's resume refresh: a directory listing, not a file read.
             "status" -> result.success(status())
             "setMode" -> {
                 val detailed = call.argument<Boolean>("detailed") ?: false
@@ -96,9 +86,6 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
     private fun status(): Map<String, Any> = runCatching {
         val capturing = RuntimeLogStore.isCapturing(context)
         val detailed = detailedMode()
-        // The marker outlives the service when the app was force-stopped, so re-arm it instead of
-        // showing a switch that would silently capture nothing. A duplicate start for the pid that
-        // is already followed is ignored by the service.
         if (capturing) RuntimeLogService.start(context, Process.myPid(), detailed)
         val events = RuntimeEventLog.files(context)
         mapOf(
@@ -129,18 +116,12 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
             .putBoolean(KEY_DETAILED, detailed).apply()
     }
 
-    /// Shares a Dart-filtered export: the page decides level/module, this only stages the text for
-    /// the FileProvider so the share sheet can hand it over without touching the user's folder.
     private fun shareText(call: MethodCall): Boolean = runCatching {
         val text = call.argument<String>("text") ?: return false
         val name = call.argument<String>("name")?.takeIf { it.isNotBlank() } ?: "runtime-events.txt"
-        // Must live under a cache dir the FileProvider already maps (`troubleshooting-share/` in
-        // res/xml/file_paths.xml); an unmapped path makes getUriForFile throw and the export fail.
         val dir = File(context.cacheDir, "troubleshooting-share").apply { mkdirs() }
         val file = File(dir, name).apply { writeText(text) }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        // QQ / WeChat read the shared URI from ClipData; with only EXTRA_STREAM they answer
-        // "文件不存在". Keep the same contract as TroubleshootingLogBridge.shareFiles.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)

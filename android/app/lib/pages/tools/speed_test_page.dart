@@ -1,7 +1,5 @@
 part of 'tools_page.dart';
 
-/// Speed test measuring real DNS query latency (legacy `DnsSpeedTestSection`). A missing channel
-/// disables the button instead of faking numbers; failed entries never win the fastest badge.
 class SpeedTestPage extends ConsumerStatefulWidget {
   const SpeedTestPage({super.key});
 
@@ -59,8 +57,6 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
               hintText: l10n.toolSpeedDomainHint,
               glyph: AppGlyphs.language,
               enabled: !state.running && !unavailable,
-              // Write back on every keystroke: `_run` reads the provider value, so a
-              // controller-only change would test the previous domain.
               onChanged: (value) =>
                   ref.read(latencyDomainProvider.notifier).setDomain(value),
               onSubmitted: (_) => _run(),
@@ -125,8 +121,6 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
               body: l10n.toolSpeedEmpty,
             ),
           if (state.results.isNotEmpty) ...[
-            // Rows go through `generateSection`: each result is a `ListItem`, so the group gets
-            // the same card fill, rounded corners and separators as every other list in the app.
             generateSection(
               title: l10n.toolSpeedResults,
               items: [
@@ -162,7 +156,6 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
   }
 }
 
-/// Rank, name, protocol badge, fastest badge, latency bar, success rate and sample count.
 class _SpeedResultRow extends StatelessWidget {
   const _SpeedResultRow({
     required this.sample,
@@ -181,8 +174,6 @@ class _SpeedResultRow extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final share = barMax <= 0 ? 0.0 : sample.elapsedMs / barMax;
     return ListItem(
-      // The row content is a custom column, so the tile's own padding and minimum height would
-      // only add empty space around it.
       padding: EdgeInsets.zero,
       minVerticalPadding: 0,
       minTileHeight: 0,

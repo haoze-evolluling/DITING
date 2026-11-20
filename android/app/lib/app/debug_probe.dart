@@ -1,6 +1,3 @@
-/// On-device UI probe, debug/profile only: VM Service extensions that navigate, dump global
-/// rects and collect layout errors, so spacing is measured rather than guessed. In release
-/// builds `kDebugMode` is constant false and call sites are tree-shaken away.
 library;
 
 import 'dart:convert';
@@ -24,18 +21,14 @@ const List<String> _structureTypes = <String>[
   'PageBody',
   'FloatingHeader',
   'Scaffold',
-  // Register textless containers too, or the spacing audit counts them as gaps.
   'Card',
   'Tile',
   'Image',
   'Chart',
   'EditableText',
-  // Input shell: `EditableText` covers only the text line, so a tall field
-  // would be reported as blank space.
   'InputDecorator',
   'TextField',
   'NullStatus',
-  // Other painted blocks; missing them produced false gaps of 190-660dp.
   'Button',
   'CustomPaint',
   'GlyphIcon',
@@ -47,8 +40,6 @@ void installDebugProbe() {
   if (!kDebugMode) return;
   final previous = FlutterError.onError;
   FlutterError.onError = (FlutterErrorDetails details) {
-    // Keep every layout error: filtering on "overflowed" alone drops
-    // "RenderBox was given infinite size", which also hides content.
     final text = details.exceptionAsString().split('\n').first;
     if (text.contains('RenderBox') ||
         text.contains('overflowed') ||
@@ -66,8 +57,6 @@ void installDebugProbe() {
   ) async {
     final loc = args['loc'] ?? '/';
     _diagnostics.clear();
-    // `go` replaces the page stack but leaves `PopupRoute`s from the previous
-    // page open; their text would be reported as part of the new page.
     rootNavigatorKey.currentState?.popUntil((route) => route is! PopupRoute);
     final context = rootNavigatorKey.currentContext;
     if (context != null) GoRouter.of(context).go(loc);
@@ -116,8 +105,6 @@ void installDebugProbe() {
         if (dir == AxisDirection.left || dir == AxisDirection.right) {
           hz = true;
         } else {
-          // Clamp to the scroll viewport bottom: clipped rows are not on screen
-          // and must not count as intruding into the system bars.
           final box = element.renderObject;
           if (box is RenderBox && box.hasSize) {
             final bottom =
@@ -127,8 +114,6 @@ void installDebugProbe() {
           }
         }
       }
-      // Inactive shell branches stay laid out inside an invisible `Visibility`;
-      // skip them so their text is not reported as part of the current page.
       if (widget is Visibility && !widget.visible) return;
       if (widget is Offstage && widget.offstage) return;
       if (widget is SliverPadding) {
@@ -137,7 +122,6 @@ void installDebugProbe() {
         _notes.add('SliverPadding t=${_r(top)}');
       }
       final type = widget.runtimeType.toString();
-      // The bars' own titles and buttons live inside the bar area by design.
 
       if (type == 'AppBar' || type == 'NavigationDock') inBar = true;
       if (type == 'PageBody') {

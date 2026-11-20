@@ -1,5 +1,3 @@
-// Theme assembly, the appearance providers and the enum labels that reach the screen.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/layout.dart';
@@ -18,7 +16,6 @@ import '../support/fake_vpn_controller.dart';
 
 void main() {
   group('主题与外观', _appLayer);
-  // Every supported language must produce display text, not a source identifier.
   for (final locale in AppL10n.supportedLocales) {
     group(
       '枚举文案 ${locale.languageCode}',
@@ -29,7 +26,6 @@ void main() {
 
 void _appLayer() {
   group('buildAppTheme 装配顺序', () {
-    // Order matters: pure black goes after seededColorScheme, before surface recomputes a tint
     test('纯黑主题的 surface 是纯黑', () {
       final theme = buildAppTheme(
         const AppThemeSpec(
@@ -66,9 +62,7 @@ void _appLayer() {
           brightness: Brightness.light,
         ),
       );
-      // Without withAppShapes the Card radius stays the M3 default.
       expect(theme.cardTheme.shape, isNotNull);
-      // The Material date/time pickers get the token too, not their M3 28/square defaults.
       expect(theme.timePickerTheme.shape, isNotNull);
       expect(theme.datePickerTheme.shape, isNotNull);
       expect(theme.datePickerTheme.rangePickerShape, isNotNull);
@@ -108,8 +102,6 @@ void _appLayer() {
 
     test('切换色板后 effectiveSeed 跟着变', () {
       final c = container();
-      // Unset `theme_color_style` falls back to SYSTEM in 1.4.3, which degrades to M3 blue without
-      // Monet
       expect(c.read(paletteProvider), AppPalette.system);
       c.read(paletteProvider.notifier).select(AppPalette.purple);
       expect(
@@ -247,7 +239,6 @@ void _appLayer() {
         'preset_alidns_doh',
         'preset_dnspod_doh',
       ]);
-      // Non-switchable presets keep their own protocol.
       expect(
         presetIdForProtocol('preset_google_dns', DnsProtocol.doh),
         'preset_google_dns',
@@ -264,9 +255,7 @@ void _appLayer() {
   });
 }
 
-/// Guards enums reach the screen through `.label`; a bare enum renders `ProviderProtocol.doh`
 void _enumDisplay(AppL10n l10n) {
-  /// A source identifier like "EnumType.value" must never appear in user text.
   void expectNoRawEnumLiteral(String text, String what) {
     expect(
       RegExp(r'\b[A-Z][A-Za-z]*\.[a-z][A-Za-z]*\b').hasMatch(text),
@@ -275,7 +264,6 @@ void _enumDisplay(AppL10n l10n) {
     );
   }
 
-  // 1.4.3's preset providers live under `preset_*` ids; the UI must use that catalog.
   final catalog = defaultProviderCatalog();
 
   group('providerEndpointOf', () {

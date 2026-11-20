@@ -1,8 +1,3 @@
-/// The local zones switch and their default TTL.
-///
-/// The old desktop console's `ZoneFileCard.vue` keeps these in the header of the zone list; here they
-/// are their own card, because the list of editable RFC 1035 blocks needs the rest of the height. The
-/// TTL is a draft that saves with its button; the switch saves on the spot.
 library;
 
 import 'dart:async';

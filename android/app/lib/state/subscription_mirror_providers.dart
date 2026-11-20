@@ -1,8 +1,6 @@
 part of 'subscription_providers.dart';
 
-// Mirror templates (the mirror_template table).
 
-/// Template repository; null without a rules database.
 final mirrorTemplateRepositoryProvider =
     FutureProvider<MirrorTemplateRepository?>((ref) async {
       final db = await ref.watch(subscriptionDatabaseProvider.future);
@@ -13,7 +11,6 @@ final mirrorTemplateRepositoryProvider =
       );
     });
 
-/// All mirror templates, ordered by `addedAt DESC` like legacy `observeAll`.
 final mirrorTemplatesProvider = FutureProvider<List<MirrorTemplateRecord>>((
   ref,
 ) async {
@@ -22,7 +19,6 @@ final mirrorTemplatesProvider = FutureProvider<List<MirrorTemplateRecord>>((
   return repository == null ? const <MirrorTemplateRecord>[] : repository.all();
 });
 
-/// Mirror-template CRUD; `onChanged` bumps the revision so the list rebuilds.
 class MirrorTemplateActions {
   MirrorTemplateActions(this._ref);
 
@@ -31,11 +27,9 @@ class MirrorTemplateActions {
   Future<MirrorTemplateRepository?> _repository() =>
       _ref.read(mirrorTemplateRepositoryProvider.future);
 
-  /// New row id, or null on a name clash or empty input.
   Future<int?> create({required String name, required String template}) async =>
       (await _repository())?.insert(name: name, template: template);
 
-  /// Returns false on a name clash or invalid input.
   Future<bool> update({
     required int id,
     required String name,

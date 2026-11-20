@@ -1,4 +1,3 @@
-/// Mini home preview (upstream `views/theme_preview.dart`), painted in a part file.
 library;
 
 import 'dart:ui' show ImageFilter;
@@ -9,12 +8,8 @@ import 'package:material_ui/material_ui.dart';
 
 part 'mini_screen_painter.dart';
 
-// `dart:math`, `dart:ui` and `AppShape` are only used in the part file, but parts
-// share the parent's import scope, so the imports must stay here.
 enum MiniPage { dashboard, rules, logs, tools }
 
-/// One miniature screen. When [previous] is set the frame freezes mid-transition at
-/// [progress], which is what the tab-animation thumbnails show.
 class MiniScreen extends StatelessWidget {
   const MiniScreen({
     super.key,
@@ -33,7 +28,6 @@ class MiniScreen extends StatelessWidget {
   final ColorScheme colorScheme;
   final bool floatingBar;
 
-  /// Whether the floating bar is glassy; the regular bar stays solid.
   final bool liquidGlass;
 
   final int selected;
@@ -92,8 +86,6 @@ class MiniScreen extends StatelessWidget {
   }
 }
 
-/// Clips the thumbnail into a phone shape (9:17). Content is painted at a fixed
-/// 90x170 logical size and scaled, so the width-based geometry stays proportional.
 class MiniScreenThumb extends StatelessWidget {
   const MiniScreenThumb({
     super.key,
@@ -106,8 +98,6 @@ class MiniScreenThumb extends StatelessWidget {
 
   final Widget screen;
 
-  /// Rendered height; the width follows the phone's 9:17 shape. Pages that show the
-  /// thumbnail as a real preview rather than a row glyph pass a larger value.
   final double height;
 
   @override
@@ -180,7 +170,6 @@ class _MiniGeometry {
   final double unit;
   late final double margin;
 
-  /// Height taken by the dock; the floating bar takes none.
   late final double pageBottom;
   late final Rect bar;
 }

@@ -1,17 +1,12 @@
-//! The bounded dedupe set, a field-for-field port of `connLogSeenDedup`.
-
 use std::collections::HashSet;
 use std::sync::{Mutex, MutexGuard};
 
 use crate::key::build_key;
 
-/// `connLogSeenMaxEntries`: the per-session bound.
 pub const MAX_ENTRIES: usize = 8192;
 
 struct State {
     seen: HashSet<String>,
-    /// `cleared`: how many times the overflow reset fired. `reset()` does not touch it (the Go
-    /// code only ever incremented it in `markSeen`).
     cleared: u64,
 }
 
@@ -24,7 +19,6 @@ impl Default for State {
     }
 }
 
-/// The process-wide connection-log dedupe set.
 #[derive(Default)]
 pub struct ConnLogDedup {
     state: Mutex<State>,
@@ -35,7 +29,6 @@ impl ConnLogDedup {
         Self::default()
     }
 
-    /// `connLogKey` + `markSeen`: builds the key and reports whether it was already present.
     pub fn mark(
         &self,
         prefix: &str,
@@ -48,7 +41,6 @@ impl ConnLogDedup {
         self.mark_key(build_key(prefix, app, dest, port, protocol, reason))
     }
 
-    /// `markSeen` on an already built key.
     pub fn mark_key(&self, key: String) -> bool {
         let mut state = self.lock();
         if state.seen.contains(&key) {
@@ -62,18 +54,15 @@ impl ConnLogDedup {
         false
     }
 
-    /// `reset`: empty the set without resetting the overflow counter.
     pub fn reset(&self) {
         let mut state = self.lock();
         state.seen = HashSet::with_capacity(MAX_ENTRIES);
     }
 
-    /// `size`: current entry count.
     pub fn size(&self) -> u32 {
         self.lock().seen.len() as u32
     }
 
-    /// `cleared`: number of overflow resets so far.
     pub fn cleared(&self) -> u64 {
         self.lock().cleared
     }

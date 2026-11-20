@@ -1,7 +1,3 @@
-/// The protection pages' engine config and pause state.
-///
-/// Both reads come from the service; every write re-reads what it kept. The config form is posted as
-/// a whole subset (the service merges it), so a rejected save leaves the previous values on screen.
 library;
 
 import 'dart:async';
@@ -57,8 +53,6 @@ class DesktopFilterConfigNotifier extends Notifier<DesktopFilterConfigState> {
     }
   }
 
-  /// Saves the form. Returns the failure for the page's snackbar; on success both the config and the
-  /// counters are re-read, because a switch changes the numbers above it too.
   Future<DesktopApiException?> save(DesktopFilterConfig next) async {
     if (state.saving) return null;
     state = DesktopFilterConfigState(
@@ -122,7 +116,6 @@ class DesktopFilterPauseNotifier extends Notifier<DesktopFilterPauseState> {
     }
   }
 
-  /// Pauses for [durationSec] (0 means until resumed by hand), or resumes immediately.
   Future<DesktopApiException?> setPaused(
     bool paused, {
     int durationSec = 0,

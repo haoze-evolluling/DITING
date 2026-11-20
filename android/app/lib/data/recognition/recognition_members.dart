@@ -1,18 +1,12 @@
-/// Data model for the sponsor list; validation runs in
-/// `rust/diting-recognition-core`, and any failure throws [FormatException] so callers keep the last
-/// good cache.
 library;
 
 import 'package:diting_android/data/db/rust_recognition_core.dart';
 
-/// Decoration the cloud list may pin on an avatar; `rainbow` is the flowing halo the UI draws
-/// around a member's photo. The kernel validates the value, so an unknown name never reaches here.
 enum RecognitionAvatarFrame {
   rainbow;
 
   static RecognitionAvatarFrame? fromName(String? raw) => switch (raw) {
     'rainbow' => rainbow,
-    // Absent in older caches and in documents written by an older kernel.
     _ => null,
   };
 }
@@ -27,14 +21,10 @@ class RecognitionMember {
 
   final String name;
 
-  /// Avatar file name; null means a placeholder is drawn.
   final String? avatarFileName;
 
-  /// How many times this sponsor supported the project; 1 unless the cloud list says otherwise.
-  /// Only sponsors carry it, and the row draws a `×N` badge when it is above one.
   final int count;
 
-  /// Optional decoration around the avatar; null draws the plain circle.
   final RecognitionAvatarFrame? frame;
 }
 
@@ -61,8 +51,6 @@ List<RecognitionMember> _membersFromParsed(Object? raw) {
   ]);
 }
 
-/// Parses and validates a list JSON; the kernel rejects a wrong root, mistyped field, duplicate
-/// entry or bad avatar file name with a user-readable reason.
 RecognitionMembers parseRecognitionMembers(String raw) {
   final answer = RustRecognitionCore.instance.parse(raw);
   if (answer['ok'] != true) {

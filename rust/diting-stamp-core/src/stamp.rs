@@ -1,28 +1,14 @@
-//! `sdns://` DNS stamps, parsed byte for byte like `go-dnsstamps` and like the Go code this
-//! replaced (`desktop/service/internal/core/resolver_stamp.go`):
-//!
-//! * the first byte is the protocol id, followed by an 8-byte little-endian props bitmap;
-//! * string fields are lp-strings (1 length byte + body);
-//! * certificate hashes and bootstrap IPs are VLP lists (high bit `0x80` means "one more item").
-//!
-//! DNSCrypt and ODoH stamps stay unsupported and are reported as errors, never silently
-//! downgraded. The parsed value also carries the strings the Go caller used to derive itself
-//! (`URL()` / `Server()`), so the defaults for ports and the DoH path live in exactly one place.
-
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
 
-/// Scheme every stamp starts with (`sdns:` is required, the `//` is optional on input).
 pub const STAMP_SCHEME: &str = "sdns:";
 
-/// Default port of the protocols whose stamps may omit it.
 pub const DEFAULT_HTTPS_PORT: u16 = 443;
 pub const DEFAULT_TLS_PORT: u16 = 853;
 pub const DEFAULT_DNS_PORT: u16 = 53;
 
-/// Length of a SHA-256(RawTBSCertificate) pin inside a stamp.
 pub const HASH_LEN: usize = 32;
 
 const PROTO_PLAIN: u8 = 0x00;
@@ -34,7 +20,6 @@ const PROTO_ODOH_TARGET: u8 = 0x05;
 const PROTO_DNSCRYPT_RELAY: u8 = 0x81;
 const PROTO_ODOH_RELAY: u8 = 0x85;
 
-/// Stamp protocol id. Only the four protocols the resolver implements are representable.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Proto {
     Plain,
@@ -44,7 +29,6 @@ pub enum Proto {
 }
 
 impl Proto {
-    /// On-wire protocol byte, the value the Go side stores in `ServerStamp.Proto`.
     pub fn code(self) -> u8 {
         match self {
             Proto::Plain => PROTO_PLAIN,
@@ -54,7 +38,6 @@ impl Proto {
         }
     }
 
-    /// Display name, identical to `StampProtoType.String()`.
     pub fn name(self) -> &'static str {
         match self {
             Proto::Plain => "Plain",
@@ -64,7 +47,6 @@ impl Proto {
         }
     }
 
-    /// Upstream protocol enum name, identical to the Go `DNSProtocol` constants.
     pub fn protocol(self) -> &'static str {
         match self {
             Proto::Plain => "PLAIN",
@@ -74,7 +56,6 @@ impl Proto {
         }
     }
 
-    /// Port implied by the protocol when neither the stamp nor the address carries one.
     pub fn default_port(self) -> u16 {
         match self {
             Proto::Plain => DEFAULT_DNS_PORT,
@@ -84,20 +65,14 @@ impl Proto {
     }
 }
 
-/// A parsed stamp. Field names follow the Go struct the caller still exposes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Stamp {
     pub proto: Proto,
     pub props: u64,
-    /// Direct address, always `host:port`; empty for DoH stamps that rely on the hostname.
     pub server_addr: String,
-    /// SHA-256 certificate pins.
     pub hashes: Vec<[u8; HASH_LEN]>,
-    /// Hostname used for SNI and certificate validation (may carry a port).
     pub provider_name: String,
-    /// DoH path as written in the stamp (may be empty).
     pub path: String,
-    /// Bootstrap IPs carried by the stamp, unvalidated on purpose (as before).
     pub bootstrap_ips: Vec<String>,
 }
 
@@ -114,7 +89,6 @@ impl Stamp {
         }
     }
 
-    /// Full DoH URL, empty for every other protocol. An empty path falls back to `/dns-query`.
     pub fn url(&self) -> String {
         if self.proto != Proto::DoH {
             return String::new();
@@ -133,7 +107,6 @@ impl Stamp {
         )
     }
 
-    /// Address to put into `ProviderConfig.Server`: the protocol default port is omitted.
     pub fn server(&self) -> String {
         if self.provider_name.is_empty() {
             return self.server_addr.clone();
@@ -141,9 +114,6 @@ impl Stamp {
         self.host_with_port(self.proto.default_port())
     }
 
-    /// Hostname with port; the port equals the protocol default is dropped.
-    ///
-    /// Port precedence: port inside the stamp hostname > port of the direct address > default.
     fn host_with_port(&self, default_port: u16) -> String {
         let (host, mut port) = split_port(&self.provider_name);
         if port.is_empty() {
@@ -157,7 +127,6 @@ impl Stamp {
     }
 }
 
-/// Parses a stamp string. Errors are user-facing text and keep the wording of the Go original.
 pub fn parse(stamp_text: &str) -> Result<Stamp, String> {
     let text = stamp_text.trim();
     if text.is_empty() {
@@ -201,7 +170,6 @@ fn parse_plain(bin: &[u8]) -> Result<Stamp, String> {
 fn parse_doh(bin: &[u8]) -> Result<Stamp, String> {
     let mut reader = Reader::new(bin, 1);
     let props = reader.read_props()?;
-    // The direct address of a DoH stamp may be empty: the hostname is resolved normally then.
     let addr = reader.read_lp_string(true)?;
     let hashes = reader.read_hashes()?;
     let provider = reader.read_lp_string(false)?;
@@ -248,13 +216,11 @@ fn parse_dot(bin: &[u8]) -> Result<Stamp, String> {
 }
 
 fn parse_doq(bin: &[u8]) -> Result<Stamp, String> {
-    // DoQ shares the DoT layout byte for byte; only the protocol id differs.
     let mut stamp = parse_dot(bin)?;
     stamp.proto = Proto::DoQ;
     Ok(stamp)
 }
 
-/// Bounds-checked sequential reader, so no index arithmetic is written by hand.
 struct Reader<'a> {
     bin: &'a [u8],
     pos: usize,
@@ -269,7 +235,6 @@ impl<'a> Reader<'a> {
         self.bin.len() - self.pos
     }
 
-    /// 8-byte little-endian props bitmap.
     fn read_props(&mut self) -> Result<u64, String> {
         if self.remaining() < 8 {
             return Err("stamp is too short (props)".to_string());
@@ -280,7 +245,6 @@ impl<'a> Reader<'a> {
         Ok(u64::from_le_bytes(bytes))
     }
 
-    /// lp-string: one length byte plus the body.
     fn read_lp_string(&mut self, allow_empty: bool) -> Result<String, String> {
         if self.remaining() < 1 {
             return Err("stamp is too short (length byte)".to_string());
@@ -304,7 +268,6 @@ impl<'a> Reader<'a> {
             .map_err(|_| "stamp contains a string field that is not valid UTF-8".to_string())
     }
 
-    /// VLP list of strings; `elem_len` > 0 pins the element size.
     fn read_vlp_strings(&mut self, elem_len: usize) -> Result<Vec<String>, String> {
         let mut out = Vec::new();
         loop {
@@ -332,7 +295,6 @@ impl<'a> Reader<'a> {
         Ok(out)
     }
 
-    /// Certificate pins: VLP with a fixed 32-byte element size.
     fn read_hashes(&mut self) -> Result<Vec<[u8; HASH_LEN]>, String> {
         let mut out = Vec::new();
         loop {
@@ -363,7 +325,6 @@ impl<'a> Reader<'a> {
         Ok(out)
     }
 
-    /// Optional trailing bootstrap-IP section; absent means "no bytes left".
     fn read_optional_bootstrap_ips(&mut self) -> Result<Vec<String>, String> {
         if self.remaining() == 0 {
             return Ok(Vec::new());
@@ -379,7 +340,6 @@ impl<'a> Reader<'a> {
     }
 }
 
-/// Validates a direct address and fills in the protocol default port.
 fn normalize_addr(addr: &str, default_port: u16) -> Result<String, String> {
     let (host, port) = split_port(addr);
     let port = if port.is_empty() {
@@ -402,7 +362,6 @@ fn normalize_addr(addr: &str, default_port: u16) -> Result<String, String> {
     Ok(join_host_port(ip_only, &port))
 }
 
-/// Validates the stamp hostname, which may carry a port.
 fn validate_hostname(hostname: &str) -> Result<(), String> {
     if hostname.is_empty() {
         return Err("stamp has an empty hostname".to_string());
@@ -432,16 +391,11 @@ fn is_ip_literal(value: &str) -> bool {
     value.parse::<Ipv4Addr>().is_ok() || value.parse::<Ipv6Addr>().is_ok()
 }
 
-/// Splits at the last colon, keeping IPv6 literals intact; no port yields an empty port.
-///
-/// The Go side keeps an identical helper (`splitStampPort`) because the pin lookup table uses it
-/// for plain `host:port` server strings too.
 fn split_port(value: &str) -> (&str, &str) {
     let Some(colon) = value.rfind(':') else {
         return (value, "");
     };
     if let Some(bracket) = value.rfind(']') {
-        // `[::1]` without a port: the colon belongs to the literal, not to a port.
         if colon < bracket {
             return (value, "");
         }
@@ -449,7 +403,6 @@ fn split_port(value: &str) -> (&str, &str) {
     (&value[..colon], &value[colon + 1..])
 }
 
-/// `net.JoinHostPort` semantics: brackets only for hosts that contain a colon.
 fn join_host_port(host: &str, port: &str) -> String {
     if host.contains(':') {
         format!("[{host}]:{port}")

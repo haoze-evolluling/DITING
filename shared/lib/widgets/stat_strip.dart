@@ -1,7 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A row of equally wide value/label cells, shared by every stats page.
 class StatStrip extends StatelessWidget {
   const StatStrip({
     super.key,
@@ -13,7 +12,6 @@ class StatStrip extends StatelessWidget {
   final List<StatItem> stats;
   final EdgeInsets padding;
 
-  /// Whether to draw a divider between cells.
   final bool separator;
 
   @override
@@ -38,7 +36,6 @@ class StatStrip extends StatelessWidget {
   }
 }
 
-/// One cell of a [StatStrip].
 class StatItem {
   const StatItem({
     required this.label,
@@ -51,7 +48,6 @@ class StatItem {
   final String value;
   final String? unit;
 
-  /// Value colour, e.g. error for blocked counts, success for hit rates.
   final Color? color;
 }
 
@@ -109,7 +105,6 @@ class _StatCell extends StatelessWidget {
   }
 }
 
-/// A read-only `label: value` row.
 class KeyValueRow extends StatelessWidget {
   const KeyValueRow({
     super.key,
@@ -121,7 +116,6 @@ class KeyValueRow extends StatelessWidget {
   final String label;
   final String value;
 
-  /// Lining digits for addresses, ports and package names.
   final bool tabular;
 
   @override
@@ -161,8 +155,6 @@ class KeyValueRow extends StatelessWidget {
   }
 }
 
-/// A titled group: header, [child], optional footer. Horizontal padding applies to [child] only;
-/// `ListHeader`/`ListFooter` already carry 16, and doubling it indents the title by 32.
 class SectionBlock extends StatelessWidget {
   const SectionBlock({
     super.key,
@@ -200,9 +192,6 @@ class SectionBlock extends StatelessWidget {
   }
 }
 
-/// Bottom spacer that clears whatever bar the shell draws; appended to scrollable pages. Ask
-/// [DockInsetScope] rather than [NavigationDock] directly: pages pushed over the shell have no bar,
-/// and reserving dock-sized space there only shows as dead white at the end of the list.
 class DockSpacer extends StatelessWidget {
   const DockSpacer({super.key, this.extra = 0});
 
@@ -214,9 +203,6 @@ class DockSpacer extends StatelessWidget {
   }
 }
 
-/// Scrollable page body with the app bar inset, dock spacer and scrollbar. The inset must come from
-/// `context.appBarInset` and go into `ListView.padding`, not an outer `Padding`: the scaffold uses
-/// `extendBodyBehindAppBar`, so otherwise the viewport is clipped instead of scrolling behind it.
 class PageBody extends StatelessWidget {
   const PageBody({
     super.key,
@@ -237,8 +223,6 @@ class PageBody extends StatelessWidget {
       removeTop: true,
       child: FloatingBarScope(
         inset: 0,
-        // Rows below the fold wait for the route to settle, so they do not land in the
-        // transition's first frame.
         child: RouteArrivalScope(
           builder: (_, cacheExtent) => ListView(
             scrollCacheExtent: cacheExtent,

@@ -22,7 +22,6 @@ fn a_configured_uid_only_resolves_its_own_domains() {
     assert!(kernel.domain_allowed(1, "example.com"));
     assert!(kernel.domain_allowed(1, "www.example.com"));
     assert!(!kernel.domain_allowed(1, "other.example"));
-    // An unselected UID is not restricted at all.
     assert!(kernel.domain_allowed(2, "other.example"));
 }
 
@@ -34,7 +33,6 @@ fn a_selected_uid_with_an_empty_set_may_resolve_nothing() {
     assert!(kernel.has_uids());
     assert!(!kernel.domain_allowed(7, "example.com"));
     assert!(!kernel.connection_allowed(7, &v4(203, 0, 113, 7), T0));
-    // Loopback stays reachable even for a selected UID.
     assert!(kernel.connection_allowed(7, &v4(127, 0, 0, 1), T0));
 }
 
@@ -93,7 +91,6 @@ fn zero_ttl_unspecified_and_empty_records_never_grant() {
         (v4(203, 0, 113, 7), 0),
         (v4(0, 0, 0, 0), 300),
         (vec![0u8; 16], 300),
-        // The IPv4-mapped zero form is `net.IPv4zero` to Go as well.
         (
             vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0, 0, 0, 0],
             300,
@@ -149,7 +146,6 @@ fn exceeding_256_grants_prunes_the_expired_ones() {
     kernel.remember(1, "example.com.", &first_batch, T0);
     assert_eq!(kernel.grant_count(1), MAX_GRANTS as u32);
 
-    // Two seconds later the first 256 grants are expired; inserting a 257th triggers the prune.
     let later = T0 + 2_000_000_000;
     kernel.remember(1, "example.com.", &[(vec![10, 0, 1, 0], 300)], later);
 

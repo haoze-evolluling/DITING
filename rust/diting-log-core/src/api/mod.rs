@@ -1,15 +1,3 @@
-//! Payload codecs for the JNI entry points: decode one request, run one piece of log logic, encode
-//! the answer.
-//!
-//! Keeping this out of [`crate::jni`] means every layout can be unit-tested without a JVM.
-//! A decoder returns None on any drift (short read, unknown tag, trailing bytes), which the bridge
-//! turns into a null `ByteArray` and Kotlin turns into an `IllegalStateException`.
-//!
-//! The modules follow the Kotlin side: this file the HTTP/race/bootstrap rows, [`dns`] the DNS
-//! batch and its combined classify-and-enqueue call, [`policy`] the retention sweep and the crash
-//! buffer, [`state`] the counters, buckets, write health and attribution caches, [`queue`] the
-//! writer queues, and [`runtime`] the runtime-log capture, its files and the `dns_cache` projection.
-
 pub mod dns;
 pub mod policy;
 pub mod queue;
@@ -36,9 +24,6 @@ use crate::row::{
 };
 use crate::stats::Stats;
 
-// ---------------------------------------------------------------------------------------------
-// Optional-field helpers (a presence byte keeps NULL apart from "")
-// ---------------------------------------------------------------------------------------------
 
 pub(crate) fn write_optional(writer: &mut Writer, value: Option<&str>) {
     match value {
@@ -69,11 +54,7 @@ pub(crate) fn write_optional_i64(writer: &mut Writer, value: Option<i64>) {
     }
 }
 
-// ---------------------------------------------------------------------------------------------
-// HTTP / race / bootstrap rows
-// ---------------------------------------------------------------------------------------------
 
-/// One MITM event; answers with the row, or nothing when the mode hides it.
 pub fn http_event(stats: &Stats, mode: LogMode, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let input = HttpInput {
@@ -87,7 +68,6 @@ pub fn http_event(stats: &Stats, mode: LogMode, payload: &[u8], now_ms: i64) -> 
         return None;
     }
 
-    // The counters see the blank-defaulted outcome even when the row is filtered.
     stats.record_http(&normalized_outcome(&input.outcome));
 
     match http_row(&input, mode, now_ms) {
@@ -100,18 +80,6 @@ pub fn http_event(stats: &Stats, mode: LogMode, payload: &[u8], now_ms: i64) -> 
     }
 }
 
-/// One batch of MITM events: counters, classification and the writer queue in a single call.
-///
-/// The engine hands Kotlin a packed batch of `(package, authority, protocol, outcome, rule)`
-/// tuples; this entry point decodes all of them before touching the counters, records the outcome
-/// of every row, turns the rows the log mode keeps into queue entries and enqueues them under one
-/// lock. Answers:
-///
-/// ```text
-/// u8 0  queue closed, nothing enqueued
-/// u8 1  nothing enqueued (the mode hid every row)
-/// u8 2  u32 overflow | u8 batch_full | i64 flush_delay_ms
-/// ```
 pub fn http_event_batch(
     stats: &Stats,
     queue: &Queue,
@@ -147,7 +115,6 @@ pub fn http_event_batch(
     Some(submit_classified(queue, rows, now_ms))
 }
 
-/// Enqueues rows the kernel already classified; the answer is the shared batch status.
 pub(crate) fn submit_classified(queue: &Queue, rows: Vec<Vec<u8>>, now_ms: i64) -> Vec<u8> {
     if rows.is_empty() {
         return vec![1];
@@ -193,7 +160,6 @@ fn decode_race_input(reader: &mut Reader<'_>) -> Option<RaceInput> {
     })
 }
 
-/// One race result; answers with the row, or nothing when there is no query name.
 pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let input = decode_race_input(&mut reader)?;
@@ -211,19 +177,11 @@ pub fn race(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     }
 }
 
-/// `u32 count` then one race input per event; answers with `u32 count | rows(u32 length | bytes)`,
-/// the same row layout [`race`] answers, so the writer submits the whole batch in one call.
 pub fn race_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let rows = race_rows(payload, now_ms)?;
     Some(rows_payload(&rows))
 }
 
-/// Classifies one race batch and enqueues it in a single crossing, the same shape
-/// [`dns_batch_submit`](super::dns::dns_batch_submit) uses for DNS.
-///
-/// Kotlin used to call [`race_batch`], unpack every row into a `ByteArray`, hand the list back to
-/// `queueSubmitMany` for a re-pack and let this crate decode the blobs again. The rows never need
-/// to leave the kernel.
 pub fn race_batch_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let rows = race_rows(payload, now_ms)?;
     Some(submit_classified(queue, rows, now_ms))
@@ -252,7 +210,6 @@ fn race_rows(payload: &[u8], now_ms: i64) -> Option<Vec<Vec<u8>>> {
     )
 }
 
-/// The `u32 count | rows(u32 length | bytes)` framing the Kotlin writer queue accepts.
 pub(crate) fn rows_payload(rows: &[Vec<u8>]) -> Vec<u8> {
     let mut writer = Writer::new();
     writer.u32(rows.len() as u32);
@@ -292,7 +249,6 @@ fn decode_bootstrap_input(reader: &mut Reader<'_>) -> Option<BootstrapInput> {
     })
 }
 
-/// One bootstrap probe; answers with the row, or nothing when the host is blank.
 pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let input = decode_bootstrap_input(&mut reader)?;
@@ -310,13 +266,11 @@ pub fn bootstrap(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     }
 }
 
-/// The bootstrap counterpart of [`race_batch`].
 pub fn bootstrap_batch(payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let rows = bootstrap_rows(payload, now_ms)?;
     Some(rows_payload(&rows))
 }
 
-/// Classifies one bootstrap batch and enqueues it in a single crossing.
 pub fn bootstrap_batch_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let rows = bootstrap_rows(payload, now_ms)?;
     Some(submit_classified(queue, rows, now_ms))
@@ -390,7 +344,6 @@ mod tests {
             http_event(&stats, LogMode::BlockedAndErrors, &payload, 1),
             Some(Vec::new())
         );
-        // The counters were fed anyway: the notification ignores the log mode.
         assert_eq!(stats.request_snapshot().passed, 1);
 
         let all = http_event(&stats, LogMode::All, &payload, 1).unwrap();
@@ -432,7 +385,6 @@ mod tests {
         assert_eq!(queue.pending_len(), 2);
         assert_eq!(stats.request_snapshot().total, 2);
 
-        // The mode filter still applies inside the batch, and the counters still see every row.
         let stats = Stats::new();
         let queue = Queue::new(HTTP);
         let answer =
@@ -446,7 +398,6 @@ mod tests {
         assert_eq!(queue.pending_len(), 1);
         assert_eq!(stats.request_snapshot().total, 2);
 
-        // Nothing to enqueue: the answer is the "hidden" status, no queue write happens.
         let mut hidden = Writer::new();
         hidden.u32(1);
         hidden.string("com.app");

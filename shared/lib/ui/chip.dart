@@ -101,7 +101,6 @@ class TonalChip extends StatelessWidget {
   }
 }
 
-/// A font's ascent outweighs its descent, so a centered line box sits low.
 class _CapCentered extends SingleChildRenderObjectWidget {
   static const _capHeightPerEm = 0.7;
 

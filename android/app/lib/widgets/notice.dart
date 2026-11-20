@@ -1,11 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A tinted inline notice: a glyph and a paragraph on a rounded warning or error fill.
-///
-/// Used where a card would be too heavy — inside another card, or right under a switch that needs a
-/// caveat. The 10-inset / 8-gap / `AppShape.standard` geometry was copy-pasted between the developer page
-/// and the disclaimer, so it lives here now.
 class InlineNotice extends StatelessWidget {
   const InlineNotice({
     super.key,
@@ -20,7 +15,6 @@ class InlineNotice extends StatelessWidget {
   final String message;
   final Glyph glyph;
 
-  /// `warningContainer` when omitted, the caveat tone this widget exists for.
   final Color? color;
   final Color? foregroundColor;
   final double glyphSize;
@@ -53,10 +47,6 @@ class InlineNotice extends StatelessWidget {
   }
 }
 
-/// A single-line confirmation in a card: what just happened, in the page's own surface.
-///
-/// Distinct from [InlineNotice], which shouts a caveat; this one stays quiet and carries a
-/// successful outcome. The mark doubles as the state: a check for done, an info glyph otherwise.
 class CardNoticeRow extends StatelessWidget {
   const CardNoticeRow({
     super.key,
@@ -69,7 +59,6 @@ class CardNoticeRow extends StatelessWidget {
   final String message;
   final Glyph glyph;
 
-  /// Glyph colour; `primary` when omitted.
   final Color? color;
   final double glyphSize;
 

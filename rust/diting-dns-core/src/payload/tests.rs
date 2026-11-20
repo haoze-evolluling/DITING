@@ -1,6 +1,3 @@
-//! Boundary tests: the layout the Go decoder reads is the one written here byte for byte, and
-//! every malformed frame is rejected instead of misread.
-
 use super::*;
 use crate::message::AddressRecord;
 use diting_dns_wire::{ChainKind, ChainTarget};

@@ -1,5 +1,3 @@
-//! Query history search, aggregates and configuration (`/api/v1/querylog/*`).
-
 use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::QueryLogConfig;
@@ -10,7 +8,6 @@ use diting_desktop_core::querylog::{
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.QueryStatsResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryStatsResponse {
@@ -44,12 +41,10 @@ fn to_core_config(config: &QueryLogConfig) -> QueryLogSettings {
 }
 
 impl AppRuntime {
-    /// `GetQueryLog`.
     pub fn query_log(&self, query: SearchQuery) -> SearchResult {
         self.querylog.search(query)
     }
 
-    /// `GetQueryStats`.
     pub fn query_stats(&self) -> QueryStatsResponse {
         const TOP_N: i64 = 10;
         QueryStatsResponse {
@@ -61,26 +56,21 @@ impl AppRuntime {
         }
     }
 
-    /// `ClearQueryLog`.
     pub fn clear_query_log(&self) -> Result<(), ControllerError> {
         self.querylog
             .clear(true)
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `GetQueryLogConfig`.
     pub fn query_log_config(&self) -> QueryLogConfig {
         to_api_config(&self.querylog.config())
     }
 
-    /// `UpdateQueryLogConfig`.
     pub fn update_query_log_config(
         &self,
         mut config: QueryLogConfig,
     ) -> Result<(), ControllerError> {
         config.normalize();
-        // Apply through the engine first: it performs its own normalization (max entries,
-        // retention, data dir), and the persisted file must match the effective settings.
         self.querylog.configure(to_core_config(&config));
         let effective = to_api_config(&self.querylog.config());
         self.update_config(|next| next.query_log = effective)

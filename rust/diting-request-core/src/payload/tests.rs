@@ -1,5 +1,3 @@
-//! Layout round trips.
-
 use super::*;
 
 fn push_text(out: &mut Vec<u8>, text: &str) {

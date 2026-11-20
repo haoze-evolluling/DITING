@@ -1,10 +1,3 @@
-//! Cache lookup and store.
-//!
-//! A hit stops the walk; a stale hit is served immediately when optimistic mode is on and is kept
-//! as a fallback otherwise. Excluded domains bypass both read and write, matching the Go comment:
-//! skipping only one direction either keeps poison in the cache or makes the exclusion useless.
-//! Responses produced by local stages never enter the cache because those stages stop earlier.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -64,7 +57,6 @@ impl Stage for CacheStage {
             return;
         }
         let excluded = self.cache.is_excluded(&normalized_name(&ctx.question.name));
-        // A stale entry rescued the failed upstream path: serve it instead of SERVFAIL.
         let failed = ctx.response.is_none()
             || ctx
                 .response

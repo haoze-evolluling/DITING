@@ -1,8 +1,3 @@
-/// The server certificate: its summary, its expiry warning and the two ways to replace it (generate a
-/// self-signed one, or import a PEM pair).
-///
-/// The old desktop console's `CertificateCard.vue` is the blueprint. Nothing here reads key material
-/// back: the service exposes a summary only.
 library;
 
 import 'dart:async';

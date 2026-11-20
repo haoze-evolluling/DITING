@@ -6,11 +6,6 @@ import android.os.Build
 import android.util.Log
 import java.io.File
 
-/// Deletes the data owned by the retired server mode. The mode starts from scratch when it is
-/// redesigned, so nothing here is migrated or kept for compatibility.
-///
-/// Runs once per process before the Flutter engine starts; every operation is idempotent because a
-/// failed run is retried on the next launch.
 internal object ServerModeRetirement {
     private const val TAG = "ServerModeRetirement"
     private const val SERVER_PREFS = "diting_dns_mode_prefs"
@@ -22,7 +17,6 @@ internal object ServerModeRetirement {
     private const val SERVER_NOTIFICATION_KEY = "default_server_text"
     private const val SERVER_NOTIFICATION_CHANNEL = "channel_dns_mode"
 
-    /// Current and legacy names; both the V2 stores and the pre-V2 files are discarded.
     private val DATABASES = listOf(
         "diting_dns_rules_v2",
         "diting_dns_logs_v2",

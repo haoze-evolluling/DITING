@@ -1,19 +1,11 @@
-//! CORS and Origin trust for the loopback console.
-//!
-//! Browsers let any web page reach `127.0.0.1`, so only reflected Origins are trusted: requests
-//! without an Origin (local processes, curl) and Origins whose host is loopback or the server's
-//! own Host header. Chromium Private Network Access is acknowledged explicitly.
-
 use hyper::header::{
     HeaderMap, HeaderValue, ACCESS_CONTROL_ALLOW_HEADERS, ACCESS_CONTROL_ALLOW_METHODS,
     ACCESS_CONTROL_ALLOW_ORIGIN, ACCESS_CONTROL_MAX_AGE,
 };
 use hyper::http::HeaderName;
 
-/// The private-network preflight acknowledgement header.
 pub const ALLOW_PRIVATE_NETWORK: &str = "access-control-allow-private-network";
 
-/// Whether a request Origin may talk to this service.
 pub fn is_trusted_origin(origin: &str, host: Option<&str>) -> bool {
     let origin = origin.trim();
     if origin.is_empty() {
@@ -63,7 +55,6 @@ fn authority_host(authority: &str) -> String {
     }
 }
 
-/// Adds the standard CORS headers to an outgoing response.
 pub fn apply_headers(headers: &mut HeaderMap, origin: &str, host: Option<&str>) {
     let trusted = is_trusted_origin(origin, host);
     if origin.trim().is_empty() {
@@ -95,7 +86,6 @@ pub fn apply_headers(headers: &mut HeaderMap, origin: &str, host: Option<&str>) 
     );
 }
 
-/// Preflight result: `Some(status)` means the middleware answered without calling a handler.
 pub fn preflight_status(origin: &str, host: Option<&str>) -> Option<u16> {
     if is_trusted_origin(origin, host) {
         Some(204)

@@ -1,28 +1,8 @@
-//! The SOCKS5 wire codec: greeting, method/auth exchange, request address encoding, reply parsing
-//! and the UDP-associate datagram framing.
-//!
-//! Go keeps the socket: it writes what [`greeting`] / [`auth_request`] / [`request`] return, reads
-//! exactly the sizes the replies declare and hands the bytes back here. That split is what keeps
-//! the deadlines, the `net.Conn` type and the status reporting unchanged.
-//!
-//! Behaviour copied from the pre-migration `flow_outbound.go`, quirks included:
-//!
-//! * the greeting only offers username/password when a username *or* a password is set;
-//! * `method_reply` rejects a reply whose first byte is not `0x05` instead of reading a method;
-//! * `auth_reply` only looks at the status byte, never at the sub-negotiation version;
-//! * a reply whose status byte is non-zero fails with that byte as the code (`0` for a bad
-//!   version), and a domain-shaped relay host may be anything, even empty;
-//! * the address encoder treats a non-IP host as a domain, including literals Go rejects such as
-//!   `1.2.3.4.5` or a scoped `fe80::1%eth0`.
-
 use crate::addr::{ip_text, join_host_port, parse_ip, split_host_port, to4};
 
-/// SOCKS5 `CONNECT`.
 pub const COMMAND_CONNECT: u8 = 0x01;
-/// SOCKS5 `UDP ASSOCIATE`.
 pub const COMMAND_UDP_ASSOCIATE: u8 = 0x03;
 
-/// The authentication method the proxy picked.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AuthMethod {
     None,
@@ -30,7 +10,6 @@ pub enum AuthMethod {
 }
 
 impl AuthMethod {
-    /// Wire value of the "selected method" byte.
     pub fn code(self) -> u8 {
         match self {
             AuthMethod::None => 0x00,
@@ -39,23 +18,19 @@ impl AuthMethod {
     }
 }
 
-/// Result of [`parse_reply`]: either the relay endpoint or how many bytes the frame needs in total.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReplyParse {
     Done { address: String },
     NeedMore(usize),
 }
 
-/// One decoded UDP-associate datagram: the remote endpoint and the payload after the header.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DatagramView {
     pub address: String,
     pub host_is_ip: bool,
-    /// Offset of the payload inside the bytes the caller passed in.
     pub offset: usize,
 }
 
-/// The greeting: version, method count and the offered methods.
 pub fn greeting(username: &str, password: &str) -> Vec<u8> {
     let mut methods = vec![0x00];
     if !username.is_empty() || !password.is_empty() {
@@ -68,7 +43,6 @@ pub fn greeting(username: &str, password: &str) -> Vec<u8> {
     out
 }
 
-/// Reads the proxy's method selection (two bytes: version + selected method).
 pub fn method_reply(reply: &[u8]) -> Result<AuthMethod, String> {
     if reply.len() != 2 || reply[0] != 0x05 {
         return Err("invalid SOCKS5 greeting response".to_string());
@@ -81,7 +55,6 @@ pub fn method_reply(reply: &[u8]) -> Result<AuthMethod, String> {
     }
 }
 
-/// The RFC 1929 username/password sub-negotiation request.
 pub fn auth_request(username: &str, password: &str) -> Vec<u8> {
     let mut out = Vec::with_capacity(3 + username.len() + password.len());
     out.push(0x01);
@@ -92,7 +65,6 @@ pub fn auth_request(username: &str, password: &str) -> Vec<u8> {
     out
 }
 
-/// Reads the sub-negotiation reply: only the status byte decides, as before.
 pub fn auth_reply(reply: &[u8]) -> Result<(), String> {
     if reply.len() != 2 || reply[1] != 0x00 {
         return Err("SOCKS5 authentication failed".to_string());
@@ -100,7 +72,6 @@ pub fn auth_reply(reply: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-/// Encodes `host:port` as ATYP + address + port.
 pub fn address(target: &str) -> Result<Vec<u8>, String> {
     let (host, port_text) =
         split_host_port(target).map_err(|err| format!("invalid target {target:?}: {err}"))?;
@@ -134,7 +105,6 @@ pub fn address(target: &str) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
-/// The full request: version, command, reserved byte and the encoded address.
 pub fn request(command: u8, target: &str) -> Result<Vec<u8>, String> {
     let mut out = Vec::with_capacity(3 + 1 + 16 + 2);
     out.extend_from_slice(&[0x05, command, 0x00]);
@@ -142,15 +112,10 @@ pub fn request(command: u8, target: &str) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
-/// The fixed `UDP ASSOCIATE` request for `0.0.0.0:0` (the relay picks the address).
 pub fn udp_associate_request() -> Vec<u8> {
     vec![0x05, COMMAND_UDP_ASSOCIATE, 0x00, 0x01, 0, 0, 0, 0, 0, 0]
 }
 
-/// Parses a reply frame, asking for more bytes while the frame is incomplete.
-///
-/// The checks run in the order the old reader ran them: the header (including the status byte) is
-/// validated as soon as four bytes are in, before the address is read.
 pub fn parse_reply(buf: &[u8]) -> Result<ReplyParse, String> {
     if buf.len() < 4 {
         return Ok(ReplyParse::NeedMore(4));
@@ -193,7 +158,6 @@ pub fn parse_reply(buf: &[u8]) -> Result<ReplyParse, String> {
     })
 }
 
-/// Wraps a payload into `RSV(0) | address | payload`.
 pub fn datagram(target: &str, payload: &[u8]) -> Result<Vec<u8>, String> {
     let address = address(target)?;
     let mut out = Vec::with_capacity(3 + address.len() + payload.len());
@@ -203,11 +167,6 @@ pub fn datagram(target: &str, payload: &[u8]) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
-/// Parses the datagram bytes that follow the three reserved bytes.
-///
-/// The caller has already validated the reserved header and passes exactly `buf[3:n]`, so a short
-/// buffer is a truncated datagram: the errors are Go's `io` texts (`EOF` when nothing was left,
-/// `unexpected EOF` when a field was cut short).
 pub fn parse_datagram(buf: &[u8]) -> Result<DatagramView, String> {
     let mut cursor = 0;
     let atyp = read_u8(buf, &mut cursor)?;
@@ -235,7 +194,6 @@ fn read_u8(buf: &[u8], cursor: &mut usize) -> Result<u8, String> {
     Ok(read_field(buf, cursor, 1)?[0])
 }
 
-/// `io.ReadFull` over a slice: `EOF` with nothing left, `unexpected EOF` with a partial field.
 fn read_field(buf: &[u8], cursor: &mut usize, length: usize) -> Result<Vec<u8>, String> {
     let available = buf.len() - *cursor;
     if available < length {

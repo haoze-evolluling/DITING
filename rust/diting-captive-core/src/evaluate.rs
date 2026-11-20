@@ -1,7 +1,3 @@
-//! The captive-portal verdict: one pure function over a normalized `generate_204` probe, plus the
-//! RFC 8910 option parser and the gate that decides whether blocking is suspended.
-
-/// Portal state, serialized as `open` / `portal` / `unknown`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PortalState {
     Open,
@@ -19,31 +15,20 @@ impl PortalState {
     }
 }
 
-/// The result of one `generate_204` probe, normalized by the caller.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Probe {
-    /// HTTP status the probe got back.
     pub status_code: Option<u16>,
-    /// Redirect target, when the probe was answered with a 3xx.
     pub redirect_url: Option<String>,
-    /// Whether the body matched the `generate_204` expectation. `None` when not checked.
     pub body_matches_expected: Option<bool>,
 }
 
-/// The judgement plus the portal URL (when one was found).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PortalVerdict {
     pub state: PortalState,
-    /// URL of the portal login page, when known.
     pub portal_url: Option<String>,
-    /// Whether blocking should be paused while the state is `portal`.
     pub suspend_blocking: bool,
 }
 
-/// Parses the RFC 8910 `Captive-Portal` option value into a URL.
-///
-/// The option carries a URI; some networks prefix it with `http://` already, some do not. A value
-/// that is not a plausible http(s) URL is rejected rather than handed to `url_launcher`.
 pub fn parse_portal_url(option: &str) -> Option<String> {
     let value = option.trim();
     if value.is_empty() {
@@ -59,12 +44,6 @@ pub fn parse_portal_url(option: &str) -> Option<String> {
     Some(value.to_string())
 }
 
-/// `evaluate`: judges one probe.
-///
-/// * a 204 whose body matched (`body_matches_expected != Some(false)`) is `open`;
-/// * a 3xx with a redirect, a 511 (network authentication required), or a 204 whose body did *not*
-///   match is `portal`, with blocking suspended;
-/// * anything else, or a missing status, is `unknown`.
 pub fn evaluate(probe: &Probe) -> PortalVerdict {
     let portal_url = probe.redirect_url.as_deref().and_then(parse_portal_url);
 
@@ -80,7 +59,6 @@ pub fn evaluate(probe: &Probe) -> PortalVerdict {
             suspend_blocking: true,
         },
         Some(204) => PortalVerdict {
-            // A 204 with the wrong body is the classic "portal returns a login page with 204".
             state: PortalState::Portal,
             portal_url,
             suspend_blocking: true,
@@ -93,18 +71,13 @@ pub fn evaluate(probe: &Probe) -> PortalVerdict {
     }
 }
 
-/// The platform-signal combination. A validated network with an open probe is never a portal; a
-/// captive-capability flag or a portal probe suspends blocking.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GateDecision {
-    /// Whether blocking is suspended for the duration of the portal.
     pub suspend_blocking: bool,
-    /// The portal URL to send the user to, when known.
     pub portal_url: Option<String>,
     pub reason: String,
 }
 
-/// `gate`: combines Kotlin's capability bits with the probe verdict.
 pub fn gate(
     network_validated: bool,
     captive_capability: bool,

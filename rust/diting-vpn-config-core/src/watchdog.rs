@@ -1,20 +1,7 @@
-//! The VPN-slot watchdog state machine.
-//!
-//! `onRevoke` fires both when another app takes the slot and when the user disconnects from system
-//! settings. Only the first is followed by a foreign VPN network, so a revoke with no VPN inside
-//! [`CONFIRM_WINDOW_MS`] is the user's choice. Once occupied, the slot must stay free for
-//! [`RELEASE_DEBOUNCE_MS`] before the owner may reclaim it.
-//!
-//! Kotlin still owns the `ConnectivityManager` callback, the `Handler` timers, the notification and
-//! `VpnService.prepare`; this module owns every phase, deadline and poll interval.
-
-/// Wait after `onRevoke` before the first poll; our own network tears down asynchronously.
 pub const GRACE_MS: i64 = 2_000;
-/// No foreign VPN within this window means the user turned the tunnel off.
 pub const CONFIRM_WINDOW_MS: i64 = 15_000;
 pub const CONFIRM_POLL_MS: i64 = 1_000;
 pub const WATCH_POLL_MS: i64 = 5_000;
-/// The slot must stay free this long before reconnecting.
 pub const RELEASE_DEBOUNCE_MS: i64 = 3_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -70,7 +57,6 @@ impl Watchdog {
         Self::default()
     }
 
-    /// Starts a new confirmation window and returns the first poll delay.
     pub fn start(&mut self, now_ms: i64) -> i64 {
         self.active = true;
         self.phase = Phase::Confirming;
@@ -85,7 +71,6 @@ impl Watchdog {
         self.free_since = 0;
     }
 
-    /// Feeds one poll; the returned delay is what the caller should schedule next (0 means stop).
     pub fn evaluate(&mut self, now_ms: i64, occupied: bool) -> Step {
         if !self.active {
             return Step::idle(0);
@@ -137,7 +122,6 @@ impl Watchdog {
     }
 }
 
-/// Whether a revoke should be followed at all.
 pub fn should_follow(
     enabled: bool,
     current_work_mode: &str,
@@ -147,7 +131,6 @@ pub fn should_follow(
     reclaim_allowed(enabled, current_work_mode, expected_work_mode) && has_restore_intent
 }
 
-/// Mode/switch gate, checked before `VpnService.prepare` so a mode change never re-prepares.
 pub fn reclaim_allowed(enabled: bool, current_work_mode: &str, expected_work_mode: &str) -> bool {
     enabled && current_work_mode == expected_work_mode
 }
@@ -171,7 +154,6 @@ impl ReconnectAction {
     }
 }
 
-/// The on-released decision in the legacy order: mode/switch, consent, then the restore intent.
 pub fn reconnect_decision(
     enabled: bool,
     current_work_mode: &str,
@@ -228,7 +210,6 @@ mod tests {
         assert_eq!(step.event, Event::Released);
         assert_eq!(step.next_delay_ms, WATCH_POLL_MS);
 
-        // A new VPN after release goes back to occupied instead of confirming.
         let step = watchdog.evaluate(10_000, true);
         assert_eq!(step.event, Event::Occupied);
         assert_eq!(

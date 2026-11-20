@@ -1,4 +1,3 @@
-/// Request list (upstream `views/connection/requests.dart`): `http_request_log` + `dns_log`.
 library;
 
 import 'dart:async';
@@ -23,7 +22,6 @@ part 'requests_apps.dart';
 part 'requests_detail.dart';
 part 'requests_rows.dart';
 
-/// Every app's requests; the menu leads to the per-app pages.
 class RequestsPage extends ConsumerWidget {
   const RequestsPage({super.key});
 
@@ -50,8 +48,6 @@ class RequestsPage extends ConsumerWidget {
   }
 }
 
-/// Filterable, paged request list shared by [RequestsPage] and [AppRequestsPage]; each page brings
-/// its own query and feed so their filters never leak into each other.
 class RequestFeedView extends ConsumerStatefulWidget {
   const RequestFeedView({
     super.key,
@@ -66,13 +62,9 @@ class RequestFeedView extends ConsumerStatefulWidget {
   final String title;
   final NotifierProvider<RequestFeedNotifier, RequestFeedQuery> queryProvider;
 
-  /// The global and per-app loaders are different provider types with no shared public supertype,
-  /// so the view takes accessors instead of the providers themselves.
   final AsyncValue<RequestFeed> Function(WidgetRef ref) watchFeed;
   final void Function(WidgetRef ref) loadMore;
 
-  /// Set when the list is already narrowed to one app; the detail sheet then hides its link to
-  /// the same app page.
   final String? packageName;
   final List<CommonPopupMenuItem> leadingMenuItems;
 
@@ -81,12 +73,10 @@ class RequestFeedView extends ConsumerStatefulWidget {
 }
 
 class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
-  /// 250 ms search debounce, as upstream: every keystroke would otherwise issue a LIKE query.
   static const _searchDebounce = Duration(milliseconds: 250);
 
   Timer? _searchTimer;
 
-  /// Distance from the end of the list at which the next page starts loading.
   static const double _loadMoreThreshold = 240;
 
   @override
@@ -178,8 +168,6 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
   }
 
   Widget _buildBody(AsyncValue<RequestFeed> asyncFeed, String filterLabel) {
-    // Check hasValue first: a refresh keeps the old value alongside isLoading, and
-    // looking at isLoading alone would flash the loading state and lose scroll.
     if (asyncFeed.hasValue) return _body(asyncFeed.requireValue, filterLabel);
     if (asyncFeed.hasError) {
       return ObsFailure(
@@ -214,7 +202,6 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
         ),
       ),
       child: NotificationListener<ScrollNotification>(
-        // 240 px of slack starts the next cursor page before the user hits the end.
         onNotification: (notification) {
           if (notification.metrics.extentAfter < _loadMoreThreshold) {
             _loadMore(feed);
@@ -223,7 +210,6 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
         },
         child: PrismListView(
           padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
-          // Header + one row per request + footer.
           itemCount: items.length + 2,
           estimatedItemExtent: 92,
           itemBuilder: (context, index) {
@@ -266,19 +252,12 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
     );
   }
 
-  /// Requests the next cursor page when the list is scrolled near its end.
-  ///
-  /// [RequestFeed.loadingMore] is the guard: the loader refuses a second request while one is in
-  /// flight, so a scroll burst cannot queue the same cursor twice. A failed read surfaces as
-  /// [ObsFailure], whose retry restarts from the top.
   void _loadMore(RequestFeed feed) {
     if (!feed.hasMore || feed.loadingMore) return;
     widget.loadMore(ref);
   }
 }
 
-/// Footer that doubles as the pagination indicator: a spinner while the next page is being read,
-/// the count once it has landed.
 class _FeedFooter extends StatelessWidget {
   const _FeedFooter({required this.label, required this.loading});
 

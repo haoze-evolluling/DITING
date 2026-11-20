@@ -1,16 +1,5 @@
-//! Subscription auto-update timing.
-//!
-//! The rules themselves moved to `diting-schedule-core` (`Cadence` + the pure evaluator); this
-//! module is the thin subscription adapter that keeps the public `schedule.evaluate` payload — a
-//! plan with `records`, returning `{due, nextDueAt}` — unchanged, so no behavioural regression can
-//! hide behind the extraction. `now` and the local `day → slot` table stay injected by Dart.
-
 use serde_json::{json, Value};
 
-/// One evaluation for a whole list: the due ids and the next due moment.
-///
-/// Delegates to [`diting_schedule_core::evaluate`] and drops its `windowActive` field, which the
-/// subscription UI does not consume.
 pub fn evaluate(request: &Value) -> Option<Value> {
     let answer = diting_schedule_core::evaluate(request)?;
     Some(json!({
@@ -26,8 +15,6 @@ mod tests {
     const HOUR: i64 = 3_600_000;
     const DAY: i64 = 86_400_000;
 
-    /// Slots at 04:00 local for days in `[base-4, base+8]`; the epoch grid is synthetic (each day
-    /// is exactly `DAY` long), which keeps the rules testable in any time zone.
     fn slots(around: i64) -> Value {
         let mut list = Vec::new();
         for day in (around - 4)..=(around + 8) {

@@ -1,10 +1,3 @@
-/// The encrypted DNS listeners: the master switch, the three protocols with their real listen state,
-/// and the DoH URLs a client can be given.
-///
-/// The old desktop console's `EncryptedListenersCard.vue` is the blueprint. A configured port is not
-/// a bound port, so each protocol shows both. The network parameters are a draft that saves with its
-/// own button, so they are [EncryptedNetworkCard]: one card holding both the switches and a five-field
-/// form grew taller than the window.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

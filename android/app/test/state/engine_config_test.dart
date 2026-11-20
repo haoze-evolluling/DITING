@@ -1,6 +1,3 @@
-// The DNS config handed to the Rust engine: provider catalog, cache presets, block
-// response and the race list all come from 1.4.3 keys.
-
 import 'dart:convert';
 
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -19,7 +16,6 @@ void main() {
   group('VPN DNS 配置', _vpnConfig);
 }
 
-/// Locks that the UI writes the fixed prefs keys the engine reads (providers, cache, app rules)
 void _providerCatalog() {
   ProviderContainer container({Map<String, Object?> dns = const {}}) {
     final store = MemoryLegacyPrefsStore({
@@ -243,13 +239,11 @@ void _providerCatalog() {
       expect(cache['minTtlSeconds'], 45);
       expect(cache['staleFallbackSeconds'], 600);
 
-      // Out-of-range input is clamped on the way to the engine.
       DnsCacheCustomPolicy.read(settings)
           .copyWith(maxTtlSeconds: 5)
           .write(settings, enabled: true);
       expect(settings.cacheMaxTtlSeconds, DnsCacheCustomPolicy.minSeconds);
 
-      // Choosing a preset again replaces the custom marker and values.
       DnsCachePreset.balanced.applyTo(settings, enabled: true);
       expect(settings.cachePresetRaw, 'balanced');
       expect(DnsCachePreset.current(settings), DnsCachePreset.balanced);
@@ -303,7 +297,6 @@ void _providerCatalog() {
       final visible = c.read(visibleProvidersProvider);
       final ids = visible.map((provider) => provider.id).toSet();
       expect(ids, contains('preset_alidns_dot'));
-      // The current selection is always kept, so the user can see it.
       expect(ids, contains('preset_google_dns'));
       expect(ids, isNot(contains('preset_cloudflare_dns')));
     });

@@ -13,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Log dashboard, one editable card board per log mode (all, blocked and errors, off).
 class LogsPage extends ConsumerStatefulWidget {
   const LogsPage({super.key});
 
@@ -29,18 +28,13 @@ class _LogsPageState extends ConsumerState<LogsPage>
   @override
   void initState() {
     super.initState();
-    // Counters come from the native engine; pull them once when the page opens.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(powerProvider.notifier).syncStatus();
     });
-    // These cards read tables the native writers keep filling; share home's timer so the
-    // lists update without tapping refresh. Tests disable it.
     _logRefresh = ref.read(logLiveRefreshProvider.notifier);
   }
 
-  /// Only the front tab refreshes; an offstage logs board must not run aggregate queries behind
-  /// home's scroll.
   @override
   void onPageVisibilityChanged(bool visible) {
     if (visible == _polling) return;
@@ -62,7 +56,6 @@ class _LogsPageState extends ConsumerState<LogsPage>
   Widget build(BuildContext context) {
     final mode = ref.watch(logModeProvider);
     final editing = ref.watch(logDashboardEditingProvider);
-    // Cards read the density scope, mounted at the same level as the home page.
     return DashboardDensityScopeHost(
       child: CommonScaffold(
         title: editing
@@ -85,8 +78,6 @@ class _LogsPageState extends ConsumerState<LogsPage>
             ),
             IconButton(
               tooltip: context.l10n.logsRefresh,
-              // Shares one revision with the drill-down pages: one refresh re-queries every
-              // log table, so the dashboard and the cache page never disagree.
               onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
               icon: const GlyphIcon(AppGlyphs.refresh),
             ),
@@ -95,7 +86,6 @@ class _LogsPageState extends ConsumerState<LogsPage>
         body: PageBody(
           children: [
             const SizedBox(height: 8),
-            // Each log mode has its own card set, so each keeps its own layout.
             LogDashboardBoard(mode: mode),
             const SizedBox(height: 8),
           ],

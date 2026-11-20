@@ -4,11 +4,6 @@ import com.haoze.diting.engine.TunnelEngine
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-/// Reads the engine's counters in the shape the Dart layer expects; both engines answer.
-///
-/// The engine packs six big-endian `u64`s (`statsSnapshot`), so a poll is one JNI crossing and no
-/// JSON document: the status channel used to build and parse two separate JSON objects here every
-/// few seconds for the whole life of the tunnel.
 object EngineStats {
     private const val FIELDS = 6
 

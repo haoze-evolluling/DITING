@@ -14,8 +14,6 @@ import 'package:diting_shared/state/settings_providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-/// Builds one log dashboard card. [interactive] is false in edit mode, where no card navigates:
-/// leaving the page mid-arrangement reads as a lost drag.
 Widget buildLogDashboardCard(
   BuildContext context,
   LogDashboardWidget widget,
@@ -30,8 +28,6 @@ Widget buildLogDashboardCard(
       onRecentActivity: push(ObservabilityPaths.requests),
     ),
     LogDashboardWidget.trafficMonitor => TrafficMonitorCard(
-      // Full screen like the hub entry: the bar belongs to the shell, so only a push on the root
-      // navigator hides it and gives the title bar a back arrow.
       onDetail: interactive
           ? () => pushStandalone(context, Routes.traffic)
           : null,
@@ -68,7 +64,6 @@ Widget buildLogDashboardCard(
   };
 }
 
-/// Bare title block in view mode; edit mode wraps it in a card so it can carry the edit bar.
 class _HeroBlock extends StatelessWidget {
   const _HeroBlock({required this.mode});
 

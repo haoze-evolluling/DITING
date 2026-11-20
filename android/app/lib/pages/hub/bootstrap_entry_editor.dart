@@ -4,7 +4,6 @@ import 'package:material_ui/material_ui.dart';
 
 typedef BootstrapEntryDraft = ({String name, String ip});
 
-/// Shared add dialog for normal and server bootstrap entries.
 class BootstrapEntryEditor extends StatefulWidget {
   const BootstrapEntryEditor({super.key});
 

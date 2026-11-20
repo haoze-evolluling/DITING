@@ -1,7 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'focus.dart';
 
-// Android TV's keyboard covers about the lower 45% of the screen.
 const _floatingKeyboardShare = 0.5;
 const _maxRevealFrames = 30;
 
@@ -58,8 +57,6 @@ class _RemoteKeyboardState extends State<_RemoteKeyboard> {
     _outgoing = node?..addListener(_holdKeyboard);
   }
 
-  // The node losing focus hears of it before the field gaining it, whose listener opens the
-  // keyboard.
   void _holdKeyboard() {
     final focus = FocusManager.instance.primaryFocus;
     if (focus == _outgoing || !_usingRemote || _keyboardShown) {
@@ -92,7 +89,6 @@ class _RemoteKeyboardState extends State<_RemoteKeyboard> {
     }
   }
 
-  // Containers ease into a new inset, so reveal the field until they settle.
   void _revealFocusedField([int frame = 0]) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final editable = _editableOf(FocusManager.instance.primaryFocus);
@@ -137,7 +133,6 @@ class _RemoteKeyboardState extends State<_RemoteKeyboard> {
       return KeyEventResult.ignored;
     }
     _usingRemote = true;
-    // The keyboard takes the remote's keys while up, so one reaching the app means BACK closed it.
     _openedKeyboard = false;
     if (!remoteSelectKeys.contains(event.logicalKey) || _keyboardShown) {
       return KeyEventResult.ignored;

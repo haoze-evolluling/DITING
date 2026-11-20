@@ -1,8 +1,3 @@
-/// The LAN DNS page's state and its three writes.
-///
-/// Every write answers with a success flag only, so each one re-reads `/dns/lan`: the service decides
-/// the listen addresses and whether a firewall rule exists. A rejected write keeps the last state and
-/// returns the reason.
 library;
 
 import 'dart:async';
@@ -48,7 +43,6 @@ class DesktopLanNotifier extends Notifier<DesktopLanState> {
     }
   }
 
-  /// Turning the service on asks for the 53/tcp+udp rule in the same call, as the console did.
   Future<DesktopApiException?> setAllowLan(bool allow) => _write(() async {
     await ref
         .read(desktopApiClientProvider)

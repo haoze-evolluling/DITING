@@ -1,9 +1,3 @@
-//! RFC 6761 / RFC 7686 / RFC 9462 special-use names.
-//!
-//! `localhost` resolves locally, `test`/`invalid`/`onion`/`home.arpa` are NXDOMAIN, and
-//! `resolver.arpa` answers an authoritative NODATA so an OS DDR probe cannot bypass the local
-//! service and discover a public encrypted resolver behind the user's back.
-
 use async_trait::async_trait;
 use diting_dns_wire::build::{RData, ResourceRecord, TYPE_A, TYPE_AAAA};
 use diting_dns_wire::CLASS_IN;

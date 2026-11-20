@@ -7,8 +7,6 @@ import com.haoze.diting.normal.VpnRouteConfig
 import com.haoze.diting.vpn.VpnPlanNative
 import com.haoze.diting.vpn.applyTo
 
-/// Narrow-route TUN: only the DNS subnet and public resolvers enter it; other traffic keeps OS
-/// routing. The address/DNS/route plan comes from `rust/diting-vpn-config-core`.
 object ExpressRouteConfig {
     private const val TAG = "ExpressRouteConfig"
 

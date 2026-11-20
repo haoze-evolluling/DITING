@@ -1,12 +1,5 @@
 package com.haoze.diting.engine;
 
-/// The engine class the app will use, declared here exactly as the Kotlin facade will be.
-///
-/// The smoke test loads the host `libditing_engine` and drives this class, so a renamed native, a
-/// swapped argument order or a wrong callback signature fails on the host instead of on a phone.
-/// Method names are the gomobile-generated ones the current Kotlin call sites already use
-/// (`applyDNSConfig`, `applyRuleSnapshot`, `startStandalone`, …), so moving a call site to the new
-/// facade is a change of import, not of spelling.
 public final class Engine {
     private long handle;
 
@@ -15,7 +8,6 @@ public final class Engine {
         check(handle != 0, "engine handle");
     }
 
-    /// The engine handed to the JVM by `nativeNew`; the Kotlin facade keeps it private too.
     public long handle() {
         return handle;
     }
@@ -37,19 +29,16 @@ public final class Engine {
         nativeStopStandalone(handle);
     }
 
-    /// Delivers the buffered DNS / race / bootstrap batches on the calling thread.
     public void flushLogs() {
         requireHandle();
         nativeFlushLogs(handle);
     }
 
-    /// Null on success, otherwise the error text (Go returned an `error` here).
     public String startStandalone(long port) {
         requireHandle();
         return nativeStartStandalone(handle, port);
     }
 
-    /// The port the server is listening on; 0 when it is not running.
     public long standalonePort() {
         requireHandle();
         return nativeStandalonePort(handle);
@@ -60,13 +49,11 @@ public final class Engine {
         return nativeIsRunning(handle);
     }
 
-    /// Null on success, otherwise the error text.
     public String applyDNSConfig(String json) {
         requireHandle();
         return nativeApplyDnsConfig(handle, json);
     }
 
-    /// Empty on success, otherwise the rejection text.
     public String applyRuleSnapshot(String json) {
         requireHandle();
         return nativeApplyRuleSnapshot(handle, json);
@@ -132,7 +119,6 @@ public final class Engine {
         nativeSetBootstrapLogCallback(handle, callback);
     }
 
-    // ---- outbound proxy (stage 4a) --------------------------------------------------------
 
     public String configureOutboundProxy(String configJson) {
         requireHandle();
@@ -145,7 +131,6 @@ public final class Engine {
         nativeSetOutboundProxyStatusCallback(handle, callback);
     }
 
-    // ---- TUN data plane (stage 3) ---------------------------------------------------------
 
     public void startFull(long fd, SocketProtector protector) {
         requireHandle();
@@ -213,9 +198,7 @@ public final class Engine {
         nativeSetTickIntervalMs(handle, millis);
     }
 
-    // ---- MITM (stage 4b) -----------------------------------------------------------------
 
-    /// The root CA in PEM form, or "" when MITM could not start.
     public String startStackMitm(String certDir) {
         requireHandle();
         return nativeStartStackMitm(handle, certDir);
@@ -288,48 +271,39 @@ public final class Engine {
         }
     }
 
-    /// `tunnel.BatchLogCallback.onDNSQueryBatch(byte[])`: one packed DNS batch.
     public interface BatchLogCallback {
         void onDNSQueryBatch(byte[] rows);
     }
 
-    /// `tunnel.RaceLogCallback.onRaceEvents(byte[])`: one packed race batch.
     public interface RaceLogCallback {
         void onRaceEvents(byte[] rows);
     }
 
-    /// `tunnel.BootstrapLogCallback.onBootstrapEvents(byte[])`: one packed bootstrap batch.
     public interface BootstrapLogCallback {
         void onBootstrapEvents(byte[] rows);
     }
 
-    /// `OutboundProxyStatusCallback.onOutboundProxyStatus(String, String)`.
     public interface OutboundProxyStatusCallback {
         void onOutboundProxyStatus(String state, String message);
     }
 
-    /// `SocketProtector.protect(long): boolean`.
     public interface SocketProtector {
         boolean protect(long fd);
     }
 
-    /// `UIDResolver.resolveUID(long, byte[], long, byte[], long): long`.
     public interface UIDResolver {
         long resolveUID(long protocol, byte[] localAddress, long localPort, byte[] remoteAddress,
                 long remotePort);
     }
 
-    /// `AppUidResolver.packageForUid(long): String`.
     public interface AppUidResolver {
         String packageForUid(long uid);
     }
 
-    /// `TrafficCallback.onTrafficStatsTick(byte[])`: one packed per-UID tick.
     public interface TrafficCallback {
         void onTrafficStatsTick(byte[] rows);
     }
 
-    /// `HttpLogCallback.onHttpEvents(byte[])`: a packed batch of relay decisions.
     public interface HttpLogCallback {
         void onHttpEvents(byte[] rows);
     }

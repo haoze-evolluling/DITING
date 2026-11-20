@@ -1,9 +1,3 @@
-/// Models for custom DNS rewrite (`/api/v1/dns/rewrite/*`).
-///
-/// The old desktop console's `RewritePanel.vue` and `RewriteEditModal.vue` are the blueprint: the
-/// same rule fields, the same record types and response codes, the same split between the shortcut
-/// fields (addresses / alias / text) and the explicit record list. Every parser tolerates a missing
-/// field, because the service answers `omitempty` and an older build must not blank the page.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -21,7 +15,6 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// The record types the service accepts, in its own order (`rewriteRecordTypes`).
 const List<String> desktopRewriteRecordTypes = [
   'A',
   'AAAA',
@@ -35,7 +28,6 @@ const List<String> desktopRewriteRecordTypes = [
   'SVCB',
 ];
 
-/// The response codes a rule may return instead of records (`REWRITE_RCODES`).
 const List<String> desktopRewriteRcodes = [
   'NOERROR',
   'FORMERR',
@@ -45,13 +37,10 @@ const List<String> desktopRewriteRcodes = [
   'REFUSED',
 ];
 
-/// The service's default lifetime when neither the rule nor the engine sets one.
 const int desktopRewriteDefaultTtl = 60;
 
-/// The chip label the shortcut address fields carry, so the table can name it once.
 const String desktopRewriteAddressChip = 'A / AAAA';
 
-/// One explicit record (`core.RewriteRecord`): a type and its `$dnsrewrite` style value.
 class DesktopRewriteRecord {
   const DesktopRewriteRecord({required this.type, required this.value});
 
@@ -67,8 +56,6 @@ class DesktopRewriteRecord {
   Map<String, Object?> toJson() => {'type': type, 'value': value};
 }
 
-/// One `core.RewriteRule`. The shortcut fields and [records] are submitted together, exactly like
-/// the console: switching the editor back to shortcuts must not silently drop the record list.
 class DesktopRewriteRule {
   const DesktopRewriteRule({
     required this.domain,
@@ -95,18 +82,14 @@ class DesktopRewriteRule {
         ttl: _int(json['ttl']),
       );
 
-  /// The matched name; a wildcard (`*.lan`) is matched by the service, not here.
   final String domain;
   final List<String> ips;
   final String cname;
   final List<String> txt;
   final List<DesktopRewriteRecord> records;
 
-  /// Empty or `NOERROR` means "answer normally"; any other code means "answer with that failure and
-  /// no records at all".
   final String rcode;
 
-  /// Zero means "use the engine's default TTL".
   final int ttl;
 
   bool get isRcodeFailure => rcode.isNotEmpty && rcode != 'NOERROR';
@@ -117,7 +100,6 @@ class DesktopRewriteRule {
       ips.isNotEmpty ||
       records.isNotEmpty;
 
-  /// The type chips the row shows: a failure code replaces them, because no record is returned.
   List<String> get typeLabels {
     if (isRcodeFailure) return [rcode];
     final labels = <String>[];
@@ -132,7 +114,6 @@ class DesktopRewriteRule {
     return labels;
   }
 
-  /// Whether [query] (already lower-cased) matches any field the console searches.
   bool matches(String query) {
     if (query.isEmpty) return true;
     if (domain.toLowerCase().contains(query)) return true;
@@ -154,7 +135,6 @@ class DesktopRewriteRule {
   };
 }
 
-/// `core.RewriteConfig`: the engine switch, its default lifetime and the whole rule list.
 class DesktopRewriteConfig {
   const DesktopRewriteConfig({
     required this.enabled,
@@ -177,7 +157,6 @@ class DesktopRewriteConfig {
   final int ttl;
   final List<DesktopRewriteRule> rules;
 
-  /// The lifetime a row shows when its own rule left the field empty.
   int get effectiveTtl => ttl > 0 ? ttl : desktopRewriteDefaultTtl;
 
   DesktopRewriteConfig copyWith({

@@ -1,8 +1,3 @@
-/// Models for the local authoritative zones (`/api/v1/dns/zone/*`).
-///
-/// The old desktop console's `ZoneFileCard.vue` is the blueprint: zone text is edited locally and
-/// only "save all" posts it; the service answers with the rebuilt state of every zone, including the
-/// ones it could not load. Every parser tolerates a missing field.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -20,10 +15,8 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// `core.DefaultZoneTTL`; the service applies it when the config leaves the field at zero.
 const int desktopZoneDefaultTtl = 300;
 
-/// One `core.ZoneEntry`: a zone apex and the RFC 1035 text that declares it.
 class DesktopZoneEntry {
   const DesktopZoneEntry({
     required this.id,
@@ -61,8 +54,6 @@ class DesktopZoneEntry {
   };
 }
 
-/// One `core.ZoneState`: whether the service loaded the zone, how many names it holds, and why it
-/// failed when it did not.
 class DesktopZoneState {
   const DesktopZoneState({
     required this.id,
@@ -88,7 +79,6 @@ class DesktopZoneState {
   final String error;
 }
 
-/// `ipc.ZoneConfigResponse`: the config plus what the service built from it.
 class DesktopZoneConfig {
   const DesktopZoneConfig({
     required this.enabled,
@@ -131,7 +121,6 @@ class DesktopZoneConfig {
 
   int get effectiveTtl => ttl > 0 ? ttl : desktopZoneDefaultTtl;
 
-  /// The build result for [id], or null when the service did not report one (an older build).
   DesktopZoneState? stateOf(String id) {
     for (final state in states) {
       if (state.id == id) return state;
@@ -154,7 +143,6 @@ class DesktopZoneConfig {
   );
 }
 
-/// `ipc.ZoneTestResponse`: the preview of one zone text through the engine's own parser.
 class DesktopZoneTest {
   const DesktopZoneTest({
     required this.success,

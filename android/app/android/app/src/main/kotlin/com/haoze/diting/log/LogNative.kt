@@ -1,15 +1,5 @@
 package com.haoze.diting.log
 
-/// Native log kernel, the JNI face of `rust/diting-log-core`.
-///
-/// The payload layouts are documented in `rust/diting-log-core/src/api.rs`; every request is one
-/// packed `ByteArray` (the builders live next to the callers) and every answer is one packed
-/// `ByteArray`, both big-endian. The library is required: a build that forgot
-/// `python rust/build_android.py` throws an [IllegalStateException] instead of running a second
-/// classifier in Kotlin.
-///
-/// The `Long` handles are boxed kernels (`Stats`, `Traffic`, `Health`, `Attr`, `Queue`); each one
-/// is owned by exactly one Kotlin object and freed where that object used to be cleared.
 internal class LogNative private constructor() {
     external fun dnsBatchSubmit(
         stats: Long,
@@ -101,12 +91,10 @@ internal class LogNative private constructor() {
     external fun mirrorRows(packed: ByteArray): ByteArray?
 
     companion object {
-        /// `LogMode` tags: the order of `row::LogMode`.
         const val MODE_TAG_ALL = 0
         const val MODE_TAG_BLOCKED_AND_ERRORS = 1
         const val MODE_TAG_OFF = 2
 
-        /// `queue_settings` tags: `queue::LOG_TABLE` and `queue::HTTP`.
         const val QUEUE_LOG_TABLE = 0
         const val QUEUE_HTTP = 1
 
@@ -123,7 +111,6 @@ internal class LogNative private constructor() {
             }
         }
 
-        /// The mode tag `DnsLogWriter`, `HttpRequestLogWriter` and the kernel agree on.
         fun modeTag(mode: String): Int = when (mode) {
             DnsLogWriter.MODE_ALL -> MODE_TAG_ALL
             DnsLogWriter.MODE_BLOCKED_AND_ERRORS -> MODE_TAG_BLOCKED_AND_ERRORS
@@ -131,7 +118,6 @@ internal class LogNative private constructor() {
             else -> MODE_TAG_ALL
         }
 
-        /// The two retention windows and the tables one sweep visits.
         fun retentionPlan(
             logDays: Int?,
             trafficDays: Int?,
@@ -160,7 +146,6 @@ internal class LogNative private constructor() {
             )
         }
 
-        /// This app's crash-buffer blocks, flattened back into lines.
         fun crashSelect(packageName: String, lines: List<String>): List<String> {
             val packed = LogPayload.pack { out ->
                 LogPayload.writeString(out, packageName)
@@ -255,7 +240,6 @@ internal class LogNative private constructor() {
             }
         }
 
-        /// Puts a failed batch back; false means the payload did not match the take layout.
         fun trafficRequeue(handle: Long, batches: List<LogTrafficBatch>): Boolean {
             val packed = LogPayload.pack { out ->
                 out.writeInt(batches.size)
@@ -275,7 +259,6 @@ internal class LogNative private constructor() {
         fun healthNew(): Long = requireHandle(instance.healthNew(), "write health")
         fun healthFree(handle: Long) = instance.healthFree(handle)
 
-        /// Counts the dropped rows and answers the one warning line of this window, if any.
         fun healthDropped(handle: Long, rows: Int, reasonTag: Int, table: String): String? {
             val packed = LogPayload.pack { out ->
                 out.writeInt(rows)
@@ -330,7 +313,6 @@ internal class LogNative private constructor() {
         fun attrFree(handle: Long) = instance.attrFree(handle)
         fun attrClear(handle: Long) = instance.attrClear(handle)
 
-        /// `UidPackageCache.resolveUid`'s cache read; null means "ask the platform".
         fun attrUidLookup(handle: Long, packed: ByteArray): Int? {
             val reader = LogPayload.Reader(
                 requireNotNull(
@@ -343,7 +325,6 @@ internal class LogNative private constructor() {
         fun attrUidStore(handle: Long, packed: ByteArray, uid: Int): Boolean =
             instance.attrUidStore(handle, packed, uid, System.currentTimeMillis())
 
-        /// `PackageLookup`: null when the cache must be filled by the caller.
         fun attrPackageLookup(handle: Long, uid: Int): LogPackageLookup {
             val reader = LogPayload.Reader(
                 requireNotNull(instance.attrPackageLookup(handle, uid)) {
@@ -366,7 +347,6 @@ internal class LogNative private constructor() {
 
         fun queueFree(handle: Long) = instance.queueFree(handle)
 
-        /// The next transaction's rows, or null when the queue is empty.
         fun queueTake(handle: Long): List<ByteArray>? {
             val reader = LogPayload.Reader(
                 requireNotNull(instance.queueTake(handle)) {
@@ -404,7 +384,6 @@ internal class LogNative private constructor() {
         fun queueClose(handle: Long): Int = instance.queueClose(handle)
         fun queuePendingLen(handle: Long): Int = instance.queuePendingLen(handle)
 
-        /// The `.log` files of one directory listing, newest first, plus how many a trim keeps.
         fun storeIndex(files: List<LogStoreFile>): LogStoreIndex {
             val packed = LogPayload.pack { out ->
                 out.writeInt(files.size)
@@ -429,7 +408,6 @@ internal class LogNative private constructor() {
             length = reader.i64(),
         )
 
-        /// The export document; null when there is neither a file nor a crash block to show.
         fun storeDocument(
             sections: List<LogStoreSection>,
             crash: String,
@@ -452,8 +430,6 @@ internal class LogNative private constructor() {
             return if (reader.u8() == 1) reader.string() else null
         }
 
-        /// The `logcat` attempts and the watchdog cadence for a capture of `pid`/`uid`; detailed
-        /// mode asks for the single `-b all` reader.
         fun capturePlan(pid: Int, uid: Int, detailed: Boolean): LogCapturePlan {
             val reader = LogPayload.Reader(
                 requireNotNull(instance.capturePlan(pid, uid, if (detailed) 1 else 0)) {
@@ -472,7 +448,6 @@ internal class LogNative private constructor() {
         fun captureSessionNew(): Long = requireHandle(instance.captureSessionNew(), "capture session")
         fun captureSessionFree(handle: Long) = instance.captureSessionFree(handle)
 
-        /// Counts one captured line into the current file.
         fun captureLine(handle: Long, line: String): LogCaptureLine {
             val packed = LogPayload.pack { out -> LogPayload.writeString(out, line) }
             val reader = LogPayload.Reader(
@@ -483,7 +458,6 @@ internal class LogNative private constructor() {
             return LogCaptureLine(written = reader.i64(), rotate = reader.u8() == 1)
         }
 
-        /// Opens the runtime-event gate (minimum level plus the de-duplication window).
         fun runtimeEventNew(minLevelTag: Int, dedupWindowMs: Long): Long =
             requireHandle(instance.runtimeEventNew(minLevelTag, dedupWindowMs), "runtime event gate")
 
@@ -492,8 +466,6 @@ internal class LogNative private constructor() {
         fun runtimeEventSetLevel(handle: Long, minLevelTag: Int) =
             instance.runtimeEventSetLevel(handle, minLevelTag)
 
-        /// Formats one event through the kernel's level/dedup gate; `wrote == false` means the
-        /// writer must not append anything.
         fun runtimeEventLine(
             handle: Long,
             timeText: String,
@@ -523,7 +495,6 @@ internal class LogNative private constructor() {
             return LogRuntimeEventLine(wrote = wrote, line = reader.string())
         }
 
-        /// How much of the engine's cache is projected, and how often.
         fun mirrorLayout(): LogMirrorLayout {
             val reader = LogPayload.Reader(
                 requireNotNull(instance.mirrorLayout()) {
@@ -537,11 +508,6 @@ internal class LogNative private constructor() {
             )
         }
 
-        /// The `dns_cache` rows for one engine snapshot.
-        ///
-        /// `snapshot` is `Engine.getDNSCacheSnapshot`'s packed entries, which are already in this
-        /// kernel's mirror input layout, so the bytes are forwarded without a JSON parse or a
-        /// Kotlin-side repack.
         fun mirrorRows(snapshot: ByteArray): List<ByteArray> {
             val reader = LogPayload.Reader(
                 requireNotNull(instance.mirrorRows(snapshot)) {

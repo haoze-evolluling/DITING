@@ -4,10 +4,6 @@ import 'package:diting_android/pages/home/dashboard/detail/dashboard_detail_part
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Chart card: title row, the plot on a faint baseline and an optional caption.
-///
-/// The empty state keeps the plot area and the baseline instead of a lone centered sentence,
-/// which is what made the speed page look broken when the tunnel was idle.
 class DashboardDetailChart extends StatelessWidget {
   const DashboardDetailChart({
     super.key,
@@ -43,7 +39,6 @@ class DashboardDetailChart extends StatelessWidget {
         height: height * scale.clamp(1, 1.4),
         child: Stack(
           children: [
-            // Baseline: a zero-length series would otherwise leave the card blank.
             Positioned(
               left: 0,
               right: 0,
@@ -80,8 +75,6 @@ class DashboardDetailChart extends StatelessWidget {
   }
 }
 
-/// Composition bar for one total split into parts; a zero total draws the track only, so the
-/// widget never divides by zero.
 class DashboardShareBar extends StatelessWidget {
   const DashboardShareBar({
     super.key,
@@ -89,7 +82,6 @@ class DashboardShareBar extends StatelessWidget {
     this.height = 12,
   });
 
-  /// Parts of the whole; values are weights, not percentages.
   final List<({double value, Color color})> segments;
   final double height;
 
@@ -108,8 +100,6 @@ class DashboardShareBar extends StatelessWidget {
                   for (final part in segments)
                     if (part.value > 0)
                       Expanded(
-                        // Per-mille flex: a 0.3% sliver must stay a sliver, not round up to
-                        // a visible block.
                         flex: (part.value * 1000 / total).round().clamp(
                           1,
                           1000,
@@ -123,7 +113,6 @@ class DashboardShareBar extends StatelessWidget {
   }
 }
 
-/// Legend line under a [DashboardShareBar]: dot, label and the value with its share.
 class DashboardShareLegend extends StatelessWidget {
   const DashboardShareLegend({
     super.key,
@@ -137,7 +126,6 @@ class DashboardShareLegend extends StatelessWidget {
   final String value;
   final Color color;
 
-  /// 0..1 share of the whole; omitted when it makes no sense (device free memory).
   final double? share;
 
   @override

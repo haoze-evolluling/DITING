@@ -7,11 +7,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// DNS cache settings (upstream `CacheSettingsScreen`). The switch and presets write the
-/// nine legacy `dns_cache_*_v2` keys directly, because the engine follows that policy.
-///
-/// Besides the three stored presets the page offers a custom policy: it writes the same keys,
-/// keeps `dns_cache_preset_v3` at `custom`, and lets each duration be edited on its own.
 class CacheSettingsPage extends ConsumerWidget {
   const CacheSettingsPage({super.key});
 
@@ -74,8 +69,6 @@ class CacheSettingsPage extends ConsumerWidget {
   }
 }
 
-/// The parameter rows behind the custom preset. Every edit writes the nine keys immediately, so
-/// leaving the page cannot lose a value.
 class _CustomCacheSection extends ConsumerWidget {
   const _CustomCacheSection({required this.settings, required this.enabled});
 
@@ -193,7 +186,6 @@ class _CustomCacheSection extends ConsumerWidget {
   }
 }
 
-/// The TTL mode picker; the label of the current mode doubles as the button.
 class _ModeRow extends StatelessWidget {
   const _ModeRow({required this.mode, required this.onChanged});
 
@@ -289,8 +281,6 @@ class _ValueButton extends StatelessWidget {
   }
 }
 
-/// A whole-second editor. The engine clamps every duration to 30–86400 s, so the dialog rejects
-/// anything outside that window instead of silently trimming it.
 class _SecondsDialog extends StatefulWidget {
   const _SecondsDialog({required this.title, required this.initialValue});
 

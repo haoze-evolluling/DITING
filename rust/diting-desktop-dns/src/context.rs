@@ -1,10 +1,3 @@
-//! One query through the pipeline.
-//!
-//! The fields mirror the Go `DNSContext`: the raw request, the decoded question, the client
-//! identity and group, the negotiated transport, and the answer the terminal stage produces.
-//! Attribute names are strings because the query log and the EDE stage read them by the same
-//! names the old code set (`cache_hit`, `ecs_stripped`, …).
-
 use std::net::SocketAddr;
 use std::time::Instant;
 
@@ -48,7 +41,6 @@ pub struct DnsContext {
     pub group: String,
     pub started: Instant,
     pub response: Option<Vec<u8>>,
-    /// A stale cache entry kept for fallback when the upstream path fails.
     pub stale_response: Option<Vec<u8>>,
     pub error: Option<String>,
     attributes: Vec<(String, String)>,
@@ -105,7 +97,6 @@ impl DnsContext {
         &self.attributes
     }
 
-    /// Synthesizes a reply with `rcode`, copying ID/question/RD/CD and setting RA.
     pub fn reply_with_rcode(&mut self, rcode: u8) {
         self.response =
             diting_dns_wire::build::MessageBuilder::reply_to(&self.request).and_then(|builder| {
@@ -116,12 +107,10 @@ impl DnsContext {
             });
     }
 
-    /// The terminal fallback when no stage produced an answer.
     pub fn fail_servfail(&mut self) {
         self.reply_with_rcode(RCODE_SERVFAIL);
     }
 
-    /// The client advertised UDP payload size, clamped to `[512, 65535]`.
     pub fn udp_payload_size(&self) -> usize {
         diting_dns_wire::build::parse_opt(&self.request)
             .map(|opt| usize::from(opt.udp_size).clamp(512, 65535))

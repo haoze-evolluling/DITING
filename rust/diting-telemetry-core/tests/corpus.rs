@@ -1,16 +1,3 @@
-//! Replays the three traces produced by the old Go implementations.
-//!
-//! * `logagg_trace.tsv` — `log_aggregator.go`: FIFO drains, the 50-row flush threshold, the
-//!   2048-slot capacity drop and the 3/4 high-water shedding of unblocked connection rows (with both
-//!   counters). The generator pushed into the channel and pulled from it directly, so the rows are
-//!   exactly what the old aggregate loop would have batched.
-//! * `traffic_trace.tsv` — `traffic_tracker.go`: the `uid <= 0` / non-positive gate, the delta swap
-//!   and the totals that survive it, plus the interval normalization (`SetTickInterval(0)` is a
-//!   no-op).
-//! * `uidcache_trace.tsv` — `uid_cache.go` driven through `resolveFlowUID` / `PackageForUid` with an
-//!   injected clock: positive and negative TTLs, the 4-byte vs 16-byte address widths, `uint16` /
-//!   `uint8` key truncation, prune-then-reset at 1024 and the 256-entry package reset.
-
 use diting_telemetry_core::logagg::{BATCH_SIZE, HIGH_WATER_MARK};
 use diting_telemetry_core::uidcache::Addr;
 use diting_telemetry_core::{
@@ -49,7 +36,6 @@ fn item(domain: &str, blocked: bool, blocked_by: &str) -> LogItem {
 #[test]
 fn the_log_aggregator_trace_replays_exactly() {
     let aggregator = LogAggregator::new();
-    // The fixture pushes far past the high-water mark, so the constants are part of the replay.
     assert_eq!(HIGH_WATER_MARK, 1536);
 
     for fields in rows(LOGAGG) {
@@ -159,7 +145,6 @@ fn the_traffic_trace_replays_exactly() {
     }
 }
 
-/// `4:10.0.0.2` / `16:2001:db8::1`, and the 16-byte IPv4-mapped form Go's `net.ParseIP` produces.
 fn parse_addr(field: &str) -> Addr {
     let (width, text) = field.split_once(':').expect("width prefix");
     match width {
@@ -179,7 +164,6 @@ fn parse_addr(field: &str) -> Addr {
     }
 }
 
-/// One `resolveFlow` pass: a hit answers, a miss asks the inner resolver and stores its answer.
 fn resolve_flow(cache: &mut FlowUidCache, key: FlowKey, now_ns: i64, inner: i32) -> i32 {
     match cache.lookup(&key, now_ns) {
         Some(uid) => uid,

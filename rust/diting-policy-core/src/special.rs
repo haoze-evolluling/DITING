@@ -1,9 +1,3 @@
-//! `specialRule`: the rules that carry an app scope, a `dnsType` filter, a `denyallow` exception
-//! list or a regex body (`policy_snapshot.go` / `parseSpecialRule` in `policy_engine.go`).
-//!
-//! Everything here is a field-for-field port, including the order of the four checks in
-//! [`SpecialRule::matches`], because the first failing level decides the verdict.
-
 use std::collections::HashMap;
 
 use regex::Regex;
@@ -13,9 +7,7 @@ use crate::json;
 use crate::regex_go;
 use crate::text::{go_lower, go_lower_trim_dot, go_trim_space};
 
-/// `specialRule`.
 pub struct SpecialRule {
-    /// Reason reported when the rule hits: the lowered pattern, or the raw one for regex rules.
     pub pattern: String,
     pub source: String,
     pub important: bool,
@@ -25,8 +17,6 @@ pub struct SpecialRule {
     pub denyallow: Vec<String>,
     pub is_regex: bool,
     regex: Option<Regex>,
-    /// `rxPrefix`: the ASCII literal every match must start with. Used exactly like Go's
-    /// prefilter, so a rule that cannot match is rejected without running the regex.
     rx_prefix: String,
     wildcard: Option<WildcardMatcher>,
     pub include_qtypes: HashMap<u16, ()>,
@@ -34,10 +24,6 @@ pub struct SpecialRule {
 }
 
 impl SpecialRule {
-    /// The reason a block reports. A subscription rule reports its source tag (`sub_<id>`), which
-    /// is what the log layer parses to attribute the block to that subscription; a custom rule
-    /// reports the readable pattern instead. Plain subscription rules already come back from the
-    /// trie with the tag as their reason, so every subscription match is attributable the same way.
     pub fn block_reason(&self) -> &str {
         if self.source.starts_with("sub_") {
             &self.source
@@ -46,8 +32,6 @@ impl SpecialRule {
         }
     }
 
-    /// `parseSpecialRule`. `None` means "drop the rule", the same outcome as Go returning nil
-    /// (a regex that does not compile is logged there and dropped here).
     pub fn parse(cfg: &json::SpecialRule, is_allow: bool) -> Option<SpecialRule> {
         let is_regex = cfg.is_regex.unwrap_or(false);
         let mut rule = SpecialRule {
@@ -67,7 +51,6 @@ impl SpecialRule {
         };
 
         if is_regex {
-            // Go keeps the raw pattern (only trimmed) and adds the `(?i)` prefix if missing.
             rule.regex = Some(regex_go::compile_rule_regex(&rule.pattern).ok()?);
             let anchored = if crate::text::has_fold_prefix(&rule.pattern) {
                 rule.pattern.clone()
@@ -136,9 +119,7 @@ impl SpecialRule {
         Some(rule)
     }
 
-    /// `specialRule.matches(domain, appName, qtype)` in Go's check order.
     pub fn matches(&self, domain: &str, app_name: &str, qtype: u16) -> bool {
-        // 1. DNS query type.
         if !self.exclude_qtypes.is_empty() || !self.include_qtypes.is_empty() {
             if qtype == 0 {
                 return false;
@@ -151,7 +132,6 @@ impl SpecialRule {
             }
         }
 
-        // 2. App scope.
         if !self.app_scope.is_empty() {
             if self.app_inverted {
                 if !app_name.is_empty() && self.app_scope.contains_key(app_name) {
@@ -164,14 +144,12 @@ impl SpecialRule {
             }
         }
 
-        // 3. denyallow exceptions exempt the whole subtree.
         for exception in &self.denyallow {
             if crate::text::domain_or_suffix(domain, exception) {
                 return false;
             }
         }
 
-        // 4. Pattern: regex, glob, or plain domain-or-suffix.
         if self.is_regex {
             match self.regex.as_ref() {
                 Some(regex) => {
@@ -247,7 +225,6 @@ mod tests {
         );
         assert!(!only_aaaa.matches("a.com", "", 1));
         assert!(only_aaaa.matches("a.com", "", 28));
-        // qtype 0 (the MITM path) never matches a dnsType-constrained rule.
         assert!(!only_aaaa.matches("a.com", "", 0));
 
         let not_aaaa = rule(
@@ -279,7 +256,6 @@ mod tests {
         assert_eq!(rule.rx_prefix, "banner7.");
         assert!(rule.matches("banner7.x.cn", "", 1));
         assert!(!rule.matches("other.io", "", 1));
-        // Non-ASCII domains are never rejected by the prefilter, only by the regex itself.
         assert!(!rule.matches("\u{4e2d}\u{56fd}.example", "", 1));
     }
 

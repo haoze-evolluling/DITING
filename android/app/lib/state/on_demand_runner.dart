@@ -1,11 +1,3 @@
-/// Applies the on-demand whitelist to the live tunnel.
-///
-/// The switch and the SSID table are persisted configuration; without this runner they were only
-/// ever displayed. There is no background network callback in this build (the platform channel
-/// reports the joined SSID on demand), so the catch-up moments are start and resume — but the
-/// whitelist only moves the tunnel when the network CHANGED since the last evaluation. Re-running
-/// the same network would override a manual start/stop on every launch, which is why the last
-/// evaluated SSID is persisted next to the rules.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -16,36 +8,25 @@ import 'package:diting_android/state/config_providers_resources.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// What one evaluation did, so the page can say why nothing happened.
 enum OnDemandOutcome {
-  /// The on-demand switch is off; the tunnel is left to the power button.
   disabled,
 
-  /// The platform could not report the network, so the whitelist cannot be trusted.
   unknownSsid,
 
-  /// The network is the one the whitelist was last applied to; a manual start or stop is kept.
   sameNetwork,
 
-  /// Not on Wi-Fi and no whitelist entry covers cellular.
   noWifi,
 
-  /// Matched an entry, so the tunnel was (or already is) running.
   started,
 
-  /// Already running for a matching network; nothing to change.
   alreadyRunning,
 
-  /// Did not match, so a running tunnel was stopped.
   stopped,
 
-  /// Did not match and nothing was running.
   alreadyStopped,
 
-  /// The tunnel is mid-transition; the next evaluation picks it up.
   busy,
 
-  /// The whitelist matched but the system dialog has not been accepted yet.
   needsConsent;
 
   String label(AppL10n l10n) => switch (this) {
@@ -62,34 +43,26 @@ enum OnDemandOutcome {
   };
 }
 
-/// Re-evaluates the whitelist against the network the device is on now and moves the tunnel to
-/// match it.
 class OnDemandRunner {
   OnDemandRunner(this._ref);
 
   final Ref _ref;
 
-  /// [force] re-evaluates even when the network is unchanged; the "立即应用" button and the
-  /// on-demand switch use it, start and resume do not.
   Future<OnDemandOutcome> apply({bool force = false}) async {
     final resources = _ref.read(configResourcesProvider);
     if (!resources.onDemand) {
       return OnDemandOutcome.disabled;
     }
-    // Read the SSID fresh: the cached provider may describe the network from before a switch.
     final ssid = await _ref.read(currentSsidReaderProvider)();
     if (ssid == null) {
       return OnDemandOutcome.unknownSsid;
     }
     final store = ConfigResourceStore(_ref.read(legacyPrefsStoreProvider));
     final lastSsid = store.loadLastEvaluatedSsid();
-    // A never-evaluated install only records the network, so an upgrade cannot auto-start the
-    // tunnel; after that, acting is reserved for a real network change.
     if (!force && (lastSsid == ssid || lastSsid == null)) {
       if (lastSsid == null) store.saveLastEvaluatedSsid(ssid);
       return OnDemandOutcome.sameNetwork;
     }
-    // Only a settled outcome records the network; `busy` retries on the next evaluation.
     OnDemandOutcome settle(OnDemandOutcome outcome) {
       if (outcome != OnDemandOutcome.busy) {
         store.saveLastEvaluatedSsid(ssid);
@@ -117,9 +90,6 @@ class OnDemandRunner {
         }
         await _ref.read(powerProvider.notifier).toggle();
         final after = _ref.read(powerProvider);
-        // `toggle` returns once the start is scheduled; for a tunnel, `starting` means the system
-        // consent dialog is still open and the real answer arrives through `onPrepareResult`.
-        // Root takeover has no dialog and settles on its own.
         final rootStarting =
             after == PowerState.starting &&
             _ref.read(workModeProvider) == AppWorkMode.normal &&

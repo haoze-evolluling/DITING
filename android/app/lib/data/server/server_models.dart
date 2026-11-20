@@ -1,4 +1,3 @@
-/// Server-mode configuration, status, statistics and query-log models.
 library;
 
 class ServerListenConfig {

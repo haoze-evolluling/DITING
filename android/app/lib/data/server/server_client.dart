@@ -1,4 +1,3 @@
-/// Typed client for `com.haoze.diting/server`.
 library;
 
 import 'dart:convert';
@@ -100,7 +99,6 @@ class MethodChannelServerClient implements ServerClient {
         return ServerConfig.fromJson(Map<String, Object?>.from(result));
       }
     } on ServerException {
-      // A stopped server has no control socket; the file is authoritative then.
     }
     final raw = await readConfig();
     if (raw == null || raw.trim().isEmpty) return ServerConfig.defaults();

@@ -1,11 +1,8 @@
-//! The decoders, checked against payloads the Dart side actually writes.
-
 use super::*;
 use crate::wire::Writer;
 
 fn tunnel_payload() -> Vec<u8> {
     let mut writer = Writer::new();
-    // bootstrapEnabled | cacheEnabled | cacheMinTtlEnabled | cacheStaleEnabled | dynamicEnabled
     writer.u8(0b1_1111);
     writer.u8(0b1);
     writer.string("parallel_race");

@@ -1,5 +1,3 @@
-//! The public server configuration and its desktop-runtime conversion.
-
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -12,7 +10,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::paths::ServerPaths;
 
-/// Effective listener information. The port is chosen by the process identity, never by the UI.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ListenConfig {
@@ -33,9 +30,6 @@ impl Default for ListenConfig {
     }
 }
 
-/// `config.json` for server mode. It is intentionally smaller than the desktop configuration:
-/// listener identity, upstream, filtering, cache and query history are the whole management
-/// surface in the first release.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ServerConfig {
@@ -66,7 +60,6 @@ impl Default for ServerConfig {
     }
 }
 
-/// Server mode starts without a subscription list; desktop keeps its own default.
 fn default_filter_config() -> FilterConfig {
     FilterConfig {
         lists: Vec::new(),
@@ -74,7 +67,6 @@ fn default_filter_config() -> FilterConfig {
     }
 }
 
-/// Match the normal mode's default pair, using the server's `PLAIN` protocol spelling.
 fn default_server_providers() -> Vec<ProviderConfig> {
     vec![
         ProviderConfig {
@@ -92,7 +84,6 @@ fn default_server_providers() -> Vec<ProviderConfig> {
     ]
 }
 
-/// The same three presets as normal mode's default bootstrap selection.
 fn default_server_bootstrap() -> Vec<BootstrapServer> {
     vec![
         BootstrapServer {
@@ -117,7 +108,6 @@ fn default_server_bootstrap() -> Vec<BootstrapServer> {
 }
 
 impl ServerConfig {
-    /// Load, normalize and bind paths to the server data root.
     pub fn load(
         paths: &ServerPaths,
         port: u16,
@@ -151,7 +141,6 @@ impl ServerConfig {
         std::fs::rename(&temporary, path).map_err(|error| format!("提交服务器配置失败: {error}"))
     }
 
-    /// Validate, repair and bind every server-owned path.
     pub fn normalize(
         &mut self,
         paths: &ServerPaths,
@@ -191,7 +180,6 @@ impl ServerConfig {
         Ok(())
     }
 
-    /// Replace the management-editable sections while preserving the effective listener identity.
     pub fn replace_editable(&mut self, next: Self, paths: &ServerPaths) -> Result<(), String> {
         let listen = self.listen.clone();
         *self = next;
@@ -227,7 +215,6 @@ impl ServerConfig {
         config
     }
 
-    /// A compact upstream summary for status cards.
     pub fn upstream_summary(&self) -> String {
         let names: Vec<&str> = self
             .upstream

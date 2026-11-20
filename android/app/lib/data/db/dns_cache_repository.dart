@@ -1,6 +1,3 @@
-/// Read access to the legacy `dns_cache` table; `DnsCacheMirror` copies the engine's in-memory
-/// LRU into it every 10 s, so rows lag the engine by at most one publish interval. The statement
-/// and the TTL arithmetic live in `rust/diting-log-query-core`.
 library;
 
 import 'package:sqflite/sqflite.dart';
@@ -36,8 +33,6 @@ class DnsCacheRecord {
   final int originalTtlSeconds;
   final int responseSize;
 
-  /// Set by [DnsCacheRepository.entries] from the statement's `nowMs`; null on hand-built rows,
-  /// which fall back to the wall clock.
   final int? remainingTtlFromKernel;
 
   int get remainingTtlSeconds {
@@ -47,7 +42,6 @@ class DnsCacheRecord {
     return remaining <= 0 ? 0 : remaining ~/ 1000;
   }
 
-  /// The shape the overview aggregate consumes.
   Map<String, Object?> toKernel() => {
     'queryName': domain,
     'queryType': queryType,
@@ -87,7 +81,6 @@ class DnsCacheRepository {
     return parsed.isEmpty ? 0 : (parsed.first['n'] as num?)?.toInt() ?? 0;
   }
 
-  /// Lifetime hits over the whole table, expired rows included.
   Future<int> totalHitCount() async {
     final plan = RustLogQueryCore.instance.plan('cache.hits');
     final rows = await _db.rawQuery(plan.sql, plan.args);
@@ -95,7 +88,6 @@ class DnsCacheRepository {
     return parsed.isEmpty ? 0 : (parsed.first['n'] as num?)?.toInt() ?? 0;
   }
 
-  /// Average cached response size, used by the "saved bytes" estimate.
   Future<double> averageResponseSize() async {
     final plan = RustLogQueryCore.instance.plan('cache.avgSize');
     final rows = await _db.rawQuery(plan.sql, plan.args);

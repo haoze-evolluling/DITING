@@ -1,46 +1,26 @@
-//! RFC 1035 zone-file subset parser.
-//!
-//! The Go engine delegated this to `miekg/dns`'s `ZoneParser`; this is the subset the desktop
-//! service needs, with the same directives and record grammar:
-//!
-//! * `$ORIGIN`, `$TTL`, `$GENERATE`; `$INCLUDE` is rejected outright because it reads host files.
-//! * relative / absolute names, `@`, `( … )` continuations, `;` comments, quoted TXT strings.
-//! * A / AAAA / CNAME / PTR / NS / MX / TXT / SRV / SOA / CAA, class `IN` or omitted, TTL column
-//!   optional and accepted before or after the class.
-//!
-//! `$GENERATE` expands into normal record statements, so the record budget applies while it
-//! expands instead of only afterwards.
-
 use super::records::{
     is_class, is_ttl_token, normalize_origin, parse_ttl, parse_u16, parse_u32, parse_u8,
     record_type, resolve_name, ZoneRData, ZoneRecord, TYPE_A, TYPE_AAAA, TYPE_CAA, TYPE_CNAME,
     TYPE_MX, TYPE_NS, TYPE_PTR, TYPE_SOA, TYPE_SRV, TYPE_TXT,
 };
 
-/// Hard cap on generated iterations so a non-IN `$GENERATE` cannot spin for billions of rounds
-/// without ever consuming the record budget.
 const MAX_GENERATE_ITERATIONS: u64 = 1_000_000;
 
 #[derive(Debug)]
 struct Statement {
     tokens: Vec<String>,
-    /// True when the logical line started with whitespace (owner is inherited).
     blank_owner: bool,
 }
 
-/// The parse result for one zone entry.
 #[derive(Debug)]
 pub(crate) struct ParsedZone {
-    /// Normalized apex from the entry (not the last `$ORIGIN`).
     pub origin: String,
     pub records: Vec<ZoneRecord>,
-    /// Explicit apex SOA, if the zone declared one.
     pub soa: Option<ZoneRecord>,
     pub count: usize,
     pub truncated: bool,
 }
 
-/// Parses one zone entry. `budget` is the remaining global record allowance.
 pub(crate) fn parse_zone(
     raw_origin: &str,
     content: &str,
@@ -75,9 +55,7 @@ pub(crate) fn parse_zone(
 }
 
 struct Parser {
-    /// The entry's apex, used to decide which SOA is the zone SOA.
     zone_origin: String,
-    /// Current `$ORIGIN`.
     origin: String,
     default_ttl: u32,
     prev_owner: Option<String>,
@@ -173,12 +151,10 @@ impl Parser {
             record_type(type_token).ok_or_else(|| format!("不支持的记录类型 {type_token:?}"))?;
         index += 1;
 
-        // The Go loop stopped before adding the record once the budget was exhausted.
         if self.parsed.count >= self.budget {
             self.parsed.truncated = true;
             return Ok(());
         }
-        // The owner is inherited even for records the IN-only index later discards.
         self.prev_owner = Some(owner.clone());
         if class.as_deref().is_some_and(|class| class != "IN") {
             return Ok(());
@@ -319,7 +295,6 @@ fn parse_range(range: &str) -> Result<(u32, u32, u32), String> {
     Ok((start, stop, step))
 }
 
-/// `$` and `${offset,width,base}` substitution used by `$GENERATE`.
 fn substitute(token: &str, value: u64) -> String {
     let mut output = String::new();
     let mut chars = token.chars().peekable();
@@ -372,7 +347,6 @@ fn expand_spec(spec: &str, value: u64) -> String {
     format!("{sign}{digits:0>width$}")
 }
 
-/// Splits the text into logical statements (parentheses join lines) and tokens.
 fn lex(content: &str) -> Result<Vec<Statement>, String> {
     let mut statements = Vec::new();
     let mut tokens = Vec::new();

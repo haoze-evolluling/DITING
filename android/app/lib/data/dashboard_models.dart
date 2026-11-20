@@ -2,7 +2,6 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
-/// Ring buffer shaped like upstream `FixedList`: fixed length, append-only, redrawn via [revision].
 class RingBuffer<T> {
   RingBuffer(this.maxLength, {List<T>? initial})
     : _items = [...?initial].take(maxLength).toList();
@@ -42,9 +41,6 @@ class SpeedSample {
 
   bool get isZero => up == 0 && down == 0;
 
-  /// Value equality so the notifier can skip a tick that changes nothing: on an idle network the
-  /// rate is 0 every second, and re-emitting an identical sample made the two dashboard charts
-  /// re-append and repaint at 1 Hz for no visible change.
   @override
   bool operator ==(Object other) =>
       other is SpeedSample && other.up == up && other.down == down;
@@ -66,7 +62,6 @@ class TrafficTotals {
   double get total => up + down;
 }
 
-/// Core state; the service card disables probes and greys the dot when stopped.
 enum CoreState {
   running,
   stopped,
@@ -83,17 +78,9 @@ enum CoreState {
   bool get isRunning => this == CoreState.running;
 }
 
-/// Reorderable home dashboard cards, in the order the add-card sheet shows them.
-///
-/// Only cards that are *not* on the log dashboard live here: the log dashboard already owns
-/// traffic, request overview, traffic structure, recent requests, cache hotspots, race winners,
-/// bootstrap DNS, rule blocks and the filtered highlight. Repeating them on home made the two
-/// dashboards look like one page, so home keeps the local device view instead.
 enum DashboardWidget {
-  /// Picked service provider; `解析服务商` in single mode, `竞速服务商` in the other modes.
   provider,
 
-  /// Resolution mode plus the endpoints currently in use.
   resolution,
   status,
   networkSpeed,
@@ -112,7 +99,6 @@ enum DashboardWidget {
   };
 }
 
-/// One card for every widget home owns, in the order a fresh install shows them.
 const defaultDashboardWidgets = <DashboardWidget>[
   DashboardWidget.provider,
   DashboardWidget.resolution,

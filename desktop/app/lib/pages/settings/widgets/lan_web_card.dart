@@ -1,11 +1,3 @@
-/// The LAN web console: the master switch, the port and the URLs to open.
-///
-/// The old desktop console's `LanWebCard.vue` is the blueprint. The switch sends
-/// `configureFirewall: true`, as the console did, so turning the console on also asks for the rule;
-/// whether the host actually has a firewall manager is the service's answer, not a guess here.
-///
-/// The firewall rule and the admin credential are [LanWebAccessCard], because a page of URLs, a port
-/// field and a credential block in one card made it taller than the window.
 library;
 
 import 'dart:async';
@@ -229,7 +221,6 @@ class _UrlRow extends StatelessWidget {
   }
 }
 
-/// The first LAN address as a scannable code: the console's answer to "typing an IP on a phone".
 class _ScanRow extends StatelessWidget {
   const _ScanRow({required this.url});
 

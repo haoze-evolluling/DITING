@@ -1,9 +1,3 @@
-//! Rule tables, buckets and inverted rules that `Snapshot` is made of
-//! (`appRuleBucket`, `invertedRule` and the matching helpers in `policy_snapshot.go`).
-//!
-//! Split out of [`crate::snapshot`] to keep each file reviewable; nothing here knows about the
-//! priority order, it only answers "does this table hold this domain".
-
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -14,7 +8,6 @@ use crate::special::SpecialRule;
 use crate::text::{domain_or_suffix, go_lower_trim};
 use crate::wildcard_index::WildcardIndex;
 
-/// `appRuleBucket`.
 #[derive(Default)]
 pub(crate) struct AppRuleBucket {
     pub(crate) allow: HashMap<String, ()>,
@@ -25,11 +18,8 @@ pub(crate) struct AppRuleBucket {
     pub(crate) important_wildcards: Option<WildcardIndex>,
 }
 
-/// `invertedRule`.
 pub(crate) struct InvertedRule {
     pub(crate) pattern: String,
-    /// The source tag (`sub_<id>` for a subscription, `custom`/`useradd` otherwise); a block
-    /// reports it so a subscription match stays attributable.
     pub(crate) source: String,
     pub(crate) excluded_apps: HashMap<String, ()>,
     pub(crate) wildcard: Option<WildcardMatcher>,
@@ -45,7 +35,6 @@ impl InvertedRule {
     }
 }
 
-/// `matchDomainOrSuffix`: the value of the longest matching suffix in map order.
 pub(crate) fn match_domain_or_suffix<'a>(
     domain: &str,
     table: &'a HashMap<String, String>,
@@ -70,7 +59,6 @@ pub(crate) fn match_domain_or_suffix<'a>(
     None
 }
 
-/// `matchDomainOrSuffixSet`.
 pub(crate) fn match_domain_or_suffix_set(domain: &str, table: &HashMap<String, ()>) -> bool {
     if table.is_empty() {
         return false;

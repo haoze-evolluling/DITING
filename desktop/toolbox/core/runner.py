@@ -62,7 +62,6 @@ def stream_process_output(
     if env:
         run_env.update(env)
 
-    # 确保统一的 UTF-8 输入输出环境
     run_env["PYTHONIOENCODING"] = "utf-8"
     run_env["PYTHONUTF8"] = "1"
 

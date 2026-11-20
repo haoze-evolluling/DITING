@@ -1,8 +1,3 @@
-//! Fixed-capacity overwrite ring for recent query records.
-//!
-//! Port of the former Go service's `internal/querylog/ring.go`: once full, appends overwrite the oldest
-//! entry, logical order is always oldest → newest, and searches walk backwards (newest first).
-
 use std::sync::RwLock;
 
 use super::types::{Record, SearchQuery, DEFAULT_MAX_ENTRIES};
@@ -21,13 +16,11 @@ impl RingInner {
     }
 }
 
-/// Thread-safe overwrite ring buffer.
 pub(crate) struct Ring {
     inner: RwLock<RingInner>,
 }
 
 impl Ring {
-    /// Create a ring with `max_size` slots (`<= 0` falls back to the default capacity).
     pub(crate) fn new(max_size: i32) -> Self {
         let max_size = if max_size <= 0 {
             DEFAULT_MAX_ENTRIES
@@ -45,7 +38,6 @@ impl Ring {
         }
     }
 
-    /// Append one record, overwriting the oldest entry when full.
     pub(crate) fn append(&self, record: Record) {
         let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
         let max_size = inner.max_size;
@@ -61,25 +53,21 @@ impl Ring {
         inner.total += 1;
     }
 
-    /// Current number of retained records.
     #[allow(dead_code)]
     pub(crate) fn len(&self) -> usize {
         self.inner.read().unwrap_or_else(|e| e.into_inner()).size
     }
 
-    /// Whether the ring holds no records.
     #[allow(dead_code)]
     pub(crate) fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    /// Cumulative number of records ever appended.
     #[allow(dead_code)]
     pub(crate) fn total(&self) -> u64 {
         self.inner.read().unwrap_or_else(|e| e.into_inner()).total
     }
 
-    /// Resize, keeping the newest `min(current, max_size)` records (`<= 0` is ignored).
     pub(crate) fn resize(&self, max_size: i32) {
         if max_size <= 0 {
             return;
@@ -100,7 +88,6 @@ impl Ring {
         inner.max_size = max_size;
     }
 
-    /// Drop every in-memory record but preserve the configured capacity.
     pub(crate) fn clear(&self) {
         let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
         inner.buf = vec![Record::default(); inner.max_size];
@@ -108,7 +95,6 @@ impl Ring {
         inner.size = 0;
     }
 
-    /// Search and apply `offset`/`limit`. Returns newest-first matches plus the full match count.
     #[allow(dead_code)]
     pub(crate) fn search(&self, query: &SearchQuery) -> (Vec<Record>, usize) {
         let (mut all, total) = self.search_all(query);
@@ -125,10 +111,6 @@ impl Ring {
         (all, total)
     }
 
-    /// Return every match newest-first, without pagination.
-    ///
-    /// Backwards iteration makes recent hits cheap and allows an early break once records fall
-    /// below the `start_ms` lower bound.
     pub(crate) fn search_all(&self, query: &SearchQuery) -> (Vec<Record>, usize) {
         let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
         if inner.size == 0 {
@@ -150,7 +132,6 @@ impl Ring {
         (matched, total)
     }
 
-    /// Timestamp of the oldest retained record, or `0` when empty.
     pub(crate) fn oldest_timestamp(&self) -> i64 {
         let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
         if inner.size == 0 {

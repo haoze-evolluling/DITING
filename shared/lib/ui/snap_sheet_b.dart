@@ -48,7 +48,6 @@ class _SnapSheetState extends State<_SnapSheet>
     );
   }
 
-  /// Sees the content's scrolls too, so a turn the content started never moves the sheet.
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent || event.scrollDelta.dy == 0) {
       return;
@@ -126,7 +125,6 @@ class _SnapSheetState extends State<_SnapSheet>
   }
 }
 
-/// The sheet makes room for the keyboard itself, so nothing inside it does.
 class _WithoutKeyboard extends StatelessWidget {
   const _WithoutKeyboard({required this.child});
 
@@ -161,7 +159,6 @@ class _KeyboardViewport extends StatelessWidget {
   }
 }
 
-/// Keyboard, presentation and stacked sheets move the sheet as painted; only height lays it out.
 class _SheetViewport extends SingleChildRenderObjectWidget {
   const _SheetViewport({
     required this.model,
@@ -316,7 +313,6 @@ class _RenderSheetViewport extends RenderBox
   void performLayout() {
     var limit = _model.beginLayout(size.height, _keyboard);
     final content = _model._content;
-    // The limit reaches the content outside its constraints, which may not have changed.
     if (content != null &&
         (content._limit != limit || _model._measureRoom != null)) {
       invokeLayoutCallback<BoxConstraints>((_) => content.markNeedsLayout());
@@ -328,7 +324,6 @@ class _RenderSheetViewport extends RenderBox
       invokeLayoutCallback<BoxConstraints>((_) => content.markNeedsLayout());
       _layoutSheet(height);
     }
-    // Within the limit only the sheet around the content needs a new layout.
     if (_model.fitsContent) {
       _model.fitContent();
       final fitted = _model.height;
@@ -340,7 +335,6 @@ class _RenderSheetViewport extends RenderBox
     _model.endLayout();
   }
 
-  /// Never tight, so a change in the content's height reaches this layout.
   void _layoutSheet(double height) {
     _shown = height;
     child?.layout(
@@ -387,7 +381,6 @@ class _RenderSheetViewport extends RenderBox
   @override
   bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
     final child = this.child;
-    // A mouse may hit test between frames, before the sheet is laid out.
     if (child == null || !child.hasSize) {
       return false;
     }
@@ -404,7 +397,6 @@ class _RenderSheetViewport extends RenderBox
   }
 }
 
-/// The surface fills what the content leaves, the keyboard's part included.
 class _SheetContent extends SingleChildRenderObjectWidget {
   const _SheetContent({required this.model, required super.child});
 

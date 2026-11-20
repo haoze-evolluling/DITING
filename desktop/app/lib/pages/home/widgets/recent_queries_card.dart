@@ -1,5 +1,3 @@
-/// The newest queries, in the space upstream fills with its connections table. Read-only: the log
-/// page owns search and paging.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -50,8 +48,6 @@ class RecentQueriesCard extends ConsumerWidget {
               ),
             )
           else
-            // Shrink-wrapped so a card in a stacked column takes only its rows, and scrollable so
-            // the same card in the fixed row cannot overflow.
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,

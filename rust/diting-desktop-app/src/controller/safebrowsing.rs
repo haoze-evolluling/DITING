@@ -1,9 +1,3 @@
-//! Reputation lookup and parental control (`/api/v1/filter/safebrowsing`).
-//!
-//! The verdict runs inside the DNS stage; this module only exposes the configuration and the
-//! cumulative counters, plus the block-answer policy the stage will apply, so the UI can explain
-//! what a hit actually returns.
-
 use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::security::SafeBrowsingConfig;
@@ -12,7 +6,6 @@ use diting_desktop_core::safebrowsing::SafeBrowsingStats;
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureSafeBrowsingRequest`; every field is optional so "off" and "unchanged" differ.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureSafeBrowsingRequest {
@@ -28,7 +21,6 @@ pub struct ConfigureSafeBrowsingRequest {
     pub cache_ttl_seconds: Option<i32>,
 }
 
-/// `core.SafeBrowsingStats`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SafeBrowsingStatsDto {
@@ -51,7 +43,6 @@ impl From<SafeBrowsingStats> for SafeBrowsingStatsDto {
     }
 }
 
-/// `ipc.SafeBrowsingResponse`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SafeBrowsingResponse {
@@ -65,21 +56,17 @@ pub struct SafeBrowsingResponse {
 }
 
 impl AppRuntime {
-    /// `GetSafeBrowsing`.
     pub fn safe_browsing_status(&self) -> SafeBrowsingResponse {
         let config = self.config();
         SafeBrowsingResponse {
             config: self.safebrowsing.config(),
             stats: self.safebrowsing.stats().into(),
-            // A reputation hit must return the same shape as a rule hit; the UI says so too.
             blocking_ipv4: config.filter.blocking_ipv4,
             blocking_ipv6: config.filter.blocking_ipv6,
             block_mode: config.filter.block_mode,
         }
     }
 
-    /// `ConfigureSafeBrowsing`; the stored value is the normalized one, so a restart reads back
-    /// exactly what the engine is using.
     pub fn configure_safe_browsing(
         &self,
         request: ConfigureSafeBrowsingRequest,

@@ -1,10 +1,3 @@
-//! Fixed-layout payload reader/writer for the `RuleIndexNative` calls.
-//!
-//! Big-endian, matching `DataOutputStream` on the Kotlin side. Strings are a `u32` byte length plus
-//! UTF-8; blobs are the same with opaque bytes. [`Reader::finish`] rejects trailing bytes, so a
-//! payload from a newer Kotlin side is a hard error rather than a partial read.
-
-/// Big-endian cursor over one payload.
 pub struct Reader<'a> {
     data: &'a [u8],
     offset: usize,
@@ -46,26 +39,22 @@ impl<'a> Reader<'a> {
         Some(i64::from_be_bytes(raw))
     }
 
-    /// `u32` length plus opaque bytes.
     pub fn blob(&mut self) -> Option<&'a [u8]> {
         let length = self.u32()? as usize;
         self.take(length)
     }
 
-    /// `u32` length plus UTF-8 bytes.
     pub fn string(&mut self) -> Option<String> {
         let length = self.u32()? as usize;
         let raw = self.take(length)?;
         String::from_utf8(raw.to_vec()).ok()
     }
 
-    /// True when the whole payload was consumed.
     pub fn finish(&self) -> bool {
         self.offset == self.data.len()
     }
 }
 
-/// Append-only payload builder.
 pub struct Writer {
     data: Vec<u8>,
 }
@@ -136,14 +125,12 @@ mod tests {
         assert_eq!(reader.string().as_deref(), Some("example.com"));
         assert!(reader.finish());
 
-        // One trailing byte is drift, not something to ignore.
         let mut padded = payload.clone();
         padded.push(0);
         let mut reader = Reader::new(&padded);
         assert!(reader.string().is_some() || reader.u8().is_some());
         assert!(!reader.finish());
 
-        // Truncation is a failed read, never a default value.
         let mut reader = Reader::new(&payload[..payload.len() - 2]);
         assert!(reader.u8().is_some());
         assert!(reader.u32().is_some());

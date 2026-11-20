@@ -1,8 +1,3 @@
-/// The local authoritative zones' data: the config, the service's per-zone build results, and the
-/// three writes (engine switch, default TTL, the whole zone list).
-///
-/// A zone that fails to parse is an expected answer rather than an outage, so only a failed request
-/// becomes [DesktopZoneConfigState.error]; the per-zone reasons come from the service's own states.
 library;
 
 import 'dart:async';
@@ -17,8 +12,6 @@ class DesktopZoneConfigState {
 
   final DesktopZoneConfig? config;
 
-  /// The last read failed. The previous config stays on screen so the card can say the figures are
-  /// from before; a rejected write is returned to the caller instead.
   final DesktopApiException? error;
 
   final bool saving;
@@ -53,8 +46,6 @@ class DesktopZoneNotifier extends Notifier<DesktopZoneConfigState> {
   Future<DesktopApiException?> saveZones(List<DesktopZoneEntry> zones) =>
       _write((client) => client.updateZoneConfig(zones: zones));
 
-  /// One write at a time. The service answers with the rebuilt state of every zone, so the card can
-  /// show which zone it rejected instead of only a message.
   Future<DesktopApiException?> _write(
     Future<DesktopZoneConfig?> Function(DesktopApiClient client) body,
   ) async {

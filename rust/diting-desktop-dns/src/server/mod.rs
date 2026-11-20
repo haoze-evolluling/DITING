@@ -1,9 +1,3 @@
-//! Plain DNS service: dual-stack UDP and TCP on the configured addresses.
-//!
-//! Both transports feed the same pipeline. The socket layer only validates the frame (single
-//! standard question), applies the per-query deadline, and truncates UDP replies to the client's
-//! advertised payload size — exactly the split the Go `Server` had.
-
 pub mod config;
 
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -20,11 +14,8 @@ use crate::pipeline::Pipeline;
 
 pub use config::ServerConfig;
 
-/// Maximum DNS message accepted over TCP (RFC 1035 length prefix is 16 bits).
 const MAX_TCP_MESSAGE: usize = 65535;
 const UDP_BUFFER: usize = 65535;
-/// Cap on concurrent queries/connections. Above it a datagram or connection is dropped, mirroring
-/// the standalone engine's admission control, so a flood cannot spawn unbounded tasks.
 const MAX_INFLIGHT: usize = 256;
 
 pub struct DnsServer {
@@ -34,25 +25,15 @@ pub struct DnsServer {
     tasks: Mutex<Vec<JoinHandle<()>>>,
     started: AtomicBool,
     closed: AtomicBool,
-    /// Serializes `start` / `shutdown`: without it a shutdown that runs while the binds are in
-    /// flight can be observed as "not started yet" and silently lost, leaving a server that is
-    /// marked stopped but still listening.
     lifecycle: AsyncMutex<()>,
 }
 
-/// A set of already-bound standard sockets.
-///
-/// Android's root startup binds port 53 first, drops to the application UID and only then creates
-/// the async runtime. Adopting these sockets keeps that privilege boundary exact: no worker or
-/// writer thread is ever started while the process still runs as root.
 pub struct BoundDnsSockets {
     udp: Vec<std::net::UdpSocket>,
     tcp: Vec<std::net::TcpListener>,
 }
 
 impl BoundDnsSockets {
-    /// Binds every configured socket synchronously. IPv6 failures are tolerated; an IPv4 failure
-    /// aborts, matching the async listener.
     pub fn bind(config: &ServerConfig) -> Result<Self, String> {
         let config = config.clone().normalized();
         let mut udp = Vec::new();
@@ -93,8 +74,6 @@ impl BoundDnsSockets {
         self.udp.is_empty() && self.tcp.is_empty()
     }
 
-    /// The addresses that actually bound. IPv6 failures are omitted instead of being reported as
-    /// active, so management UIs can show the real listener set.
     pub fn addresses(&self) -> Vec<String> {
         let mut addresses: Vec<String> = self
             .udp
@@ -135,13 +114,10 @@ impl DnsServer {
         self.started.load(Ordering::SeqCst) && !self.closed.load(Ordering::SeqCst)
     }
 
-    /// Binds every configured socket. IPv6 bind failures are tolerated (some hosts disable IPv6);
-    /// a failure on any IPv4 address aborts, matching the Go service.
     pub async fn start(&self) -> Result<(), String> {
         self.start_inner(None).await
     }
 
-    /// Starts on sockets that were bound before the runtime existed.
     pub async fn start_with_bound(&self, bound: BoundDnsSockets) -> Result<(), String> {
         self.start_inner(Some(bound)).await
     }
@@ -226,8 +202,6 @@ impl DnsServer {
         Ok(())
     }
 
-    /// Stops accepting queries and closes all sockets. In-flight handlers finish on their own
-    /// deadline; tasks are aborted so shutdown never waits on a stuck upstream.
     pub async fn shutdown(&self) {
         let _lifecycle = self.lifecycle.lock().await;
         if !self.started.swap(false, Ordering::SeqCst) {
@@ -246,15 +220,11 @@ impl DnsServer {
         for task in &drained {
             task.abort();
         }
-        // Await the cancelled tasks instead of yielding once: the loop owns the listener socket
-        // and its per-request children, so only a completed join guarantees a restart can rebind.
         for task in drained {
             let _ = task.await;
         }
     }
 
-    /// Lets the accept loops observe the shutdown watch and drain their children, then hard-aborts
-    /// any that did not finish within the grace period.
     async fn stop_tasks(&self, tasks: &mut Vec<JoinHandle<()>>) {
         let drained: Vec<JoinHandle<()>> = tasks.drain(..).collect();
         for mut task in drained {
@@ -268,7 +238,6 @@ impl DnsServer {
         }
     }
 
-    /// Runs one request through the pipeline with the configured deadline.
     pub async fn handle_wire(
         &self,
         request: Vec<u8>,
@@ -279,9 +248,6 @@ impl DnsServer {
             .await
     }
 
-    /// The encrypted-entry variant of [`handle_wire`](Self::handle_wire): the caller supplies the
-    /// ClientID it extracted from the SNI or the DoH path, which is written to the context and its
-    /// `client_id` attribute before the pipeline runs.
     pub async fn handle_with_identity(
         &self,
         request: Vec<u8>,
@@ -349,8 +315,6 @@ async fn udp_loop(
     shutdown: &mut watch::Receiver<bool>,
 ) {
     let mut buffer = vec![0u8; UDP_BUFFER];
-    // One set owns every in-flight query. Leaving this loop (shutdown or cancellation) aborts them,
-    // so no child keeps the bound `Arc<UdpSocket>` alive past the listener's lifetime.
     let mut inflight: JoinSet<()> = JoinSet::new();
     loop {
         while inflight.try_join_next().is_some() {}
@@ -362,7 +326,6 @@ async fn udp_loop(
             }
             received = socket.recv_from(&mut buffer) => {
                 let Ok((length, peer)) = received else { continue };
-                // Over the in-flight cap: drop the datagram; the client retries.
                 let Ok(permit) = permits.clone().try_acquire_owned() else { continue };
                 let request = buffer[..length].to_vec();
                 let socket = socket.clone();
@@ -377,8 +340,6 @@ async fn udp_loop(
             }
         }
     }
-    // Await the cancelled children: dropping them releases their socket clones before the caller
-    // can rebind the same address.
     inflight.abort_all();
     while inflight.join_next().await.is_some() {}
 }
@@ -391,8 +352,6 @@ async fn tcp_loop(
     read_timeout: Duration,
     shutdown: &mut watch::Receiver<bool>,
 ) {
-    // Same ownership rule as `udp_loop`: accepted connections are children of the listener task,
-    // so a stop cannot leave an accepted stream serving after the server reports itself closed.
     let mut inflight: JoinSet<()> = JoinSet::new();
     loop {
         while inflight.try_join_next().is_some() {}
@@ -404,7 +363,6 @@ async fn tcp_loop(
             }
             accepted = listener.accept() => {
                 let Ok((stream, peer)) = accepted else { continue };
-                // Over the in-flight cap: drop the connection instead of spawning an unbounded task.
                 let Ok(permit) = permits.clone().try_acquire_owned() else { continue };
                 let pipeline = pipeline.clone();
                 inflight.spawn(async move {
@@ -430,7 +388,7 @@ async fn serve_tcp_connection(
         let read = tokio::time::timeout(read_timeout, stream.read_exact(&mut length_bytes)).await;
         match read {
             Ok(Ok(_)) => {}
-            _ => return Ok(()), // idle timeout or peer closed
+            _ => return Ok(()),
         }
         let length = usize::from(u16::from_be_bytes(length_bytes));
         if length == 0 || length > MAX_TCP_MESSAGE {

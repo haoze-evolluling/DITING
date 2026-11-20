@@ -1,10 +1,3 @@
-//! End-to-end cases for the standalone server: a real UDP/TCP client, a real upstream socket on
-//! loopback, and the engine in between.
-//!
-//! Nothing here is mocked at the boundary that matters. The fake upstream is a plain `UdpSocket` that
-//! answers whatever query it is given with one canned A record, so the tests exercise the whole path
-//! a phone would: wire in → DDR / rewrite / policy / cache / upstream → wire out.
-
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, UdpSocket};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -14,7 +7,6 @@ use std::time::{Duration, Instant};
 use diting_engine::logs::{BootstrapEvent, EventSink, RaceEvent};
 use diting_engine::Engine;
 
-/// A fake upstream that answers every query with `address` and counts the queries it saw.
 struct FakeUpstream {
     address: SocketAddr,
     queries: Arc<AtomicUsize>,
@@ -73,7 +65,6 @@ fn question_wire(name: &str) -> Vec<u8> {
     out
 }
 
-/// A one-question query for `name`, type A.
 fn query_wire(name: &str, id: u16) -> Vec<u8> {
     let mut out = vec![0u8; 12];
     out[0..2].copy_from_slice(&id.to_be_bytes());
@@ -85,7 +76,6 @@ fn query_wire(name: &str, id: u16) -> Vec<u8> {
     out
 }
 
-/// The answer the fake upstream sends: the question echoed with one A record.
 fn answer_wire(query: &[u8], address: [u8; 4], ttl: u32) -> Vec<u8> {
     let mut out = query.to_vec();
     out[2] = 0x81;
@@ -136,7 +126,6 @@ impl EventSink for Recorder {
     fn bootstrap(&self, _event: BootstrapEvent) {}
 }
 
-/// Reads one `u32 length | UTF-8` field of a packed batch.
 fn take_text(payload: &[u8], offset: &mut usize) -> String {
     let length = u32::from_be_bytes(payload[*offset..*offset + 4].try_into().unwrap()) as usize;
     *offset += 4;
@@ -180,7 +169,6 @@ fn tcp_query(port: u16, query: &[u8]) -> Option<Vec<u8>> {
     Some(response)
 }
 
-/// Waits for a condition the server reaches asynchronously.
 fn until(condition: impl Fn() -> bool) {
     let deadline = Instant::now() + Duration::from_secs(3);
     while Instant::now() < deadline {
@@ -349,9 +337,9 @@ fn log_rows_reach_the_sink() {
         "one row in the batch"
     );
     let mut offset = 4;
-    offset += 8; // timestamp
+    offset += 8;
     let domain = take_text(payload, &mut offset);
-    offset += 4; // query type
+    offset += 4;
     let blocked = payload[offset];
     offset += 1;
     let _blocked_by = take_text(payload, &mut offset);

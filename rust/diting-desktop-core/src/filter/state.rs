@@ -1,10 +1,3 @@
-//! Runtime state of the filter engine: configuration locks, compiled index snapshot, schedules,
-//! pause and subscription-cache refresh.
-//!
-//! The [`Inner`] snapshot is shared by every [`crate::filter::RuleEngine`] clone. Rules are never
-//! mutated in place: [`Inner::rebuild_now`] builds a complete [`MatcherSnapshot`] and swaps the
-//! `Arc` under one lock, so a query sees either the old or the new index, never a half-built one.
-
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64};
@@ -29,7 +22,6 @@ pub(super) const LIST_STATUS_UNCHANGED: &str = "unchanged";
 pub(super) const LIST_STATUS_CACHED: &str = "cached";
 pub(super) const LIST_STATUS_FAILED: &str = "failed";
 
-/// The whole index state, swapped atomically after every rebuild.
 pub(super) struct MatcherSnapshot {
     pub(super) global: Arc<RuleMatcher>,
     pub(super) groups: HashMap<String, Arc<RuleMatcher>>,
@@ -46,7 +38,6 @@ impl Default for MatcherSnapshot {
     }
 }
 
-/// Compiled schedules, kept apart so a hot query never re-parses `HH:MM`.
 #[derive(Debug, Default)]
 pub(super) struct ScheduleSet {
     pub(super) global: Vec<CompiledSchedule>,
@@ -59,7 +50,6 @@ pub(super) struct Inner {
     pub(super) groups: RwLock<GroupConfig>,
     pub(super) schedules: RwLock<ScheduleSet>,
     pub(super) matchers: RwLock<Arc<MatcherSnapshot>>,
-    /// Serializes rebuilds so the newest configuration always wins the final swap.
     pub(super) rebuild_lock: Mutex<()>,
     pub(super) bogus: RwLock<Option<Arc<BogusNXDomainMatcher>>>,
     pub(super) paused_until_ms: RwLock<Option<i64>>,
@@ -184,7 +174,6 @@ impl Inner {
         };
     }
 
-    /// Parses every source, builds the global snapshot and publishes it in one swap.
     pub(super) fn rebuild_now(&self) {
         let _rebuild = self.rebuild_lock.lock().unwrap();
         let config = self.config.read().unwrap().clone();

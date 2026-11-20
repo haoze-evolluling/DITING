@@ -1,8 +1,3 @@
-/// Add one subscription list. The console's `RuleListsPanel.vue` add modal is the blueprint: a name
-/// (optional, the page names it by position) and a URL or local file path (required).
-///
-/// The dialog only builds the draft; the page sends it and re-reads the rows the service answers
-/// with, because adding starts a download the page cannot predict.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -10,7 +5,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The draft the page submits; [name] may be empty.
 typedef FilterListDraft = ({String name, String url});
 
 Future<FilterListDraft?> showAddFilterListDialog(BuildContext context) =>

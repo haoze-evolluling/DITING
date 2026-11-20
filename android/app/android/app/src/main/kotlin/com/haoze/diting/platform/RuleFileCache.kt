@@ -5,10 +5,6 @@ import android.net.Uri
 import java.io.File
 import java.security.MessageDigest
 
-/// Private copies of picked rule files, keyed by their `content://` address. Written only when
-/// the SAF provider granted no persistable access, so a local subscription that would otherwise
-/// become unreadable after a restart still has a readable source. Reads prefer the original URI
-/// and fall back to this copy.
 class RuleFileCache(context: Context) {
 
     private val dir = File(context.filesDir, "rules").apply { mkdirs() }

@@ -1,9 +1,3 @@
-//! Build-time version information.
-//!
-//! The single source of truth is `desktop/app/pubspec.yaml`'s `version:` line; the service
-//! crate's `build.rs` reads it and injects it through `DITING_VERSION`/`DITING_BUILD_TIME`/
-//! `DITING_GIT_COMMIT`, so `-v` and `/api/v1/status` report the same values the Go build did.
-
 pub const VERSION: &str = match option_env!("DITING_VERSION") {
     Some(value) => value,
     None => "dev",

@@ -1,5 +1,3 @@
-//! End-to-end HTTP/WebSocket contract tests on an ephemeral loopback port.
-
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
@@ -162,7 +160,6 @@ async fn representative_handler_persists_a_temporary_config() {
         ),
     )
     .await;
-    // The test runtime used its own temp path inside `start`; read the config it persists.
     let runtime_path = server.runtime().config_path();
     assert_eq!(status, 200, "{text}");
     let saved = store::load_config(&runtime_path).unwrap();
@@ -181,7 +178,6 @@ async fn restart_rebinds_to_the_configured_address() {
     let (server, root) = start("webrebind", test_config(Path::new("."))).await;
     let before = server.addr().await.unwrap();
 
-    // Reserve an ephemeral port, release it, then point the configuration at it.
     let probe = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let target = probe.local_addr().unwrap();
     drop(probe);

@@ -13,9 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// AI analysis settings (upstream `AgentApiSettingsScreen`). Reports are rendered by
-/// [AgentAnalysisSheet], which the log pages open directly; this page configures the provider and
-/// offers the two test entries.
 class AgentApiPage extends ConsumerWidget {
   const AgentApiPage({super.key});
 
@@ -158,9 +155,6 @@ class AgentApiPage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.dashboard),
                 title: Text(context.l10n.agentApiDashboard),
                 subtitle: Text(context.l10n.agentApiDashboardSubtitle),
-                // `/logs` is a tab root: pushing it stacks a second copy of the shell branch and
-                // trips go_router's duplicate page-key assert, so open the full-screen twin and
-                // fall back to a branch switch.
                 onTap: () {
                   if (!pushStandalone(context, Routes.logs)) {
                     openLocation(context, Routes.logs);

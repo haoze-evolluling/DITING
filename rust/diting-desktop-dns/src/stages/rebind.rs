@@ -1,10 +1,3 @@
-//! DNS rebinding protection.
-//!
-//! A public name resolving to a private/loopback/link-local address is the classic rebinding
-//! attack: the browser resolves once to the attacker's server, then again to a LAN device. The
-//! stage checks all answer sections (SVCB hints included), honours the allowlist (`localhost`,
-//! `.lan`, ...), evicts the poisoned cache entry and replaces the answer with an empty NOERROR.
-
 use std::net::IpAddr;
 use std::sync::Arc;
 
@@ -72,8 +65,6 @@ impl Stage for RebindStage {
         if is_domain_allowed(&domain, &allowed) {
             return;
         }
-        // The cache may have stored this answer just before this postlude; evict it so the next
-        // query does not get the poisoned record from memory.
         if let Some(cache) = &self.cache {
             if let Some(key) = cache.key_for(&ctx.request, &ctx.group) {
                 cache.raw().remove_keyed(&key);
@@ -92,7 +83,6 @@ impl Stage for RebindStage {
     }
 }
 
-/// RFC 1918, RFC 4193 ULA, RFC 3927 link-local, loopback, unspecified, and NAT64-embedded private.
 pub fn is_blocked_ip(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(ip) => {
@@ -106,7 +96,6 @@ pub fn is_blocked_ip(ip: IpAddr) -> bool {
             if is_unique_local(&octets) {
                 return true;
             }
-            // RFC 6052 64:ff9b::/96 embeds an IPv4 address that may itself be private.
             const NAT64: [u8; 12] = [0x00, 0x64, 0xff, 0x9b, 0, 0, 0, 0, 0, 0, 0, 0];
             if octets[..12] == NAT64 {
                 return is_blocked_ip(IpAddr::V4(std::net::Ipv4Addr::new(

@@ -1,9 +1,3 @@
-//! The outbound transports against fake proxies: SOCKS5, HTTP CONNECT, UDP ASSOCIATE, direct.
-//!
-//! All peers are the hand-written loopback servers in `tests/support`: they assert what the engine
-//! asked for (`targets`) and echo, so the assertions cover both the wire format and the data path.
-//! The protector cases are here too: a refused `protect` must fail the proxy dial closed.
-
 mod support;
 
 use std::sync::atomic::Ordering;
@@ -194,8 +188,6 @@ async fn the_status_callback_sees_ready_and_error() {
         .expect("socks5 dial");
     assert_eq!(recorder.0.lock().expect("recorder").as_slice(), &["ready:"]);
 
-    // A proxy that is not listening: the next dial reports a single `error` and fails. Port 1 is
-    // never a SOCKS5 proxy, and the config's loopback rule still accepts it.
     let unreachable = Config::parse(
         r#"{"enabled":true,"protocol":"socks5","host":"127.0.0.1","port":1,"scope":"all"}"#,
     )
@@ -243,8 +235,6 @@ async fn a_proxy_scope_leaves_other_apps_direct() {
     assert!(proxy.targets.lock().expect("targets").is_empty());
 }
 
-/// A dialer whose own upstream queries follow `outbound`, the way the engine wires stage 4a's
-/// `scope:"all"` into Go's `resolverOutbound()`.
 fn resolver_dialer(outbound: &str) -> diting_engine::resolver::dial::Dialer {
     use diting_engine::logs::DiscardBootstrapSink;
     use diting_engine::resolver::bootstrap::Bootstrap;
@@ -291,8 +281,6 @@ async fn the_resolvers_tcp_dial_follows_the_proxy() {
     stream.read_exact(&mut buffer).await.expect("read");
     assert_eq!(&buffer, b"dot");
 
-    // The proxy was asked for the upstream address (and echoed the bytes itself), so the query
-    // left through it instead of dialing the upstream directly.
     let targets = proxy.targets.lock().expect("targets");
     assert_eq!(targets.as_slice(), [echo.to_string()]);
 }

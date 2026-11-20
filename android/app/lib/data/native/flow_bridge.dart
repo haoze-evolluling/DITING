@@ -1,11 +1,9 @@
-/// N4 实时连接视图的 Dart 侧桥：向运行中的引擎索取增量连接快照（`com.haoze.diting/flow_view`）。
 library;
 
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
-/// 一条实时连接。
 class FlowRow {
   const FlowRow({
     required this.protocol,
@@ -39,17 +37,14 @@ class FlowRow {
   final int lastSeenMs;
   final int seq;
 
-  /// 稳定键：同一元组 + UID + 协议视为同一条连接。
   String get key => '$protocol|$srcIp:$srcPort|$dstIp:$dstPort|$uid';
 
-  /// 应用名（回退到包名 / uid）。
   String get appLabel {
     if (package.isNotEmpty) return package;
     if (uid >= 0) return 'uid:$uid';
     return 'unknown';
   }
 
-  /// 域名优先，退回远端 IP。
   String get hostLabel => domain.isNotEmpty ? domain : dstIp;
 
   static FlowRow? fromJson(Object? raw) {
@@ -74,7 +69,6 @@ class FlowRow {
   }
 }
 
-/// 一次增量快照。
 class FlowSnapshot {
   const FlowSnapshot({
     required this.baseSeq,
@@ -118,7 +112,6 @@ class FlowBridge {
 
   static const _channel = MethodChannel('com.haoze.diting/flow_view');
 
-  /// 拉取自 [sinceSeq] 以来的增量；引擎未运行时返回空快照。
   Future<FlowSnapshot> snapshot({int sinceSeq = 0, int limit = 500}) async {
     try {
       final text = await _channel.invokeMethod<String>('snapshot', {

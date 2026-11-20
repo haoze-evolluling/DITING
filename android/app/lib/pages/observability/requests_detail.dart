@@ -1,7 +1,5 @@
 part of 'requests_page.dart';
 
-/// Handling text, translating outcome and message into plain words. Wording follows the
-/// upstream matchedRule switch; no invented categories.
 String requestHandlingOf(ObservedRequest request, AppL10n l10n) {
   if (request.source == RequestSource.dns) {
     if (request.status == RequestStatus.bypassed) return l10n.obsBypassedDns;
@@ -20,7 +18,6 @@ String requestHandlingOf(ObservedRequest request, AppL10n l10n) {
   };
 }
 
-/// Matched rule text. An empty value gets an explanation rather than "none".
 String requestRuleOf(ObservedRequest request, AppL10n l10n) {
   final rule = request.matchedRule?.trim();
   if (rule != null && rule.isNotEmpty) return rule;
@@ -29,8 +26,6 @@ String requestRuleOf(ObservedRequest request, AppL10n l10n) {
       : l10n.obsNone;
 }
 
-/// Bare host of a record: drops the `TCP `/`UDP ` prefix of connection rows, the port and any
-/// trailing dot. Null when the record carries no host at all.
 String? requestHostOf(ObservedRequest request) {
   var text = request.title.trim();
   final lower = text.toLowerCase();
@@ -42,7 +37,6 @@ String? requestHostOf(ObservedRequest request) {
     return end > 1 ? text.substring(1, end) : null;
   }
   final colon = text.lastIndexOf(':');
-  // A single colon followed by digits is a port; several colons mean a bare IPv6 address.
   if (colon > 0 &&
       text.indexOf(':') == colon &&
       int.tryParse(text.substring(colon + 1)) != null) {
@@ -61,7 +55,6 @@ class RequestDetailSheet extends StatelessWidget {
 
   final ObservedRequest request;
 
-  /// Offers the page of this request's app; off when the sheet was opened from that page.
   final bool showAppLink;
 
   @override
@@ -133,7 +126,6 @@ class RequestDetailSheet extends StatelessWidget {
                       size: 18,
                       color: colorScheme.onSurfaceVariant,
                     ),
-                    // Close the sheet first, otherwise coming back shows it over the list again.
                     onTap: () {
                       Navigator.of(context).pop();
                       context.push(ObservabilityPaths.appRequests(packageName));

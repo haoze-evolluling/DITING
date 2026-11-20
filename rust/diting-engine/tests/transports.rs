@@ -1,20 +1,3 @@
-//! The four upstream transports, driven by real loopback servers.
-//!
-//! Every case here is end to end on 127.0.0.1: a real UDP/TCP socket, a real TLS handshake, a real
-//! HTTP/2 connection, a real QUIC handshake. The only thing replaced is the certificate authority
-//! (minted per test by `diting-cert-core`) and the upstream DNS server itself.
-//!
-//! What the cases pin, in the order the migration plan cares about them:
-//!
-//! * plain UDP answers, and a `TC=1` answer is retried over TCP on the *same* port;
-//! * DoT parks a connection and the next query reuses it (one accepted socket for two queries);
-//! * DoH negotiates HTTP/2 and reuses the session, and a 403 becomes `DoH rate limited (403)`;
-//! * DoQ opens a bidirectional stream per query on one QUIC connection;
-//! * the bootstrap resolver turns `dot.test` into `127.0.0.1` and reports it through
-//!   `BootstrapLogCallback`'s event;
-//! * `parallel_race` returns the fast provider's answer and reports the winning provider;
-//! * the engine hands its trust store to the transports, so `ResolveDomain` reaches a DoH upstream.
-
 mod support;
 
 use std::sync::atomic::Ordering;
@@ -25,7 +8,6 @@ use diting_engine::resolver::trust::UpstreamTrust;
 use http::Version;
 use support::*;
 
-// ---- cases --------------------------------------------------------------------------------------
 
 #[tokio::test]
 async fn plain_udp_answers_the_query() {
@@ -46,7 +28,6 @@ async fn plain_udp_answers_the_query() {
 
 #[tokio::test]
 async fn a_truncated_udp_answer_is_retried_over_tcp() {
-    // One port for both protocols: the resolver has to fall back on the same `host:port`.
     let tcp_listener = std::net::TcpListener::bind("127.0.0.1:0").expect("reserve a port");
     let port = tcp_listener.local_addr().expect("local addr").port();
     let udp_socket = std::net::UdpSocket::bind(("127.0.0.1", port)).expect("bind the same port");
@@ -186,7 +167,6 @@ async fn doq_answers_on_a_bidirectional_stream() {
 async fn bootstrap_turns_the_provider_hostname_into_an_address() {
     let pki = TestPki::new("dot.test");
     let (upstream, _connections) = spawn_dot(&pki).await;
-    // The bootstrap server answers every question with 127.0.0.1.
     let (bootstrap, bootstrap_queries) = spawn_udp_upstream([127, 0, 0, 1], false);
 
     let bootstrap_config = format!(
@@ -229,7 +209,6 @@ async fn bootstrap_turns_the_provider_hostname_into_an_address() {
 
 #[tokio::test]
 async fn parallel_race_returns_the_faster_provider() {
-    // A bound socket nobody reads: the query is sent and never answered.
     let silent = std::net::UdpSocket::bind("127.0.0.1:0").expect("bind the silent upstream");
     let silent = silent.local_addr().expect("local addr");
     let (fast, _count) = spawn_udp_upstream([5, 5, 5, 5], false);
@@ -259,8 +238,6 @@ async fn parallel_race_returns_the_faster_provider() {
 
 #[tokio::test]
 async fn smart_prediction_advances_past_a_failed_provider() {
-    // The first provider is a closed port: the DoT dial fails immediately, so the scheduler has to
-    // advance to the second one without waiting for the hedge timer.
     let (fast, _count) = spawn_udp_upstream([8, 8, 8, 8], false);
     let config = config_json(
         "smart_prediction",
@@ -311,12 +288,8 @@ async fn a_provider_that_cannot_be_built_is_reported() {
         &[provider_json("p1", "DOH", "", "not a url")],
         None,
     );
-    // The config kernel rejects it before the resolver ever sees it, with the Go error text.
     assert!(DnsConfig::from_json(&config).is_err());
 
-    // A config the kernel accepts but the transport cannot use: an empty DoH host cannot happen
-    // after validation, so the interesting case is the DoQ client failing to build — which the
-    // resolver reports through `skipped` instead of failing every query.
     let config = config_json(
         "single",
         &[provider_json("p1", "PLAIN", "127.0.0.1:53", "")],

@@ -1,17 +1,5 @@
-//! The `getStats` document.
-//!
-//! `EngineStats.kt` reads three fields with `optLong` and never shows the raw JSON, but the names are
-//! still the contract: `total`, `blocked`, `dropped_logs`. `dropped_logs` is the batch buffer's drop
-//! counter, i.e. rows the UI will never see because the engine outran its writer.
-
 use crate::engine::Engine;
 
-/// `StatsSnapshot`: the six counters `EngineStats.snapshot` publishes, packed as big-endian
-/// `u64`s (`total | blocked | dropped_logs | cache_hits | cache_misses | cache_entries`).
-///
-/// The dashboard polls this every few seconds for the whole life of the tunnel. It used to take two
-/// JNI calls, two JSON encoders, two Java `String` conversions and two `JSONObject` parses per
-/// poll; the fixed layout lets Kotlin read the numbers with one `ByteBuffer`.
 pub fn engine_stats_snapshot(engine: &Engine) -> Vec<u8> {
     let cache = engine.cache().stats();
     let mut out = Vec::with_capacity(6 * 8);
@@ -28,15 +16,12 @@ pub fn engine_stats_snapshot(engine: &Engine) -> Vec<u8> {
     out
 }
 
-/// `GetStats`: the JSON `EngineStats.snapshot` parses.
 pub fn engine_stats_json(engine: &Engine) -> String {
     let mut document = serde_json::json!({
         "total": engine.total_queries(),
         "blocked": engine.blocked_queries(),
         "dropped_logs": engine.logs().dropped(),
     });
-    // The TUN counters are additive: the three fields above are untouched, a UI that ignores
-    // unknown keys keeps working, and a support log can finally say why a flow was dropped.
     if let Some(tun) = engine.tun_document() {
         document["tun"] = tun;
     }

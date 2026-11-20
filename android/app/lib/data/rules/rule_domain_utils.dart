@@ -1,8 +1,3 @@
-/// Domain normalization for display and rewrite targets; anything undecidable returns null so the
-/// value is treated as "not a domain" instead of being shown as one.
-///
-/// The rule parser does not use this file: parsing lives in Rust
-/// (`rust/diting-rule-core/src/domain.rs`).
 library;
 
 import 'dart:io';
@@ -52,7 +47,6 @@ String? _toAsciiLower(String value) {
     }
   }
   if (isAscii) {
-    // ASCII domains still reject control characters and spaces.
     for (final unit in value.codeUnits) {
       if (unit < 0x21 || unit == 0x7f) {
         return null;
@@ -61,7 +55,6 @@ String? _toAsciiLower(String value) {
     return value.toLowerCase();
   }
   try {
-    // `Uri.parse` applies IDNA to non-ASCII hosts; the returned host is punycode.
     final uri = Uri.parse('http://$value/');
     final host = uri.host;
     if (host.isEmpty) {

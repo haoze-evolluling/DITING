@@ -1,11 +1,3 @@
-// The Android reference shots. Run them, then look at
-// `android/app/build/screenshots/*.png`:
-//
-//   DITING_SCREENSHOTS=1 flutter test test/screenshot/app_screenshot_test.dart --update-goldens
-//
-// Without the environment variable every case is skipped, so a plain `flutter test` stays clean.
-// These shots are the reference the desktop UI must stay identical to.
-
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
@@ -25,7 +17,6 @@ import 'screenshot_harness.dart';
 void main() {
   installGlobalTestHooks();
   setUpAll(loadHostFonts);
-  // `testWidgets` only takes a bool; the reason lives in the file header and the harness.
   final skip = !screenshotsEnabled;
 
   group('安卓参照', () {
@@ -56,7 +47,6 @@ void main() {
       }, skip: skip);
     }
 
-    // Design review for a new icon batch: stroke and filled side by side, on the app's own theme.
     testWidgets('安卓 图标总览', (tester) async {
       await captureScreenshot(
         tester,
@@ -108,8 +98,6 @@ void main() {
   });
 }
 
-/// The hand-drawn additions under review, in `AppGlyphs` name form so the sheet and the app resolve
-/// the same glyph.
 const _reviewGlyphs = <String>[
   'automation',
   'notification',
@@ -137,6 +125,5 @@ const _reviewGlyphs = <String>[
   'record',
 ];
 
-/// `/` → `home`, `/logs` → `logs`: one stable file name per branch.
 String _slug(String location) =>
     location == Routes.home ? 'home' : location.replaceAll('/', '');

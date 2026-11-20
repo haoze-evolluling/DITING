@@ -1,4 +1,3 @@
-/// Per-site latency breakdown, opened from the card's cell and from the detail page's rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -27,7 +26,6 @@ class SiteLatencyTargetSheet extends StatelessWidget {
     return CommonScaffold(
       title: target.name,
       body: ListView(
-        // The sheet title floats over the body, so this top padding is required.
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
           ListHeader(title: context.l10n.siteLatencySheetLatency),

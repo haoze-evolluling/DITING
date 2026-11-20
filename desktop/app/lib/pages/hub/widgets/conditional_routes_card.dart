@@ -1,5 +1,3 @@
-/// Split-DNS routes: private suffixes sent to a dedicated server, with `*.internal` wildcards.
-/// `ConditionalRoutesCard.vue` is the blueprint; the map the service stores is sent whole.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

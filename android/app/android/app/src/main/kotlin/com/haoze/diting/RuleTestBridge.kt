@@ -11,14 +11,6 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import org.json.JSONObject
 
-/**
- * Dart-facing hook for the rule-test simulator (R1).
- *
- * The rule snapshot is built here, in the same process the engine uses, from the same
- * `RuleSnapshotStore` document the engine is fed, so the simulator's verdict cannot drift from the
- * engine's. The heavy work (packing rows, mmap tries, building the snapshot, the seven-level walk)
- * runs on the executor; only the JSON is handed back to Dart.
- */
 class RuleTestBridge(
     private val context: Context,
     messenger: BinaryMessenger,

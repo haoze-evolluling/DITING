@@ -22,13 +22,10 @@ sealed class GlyphShape {
   final GlyphRole role;
   final bool solid;
 
-  /// Shapes are const and canonicalized, so one path per shape serves every paint; the dock
-  /// repaints its glyphs on every lens frame and rebuilding them showed up in profiles.
   static final _built = Expando<Path>();
 
   Path get path => _built[this] ??= buildPath();
 
-  /// Builds the path once; callers read [path].
   @protected
   Path buildPath();
 }
@@ -111,7 +108,6 @@ class GlyphArc extends GlyphShape {
     );
 }
 
-/// Joins two circles of [radius] with a line whose round caps end on their strokes.
 class GlyphLink extends GlyphShape {
   const GlyphLink(this.from, this.to, this.radius)
     : super(role: GlyphRole.line);
@@ -132,7 +128,6 @@ class GlyphLink extends GlyphShape {
   }
 }
 
-/// SVG path data on the glyph grid, for curves the other shapes cannot draw.
 class GlyphPath extends GlyphShape {
   const GlyphPath(
     this.data, {
@@ -143,9 +138,6 @@ class GlyphPath extends GlyphShape {
 
   final String data;
 
-  /// Brand silhouettes with a cut-out detail inside the outline (a letter inside a square, a
-  /// play triangle inside a disc) draw the hole as a second subpath; that only works with
-  /// [PathFillType.evenOdd], because two subpaths wound the same way merge under non-zero.
   final PathFillType fillType;
 
   @override

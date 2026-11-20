@@ -1,5 +1,3 @@
-//! Client access, rate limiting and DNS hardening operations.
-
 use serde::Deserialize;
 
 use diting_desktop_api::config::{
@@ -9,7 +7,6 @@ use diting_desktop_api::config::{
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureAccessRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureAccessRequest {
@@ -19,7 +16,6 @@ pub struct ConfigureAccessRequest {
     pub blocked_clients: Vec<String>,
 }
 
-/// `ipc.ConfigureRateLimitRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureRateLimitRequest {
@@ -37,7 +33,6 @@ pub struct ConfigureRateLimitRequest {
     pub exempt_ips: Vec<String>,
 }
 
-/// `ipc.ConfigureDNS64Request`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureDNS64Request {
@@ -47,7 +42,6 @@ pub struct ConfigureDNS64Request {
     pub prefixes: Vec<String>,
 }
 
-/// `ipc.ConfigureBlockUnqualifiedRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureBlockUnqualifiedRequest {
@@ -55,7 +49,6 @@ pub struct ConfigureBlockUnqualifiedRequest {
     pub block_unqualified: bool,
 }
 
-/// `ipc.ConfigurePrivacyRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigurePrivacyRequest {
@@ -75,7 +68,6 @@ pub struct ConfigurePrivacyRequest {
     pub block_any_mode: Option<String>,
 }
 
-/// `ipc.ConfigureRebindRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureRebindRequest {
@@ -85,7 +77,6 @@ pub struct ConfigureRebindRequest {
     pub allowed_domains: Option<Vec<String>>,
 }
 
-/// `ipc.ConfigureHostsRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureHostsRequest {
@@ -99,7 +90,6 @@ pub struct ConfigureHostsRequest {
     pub ttl: Option<u32>,
 }
 
-/// `ipc.ConfigureECSRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureECSRequest {
@@ -112,7 +102,6 @@ pub struct ConfigureECSRequest {
 }
 
 impl AppRuntime {
-    /// `ConfigureAccess`.
     pub fn configure_access(&self, request: ConfigureAccessRequest) -> Result<(), ControllerError> {
         self.update_config(|config| {
             config.access = AccessControlConfig {
@@ -124,7 +113,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureRateLimit`.
     pub fn configure_rate_limit(
         &self,
         request: ConfigureRateLimitRequest,
@@ -143,7 +131,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureDNS64`.
     pub fn configure_dns64(&self, request: ConfigureDNS64Request) -> Result<(), ControllerError> {
         self.update_config(|config| {
             config.dns64 = DNS64Config {
@@ -155,7 +142,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureBlockUnqualified`.
     pub fn configure_block_unqualified(
         &self,
         request: ConfigureBlockUnqualifiedRequest,
@@ -165,7 +151,6 @@ impl AppRuntime {
             .map_err(ControllerError::new)
     }
 
-    /// `ConfigurePrivacy`.
     pub fn configure_privacy(
         &self,
         request: ConfigurePrivacyRequest,
@@ -203,7 +188,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureRebind`.
     pub fn configure_rebind(&self, request: ConfigureRebindRequest) -> Result<(), ControllerError> {
         self.update_config(|config| {
             if let Some(enabled) = request.enabled {
@@ -217,7 +201,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureHosts`.
     pub fn configure_hosts(&self, request: ConfigureHostsRequest) -> Result<(), ControllerError> {
         if let Some(ttl) = request.ttl {
             if ttl == 0 {
@@ -242,7 +225,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureECS`.
     pub fn configure_ecs(&self, request: ConfigureECSRequest) -> Result<(), ControllerError> {
         self.update_config(|config| {
             if let Some(enabled) = request.enabled {

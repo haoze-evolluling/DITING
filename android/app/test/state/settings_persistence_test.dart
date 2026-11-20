@@ -1,6 +1,3 @@
-// Settings that used to reset on restart: appearance, dashboard order and the two
-// config-resource tables.
-
 import 'dart:convert';
 
 import 'package:diting_shared/app/theme/layout.dart';
@@ -34,8 +31,6 @@ void main() {
   group('User-Agent 与按需连接', _configResources);
 }
 
-/// Settings that used to reset on restart: appearance, dashboard order, on-demand matching and the
-/// user agent every client sends.
 void _settingsPersistence() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -143,11 +138,9 @@ void _settingsPersistence() {
         ],
       );
       addTearDown(instance.dispose);
-      // The AI card sits mid-board in this mode, so a reorder must leave its slot alone.
       const mode = LegacyLogMode.all;
       final visible = instance.read(visibleLogDashboardWidgetsProvider(mode));
       expect(visible, isNot(contains(LogDashboardWidget.aiInsight)));
-      // Move the hero (visible index 0) below the stats card.
       instance
           .read(logDashboardWidgetsProvider(mode).notifier)
           .moveVisible(visible, 0, 1);
@@ -181,7 +174,6 @@ void _settingsPersistence() {
 
     test('勾选与取消都会写回，且最多四个', () {
       final notifier = container().read(dashboardSiteIdsProvider.notifier);
-      // The default four already fill the card, so a new site needs a free slot first.
       expect(notifier.toggle('baidu'), isTrue);
       expect(
         container().read(dashboardSiteIdsProvider),
@@ -222,7 +214,6 @@ void _settingsPersistence() {
         const MockSsidRule(ssid: 'Cafe', cellular: false, wifi: true),
       );
       final decision = container().read(onDemandDecisionProvider);
-      // No platform channel in tests, so the SSID is unknown rather than fabricated.
       expect(decision.state, SsidMatchState.unknown);
     });
   });
@@ -290,7 +281,6 @@ void _settingsPersistence() {
   });
 }
 
-/// Pins the two config-resource tables, which used to live in memory and reverted on restart
 void _configResources() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -422,7 +412,6 @@ void _configResources() {
         mockUserAgents.where((a) => a.isDefault).length,
       );
       expect(state.selectedUserAgent, isNull);
-      // Legacy rows without a name get a short inferred label instead of the raw UA.
       final custom = state.userAgents.firstWhere((a) => !a.isDefault);
       expect(custom.name, 'Chrome / Windows');
     });

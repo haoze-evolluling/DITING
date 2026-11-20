@@ -1,8 +1,3 @@
-//! Administrator credentials, login throttling and sessions.
-//!
-//! Mirrors the former Go service's `internal/auth/auth.go`: SHA-256(salt ‖ password) hex digests, five
-//! failures lock an address for five minutes and sessions expire after the configured timeout.
-
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -15,11 +10,8 @@ pub const MAX_FAILED_ATTEMPTS: u32 = 5;
 pub const LOCKOUT: Duration = Duration::from_secs(5 * 60);
 pub const DEFAULT_SESSION_TTL: Duration = Duration::from_secs(7 * 24 * 3600);
 const MAX_TRACKED_CLIENTS: usize = 4096;
-/// Sessions kept at once. Expired ones are pruned on every login; this only bounds the case where
-/// many logins happen inside one TTL window.
 const MAX_SESSIONS: usize = 1024;
 
-/// One issued session.
 #[derive(Debug, Clone)]
 pub struct SessionInfo {
     pub token: String,
@@ -52,7 +44,6 @@ struct State {
     sessions: HashMap<String, Session>,
 }
 
-/// Thread-safe credential/session manager.
 pub struct AuthManager {
     state: Mutex<State>,
 }
@@ -73,7 +64,6 @@ fn random_hex(len: usize) -> String {
     hex_encode(&bytes)
 }
 
-/// Salted SHA-256 password hash. `salt` is generated when empty.
 pub fn hash_password(password: &str, salt: &str) -> (String, String) {
     let used_salt = if salt.is_empty() {
         random_hex(16)
@@ -107,7 +97,6 @@ fn now_unix() -> i64 {
 }
 
 impl AuthManager {
-    /// Builds the manager from the persisted `web` configuration block.
     pub fn from_web(config: &WebConfig) -> Self {
         let nanos = config.session_timeout.0.max(0) as u64;
         let session_timeout = if nanos == 0 {
@@ -132,7 +121,6 @@ impl AuthManager {
         }
     }
 
-    /// Test-friendly constructor.
     pub fn new(username: &str, password_hash: &str, salt: &str, session_timeout: Duration) -> Self {
         Self {
             state: Mutex::new(State {
@@ -196,8 +184,6 @@ impl AuthManager {
             }
         }
 
-        // Sessions were only ever dropped when presented again, so expired tokens accumulated for
-        // as long as nobody used them.
         state.sessions.retain(|_, session| now < session.expires);
         if state.sessions.len() > MAX_SESSIONS {
             let excess = state.sessions.len() - MAX_SESSIONS;
@@ -233,7 +219,6 @@ impl AuthManager {
         format!("用户名或密码错误 (剩余重试次数: {remaining})")
     }
 
-    /// `CheckIPLockout` for status responses.
     pub fn lockout(&self, client_ip: &str) -> (bool, i64) {
         let state = self.lock();
         if let Some(attempt) = state.attempts.get(client_ip) {
@@ -247,7 +232,6 @@ impl AuthManager {
         (false, 0)
     }
 
-    /// Validates a session token and drops it when expired.
     pub fn validate_session(&self, token: &str) -> Option<SessionInfo> {
         if token.is_empty() {
             return None;
@@ -274,7 +258,6 @@ impl AuthManager {
         }
     }
 
-    /// `Login`.
     pub fn login(
         &self,
         username: &str,
@@ -333,7 +316,6 @@ impl AuthManager {
         Ok(info)
     }
 
-    /// `VerifyPassword`.
     pub fn verify_password(&self, password: &str) -> bool {
         let state = self.lock();
         if state.password_hash.is_empty() {
@@ -343,7 +325,6 @@ impl AuthManager {
         constant_time_eq(&calculated, &state.password_hash)
     }
 
-    /// `VerifyPasswordWithIP`: same throttle table as login.
     pub fn verify_password_with_ip(&self, client_ip: &str, password: &str) -> Result<bool, String> {
         let mut state = self.lock();
         let now = Instant::now();
@@ -369,7 +350,6 @@ impl AuthManager {
         Ok(true)
     }
 
-    /// `SetupInitialCredentials`.
     pub fn setup(
         &self,
         username: &str,
@@ -394,7 +374,6 @@ impl AuthManager {
         Ok((username, hash, salt))
     }
 
-    /// `UpdateCredentials`; `bypass_old` is set for trusted local IPC callers.
     pub fn update_credentials(
         &self,
         username: &str,
@@ -429,7 +408,6 @@ impl AuthManager {
         Ok((username, hash, salt))
     }
 
-    /// Updates stored credentials from a config reload (no validation).
     pub fn reload(&self, username: &str, hash: &str, salt: &str, timeout: Duration) {
         let mut state = self.lock();
         state.username = if username.is_empty() {
@@ -473,9 +451,7 @@ mod tests {
         let error = auth.login("admin", "wrong", "10.0.0.1").unwrap_err();
         assert!(error.contains("锁定"));
         assert!(auth.lockout("10.0.0.1").0);
-        // A correct password is still refused while locked.
         assert!(auth.login("admin", "secret", "10.0.0.1").is_err());
-        // Another address is unaffected.
         assert!(auth.login("admin", "secret", "10.0.0.2").is_ok());
     }
 

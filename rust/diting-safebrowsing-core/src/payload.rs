@@ -1,31 +1,12 @@
-//! The binary layouts shared with `desktop/service/internal/core/safebrowsing_native.go`.
-//!
-//! Everything is little endian and starts with a layout byte, so a stale Go/Rust pair is a loud
-//! rejection instead of a misread field. `text` is a `u16` length followed by UTF-8 bytes.
-//!
-//! ```text
-//! plan:  u8 layout | u8 flags | u8 need_count | 32-byte digest * need_count | text question
-//! apply: u8 layout | u8 service | u8 queried_count | 32-byte digest * queried_count
-//!        | u16 received_count | (text) * received_count
-//! ```
-//!
-//! `plan.flags` carries three booleans: bit 0 `empty` (the host has no candidate digest at all),
-//! bit 1 `found` (every prefix was cached, so `blocked` is the answer) and bit 2 `blocked`.
-//!
-//! The digests travel as 32 raw bytes rather than 64 hex characters: one hand-built label is
-//! built here anyway, and hex would only double the payload per query.
-
 use crate::engine::Plan;
 use crate::hash::{HostnameHash, HASH_SIZE};
 
-/// Layout version of every payload below; `sbPayloadLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 1;
 
 const PLAN_EMPTY: u8 = 1 << 0;
 const PLAN_FOUND: u8 = 1 << 1;
 const PLAN_BLOCKED: u8 = 1 << 2;
 
-/// Decoded `apply` request: which service, what was asked, what came back.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ApplyRequest {
     pub service: u8,
@@ -33,7 +14,6 @@ pub struct ApplyRequest {
     pub received: Vec<String>,
 }
 
-/// Encodes one [`Plan`].
 pub fn encode_plan(plan: &Plan) -> Vec<u8> {
     let mut flags = 0u8;
     if plan.empty {
@@ -58,7 +38,6 @@ pub fn encode_plan(plan: &Plan) -> Vec<u8> {
     out
 }
 
-/// Reads a plan back; used by the ABI round-trip tests and by nothing else.
 #[cfg(test)]
 pub(crate) fn decode_plan(data: &[u8]) -> Result<Plan, String> {
     let mut reader = Reader::new(data);
@@ -83,7 +62,6 @@ pub(crate) fn decode_plan(data: &[u8]) -> Result<Plan, String> {
     })
 }
 
-/// Decodes an `apply` request written by the Go side.
 pub fn decode_apply(data: &[u8]) -> Result<ApplyRequest, String> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;

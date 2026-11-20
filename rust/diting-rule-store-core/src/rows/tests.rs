@@ -21,11 +21,9 @@ fn a_rule_is_active_only_when_row_and_source_agree() {
     let rules = rule_from_joined("block", &joined, &names());
     assert_eq!(rules.len(), 1, "consecutive rows of one id are one rule");
     let rule = &rules[0];
-    // Every source is disabled, so the rule is off even though its own flag is set.
     assert_eq!(rule["enabled"], json!(false));
     assert_eq!(rule["important"], json!(true));
     assert_eq!(rule["group"], json!("我的"));
-    // `appScope` is trimmed; an empty value would be global.
     assert_eq!(rule["appScope"], json!("com.a"));
     assert_eq!(rule["source"], json!("subscription"));
     assert_eq!(rule["subscriptionName"], json!("订阅A"));
@@ -58,7 +56,6 @@ fn a_deleted_subscription_leaves_the_rule_user_owned() {
     let joined = vec![json!({"id": 7, "pattern": "a.test", "enabled": 1,
                              "sourceName": "sub_99", "sourceEnabled": 1})];
     let rules = rule_from_joined("block", &joined, &names());
-    // The source tag still points at a subscription, but its name is gone.
     assert_eq!(rules[0]["source"], json!("subscription"));
     assert_eq!(rules[0]["subscriptionName"], json!(null));
 }
@@ -72,7 +69,6 @@ fn rewrite_rules_take_their_target_and_drop_block_only_flags() {
     ];
     let rules = rule_from_joined("rewrite", &joined, &names());
     assert_eq!(rules[0]["target"], json!("1.1.1.1"));
-    // `important` / `appInverted` have no column meaning for a rewrite row.
     assert_eq!(rules[0]["important"], json!(false));
     assert_eq!(rules[0]["appInverted"], json!(false));
     assert!(rules[0]["target"].is_string());
@@ -89,7 +85,6 @@ fn split_rows_group_sources_by_rule_id() {
         json!({"ruleId": 20, "source": "useradd", "enabled": 1}),
     ];
     let rules = rule_from_sources("block", &rules_rows, &source_rows, &names());
-    // The order of the query is preserved; only the flags differ.
     assert_eq!(rules[0]["pattern"], json!("b.test"));
     assert_eq!(rules[0]["enabled"], json!(true));
     assert_eq!(rules[1]["pattern"], json!("a.test"));

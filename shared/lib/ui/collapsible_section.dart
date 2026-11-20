@@ -11,7 +11,6 @@ import 'package:material_ui/material_ui.dart';
 
 import 'inherited.dart';
 
-/// A titled section whose header folds its entries away; those near the middle fade in first.
 class SliverCollapsibleSection extends StatefulWidget {
   final String label;
   final int itemCount;
@@ -161,7 +160,6 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
     );
   }
 
-  /// An entry is at least [kMinInteractiveDimension] tall, so these fill the screen.
   int _unfoldingCount(int count) {
     final fitting =
         MediaQuery.sizeOf(context).height ~/ kMinInteractiveDimension + 1;
@@ -201,7 +199,6 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
   }
 }
 
-/// An entry unfolding from under its list's header; those near the middle fade in first.
 class UnfoldEntryTransition extends StatelessWidget {
   static const duration = Duration(milliseconds: 240);
   static const _fade = 0.5;

@@ -1,10 +1,3 @@
-/// Desktop home: the dashboard, the device list and the log dashboard on one page.
-///
-/// The page owns no state of its own beyond what the snapshots say. Three honest shapes: the first
-/// load, an unreachable or unauthorized service, and the board. A failed poll after a good one
-/// keeps the last figures and says they are stale. The three sections share one board and one
-/// refresh, because they answer the same question — what is the service doing right now — from
-/// three angles, and a window has room for all of them.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -33,8 +26,6 @@ class DesktopHomePage extends ConsumerWidget {
     final value = snapshot.status;
     final config = ref.watch(desktopApiConfigProvider);
 
-    /// One refresh for the whole page: each section polls on its own, but a reader who just
-    /// changed something on another page expects this button to re-read all of them at once.
     void refreshAll() {
       ref.read(desktopStatusProvider.notifier).refresh();
       ref.read(desktopTrafficProvider.notifier).reload();
@@ -77,9 +68,6 @@ class DesktopHomePage extends ConsumerWidget {
   }
 }
 
-/// The board itself, once the status snapshot exists. It is a separate widget so the device and
-/// log providers are only read when there is a board to put their cards on: a window that cannot
-/// reach the service shows one notice instead of three failed sections.
 class _HomeBoard extends ConsumerWidget {
   const _HomeBoard({
     required this.status,
@@ -89,7 +77,6 @@ class _HomeBoard extends ConsumerWidget {
 
   final DesktopStatus status;
 
-  /// The status snapshot answered before but its last poll failed.
   final bool stale;
 
   final VoidCallback onRefresh;
@@ -99,8 +86,6 @@ class _HomeBoard extends ConsumerWidget {
     final traffic = ref.watch(desktopTrafficProvider);
     return PageBody(
       children: [
-        // The summary card and the client card speak for their own failed reads; this notice is
-        // about the two snapshots that keep showing their previous figures without a hint.
         if (stale || traffic.isStale) StaleStatusNotice(onRetry: onRefresh),
         DashboardDensityScopeHost(
           child: DesktopCardBoard(
@@ -116,8 +101,6 @@ class _HomeBoard extends ConsumerWidget {
   }
 }
 
-/// The service never answered: say which address was tried, so the fix (start it, or point the app
-/// at another port) is obvious from the screen.
 class _BackendNotice extends StatelessWidget {
   const _BackendNotice({
     required this.unauthorized,

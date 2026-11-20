@@ -1,8 +1,3 @@
-/// Configuration profiles (A3): one-tap snapshots of work mode / upstream set / rule groups / toggles.
-///
-/// A profile is an `automation_profile` row whose `payload.kind` is `config`. Applying one is an
-/// audited event here (the actual engine switch is the `switch_profile` automation action); the
-/// page owns create / rename / delete so a scene can bind to a stable id.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';

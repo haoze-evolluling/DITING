@@ -7,11 +7,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/// Host-JVM smoke test for the log kernel's JNI boundary.
-///
-/// It proves the exported symbols match the signatures Kotlin declares (name and argument
-/// order) and that every payload round trips. The semantics belong to the Rust tests; this only
-/// checks the boundary, so it needs nothing but a JVM and `diting_log_core.dll`/`.so`.
 public final class LogSmoke {
     static int checks;
 
@@ -41,7 +36,6 @@ public final class LogSmoke {
         check(answer != null, "dns batch answered");
         Reader rows = new Reader(answer);
         check(rows.count() == 1, "one dns row");
-        // `u32 count | rows(u32 length | bytes)`: Kotlin hands each blob to the SQL writer.
         Reader row = new Reader(rows.blob());
         check(row.i64() == now, "timestamp falls back to now");
         check(row.string().equals("example.com"), "query name folded");
@@ -61,7 +55,6 @@ public final class LogSmoke {
         check(snapshot.i64() == 0, "nothing rewritten");
         check(snapshot.i64() == 0, "nothing failed");
 
-        // An off-mode batch still counts but answers an empty row batch (`u32 count = 0`).
         byte[] off = native_.dnsBatch(handle, 2, batch, now);
         check(off != null && new Reader(off).count() == 0, "mode off answers nothing");
         Reader afterOff = new Reader(native_.statsSnapshot(handle));
@@ -69,7 +62,6 @@ public final class LogSmoke {
 
         native_.rateTick(handle, 100, 200, now);
         native_.rateTick(handle, 1_100, 2_100, now + 1_000);
-        // The rate is this tick's delta over the real interval, not a difference of the two ticks.
         Reader rate = new Reader(native_.rateSnapshot(handle, now + 1_000));
         check(rate.i64() == 1_100, "tx rate");
         check(rate.i64() == 2_100, "rx rate");
@@ -195,7 +187,6 @@ public final class LogSmoke {
         check(bootstrapRow.u8() == 0, "fallback flag");
         check(bootstrapRow.optional() == null, "bootstrap message");
 
-        // One batch carries the rows; the blank entries are skipped by the same classifier.
         byte[] raceBatch = pack(out -> {
             out.writeInt(3);
             writeRace(out, " Example.COM ");
@@ -222,7 +213,6 @@ public final class LogSmoke {
         firstBootstrap.i64();
         check(firstBootstrap.string().equals("unknown"), "bootstrap batch ip id");
 
-        // The submit forms classify and enqueue in one call, so no row crosses back to the JVM.
         long raceQueue = native_.queueNew(0);
         Reader raceSubmit = new Reader(native_.raceRowsSubmit(raceQueue, raceBatch, now));
         check(raceSubmit.u8() == 2, "race batch enqueued directly");
@@ -237,7 +227,6 @@ public final class LogSmoke {
         native_.statsFree(stats);
     }
 
-    /// One complete race input, in the log kernel's layout.
     static void writeRace(DataOutputStream out, String queryName) throws IOException {
         writeString(out, queryName);
         out.writeInt(28);
@@ -254,7 +243,6 @@ public final class LogSmoke {
         writeString(out, "");
     }
 
-    /// One complete bootstrap input, in the log kernel's layout.
     static void writeBootstrap(DataOutputStream out, String host) throws IOException {
         writeString(out, "");
         writeString(out, "Cloudflare");
@@ -484,7 +472,6 @@ public final class LogSmoke {
         check(native_.queueNew(2) == 0, "unknown settings tag is rejected");
     }
 
-    // --- payload helpers --------------------------------------------------------------------
 
     interface Writer {
         void write(DataOutputStream out) throws IOException;
@@ -605,7 +592,6 @@ public final class LogSmoke {
         }
     }
 
-    /// `queueTake` answers `u8 hasBatch | u32 count | blobs`; `queueRequeue` takes the rows alone.
     static byte[] asRequeue(byte[] take) {
         Reader reader = new Reader(take);
         check(reader.u8() == 1, "take answered a batch");

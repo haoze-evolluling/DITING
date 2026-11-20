@@ -1,38 +1,17 @@
-//! Port of `newWildcardMatcher` (`android/engine/policy_matcher.go`).
-//!
-//! A wildcard rule is compiled to `(?i)^<glob with * -> .*>$`, exactly like Go does with
-//! `regexp.QuoteMeta` + `regexp.Compile`. Both engines do Unicode simple case folding for `(?i)`,
-//! so porting the compilation instead of hand-rolling a glob matcher keeps the folding orbits
-//! (`s`/`ſ`, `k`/KELVIN SIGN) identical. `.*` is rune-wise in both.
-//!
-//! `*.example.com` additionally matches `example.com` itself (and its parent labels): the
-//! `base_domain` field carries that shortcut.
-//!
-//! Compilation is lazy. A subscription rule set can carry thousands of globs and most of them never
-//! match anything, while the Unicode `(?i)` compiler costs ~100 us per pattern: paid at snapshot
-//! build time that made rule reloads several times slower than the Go engine, paid on first use it
-//! is a one-off spike inside a single query. The answers are identical either way.
-
 use std::sync::OnceLock;
 
 use regex::Regex;
 
 use crate::text::go_lower;
 
-/// `wildcardMatcher`.
 pub struct WildcardMatcher {
-    /// The pattern as the caller stored it (already lowercased by the snapshot builder).
     pub pattern: String,
-    /// `*.base` shortcut domain, empty when the pattern is not of that shape.
     pub base_domain: String,
-    /// Pattern is exactly `*`.
     pub is_all: bool,
-    /// Compiled on first use; `None` inside mirrors Go returning nil on a failed compile.
     regex: OnceLock<Option<Regex>>,
 }
 
 impl WildcardMatcher {
-    /// `newWildcardMatcher`: `None` mirrors Go returning nil on a failed compile.
     pub fn new(pattern: &str) -> Option<WildcardMatcher> {
         if pattern == "*" {
             return Some(WildcardMatcher {
@@ -56,7 +35,6 @@ impl WildcardMatcher {
         })
     }
 
-    /// The compiled pattern, built once per matcher.
     fn regex(&self) -> Option<&Regex> {
         self.regex
             .get_or_init(|| {
@@ -75,7 +53,6 @@ impl WildcardMatcher {
             .as_ref()
     }
 
-    /// `matches`: the pattern itself, then every parent label of the domain, is tried.
     pub fn matches(&self, domain: &str) -> bool {
         if self.is_all {
             return true;
@@ -89,7 +66,6 @@ impl WildcardMatcher {
         if regex.is_match(domain) {
             return true;
         }
-        // Parent labels, left to right; a trailing dot yields no empty suffix (same as Go).
         let mut start = 0usize;
         while let Some(relative) = domain[start..].find('.') {
             let dot = start + relative;
@@ -137,7 +113,6 @@ mod tests {
         assert!(m.matches("ads1.example.org"));
         assert!(m.matches("ads.example.org"));
         assert!(!m.matches("ad.example.org"));
-        // `(?i)` folding is Unicode simple folding, same as Go's regexp.
         let folded = WildcardMatcher::new("s*.example.org").unwrap();
         assert!(folded.matches("\u{017F}1.example.org"));
     }
@@ -147,14 +122,12 @@ mod tests {
         let m = WildcardMatcher::new("a*b.c").unwrap();
         assert!(m.matches("axb.c"));
         assert!(m.matches("a.b.c"));
-        // `*` is `.*`, so it may match nothing at all.
         assert!(m.matches("ab.c"));
         assert!(!m.matches("ab.cc"));
     }
 
     #[test]
     fn trailing_dot_pattern_still_matches_the_trimmed_parent() {
-        // `*.foo.` keeps the raw glob but the base domain is `foo`.
         let m = WildcardMatcher::new("*.foo.").unwrap();
         assert_eq!(m.base_domain, "foo");
         assert!(m.matches("a.foo"));

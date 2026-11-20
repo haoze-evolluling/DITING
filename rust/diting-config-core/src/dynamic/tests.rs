@@ -1,5 +1,3 @@
-//! The `< 1` defaults.
-
 use super::*;
 
 #[test]
@@ -24,7 +22,6 @@ fn positive_values_are_kept() {
         ),
         (1, 2, 3)
     );
-    // Each field is independent: one zero does not reset the others.
     let mixed = DynamicBlock::normalized(true, 7, 0, 900);
     assert_eq!(
         (

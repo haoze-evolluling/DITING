@@ -1,9 +1,3 @@
-/// The log search filters and the destructive action that empties the retained history.
-///
-/// The conditions match the old desktop console's search card
-/// (`frontend/src/components/overview/QueryHistoryPanel.vue`): domain contains, client IP or host
-/// name, one record type, one status. The controls are the app's own picker and search field, so a
-/// filter reads the same here as anywhere else in the shell.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -14,11 +8,8 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Wide enough for a domain and narrow enough that both fields and the two pickers share one row.
 const double _fieldWidth = 210;
 
-/// The status word a filter or a row uses; one source, so the picker and the empty state cannot
-/// disagree about what "cached" is called.
 String logStatusLabel(BuildContext context, DesktopLogStatus status) {
   final l10n = context.l10n;
   return switch (status) {
@@ -30,7 +21,6 @@ String logStatusLabel(BuildContext context, DesktopLogStatus status) {
   };
 }
 
-/// The active conditions in words, for the empty state's description.
 String logFilterLabel(BuildContext context, DesktopLogQuery query) {
   return [
     if (query.status != DesktopLogStatus.all)
@@ -41,8 +31,6 @@ String logFilterLabel(BuildContext context, DesktopLogQuery query) {
   ].join(' · ');
 }
 
-/// Both search fields, both pickers and the clear action. The controllers live in the table that
-/// owns the search debounce; this bar only renders them.
 class LogFilterBar extends ConsumerWidget {
   const LogFilterBar({
     super.key,
@@ -58,7 +46,6 @@ class LogFilterBar extends ConsumerWidget {
   final ValueChanged<String> onDomainChanged;
   final ValueChanged<String> onClientChanged;
 
-  /// Whether the fields and pickers can share one row.
   final bool wide;
 
   @override
@@ -178,7 +165,6 @@ class _TypePicker extends ConsumerWidget {
   }
 }
 
-/// Empties the service's retained history. Behind a confirm, because the service keeps no undo.
 class _ClearHistoryButton extends ConsumerWidget {
   const _ClearHistoryButton();
 

@@ -4,8 +4,6 @@ import java.util.concurrent.TimeUnit
 
 data class RootProbeResult(val available: Boolean, val uid: Int, val message: String)
 
-/// Root is detected by running `su -c id -u` with a hard timeout. A denied prompt, a missing
-/// binary, or a slow shell all mean "not root"; none of them may block app startup.
 object ServerRoot {
     fun probe(): RootProbeResult = runCatching {
         val process = ProcessBuilder("su", "-c", "id -u")

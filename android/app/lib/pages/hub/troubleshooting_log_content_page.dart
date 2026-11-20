@@ -1,6 +1,3 @@
-/// Second level of one log file: the full text. Reached from the information card in
-/// [TroubleshootingLogDetailSheet]; identity alone comes from the route, so the entry survives
-/// a deep link or a rebuild.
 library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';

@@ -2,9 +2,6 @@
 
 part of 'button.dart';
 
-// iOS 27 on iPad marks the button of a group under a pointer with a capsule
-// 4 pt inside the group, sliding to the next on this spring and fading in
-// place as the pointer comes and goes; the group does not swell.
 const _markAlpha = 0.08;
 const _markInsets = EdgeInsets.symmetric(horizontal: 2, vertical: 4);
 final _markSlide = SpringDescription.withDampingRatio(
@@ -64,8 +61,6 @@ class _HoverMark {
     );
   }
 
-  /// Where the button under the pointer shows in the area now, cut by the
-  /// clips between them, as a bar's search narrows its slot.
   Rect? _slotRect() {
     final box = _box;
     final area = _area.currentContext?.findRenderObject();

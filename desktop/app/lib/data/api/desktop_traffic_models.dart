@@ -1,8 +1,3 @@
-/// The recognised LAN clients and the two limits applied to them: `/api/v1/clients` plus the
-/// `access` / `rateLimit` blocks of `/api/v1/status`.
-///
-/// The old desktop console's `ClientsPanel.vue` is the blueprint. A client is identified by address
-/// only; the name is either the service's rDNS guess or an alias the user set here.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -30,7 +25,6 @@ List<String> _strings(Object? value) => switch (value) {
 Map<String, Object?> _map(Object? value) =>
     value is Map ? value.cast<String, Object?>() : const {};
 
-/// One recognised client.
 class DesktopClient {
   const DesktopClient({
     required this.ip,
@@ -48,11 +42,9 @@ class DesktopClient {
 
   final String ip;
 
-  /// Empty when neither rDNS nor an alias produced a name.
   final String name;
   final int queryCount;
 
-  /// Unix seconds; zero means the service never recorded activity.
   final int lastSeen;
 }
 
@@ -65,7 +57,6 @@ List<DesktopClient> desktopClients(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// The whitelist / blocklist pair. An empty whitelist means "no restriction".
 class DesktopAccessControl {
   const DesktopAccessControl({
     this.allowed = const [],
@@ -86,7 +77,6 @@ class DesktopAccessControl {
   bool blocks(String ip) => blocked.contains(ip);
 }
 
-/// The token-bucket limit. The service clamps out-of-range values, so a save re-reads the answer.
 class DesktopRateLimit {
   const DesktopRateLimit({
     required this.enabled,
@@ -114,7 +104,6 @@ class DesktopRateLimit {
   final int ipv6Prefix;
   final List<String> exemptIPs;
 
-  /// The service's own defaults, used by the reset button and by an empty answer.
   static const fallback = DesktopRateLimit(
     enabled: false,
     rate: 50,
@@ -134,7 +123,6 @@ class DesktopRateLimit {
   };
 }
 
-/// The two limit blocks read together from `/status`.
 class DesktopClientLimits {
   const DesktopClientLimits({required this.access, required this.rateLimit});
 

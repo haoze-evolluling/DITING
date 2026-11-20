@@ -1,9 +1,3 @@
-//! Adapter registry helpers.
-//!
-//! Windows lets virtual filter drivers hide the configured DNS list from
-//! `GetAdaptersAddresses`, so the stack-specific `Tcpip`/`Tcpip6` keys are the authority for
-//! DHCP-vs-static and for detecting residual loopback servers.
-
 use std::net::IpAddr;
 use std::ptr;
 
@@ -15,7 +9,6 @@ use windows_sys::Win32::System::Registry::{
 
 use crate::netutil::is_loopback_or_local_ip;
 
-/// Normalizes a GUID to the `{...}` form used by the registry and `SetInterfaceDnsSettings`.
 pub(crate) fn normalize_guid(guid: &str) -> String {
     let clean = guid.trim().trim_matches(|ch| ch == '{' || ch == '}');
     if clean.is_empty() {
@@ -25,11 +18,6 @@ pub(crate) fn normalize_guid(guid: &str) -> String {
     }
 }
 
-/// Loopback/unspecified check that also handles a *bare* IPv6 literal.
-///
-/// The shared `is_loopback_or_local_ip` assumes `host:port`; a bare `"::1"` therefore falls into
-/// its port-stripping path and is not recognized. Windows returns DNS entries as bare literals,
-/// so that gap would leave `::1` in snapshots and defeat residual-loopback cleanup.
 pub(crate) fn is_loopback_literal(text: &str) -> bool {
     let trimmed = text.trim();
     if let Ok(address) = trimmed.parse::<IpAddr>() {
@@ -38,7 +26,6 @@ pub(crate) fn is_loopback_literal(text: &str) -> bool {
     is_loopback_or_local_ip(trimmed)
 }
 
-/// Reads `EnableDHCP`/`NameServer` from both stack registry keys.
 pub(crate) fn get_dhcp_config_from_registry(guid: &str) -> (bool, bool) {
     let mut v4_dhcp = true;
     let mut v6_dhcp = true;
@@ -49,7 +36,6 @@ pub(crate) fn get_dhcp_config_from_registry(guid: &str) -> (bool, bool) {
 
     let v4_path = format!(r"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{guid}");
     if let Some(key) = open_key(HKEY_LOCAL_MACHINE, &v4_path) {
-        // SAFETY: `key` was returned by RegOpenKeyExW and is closed exactly once.
         unsafe {
             let enable_dhcp = read_dword(key, "EnableDHCP");
             let name_server = read_string(key, "NameServer");
@@ -67,7 +53,6 @@ pub(crate) fn get_dhcp_config_from_registry(guid: &str) -> (bool, bool) {
 
     let v6_path = format!(r"SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\{guid}");
     if let Some(key) = open_key(HKEY_LOCAL_MACHINE, &v6_path) {
-        // SAFETY: same ownership rule as above.
         unsafe {
             let name_server = read_string(key, "NameServer");
             RegCloseKey(key);
@@ -89,8 +74,6 @@ fn parse_registry_name_server(value: &str) -> Vec<String> {
         .collect()
 }
 
-/// Checks whether either registry key still lists a loopback resolver. This catches leftovers
-/// that the DNS API may hide behind a virtual adapter.
 pub(crate) fn check_registry_contains_loopback(guid: &str) -> bool {
     let guid = normalize_guid(guid);
     if guid.is_empty() {
@@ -103,7 +86,6 @@ pub(crate) fn check_registry_contains_loopback(guid: &str) -> bool {
         let Some(key) = open_key(HKEY_LOCAL_MACHINE, &path) else {
             continue;
         };
-        // SAFETY: `key` is owned by this loop and closed before the next iteration.
         let value = unsafe {
             let value = read_string(key, "NameServer");
             RegCloseKey(key);
@@ -121,10 +103,8 @@ pub(crate) fn check_registry_contains_loopback(guid: &str) -> bool {
     false
 }
 
-/// Reads a string value from `HKEY_LOCAL_MACHINE`. Used by the service manager for `ImagePath`.
 pub(crate) fn read_machine_string(path: &str, value_name: &str) -> Option<String> {
     let key = open_key(HKEY_LOCAL_MACHINE, path)?;
-    // SAFETY: `key` is owned here and closed immediately after the query.
     unsafe {
         let value = read_string(key, value_name);
         RegCloseKey(key);
@@ -135,7 +115,6 @@ pub(crate) fn read_machine_string(path: &str, value_name: &str) -> Option<String
 fn open_key(root: HKEY, path: &str) -> Option<HKEY> {
     let path = wide(path);
     let mut key: HKEY = ptr::null_mut();
-    // SAFETY: `path` is a NUL-terminated UTF-16 string; `key` is a valid out-pointer.
     let status = unsafe { RegOpenKeyExW(root, path.as_ptr(), 0, KEY_QUERY_VALUE, &mut key) };
     if status == ERROR_SUCCESS {
         Some(key)
@@ -144,8 +123,6 @@ fn open_key(root: HKEY, path: &str) -> Option<HKEY> {
     }
 }
 
-/// # Safety
-/// `key` must be an open registry key; `name` is converted to a NUL-terminated UTF-16 string.
 unsafe fn read_dword(key: HKEY, name: &str) -> Option<u32> {
     let name = wide(name);
     let mut kind = 0u32;
@@ -166,8 +143,6 @@ unsafe fn read_dword(key: HKEY, name: &str) -> Option<u32> {
     }
 }
 
-/// # Safety
-/// `key` must be an open registry key.
 unsafe fn read_string(key: HKEY, name: &str) -> Option<String> {
     let name = wide(name);
     let mut kind = 0u32;
@@ -218,8 +193,6 @@ fn decode_utf16_bytes(bytes: &[u8]) -> String {
     String::from_utf16_lossy(&units)
 }
 
-/// Resolves `%VAR%`/`$VAR` references in a service ImagePath. Windows stores `\SystemRoot\...`
-/// and `%ProgramFiles%\...` forms; `os.ExpandEnv` handled `$` while the registry uses `%`.
 pub(crate) fn expand_env(text: &str) -> String {
     let mut result = String::with_capacity(text.len());
     let chars: Vec<char> = text.chars().collect();

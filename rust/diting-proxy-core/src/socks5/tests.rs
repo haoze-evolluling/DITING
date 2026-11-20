@@ -1,6 +1,3 @@
-//! The SOCKS5 codec: byte-exact shapes, the need-more contract of the reply parser and the
-//! datagram framing.
-
 use super::*;
 
 fn hex(bytes: &[u8]) -> String {
@@ -53,7 +50,6 @@ fn auth_bytes_are_length_prefixed() {
         auth_reply(&[0x01, 0x01]).unwrap_err(),
         "SOCKS5 authentication failed"
     );
-    // The version byte is never checked: only the status byte decides.
     assert!(auth_reply(&[0x00, 0x00]).is_ok());
     assert_eq!(
         auth_reply(&[0x01]).unwrap_err(),
@@ -84,7 +80,6 @@ fn address_encoding_matches_the_wire_form() {
         hex(&address("example.com:0").unwrap()),
         "030b6578616d706c652e636f6d0000"
     );
-    // A literal Go rejects becomes a domain, exactly like before.
     assert_eq!(
         hex(&address("1.2.3.4.5:80").unwrap()),
         "0309312e322e332e342e350050"
@@ -125,7 +120,6 @@ fn address_errors_carry_the_go_texts() {
         address("a:b:c:53").unwrap_err(),
         "invalid target \"a:b:c:53\": address a:b:c:53: too many colons in address"
     );
-    // Atoi accepts a sign, so `+8` is a port.
     assert_eq!(hex(&address("host:+8").unwrap()), "0304686f73740008");
 }
 
@@ -140,7 +134,6 @@ fn request_prefixes_command_and_reserved_byte() {
 
 #[test]
 fn reply_parser_asks_for_the_whole_frame() {
-    // Header alone is not enough for an IPv4 relay: it needs ten bytes.
     assert_eq!(parse_reply(&[]).unwrap(), ReplyParse::NeedMore(4));
     assert_eq!(
         parse_reply(&[0x05, 0x00, 0x00, 0x01]).unwrap(),
@@ -183,7 +176,6 @@ fn reply_parser_decodes_every_address_shape() {
             address: "relay.local:8080".to_string()
         }
     );
-    // A zero-length domain is legal and joins to `:port`.
     assert_eq!(
         parse_reply(&[0x05, 0x00, 0x00, 0x03, 0, 0, 0x35]).unwrap(),
         ReplyParse::Done {
@@ -202,7 +194,6 @@ fn reply_errors_use_the_status_byte() {
         parse_reply(&[0x05, 0x08, 0x00, 0x01, 1, 2, 3, 4, 0, 1]).unwrap_err(),
         "SOCKS5 request failed with code 8"
     );
-    // A bad version is reported with the status byte of that frame (0 here).
     assert_eq!(
         parse_reply(&[0x04, 0x00, 0x00, 0x01, 1, 2, 3, 4, 0, 1]).unwrap_err(),
         "SOCKS5 request failed with code 0"
@@ -251,7 +242,6 @@ fn datagram_truncation_reports_go_io_errors() {
 
 #[test]
 fn datagram_domain_may_be_a_literal_ip() {
-    // ATYP=domain carrying `9.8.7.6`: Go called `net.ParseIP` on the decoded text, so it counts.
     let mut raw = vec![0x03, 7];
     raw.extend_from_slice(b"9.8.7.6");
     raw.extend_from_slice(&[0, 53]);

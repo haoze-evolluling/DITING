@@ -1,6 +1,3 @@
-/// Dart side of `com.haoze.diting/dns_latency`, matching Kotlin `DnsLatencyBridge.kt`. `probe`
-/// takes `{providers, domain, attempts}` and returns per-provider results. Failure is
-/// `success=false` plus `message`, never an exception; `MissingPluginException` means no channel.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -27,8 +24,6 @@ enum DnsLatencyProtocol {
   }
 }
 
-/// One provider to probe. The native side has no catalog, so host, port and protocol all come from
-/// Dart.
 class DnsLatencyProviderSpec {
   const DnsLatencyProviderSpec({
     required this.id,
@@ -42,7 +37,6 @@ class DnsLatencyProviderSpec {
   final String id;
   final String name;
 
-  /// Hostname or IP; for DoH, the host parsed out of [url] (may be empty).
   final String host;
 
   final int port;
@@ -78,7 +72,6 @@ class DnsLatencySample {
   final String providerName;
   final DnsLatencyProtocol protocol;
 
-  /// Average of successful samples; on failure, the elapsed time at failure.
   final int elapsedMs;
 
   final bool success;
@@ -120,7 +113,6 @@ class DnsLatencySample {
   }
 }
 
-/// The host has no latency channel, which is not the same as every probe failing.
 class DnsLatencyUnavailable implements Exception {
   const DnsLatencyUnavailable([this.message]);
 
@@ -131,9 +123,6 @@ class DnsLatencyUnavailable implements Exception {
 }
 
 abstract class DnsLatencyRunner {
-  /// Probes an empty provider list: native rejects it with `result.error`, which proves the channel
-  /// exists. Never probe an unknown method name, since `notImplemented()` also looks like
-  /// MissingPluginException.
   Future<bool> checkAvailable();
 
   Future<List<DnsLatencySample>> probe({
@@ -161,7 +150,6 @@ class MethodChannelDnsLatencyRunner implements DnsLatencyRunner {
     } on MissingPluginException {
       return false;
     } on PlatformException {
-      // Channel exists; it just rejected the empty provider list.
       return true;
     }
   }

@@ -1,11 +1,7 @@
-//! The flow session table: keys, sessions, the incremental store and its snapshot.
-
 use std::collections::HashMap;
 
-/// Default table capacity when the caller passes 0.
 pub const DEFAULT_CAPACITY: usize = 1024;
 
-/// Lifecycle of one flow.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FlowStatus {
     Active,
@@ -31,7 +27,6 @@ impl FlowStatus {
     }
 }
 
-/// The identity of a flow: 5-tuple + UID. Two apps on the same destination stay distinct.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FlowKey {
     pub protocol: String,
@@ -42,7 +37,6 @@ pub struct FlowKey {
     pub uid: i32,
 }
 
-/// One row in the table.
 #[derive(Clone, Debug)]
 pub struct FlowSession {
     pub key: FlowKey,
@@ -57,7 +51,6 @@ pub struct FlowSession {
 }
 
 impl FlowSession {
-    /// The sequence of this session's most recent change.
     pub fn seq(&self) -> u64 {
         self.seq
     }
@@ -67,7 +60,6 @@ impl FlowSession {
     }
 }
 
-/// A mutation reported by the engine.
 #[derive(Clone, Debug)]
 pub struct FlowEvent {
     pub key: FlowKey,
@@ -79,11 +71,6 @@ pub struct FlowEvent {
     pub at_ms: i64,
 }
 
-/// One incremental snapshot. `base_seq` is the caller's cursor, `next_seq` the table's cursor after
-/// this snapshot; `truncated` means the caller should snapshot again from `next_seq`'s delta.
-///
-/// The sessions are borrowed: the snapshot is encoded and dropped while the table lock is still
-/// held, so cloning every row (and its three strings) first was pure overhead.
 #[derive(Clone, Debug)]
 pub struct Snapshot<'a> {
     pub base_seq: u64,
@@ -93,7 +80,6 @@ pub struct Snapshot<'a> {
     pub sessions: Vec<&'a FlowSession>,
 }
 
-/// The bounded session table.
 #[derive(Debug)]
 pub struct FlowTable {
     capacity: usize,
@@ -133,8 +119,6 @@ impl FlowTable {
         self.next_seq
     }
 
-    /// Records one mutation and returns its sequence. A brand-new key at capacity evicts the
-    /// least-recently-seen row (the flow view is a live window, not a ledger).
     pub fn record(&mut self, event: FlowEvent) -> u64 {
         let seq = self.next_seq.wrapping_add(1);
         self.next_seq = seq;
@@ -184,8 +168,6 @@ impl FlowTable {
         }
     }
 
-    /// Removes rows that are closed/failed, or whose last activity is older than `idle_ms` at
-    /// `now_ms`. Returns the number removed.
     pub fn prune_idle(&mut self, now_ms: i64, idle_ms: i64) -> usize {
         let before = self.by_key.len();
         self.by_key.retain(|_, session| {
@@ -199,7 +181,6 @@ impl FlowTable {
         self.by_key.clear();
     }
 
-    /// Sessions touched after `since_seq`, oldest change first, capped at `limit` (0 = no cap).
     pub fn snapshot(&self, since_seq: u64, limit: usize) -> Snapshot<'_> {
         let mut items: Vec<&FlowSession> = self
             .by_key
@@ -221,11 +202,6 @@ impl FlowTable {
 }
 
 impl Snapshot<'_> {
-    /// Encodes the snapshot as the JSON the JNI/FFI caller parses.
-    ///
-    /// The document is written straight into one buffer. Building a `serde_json::Value` map per
-    /// session (fourteen heap-allocated entries plus a boxed array) on every two-second poll was
-    /// the largest remaining cost of the flow view.
     pub fn to_json(&self) -> String {
         use std::fmt::Write;
 
@@ -282,7 +258,6 @@ fn write_string_field(out: &mut String, name: &str, value: &str) {
     write_json_string(out, value);
 }
 
-/// Appends one JSON string, escaping the characters JSON forbids inside a string.
 fn write_json_string(out: &mut String, value: &str) {
     use std::fmt::Write;
 
@@ -431,8 +406,6 @@ mod tests {
         table.record(event(active, 1, 1, FlowStatus::Active, 900));
         table.record(event(closed, 1, 1, FlowStatus::Closed, 900));
         table.record(event(idle, 1, 1, FlowStatus::Active, 10));
-        // now=1000: the closed row and the idle row (last seen 10) both go; the fresh active
-        // (last seen 900, 100ms ago) stays.
         let removed = table.prune_idle(1000, 500);
         assert_eq!(removed, 2);
         assert_eq!(table.len(), 1);

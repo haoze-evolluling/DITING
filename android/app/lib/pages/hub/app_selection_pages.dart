@@ -15,8 +15,6 @@ import 'package:diting_android/widgets/unsaved_changes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Blocked apps (upstream `BlockedAppsScreen`). Writes `blocked_app_packages` and
-/// `blocked_apps_enabled` into `dns_vpn_prefs`; normal mode hands the UIDs to the Rust engine.
 class BlockedAppsPage extends ConsumerWidget {
   const BlockedAppsPage({super.key});
 
@@ -46,8 +44,6 @@ class BlockedAppsPage extends ConsumerWidget {
     );
   }
 
-  /// Saves the list and drops those apps from the other three, as upstream does in one save:
-  /// missing one leaves an app both blocked and excluded, decided by engine check order.
   static void _saveBlocked(WidgetRef ref, Set<String> packages, bool enabled) {
     final settings = ref.read(legacySettingsProvider);
     settings.setBlockedApps(packages: packages, enabled: enabled);
@@ -56,9 +52,6 @@ class BlockedAppsPage extends ConsumerWidget {
   }
 }
 
-/// Excluded apps (upstream `ExcludedAppsScreen`). Writes `excluded_app_packages`: these use
-/// the system DNS and skip filtering, caching, logging and statistics. Same data as
-/// `/apps`, different entry point.
 class ExcludedAppsPage extends ConsumerWidget {
   const ExcludedAppsPage({super.key});
 
@@ -92,12 +85,8 @@ class ExcludedAppsPage extends ConsumerWidget {
   }
 }
 
-/// Which list was just written, so the exclusivity pass can skip it. Passed in because
-/// `LegacySettings` reads through to the store, making `difference` empty after the write.
 enum _Owner { blocked, excluded }
 
-/// Removes the apps just written to one list from the other three. One shared copy:
-/// upstream repeated it per page and one copy missed `app_allowlist_rules_json`.
 void _dropOverlaps(
   LegacySettings settings,
   Set<String> packages,
@@ -120,8 +109,6 @@ void _dropOverlaps(
   final inspection = settings.httpInspectionPackages.difference(packages);
   settings.setHttpInspectionApps(
     packages: inspection,
-    // Clearing the list must also clear the master switch: an enabled switch with no
-    // targets is skipped by the engine while the UI still shows it on.
     enabled: settings.httpInspectionEnabled && inspection.isNotEmpty,
   );
   final allowlist = settings.appAllowlistRules;
@@ -163,8 +150,6 @@ class _AppSelectionScaffold extends ConsumerStatefulWidget {
   final String? enableToggleEmptyHint;
   final void Function(Set<String> packages, bool enabled) onSave;
 
-  /// Filter and sort come from the page's own legacy preference keys, so the menu shows the same
-  /// choice the stored list had on the next open.
   final AppListFilter filter;
   final AppListSort sort;
   final ValueChanged<AppListFilter> onFilterChanged;
@@ -184,8 +169,6 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
   late bool _enabled = widget.enabled;
   String _query = '';
 
-  /// Same 250 ms debounce as 1.4.3 `AppPickerScreen`, so typing does not re-filter several hundred
-  /// apps on every keystroke.
   Timer? _debounce;
 
   @override
@@ -202,8 +185,6 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
     });
   }
 
-  /// Prefs are the only source of truth: a changed stored value discards the local draft,
-  /// otherwise saving would resurrect entries another page just removed.
   void _sync(Set<String> persisted) {
     if (!_synced) {
       _synced = true;
@@ -225,13 +206,9 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
     showAppSnack(context, context.l10n.appSelectionSaved);
   }
 
-  /// True while the draft differs from what is stored. Drives both the save button and the
-  /// "save before leaving?" guard.
   bool get _dirty =>
       _enabled != widget.enabled || !_sameSet(_selected, _initial);
 
-  /// Asked when the user leaves with pending changes, from the title-bar arrow and from the system
-  /// back gesture alike. Saving here is the same write as the save button.
   Future<bool> _confirmLeave() async {
     final choice = await showUnsavedChangesDialog(
       context,
@@ -265,8 +242,6 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
     _sync(widget.selected);
     final snapshot = ref.watch(installedAppsProvider);
     final apps = snapshot.value?.apps ?? const <InstalledApp>[];
-    // Filter and sort come from the page's own legacy preference keys, so the choice survives a
-    // restart exactly as the 1.4.3 screens did.
     final visible = visibleInstalledApps(
       apps: apps,
       query: _query,
@@ -300,7 +275,6 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
                       title: context.l10n.appSelectionSwitch,
                       items: [
                         ListItem.toggle(
-                          // The app list below is led by 40dp icons; match its column.
                           leading: const LeadingSlot(
                             child: GlyphIcon(AppGlyphs.wifiOff),
                           ),

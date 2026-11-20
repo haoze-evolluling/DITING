@@ -1,11 +1,8 @@
-/// Small, shared pieces of the hub's resolution pages: protocol names and scheduling-mode
-/// metadata. Nothing here decides DNS state; the service does.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The protocol names the console shows. They are wire names, not prose, so they stay untranslated.
 String desktopProtocolLabel(String protocol) => switch (protocol) {
   'DOH' => 'DoH',
   'DOH3' => 'DoH3',

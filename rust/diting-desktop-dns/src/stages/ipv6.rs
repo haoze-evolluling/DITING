@@ -1,10 +1,3 @@
-//! IPv6 answer suppression for broken dual-stack networks.
-//!
-//! When enabled, AAAA queries get an authoritative NODATA with an RFC 2308 SOA so clients fall
-//! back to IPv4 immediately instead of waiting for a broken Happy Eyeballs attempt. HTTPS/SVCB
-//! responses also lose their `ipv6hint` parameters, otherwise a client can still learn an IPv6
-//! address through the service-binding record.
-
 use async_trait::async_trait;
 use diting_dns_wire::build::ParsedMessage;
 use diting_dns_wire::TYPE_AAAA;

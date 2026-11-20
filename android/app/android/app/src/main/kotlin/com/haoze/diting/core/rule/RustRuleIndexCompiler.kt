@@ -3,15 +3,6 @@ package com.haoze.diting.core.rule
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
-/**
- * Native DTRI writer, the Rust side of `MappedSubscriptionRuleIndex.compileAndLoad`.
- *
- * The rules are packed into one byte array and handed to
- * `diting_rule_core`'s `Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_compile`; the JNI
- * entry point returns the DTRI image (see `rust/diting-rule-core/src/dtri.rs` and the byte-parity
- * fixtures). The library is required: a build that forgot `python rust/build_android.py` fails
- * here with an [IllegalStateException] instead of quietly compiling a second writer in Kotlin.
- */
 internal class RustRuleIndexCompiler private constructor() {
     external fun compile(packed: ByteArray): ByteArray?
 
@@ -29,12 +20,6 @@ internal class RustRuleIndexCompiler private constructor() {
             }
         }
 
-        /**
-         * Compiles everything [forEachRule] yields into a DTRI image.
-         *
-         * DB/iterator errors propagate, and so does a rejected or empty image: there is no Kotlin
-         * compiler to fall back to.
-         */
         fun compileDocument(forEachRule: ((EnabledRule) -> Unit) -> Unit): ByteArray {
             val image = instance.compile(pack(forEachRule))
             checkNotNull(image) { "native rule index writer returned no image" }
@@ -42,18 +27,10 @@ internal class RustRuleIndexCompiler private constructor() {
             return image
         }
 
-        /**
-         * `u32 count | count * (u32 patternLen, pattern, u32 sourceLen, source, u8 flags,
-         * u32 appScopeLen | u32::MAX, appScope, u32 denyallowLen | u32::MAX, denyallow,
-         * u32 dnsTypeLen | u32::MAX, dnsType)`; flags are wildcard/appInverted/regex in bits 0-2.
-         *
-         * `important` is not packed: the loaders already split the normal and important tries, and
-         * the trie never looks at it.
-         */
         private fun pack(forEachRule: ((EnabledRule) -> Unit) -> Unit): ByteArray {
             val buffer = ByteArrayOutputStream(1 shl 20)
             val out = DataOutputStream(buffer)
-            out.writeInt(0) // rule count, patched after the callback finishes
+            out.writeInt(0)
             var count = 0
             forEachRule { rule ->
                 writeString(out, rule.pattern)

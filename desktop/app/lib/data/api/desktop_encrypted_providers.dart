@@ -1,7 +1,3 @@
-/// The encrypted DNS server's state and its four write paths.
-///
-/// Every endpoint answers with the whole status after a change, so the page adopts it directly; a
-/// rejection keeps the previous status and returns the service's reason.
 library;
 
 import 'dart:async';
@@ -47,7 +43,6 @@ class DesktopEncryptedNotifier extends Notifier<DesktopEncryptedState> {
     }
   }
 
-  /// The service merges the patch over its config and answers with the normalised status.
   Future<DesktopApiException?> configure(Map<String, Object?> patch) =>
       _write(
         () => ref.read(desktopApiClientProvider).configureEncryptedDns(patch),

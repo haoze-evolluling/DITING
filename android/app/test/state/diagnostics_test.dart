@@ -1,6 +1,3 @@
-// Network-tool judging rules and panels: host sanitizing, a sparse `fromMap`,
-// and every probe state.
-
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
@@ -123,7 +120,6 @@ void _diagnostics() {
       expect(find.text('4 / 4'), findsOneWidget);
       expect(find.text('0.0 %'), findsOneWidget);
       expect(find.text('10.0 ms / 12.5 ms / 18.0 ms'), findsOneWidget);
-      // `PageBody` builds lazily, so `jumpTo(maxScrollExtent)` sees a stale bound; drag instead
       for (var i = 0; i < 4; i++) {
         await tester.drag(find.text('目标'), const Offset(0, -400));
         await tester.pumpAndSettle();

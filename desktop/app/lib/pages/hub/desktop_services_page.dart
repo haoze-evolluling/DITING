@@ -1,13 +1,3 @@
-/// The `hub` branch's app blocking page: the group shortcuts, the built-in service catalogue, the
-/// search and group filters, the selection and each service's weekly plan.
-///
-/// The page is one column even on a wide board: the group chips answer "which groups", the list
-/// below answers "which service", and reading them top to bottom keeps a 146-service catalogue from
-/// pushing the chips into a column of their own.
-///
-/// The old desktop console (`ProtectView.vue` and its `ServicesPanel`) is the functional blueprint.
-/// The page owns no blocking logic: it reads `/api/v1/filter/services` and adopts the whole state the
-/// service answers with after every write.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

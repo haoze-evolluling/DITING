@@ -1,21 +1,10 @@
-//! Payload codecs for the JNI entry points: decode one request, run one probe function, encode the
-//! answer.
-//!
-//! Keeping this out of [`crate::jni_bridge`] means every layout can be unit-tested without a JVM.
-//! A decoder returns None on any drift (short read, unknown tag, trailing bytes), which the bridge
-//! turns into a null `ByteArray` and Kotlin turns into an `IllegalStateException`.
-
 use crate::dns::{self, QueryType, Reply};
 use crate::host;
 use crate::payload::{Reader, Writer};
 use crate::ping;
 use crate::trace::{self, Hop};
 
-// ---------------------------------------------------------------------------------------------
-// Request layouts
-// ---------------------------------------------------------------------------------------------
 
-/// `u16 id | u8 qtype (0 = A, 1 = AAAA) | u32 domainLen | domain`.
 pub fn build_dns_query(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let id = reader.u16()?;
@@ -27,7 +16,6 @@ pub fn build_dns_query(payload: &[u8]) -> Option<Vec<u8>> {
     dns::build_query(id, qtype, &domain)
 }
 
-/// `u8 ipv4 | u32 responseLen | response`.
 pub fn parse_dns_server_reply(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let ipv4 = match reader.u8()? {
@@ -63,7 +51,6 @@ pub fn parse_dns_server_reply(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u32 textLen | text`.
 pub fn ping_summary(payload: &[u8]) -> Option<Vec<u8>> {
     let text = read_text(payload)?;
     let mut writer = Writer::new();
@@ -100,7 +87,6 @@ pub fn ping_summary(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u32 count | count * f64`.
 pub fn latency_stats(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
@@ -128,7 +114,6 @@ pub fn latency_stats(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u32 resolvedLen | resolved | u32 textLen | text`.
 pub fn trace_hop(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let resolved = reader.string()?;
@@ -165,38 +150,27 @@ pub fn trace_hop(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-// ---------------------------------------------------------------------------------------------
-// String entry points
-// ---------------------------------------------------------------------------------------------
 
-/// `NetHost.sanitize`.
 pub fn sanitize_host(input: &str) -> String {
     host::sanitize(input)
 }
 
-/// `DnsLookupProbe.isIpLiteral`.
 pub fn is_ip_literal(input: &str) -> bool {
     host::is_ip_literal(input)
 }
 
-/// `DnsLatencyTester.isSuccess`.
 pub fn dns_response_succeeded(wire: &[u8]) -> bool {
     dns::response_succeeded(wire)
 }
 
-/// `DnsLatencyTester`'s DoH endpoint derivation.
 pub fn doh_endpoint(url: &str, host_text: &str) -> String {
     dns::doh_endpoint(url, host_text)
 }
 
-/// `TraceProbe`'s streaming stamp line.
 pub fn trace_response_line(line: &str) -> bool {
     trace::is_response_line(line)
 }
 
-// ---------------------------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------------------------
 
 fn read_text(payload: &[u8]) -> Option<String> {
     let mut reader = Reader::new(payload);
@@ -207,7 +181,6 @@ fn read_text(payload: &[u8]) -> Option<String> {
     Some(text)
 }
 
-/// Packs up to eight presence bits (bit 0 is the first entry).
 fn optional_flags(present: &[bool]) -> u8 {
     let mut flags = 0u8;
     for (index, value) in present.iter().enumerate().take(8) {
@@ -238,7 +211,6 @@ mod tests {
         assert_eq!(query.len(), 12 + 1 + 7 + 1 + 3 + 1 + 4);
         assert_eq!(&query[..2], &[0x12, 0x34]);
 
-        // Unknown type tag and trailing bytes are drift, not defaults.
         let mut writer = Writer::new();
         writer.u16(0);
         writer.u8(2);
@@ -274,7 +246,6 @@ rtt min/avg/max/mdev = 12.500/12.500/12.500/0.000 ms\n";
         assert_eq!(reader.i32(), Some(57));
         assert_eq!(reader.u8(), Some(0));
 
-        // The synthesized gap row: no elapsed, no TTL, timeout set.
         assert_eq!(reader.i32(), Some(2));
         assert_eq!(reader.u8(), Some(0b00));
         assert_eq!(reader.f64(), Some(0.0));
@@ -306,7 +277,6 @@ rtt min/avg/max/mdev = 12.500/12.500/12.500/0.000 ms\n";
         assert_eq!(reader.i64(), Some(20));
         assert!(reader.finish());
 
-        // Fewer samples than declared is drift.
         let mut writer = Writer::new();
         writer.u32(2);
         writer.f64(1.0);

@@ -165,7 +165,6 @@ class _IllustrationPalette {
       Object.hash(shape, ink, highlight, accent, accentContainer);
 }
 
-/// Every choreography must land on the same final frame; a skipped entrance paints it.
 enum _Entrance { spin, morph, orbit }
 
 enum _Accent { blob, dot, ring }

@@ -1,7 +1,3 @@
-//! Unit tests of the model itself. The trace in `tests/corpus.rs` pins every value against the
-//! original Go implementation; these cover the branches the trace does not reach (clamps, the
-//! weight floor, the cooldown cap) and document the intended shape of the estimator.
-
 use super::*;
 
 const MS: i64 = 1_000_000;
@@ -28,14 +24,11 @@ fn cold_provider_reports_the_documented_defaults() {
 #[test]
 fn tail_latency_estimators_clamp_both_ends() {
     let stats = ProviderStats::new();
-    // One slow sample: SRTT 2 s, RTTVAR 1 s, so all three estimates exceed their upper clamp.
     stats.record_success(2 * S, 0);
     assert_eq!(stats.hedge_delay(), HEDGE_DELAY_MAX_NS);
     assert_eq!(stats.attempt_timeout(), ATTEMPT_TIMEOUT_MAX_NS);
     assert_eq!(stats.udp_retry_delay(), UDP_RETRY_DELAY_MAX_NS);
 
-    // Fast, stable samples pull all three under their lower clamp. RTTVAR decays by 0.75 per
-    // sample, so it needs ~50 samples before the variance term stops dominating.
     for _ in 0..50 {
         stats.record_success(2 * MS, 0);
     }

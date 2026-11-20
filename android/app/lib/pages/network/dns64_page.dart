@@ -1,4 +1,3 @@
-/// N8: the DNS64 page — one switch the engine turns into AAAA synthesis.
 library;
 
 import 'package:diting_android/state/dns64_providers.dart';

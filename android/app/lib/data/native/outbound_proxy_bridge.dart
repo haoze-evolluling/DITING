@@ -1,17 +1,9 @@
-/// Dart side of `com.haoze.diting/outbound_proxy`. Credentials sit in `dns_vpn_prefs` under an
-/// AndroidKeyStore key Dart cannot reach, so the proxy is composed natively. The app package is
-/// part of the config: Android lets only one app bind a loopback port.
-///
-/// Validation, target filtering and the engine JSON come from
-/// `rust/diting-outbound-proxy-core`, which imports the engine's own protocol/host/port/credential/
-/// scope rules; only the localized sentences and the channel stay here.
 library;
 
 import 'package:diting_android/data/db/rust_outbound_proxy_core.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter/services.dart';
 
-/// Matches 1.4.3 `OutboundProxyProtocol`; `storageValue` is parsed by the Rust engine.
 enum OutboundProxyProtocol {
   socks5('socks5', 'SOCKS5'),
   http('http', 'HTTP CONNECT');
@@ -28,8 +20,6 @@ enum OutboundProxyProtocol {
       );
 }
 
-/// Which apps the proxy applies to. `all` is the original whole-device behaviour; `apps` proxies only
-/// [OutboundProxyConfig.targetPackages] and keeps DNS upstream queries and every other app direct.
 enum OutboundProxyScope {
   all('all'),
   apps('apps');
@@ -68,10 +58,8 @@ class OutboundProxyConfig {
 
   final OutboundProxyScope scope;
 
-  /// Apps routed through the proxy when [scope] is [OutboundProxyScope.apps].
   final Set<String> targetPackages;
 
-  /// Engine-reported state: `disabled`, `connecting`, `ready` or `error`.
   final String status;
   final String statusMessage;
 
@@ -101,7 +89,6 @@ class OutboundProxyConfig {
     statusMessage: statusMessage ?? this.statusMessage,
   );
 
-  /// The Dart enum spellings crossed into the native map; status fields stay out of the rules.
   Map<String, Object?> _coreConfig() => {
     'enabled': enabled,
     'protocol': protocol.storageValue,
@@ -114,9 +101,6 @@ class OutboundProxyConfig {
     'targetPackages': targetPackages.toList(),
   };
 
-  /// Mirrors `Engine` and the settings page order, so the first offending field is reported
-  /// identically; a null [installedPackages] skips the "not installed" check rather than failing
-  /// closed. The sentences stay here; the rule and its token come from the kernel.
   String? validationError({
     String? selfPackage,
     Set<String>? installedPackages,
@@ -138,15 +122,10 @@ class OutboundProxyConfig {
     };
   }
 
-  /// Targets without the proxy app: it sits outside the TUN, so selecting it would have no effect.
   Set<String> get effectiveTargets => {
     ...RustOutboundProxyCore.instance.effectiveTargets(_coreConfig()),
   };
 
-  /// JSON handed to `Engine.configureOutboundProxy`. `port` must be a JSON number: the engine's
-  /// `RawConfig` decodes it into `port: i64` (`rust/diting-engine/src/outbound/mod.rs`), and a
-  /// string fails deserialization, so the proxy is not applied. Per-app scope adds `scope` and
-  /// `packages`; the VPN service turns `packages` into the `uids` the engine matches on.
   String toEngineJson() =>
       RustOutboundProxyCore.instance.engineJson(_coreConfig());
 
@@ -178,7 +157,6 @@ abstract class OutboundProxyStore {
 
   Future<void> reset();
 
-  /// Engine-reported status, persisted so the page can show it after a restart.
   Future<void> setStatus(String state, String message);
 }
 

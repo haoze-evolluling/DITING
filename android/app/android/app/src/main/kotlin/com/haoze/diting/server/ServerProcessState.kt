@@ -3,11 +3,6 @@ package com.haoze.diting.server
 import android.content.Context
 import java.io.File
 
-/// The last observed state of the standalone server process.
-///
-/// The service and the MethodChannel bridge live in the same app process, so a synchronized
-/// singleton is the source of truth for both. Flutter polls it instead of duplicating lifecycle
-/// state in Dart.
 object ServerProcessState {
     private val lock = Any()
 

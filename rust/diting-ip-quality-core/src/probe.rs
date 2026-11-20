@@ -1,12 +1,7 @@
-//! The egress-IP probe: a source answers either a bare address or `{"ip": "..."}`, and a captive
-//! portal's HTML must not be mistaken for one.
-
 use serde_json::Value;
 
-/// Long enough for a full IPv6 address; anything longer is a page, not an address.
 const MAX_IP_LENGTH: usize = 45;
 
-/// Same gate as the legacy `_isIpLike`: ASCII hex digits, dots and colons only.
 pub fn is_ip_like(value: &str) -> bool {
     if value.is_empty() || value.len() > MAX_IP_LENGTH {
         return false;
@@ -16,7 +11,6 @@ pub fn is_ip_like(value: &str) -> bool {
         .all(|byte| byte.is_ascii_hexdigit() || byte == b'.' || byte == b':')
 }
 
-/// Reads the egress IP out of one probe body; `None` means "this endpoint did not answer".
 pub fn parse_probe(body: &str) -> Option<String> {
     let raw = body.trim();
     if raw.starts_with('{') {

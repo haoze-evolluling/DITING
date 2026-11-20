@@ -1,16 +1,3 @@
-//! DNS over HTTP/3 (RFC 8484 over RFC 9114) for N7.
-//!
-//! The workspace has no `h3` crate available offline, so this module carries the minimal HTTP/3
-//! framing a DoH exchange needs: a QUIC connection (via `quinn`, already a dependency for DoQ), one
-//! client-initiated control/QPACK stream set, and a request encoded as a `HEADERS` frame (all-literal
-//! QPACK) plus a `DATA` frame. The response is read as a whole stream and only the `DATA` frames are
-//! concatenated — `HEADERS` are skipped because the DNS answer is what the caller needs.
-//!
-//! This is deliberately narrow: no QPACK dynamic table (the SETTINGS frame advertises capacity 0), no
-//! server push, no trailers. That is enough for a POST `/dns-query` exchange and keeps the framing
-//! reviewable. The caller falls back to DoH/HTTP-2 whenever any step fails, so a server that speaks
-//! a richer HTTP/3 profile still resolves correctly.
-
 use std::net::SocketAddr;
 use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
@@ -22,7 +9,6 @@ use crate::resolver::dial::{self, Dialer};
 use crate::resolver::session::take_live_session;
 use crate::resolver::trust::UpstreamTrust;
 
-/// The DoH3 transport: a lazily created endpoint per family plus the cached sessions.
 pub struct Doh3Client {
     config: quinn::ClientConfig,
     endpoint: Mutex<Option<(bool, Endpoint)>>,
@@ -46,7 +32,6 @@ impl Doh3Client {
         })
     }
 
-    /// One `POST` of `query` to `path` on `host:port`, returning the DNS message from the DATA frames.
     pub async fn query(
         &self,
         dialer: &Dialer,
@@ -86,9 +71,6 @@ impl Doh3Client {
             return Ok(connection);
         }
         let mut last_error = String::new();
-        // A hostname with both families can list an address family the origin does not listen on;
-        // give each of several candidates a short probe so a dead family cannot burn the whole
-        // budget, but a single candidate gets the full handshake timeout.
         let per_attempt = if addresses.len() > 1 {
             Duration::from_millis(800)
         } else {
@@ -145,11 +127,6 @@ impl Doh3Client {
         Ok(endpoint)
     }
 
-    /// The cached session for `key` when it is still alive; a closed one is evicted.
-    ///
-    /// Lookup and eviction share one guard through [`take_live_session`]: re-locking
-    /// `sessions` from inside an `if let` that already holds its guard would deadlock the
-    /// calling task permanently.
     fn live_session(&self, key: &str) -> Option<quinn::Connection> {
         let mut sessions = self.lock_sessions();
         take_live_session(&mut sessions, key, |connection| {
@@ -187,14 +164,11 @@ impl Drop for Doh3Client {
     }
 }
 
-/// Opens the three unidirectional streams HTTP/3 requires before a request: control (with an empty
-/// SETTINGS frame, so QPACK dynamic capacity stays 0), QPACK encoder, and QPACK decoder.
 async fn setup_connection(connection: &quinn::Connection) -> Result<(), String> {
     let mut control = connection
         .open_uni()
         .await
         .map_err(|error| format!("DoH3 control stream: {error}"))?;
-    // Stream type 0x00 (control), then a SETTINGS frame (type 0x04, length 0).
     control
         .write_all(&[0x00, 0x04, 0x00])
         .await
@@ -218,14 +192,13 @@ async fn setup_connection(connection: &quinn::Connection) -> Result<(), String> 
     Ok(())
 }
 
-/// The HEADERS + DATA frames for one `POST /dns-query` exchange.
 fn build_request(host: &str, port: u16, path: &str, query: &[u8]) -> Vec<u8> {
     let authority = if port == 443 {
         host.to_string()
     } else {
         format!("{host}:{port}")
     };
-    let mut section = vec![0x00, 0x00]; // Required Insert Count 0, Delta Base 0.
+    let mut section = vec![0x00, 0x00];
     for (name, value) in [
         (":method", "POST"),
         (":scheme", "https"),
@@ -237,22 +210,18 @@ fn build_request(host: &str, port: u16, path: &str, query: &[u8]) -> Vec<u8> {
         qpack_literal(&mut section, name, value);
     }
     let mut out = Vec::new();
-    frame(&mut out, 0x01, &section); // HEADERS
-    frame(&mut out, 0x00, query); // DATA
+    frame(&mut out, 0x01, &section);
+    frame(&mut out, 0x00, query);
     out
 }
 
-/// Appends a literal field line with a literal name (RFC 9204 §4.5.6), no huffman, never indexed.
 fn qpack_literal(out: &mut Vec<u8>, name: &str, value: &str) {
-    // `0010_0000` = literal line, literal name, no huffman; lower 3 bits carry the name length.
     prefix_int(out, name.len(), 3, 0x20);
     out.extend_from_slice(name.as_bytes());
-    // Value length is a 7-bit prefix; the high bit (huffman) stays 0.
     prefix_int(out, value.len(), 7, 0x00);
     out.extend_from_slice(value.as_bytes());
 }
 
-/// Writes an integer with an `prefix_bits`-wide prefix (`first` holds the fixed bits).
 fn prefix_int(out: &mut Vec<u8>, value: usize, prefix_bits: u8, first: u8) {
     let max = (1usize << prefix_bits) - 1;
     if value < max {
@@ -268,14 +237,12 @@ fn prefix_int(out: &mut Vec<u8>, value: usize, prefix_bits: u8, first: u8) {
     out.push(rest as u8);
 }
 
-/// Appends a frame: varint type, varint length, then the payload.
 fn frame(out: &mut Vec<u8>, kind: u64, payload: &[u8]) {
     varint(out, kind);
     varint(out, payload.len() as u64);
     out.extend_from_slice(payload);
 }
 
-/// QUIC variable-length integer (RFC 9000 §16).
 fn varint(out: &mut Vec<u8>, value: u64) {
     if value < 64 {
         out.push(value as u8);
@@ -295,7 +262,6 @@ fn varint(out: &mut Vec<u8>, value: u64) {
     }
 }
 
-/// Reads a QUIC varint, returning `(value, bytes_consumed)`.
 fn read_varint(buf: &[u8]) -> Option<(u64, usize)> {
     let first = *buf.first()?;
     let len = 1usize << (first >> 6);
@@ -309,8 +275,6 @@ fn read_varint(buf: &[u8]) -> Option<(u64, usize)> {
     Some((value, len))
 }
 
-/// Walks the response stream frames and concatenates every DATA frame; HEADERS and unknown frames
-/// are skipped.
 fn extract_data(bytes: &[u8]) -> Result<Vec<u8>, String> {
     let mut rest = bytes;
     let mut data = Vec::new();
@@ -366,8 +330,8 @@ mod tests {
     #[test]
     fn extract_data_skips_a_headers_frame() {
         let mut stream = Vec::new();
-        frame(&mut stream, 0x01, b"\x00\x00"); // HEADERS
-        frame(&mut stream, 0x00, b"DNS"); // DATA
+        frame(&mut stream, 0x01, b"\x00\x00");
+        frame(&mut stream, 0x00, b"DNS");
         assert_eq!(extract_data(&stream).unwrap(), b"DNS");
     }
 

@@ -1,6 +1,3 @@
-// Pure parser for the external subscription-import deep link. No native channel is involved, so the
-// accepted grammar is pinned here.
-
 import 'package:diting_android/data/subscriptions/subscription_deeplink.dart';
 import 'package:flutter_test/flutter_test.dart';
 

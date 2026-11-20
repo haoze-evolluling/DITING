@@ -1,7 +1,3 @@
-// Desktop hub app blocking (desktop parity): the built-in catalogue,
-// the selection, group blocking and the per-service weekly plan. Every value must come from
-// `/filter/services`; each write adopts the whole state the service answers with.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_services_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_services_page.dart';

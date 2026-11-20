@@ -1,37 +1,12 @@
-//! The TUN corpus: the packet shapes stage 3 has to accept, frozen as a libpcap file.
-//!
-//! `rust/diting-netstack-spike` proved *that* the transparent proxy works; this corpus freezes *what
-//! it has to work on*. The file is LINKTYPE_RAW (bare IP packets, exactly what a TUN device hands
-//! `read(2)`), so it can be opened in Wireshark next to the engine's own dumps and replayed here.
-//!
-//! The pcap holds the client-to-upstream packets only — the ones the engine reads from the device:
-//!
-//! | # | packet | why stage 3 must handle it |
-//! | --- | --- | --- |
-//! | 1 | IPv4 TCP SYN `10.0.0.2:40000 → 93.184.216.34:443` | ordinary intercepted TLS flow |
-//! | 2 | IPv6 TCP SYN `[2001:db8::2]:40001 → [2606:2800:220:1::1]:443` | IPv6-only networks |
-//! | 3 | IPv4 UDP DNS `10.0.0.2:50000 → 8.8.8.8:53` | the resolver plain path |
-//! | 4 | IPv6 UDP DNS `[2001:db8::2]:50002 → [2001:4860:4860::8888]:53` | IPv6 resolver path |
-//! | 5 | IPv4 UDP 443 with a QUIC-shaped payload | the QUIC drop policy (`setUseTcpStack`) |
-//! | 6 | IPv4 TCP 853 SYN `→ 1.1.1.1:853` | the encrypted-DNS block policy |
-//!
-//! The acknowledgement/data/FIN packets are **not** in the file: the stack picks the server's initial
-//! sequence number at random, and a pcap containing it would change on every regeneration. The replay
-//! drives the handshake forward with the observed SYN-ACK instead, which is also how the netstack
-//! spike's own tests work.
-
 use smoltcp::time::Instant;
 use smoltcp::wire::{IpAddress, IpEndpoint, TcpControl};
 
 use diting_netstack_spike::wire::{emit_tcp, emit_udp, endpoint_v4, endpoint_v6, parse_tcp};
 use diting_netstack_spike::{Limits, Netstack};
 
-/// libpcap `LINKTYPE_RAW`: the payload of every record is one bare IP packet.
 pub const LINKTYPE_RAW: u32 = 101;
-/// A fixed capture timestamp base (2023-11-14T22:13:20Z), so the file is byte-stable.
 pub const BASE_SECONDS: u32 = 1_700_000_000;
 
-/// One corpus packet.
 pub struct Packet {
     pub label: &'static str,
     pub bytes: Vec<u8>,
@@ -41,14 +16,12 @@ fn dns_query() -> Vec<u8> {
     crate::dns::query("dns.example.test", 1)
 }
 
-/// The fennec-shaped QUIC payload: a long-header first byte plus filler, enough for the QUIC rule.
 fn quic_payload() -> Vec<u8> {
     let mut payload = vec![0xc3u8];
     payload.resize(64, 0);
     payload
 }
 
-/// The client-to-upstream packets, in capture order.
 pub fn packets() -> Vec<Packet> {
     let client_v4 = endpoint_v4([10, 0, 0, 2], 40_000);
     let client_v4_dns = endpoint_v4([10, 0, 0, 2], 50_000);
@@ -114,7 +87,6 @@ pub fn packets() -> Vec<Packet> {
     ]
 }
 
-/// Eight 16-bit groups as the 16 octets an IPv6 address is written with.
 fn ipv6(groups: [u16; 8]) -> [u8; 16] {
     let mut octets = [0u8; 16];
     for (index, group) in groups.into_iter().enumerate() {
@@ -123,10 +95,8 @@ fn ipv6(groups: [u16; 8]) -> [u8; 16] {
     octets
 }
 
-/// Serializes the corpus as a libpcap file.
 pub fn pcap() -> Vec<u8> {
     let mut file = Vec::new();
-    // Global header: magic, 2.4, no timezone, no sigfigs, 65535 snap length, LINKTYPE_RAW.
     file.extend_from_slice(&0xa1b2_c3d4u32.to_be_bytes());
     file.extend_from_slice(&2u16.to_be_bytes());
     file.extend_from_slice(&4u16.to_be_bytes());
@@ -135,7 +105,6 @@ pub fn pcap() -> Vec<u8> {
     file.extend_from_slice(&65_535u32.to_be_bytes());
     file.extend_from_slice(&LINKTYPE_RAW.to_be_bytes());
     for (index, packet) in packets().iter().enumerate() {
-        // One record per millisecond, so a viewer shows them in order and the file stays stable.
         file.extend_from_slice(&BASE_SECONDS.to_be_bytes());
         file.extend_from_slice(&(index as u32 * 1_000).to_be_bytes());
         file.extend_from_slice(&(packet.bytes.len() as u32).to_be_bytes());
@@ -145,7 +114,6 @@ pub fn pcap() -> Vec<u8> {
     file
 }
 
-/// Splits a libpcap file into its IP packets, rejecting anything the engine could not have written.
 pub fn parse_pcap(bytes: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     if bytes.len() < 24 {
         return Err("the capture header is truncated".to_string());
@@ -182,10 +150,8 @@ pub fn parse_pcap(bytes: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     Ok(packets)
 }
 
-/// The single SYN handshake the replay completes, so the data path is exercised too.
 const REPLAY_PAYLOAD: &[u8] = b"GET /corpus HTTP/1.1\r\nHost: example.test\r\n\r\n";
 
-/// Replays the capture through the transparent proxy.
 pub fn replay(bytes: &[u8]) -> Result<usize, String> {
     let captured = parse_pcap(bytes)?;
     let expected = packets();
@@ -204,13 +170,11 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
                 crate::hex(packet)
             ));
         }
-        // Every record must be one bare IP packet with a valid shape.
         if diting_netstack_spike::wire::split_ip(packet).is_none() {
             return Err(format!("packet {index} is not an IP packet"));
         }
     }
 
-    // A fixed smoltcp clock: the corpus must not depend on the wall clock.
     let now = Instant::from_millis(1_000);
     let mut net = Netstack::new(Limits::default());
     for packet in &captured {
@@ -218,7 +182,6 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
         net.poll(now);
     }
 
-    // Three TCP flows, one per SYN (IPv4:443, IPv6:443, IPv4:853), and two UDP destination ports.
     if net.tcp_flow_count() != 3 {
         return Err(format!(
             "expected 3 TCP flows, got {}",
@@ -232,8 +195,6 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
         ));
     }
 
-    // Every datagram still carries its original destination, which is what "answer as the upstream"
-    // depends on.
     let mut datagrams = Vec::new();
     while let Some(datagram) = net.udp_take() {
         datagrams.push(datagram);
@@ -253,7 +214,6 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
             "the datagrams changed: {payloads:?} (expected {expected_payloads:?})"
         ));
     }
-    // The IPv6 DNS datagram is addressed to the IPv6 upstream: the local address is preserved.
     let ipv6_dns = datagrams
         .iter()
         .find(|datagram| {
@@ -264,7 +224,6 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
         return Err("the IPv6 DNS payload changed".to_string());
     }
 
-    // Complete the IPv4 handshake against the stack's own SYN-ACK, then relay one request.
     let client = endpoint_v4([10, 0, 0, 2], 40_000);
     let server = endpoint_v4([93, 184, 216, 34], 443);
     let syn_ack = net
@@ -312,7 +271,6 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
     Ok(captured.len())
 }
 
-/// The endpoint the replay relays on, exposed so the test can assert on it.
 pub fn replay_flow() -> (IpEndpoint, IpEndpoint) {
     (
         endpoint_v4([93, 184, 216, 34], 443),
@@ -335,7 +293,7 @@ mod tests {
     #[test]
     fn a_non_raw_capture_is_rejected() {
         let mut file = pcap();
-        file[20..24].copy_from_slice(&1u32.to_be_bytes()); // LINKTYPE_ETHERNET
+        file[20..24].copy_from_slice(&1u32.to_be_bytes());
         assert!(parse_pcap(&file).is_err());
     }
 
@@ -350,7 +308,6 @@ mod tests {
     fn the_shapes_are_stable() {
         let corpus = packets();
         assert_eq!(corpus.len(), 6);
-        // `split_ip` only carries addresses; the ports come from the L4 parser.
         let first = parse_tcp(&corpus[0].bytes).expect("a TCP segment");
         assert_eq!(first.src.port, 40_000);
         assert_eq!(first.dst.port, 443);

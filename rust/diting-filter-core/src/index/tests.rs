@@ -1,6 +1,3 @@
-//! Matcher behaviour, ported one for one from the Go tests the migration replaced
-//! (`rule_test.go`, `rule_modifiers_test.go`, `rule_modifiers_rewrite_test.go`).
-
 use super::*;
 use crate::rule::{
     FLAG_ALLOW, FLAG_EXACT, FLAG_IMPORTANT, FLAG_REGEX, FLAG_REWRITE, FLAG_WILDCARD,
@@ -27,7 +24,6 @@ fn exact(pattern: &str) -> Rule {
     Rule::new(pattern).with_flags(FLAG_EXACT)
 }
 
-/// The source Go's `buildWildcardRegex` compiles for a wildcard pattern.
 fn wildcard_source(pattern: &str) -> String {
     let mut source = String::from("(?i)^(?:.*\\.)?");
     for ch in pattern.chars() {
@@ -41,7 +37,6 @@ fn wildcard_source(pattern: &str) -> String {
     source
 }
 
-/// A wildcard rule whose regex is built the way Go's `buildWildcardRegex` builds it.
 fn wildcard(pattern: &str) -> Rule {
     Rule::new(pattern)
         .with_flags(FLAG_WILDCARD)
@@ -183,7 +178,6 @@ fn dns_type_restrictions_apply_but_any_matches_everything() {
         index.match_domain("ipv6only.ad.com", AAAA).action,
         Action::Block
     );
-    // `ANY` and the "unspecified" type bypass the restriction (Go's `matchDNSType`).
     assert_eq!(
         index
             .match_domain("ipv6only.ad.com", crate::rule::TYPE_ANY)
@@ -221,7 +215,6 @@ fn denyallow_excludes_the_target_and_falls_through_to_the_next_tier() {
         );
     }
 
-    // The excluded `$important` rule falls through to the lower tier instead of passing.
     let decision = index.match_domain("cdn.example.com", A);
     assert_eq!(decision.reason, Some(Reason::Blacklist));
     assert_eq!(decision.rule, Some(2));

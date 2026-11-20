@@ -1,21 +1,3 @@
-//! Streaming document parse: the same classification as [`crate::document::parse_document`], but the
-//! result is handed to the caller one bounded chunk at a time as the existing DRC1 binary payload.
-//!
-//! A whole-document parse of a large subscription builds every `ParsedRule` at once and hands the
-//! caller one big payload; the Dart side then rebuilds every rule object and (before this) also a
-//! whole-document JSON plan. For a multi-megabyte subscription those full copies are what push the
-//! process to its memory ceiling. This module keeps the working set flat: it walks the document
-//! chunk by chunk and each [`StreamParse::next_chunk`] returns only that chunk's rules.
-//!
-//! Cross-line state is preserved without holding the whole document in rule form:
-//! * `$badfilter` rules are collected in a cheap pre-scan (only lines that contain the modifier are
-//!   parsed) so a rule disabled by a later line is still removed, exactly like the whole-document
-//!   parse. Like the original, it removes only `block` / `allow` / `rewrite` rules — url and
-//!   cosmetic families are never badfiltered.
-//! * Duplicates are collapsed within a chunk. Across chunks the import SQL's `WHERE NOT EXISTS`
-//!   still prevents a duplicate row, so the stored rule set matches the whole-document parse; the
-//!   reported duplicate count only counts within-chunk repeats (it is a diagnostic, never stored).
-
 use std::collections::HashSet;
 use std::ptr;
 
@@ -24,8 +6,6 @@ use crate::ffi::{encode, into_buffer};
 use crate::keys::{allow_key_of, block_key_of, rewrite_key_of, url_key};
 use crate::models::CategorizedRules;
 
-/// Parses `text` in chunks of at most [`Self::chunk_lines`] lines. The text is owned (one copy) so a
-/// chunk slice borrows from it without re-scanning; the parser cursor only moves forward.
 pub struct StreamParse {
     text: String,
     cursor: usize,
@@ -35,7 +15,6 @@ pub struct StreamParse {
 }
 
 impl StreamParse {
-    /// Scans `text` for `$badfilter` keys once, then is ready to yield chunks.
     pub fn new(text: String, chunk_lines: usize) -> Self {
         let badfilter_keys = scan_badfilter_keys(&text);
         Self {
@@ -47,7 +26,6 @@ impl StreamParse {
         }
     }
 
-    /// The next chunk's rules, or `None` once the document is exhausted.
     pub fn next_rules(&mut self) -> Option<CategorizedRules> {
         if self.done {
             return None;
@@ -87,8 +65,6 @@ impl StreamParse {
             invalid_count += classified.invalid_count;
             unsupported_count += classified.unsupported_count;
             ignored_count += classified.ignored_count;
-            // `classified.badfilter_keys` are intentionally ignored here: the pre-scan already has
-            // every key from the whole document, including lines later in the file.
 
             for rule in classified.block_rules {
                 let key = block_key_of(&rule);
@@ -126,8 +102,6 @@ impl StreamParse {
                 }
                 rewrite_rules.push(rule);
             }
-            // Url and cosmetic families are never badfiltered (mirrors `parse_document`), so only
-            // within-chunk dedupe applies.
             for rule in classified.url_block_rules {
                 let key = url_key("url_block", &rule.pattern, rule.app_scope.as_deref());
                 if !seen_url_block.insert(key) {
@@ -176,14 +150,10 @@ impl StreamParse {
         })
     }
 
-    /// The next chunk encoded as a DRC1 payload, or `None` once the document is exhausted.
     pub fn next_chunk(&mut self) -> Option<Vec<u8>> {
         self.next_rules().map(|rules| encode(&rules))
     }
 
-    /// Next `\n`-delimited line's byte range, or `None` when the document is exhausted. Mirrors
-    /// `str::split('\n')`: a trailing newline yields a final empty segment, and an empty document
-    /// yields one empty segment — both are counted so line totals match the whole-document parse.
     fn take_line(&mut self) -> Option<(usize, usize)> {
         let length = self.text.len();
         if self.cursor > length {
@@ -207,7 +177,6 @@ impl StreamParse {
     }
 }
 
-/// A zero-allocation, case-insensitive substring test for the `badfilter` modifier prefilter.
 fn contains_ignore_ascii_case(haystack: &str, needle: &[u8]) -> bool {
     let bytes = haystack.as_bytes();
     needle.len() <= bytes.len()
@@ -216,8 +185,6 @@ fn contains_ignore_ascii_case(haystack: &str, needle: &[u8]) -> bool {
             .any(|window| window.eq_ignore_ascii_case(needle))
 }
 
-/// Collects every `$badfilter` key in `text`. Only lines that mention `badfilter` are fully parsed,
-/// so the prepass stays close to a byte scan even on a large subscription.
 fn scan_badfilter_keys(text: &str) -> HashSet<String> {
     let mut keys = HashSet::new();
     for line in text.split('\n') {
@@ -228,15 +195,7 @@ fn scan_badfilter_keys(text: &str) -> HashSet<String> {
     keys
 }
 
-// ---------------------------------------------------------------------------------------------
-// C ABI: a caller opens a session over the raw document bytes, pulls chunks until null, frees it.
-// The document bytes are copied into the session, so the caller may release its buffer right after
-// `begin`. Handles are boxed pointers; they are not shared across threads.
-// ---------------------------------------------------------------------------------------------
 
-/// # Safety
-/// `text` must point to `len` readable bytes (or be null with `len == 0`). Returns `0` when the
-/// bytes are not valid UTF-8.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_stream_begin(
     text: *const u8,
@@ -255,11 +214,6 @@ pub unsafe extern "C" fn diting_rule_core_stream_begin(
     Box::into_raw(Box::new(stream)) as u64
 }
 
-/// Returns the next chunk payload and sets `out_len`; a null return with `*out_len == 0` means the
-/// document is exhausted. Release the buffer with [`diting_rule_core_stream_free`].
-///
-/// # Safety
-/// `handle` must come from [`diting_rule_core_stream_begin`] and `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_stream_next(handle: u64, out_len: *mut usize) -> *mut u8 {
     if out_len.is_null() {
@@ -280,11 +234,6 @@ pub unsafe extern "C" fn diting_rule_core_stream_next(handle: u64, out_len: *mut
     }
 }
 
-/// Releases a session opened by [`diting_rule_core_stream_begin`]. Chunk payloads returned by
-/// [`diting_rule_core_stream_next`] are released separately with [`crate::ffi::diting_rule_core_free`].
-///
-/// # Safety
-/// `handle` must come from [`diting_rule_core_stream_begin`], released once.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_stream_free(handle: u64) {
     if handle == 0 {
@@ -356,7 +305,6 @@ mod tests {
 
     #[test]
     fn badfilter_removes_a_rule_from_an_earlier_chunk() {
-        // The `$badfilter` line lands several chunks after the rule it disables.
         let text = "||ads.example.com^\n||keep.example.com^\n||ads.example.com^$badfilter\n";
         let streamed = stream_all(text, 1);
         assert_eq!(
@@ -368,7 +316,6 @@ mod tests {
 
     #[test]
     fn url_badfilter_never_removes_url_rules() {
-        // Mirrors `parse_document`: url families are excluded from badfilter removal.
         let text = "||tracker.example.com/pixel.js\n\
                     ||tracker.example.com/pixel.js$badfilter\n";
         let whole = parse_document(text);

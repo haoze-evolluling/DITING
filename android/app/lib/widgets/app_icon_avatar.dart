@@ -5,13 +5,8 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// 40 dp tile; its corner follows the global [AppCorner.standard].
 const appIconTileSize = 40.0;
 
-/// Real launcher icon for one package, cached by [appIconsProvider]. Only a tile that is about to
-/// paint asks for its icon, so a long list fetches what is on screen instead of the whole
-/// inventory. Packages without an icon fall back to [fallback] on the same tile shape, which keeps
-/// row heights identical whether or not the platform answered.
 class AppIconAvatar extends ConsumerStatefulWidget {
   const AppIconAvatar({
     super.key,
@@ -23,7 +18,6 @@ class AppIconAvatar extends ConsumerStatefulWidget {
   final String packageName;
   final double size;
 
-  /// Placeholder glyph; defaults to the app-list glyph used by the legacy screen.
   final Glyph? glyph;
 
   @override
@@ -43,14 +37,12 @@ class _AppIconAvatarState extends ConsumerState<AppIconAvatar> {
     if (oldWidget.packageName != widget.packageName) _request();
   }
 
-  /// Deferred by a microtask in the notifier, so this is safe during the build phase.
   void _request() {
     ref.read(appIconsProvider.notifier).request([widget.packageName]);
   }
 
   @override
   Widget build(BuildContext context) {
-    // `select`: a batch of icons landing rebuilds only the rows it covers.
     final bytes = ref.watch(
       appIconsProvider.select((icons) => icons[widget.packageName]),
     );
@@ -88,8 +80,6 @@ class _AppIconImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Decoding at the device pixel ratio keeps a 192 px source from being rasterised larger than
-    // the tile ever draws, which is what made long lists drop frames while scrolling.
     final target = (size * MediaQuery.devicePixelRatioOf(context)).round();
     return Image.memory(
       bytes,

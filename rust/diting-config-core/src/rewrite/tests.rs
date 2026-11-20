@@ -1,5 +1,3 @@
-//! Target classification and the key fold.
-
 use super::*;
 
 fn targets(values: &[&str]) -> Vec<String> {
@@ -24,10 +22,8 @@ fn first_target_of_each_family_wins() {
 
 #[test]
 fn ip_targets_are_stored_in_their_string_form() {
-    // A mapped IPv4 literal is an IPv4 answer, in dotted-quad text.
     let entry = classify(&targets(&["::ffff:1.2.3.4"])).expect("entry");
     assert_eq!((entry.ip4.as_str(), entry.ip6.as_str()), ("1.2.3.4", ""));
-    // IPv6 text follows `net.IP.String()`, so the compressed form wins.
     let entry = classify(&targets(&["2606:4700:0000::1111"])).expect("entry");
     assert_eq!(entry.ip6, "2606:4700::1111");
 }
@@ -38,7 +34,6 @@ fn names_are_lowered_and_stripped_of_one_dot() {
     assert_eq!(entry.cname, "example.com");
     let entry = classify(&targets(&["Example.COM.."])).expect("entry");
     assert_eq!(entry.cname, "example.com.");
-    // Anything that is not an IP literal is a CNAME target, spaces inside included.
     let entry = classify(&targets(&["not a host?"])).expect("entry");
     assert_eq!(entry.cname, "not a host?");
 }

@@ -1,9 +1,6 @@
 part of 'subscription_providers.dart';
 
-// Editing an existing subscription (name, address, kind, group, mirror).
 
-/// Result of editing a subscription; [needsReimport] means the stored rules no longer match
-/// the row (address or kind changed) and an update should run right away.
 sealed class EditSubscriptionResult {
   const EditSubscriptionResult();
 }
@@ -19,8 +16,6 @@ class EditSubscriptionFailure extends EditSubscriptionResult {
 }
 
 extension SubscriptionEditActions on SubscriptionActions {
-  /// Saves edits to subscription [id]. Local rows keep their picked file, so [url] is ignored
-  /// for them; the source type never changes.
   Future<EditSubscriptionResult> edit(
     int id, {
     required String name,

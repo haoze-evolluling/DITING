@@ -1,9 +1,3 @@
-/// The `hub` branch's subscription lists: the engine's counters, the lists themselves and the four
-/// per-list writes (add, toggle, refresh, delete).
-///
-/// The old desktop console (`ProtectView.vue` and its `RuleListsPanel`) is the functional blueprint.
-/// The page owns no rule logic: it reads `/api/v1/filter/stats` and `/api/v1/filter/lists`, and each
-/// write re-reads both so a rejected change never stays on screen.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

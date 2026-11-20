@@ -1,11 +1,8 @@
-//! LAN DNS exposure and the remote Web console (`/dns/lan*`, `/web/*`).
-
 use serde::{Deserialize, Serialize};
 
 use crate::controller::{effective_listen_addresses, ControllerError};
 use crate::AppRuntime;
 
-/// `ipc.LANStatusResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LanStatusResponse {
@@ -17,7 +14,6 @@ pub struct LanStatusResponse {
     pub firewall_backend: String,
 }
 
-/// `ipc.ConfigureLANRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureLANRequest {
@@ -27,7 +23,6 @@ pub struct ConfigureLANRequest {
     pub configure_firewall: bool,
 }
 
-/// `ipc.ConfigureFirewallRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureFirewallRequest {
@@ -35,7 +30,6 @@ pub struct ConfigureFirewallRequest {
     pub enable: bool,
 }
 
-/// `ipc.WebStatusResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WebStatusResponse {
@@ -50,7 +44,6 @@ pub struct WebStatusResponse {
     pub username: String,
 }
 
-/// `ipc.ConfigureWebRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureWebRequest {
@@ -86,7 +79,6 @@ fn effective_web_port(runtime: &AppRuntime) -> i32 {
 }
 
 impl AppRuntime {
-    /// `GetLANStatus`.
     pub async fn lan_status(&self) -> LanStatusResponse {
         let config = self.config();
         let (udp, _) = effective_listen_addresses(&config.dns);
@@ -106,7 +98,6 @@ impl AppRuntime {
         }
     }
 
-    /// `ConfigureLAN`; restarts a running listener so the new binding applies immediately.
     pub async fn configure_lan(&self, request: ConfigureLANRequest) -> Result<(), ControllerError> {
         let was_running = self.is_dns_running();
         self.update_config(|config| {
@@ -141,7 +132,6 @@ impl AppRuntime {
         Ok(())
     }
 
-    /// `ConfigureFirewall`.
     pub async fn configure_firewall(&self, enable: bool) -> Result<(), ControllerError> {
         let firewall = self
             .platform()
@@ -153,7 +143,6 @@ impl AppRuntime {
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `GetWebStatus`. Authentication state is supplied by the IPC-owned auth manager.
     pub async fn web_status(&self, initialized: bool, username: &str) -> WebStatusResponse {
         let config = self.config();
         let port = effective_web_port(self);
@@ -191,10 +180,6 @@ impl AppRuntime {
         }
     }
 
-    /// `ConfigureWeb`: persists the target and lets the IPC layer rebind the listener.
-    ///
-    /// The rebind itself lives in `diting-desktop-ipc` (the handler owns the server handle), which
-    /// keeps this crate independent of the HTTP layer.
     pub async fn configure_web(&self, request: ConfigureWebRequest) -> Result<(), ControllerError> {
         let port = if request.port > 0 {
             request.port
@@ -224,7 +209,6 @@ impl AppRuntime {
         Ok(())
     }
 
-    /// `ConfigureWebFirewall`.
     pub async fn configure_web_firewall(&self, enable: bool) -> Result<(), ControllerError> {
         let firewall = self
             .platform()

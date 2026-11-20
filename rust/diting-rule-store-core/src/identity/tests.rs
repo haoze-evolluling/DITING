@@ -4,8 +4,6 @@ use super::{identity, predicate, rewrite_target_type, Flavor, TargetType};
 
 #[test]
 fn a_target_is_an_address_or_a_hostname() {
-    // The set `InternetAddress.tryParse` accepts, verbatim: no leading zeros, no zone ids, no
-    // brackets, exactly four octets.
     for (target, expected) in [
         (None, TargetType::Cname),
         (Some(""), TargetType::Cname),
@@ -40,7 +38,6 @@ fn the_global_identity_covers_every_unique_key_column() {
         built.args,
         vec![json!("a.test"), json!(0), json!(0), json!(0)]
     );
-    // A new rule writes every flag the engine reads instead of relying on a column default.
     assert_eq!(built.row["enabled"], json!(1));
     assert_eq!(built.row["appScope"], json!(null));
     assert_eq!(built.row["isWildcard"], json!(0));
@@ -52,7 +49,6 @@ fn a_scoped_rule_uses_its_own_identity() {
     let rule = json!({"pattern": "a.test", "important": true});
     let built = identity("allow", Flavor::Scoped, &rule, Some("com.a"), 1000);
     assert_eq!(built.table, "allow_rule");
-    // Deliberately narrower than the global identity: no `dnsType` / `isRegex`.
     assert_eq!(
         built.where_sql,
         "pattern = ? AND important = ? AND appScope = ? AND appInverted = 0"
@@ -102,7 +98,6 @@ fn a_rewrite_identity_is_the_target_triple() {
         vec![json!("a.test"), json!("IPv4"), json!("1.1.1.1")]
     );
     assert_eq!(built.row["targetType"], json!("IPv4"));
-    // A rewrite row keeps its line: the app shows it, the engine ignores it.
     assert_eq!(built.row["rawLine"], json!("a.test"));
     assert_eq!(built.row["enabled"], json!(1));
 
@@ -134,7 +129,6 @@ fn the_app_predicates_share_one_scope_clause() {
         ]
     );
 
-    // Rules loaded for one app never include the `*` marker.
     let (where_sql, args) = predicate("loadForApp", "com.a");
     assert_eq!(
         where_sql,

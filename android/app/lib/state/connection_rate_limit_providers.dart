@@ -1,4 +1,3 @@
-/// Normal-mode connection rate-limit settings.
 library;
 
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';

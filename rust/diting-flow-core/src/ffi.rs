@@ -1,12 +1,8 @@
-//! The C ABI the JNI/FFI caller loads. A handle owns one [`FlowTable`]; snapshots are JSON with the
-//! fixed `magic "DFL1" | abi` header so a loader refuses a mismatched library.
-
 use serde_json::Value;
 
 use crate::payload;
 use crate::session::FlowTable;
 
-/// Bumped whenever a payload layout or a semantic changes.
 pub const ABI_VERSION: u32 = 1;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DFL1");
@@ -19,9 +15,6 @@ fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     (pointer, length)
 }
 
-/// # Safety
-/// `out_len` must be writable; `bytes` is `None` (reported as null) or a finished buffer whose
-/// ownership moves to the caller.
 unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     if out_len.is_null() {
         return std::ptr::null_mut();
@@ -39,8 +32,6 @@ unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     }
 }
 
-/// # Safety
-/// `text` must point to `len` readable bytes.
 unsafe fn input_at<'a>(text: *const u8, len: usize) -> &'a [u8] {
     if text.is_null() || len == 0 {
         &[]
@@ -54,16 +45,11 @@ pub extern "C" fn diting_flow_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Creates a session table. `capacity == 0` selects the default.
 #[no_mangle]
 pub extern "C" fn diting_flow_new(capacity: usize) -> *mut FlowTable {
     Box::into_raw(Box::new(FlowTable::new(capacity)))
 }
 
-/// Drops a handle created by [`diting_flow_new`].
-///
-/// # Safety
-/// `handle` must come from [`diting_flow_new`] and not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_flow_free(handle: *mut FlowTable) {
     if !handle.is_null() {
@@ -71,11 +57,6 @@ pub unsafe extern "C" fn diting_flow_free(handle: *mut FlowTable) {
     }
 }
 
-/// Records one flow event from a JSON payload. Returns 0 on success, -1 on a bad payload, -2 on a
-/// null handle (treated as "flow view disabled").
-///
-/// # Safety
-/// `handle` must be valid; `text`/`len` must describe one readable JSON payload.
 #[no_mangle]
 pub unsafe extern "C" fn diting_flow_record(
     handle: *mut FlowTable,
@@ -95,10 +76,6 @@ pub unsafe extern "C" fn diting_flow_record(
     0
 }
 
-/// Empties the table.
-///
-/// # Safety
-/// `handle` must be valid.
 #[no_mangle]
 pub unsafe extern "C" fn diting_flow_reset(handle: *mut FlowTable) -> u32 {
     if let Some(table) = handle.as_mut() {
@@ -107,19 +84,11 @@ pub unsafe extern "C" fn diting_flow_reset(handle: *mut FlowTable) -> u32 {
     0
 }
 
-/// Current row count.
-///
-/// # Safety
-/// `handle` must be valid.
 #[no_mangle]
 pub unsafe extern "C" fn diting_flow_len(handle: *const FlowTable) -> usize {
     handle.as_ref().map_or(0, FlowTable::len)
 }
 
-/// Returns an incremental snapshot for `{ "sinceSeq": u64, "limit": n }` as `DFL1 | abi | json`.
-///
-/// # Safety
-/// `handle` must be valid; `text`/`len` must describe one readable JSON payload; `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_flow_snapshot(
     handle: *const FlowTable,
@@ -143,10 +112,6 @@ pub unsafe extern "C" fn diting_flow_snapshot(
     respond(Some(bytes), out_len)
 }
 
-/// Releases a buffer returned by [`diting_flow_snapshot`].
-///
-/// # Safety
-/// `pointer`/`size` must come from [`diting_flow_snapshot`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_flow_free_bytes(pointer: *mut u8, size: usize) {
     if pointer.is_null() || size == 0 {

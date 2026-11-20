@@ -3,7 +3,6 @@ import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
-/// Network profiles (N1).
 abstract final class NetworkProfilePaths {
   static const root = '/network/profiles';
 }

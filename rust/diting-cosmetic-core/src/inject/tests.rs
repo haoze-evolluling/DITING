@@ -1,8 +1,5 @@
-//! Unit tests for the streaming scanner's pieces.
-
 use super::*;
 
-/// Feeds `input` through the scanner the way the Go `Read` loop does.
 fn inject_all(link: &str, input: &[u8]) -> Vec<u8> {
     let mut injector = Injector::new(link.as_bytes().to_vec());
     let mut buf = vec![0u8; 4096];
@@ -48,8 +45,6 @@ fn head_marker_is_matched_without_case() {
 fn partial_marker_picks_the_shortest_suffix() {
     assert_eq!(partial_marker_len(b"abc<"), Some(1));
     assert_eq!(partial_marker_len(b"abc<he"), Some(3));
-    // Only the last four bytes can be held back, so a complete `<head` is never a partial marker
-    // (the finder already saw it); a four-byte prefix still is.
     assert_eq!(partial_marker_len(b"abc<HEA"), Some(4));
     assert_eq!(partial_marker_len(b"abc<HEAD"), None);
     assert_eq!(partial_marker_len(b"abc"), None);
@@ -83,8 +78,6 @@ fn document_without_head_passes_through() {
 
 #[test]
 fn partial_marker_is_flushed_when_the_stream_ends() {
-    // `io.ReadAll` feeds `<html><body><head` and then reads again, so the partial tag is still in
-    // carry when the zero-length EOF read arrives; those bytes are the document's tail.
     let mut injector = Injector::new(b"[LINK]".to_vec());
     let mut buf = [0u8; 64];
     let document = b"<html><body><head";
@@ -127,18 +120,13 @@ fn pending_drains_before_the_next_upstream_read() {
 
 #[test]
 fn non_utf8_bytes_before_the_marker_keep_the_index() {
-    // The old reader lower-cased a copy with `bytes.ToLower`, which turns every invalid byte into a
-    // three-byte U+FFFD and made the marker index point past the buffer (it panicked outright).
     let document = b"\xb0\xa1<head><body>";
     let out = inject_all("[LINK]", document);
-    // The marker survives, the tag lands right after it, and the junk bytes are untouched.
     assert!(out.starts_with(b"\xb0\xa1<head>[LINK]<body>"));
 }
 
 #[test]
 fn rune_that_shrinks_when_lowered_keeps_the_index() {
-    // `İ` (U+0130) lowers to a one-byte `i` in Go's mapping, so the old index walked backwards and
-    // the tag landed inside the marker. The byte-wise scan cannot shift.
     let document = "\u{130}<head><body>".as_bytes();
     let out = inject_all("[LINK]", document);
     assert!(out.ends_with(b"<head>[LINK]<body>"));

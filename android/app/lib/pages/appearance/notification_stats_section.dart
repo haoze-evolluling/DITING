@@ -1,5 +1,3 @@
-/// "Notification details" section of the notification page: which request counts the running
-/// service shows, and in which order. Enabled items are dragged into order; the rest sit below.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -15,10 +13,8 @@ class NotificationStatsSection extends ConsumerWidget {
     required this.onChanged,
   });
 
-  /// False while the notification is not persistent; the items then have nowhere to show.
   final bool enabled;
 
-  /// Called after every change so the page can repaint the running notification.
   final VoidCallback onChanged;
 
   @override
@@ -51,7 +47,6 @@ class NotificationStatsSection extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ReorderableListView.builder(
-              // The page already scrolls; a nested scrollable would steal drag gestures.
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
@@ -100,7 +95,6 @@ class NotificationStatsSection extends ConsumerWidget {
   }
 }
 
-/// An enabled row: the switch removes it, the trailing handle drags it.
 class _EnabledRow extends StatelessWidget {
   const _EnabledRow({
     required this.item,

@@ -1,15 +1,6 @@
-//! `DomainBloomFilter`: the prefilter in front of the block trie.
-//!
-//! Same shape as the Go type it replaces - double hashing with FNV-1a and FNV-1, `k` probes per
-//! name, and a hierarchical probe that walks the parent domains. Its only job is to reject clean
-//! names in nanoseconds before the trie walk; it never decides a match, so a false positive costs
-//! one walk and a false negative would be impossible by construction (every blocking domain is
-//! added, and the hierarchical probe visits every suffix the trie could match).
-
 const FNV_OFFSET64: u64 = 14_695_981_039_346_656_037;
 const FNV_PRIME64: u64 = 1_099_511_628_211;
 
-/// `OptimalBloomParams`: bit count and probe count for `expected_items` at `fp_rate`.
 pub fn optimal_params(expected_items: usize, fp_rate: f64) -> (u64, u32) {
     let expected_items = expected_items.max(1) as f64;
     let fp_rate = if fp_rate <= 0.0 || fp_rate >= 1.0 {
@@ -26,7 +17,6 @@ pub fn optimal_params(expected_items: usize, fp_rate: f64) -> (u64, u32) {
     (bit_count, hash_count)
 }
 
-/// `DomainBloomFilter`.
 #[derive(Debug, Default, Clone)]
 pub struct DomainBloomFilter {
     bits: Vec<u8>,
@@ -44,7 +34,6 @@ impl DomainBloomFilter {
         }
     }
 
-    /// `Add`: the domain is already normalized by the caller.
     pub fn add(&mut self, domain: &str) {
         if domain.is_empty() || self.bit_count == 0 {
             return;
@@ -56,9 +45,7 @@ impl DomainBloomFilter {
         }
     }
 
-    /// `MightContain`: false means the name is definitely not in the set.
     pub fn might_contain(&self, domain: &str) -> bool {
-        // An unbuilt filter fails open, exactly like the Go version did.
         if self.bit_count == 0 || self.bits.is_empty() {
             return true;
         }
@@ -75,14 +62,12 @@ impl DomainBloomFilter {
                         return false;
                     }
                 }
-                // Mirrors the Go bounds check: a corrupted bitmap also fails open.
                 None => return true,
             }
         }
         true
     }
 
-    /// `MightContainDomainOrParent`: probes the name and every parent suffix.
     pub fn might_contain_domain_or_parent(&self, domain: &str) -> bool {
         if domain.is_empty() {
             return false;
@@ -123,12 +108,10 @@ mod tests {
 
     #[test]
     fn optimal_params_follow_the_go_formula() {
-        // 1000 items at 0.1%: m = 14378 bits rounded up to a byte boundary, k = 10.
         let (bit_count, hash_count) = optimal_params(1000, 0.001);
         assert_eq!(bit_count, 14384);
         assert_eq!(hash_count, 10);
         assert!(bit_count.is_multiple_of(8));
-        // Degenerate inputs are clamped, not rejected.
         let (bit_count, hash_count) = optimal_params(0, 0.0);
         assert!(bit_count >= 8);
         assert!(hash_count >= 1);
@@ -164,7 +147,6 @@ mod tests {
         }
         for domain in &domains {
             assert!(bloom.might_contain(domain), "{domain}");
-            // Every added name must also pass the hierarchical probe used on the hot path.
             assert!(bloom.might_contain_domain_or_parent(domain), "{domain}");
         }
     }

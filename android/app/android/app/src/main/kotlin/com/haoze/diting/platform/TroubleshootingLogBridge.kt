@@ -16,11 +16,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/// Per-file management for the troubleshooting log page: list, read one, delete one, share one,
-/// download one, share or download everything, and clear everything.
-///
-/// Runtime captures stay on [RuntimeLogStore]; crash reports reuse [AppStorageCleaner]'s document
-/// reader and the same crash/legacy-crash directories the existing 故障排查 page already counts.
 class TroubleshootingLogBridge(private val context: Context) : MethodChannel.MethodCallHandler {
 
     companion object {
@@ -87,8 +82,6 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         return shareFiles(listOf(file), "DITING")
     }
 
-    /// One share per kind: the same documents "export" writes, staged in cache so the FileProvider
-    /// can hand them over without touching the user's export folder.
     private fun shareAll(): Boolean = runCatching {
         val runtime = RuntimeLogStore.read(context)
         val crash = crashStore.readCrashLogs()
@@ -105,7 +98,6 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         shareFiles(files, "DITING")
     }.getOrDefault(false)
 
-    /// One file straight into Download, keeping the name the timeline shows.
     private fun download(call: MethodCall): Map<String, Any?> {
         val file = TroubleshootingLogStore.resolve(
             context,
@@ -117,8 +109,6 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         return DownloadFolderWriter.write(context, file.name, MIME_TEXT, bytes).toMap()
     }
 
-    /// Every listed file, one per download: the page names them, so saving them apart keeps that
-    /// mapping; the share path merges instead because an intent payload is capped.
     private fun downloadAll(): Map<String, Any?> {
         var saved = 0
         var failed = 0
@@ -144,9 +134,6 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         val uris = files.map {
             FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", it)
         }
-        // QQ (and WeChat) read the shared URI out of ClipData. With only EXTRA_STREAM set they
-        // report "文件不存在" for a perfectly valid FileProvider URI, so a ClipData carrying every
-        // URI is part of the contract, not an optional nicety.
         val clip = ClipData.newRawUri(title, uris.first())
         uris.drop(1).forEach { clip.addItem(ClipData.Item(it)) }
         val intent = if (uris.size == 1) {
@@ -163,8 +150,6 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
             }
         }
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        // The grant has to sit on the chooser too: some OEM choosers only forward the flags they
-        // were launched with, and the target then cannot open the content URI.
         val chooser = Intent.createChooser(intent, title).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -172,8 +157,6 @@ class TroubleshootingLogBridge(private val context: Context) : MethodChannel.Met
         context.startActivity(chooser)
         true
     }.onFailure {
-        // A swallowed exception here used to be invisible (only a generic "分享失败" toast), so
-        // there was no way to tell a missing file from a bad grant. Keep the reason in logcat.
         Log.w(TAG, "share failed: ${files.joinToString { it.name }}", it)
     }.getOrDefault(false)
 }

@@ -10,9 +10,7 @@ fn keys_match_the_go_append_order() {
         build_key("blk|", "com.example.app", "1.2.3.4", 443, 6, "uid_blocked"),
         "blk|com.example.app|1.2.3.4|443|6|uid_blocked"
     );
-    // Empty components still produce all four separators.
     assert_eq!(build_key("", "", "", 0, 0, ""), "||0|0");
-    // A reason is appended only when non-empty; a reason containing `|` is not escaped.
     assert_eq!(build_key("", "a|b", "c|d", 1, 6, "x"), "a|b|c|d|1|6|x");
 }
 

@@ -2,7 +2,6 @@
 
 part of 'liquid_glass.dart';
 
-/// iOS 27's rim around a menu's or an alert's glass (.agents/architecture.md).
 @immutable
 class LiquidGlassRim {
   const LiquidGlassRim({
@@ -26,7 +25,6 @@ class LiquidGlassRim {
   final double corner;
   final double flat;
 
-  /// Added light, not white laid over: iOS lifts dark and light panes alike.
   final double shine;
 
   LiquidGlassRim scale(double t) {
@@ -39,7 +37,6 @@ class LiquidGlassRim {
     );
   }
 
-  /// The line, outside the pane; the pane given this rim draws the highlight.
   void paintLine(Canvas canvas, Rect rect, double radius) {
     if (rect.isEmpty) {
       return;
@@ -90,7 +87,6 @@ class LiquidGlassRim {
     final stops = [for (final (stop, _) in around) stop];
     for (final band in _shineBands) {
       final alpha = shine * band.lit;
-      // A ring, not a stroke: Impeller widens a stroke thinner than a pixel.
       canvas.drawPath(
         Path()
           ..fillType = PathFillType.evenOdd
@@ -151,7 +147,6 @@ class LiquidGlassRim {
   int get hashCode => Object.hash(side, corner, flat, shine);
 }
 
-/// Light a press casts on a pane: [strength] at [center], falling off to [wash] over [reach].
 @immutable
 class LiquidGlassGlow {
   const LiquidGlassGlow({

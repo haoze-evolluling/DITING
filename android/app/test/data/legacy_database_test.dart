@@ -1,5 +1,3 @@
-// Exercises the log SQL against the exact 1.4.3 layout read off the device.
-
 import 'package:diting_android/data/db/app_traffic_repository.dart';
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
@@ -83,7 +81,6 @@ void _legacyRepository() {
   );
 
   group('http_request_log 五档筛选', () {
-    /// One row per outcome plus an unknown one, which 1.4.3's `else` branch maps to ERROR
     const outcomes = <String>[
       'allowed',
       'rewritten',
@@ -123,7 +120,6 @@ void _legacyRepository() {
         'unsupported_protocol',
         'resource_bypass',
       });
-      // `NOT IN` catch-all: an unlisted outcome counts as failed, not passed
       expect(await outcomesOf(RequestStatus.error), {'decryption_failed'});
     });
 
@@ -315,7 +311,6 @@ void _legacyRepository() {
 
   group('app_traffic_daily', () {
     setUp(() async {
-      // Totals differ on purpose: equal totals make the `ORDER BY` a tie with no stable order
       await insertTraffic('2026-10-19', 'com.a', tx: 10, rx: 90, appName: '甲');
       await insertTraffic('2026-10-19', 'com.b', tx: 70, rx: 50, appName: '乙');
       await insertTraffic('2026-10-20', 'com.a', tx: 20, rx: 80, appName: '甲');
@@ -389,5 +384,3 @@ void _legacyRepository() {
     });
   });
 }
-
-/// Runs the subscription SQL against the real 1.4.3 tables: `ORDER BY`, conflicts, cascades

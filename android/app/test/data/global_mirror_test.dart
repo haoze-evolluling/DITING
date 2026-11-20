@@ -1,6 +1,3 @@
-// Global mirror in the subscription fetcher: rows without their own template go through it and
-// always fall back to direct, so a dead mirror never breaks an update.
-
 import 'dart:io';
 
 import 'package:diting_android/data/db/subscription_models.dart';

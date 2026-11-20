@@ -1,5 +1,3 @@
-//! Self-signed certificate generation, ported from `cert_generate.go`.
-
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
@@ -29,10 +27,8 @@ use x509_cert::time::{Time, Validity};
 
 use super::material::pem_encode;
 
-/// `serverAuth` (RFC 5280 §4.2.1.12), the only EKU the former Go service embedded.
 const SERVER_AUTH_OID: &str = "1.3.6.1.5.5.7.3.1";
 
-/// A freshly generated certificate and its PKCS#8 private key, both PEM encoded.
 #[derive(Debug, Clone)]
 pub struct SelfSignedCert {
     pub cert_pem: String,
@@ -41,10 +37,6 @@ pub struct SelfSignedCert {
 
 const DEFAULT_VALID_DAYS: i32 = 825;
 
-/// Generate a self-signed server certificate from `config`.
-///
-/// `notBefore` is one day in the past so small clock differences between host and clients cannot
-/// make a freshly generated certificate look "not yet valid".
 pub fn generate_self_signed(config: &CertConfig) -> Result<SelfSignedCert, String> {
     let mut config = config.clone();
     normalize_cert_config(&mut config);
@@ -79,9 +71,6 @@ pub fn generate_self_signed(config: &CertConfig) -> Result<SelfSignedCert, Strin
     }
     params.serial_number = Some(SerialNumber::from(serial.to_vec()));
 
-    // `rcgen` exposes its time values only through `date_time_ymd`; start from the Unix epoch and
-    // add the exact number of seconds so the validity matches Go's `now ± offset` (rather than
-    // being rounded to midnight).
     let epoch = date_time_ymd(1970, 1, 1);
     let now = chrono::Utc::now().timestamp();
     let not_before = (now - 86_400).max(0) as u64;
@@ -104,12 +93,6 @@ fn generate_ecdsa_key() -> Result<KeyPair, String> {
         .map_err(|error| format!("生成 ECDSA 私钥失败: {error}"))
 }
 
-/// RSA-3072 self-signed certificate, matching Go's `rsa.GenerateKey(rand.Reader, 3072)`.
-///
-/// `rcgen`'s ring backend cannot generate or sign with RSA, so this path builds the X.509
-/// structure with `x509-cert` and signs it through the pure-Rust `rsa` crate. The profile is
-/// deliberately `Manual`: Go's template used DS + KeyEncipherment + KeyCertSign, which neither
-/// the Root nor the Leaf preset reproduces.
 fn generate_rsa_self_signed(
     config: &CertConfig,
     valid_days: i32,
@@ -192,7 +175,6 @@ fn generate_rsa_self_signed(
     })
 }
 
-/// SAN list for the `x509-cert` RSA path, mirroring [`subject_alt_names`].
 fn x509_subject_alt_names(config: &CertConfig) -> Result<Vec<GeneralName>, String> {
     let mut names = Vec::new();
     for name in &config.dns_names {
@@ -213,7 +195,6 @@ fn x509_subject_alt_names(config: &CertConfig) -> Result<Vec<GeneralName>, Strin
     Ok(names)
 }
 
-/// Common name resolution, matching `certCommonName`.
 fn common_name(config: &CertConfig) -> String {
     if !config.common_name.is_empty() {
         return config.common_name.clone();
@@ -227,8 +208,6 @@ fn common_name(config: &CertConfig) -> String {
     DEFAULT_SERVER_NAME.to_string()
 }
 
-/// SAN list, matching `GenerateSelfSignedCert`: invalid IP literals are rejected and an empty SAN
-/// list defaults to the two loopback addresses.
 fn subject_alt_names(config: &CertConfig) -> Result<Vec<SanType>, String> {
     let mut names = Vec::new();
 

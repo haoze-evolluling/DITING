@@ -1,4 +1,3 @@
-/// U10: the privacy suite page — the two DNS switches the engine enforces.
 library;
 
 import 'package:diting_android/state/privacy_providers.dart';

@@ -1,10 +1,3 @@
-/// The `hub` branch's blocking mode page: the master switch, the three answer modes, the addresses
-/// they return, the refresh interval, the temporary pause, the advanced switches and the bogus
-/// NXDOMAIN correction.
-///
-/// The old desktop console (`ProtectView.vue`, `RulesPanel.vue` "config"/"advanced" tabs) is the
-/// functional blueprint. The page owns no blocking logic: it reads `/filter/config`,
-/// `/filter/stats` and `/filter/pause`, and every write re-reads them.
 library;
 
 import 'dart:async';

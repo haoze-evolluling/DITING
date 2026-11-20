@@ -145,7 +145,6 @@ class _RenderLiquidGlass extends RenderProxyBox {
     markNeedsPaint();
   }
 
-  // The pane wraps the glass it is, so it hears presses and lights from the finger, as iOS does.
   Offset? _touch;
 
   @override

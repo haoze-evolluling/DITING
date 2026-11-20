@@ -5,26 +5,6 @@ import android.util.Log
 import org.json.JSONObject
 import java.io.File
 
-/**
- * Builds the `Engine.applyRuleSnapshot` document and the rewrite-rule map for one data set.
- *
- * The snapshot is returned as UTF-8 bytes and handed to the engine unchanged: both ends are Rust
- * kernels, so making it a Java `String` only added a transcode of what can be a multi-megabyte
- * document.
- *
- * Kotlin owns the SQLite reads (`RuleSnapshotDao`), the DTRI compile call
- * (`MappedSubscriptionRuleIndex`), the stamp file's I/O and the `File` lookups. The classification
- * of the rows, the exported lists and the document itself are built by `rust/diting-rule-core`
- * (see `RuleSnapshotNative`), and so are the index decisions around it: the artifact paths
- * (`RuleIndexLayout`), the header validation, the usable-path filter, the stamp rule, the per-app
- * allowlist normalization, the rule fingerprint text and the rewrite-table de-duplication (see
- * `RuleIndexNative`). There is no second implementation of the rule semantics, so a missing library
- * fails the snapshot build and the caller stops the tunnel rather than running with filtering
- * silently off.
- *
- * The snapshot is built in the service process instead of being shipped through the Intent, so its
- * size no longer depends on the subscription row count and never crosses the Binder limit.
- */
 object RuleSnapshotStore {
     private const val TAG = "RuleSnapshotStore"
     private const val STAMP_FILE = "stamp"
@@ -43,14 +23,12 @@ object RuleSnapshotStore {
                 "rule database ${dataset.rulesDatabase()} unavailable",
             )
 
-        // Every dataset keeps DTRI artifacts under its own root, so all modes build and mmap alike.
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
 
         return try {
             val triesFresh = isStampCurrent(indexDirectory, dao)
             val block = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.BLOCK)
             val allow = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.ALLOW)
-            // The stamp, the usable flags and the inline-row decision all come from one answer.
             val plan = RuleIndexNative.plan(block, allow)
             if (plan.settled) {
                 writeStamp(indexDirectory, dao)
@@ -80,8 +58,6 @@ object RuleSnapshotStore {
                     ),
                 ),
             )
-            // One line: a compile costs seconds on a large subscription and this is the only trace
-            // of which path the start took.
             Log.i(
                 TAG,
                 "[${dataset.name}] snapshot ${document.size}B in ${(System.nanoTime() - started) / 1_000_000}ms " +
@@ -93,15 +69,12 @@ object RuleSnapshotStore {
         }
     }
 
-    /// Text form of [buildSnapshot], for the rule-test simulator's JSON answer to Dart.
     fun buildSnapshotJson(context: Context, dataset: RuleDataset): String =
         buildSnapshot(context, dataset).toString(Charsets.UTF_8)
 
-    /** `Engine.setRewriteRules` flat domain -> target map; '' when empty, matching the Dart encoder. */
     fun buildRewriteRulesJson(context: Context, dataset: RuleDataset): String {
         val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase()) ?: return ""
         return try {
-            // Trimmed, blank-free and one row per pattern (oldest wins), then the flat JSON map.
             val targets = JSONObject()
             for ((pattern, target) in RuleIndexNative.rewriteRules(dao.rewriteRules())) {
                 targets.put(pattern, target)
@@ -112,10 +85,6 @@ object RuleSnapshotStore {
         }
     }
 
-    /**
-     * Recompiles the tries when the database changed since the last build; cheap when the stamp
-     * still matches. Called after rule writes so the next service start mmaps instead of compiling.
-     */
     fun refreshIndexes(context: Context, dataset: RuleDataset) {
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
         val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase()) ?: return
@@ -131,7 +100,6 @@ object RuleSnapshotStore {
         }
     }
 
-    /** Loads (validating) the two tries of one half, compiling the stale or missing ones. */
     private fun loadIndexes(
         dao: RuleSnapshotDao,
         indexDirectory: File,
@@ -149,10 +117,6 @@ object RuleSnapshotStore {
         } else {
             RuleIndexLayout.allowImportantIndex(indexDirectory)
         }
-        // The DTRI writer skips the rows a trie cannot hold (wildcards, regexes, app-scoped and
-        // `denyallow`/`dnsType` rows) with the same predicate the old Kotlin filter used, so only
-        // the `important` split still happens here. `important` is not part of the DTRI payload
-        // either: the two files split it, exactly like the historical loaders.
         val normal = ensureIndex(normalFile, triesFresh) { consume ->
             val importantFilter = if (isBlock) false else null
             dao.forEachSubscriptionRulePage(kind, importantFilter) { rule ->
@@ -167,10 +131,6 @@ object RuleSnapshotStore {
         return RuleIndexHalf(normal, important)
     }
 
-    /**
-     * The subscription rows the snapshot needs. When both tries are usable the plain rules already
-     * live in the DTRI files, so only the rows that must stay inline are read.
-     */
     private fun subscriptionRows(
         dao: RuleSnapshotDao,
         kind: RuleSnapshotDao.RuleKind,
@@ -190,8 +150,6 @@ object RuleSnapshotStore {
         return rows
     }
 
-    /** Loads (validating) an existing trie or compiles a fresh one; `FAILED` means the compile
-     *  ran but produced nothing usable, so callers must not refresh the stamp. */
     private fun ensureIndex(
         file: File,
         triesFresh: Boolean,
@@ -213,7 +171,6 @@ object RuleSnapshotStore {
         return if (compiled != null) IndexOutcome.COMPILED else IndexOutcome.FAILED
     }
 
-    /** The four trie paths, exported only when the file exists and is non-empty. */
     private fun triePaths(indexDirectory: File): List<String?> {
         val files = listOf(
             RuleIndexLayout.blockIndex(indexDirectory),
@@ -227,7 +184,6 @@ object RuleSnapshotStore {
         )
     }
 
-    /** Package -> allowed domains from the user's per-app allowlist prefs. */
     private fun readAppAllowlist(context: Context): Map<String, Set<String>> {
         val raw = runCatching {
             context.getSharedPreferences(APP_ALLOWLIST_PREFS, Context.MODE_PRIVATE)
@@ -240,7 +196,6 @@ object RuleSnapshotStore {
             val arr = parsed.optJSONArray(key) ?: continue
             packages += key to List(arr.length()) { arr.optString(it) }
         }
-        // The kernel trims, drops the blanks, de-duplicates and keeps the insertion order.
         val result = LinkedHashMap<String, Set<String>>()
         for ((packageName, domains) in RuleIndexNative.appAllowlist(packages)) {
             result[packageName] = domains.toSet()
@@ -248,14 +203,7 @@ object RuleSnapshotStore {
         return result
     }
 
-    // The tries are derived data: the stamp records the rule-table fingerprint they were compiled
-    // from, so any rule write (import, toggle, delete) invalidates them and forces one recompile.
-    // It must not use the database file size/mtime: the same file carries the request-log tables,
-    // which the tunnel writes continuously, so every start would look stale and recompile.
 
-    // The stamp is only refreshed when a compile actually happened and nothing failed: writing it
-    // after a failed compile would make the next start trust a stale trie file as fresh. That rule
-    // is `RuleIndexNative.plan`'s `settled`.
 
     private fun stampFile(indexDirectory: File) = File(indexDirectory, STAMP_FILE)
 

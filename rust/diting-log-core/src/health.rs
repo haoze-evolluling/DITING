@@ -1,25 +1,12 @@
-//! `DbWriteHealth`: the drop counters and the one-line-per-window warning gate.
-//!
-//! The counters exist because a silent "no logs at all" has to become visible, and the window
-//! exists because 2.1.7 printed a 25-line stack trace per failed open from every callback thread.
-//! Both are pure bookkeeping, so they live here; the `Log.w` call, the throwable and the
-//! diagnostics-channel map shape stay in Kotlin.
-
 use std::sync::Mutex;
 
-/// One warning line per window; everything inside it is counted as suppressed.
 pub const WARN_WINDOW_MS: i64 = 60_000;
 
-/// Why rows were thrown away (`DbWriteHealth.DropReason`), in the enum's Kotlin order.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DropReason {
-    /// The bounded queue was full because the database stayed busy for too long.
     Overflow,
-    /// The table really is not in the file (wrong database, or schema not created yet).
     TableMissing,
-    /// No database file at all.
     NoDatabase,
-    /// The writer was closed with rows it could no longer write.
     Closed,
 }
 
@@ -31,7 +18,6 @@ impl DropReason {
         Self::Closed,
     ];
 
-    /// Payload tag; an unknown tag is drift.
     pub fn from_tag(tag: u8) -> Option<Self> {
         Self::ALL.get(tag as usize).copied()
     }
@@ -40,7 +26,6 @@ impl DropReason {
         Self::ALL.iter().position(|reason| *reason == self).unwrap() as u8
     }
 
-    /// `DropReason.key`, the spelling the diagnostics channel exposes.
     pub fn key(self) -> &'static str {
         match self {
             Self::Overflow => "overflow",
@@ -51,11 +36,9 @@ impl DropReason {
     }
 }
 
-/// `DbWriteHealth.snapshot()`.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct HealthSnapshot {
     pub dropped_rows: i64,
-    /// In [`DropReason::ALL`] order.
     pub dropped_by_reason: [i64; 4],
     pub last_drop: String,
     pub open_failures: i64,
@@ -74,7 +57,6 @@ struct Inner {
     last_cause: Option<String>,
 }
 
-/// The counters and the warning window.
 #[derive(Debug, Default)]
 pub struct Health {
     inner: Mutex<Inner>,
@@ -85,7 +67,6 @@ impl Health {
         Self::default()
     }
 
-    /// `onDropped`: count the rows, then let the window decide whether to say anything.
     pub fn on_dropped(
         &self,
         rows: i32,
@@ -105,7 +86,6 @@ impl Health {
         warn_locked(&mut inner, &message, None, now_ms)
     }
 
-    /// `onOpenFailure`: one more failed open, reported through the same window.
     pub fn on_open_failure(
         &self,
         message: &str,
@@ -117,7 +97,6 @@ impl Health {
         warn_locked(&mut inner, message, cause, now_ms)
     }
 
-    /// `warn`: Some(line) when this call is the window's one report, None when it is suppressed.
     pub fn warn(&self, message: &str, cause: Option<&str>, now_ms: i64) -> Option<String> {
         let mut inner = self.inner.lock().unwrap_or_else(|error| error.into_inner());
         warn_locked(&mut inner, message, cause, now_ms)
@@ -136,7 +115,6 @@ impl Health {
     }
 }
 
-/// The shared body of `onDropped` / `onOpenFailure` / `warn`.
 fn warn_locked(
     inner: &mut Inner,
     message: &str,
@@ -178,7 +156,6 @@ mod tests {
         );
         assert_eq!(health.warn("stuck", None, 1_059_999), None);
 
-        // One minute after the first line, the backlog is reported once with its count.
         let line = health
             .on_dropped(1, DropReason::Closed, "http_request_log", 1_060_000)
             .unwrap();
@@ -223,7 +200,6 @@ mod tests {
         assert_eq!(snapshot.open_failures, 1);
         assert_eq!(snapshot.last_cause, "SQLiteDatabaseLockedException: locked");
 
-        // The cause of a suppressed line is still remembered.
         assert_eq!(
             health.on_open_failure(
                 "unable to open diting_express_logs_v2",

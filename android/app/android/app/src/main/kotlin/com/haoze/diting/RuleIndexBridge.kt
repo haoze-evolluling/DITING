@@ -10,10 +10,6 @@ import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/// Dart-facing hook that refreshes the compiled rule tries after rule writes, the counterpart of
-/// the legacy app rebuilding its rule caches inside RuleOperationWorker after every batch.
-/// Calling this is an optimization, not a correctness requirement: the service recompiles
-/// whenever the stamp no longer matches the database, this just moves the cost off the next start.
 class RuleIndexBridge(
     private val context: Context,
     messenger: BinaryMessenger,

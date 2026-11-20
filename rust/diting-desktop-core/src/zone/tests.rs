@@ -67,7 +67,6 @@ fn nodata_and_nxdomain_carry_soa() {
     assert!(absent.answers.is_empty());
     assert_eq!(absent.authority.len(), 1);
 
-    // Outside the zone the engine stays silent.
     assert!(!engine.lookup("example.com.", 1).matched);
 }
 
@@ -89,12 +88,10 @@ fn cname_chain_is_followed() {
     );
     let answer = engine.lookup("alias2.lan.", 1);
     assert!(answer.matched);
-    // alias2 -> alias, alias -> real, real A.
     assert_eq!(answer.answers.len(), 3);
     assert_eq!(answer.answers[0].rtype, TYPE_CNAME);
     assert_eq!(answer.answers[2].rtype, 1);
 
-    // Lone CNAME with no target record of the requested type is NODATA.
     let missing = engine.lookup("alias.lan.", 28);
     assert!(missing.matched);
     assert!(missing.answers.is_empty());

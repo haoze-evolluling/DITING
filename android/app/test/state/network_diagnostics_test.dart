@@ -105,7 +105,6 @@ void main() {
   });
 
   group('rust kernels over dart:ffi', () {
-    // The host build produces `rust/target/debug/diting_*_core.dll`; skip elsewhere.
     test('leak core round-trips a leak verdict', () {
       if (!Platform.isWindows) return;
       final verdict = RustLeakCore.instance.evaluate(

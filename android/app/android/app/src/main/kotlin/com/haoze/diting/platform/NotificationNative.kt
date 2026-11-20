@@ -1,11 +1,5 @@
 package com.haoze.diting.platform
 
-/// Native notification settings and detail-line formatter (`rust/diting-notification-core`).
-///
-/// Kotlin still reads SharedPreferences and the counters, and still draws the notification; the
-/// ordered-item fallback, running-text chain and `1,234  ·  ↑ 1.5 MB/s` formatting come from here.
-/// The library is required: a build without it throws instead of falling back to a second copy of
-/// the rules.
 internal class NotificationNative private constructor() {
     external fun statsItems(raw: String, hasRaw: Boolean, legacySpeed: Boolean): String
     external fun runningText(custom: String, modeDefault: String, fallback: String): String
@@ -37,7 +31,6 @@ internal class NotificationNative private constructor() {
             }
         }
 
-        /// Ordered ids, newline-separated by the kernel.
         fun statsItems(raw: String, hasRaw: Boolean, legacySpeed: Boolean): List<String> =
             instance.statsItems(raw, hasRaw, legacySpeed)
                 .lineSequence()
@@ -47,7 +40,6 @@ internal class NotificationNative private constructor() {
         fun runningText(custom: String, modeDefault: String, fallback: String): String =
             instance.runningText(custom, modeDefault, fallback)
 
-        /// Null when no item renders, so the caller keeps the body to the status text alone.
         fun compose(
             items: List<String>,
             labelsJson: String,

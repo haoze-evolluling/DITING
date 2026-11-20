@@ -1,28 +1,3 @@
-//! The TUN file descriptor handed over by `VpnService`.
-//!
-//! Kotlin calls `ParcelFileDescriptor.detachFd()` and passes the raw `int` into the engine. That
-//! number must never be used directly: it belongs to the Java wrapper, and Kotlin closing the
-//! `ParcelFileDescriptor` closes it out from under the reader thread. `dup(2)` gives the engine its
-//! own descriptor for the same open file description, which is exactly what the Go engine did
-//! (`unix.Dup` on the fd it received).
-//!
-//! Two descriptors are duplicated, one per direction, because the reader thread blocks in `read(2)`
-//! while the write path may run concurrently. `O_NONBLOCK` is set on both so a slow device can never
-//! pin a thread: the reader classifies `EAGAIN` and retries, the writer does the same.
-//!
-//! Fault classification (the policy the Go engine implemented inline in `tun_link_endpoint.go`):
-//!
-//! | errno | [`Fault`] | what the caller does |
-//! | --- | --- | --- |
-//! | `EAGAIN`, `EWOULDBLOCK`, `EINTR` | [`Fault::Again`] | retry immediately |
-//! | `ENETDOWN`, `EBUSY`, `ENOBUFS`, `EIO`, `EMSGSIZE` | [`Fault::Backoff`] | sleep, then retry (network switch, MTU probe) |
-//! | `EBADF`, `ENODEV`, `EINVAL` | [`Fault::Fatal`] | stop the flow |
-//!
-//! Only unix hosts have this path. A Windows host cannot receive an Android TUN descriptor, so the
-//! constructors report an error there and the pipeline is driven by
-//! [`crate::io::LoopbackSource`] instead; the JNI facade, the protect ordering and the callback
-//! threads are identical in both cases.
-
 #[cfg(unix)]
 pub use unix::TunFd;
 #[cfg(unix)]
@@ -30,7 +5,6 @@ pub use unix::{dup_fd, FdSink, FdSource, OwnedFd};
 #[cfg(not(unix))]
 pub use unsupported::Unsupported;
 
-/// The message a caller sees when the host has no TUN path.
 pub const UNSUPPORTED: &str =
     "TUN file descriptors are only available on Android (unix); this host uses LoopbackSource";
 
@@ -43,7 +17,6 @@ mod unix {
 
     use super::super::io::{Fault, PacketSink, PacketSource};
 
-    /// A descriptor the engine owns and closes on drop.
     #[derive(Debug)]
     pub struct OwnedFd {
         raw: RawFd,
@@ -57,15 +30,12 @@ mod unix {
 
     impl Drop for OwnedFd {
         fn drop(&mut self) {
-            // Closing is what wakes a reader blocked in `read(2)` on the *other* duplicate, which is
-            // how `stop` unblocks the TUN reader without a poll loop.
             unsafe {
                 libc::close(self.raw);
             }
         }
     }
 
-    /// `dup(2)` the fd handed over by Kotlin and put it into non-blocking mode.
     pub fn dup_fd(raw: RawFd) -> Result<OwnedFd, String> {
         if raw < 0 {
             return Err(format!("invalid TUN file descriptor {raw}"));
@@ -99,12 +69,9 @@ mod unix {
         Ok(())
     }
 
-    /// Maps an errno onto the engine's three-way policy.
     pub fn classify(errno: c_int) -> Fault {
         match errno {
-            // `EWOULDBLOCK` is spelled as the same value as `EAGAIN` on every unix Rust supports.
             libc::EAGAIN | libc::EINTR => Fault::Again,
-            // The route is gone during a Wi-Fi/cellular switch, or the device queue is full.
             libc::ENETDOWN | libc::EBUSY | libc::ENOBUFS | libc::EIO | libc::EMSGSIZE => {
                 Fault::Backoff
             }
@@ -112,7 +79,6 @@ mod unix {
         }
     }
 
-    /// The read half: one TUN descriptor, one packet per `read(2)`.
     pub struct FdSource {
         fd: OwnedFd,
     }
@@ -140,8 +106,6 @@ mod unix {
                 return Ok(read as usize);
             }
             if read == 0 {
-                // A zero-length read on a TUN device is not a packet: treat it as "try again" so a
-                // spurious wake cannot end the flow.
                 return Err(Fault::Backoff);
             }
             Err(classify(
@@ -150,12 +114,9 @@ mod unix {
         }
 
         fn wake(&self) {
-            // Nothing portable: `stop` closes the engine's duplicate, which makes the blocked
-            // `read(2)` fail. Kept explicit so the next reader of this code does not add a poll loop.
         }
     }
 
-    /// The write half: a second duplicate of the same TUN descriptor.
     pub struct FdSink {
         fd: OwnedFd,
     }
@@ -184,8 +145,6 @@ mod unix {
         }
     }
 
-    /// A TUN descriptor pair: the reader and the writer own separate duplicates of the fd Kotlin
-    /// detached, so one direction blocking in `read(2)` never serialises the other.
     pub struct TunFd {
         pub reader: FdSource,
         pub writer: FdSink,
@@ -200,7 +159,6 @@ mod unix {
         }
     }
 
-    /// Keeps `std::fs::File::{from_raw_fd, into_raw_fd}` honest about ownership in tests.
     #[cfg(test)]
     pub fn adopt_file(raw: RawFd) -> std::fs::File {
         unsafe { std::fs::File::from_raw_fd(raw) }
@@ -213,8 +171,6 @@ mod unix {
         use std::io::{Read, Write};
         use std::os::unix::io::{AsRawFd, FromRawFd};
 
-        /// `socketpair(AF_UNIX, SOCK_DGRAM)` is the host stand-in for a TUN device: one packet per
-        /// read, one packet per write, and `dup` behaves exactly like it does on a real fd.
         fn socket_pair() -> (std::fs::File, std::fs::File) {
             let mut fds = [0 as libc::c_int; 2];
             let rc =
@@ -258,7 +214,6 @@ mod unix {
             }
             assert_eq!(&buf[..read], b"packet");
 
-            // The sink writes to the same device, so the original peer sees its own packet again.
             assert_eq!(sink.send(b"back").expect("send"), 4);
             let mut echoed = [0u8; 16];
             let n = writer.read(&mut echoed).expect("read the echo");
@@ -277,7 +232,6 @@ mod unix {
         fn a_closed_descriptor_is_fatal() {
             let (peer, _keep) = socket_pair();
             let source = FdSource::from_raw(peer.as_raw_fd()).expect("source");
-            // Close the engine's duplicate the way `stop` does, then read again.
             let raw = source.raw_fd();
             unsafe {
                 libc::close(raw);
@@ -309,7 +263,6 @@ mod unix {
 
 #[cfg(not(unix))]
 mod unsupported {
-    /// Exists so callers can name the type on hosts without a TUN path; every constructor fails.
     #[derive(Debug)]
     pub struct Unsupported;
 

@@ -1,5 +1,3 @@
-//! Payload layout cases shared with `android/engine/mitm_sniffer_payload_test.go`.
-
 use crate::payload::{decode, encode, KIND_HTTP, KIND_TLS, KIND_UNKNOWN, LAYOUT_VERSION};
 
 #[test]

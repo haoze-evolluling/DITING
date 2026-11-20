@@ -1,9 +1,3 @@
-/// Models for the resolver cache (`/api/v1/cache/*`).
-///
-/// The old desktop console's `CachePanel.vue` and its `accel/` cards are the blueprint: the same
-/// counters, the same TTL policy modes, the same exclude-pattern semantics, the same persistence
-/// switches. Every parser tolerates a missing field, because the service answers `omitempty` and an
-/// older build must not blank the page.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -27,17 +21,14 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// The three TTL policies, in the console's order. The service takes these exact strings.
 const List<String> desktopCacheModes = [
   'limit_max_ttl',
   'follow_dns_ttl',
   'fixed_ttl',
 ];
 
-/// The default persistence interval the service applies when it is left at zero.
 const int desktopCacheDefaultPersistSeconds = 300;
 
-/// `core.CacheStats`.
 class DesktopCacheStats {
   const DesktopCacheStats({
     required this.enabled,
@@ -85,19 +76,16 @@ class DesktopCacheStats {
   final int staleHits;
   final int negativeHits;
 
-  /// 0..1, computed by the service over hits and misses.
   final double hitRatio;
   final int entryCount;
   final int maxEntries;
   final int evictions;
   final int prefetchCount;
 
-  /// The capacity bar's fill, clamped so a shrunk limit cannot overflow the track.
   double get fill =>
       maxEntries <= 0 ? 0 : (entryCount / maxEntries).clamp(0, 1).toDouble();
 }
 
-/// One `core.CacheEntryItem` from `GET /api/v1/cache/entries`.
 class DesktopCacheEntry {
   const DesktopCacheEntry({
     required this.domain,
@@ -126,19 +114,16 @@ class DesktopCacheEntry {
   final String qtype;
   final int originalTtl;
 
-  /// Negative once the record only lives in the stale window.
   final int remainingTtl;
   final int hitCount;
   final bool isNegative;
 
-  /// `fresh` or `stale`; the service decides, the page does not re-derive it from TTLs.
   final String status;
   final List<String> ipList;
 
   bool get isStale => status == 'stale';
 }
 
-/// `CacheEntriesResponse`: the total the service counted, plus the limited page it returned.
 class DesktopCacheEntries {
   const DesktopCacheEntries({required this.total, required this.entries});
 
@@ -158,7 +143,6 @@ class DesktopCacheEntries {
   final List<DesktopCacheEntry> entries;
 }
 
-/// One `core.CacheDomainStat` from `GET /api/v1/cache/top`.
 class DesktopCacheDomain {
   const DesktopCacheDomain({
     required this.domain,
@@ -179,7 +163,6 @@ class DesktopCacheDomain {
   final String qtype;
   final int hitCount;
 
-  /// Epoch millis; zero means the service did not report one.
   final int lastHitAt;
 }
 
@@ -188,7 +171,6 @@ List<DesktopCacheDomain> desktopCacheDomains(Object? value) => [
     if (item is Map) DesktopCacheDomain.fromJson(item.cast<String, Object?>()),
 ];
 
-/// `CachePersistResponse`: where the cache is written, and what the last operation did.
 class DesktopCachePersist {
   const DesktopCachePersist({
     required this.path,
@@ -213,18 +195,15 @@ class DesktopCachePersist {
 
   final String path;
 
-  /// Entries read back by the last `load`; zero for every other answer.
   final int restored;
   final int entryCount;
   final bool persistOn;
   final int intervalSec;
 
-  /// The last write failure, empty when there was none.
   final String lastError;
   final int excludeHits;
 }
 
-/// `core.CacheConfig`, as `GET` / `POST /api/v1/cache/config` carry it.
 class DesktopCacheConfig {
   const DesktopCacheConfig({
     required this.enabled,
@@ -299,10 +278,8 @@ class DesktopCacheConfig {
 
   final bool enabled;
 
-  /// Entries kept across the shards before eviction.
   final int maxEntries;
 
-  /// One of [desktopCacheModes].
   final String mode;
   final int maxTtlSeconds;
   final int fixedTtlSeconds;
@@ -313,22 +290,17 @@ class DesktopCacheConfig {
   final bool negativeTtlEnabled;
   final int negativeTtlSeconds;
 
-  /// Stale-while-revalidate: answer from cache, refresh in the background.
   final bool optimistic;
   final bool prefetchEnabled;
   final int prefetchThreshold;
   final int prefetchBeforeExpiryMs;
 
-  /// Go RE2 patterns; a matching name neither reads nor writes the cache.
   final List<String> excludePatterns;
   final bool persistEnabled;
 
-  /// Empty means the service derives the path from its data layout.
   final String persistPath;
   final int persistIntervalSeconds;
 
-  /// What the interval field shows: the service treats zero as "use the default", so the field
-  /// shows that default instead of an empty `0`.
   int get effectivePersistIntervalSeconds => persistIntervalSeconds <= 0
       ? desktopCacheDefaultPersistSeconds
       : persistIntervalSeconds;
@@ -377,7 +349,6 @@ class DesktopCacheConfig {
         persistIntervalSeconds ?? this.persistIntervalSeconds,
   );
 
-  /// The service merges the body over the config it already holds, so every field travels.
   Map<String, Object?> toJson() => {
     'enabled': enabled,
     'maxEntries': maxEntries,
@@ -401,7 +372,6 @@ class DesktopCacheConfig {
   };
 }
 
-/// The entry-table chips: the console filters the page it already has, it does not re-query.
 enum DesktopCacheEntryFilter {
   all,
   fresh,

@@ -14,36 +14,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
 
-/**
- * Reference writer for the DTRI subscription-rule index.
- *
- * <p>This is the Kotlin {@code MappedSubscriptionRuleIndex.compile} algorithm lifted out of Android
- * so it can run on a desktop JVM: no Kotlin toolchain, no device, and it can be diffed byte for
- * byte against the Rust port in {@code rust/diting-rule-core/src/dtri.rs}. The committed fixtures
- * under {@code rust/diting-rule-core/tests/fixtures/} are produced with this file.
- *
- * <pre>
- *   java rust/tools/dtri-reference/DTRIReference.java rules.txt out.dtri
- *   java rust/tools/dtri-reference/DTRIReference.java --pack rules.txt out.pack
- *   java rust/tools/dtri-reference/DTRIReference.java --generate 100000 rules.txt
- *   java rust/tools/dtri-reference/DTRIReference.java --bench rules.txt [iterations]
- * </pre>
- *
- * <p>--bench compiles the corpus several times in one process and prints the best run, so a
- * warm-JIT number can be compared with the native benchmark on the same box (or on ART via
- * {@code dalvikvm}).
- *
- * <p>--pack writes the JNI payload `RustRuleIndexCompiler.pack` builds, so the packed format is
- * pinned by committed fixtures instead of only by the Android build.
- *
- * <p>Corpus format: one rule per line, tab separated, fields in this order:
- * pattern, source, important, appScope, appInverted, isWildcard, denyallow, isRegex, dnsType.
- * Booleans are {@code 1}/{@code 0}; a field of {@code ~} is null and {@code =} is the empty string
- * (the trie filter treats those differently: {@code isNullOrEmpty} skips only a non-empty value).
- * Trailing fields may be omitted.
- */
 public final class DTRIReference {
-    private static final int MAGIC = 0x44545249; // DTRI
+    private static final int MAGIC = 0x44545249;
     private static final int VERSION = 1;
     private static final int BLOOM_HASHES = 7;
 
@@ -137,7 +109,6 @@ public final class DTRIReference {
         return index < fields.length ? fields[index] : fallback;
     }
 
-    /** {@code ~} is null, {@code =} is the empty string, anything else is itself. */
     private static String nullable(String[] fields, int index) {
         String value = field(fields, index, "~");
         if (value.equals("~")) {
@@ -150,7 +121,6 @@ public final class DTRIReference {
         return value.equals("1") || value.equalsIgnoreCase("true");
     }
 
-    /** The JNI payload: no filtering, the writer applies the Kotlin compile filter itself. */
     static void writePacked(File corpus, File target) throws IOException {
         List<Rule> rules = readCorpus(corpus);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -232,8 +202,8 @@ public final class DTRIReference {
         }
 
         ByteArrayOutputStream labels = new ByteArrayOutputStream();
-        List<int[]> edges = new ArrayList<>(); // labelOffset, labelLength, child
-        List<int[]> flatNodes = new ArrayList<>(); // source, firstEdge, edgeCount
+        List<int[]> edges = new ArrayList<>();
+        List<int[]> flatNodes = new ArrayList<>();
         for (BuildNode node : nodes) {
             int firstEdge = edges.size();
             for (Map.Entry<String, BuildNode> entry : sortedChildren(node)) {
@@ -352,7 +322,6 @@ public final class DTRIReference {
         int index = -1;
     }
 
-    /** Synthetic corpus for the benchmark: realistic nested domains with mixed sources. */
     private static void generate(File target, int count) throws IOException {
         Random random = new Random(20261105L);
         String[] second = {"ads", "track", "metrics", "cdn", "static", "promo", "beacon", "api"};

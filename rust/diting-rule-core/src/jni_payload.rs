@@ -1,24 +1,14 @@
-//! Payload codecs for the `RuleIndexNative` entry points.
-//!
-//! Every call is one packed `ByteArray` in and one packed `ByteArray` out, big-endian (the same
-//! convention as `RuleIndexCompiler`'s rule payload), so a renamed field or a stale library fails
-//! the decode instead of misreading a path or a fingerprint.
-//!
-//! The layouts are unit-tested here, which is the only place they can be tested without a JVM.
-
 use crate::dtri::{self, Validation};
 use crate::index_layout;
 use crate::payload::{Reader, Writer};
 use crate::snapshot::plan::{self, Half, Outcome};
 
-/// One rule half's two outcomes; an unknown tag is drift.
 fn read_half(reader: &mut Reader<'_>) -> Option<Half> {
     let normal = Outcome::from_tag(reader.u8()?)?;
     let important = Outcome::from_tag(reader.u8()?)?;
     Some(Half::new(normal, important))
 }
 
-/// `paths(datasetTag)`: the seven relative paths of one dataset, in layout order.
 pub fn layout_paths(dataset: u8) -> Option<Vec<u8>> {
     let layout = index_layout::layout(dataset)?;
     let mut writer = Writer::new();
@@ -36,7 +26,6 @@ pub fn layout_paths(dataset: u8) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `blob header | i64 fileLength` → `u8 status | i64 expectedLength`.
 pub fn dtri_validate(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let header = reader.blob()?;
@@ -58,8 +47,6 @@ pub fn dtri_validate(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u8 blockNormal | u8 blockImportant | u8 allowNormal | u8 allowImportant`
-/// → `u8 compiled | u8 settled | four usable flags | two special-only flags`.
 pub fn snapshot_plan(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let block = read_half(&mut reader)?;
@@ -81,8 +68,6 @@ pub fn snapshot_plan(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u8 directoryOk | u32 count | rows(string path, u8 exists, i64 length)`
-/// → four `(u8 present, string path)` pairs.
 pub fn trie_paths(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let directory_ok = reader.u8()? != 0;
@@ -136,7 +121,6 @@ fn write_packages(writer: &mut Writer, packages: &[(String, Vec<String>)]) {
     }
 }
 
-/// `u32 count | rows(string package, u32 n, strings)`; the answer is the normalized list.
 pub fn app_allowlist(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let packages = read_packages(&mut reader)?;
@@ -148,7 +132,6 @@ pub fn app_allowlist(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u32 count | rows(string table, u8 present, i64 rows, i64 sumA, i64 sumB)` → `string`.
 pub fn rule_fingerprint(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
@@ -170,7 +153,6 @@ pub fn rule_fingerprint(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u32 count | rows(string pattern, string target)`; the answer keeps one row per pattern.
 pub fn rewrite_rules(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
@@ -238,7 +220,6 @@ mod tests {
         assert_eq!(reader.i64(), Some(image.len() as i64));
         assert!(reader.finish());
 
-        // One byte short of the declared sections.
         let mut writer = Writer::new();
         writer.blob(header);
         writer.i64(image.len() as i64 - 1);
@@ -248,7 +229,6 @@ mod tests {
         assert_eq!(reader.u8(), Some(4));
         assert_eq!(reader.i64(), Some(image.len() as i64));
 
-        // Too short to even hold a header.
         let mut writer = Writer::new();
         writer.blob(&header[..8]);
         writer.i64(8);
@@ -261,24 +241,22 @@ mod tests {
     #[test]
     fn the_snapshot_plan_flags_the_usable_halves() {
         let mut writer = Writer::new();
-        // block: compiled + loaded, allow: loaded + not indexed
         for tag in [2u8, 1, 1, 0] {
             writer.u8(tag);
         }
         let packed = writer.into_vec();
         let answer = snapshot_plan(&packed).unwrap();
         let mut reader = Reader::new(&answer);
-        assert_eq!(reader.u8(), Some(1)); // compiled
-        assert_eq!(reader.u8(), Some(1)); // settled: nothing failed
-        assert_eq!(reader.u8(), Some(1)); // block normal usable
-        assert_eq!(reader.u8(), Some(1)); // block important usable
-        assert_eq!(reader.u8(), Some(1)); // allow normal usable
-        assert_eq!(reader.u8(), Some(0)); // allow important not indexed
-        assert_eq!(reader.u8(), Some(1)); // block: only special rows left
-        assert_eq!(reader.u8(), Some(0)); // allow: every row stays inline
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(0));
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(0));
         assert!(reader.finish());
 
-        // A failed half blocks the stamp even when the other one compiled.
         let mut writer = Writer::new();
         for tag in [2u8, 1, 3, 1] {
             writer.u8(tag);
@@ -286,8 +264,8 @@ mod tests {
         let packed = writer.into_vec();
         let answer = snapshot_plan(&packed).unwrap();
         let mut reader = Reader::new(&answer);
-        assert_eq!(reader.u8(), Some(1)); // compiled
-        assert_eq!(reader.u8(), Some(0)); // but not settled
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u8(), Some(0));
     }
 
     #[test]
@@ -327,7 +305,6 @@ mod tests {
         assert_eq!(reader.string().as_deref(), Some("allow.important.trie"));
         assert!(reader.finish());
 
-        // Three entries is drift: the layout is exactly four.
         let mut writer = Writer::new();
         writer.u8(1);
         writer.u32(3);
@@ -376,7 +353,6 @@ mod tests {
         );
         assert!(reader.finish());
 
-        // An unknown presence byte is drift.
         let mut writer = Writer::new();
         writer.u32(1);
         writer.string("block_rule");

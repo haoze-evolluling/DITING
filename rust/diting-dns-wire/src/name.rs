@@ -1,14 +1,6 @@
-//! DNS name decoding with miekg/dns presentation escaping.
-
-/// `maxDomainNameWireOctets` in miekg/dns.
 pub const MAX_NAME_WIRE_OCTETS: i32 = 255;
-/// `maxCompressionPointers` in miekg/dns: `(255+1)/2 - 2`.
 const MAX_COMPRESSION_POINTERS: usize = 126;
 
-/// Decodes a name the way `dns.UnpackDomainName` did, escaping for presentation.
-///
-/// `limit` is the slice miekg/dns unpacked: the whole message for owner names, the record's rdata
-/// for a CNAME/SVCB target, so a compression pointer cannot reach past it.
 pub fn unpack_name(wire: &[u8], start: usize, limit: usize) -> Option<(String, usize)> {
     let limit = limit.min(wire.len());
     let mut text = String::new();
@@ -86,17 +78,6 @@ fn push_escaped(text: &mut String, byte: u8) {
     }
 }
 
-/// Encodes a presentation name back into wire labels: the inverse of [`unpack_name`].
-///
-/// `\DDD` becomes the byte it spells, `\X` the literal `X`, an unescaped `.` ends a label and a
-/// trailing `.` is the root label. The result must stay within [`MAX_NAME_WIRE_OCTETS`] and every
-/// label within 63 bytes, or the name is rejected: a reply the client cannot parse is worse than a
-/// refused answer.
-///
-/// Returns `false` (leaving `out` unchanged) for anything `UnpackDomainName` could not have
-/// produced: a leading or doubled dot, an escape at the end, a `\DDD` above 255, an over-long label
-/// or an over-long name. There is no compression: synthesized replies are small, and an
-/// uncompressed answer is still a valid one.
 pub fn pack_name(name: &str, out: &mut Vec<u8>) -> bool {
     let start = out.len();
     if name == "." {
@@ -174,7 +155,6 @@ pub fn pack_name(name: &str, out: &mut Vec<u8>) -> bool {
             return false;
         }
     } else if !closed {
-        // An empty name ("") never came out of `unpack_name`; only "." did.
         out.truncate(start);
         return false;
     }

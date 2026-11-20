@@ -1,9 +1,3 @@
-//! Platform error type shared by every OS backend.
-//!
-//! Go returns plain `error` values; the IPC layer only ever needs the message, except for port
-//! conflicts where the diagnostic result travels with the error so the console can offer the
-//! one-click fix.
-
 use diting_desktop_api::platform_types::PortCheckResult;
 
 #[derive(Debug, thiserror::Error)]
@@ -27,7 +21,6 @@ impl PlatformError {
         Self::PortConflict(Box::new(result))
     }
 
-    /// The structured port probe result, when this error is a bind conflict.
     pub fn port_result(&self) -> Option<&PortCheckResult> {
         match self {
             Self::PortConflict(result) => Some(result),

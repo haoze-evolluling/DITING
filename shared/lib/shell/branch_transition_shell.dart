@@ -1,12 +1,3 @@
-// Animates a `StatefulShellRoute` branch switch the way FlClash's `_HomePageView`
-// does: the outgoing page and the incoming page move together (slide) or cross
-// fade in place (fade), instead of the incoming page merely fading in alone.
-//
-// This is the container go_router asks for via `navigatorContainerBuilder`
-// (route.dart's `ShellNavigationContainerBuilder`). It mirrors the default
-// index-stack container's `Offstage` + `TickerMode` wrapper so every branch
-// Navigator keeps its state and an off-screen page stops ticking, but adds the
-// per-page transform the default cannot express.
 import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -99,10 +90,6 @@ class _BranchTransitionShellState extends ConsumerState<BranchTransitionShell>
     );
   }
 
-  /// Every branch is wrapped in the same `Offstage > TickerMode > transform`
-  /// chain every frame; only the property values change, so a switch never
-  /// reparents a Navigator and its state survives. Intermediate branches of a
-  /// long jump are simply offstage, so nothing between gets built or painted.
   Widget _slot(int index, TabTransition transition, double t) {
     final isCurrent = index == _current;
     final isPrevious = index == _previous && index != _current && t < 1;
@@ -133,9 +120,6 @@ class _BranchTransitionShellState extends ConsumerState<BranchTransitionShell>
       opacity = 0;
     }
 
-    // Moving a whole page means transforming whatever it paints. Drawing it
-    // from a snapshot while it moves keeps Impeller from re-rasterizing every
-    // glyph and shadow on each step, as FlClash's `_FadeTabPage` does.
     return _BranchPage(
       key: ValueKey<int>(index),
       visible: visible,

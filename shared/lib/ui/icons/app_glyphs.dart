@@ -144,7 +144,6 @@ abstract final class AppGlyphs {
   static const appsList = _g_appsList_;
   static const iconTile = _g_iconTile_;
 
-  // Second hand-drawn batch: replaces borrowed glyphs whose meaning did not fit the row.
   static const automation = _g_automation_;
   static const notification = _g_notification_;
   static const vibrate = _g_vibrate_;
@@ -160,7 +159,6 @@ abstract final class AppGlyphs {
   static const heart = _g_heart_;
   static const trophy = _g_trophy_;
 
-  // Third batch: the rows below still shared a glyph with an unrelated idea.
   static const network = _g_network_;
   static const pause = _g_pause_;
   static const shield = _g_shield_;
@@ -172,13 +170,11 @@ abstract final class AppGlyphs {
   static const upstream = _g_upstream_;
   static const record = _g_record_;
 
-  // Brand marks for the speed card, same shapes as FlClash's and the same GlyphPath render.
   static const baidu = _g_baidu_;
   static const douyin = _g_douyin_;
   static const bilibili = _g_bilibili_;
   static const neteaseMusic = _g_neteaseMusic_;
 
-  // Remaining speed-card sites, grouped the way the detail page groups them.
   static const sogou = _g_sogou_;
   static const google = _g_google_;
   static const duckDuckGo = _g_duckDuckGo_;

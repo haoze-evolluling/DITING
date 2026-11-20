@@ -1,17 +1,3 @@
-//! The scheduler driver: [`diting_resolver_core::Schedule`] turned into real queries.
-//!
-//! This is `resolveSequential` / `resolveConcurrent` from `resolver_strategy.go`, with goroutines and
-//! `time.Timer`s replaced by a [`JoinSet`] and `tokio::select!`. The kernel decides everything the
-//! user can observe — attempt order, per-attempt budgets, the hedge stagger, the encrypted grace
-//! window, and every field of the race-log line — and this module only executes what it is told.
-//!
-//! Two invariants the old code had and this one keeps:
-//!
-//! * one attempt per provider at most, and a cancelled loser can never block the winner (the JoinSet
-//!   is aborted once the query is decided);
-//! * a failed attempt reports its own error text to the kernel, which joins them into the closing
-//!   race-log `errorMessage` — so the log line names every provider that failed, in attempt order.
-
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -28,17 +14,8 @@ use tokio::time::Instant as TokioInstant;
 
 use super::{elapsed_ns, now_ns, plain, Inner, RaceEvent, NO_PROVIDER};
 
-/// The ceiling for one HTTP/3 exchange before the query falls back to DoH/HTTP-2.
-///
-/// It must stay below the per-attempt budget the scheduler hands to [`attempt`]: the outer
-/// `timeout` cancels the whole attempt, so a stalled H3 exchange would otherwise never reach the
-/// `Err` arm — no fallback, no `note_h3_failure`, and the dead path would stay enabled forever.
-/// [`h3_attempt_timeout`] halves the attempt budget so the fallback still gets a chance; the
-/// sequential scheduler's adaptive budget is only 0.3–2 s, well under this ceiling.
 const DOH3_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(2);
 
-/// The H3 slice of one attempt: at most [`DOH3_ATTEMPT_TIMEOUT`], and never more than half of the
-/// attempt budget so the HTTP/2 fallback still fits before the outer deadline.
 fn h3_attempt_timeout(budget: Option<Duration>) -> Duration {
     match budget {
         Some(budget) => (budget / 2)
@@ -48,7 +25,6 @@ fn h3_attempt_timeout(budget: Option<Duration>) -> Duration {
     }
 }
 
-/// One finished attempt.
 struct Attempt {
     provider: u32,
     result: Result<Vec<u8>, String>,
@@ -76,11 +52,6 @@ pub(crate) async fn resolve(
             sequential(inner, &mut schedule, query, started).await
         }
         Strategy::ParallelRace | Strategy::SmartPrediction => {
-            // Every attempt carries the query budget (`ctx` in the old code), so a slow provider is
-            // cancelled at the budget and reports its own error to the kernel — which is what the
-            // race-log line names. The outer timer is only a backstop for a transport that ignores
-            // its own deadline; it has to stay above the per-attempt budget, otherwise the decision
-            // (and the log line) would be lost.
             let budget = Duration::from_nanos(TUNING.query_timeout_plain_ns.max(1) as u64);
             let backstop = budget + Duration::from_secs(2);
             match tokio::time::timeout(
@@ -96,8 +67,6 @@ pub(crate) async fn resolve(
     }
 }
 
-/// `scheduleInputFor`: every per-provider reading taken once, at the query's start time, so the
-/// ranking cannot disagree with the statistics the providers recorded.
 fn plan_input(inner: &Inner, now_ns: i64) -> PlanInput {
     let strategy = match plan::strategy(inner.mode) {
         plan::Strategy::Single => Strategy::Single,
@@ -105,8 +74,6 @@ fn plan_input(inner: &Inner, now_ns: i64) -> PlanInput {
         plan::Strategy::ParallelRace => Strategy::ParallelRace,
         plan::Strategy::SmartPrediction => Strategy::SmartPrediction,
     };
-    // `AllowAttempt` arms the circuit breaker's half-open probe, and the old code only consulted it
-    // for `primary_backup`; every other strategy passes "allowed".
     let consult_circuit = strategy == Strategy::PrimaryBackup && inner.providers.len() > 1;
     let providers = inner
         .providers
@@ -130,7 +97,6 @@ fn plan_input(inner: &Inner, now_ns: i64) -> PlanInput {
     }
 }
 
-/// One provider attempt: transport, validation, statistics.
 async fn attempt(
     inner: &Arc<Inner>,
     index: u32,
@@ -141,9 +107,6 @@ async fn attempt(
     let retry_delay_ns = provider.stats.udp_retry_delay();
     let started = Instant::now();
 
-    // Derived from the attempt budget: the sequential scheduler passes an adaptive 0.3–2 s budget,
-    // so a fixed 2 s inner timeout would be cancelled by the outer one and never trigger the
-    // DoH fallback at all.
     let h3_timeout = h3_attempt_timeout(budget);
     let transport = async {
         match provider.protocol {
@@ -178,8 +141,6 @@ async fn attempt(
                             .unwrap_or("/dns-query");
                         h3.query(&inner.dial, &provider.host, port, path, query)
                             .await
-                    // N7: upgrade to HTTP/3 once the origin advertised it, and fall back to DoH on
-                    // any failure (recording it so a broken H3 path is abandoned).
                     } else if doh.doh3_ready() {
                         if let Some(h3) = &inner.doh3 {
                             let port = doh
@@ -189,10 +150,6 @@ async fn attempt(
                                 .path_and_query()
                                 .map(|value| value.as_str())
                                 .unwrap_or("/dns-query");
-                            // The timeout is what makes the fallback reachable: without it a
-                            // stalled QUIC exchange is cancelled by the outer attempt budget
-                            // before this match runs, so neither the HTTP/2 retry nor the
-                            // failure streak would happen.
                             match tokio::time::timeout(
                                 h3_timeout,
                                 h3.query(&inner.dial, &provider.host, port, path, query),
@@ -264,7 +221,6 @@ async fn attempt(
     }
 }
 
-/// `resolveSequential`: one attempt at a time, in the kernel's order.
 async fn sequential(
     inner: &Arc<Inner>,
     schedule: &mut Schedule,
@@ -304,8 +260,6 @@ async fn sequential(
     }
 }
 
-/// `resolveConcurrent`: the kernel asks for attempts, the timers drive the stagger and the encrypted
-/// grace window, the first usable answer decides the query.
 async fn concurrent(
     inner: &Arc<Inner>,
     schedule: &mut Schedule,
@@ -320,7 +274,6 @@ async fn concurrent(
     let mut step = schedule.start();
 
     let outcome = loop {
-        // Launch everything the kernel asked for before waiting on anything.
         while step.outcome.is_none() && !step.launches.is_empty() {
             let launch = step.launches[0];
             let inner = Arc::clone(inner);
@@ -379,7 +332,6 @@ async fn concurrent(
         }
     };
 
-    // Abort the attempts that lost, so no task outlives the query.
     join_set.abort_all();
 
     let winner = match &outcome {
@@ -391,7 +343,6 @@ async fn concurrent(
     finish(outcome, winner)
 }
 
-/// Waits until `at`; the branch is guarded by `is_some()`, so the `None` case never runs.
 async fn sleep_until(at: Option<TokioInstant>) {
     match at {
         Some(at) => tokio::time::sleep_until(at).await,
@@ -399,7 +350,6 @@ async fn sleep_until(at: Option<TokioInstant>) {
     }
 }
 
-/// `finishSchedule`: the race-log line and the answer (or the error text) the caller returns.
 fn finish(
     outcome: Outcome,
     winner: Option<Vec<u8>>,
@@ -415,8 +365,6 @@ fn finish(
                 };
             }
             if event.error_message.is_empty() {
-                // `errors.Join` of an empty list returned nil, and the old code returned (nil, nil):
-                // the caller then fails to extract an answer and answers SERVFAIL.
                 return (Ok(Vec::new()), Some(race));
             }
             (Err(event.error_message), Some(race))
@@ -424,8 +372,6 @@ fn finish(
     }
 }
 
-/// The kernel's event in the shape `RaceLogCallback` receives; the question is stamped by the
-/// engine, which is the only layer that still has the raw query.
 fn race_event(event: &Event) -> RaceEvent {
     RaceEvent {
         query_name: String::new(),

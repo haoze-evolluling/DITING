@@ -1,8 +1,3 @@
-//! The compile-time platform selection.
-//!
-//! Everything the rest of the service touches is a capability trait, so the composition root is
-//! identical on Windows and Linux and only this file changes at build time.
-
 use std::sync::Arc;
 
 use diting_desktop_app::PlatformHandles;
@@ -152,11 +147,6 @@ pub fn firewall_backend_name() -> String {
     }
 }
 
-/// Composes every capability the management controllers may need.
-///
-/// `dns_manager` is passed in so the service and the management runtime share **one** manager:
-/// takeover state lives in its memory, so a second instance would make shutdown take its restore
-/// decision from the wrong one and leave the host pointing at a dead loopback resolver.
 pub fn platform_handles(
     store: Arc<dyn StateStore>,
     dns_manager: Arc<dyn DnsManager>,

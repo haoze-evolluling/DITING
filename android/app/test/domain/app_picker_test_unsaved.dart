@@ -1,7 +1,5 @@
 part of 'app_picker_test.dart';
 
-/// Leaving an app picker with pending changes asks whether to save them. The title-bar arrow, the
-/// system back gesture and the hardware key all land on the same dialog.
 void _unsavedChanges() {
   installGlobalTestHooks();
 
@@ -24,9 +22,6 @@ void _unsavedChanges() {
     );
     await tester.pump();
     await tester.pumpAndSettle();
-    // The blocked/excluded pickers are secondary entries on the per-app rules page, so open that
-    // card from the hub first (the route then really has a page below it and the bar draws a back
-    // arrow; an initial route would not).
     final appRulesCard = find.text('应用规则');
     await tester.scrollUntilVisible(
       appRulesCard,
@@ -50,14 +45,11 @@ void _unsavedChanges() {
 
   Set<String> blocked() => LegacySettings(store).blockedAppPackages;
 
-  /// Taps an app row; `last` skips the row count in the section heading.
   Future<void> tapApp(WidgetTester tester, String label) async {
     await tester.tap(find.text(label).last);
     await tester.pumpAndSettle();
   }
 
-  /// Dialog buttons only: the page has its own 保存 button and the app-rules page a 排除应用
-  /// entry, so a bare text finder would be ambiguous.
   Finder inDialog(String label) =>
       find.descendant(of: find.byType(Dialog), matching: find.text(label));
 
@@ -87,7 +79,6 @@ void _unsavedChanges() {
     await leaveWith(tester, '保存');
 
     expect(blocked(), {'com.example.maps'});
-    // Leaving the picker returns to the per-app rules page; one more back returns to the hub.
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.byType(BackButton), findsNothing);
@@ -99,7 +90,6 @@ void _unsavedChanges() {
     await tester.pumpAndSettle();
 
     expect(find.text('保存更改？'), findsNothing);
-    // Now on the per-app rules page; leave it to confirm the picker itself closed.
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.byType(BackButton), findsNothing);
@@ -139,8 +129,6 @@ class _UnsavedAppsSource implements InstalledAppsSource {
       const {};
 }
 
-/// The failure state must ask the system for the permission: a bare retry fails for the same
-/// reason and leaves the user hunting for the toggle in the ROM's settings.
 void _appListErrorState() {
   testWidgets('点「去授权」向系统申请读取应用列表，授权后重新读取', (tester) async {
     final (container, bridge) = await pumpErrorState(tester, granted: true);

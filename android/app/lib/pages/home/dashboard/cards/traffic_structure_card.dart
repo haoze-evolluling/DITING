@@ -9,7 +9,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One legend segment. Order follows the mode, see [TrafficStructureMode].
 class TrafficStructureLegend {
   const TrafficStructureLegend({
     required this.label,
@@ -36,7 +35,6 @@ class TrafficStructureRate {
 
 enum TrafficStructureMode { all, filtered }
 
-/// Layout only; callers compute the numbers so the card cannot drift across midnight.
 class TrafficStructureCard extends StatelessWidget {
   const TrafficStructureCard({
     super.key,
@@ -53,7 +51,6 @@ class TrafficStructureCard extends StatelessWidget {
   final String title;
   final int total;
 
-  /// Donut segments, same order as [legends]; zero-value segments are filtered.
   final List<DonutSegment> segments;
   final List<TrafficStructureLegend> legends;
   final List<TrafficStructureRate> rates;
@@ -86,7 +83,6 @@ class TrafficStructureCard extends StatelessWidget {
               DashboardResultDonut(
                 segments: segments,
                 total: total,
-                // Smaller donut for three-row legends so the text does not outgrow it.
                 diameter: compact ? 108 : 128,
               ),
               Expanded(
@@ -120,8 +116,6 @@ class TrafficStructureCard extends StatelessWidget {
   }
 }
 
-/// Traffic structure card backed by the real aggregate snapshot. A not-ready snapshot
-/// renders an empty ring and dashes, never 0%, which would read as "no traffic today".
 class LogTrafficStructureCard extends ConsumerWidget {
   const LogTrafficStructureCard({super.key, required this.mode});
 
@@ -129,8 +123,6 @@ class LogTrafficStructureCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Slices, not the whole snapshot: this card rebuilds only when one of the four figures it
-    // draws changed, instead of on every 10 s overview refresh.
     final breakdown =
         ref.watch(logOverviewBreakdownProvider) ??
         const LogTrafficBreakdown.empty();

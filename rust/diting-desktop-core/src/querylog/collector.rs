@@ -1,9 +1,3 @@
-//! Rolling 24-hour, per-hour statistics collector.
-//!
-//! Port of the former Go service's `internal/querylog/stats.go`. Hour boundaries are computed in local
-//! time (`chrono::Local`) because the UI renders wall-clock hours, exactly like Go's
-//! `time.Date(..., t.Location())`.
-
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
@@ -14,7 +8,6 @@ use super::types::{
     STATUS_ERROR, STATUS_STALE,
 };
 
-/// Rolling statistics window in hours.
 pub(crate) const STATS_WINDOW_HOURS: usize = 24;
 const STATS_MAX_KEYS_PER_HOUR: usize = 10_000;
 const HOUR_MS: i64 = 60 * 60 * 1000;
@@ -80,7 +73,6 @@ fn inc_map(map: &mut HashMap<String, i64>, key: &str) {
     *map.entry(key.to_string()).or_insert(0) += 1;
 }
 
-/// Normalize a Unix-millisecond timestamp to the start of its local-time hour.
 pub(crate) fn hour_key(ms: i64) -> i64 {
     let local = match Local.timestamp_millis_opt(ms) {
         LocalResult::Single(dt) => dt,
@@ -98,14 +90,12 @@ pub(crate) fn hour_key(ms: i64) -> i64 {
     }
 }
 
-/// Thread-safe 24-hour rolling statistics collector.
 pub struct Collector {
     buckets: RwLock<HashMap<i64, Bucket>>,
     now: Clock,
 }
 
 impl Collector {
-    /// Create a collector using the system clock.
     pub fn new() -> Self {
         Self::with_clock(Arc::new(Local::now))
     }
@@ -121,7 +111,6 @@ impl Collector {
         (self.now)().timestamp_millis()
     }
 
-    /// Count one record into its hour bucket and evict buckets outside the rolling window.
     pub fn record(&self, record: &Record) {
         if record.timestamp <= 0 {
             return;
@@ -188,7 +177,6 @@ impl Collector {
             .collect()
     }
 
-    /// Summary for the current rolling 24-hour window.
     pub fn summary(&self) -> Summary {
         let now = self.now_millis();
         let buckets = self.buckets.read().unwrap_or_else(|e| e.into_inner());
@@ -214,7 +202,6 @@ impl Collector {
         summary
     }
 
-    /// One point per hour for the last 24 hours, zero-filled.
     pub fn per_hour(&self) -> Vec<HourPoint> {
         let now = self.now_millis();
         let buckets = self.buckets.read().unwrap_or_else(|e| e.into_inner());
@@ -241,17 +228,14 @@ impl Collector {
         points
     }
 
-    /// Most queried domains in the window.
     pub fn top_domains(&self, n: i64) -> Vec<NameCount> {
         self.top_n(n, TopKind::Domains)
     }
 
-    /// Most blocked domains in the window.
     pub fn top_blocked_domains(&self, n: i64) -> Vec<NameCount> {
         self.top_n(n, TopKind::Blocked)
     }
 
-    /// Busiest clients in the window.
     pub fn top_clients(&self, n: i64) -> Vec<NameCount> {
         self.top_n(n, TopKind::Clients)
     }
@@ -284,7 +268,6 @@ impl Collector {
         list
     }
 
-    /// Drop every statistics bucket.
     pub fn clear(&self) {
         self.buckets
             .write()

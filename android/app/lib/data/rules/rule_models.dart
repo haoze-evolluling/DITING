@@ -1,5 +1,3 @@
-/// Models for parsed AdGuard, ABP, hosts and dnsmasq rules. Cosmetic rules are parsed but never
-/// stored; see [CategorizedRules.cosmeticRules].
 library;
 
 class RewriteTargetType {

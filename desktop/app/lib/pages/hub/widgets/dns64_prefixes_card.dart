@@ -1,8 +1,3 @@
-/// The DNS64 synthesis prefixes: one RFC 6052 prefix per line, with the well-known one a button away.
-///
-/// The old desktop console's `DNS64Panel.vue` keeps this editor under the engine explanation; here it is
-/// its own card. The list is a draft that saves with the button, and a prefix the service rejects is not
-/// left on screen.
 library;
 
 import 'dart:async';
@@ -32,8 +27,6 @@ class Dns64PrefixesCard extends ConsumerStatefulWidget {
 }
 
 class _Dns64PrefixesCardState extends ConsumerState<Dns64PrefixesCard> {
-  /// The prefixes as typed. Adopted from the service only when a new answer arrives, so a rebuild
-  /// never overwrites what is being edited.
   final _prefixes = TextEditingController();
   DesktopDns64Config? _adopted;
 

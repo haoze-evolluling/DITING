@@ -11,12 +11,6 @@ import com.haoze.diting.root.RootDnsService
 import com.haoze.diting.server.ServerDnsService
 import com.haoze.diting.server.ServerPreference
 
-/// Starts, stops and toggles whichever data plane the current work mode uses, without the Flutter
-/// layer. Shared by the quick settings tile, the home screen widget and the automation activity so
-/// the three surfaces cannot drift apart.
-///
-/// The service companions are the only source of truth: every service runs in this process, so a
-/// stale static flag cannot outlive a restart the way a persisted one would.
 object DataPlaneControl {
     private const val TAG = "DataPlaneControl"
     private const val UI_PREFS = "dns_vpn_prefs"
@@ -29,30 +23,23 @@ object DataPlaneControl {
     const val WORK_MODE_EXPRESS = "express"
     const val WORK_MODE_SERVER = "server"
 
-    /// Retired value owned by the removed Kotlin server. It is cleaned up by
-    /// `ServerModeRetirement` and must never start another mode by accident.
     private const val RETIRED_WORK_MODE_SERVER = "dns"
 
-    /// What a [toggle]/[start]/[stop] call achieved. [NeedsApp] is not a failure: the app owns the
-    /// VPN consent dialog and the first Dart-computed start config, so the caller must open it.
     sealed interface Result {
         data object Started : Result
         data object Stopped : Result
         data object NeedsApp : Result
     }
 
-    /// Stored value: `normal` / `express` / `server`; a missing value means normal.
     fun workMode(context: Context): String =
         context.getSharedPreferences(WORK_MODE_PREFS, Context.MODE_PRIVATE)
             .getString(KEY_WORK_MODE, null)
             ?: WORK_MODE_NORMAL
 
-    /// The first-run agreement gate, shared with the Flutter side.
     fun isAgreementAccepted(context: Context): Boolean =
         context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_INITIAL_AGREEMENT_ACCEPTED, false)
 
-    /// Normal mode's root variant: the same work mode, but no `VpnService` consent is involved.
     fun usesRootTakeover(context: Context): Boolean =
         workMode(context) == WORK_MODE_NORMAL &&
             context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
@@ -113,8 +100,6 @@ object DataPlaneControl {
         }
     }
 
-    /// Android 12+ may refuse a foreground-service start from the background (a widget broadcast),
-    /// so a rejected start falls back to opening the app rather than silently doing nothing.
     private fun startForeground(context: Context, intent: Intent): Boolean =
         runCatching { ContextCompat.startForegroundService(context, intent) }
             .onFailure { Log.e(TAG, "Failed to start ${workMode(context)} data plane", it) }

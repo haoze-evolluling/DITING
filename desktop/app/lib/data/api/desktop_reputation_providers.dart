@@ -1,8 +1,3 @@
-/// Safe search and the reputation lookups: their reads and their merge-style writes.
-///
-/// Both endpoints answer with the resulting state (safe browsing answers with config + counters), so
-/// a write adopts that answer; the safe-search endpoint answers with a success flag only, so it is
-/// re-read.
 library;
 
 import 'dart:async';
@@ -101,7 +96,6 @@ class DesktopReputationNotifier extends Notifier<DesktopReputationState> {
     }
   }
 
-  /// The service answers with the normalised state, which the page adopts directly.
   Future<DesktopApiException?> save(Map<String, Object?> patch) async {
     if (state.saving) return null;
     state = DesktopReputationState(data: state.data, saving: true);

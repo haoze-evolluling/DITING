@@ -16,14 +16,11 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 class BaseNavigator {
   static PageRoute<T> _routeOf<T>(BuildContext context, Widget child) {
     final view = KeyboardInsetHold(child: child);
-    // FlClash picks the mobile card slide and the desktop fade; the view width,
-    // not the host platform, decides, so a narrow desktop window matches too.
     return context.isMobileView
         ? CardPageRoute<T>(builder: (_) => view)
         : FadePageRoute<T>(builder: (_) => view);
   }
 
-  /// The mobile layout drops a home page's navigator, so a desktop page left open reopens.
   static Future<T?> push<T>(BuildContext context, Widget child) {
     final navigator = Navigator.of(context);
     if (context.isMobileView) {
@@ -81,7 +78,6 @@ class _DropWatchState extends State<_DropWatch> {
   Widget build(BuildContext context) => widget.child;
 }
 
-/// The route of [context]'s page plus, for a page in a sheet, the sheets'.
 Iterable<ModalRoute<Object?>> routesCarrying(BuildContext context) sync* {
   var route = ModalRoute.of(context);
   while (route != null) {
@@ -106,8 +102,6 @@ Future<void> whenRouteSettled(BuildContext context) async {
 bool isRouteArriving(BuildContext context) => routesCarrying(context)
     .any((route) => route.offstage || (route.animation?.isAnimating ?? false));
 
-/// Completes once the route [context] is on stops moving under the route
-/// above it, as while that route still leaves after its pop.
 Future<void> whenRouteUncovered(BuildContext context) async {
   final animation = ModalRoute.of(context)?.secondaryAnimation;
   if (animation != null) {
@@ -116,7 +110,6 @@ Future<void> whenRouteUncovered(BuildContext context) async {
 }
 
 Future<void> _whenSettled(ModalRoute<Object?> route) async {
-  // HeroController builds a pushed route offstage first, so it tells the truth only after.
   while (route.offstage && route.isActive) {
     await SchedulerBinding.instance.endOfFrame;
   }
@@ -143,8 +136,6 @@ Future<void> _whenStill(Animation<double> animation) {
   return completer.future;
 }
 
-/// A navigator's first page: it never animates itself, and a card route pushed
-/// over it drives how it recedes through its delegated transition.
 class RootPage<T> extends Page<T> {
   const RootPage({required this.child, super.key, super.name});
 
@@ -281,9 +272,6 @@ class CardPageRoute<T> extends PageRoute<T>
 
   final Widget Function(BuildContext context) builder;
 
-  // HeroController would hold the first frame offstage. Painted at rest off
-  // screen instead, the page takes its costly first paint and snapshots there
-  // rather than in the first frames it moves in.
   @override
   set offstage(bool value) {}
 

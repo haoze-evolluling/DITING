@@ -8,17 +8,11 @@ import android.util.Log
 import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.control.DataPlaneControl
 
-/// 签名权限控制入口（A9）：adb / Tasker / 通知动作通过它启动、停止、切换或暂停数据面。
-///
-/// 这是导出广播接收器，但 manifest 上以 CONTROL 签名权限保护，只有同签名应用能发送。
-/// start/stop/toggle 直接改数据面，pause/cancel_pause 只写暂停截止时间并广播新状态；
-/// 操作完成后回发一个受 RECEIVE_EVENTS 保护的结果广播，并让 StateBroadcaster 推送状态。
 class AutomationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action: String = intent.action ?: return
         if (action !in SUPPORTED_ACTIONS) return
         val appContext: Context = context.applicationContext
-        // 数据面操作可能触发前台服务，不能占着主线程做；用 goAsync 保证进程存活到处理完成。
         val pendingResult: BroadcastReceiver.PendingResult = goAsync()
         Thread {
             try {
@@ -42,18 +36,15 @@ class AutomationReceiver : BroadcastReceiver() {
             else -> HandleResult(false, "未知动作：$action")
         }
         broadcastResult(context, action, result)
-        // 不论成败都推一次最新状态，外部自动化据此更新联动条件。
         StateBroadcaster.broadcast(context)
     }
 
-    /// 把 DataPlaneControl 的结果翻译成 ok/message；NeedsApp 不是失败而是需要用户先打开应用。
     private fun fromDataPlane(result: DataPlaneControl.Result): HandleResult = when (result) {
         DataPlaneControl.Result.Started -> HandleResult(true, "started")
         DataPlaneControl.Result.Stopped -> HandleResult(true, "stopped")
         DataPlaneControl.Result.NeedsApp -> HandleResult(false, "needs_app")
     }
 
-    /// 暂停只记录截止时间：到点后由定时器/上层评估恢复，数据面本身不在这里被反复起停。
     private fun pause(context: Context, intent: Intent): HandleResult {
         val minutes: Int = intent
             .getIntExtra(AutomationContract.EXTRA_PAUSE_MINUTES, AutomationContract.DEFAULT_PAUSE_MINUTES)
@@ -63,7 +54,6 @@ class AutomationReceiver : BroadcastReceiver() {
         return HandleResult(true, "paused_until=$untilMs")
     }
 
-    /// 取消暂停：把截止时间清 0，等于立刻恢复。
     private fun cancelPause(context: Context): HandleResult {
         setPausedUntil(context, 0L)
         return HandleResult(true, "resumed")
@@ -74,7 +64,6 @@ class AutomationReceiver : BroadcastReceiver() {
         BlockPauseLink.apply(context)
     }
 
-    /// A1：外部（Tasker / adb）手动触发一次自动化求值，事件类型默认 manual。
     private fun runRules(context: Context, intent: Intent): HandleResult {
         val eventType: String = intent
             .getStringExtra(AutomationContract.EXTRA_EVENT_TYPE) ?: "manual"
@@ -94,7 +83,6 @@ class AutomationReceiver : BroadcastReceiver() {
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
 
-    /// 单次控制的结果载荷。
     private data class HandleResult(val ok: Boolean, val message: String)
 
     companion object {

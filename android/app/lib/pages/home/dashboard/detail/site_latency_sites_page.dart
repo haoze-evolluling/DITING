@@ -1,5 +1,3 @@
-/// Picks the four sites the dashboard's speed card draws: tap a site to add or drop it, drag the
-/// board order to reorder, and the card follows immediately.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

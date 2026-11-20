@@ -1,6 +1,3 @@
-/// [totalPss] is whole-process PSS while [javaHeap] and [nativeHeap] are heap allocation only, so
-/// they never sum to PSS; do not derive them from `summary.java-heap` / `summary.native-heap`
-/// (always 0 on Android 14).
 library;
 
 class ProcessMemory {
@@ -29,7 +26,6 @@ class ProcessMemory {
       ? (totalPss / systemTotal).clamp(0.0, 1.0)
       : 0;
 
-  /// The native side sends KB integers; convert to bytes here.
   static ProcessMemory fromMap(Object? raw) {
     if (raw is! Map) return const ProcessMemory();
     int kb(String key) => ((raw[key] as num?)?.toInt() ?? 0) * 1024;
@@ -43,7 +39,6 @@ class ProcessMemory {
     );
   }
 
-  /// Value equality so the 2 s poller can skip a tick that would repaint the same numbers.
   @override
   bool operator ==(Object other) =>
       other is ProcessMemory &&

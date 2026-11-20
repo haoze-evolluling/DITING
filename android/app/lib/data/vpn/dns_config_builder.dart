@@ -1,9 +1,3 @@
-/// Builds the exact JSON for `Engine.applyDNSConfig`; the Rust engine rejects unknown fields. Below two
-/// providers, resolution falls back to the selected one.
-///
-/// The document itself — mode selection, the provider pick, the cache / block / dynamic keys and
-/// their clamps — comes from `rust/diting-dns-config-core/src/document.rs`. This file keeps the
-/// catalog labels (they are localised) and the row types the UI carries around.
 library;
 
 import 'dart:convert';
@@ -20,7 +14,6 @@ enum DnsProtocol {
 
   const DnsProtocol(this.storageValue);
 
-  /// The prefs spelling, which is also what the kernel exchanges.
   final String storageValue;
 
   static DnsProtocol? fromStorage(String? value) {
@@ -49,16 +42,13 @@ class DnsProviderEntry {
   final String host;
   final int port;
 
-  /// `host:port` with a bare IPv6 host bracketed; the join itself lives in the kernel.
   String get hostPort => RustDnsConfigCore.instance.joinHostPort(host, port);
 
-  /// Endpoint as 1.4.3 renders it (`[DoH] https://...` / `[DNS] 1.1.1.1:53`).
   String get endpointLabel => switch (protocol) {
     DnsProtocol.doh => '[${protocol.storageValue}] $url',
     _ => '[${protocol.storageValue}] $hostPort',
   };
 
-  /// `host:port` edited by the management UI; DoH providers keep it empty.
   String get address => protocol == DnsProtocol.doh ? url : hostPort;
 
   MockProvider toMock({int latencyMs = 0, bool isPreset = false}) =>
@@ -76,7 +66,6 @@ class DnsProviderEntry {
       );
 }
 
-/// `host:port`, bracketing bare IPv6 hosts so the engine can parse the result.
 String joinHostPort(String host, int port) =>
     RustDnsConfigCore.instance.joinHostPort(host, port);
 
@@ -87,7 +76,6 @@ class BootstrapEntry {
   final String name;
   final String ip;
 
-  /// Only for custom entries in `bootstrap_custom_json`; presets are filtered earlier.
   final bool enabled;
 }
 
@@ -228,7 +216,6 @@ List<BootstrapEntry> defaultBootstrapEntries(AppL10n l10n) => <BootstrapEntry>[
   BootstrapEntry('preset_google', 'Google', '8.8.8.8'),
 ];
 
-/// The row the kernel exchanges for one provider.
 ProviderRow providerRowOf(DnsProviderEntry entry) => (
   id: entry.id,
   name: entry.name,
@@ -238,7 +225,6 @@ ProviderRow providerRowOf(DnsProviderEntry entry) => (
   port: entry.port,
 );
 
-/// The UI type for one kernel row.
 DnsProviderEntry providerEntryOf(ProviderRow row) => DnsProviderEntry(
   id: row.id,
   name: row.name,
@@ -259,15 +245,12 @@ class DnsConfig {
   final List<DnsProviderEntry> providers;
   final List<BootstrapEntry> bootstrap;
 
-  /// The document `ApplyDNSConfig` receives, rebuilt from [settings] so a late settings change is
-  /// never pushed stale.
   Map<String, Object?> toJson(LegacySettings settings) =>
       jsonDecode(encode(settings)) as Map<String, Object?>;
 
   String encode(LegacySettings settings) => tunnelDocument(settings).document;
 }
 
-/// One kernel call: the document plus the rows it picked.
 TunnelDocument tunnelDocument(LegacySettings settings) =>
     RustDnsConfigCore.instance.buildTunnel(
       modeRaw: settings.resolutionModeRaw,
@@ -323,19 +306,16 @@ DnsConfig buildDnsConfig(LegacySettings settings) {
   );
 }
 
-/// Parses `user_providers_json`, dropping the same rows 1.4.3 drops.
 List<DnsProviderEntry> parseUserProviders(String? raw) => [
   for (final row in RustDnsConfigCore.instance.parseUserProviders(raw))
     providerEntryOf(row),
 ];
 
-/// `bootstrap_custom_json` rows, including the toggle the settings page edits.
 List<BootstrapEntry> parseCustomBootstrapEntries(String? raw) => [
   for (final row in RustDnsConfigCore.instance.parseCustomBootstrap(raw))
     BootstrapEntry(row.id, row.name, row.ip, enabled: row.enabled),
 ];
 
-/// Writes the custom bootstrap rows back in the four-field shape the page edits.
 String encodeCustomBootstrapEntries(List<BootstrapEntry> entries) =>
     RustDnsConfigCore.instance.encodeCustomBootstrap([
       for (final entry in entries)

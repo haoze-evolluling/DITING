@@ -1,5 +1,3 @@
-//! Wire-layer cases: the key format, the record walk and the metadata the cache stores.
-
 use super::*;
 
 const CLASS_IN: u16 = 1;
@@ -26,7 +24,6 @@ fn name_wire(name: &str) -> Vec<u8> {
     out
 }
 
-/// Builds a name from raw label bytes, which is how the escape cases are spelled.
 fn name_wire_with(labels: &[&[u8]]) -> Vec<u8> {
     let mut out = Vec::new();
     for label in labels {
@@ -148,7 +145,6 @@ fn question_key_handles_the_root_name() {
 
 #[test]
 fn question_key_follows_compression_pointers() {
-    // The question points at a name stored after the question's qtype/qclass.
     let mut wire = header(0x0100, 0, 0, 0);
     wire.extend_from_slice(&[0xc0, 0x14]);
     wire.extend(TYPE_A.to_be_bytes());
@@ -183,7 +179,6 @@ fn question_key_rejects_broken_questions() {
     missing_tail.extend_from_slice(&[0, 1]);
     assert_eq!(question_key(&missing_tail), None);
 
-    // A pointer loop burns the 64-jump budget and is rejected.
     let mut looped = header(0x0100, 0, 0, 0);
     looped.extend_from_slice(&[0xc0, 0x0c]);
     looped.extend_from_slice(&[0, 0, 0, 0]);
@@ -281,8 +276,6 @@ fn response_meta_formats_ipv6_like_go() {
 
 #[test]
 fn response_meta_accepts_zero_length_records() {
-    // miekg/dns treats every rdLength == 0 record as "valid but empty" (`noRdata`), so the cache
-    // used to store such answers with no IPs and no chain targets. Keep that behaviour.
     let answers = [
         record("query.example.", TYPE_A, 300, &[]),
         record("query.example.", TYPE_AAAA, 300, &[]),
@@ -297,7 +290,6 @@ fn response_meta_accepts_zero_length_records() {
     assert!(meta.ips.is_empty());
     assert!(meta.chain_targets.is_empty());
 
-    // An empty SOA answers a negative query with its header TTL and MINIMUM zero.
     let wire = response(0x8183, &[], &[record("example.", TYPE_SOA, 30, &[])], &[]);
     let meta = parse_response(&wire).expect("empty SOA is valid");
     assert_eq!(meta.min_ttl, Some(30));
@@ -340,11 +332,8 @@ fn response_meta_skips_opt_in_answers_and_falls_back_to_soa() {
     assert_eq!(meta.answer_count, 2);
     assert_eq!(meta.min_ttl, Some(300));
     assert_eq!(ttl_values(&wire, &meta.answer_ttl_offsets), vec![300]);
-    // The answer is positive, so the authority offsets are not used even though they exist.
     assert_eq!(meta.authority_ttl_offsets, Vec::<u16>::new());
 
-    // Only an OPT answer and an SOA authority: the SOA minimum governs the TTL. The answer count
-    // is non-zero, so the authority TTL offsets stay unused (the patcher then has nothing to do).
     let wire = response(
         0x8180,
         &[opt_record(5)],
@@ -360,7 +349,6 @@ fn response_meta_skips_opt_in_answers_and_falls_back_to_soa() {
 
 #[test]
 fn response_meta_reads_negative_answers() {
-    // NXDOMAIN with the SOA in the authority section.
     let authority = [soa_record("example.", 0, 45)];
     let wire = response(0x8183, &[], &authority, &[]);
     let meta = parse_response(&wire).expect("valid response");
@@ -371,7 +359,6 @@ fn response_meta_reads_negative_answers() {
     assert!(meta.answer_ttl_offsets.is_empty());
     assert_eq!(ttl_values(&wire, &meta.authority_ttl_offsets), vec![0]);
 
-    // The header TTL wins when it is non-zero and smaller than MINIMUM.
     let wire = response(0x8183, &[], &[soa_record("example.", 20, 45)], &[]);
     assert_eq!(parse_response(&wire).unwrap().min_ttl, Some(20));
 }
@@ -389,12 +376,10 @@ fn response_meta_rejects_malformed_wire() {
     assert_eq!(parse_response(&[]), None);
     assert_eq!(parse_response(&[0; 11]), None);
 
-    // A question that claims more labels than the buffer holds.
     let mut broken_question = header(0x8180, 0, 0, 0);
     broken_question.extend_from_slice(&[9, b'a']);
     assert_eq!(parse_response(&broken_question), None);
 
-    // rdata length past the end of the message.
     let mut broken_rdata = header(0x8180, 1, 0, 0);
     broken_rdata.extend(name_wire("query.example."));
     broken_rdata.extend(TYPE_AAAA.to_be_bytes());
@@ -407,13 +392,11 @@ fn response_meta_rejects_malformed_wire() {
     broken_rdata.extend_from_slice(&[1, 2, 3, 4]);
     assert_eq!(parse_response(&broken_rdata), None);
 
-    // A CNAME whose name does not fill its rdata.
     let mut rdata = name_wire("target.example.");
     rdata.push(0);
     let answers = [record("query.example.", TYPE_CNAME, 60, &rdata)];
     assert!(parse_response(&response(0x8180, &answers, &[], &[])).is_none());
 
-    // A SOA record whose rdata stops in the middle of a 32-bit field.
     let mut partial_soa = name_wire("ns1.example.");
     partial_soa.extend_from_slice(&[0, 1]);
     assert!(parse_response(&response(
@@ -424,7 +407,6 @@ fn response_meta_rejects_malformed_wire() {
     ))
     .is_none());
 
-    // A compression pointer loop in an owner name burns the pointer budget.
     let mut looped = header(0x8180, 1, 0, 0);
     looped[4..6].copy_from_slice(&0u16.to_be_bytes());
     looped.extend_from_slice(&[0xc0, 0x0c]);
@@ -445,7 +427,6 @@ fn patch_response_replaces_id_and_ttls() {
     let patched = patch_response(&wire, &meta.answer_ttl_offsets, 0xbeef, 42).expect("patched");
     assert_eq!(&patched[0..2], &0xbeefu16.to_be_bytes());
     assert_eq!(ttl_at(&patched, meta.answer_ttl_offsets[0]), 42);
-    // The original stays untouched: the cache keeps the upstream TTL for later hits.
     assert_eq!(&wire[0..2], &0x1234u16.to_be_bytes());
     assert_eq!(ttl_at(&wire, meta.answer_ttl_offsets[0]), 300);
 
@@ -509,7 +490,6 @@ fn answer_records_expose_owner_type_ttl_and_rdata() {
 fn answer_records_stop_on_a_record_boundary() {
     let wire = response(0x8180, &[a_record("a.example.", 1, [0, 0, 0, 1])], &[], &[]);
     let mut truncated = wire.clone();
-    // The header claims two answers; the message stops after the first.
     truncated[6..8].copy_from_slice(&2u16.to_be_bytes());
     let records = parse_answer_records(&truncated).expect("lenient walk");
     assert_eq!(records.len(), 1);
@@ -517,8 +497,6 @@ fn answer_records_stop_on_a_record_boundary() {
     assert_eq!(parse_answer_records(&[0; 11]), None);
 }
 
-/// The encoder is the exact inverse of the decoder for every shape the engine synthesizes:
-/// dot-separated labels, the root name, and the escapes `UnpackDomainName` emits.
 #[test]
 fn pack_name_round_trips_through_unpack_name() {
     for name in [
@@ -544,8 +522,6 @@ fn pack_name_round_trips_through_unpack_name() {
     }
 }
 
-/// Escapes are decoded back to the byte they spell, both the `\DDD` form and the literal one, and
-/// the decoder reproduces the same presentation string.
 #[test]
 fn pack_name_decodes_escapes() {
     let mut literal = Vec::new();
@@ -565,7 +541,6 @@ fn pack_name_decodes_escapes() {
     );
 }
 
-/// The malformed shapes `UnpackDomainName` cannot produce are rejected, and the output is untouched.
 #[test]
 fn pack_name_rejects_malformed_presentation() {
     for name in [

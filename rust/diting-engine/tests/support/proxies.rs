@@ -1,16 +1,8 @@
-//! Stage 4a's loopback peers: echo servers and two fake proxies.
-//!
-//! Every byte here is real I/O on 127.0.0.1. The SOCKS5 proxy is hand-written on purpose: it lets
-//! the tests assert **what the engine asked for** (`targets`) and it can answer `UDP ASSOCIATE` with
-//! its own relay socket, which is the part of the proxy contract the engine's framing depends on.
-//! The HTTP proxy answers a fixed status and then echoes, so a `403` is as easy to test as a `200`.
-
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-/// A loopback TCP echo server; the returned counter counts accepted connections.
 pub fn spawn_tcp_echo() -> (SocketAddr, Arc<AtomicUsize>) {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind the echo server");
     let address = listener.local_addr().expect("addr");
@@ -38,7 +30,6 @@ pub fn spawn_tcp_echo() -> (SocketAddr, Arc<AtomicUsize>) {
     (address, accepted)
 }
 
-/// A loopback UDP echo server; the returned counter counts datagrams.
 pub fn spawn_udp_echo() -> (SocketAddr, Arc<AtomicUsize>) {
     let socket = std::net::UdpSocket::bind("127.0.0.1:0").expect("bind the echo server");
     socket
@@ -60,8 +51,6 @@ pub fn spawn_udp_echo() -> (SocketAddr, Arc<AtomicUsize>) {
     (address, count)
 }
 
-/// A fake SOCKS5 proxy: no-auth `CONNECT` (then echoes) and `UDP ASSOCIATE` (echoes framed
-/// datagrams back unchanged). `targets` records the `host:port` the engine asked for.
 pub struct Socks5Proxy {
     pub address: SocketAddr,
     pub targets: Arc<Mutex<Vec<String>>>,
@@ -171,7 +160,6 @@ fn serve_socks5(stream: &mut std::net::TcpStream, recorded: &Mutex<Vec<String>>,
             (relay_port & 0xff) as u8,
         ];
         let _ = std::io::Write::write_all(stream, &reply);
-        // Keep the control connection open for as long as the association lives.
         let mut sink = [0u8; 64];
         let _ = std::io::Read::read(stream, &mut sink);
         return;
@@ -193,7 +181,6 @@ fn serve_socks5(stream: &mut std::net::TcpStream, recorded: &Mutex<Vec<String>>,
     }
 }
 
-/// A fake HTTP CONNECT proxy: answers `status`, then echoes on `200`.
 pub fn spawn_http_proxy(status: &str) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind the proxy");
     let address = listener.local_addr().expect("addr");

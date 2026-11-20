@@ -1,6 +1,3 @@
-// The tunnel state machine: power transitions, the express channel, the startup
-// watchdog, on-demand SSID matching and the engine counters the native side reports.
-
 import 'dart:convert';
 
 import 'package:diting_android/data/db/rule_providers.dart';
@@ -32,7 +29,6 @@ void main() {
 void _powerGuard() {
   test('未收到授权回调时不会永远停在启动中', () {
     fakeAsync((async) {
-      // prepared: false -> the system shows the auth prompt, answered by MainActivity.
       final controller = FakeVpnController(prepared: false);
       final store = MemoryLegacyPrefsStore({
         'diting_settings': {'app_work_mode': 'normal'},
@@ -50,13 +46,11 @@ void _powerGuard() {
       async.flushMicrotasks();
       expect(c.read(powerProvider), PowerState.starting);
 
-      // A lost callback (activity recreated) must converge, or the power key stays dead.
       async.elapse(const Duration(seconds: 95));
       expect(c.read(powerProvider), PowerState.error);
       expect(c.read(powerProvider.notifier).lastError, '没有获得 VPN 授权');
       expect(c.read(legacySettingsProvider).vpnRunning, isFalse);
 
-      // The error state allows another tap.
       expect(c.read(powerProvider).isBusy, isFalse);
     });
   });
@@ -80,7 +74,6 @@ void _powerGuard() {
 
       expect(c.read(powerProvider), PowerState.starting);
       async.elapse(const Duration(seconds: 1));
-      // Native says it is not running: settle on stopped instead of error.
       expect(c.read(powerProvider), PowerState.stopped);
       expect(c.read(legacySettingsProvider).vpnRunning, isFalse);
     });
@@ -108,7 +101,6 @@ void _powerGuard() {
       addTearDown(c.dispose);
 
       c.read(powerProvider);
-      // Before the 700 ms follow-up sync, which would read the fake's fixed "not running".
       async.flushMicrotasks();
       expect(controller.startCalls, 1);
       expect(c.read(powerProvider), PowerState.running);
@@ -145,7 +137,6 @@ void _powerGuard() {
       async.elapse(const Duration(seconds: 1));
       expect(controller.startCalls, 0);
       expect(c.read(powerProvider), PowerState.stopped);
-      // The user still wants the tunnel, so the next launch keeps the intent.
       expect(c.read(legacySettingsProvider).vpnRunning, isTrue);
     });
   });
@@ -169,7 +160,6 @@ void _powerGuard() {
       async.flushMicrotasks();
       expect(c.read(powerProvider), PowerState.running);
 
-      // `status()` keeps saying running, so an expired watchdog must not corrupt state.
       controller.statusValue = const VpnStatus(running: true, persisted: true);
       async.elapse(const Duration(seconds: 120));
       expect(c.read(powerProvider), PowerState.running);
@@ -184,7 +174,6 @@ void _expressMode() {
         'dns_vpn_prefs': {
           'selected_provider_id': 'preset_google_dns',
           'theme_color_style': 'moss',
-          // App-level rules do not enter the dataset container in 1.4.3.
           'excluded_app_packages': ['com.example.skip'],
         },
         'diting_express_prefs': {
@@ -226,7 +215,6 @@ void _expressMode() {
     }) {
       final store = MemoryLegacyPrefsStore({
         'diting_settings': {'app_work_mode': 'express'},
-        // The UI and the engine both read the express data set, so its container holds the keys.
         'diting_express_prefs': {
           'selected_provider_id': 'preset_dnspod_dns',
           'ipv6_mode': 'disabled',
@@ -268,15 +256,12 @@ void _expressMode() {
       expect(settings.vpnRunning, isFalse);
     });
 
-    // Regression: the app used to write DNS settings to the normal container while the express
-    // engine read `diting_express_prefs`, so the notification ignored the user's selection.
     test('极速模式里选择的解析模式进入数据集的设置与通知文案', () async {
       final c = container(
         normal: FakeVpnController(),
         express: FakeVpnController(),
       );
       c.read(resolutionModeProvider.notifier).select(ResolutionMode.smart);
-      // The settings write is what the dataset switch follows; the engine reads prefs at start.
       expect(
         c.read(legacySettingsProvider).dnsContainer,
         LegacySettings.expressContainer,

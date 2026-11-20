@@ -1,19 +1,3 @@
-//! DNS over QUIC (RFC 9250): one bidirectional stream per query on a reused QUIC connection.
-//!
-//! `resolver_doq.go` kept a single `quic.Connection` per configured endpoint and reopened it when a
-//! stream could not be opened; the message is framed with the 2-byte length prefix, the stream is
-//! closed for writing after the request, and the response length prefix is stripped only when it
-//! declares exactly the remaining bytes (the kernel's `doq_skip`).
-//!
-//! `quinn` replaces `quic-go`. The endpoint is created lazily inside the query, because building one
-//! needs a tokio runtime and `ApplyDNSConfig` runs on the JNI thread: a resolver is configured off
-//! the runtime, so nothing here may assume one. The endpoint is kept per address family, so a v6
-//! provider does not force a dual-stack socket (`quic-go`'s `Transport{Conn: udpConn}` was bound by
-//! the outbound dialer instead).
-//!
-//! The TLS config is TLS 1.3 only with the `doq` ALPN, which is what `quic-go` required and what
-//! RFC 9250 mandates.
-
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Mutex, MutexGuard};
@@ -28,7 +12,6 @@ use crate::resolver::dial::{self, Dialer};
 use crate::resolver::session::take_live_session;
 use crate::resolver::trust::UpstreamTrust;
 
-/// The DoQ transport: a lazily created endpoint per family plus the cached sessions.
 pub struct DoqClient {
     config: quinn::ClientConfig,
     endpoint: Mutex<Option<(bool, Endpoint)>>,
@@ -54,10 +37,6 @@ impl DoqClient {
         })
     }
 
-    /// `queryDoQContext`. The first stream is opened on the cached session; if opening it fails the
-    /// session is reset, a fresh one is dialed and the stream is opened once more (`getOrCreateQUICConn`
-    /// after `resetQUICConn` in the old code). A stream that opened but failed to write or read is
-    /// reported as is — the Go code did not retry that either.
     pub async fn query(
         &self,
         dialer: &Dialer,
@@ -87,13 +66,10 @@ impl DoqClient {
             Err(_) => return Err("DoQ read: timed out".to_string()),
         };
 
-        // RFC 9250 prefixes the message with its length; strip it only when the prefix declares
-        // exactly the remaining bytes.
         let skip = doq_skip(&response);
         Ok(response[skip..].to_vec())
     }
 
-    /// The cached session for `key`, dialing one when there is none.
     async fn connect(
         &self,
         dialer: &Dialer,
@@ -125,11 +101,6 @@ impl DoqClient {
         Err(last_error)
     }
 
-    /// The cached session for `key` when it is still alive; a closed one is evicted.
-    ///
-    /// Lookup and eviction share one guard through [`take_live_session`]: re-locking
-    /// `sessions` from inside an `if let` that already holds its guard would deadlock the
-    /// calling task permanently.
     fn live_session(&self, key: &str) -> Option<quinn::Connection> {
         let mut sessions = self.lock_sessions();
         take_live_session(&mut sessions, key, |connection| {
@@ -137,18 +108,12 @@ impl DoqClient {
         })
     }
 
-    /// `resetQUICConn`: drop the session so the next query dials a fresh one.
     fn forget(&self, key: &str) {
         if let Some(connection) = self.lock_sessions().remove(key) {
             connection.close(0u32.into(), b"reset");
         }
     }
 
-    /// Drops the cached sessions **without** closing them.
-    ///
-    /// Used when a resolver is replaced while queries may still be in flight: closing the cached
-    /// connections would fail those queries with a random transport error. They end on their own
-    /// (idle timeout) or when this client itself is dropped.
     pub fn detach(&self) {
         self.sessions
             .lock()
@@ -156,7 +121,6 @@ impl DoqClient {
             .clear();
     }
 
-    /// Closes every session and the endpoint (`Shutdown`).
     pub fn close(&self) {
         for (_, connection) in self
             .sessions
@@ -193,8 +157,6 @@ impl DoqClient {
             "0.0.0.0:0".parse().expect("a valid v4 bind")
         };
         let endpoint = if dialer.protector().is_installed() {
-            // QUIC's socket is not connected until the endpoint starts a handshake, so protecting
-            // it right after creation is exactly the window `VpnService.protect` needs.
             let socket = dial::bind_udp(bind, dialer.protector())
                 .map_err(|error| format!("DoQ packet outbound: {error}"))?;
             let runtime = quinn::default_runtime()
@@ -221,7 +183,6 @@ impl Drop for DoqClient {
     }
 }
 
-/// `OpenStreamSync` under the DoQ query budget.
 async fn open_stream(
     connection: &quinn::Connection,
     budget: Duration,
@@ -233,7 +194,6 @@ async fn open_stream(
     }
 }
 
-/// One framed request on the opened stream, then the whole response up to the read cap.
 async fn exchange(
     mut send: SendStream,
     mut recv: RecvStream,

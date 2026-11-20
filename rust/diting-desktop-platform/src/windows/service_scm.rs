@@ -1,9 +1,3 @@
-//! Native SCM calls used by [`super::service`].
-//!
-//! Each function maps one service-control operation and reports the same Chinese error text as the
-//! former Go implementation. Keeping them apart leaves the manager file small and focused on
-//! elevation and status presentation.
-
 use std::ffi::c_void;
 use std::ptr;
 
@@ -30,10 +24,8 @@ use crate::error::{PlatformError, PlatformResult};
 use super::elevate::quote_argument;
 use super::SERVICE_DISPLAY_NAME;
 
-/// `DELETE` access right (0x00010000), used to remove a service object.
 const SERVICE_DELETE_ACCESS: u32 = 0x0001_0000;
 
-/// Description registered with the SCM, matching the former Go service.
 const SERVICE_DESCRIPTION: &str =
     "谛听 Windows 端 DNS 内核特权服务，负责双栈物理网卡 DNS 接管与多协议上游转发。";
 
@@ -46,7 +38,6 @@ fn wide(text: &str) -> Vec<u16> {
 }
 
 fn open_scm(access: u32) -> PlatformResult<SC_HANDLE> {
-    // SAFETY: null machine/database means the local SCM; the handle is returned to the caller.
     let scm = unsafe { OpenSCManagerW(ptr::null(), ptr::null(), access) };
     if scm.is_null() {
         Err(PlatformError::message(format!(
@@ -60,7 +51,6 @@ fn open_scm(access: u32) -> PlatformResult<SC_HANDLE> {
 
 fn open_service(scm: SC_HANDLE, service_name: &str, access: u32) -> PlatformResult<SC_HANDLE> {
     let name = wide(service_name);
-    // SAFETY: `scm` is valid and `name` is NUL-terminated.
     let service = unsafe { OpenServiceW(scm, name.as_ptr(), access) };
     if service.is_null() {
         Err(PlatformError::message(format!(
@@ -83,7 +73,6 @@ pub(super) fn query_start_type(service_name: &str) -> PlatformResult<u32> {
     };
 
     let mut needed = 0u32;
-    // SAFETY: the first call only asks for the required size.
     unsafe {
         QueryServiceConfigW(service, ptr::null_mut(), 0, &mut needed);
         let error = GetLastError();
@@ -119,7 +108,6 @@ pub(super) fn query_start_type(service_name: &str) -> PlatformResult<u32> {
 pub(super) fn query_scm(service_name: &str) -> PlatformResult<(bool, bool, String)> {
     let scm = open_scm(SC_MANAGER_CONNECT)?;
     let name = wide(service_name);
-    // SAFETY: `scm` is valid and `name` is NUL-terminated.
     let service = unsafe { OpenServiceW(scm, name.as_ptr(), SERVICE_QUERY_STATUS) };
     unsafe { CloseServiceHandle(scm) };
     if service.is_null() {
@@ -133,7 +121,6 @@ pub(super) fn query_scm(service_name: &str) -> PlatformResult<(bool, bool, Strin
     }
 
     let mut status: SERVICE_STATUS = unsafe { std::mem::zeroed() };
-    // SAFETY: `service` is valid and `status` is a valid out-pointer.
     let result = unsafe { QueryServiceStatus(service, &mut status) };
     unsafe { CloseServiceHandle(service) };
     if result == 0 {
@@ -157,7 +144,6 @@ pub(super) fn query_scm(service_name: &str) -> PlatformResult<(bool, bool, Strin
     ))
 }
 
-/// Builds the SCM `ImagePath`: the quoted executable, `-run`, then any forwarded flags.
 fn service_command_line(exe_path: &str, args: &[String]) -> String {
     let mut line = format!("\"{exe_path}\" -run");
     for argument in args {
@@ -167,10 +153,6 @@ fn service_command_line(exe_path: &str, args: &[String]) -> String {
     line
 }
 
-/// Registers `exe_path` as an auto-start service running `diting-service -run`.
-///
-/// An already-registered service is treated as success: the desktop UI calls install before start
-/// on every "enable" click, and the former Go implementation ignored the duplicate error too.
 pub(super) fn install_service_native(
     service_name: &str,
     exe_path: &str,
@@ -181,7 +163,6 @@ pub(super) fn install_service_native(
     let name = wide(service_name);
     let display = wide(SERVICE_DISPLAY_NAME);
     let command_line = wide(&service_command_line(exe_path, args));
-    // SAFETY: all pointers reference NUL-terminated buffers that outlive the call.
     let service = unsafe {
         CreateServiceW(
             scm,
@@ -210,12 +191,10 @@ pub(super) fn install_service_native(
         )));
     }
 
-    // The description is cosmetic; a failure must not fail the installation.
     let description = wide(SERVICE_DESCRIPTION);
     let mut info = SERVICE_DESCRIPTIONW {
         lpDescription: description.as_ptr() as *mut u16,
     };
-    // SAFETY: `service` is valid and `info` matches SERVICE_CONFIG_DESCRIPTION.
     unsafe {
         ChangeServiceConfig2W(
             service,
@@ -237,7 +216,6 @@ pub(super) fn start_service_native(service_name: &str) -> PlatformResult<()> {
             return Err(error);
         }
     };
-    // SAFETY: no service arguments are passed.
     let result = unsafe { StartServiceW(service, 0, ptr::null()) };
     let error = last_error();
     unsafe {
@@ -262,7 +240,6 @@ pub(super) fn stop_service_native(service_name: &str) -> PlatformResult<()> {
         }
     };
     let mut status: SERVICE_STATUS = unsafe { std::mem::zeroed() };
-    // SAFETY: `service` is valid and `status` is a valid out-pointer.
     let result = unsafe { ControlService(service, SERVICE_CONTROL_STOP, &mut status) };
     let error = last_error();
     unsafe {
@@ -280,7 +257,6 @@ pub(super) fn stop_service_native(service_name: &str) -> PlatformResult<()> {
 pub(super) fn delete_service_native(service_name: &str) -> PlatformResult<()> {
     let scm = open_scm(SC_MANAGER_CONNECT)?;
     let name = wide(service_name);
-    // SAFETY: `scm` and `name` are valid.
     let service = unsafe { OpenServiceW(scm, name.as_ptr(), SERVICE_DELETE_ACCESS) };
     if service.is_null() {
         let error = last_error();
@@ -292,7 +268,6 @@ pub(super) fn delete_service_native(service_name: &str) -> PlatformResult<()> {
             "删除服务 [{service_name}] 失败: Windows 错误码 {error}"
         )));
     }
-    // SAFETY: `service` is valid; the handle is closed afterwards.
     let result = unsafe { DeleteService(service) };
     let error = last_error();
     unsafe {

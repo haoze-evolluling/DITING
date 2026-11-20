@@ -1,9 +1,3 @@
-//! Fixed-layout payload reader/writer for the `dart:ffi` boundary.
-//!
-//! Little-endian, matching the Dart side (`ByteData.getUint32(..., Endian.little)`). Strings are a
-//! `u32` byte length plus UTF-8; optional strings use `u32::MAX` as the absent marker, so a payload
-//! never needs a separate presence bit.
-
 pub const NONE: u32 = u32::MAX;
 
 pub struct Writer {

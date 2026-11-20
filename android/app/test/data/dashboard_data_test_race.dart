@@ -1,7 +1,5 @@
 part of 'dashboard_data_test.dart';
 
-/// Pins 1.4.3 `RaceLogDao.strategyStats`: `primaryWins` needs the primary to win and succeed,
-/// `selectedSuccesses` excludes fallback rescues, and `since` filters on `timestamp`
 
 void _raceStats() {
   setUpAll(() {
@@ -150,7 +148,6 @@ void _raceStats() {
   });
 }
 
-/// Guards real-data wiring in the database: no bucket counted as passed, no demo fallback
 
 void _siteLatencyCatalog() {
   test('id 与 host 都不重复', () {

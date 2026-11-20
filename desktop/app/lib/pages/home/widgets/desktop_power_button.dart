@@ -1,5 +1,3 @@
-/// The dashboard's primary action, in the app bar where upstream keeps its core button: it starts
-/// or stops the DNS listener, and the service, not this widget, decides what state that leaves.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

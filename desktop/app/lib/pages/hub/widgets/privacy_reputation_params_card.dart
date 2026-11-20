@@ -1,8 +1,3 @@
-/// The reputation lookup parameters: timeout, cache size and cache lifetime.
-///
-/// The old desktop console's `SafeBrowsingCard.vue` keeps these three numbers under the switch; here
-/// they are their own card so the lookup's counters do not share a card with a form. They are a draft
-/// that saves with the button, and the service's normalised answer is adopted afterwards.
 library;
 
 import 'dart:async';

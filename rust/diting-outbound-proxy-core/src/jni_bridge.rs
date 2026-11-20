@@ -1,10 +1,3 @@
-//! JNI entry points for the Kotlin storage/UID bridge
-//! (`com.haoze.diting.proxy.OutboundProxyNative`).
-//!
-//! Protocol and scope normalization, target filtering and the `packages` → `uids` rewrite are the
-//! same functions the Dart side uses; only the transport differs. A null answer means the kernel
-//! could not decode the call, and Kotlin turns that into an `IllegalStateException`.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JObject, JString};
@@ -22,7 +15,6 @@ fn to_jstring(env: &JNIEnv<'_>, value: String) -> jstring {
     }
 }
 
-/// `OutboundProxyNative.normalizeProtocol(String): String`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_normalizeProtocol<'local>(
     mut env: JNIEnv<'local>,
@@ -39,7 +31,6 @@ pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_normalize
     }
 }
 
-/// `OutboundProxyNative.normalizeScope(String): String`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_normalizeScope<'local>(
     mut env: JNIEnv<'local>,
@@ -56,7 +47,6 @@ pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_normalize
     }
 }
 
-/// `OutboundProxyNative.normalizeTargets(String): String`, newline-separated in and out.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_normalizeTargets<'local>(
     mut env: JNIEnv<'local>,
@@ -73,7 +63,6 @@ pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_normalize
     }
 }
 
-/// `OutboundProxyNative.packages(String): String?`, newline-separated; null means no per-app list.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_packages<'local>(
     mut env: JNIEnv<'local>,
@@ -90,7 +79,6 @@ pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_packages<
     }
 }
 
-/// `OutboundProxyNative.applyUids(String, String): String`; the original document on any failure.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_applyUids<'local>(
     mut env: JNIEnv<'local>,

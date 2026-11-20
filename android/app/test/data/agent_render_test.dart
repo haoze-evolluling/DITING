@@ -1,5 +1,3 @@
-// Markdown rendering and the analysis session that feeds it.
-
 import 'dart:async';
 
 import 'package:diting_android/data/agent/agent_analysis_target.dart';
@@ -110,7 +108,6 @@ const _colors = MarkdownColors(
   tertiary: Color(0xFF00FF00),
 );
 
-/// Answers each request with a scripted delay, so two runs can finish out of order.
 void _agentSession() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
@@ -121,7 +118,6 @@ void _agentSession() {
       overrides: [
         agentChatConfigProvider.overrideWithValue(_config),
         agentApiClientProvider.overrideWithValue(ScriptedClient(replies)),
-        // No legacy database in a unit test: the domain branch tolerates null.
         activeLogDatabaseProvider.overrideWith((ref) async => null),
       ],
     );
@@ -147,7 +143,6 @@ void _agentSession() {
       final newSession = notifier.start(const AgentDomainTarget('new.test'));
       expect(newSession, greaterThan(oldSession));
 
-      // The abandoned run is dropped before it reaches the network, so only one call is made.
       await Future<void>.delayed(Duration.zero);
       await Future<void>.delayed(Duration.zero);
       expect(client.calls, 1);
@@ -176,7 +171,6 @@ void _agentSession() {
       expect(cancelled.idle, isTrue);
       expect(cancelled.error, isNull);
 
-      // The socket is closed, so the pending future must not resurrect the run.
       reply.complete(const AgentChatResult(content: '迟到的结论', model: 'm1'));
       await Future<void>.delayed(Duration.zero);
       expect(container.read(agentAnalysisProvider).idle, isTrue);

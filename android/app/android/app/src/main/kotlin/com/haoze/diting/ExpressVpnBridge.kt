@@ -10,7 +10,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Dart-facing control plane for the express-mode (narrow-route) tunnel
 class ExpressVpnBridge(
     private val activity: Activity,
     messenger: BinaryMessenger,
@@ -30,7 +29,6 @@ class ExpressVpnBridge(
                 result.success(true)
             }
             "status" -> result.success(ExpressVpnService.status(activity))
-            // Express collects no traffic stats: answer with zeros, not a MissingPluginException.
             "trafficRates" -> result.success(
                 mapOf(
                     "running" to ExpressVpnService.isRunning,
@@ -39,14 +37,12 @@ class ExpressVpnBridge(
                     "unsupported" to true,
                 )
             )
-            // Null on success, otherwise the error text.
             "applyDnsConfig" -> result.success(
                 RuntimeDnsConfig.applyExpress(
                     activity,
                     call.argument<String>("dnsConfig").orEmpty(),
                 )
             )
-            // Re-applies the rule snapshot to a running tunnel; no-op when stopped.
             "reloadRules" -> {
                 ExpressVpnService.requestReload(activity)
                 result.success(true)
@@ -71,11 +67,9 @@ class ExpressVpnBridge(
             context = activity,
             dnsConfig = dnsConfig,
             proxyJson = call.argument<String>("outboundProxy").orEmpty(),
-            // Kept out of the TUN: a proxied DNS query would otherwise re-enter the proxy.
             proxyAppPackage = call.argument<String>("proxyAppPackage").orEmpty(),
             ipv6Mode = call.argument<String>("ipv6Mode") ?: "auto",
             excludedPackages = call.argument<List<String>>("excludedPackages").orEmpty(),
-            // Blocked/inspection packages are not forwarded: this TUN has no firewall or MITM.
         )
         return try {
             ContextCompat.startForegroundService(activity, intent)

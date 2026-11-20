@@ -1,6 +1,3 @@
-// The streaming parser must classify exactly like the whole-document parse, including across chunk
-// boundaries, `$badfilter` and duplicate handling.
-
 import 'dart:typed_data';
 
 import 'package:diting_android/data/rules/rule_models.dart';
@@ -35,7 +32,6 @@ void main() {
     for (var i = 0; i < 2500; i++) {
       lines.add('||host$i.example.com^');
     }
-    // Lands in a later chunk than `ads.example.com`.
     lines.add('||ads.example.com^\$badfilter');
     final text = lines.join('\n');
 
@@ -97,5 +93,4 @@ List<String> _patterns(List<ParsedRule> rules) => [
 
 List<String> _sorted(List<String> values) => values..sort();
 
-/// Minimal ASCII UTF-8 encoding for the test inputs (all ASCII).
 Uint8List _utf8(String text) => Uint8List.fromList([for (final unit in text.codeUnits) unit]);

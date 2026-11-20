@@ -2,7 +2,6 @@
 
 part of 'navigation_dock.dart';
 
-/// Springs toward a target the finger may move every frame; animateWith restarts the ticker.
 class _Spring extends ChangeNotifier implements ValueListenable<double> {
   _Spring(TickerProvider vsync, this._value, {this.rest = 1e-3}) {
     _ticker = vsync.createTicker(_tick);
@@ -11,8 +10,6 @@ class _Spring extends ChangeNotifier implements ValueListenable<double> {
   late final Ticker _ticker;
   double _value;
 
-  /// How close to the target counts as settled, for a spring whose last
-  /// fraction of a pixel would otherwise keep the ticker going.
   final double rest;
   double _target = 0;
   SpringSimulation? _simulation;
@@ -85,7 +82,6 @@ class _Spring extends ChangeNotifier implements ValueListenable<double> {
   }
 }
 
-// A soft, wide drop in the manner of iOS rather than a Material elevation.
 List<BoxShadow> dockShadows(ColorScheme colorScheme) {
   final strength = colorScheme.brightness == Brightness.dark ? 3.0 : 1.0;
   return [
@@ -102,7 +98,6 @@ List<BoxShadow> dockShadows(ColorScheme colorScheme) {
   ];
 }
 
-// iOS 27 shades its glass bars only below, faintly, and no darker in dark mode.
 List<BoxShadow> dockGlassShadows(ColorScheme colorScheme) => [
   BoxShadow(
     color: colorScheme.shadow.withValues(alpha: 0.013),
@@ -111,7 +106,6 @@ List<BoxShadow> dockGlassShadows(ColorScheme colorScheme) => [
   ),
 ];
 
-/// What the dock's parts stand on: a floating surface, or glass.
 class _DockSurface extends StatelessWidget {
   const _DockSurface({
     required this.glass,
@@ -175,7 +169,6 @@ class NavigationDockDestination {
   final String label;
 }
 
-/// A floating pill of destinations after iOS's tab bar, with a lens between them.
 class NavigationDock extends StatelessWidget {
   const NavigationDock({
     super.key,
@@ -240,7 +233,6 @@ class NavigationDock extends StatelessWidget {
         ),
       ),
     );
-    // The bar rebuilds every frame its lens moves; a scope keeps that to the dock.
     return SizedBox(
       width: double.infinity,
       height: _shadowRoom + height + _bottomMarginOf(context),

@@ -1,7 +1,3 @@
-// Desktop hub security and privacy (desktop parity): the
-// protocol-hardening switches, the ECS policy and the rebinding / hosts defences. Values come from
-// `/status`; each switch patches its own endpoint and the page re-reads.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_privacy_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_privacy_page.dart';
@@ -113,7 +109,6 @@ void main() {
     expect(find.text(l10n.desktopPrivacyEcsTitle), findsOneWidget);
     expect(find.text(l10n.desktopPrivacyRebindTitle), findsOneWidget);
     expect(find.text(l10n.desktopPrivacyHostsTitle), findsOneWidget);
-    // The protocol card keeps the three protocol switches; the record-type blocks are their own card.
     expect(inProtocol(find.byType(DashboardSwitch)), findsNWidgets(3));
     expect(inBlock(find.byType(DashboardSwitch)), findsNWidgets(3));
     expect(

@@ -1,5 +1,3 @@
-//! `/api/v1/dns/lan*`.
-
 use hyper::http::Method;
 use serde_json::json;
 

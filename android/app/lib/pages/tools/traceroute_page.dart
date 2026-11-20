@@ -1,7 +1,5 @@
 part of 'tools_page.dart';
 
-/// Traceroute page with a per-hop list from `DiagnosticsRunner.traceRoute`. Hops arrive in
-/// one batch: the legacy progressive callbacks cannot survive Flutter rebuilds.
 class TraceroutePage extends ConsumerStatefulWidget {
   const TraceroutePage({super.key});
 
@@ -68,7 +66,6 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
               onSubmitted: (_) => _run(),
             ),
           ),
-          // Same hop options as the legacy `TracerouteSection`: 15 and 30, defaulting to 15.
           const SizedBox(height: 12),
           generateSection(
             title: l10n.toolTraceHops,

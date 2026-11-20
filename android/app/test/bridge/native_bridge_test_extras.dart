@@ -1,7 +1,5 @@
 part of 'native_bridge_test.dart';
 
-/// Guards the one-shot contract of `consumeStartRequest`: the native side clears the extra when
-/// read, so the tile must never be able to start a tunnel twice from one tap.
 void _tileBridge() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -28,7 +26,6 @@ void _tileBridge() {
   });
 
   test('通道缺失（桌面端）降级为 false', () async {
-    // No mock handler installed at all: the call throws MissingPluginException.
     expect(await TileBridge().consumeStartRequest(), isFalse);
   });
 
@@ -42,8 +39,6 @@ void _tileBridge() {
   });
 }
 
-/// Imported fonts are the only non-system faces now that the bundle ships none, so the bridge
-/// contract and the stored shape both have to survive a round trip.
 void _fontRepository() {
   group('FontPickResult.fromMap', () {
     test('成功时带上路径、名称与大小', () {
@@ -110,8 +105,6 @@ void _fontRepository() {
   });
 }
 
-/// The troubleshooting card is the only place a silent "no logs at all" becomes visible, so the
-/// mapping from the native payload has to keep three cases apart: fine, dropping, and unopenable.
 void _dbHealthBridge() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -209,7 +202,6 @@ void _dbHealthBridge() {
   });
 }
 
-/// Guards the one-shot cold-start contract and the warm-start push of the `diting://` channel.
 void _deepLinkBridge() {
   TestWidgetsFlutterBinding.ensureInitialized();
 

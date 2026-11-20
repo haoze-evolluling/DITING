@@ -11,9 +11,6 @@ import com.haoze.diting.vpn.VpnPlanNative
 import com.haoze.diting.vpn.applyTo
 import java.net.Inet6Address
 
-/// TUN parameters and routing. The plan (addresses, DNS, routes, MTU, IPv6 decision and the
-/// excluded-package union) comes from `rust/diting-vpn-config-core`; this object keeps the
-/// Android interface label, `VpnService.Builder` and the physical-IPv6 probe.
 object VpnRouteConfig {
     private const val TAG = "VpnRouteConfig"
 
@@ -44,12 +41,9 @@ object VpnRouteConfig {
             Log.e(TAG, "Failed to establish VPN interface", e)
             null
         }
-        // `enableIpv6` is the resolved decision (explicit mode, or the AUTO probe), not the raw
-        // mode: when the tunnel carries no IPv6 the DNS side must suppress AAAA too.
         return fd to plan.enableIpv6
     }
 
-    /// The ConnectivityManager walk only runs for `auto`; explicit modes answer without it.
     fun ipv6SupportFor(service: VpnService, ipv6Mode: String): Boolean =
         VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && hasPhysicalIpv6Support(service)
 

@@ -1,10 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-// Second hand-drawn batch: icons the first set borrowed from unrelated glyphs. Same 24x24 grid,
-// 1.8 stroke and 3..21 safe area as the rest, so they sit beside the older marks without a seam.
 part of 'app_glyphs.dart';
 
-/// Trigger-to-action flow, for automation rules: one trigger branching into two actions.
-/// Replaces the AI sparkle on an empty rule list.
 const _g_automation_ = Glyph([
   GlyphBox(8.4, 3.2, 15.6, 8.2, 2),
   GlyphPolyline([
@@ -22,7 +18,6 @@ const _g_automation_ = Glyph([
   GlyphBox(15.8, 14.6, 21, 20.4, 1.8),
 ]);
 
-/// Bell, for notification settings. `status` used to stand in for them.
 const _g_notification_ = Glyph([
   GlyphPath(
     'M12 3.1 C8.7 3.1 6.7 5.6 6.7 8.9 V13 L5.1 15.7 Q4.7 16.6 5.7 16.6 '
@@ -31,7 +26,6 @@ const _g_notification_ = Glyph([
   GlyphArc(12, 17, 2.1, math.pi * 0.2, math.pi * 0.6, role: GlyphRole.detail),
 ]);
 
-/// Phone with vibration waves, for haptics. `motion` used to stand in for it.
 const _g_vibrate_ = Glyph([
   GlyphBox(8.4, 3.2, 15.6, 20.8, 2.4),
   GlyphArc(8.4, 12, 3, math.pi * 0.75, math.pi * 0.5, role: GlyphRole.line),
@@ -44,7 +38,6 @@ const _g_vibrate_ = Glyph([
   ], role: GlyphRole.detail),
 ]);
 
-/// Thermometer, for the agent's temperature parameter.
 const _g_temperature_ = Glyph([
   GlyphPath(
     'M10.25 5.9 A1.75 1.75 0 0 1 13.75 5.9 V14.17 '
@@ -65,7 +58,6 @@ const _g_temperature_ = Glyph([
   ], role: GlyphRole.line),
 ]);
 
-/// Shield with a bolt, for automatic (dynamic) blocking. The plain shield is `verified`.
 const _g_shieldBolt_ = Glyph([
   GlyphPolyline([
     GlyphVertex(12, 2.9, 1.5),
@@ -82,7 +74,6 @@ const _g_shieldBolt_ = Glyph([
   ),
 ]);
 
-/// Battery, for the "ignore battery optimisation" rows that borrowed `bolt`.
 const _g_battery_ = Glyph([
   GlyphBox(2.6, 7.2, 18.8, 16.8, 2.4),
   GlyphPolyline([
@@ -97,7 +88,6 @@ const _g_battery_ = Glyph([
   ),
 ]);
 
-/// Beamed note pair, for the site-latency music category.
 const _g_music_ = Glyph([
   GlyphCircle(7.6, 17.4, 2.4),
   GlyphCircle(16.8, 15.6, 2.4),
@@ -119,7 +109,6 @@ const _g_music_ = Glyph([
   ], role: GlyphRole.line),
 ]);
 
-/// Screen with a play mark, for the site-latency video category (`photos` was standing in).
 const _g_video_ = Glyph([
   GlyphBox(2.8, 5.2, 21.2, 18.8, 3),
   GlyphPath(
@@ -129,13 +118,11 @@ const _g_video_ = Glyph([
   ),
 ]);
 
-/// Shopping bag, for the site-latency shopping category (`star` was standing in).
 const _g_shoppingBag_ = Glyph([
   GlyphBox(4.2, 8.4, 19.8, 20.8, 3),
   GlyphArc(12, 8.4, 3.4, math.pi, math.pi),
 ]);
 
-/// Game controller, for the site-latency game category (`puzzle` was standing in).
 const _g_gamepad_ = Glyph([
   GlyphBox(2.4, 7.6, 21.6, 17.8, 4.6),
   GlyphPolyline([
@@ -152,7 +139,6 @@ const _g_gamepad_ = Glyph([
   GlyphCircle(16.2, 16.4, 1.1, role: GlyphRole.detail, solid: true),
 ]);
 
-/// Bug, for crash-log rows that borrowed the generic `wrench`.
 const _g_bug_ = Glyph([
   GlyphPath(
     'M8.4 8.2 H15.6 A3.2 3.2 0 0 1 18.8 11.4 V14.2 '
@@ -198,14 +184,12 @@ const _g_bug_ = Glyph([
   ], role: GlyphRole.detail),
 ]);
 
-/// Cylinder, for DNS/cache stores that borrowed `layers` or `memory`.
 const _g_database_ = Glyph([
   GlyphOval(4, 3.6, 20, 8.8),
   GlyphPath('M4 6.2 V16.4 A8 2.6 0 0 0 20 16.4 V6.2'),
   GlyphPath('M4 11.6 A8 2.6 0 0 0 20 11.6', role: GlyphRole.line),
 ]);
 
-/// Heart, for sponsor/thanks rows that borrowed `star` or `verified`.
 const _g_heart_ = Glyph([
   GlyphPath(
     'M12 20.4 C10.2 18.7 3.5 14.1 3.5 9.4 C3.5 6.6 5.8 4.5 8.5 4.5 '
@@ -214,7 +198,6 @@ const _g_heart_ = Glyph([
   ),
 ]);
 
-/// Trophy, for the hit-ranking entry that borrowed `rules`.
 const _g_trophy_ = Glyph([
   GlyphPath('M7.2 4.2 H16.8 V8.6 A4.8 4.8 0 0 1 7.2 8.6 Z'),
   GlyphArc(7.2, 7.6, 2.2, math.pi * 0.5, math.pi, role: GlyphRole.line),

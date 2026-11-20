@@ -5,8 +5,6 @@ import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Immediate feedback for a config change: these switches apply at once, so a rejection
-/// would otherwise show only as the switch bouncing back.
 void showConfigHint(BuildContext context, String message) {
   showAppSnack(context, message, duration: const Duration(milliseconds: 1600));
 }
@@ -38,7 +36,6 @@ Future<bool> confirmConfigAction(
   return confirmed ?? false;
 }
 
-/// Not `ListItem.input`, which opens a dialog on tap.
 class ConfigFieldRow extends StatelessWidget {
   const ConfigFieldRow({
     super.key,
@@ -50,7 +47,6 @@ class ConfigFieldRow extends StatelessWidget {
   final String label;
   final Widget child;
 
-  /// Note below the field, better than a placeholder for explaining the value.
   final String? hint;
 
   @override
@@ -84,8 +80,6 @@ class ConfigFieldRow extends StatelessWidget {
   }
 }
 
-/// Trailing remove button, wrapped in `CommonMinIconButtonTheme`: a default IconButton tap
-/// target would stretch the row height.
 class ConfigRemoveButton extends StatelessWidget {
   const ConfigRemoveButton({
     super.key,

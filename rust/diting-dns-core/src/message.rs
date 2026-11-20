@@ -1,21 +1,3 @@
-//! Query parsing, upstream answer validation and answer extraction, straight from the wire.
-//!
-//! This is the resolver half of `android/engine/resolver_strategy.go` and the message walk of
-//! `dns_response_helpers.go` / `engine_standalone.go`:
-//!
-//! * [`query_info`] replaces `parseDNSQuery` (the logged name/type of one query),
-//! * [`validate`] replaces `validateDNSResponseParsed` (transaction, question section, rcode
-//!   policy),
-//! * [`extract`] replaces the `dns.Msg` walk that fed the null-block verdict, the resolved
-//!   address list, the CNAME/SVCB chain targets, the app-allowlist grants and the diagnostics
-//!   reply.
-//!
-//! Parsing mirrors `dns.Msg.Unpack`'s leniencies (a message may stop on a record boundary; a
-//! question may stop after its name), its header-only shortcut, and the EDNS extended rcode. The
-//! one deliberate difference is rdata of record types this kernel does not read: it is skipped by
-//! `rdLength` instead of being validated field by field, so a malformed MX/TXT is accepted here
-//! while the old Go validator rejected it. Valid answers take the same path as before.
-
 use diting_dns_wire::{
     parse_header, parse_question, read_u16, read_u32, unpack_name, ChainKind, ChainTarget,
     MessageHeader, Question,
@@ -23,47 +5,27 @@ use diting_dns_wire::{
 
 use crate::answer::{self, AnswerEntry};
 
-/// `dns.TypeA`.
 pub const TYPE_A: u16 = 1;
-/// `dns.TypeCNAME`.
 pub const TYPE_CNAME: u16 = 5;
-/// `dns.TypeAAAA`.
 pub const TYPE_AAAA: u16 = 28;
-/// `dns.TypeOPT`.
 pub const TYPE_OPT: u16 = 41;
-/// `dns.TypeSVCB`.
 pub const TYPE_SVCB: u16 = 64;
-/// `dns.TypeHTTPS`.
 pub const TYPE_HTTPS: u16 = 65;
 
-/// `dns.TypeA`, as the answer payload spells it.
 const TYPE_A_BYTE: u8 = 1;
-/// `dns.TypeAAAA`, as the answer payload spells it.
 const TYPE_AAAA_BYTE: u8 = 28;
 
-/// The status codes shared with `android/engine/dns_message_payload.go`.
 pub mod status {
-    /// The answer is usable.
     pub const ACCEPTED: u8 = 0;
-    /// The upstream answered with a non-NOERROR/NXDOMAIN rcode.
     pub const UPSTREAM_RCODE: u8 = 1;
-    /// The query itself could not be unpacked.
     pub const INVALID_QUERY: u8 = 2;
-    /// The query has the QR bit set or no question.
     pub const INVALID_QUERY_FLAGS: u8 = 3;
-    /// The response could not be unpacked.
     pub const INVALID_RESPONSE: u8 = 4;
-    /// Response bit clear, or a different transaction id.
     pub const TRANSACTION_MISMATCH: u8 = 5;
-    /// Wrong number of questions.
     pub const QUESTION_COUNT: u8 = 6;
-    /// A question differs in name, type or class.
     pub const QUESTION_MISMATCH: u8 = 7;
 }
 
-/// What `parseDNSQuery` returned for logging: the lowercased question name without its trailing
-/// dot and the query type. `valid` mirrors "the query unpacked, is not a response and has a
-/// question".
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryInfo {
     pub name: String,
@@ -81,40 +43,27 @@ impl QueryInfo {
     }
 }
 
-/// One validation outcome. `rcode` is only meaningful for [`status::UPSTREAM_RCODE`]; an accepted
-/// answer keeps its own code on the wire, so Go does not need it here.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Validation {
     pub status: u8,
     pub rcode: u16,
 }
 
-/// One A/AAAA record of an answer.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AddressRecord {
-    /// 1 for A, 28 for AAAA.
     pub rrtype: u8,
     pub ttl: u32,
-    /// The raw address bytes; empty for a record packed without rdata.
     pub address: Vec<u8>,
 }
 
-/// Everything the engine used to read off the unpacked upstream response.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Extracted {
-    /// Header rcode, including the EDNS extended bits.
     pub rcode: u16,
-    /// Every A/AAAA answer is null or loopback.
     pub blocked: bool,
-    /// `dns.Question[0].Name` of the response, raw (trailing dot kept).
     pub question_name: String,
-    /// A/AAAA answers in record order, with their TTLs.
     pub addresses: Vec<AddressRecord>,
-    /// CNAME/SVCB/HTTPS targets, normalized exactly like Go did.
     pub chain_targets: Vec<ChainTarget>,
-    /// Unique address texts in answer order.
     pub ips: Vec<String>,
-    /// `strings.Join(ips, ",")`.
     pub resolved_ips: String,
 }
 
@@ -124,7 +73,6 @@ struct Sections {
     rcode: u16,
 }
 
-/// `parseDNSQuery`: unpacks the query and reports its first question.
 pub fn query_info(query: &[u8]) -> QueryInfo {
     let Some(sections) = parse_sections(query) else {
         return QueryInfo::invalid();
@@ -140,7 +88,6 @@ pub fn query_info(query: &[u8]) -> QueryInfo {
     }
 }
 
-/// `validateDNSResponseParsed`: checks one response against the query it answers.
 pub fn validate(query: &[u8], response: &[u8]) -> Validation {
     let Some(parsed) = parse_sections(query) else {
         return Validation {
@@ -183,7 +130,6 @@ pub fn validate(query: &[u8], response: &[u8]) -> Validation {
             };
         }
     }
-    // NXDOMAIN is a valid negative answer; every other non-NOERROR code is a provider failure.
     match reply.rcode {
         0 | 3 => Validation {
             status: status::ACCEPTED,
@@ -196,11 +142,6 @@ pub fn validate(query: &[u8], response: &[u8]) -> Validation {
     }
 }
 
-/// Walks one response and returns everything the engine logs and grants from it.
-///
-/// `None` means `dns.Msg.Unpack` would have failed (short header, broken name, truncated record,
-/// or an A/AAAA whose rdata length is not 4/16). Answer sections may stop on a record boundary
-/// with records still declared, exactly like the Go unpacker.
 pub fn extract(response: &[u8]) -> Option<Extracted> {
     let header = parse_header(response)?;
     let mut extracted = Extracted {
@@ -250,8 +191,6 @@ pub fn extract(response: &[u8]) -> Option<Extracted> {
         }
 
         if rd_length == 0 {
-            // `noRdata` in miekg/dns: the record exists without a body. An A/AAAA without an
-            // address still counts as an address record and prints as `<nil>`.
             match rrtype {
                 TYPE_A => {
                     extracted.addresses.push(AddressRecord {
@@ -361,13 +300,10 @@ fn push_chain_target(targets: &mut Vec<ChainTarget>, name: &str, kind: ChainKind
     });
 }
 
-/// The ASCII half of Go's `unicode.IsSpace`.
 fn is_go_space(character: char) -> bool {
     matches!(character, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r')
 }
 
-/// Mirrors `dns.Msg.Unpack`: header, questions (lenient) and a record walk that only reads what
-/// it needs. The answer payloads are not decoded here; [`extract`] does that.
 fn parse_sections(wire: &[u8]) -> Option<Sections> {
     let header = parse_header(wire)?;
     let mut sections = Sections {

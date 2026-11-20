@@ -107,11 +107,9 @@ mixin _DragBackRecognizer on GestureRecognizer {
   Axis? get axis;
 }
 
-// Desktop text fields select with a pan, which accepts past the pan slop.
 class _DragBackGestureRecognizer extends HorizontalDragGestureRecognizer
     with _DragBackRecognizer {
   _DragBackGestureRecognizer({required this.route, super.debugOwner}) {
-    // Alone in the arena, it would win by default and start at once.
     onlyAcceptDragOnThreshold = true;
   }
 
@@ -130,8 +128,6 @@ class _DragBackGestureRecognizer extends HorizontalDragGestureRecognizer
   }
 }
 
-/// iOS's zoom dismisses on a drag toward the reading end or down that keeps
-/// within about 22° of its axis, and never on one with any upward part.
 class _DismissGestureRecognizer extends PanGestureRecognizer
     with _DragBackRecognizer {
   _DismissGestureRecognizer({required this.route, super.debugOwner}) {
@@ -190,8 +186,6 @@ class _DismissGestureRecognizer extends PanGestureRecognizer
   ) => axis != null;
 }
 
-/// Trails a target on springs, on a ticker that keeps running so that a
-/// target moved every frame still advances.
 class _DragFollower {
   _DragFollower(this._navigator, this._onChanged) {
     _ticker = _navigator.createTicker(_tick);

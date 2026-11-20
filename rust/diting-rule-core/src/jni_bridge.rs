@@ -1,25 +1,7 @@
-//! JNI entry points for the Kotlin rule loaders.
-//!
-//! * `RustRuleIndexCompiler.kt` packs the enabled rules the DB loader hands it into one byte array
-//!   (format documented on [`crate::dtri::compile_packed`]), calls
-//!   [`Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_compile`] and writes the returned DTRI
-//!   image to the index file.
-//! * `RuleSnapshotNative.kt` packs the classified rows and the index state (format documented on
-//!   [`crate::snapshot::payload`]) and calls
-//!   [`Java_com_haoze_diting_core_rule_RuleSnapshotNative_build`], receiving the
-//!   `applyRuleSnapshot` JSON document.
-//!
-//! Every failure path returns null, which the Kotlin side turns into an [IllegalStateException]:
-//! both writers are the only implementations, so a missing library or a malformed payload must fail
-//! the snapshot build.
-
 use jni::objects::{JByteArray, JObject};
 use jni::sys::{jbyteArray, jint};
 use jni::JNIEnv;
 
-/// `com.haoze.diting.core.rule.RustRuleIndexCompiler.compile(ByteArray): ByteArray?`
-///
-/// Returns null instead of throwing, and never lets a Rust panic unwind through the JVM.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_compile<'local>(
     env: JNIEnv<'local>,
@@ -37,9 +19,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_com
     }
 }
 
-/// `com.haoze.diting.core.rule.RuleSnapshotNative.build(ByteArray): ByteArray?`
-///
-/// Returns null instead of throwing, and never lets a Rust panic unwind through the JVM.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleSnapshotNative_build<'local>(
     env: JNIEnv<'local>,
@@ -58,10 +37,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleSnapshotNative_build<
     }
 }
 
-// --- `RuleIndexNative`: layout, DTRI validation and the snapshot's decisions -------------------
-//
-// Every entry decodes one payload, answers one payload and returns null on drift (which Kotlin
-// turns into an `IllegalStateException`), so nothing here can quietly fall back to a Kotlin copy.
 
 fn with_payload<F>(env: &JNIEnv<'_>, packed: &JByteArray<'_>, run: F) -> Option<Vec<u8>>
 where
@@ -78,7 +53,6 @@ fn answer(env: &JNIEnv<'_>, value: Option<Vec<u8>>) -> jbyteArray {
     }
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.paths(datasetTag: Int): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_paths<'local>(
     env: JNIEnv<'local>,
@@ -92,7 +66,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_paths<'lo
     answer(&env, answer_bytes.ok().flatten())
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.dtriValidate(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_dtriValidate<'local>(
     env: JNIEnv<'local>,
@@ -105,7 +78,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_dtriValid
     answer(&env, answer_bytes.ok().flatten())
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.snapshotPlan(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_snapshotPlan<'local>(
     env: JNIEnv<'local>,
@@ -118,7 +90,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_snapshotP
     answer(&env, answer_bytes.ok().flatten())
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.triePaths(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_triePaths<'local>(
     env: JNIEnv<'local>,
@@ -131,7 +102,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_triePaths
     answer(&env, answer_bytes.ok().flatten())
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.appAllowlist(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_appAllowlist<'local>(
     env: JNIEnv<'local>,
@@ -144,7 +114,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_appAllowl
     answer(&env, answer_bytes.ok().flatten())
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.ruleFingerprint(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_ruleFingerprint<'local>(
     env: JNIEnv<'local>,
@@ -157,7 +126,6 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_ruleFinge
     answer(&env, answer_bytes.ok().flatten())
 }
 
-/// `com.haoze.diting.core.rule.RuleIndexNative.rewriteRules(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_core_rule_RuleIndexNative_rewriteRules<'local>(
     env: JNIEnv<'local>,

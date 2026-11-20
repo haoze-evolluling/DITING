@@ -1,60 +1,32 @@
-//! One rule, reduced to the fields the matcher needs.
-//!
-//! Go still owns the rule *text*: `Raw` for the query log and `Source` for the list name. Rust only
-//! receives what a decision depends on, and reports back the index of the winning rule so Go can
-//! attach those two strings without shipping them across the boundary.
-
 use diting_go_compat::text::domain_or_suffix;
 use regex::Regex;
 
-/// `@@` exception (`ParsedRule.IsAllow`).
 pub const FLAG_ALLOW: u8 = 1 << 0;
-/// `$important`.
 pub const FLAG_IMPORTANT: u8 = 1 << 1;
-/// `/regex/` rule.
 pub const FLAG_REGEX: u8 = 1 << 2;
-/// Rule pattern contains `*`.
 pub const FLAG_WILDCARD: u8 = 1 << 3;
-/// `|domain|` form: no subdomain inheritance.
 pub const FLAG_EXACT: u8 = 1 << 4;
-/// Carries a `$dnsrewrite` action (either a rewrite or, on exceptions, a cancellation).
 pub const FLAG_REWRITE: u8 = 1 << 5;
 
-/// All flag bits this version understands; a payload with unknown bits is rejected.
 pub const KNOWN_FLAGS: u8 =
     FLAG_ALLOW | FLAG_IMPORTANT | FLAG_REGEX | FLAG_WILDCARD | FLAG_EXACT | FLAG_REWRITE;
 
-/// `dns.TypeANY`, the query type that matches every `$dnstype` restriction.
 pub const TYPE_ANY: u16 = 255;
 
-/// `dns.RcodeSuccess`.
 pub const RCODE_SUCCESS: u8 = 0;
-/// `dns.TypeCNAME`.
 pub const TYPE_CNAME: u16 = 5;
 
-/// The `$dnsrewrite` action of a rule, minus the part Go needs to build records.
-///
-/// `key` is `RewriteAction.key()` computed by Go: cancelling exceptions compare that string, so the
-/// normalization of an IP or a target name (which Go words with `net.ParseIP` and IDNA) stays in one
-/// place instead of being reimplemented here.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RewriteAction {
-    /// Bare `$dnsrewrite`: cancels every rewrite of the matched name.
     pub bare: bool,
     pub rcode: u8,
     pub rrtype: u16,
     pub key: String,
 }
 
-/// A rule as the index needs it.
 #[derive(Debug, Clone)]
 pub struct Rule {
-    /// Normalized pattern: lowercased, no trailing dot, wildcards intact.
     pub pattern: String,
-    /// Compiled pattern for `$regex`/wildcard rules, `None` for a plain domain rule.
-    ///
-    /// A pattern Go accepted but this engine cannot compile leaves `None`, which makes the rule
-    /// match nothing — the same outcome as a rule whose regex Go itself refused to compile.
     pub regex: Option<Regex>,
     pub flags: u8,
     pub dns_type: u16,
@@ -119,12 +91,10 @@ impl Rule {
         self.has(FLAG_REWRITE)
     }
 
-    /// Wildcard or regex: matched by a compiled pattern, never indexed in a trie.
     pub fn is_pattern(&self) -> bool {
         self.is_regex() || self.is_wildcard()
     }
 
-    /// `matchRulePattern`: a plain domain rule has no compiled pattern and never matches here.
     pub fn matches_pattern(&self, domain: &str) -> bool {
         match &self.regex {
             Some(regex) => regex.is_match(domain),
@@ -132,12 +102,10 @@ impl Rule {
         }
     }
 
-    /// `matchDNSType`: `$dnstype` restrictions do not apply to `ANY`/unspecified query types.
     pub fn dns_type_matches(&self, qtype: u16) -> bool {
         self.dns_type == 0 || qtype == 0 || qtype == TYPE_ANY || self.dns_type == qtype
     }
 
-    /// `ruleExcludesDomain`: `$denyallow=` and `$to=` both exclude the query target.
     pub fn excludes(&self, domain: &str) -> bool {
         self.deny_allow
             .iter()
@@ -145,12 +113,10 @@ impl Rule {
             .any(|suffix| !suffix.is_empty() && domain_or_suffix(domain, suffix))
     }
 
-    /// `matchRuleApplicable`: type restriction honoured and target not excluded.
     pub fn applicable(&self, domain: &str, qtype: u16) -> bool {
         self.dns_type_matches(qtype) && !self.excludes(domain)
     }
 
-    /// `rewriteRuleMatches`: does a cancellation exception cover this query name?
     pub fn covers(&self, domain: &str) -> bool {
         if self.is_pattern() {
             return self.matches_pattern(domain);

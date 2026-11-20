@@ -1,5 +1,3 @@
-/// Live dashboard data: speed series, traffic totals and core state; polling is explicit so tests
-/// can settle.
 library;
 
 import 'dart:async';
@@ -12,20 +10,13 @@ import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/scroll_activity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Callers of this library keep getting the board layout from one place.
 export 'package:diting_android/state/dashboard_layout_providers.dart';
 
-/// Tests must set it to false: an endless periodic rebuild keeps a frame scheduled and
-/// `pumpAndSettle` times out.
 bool debugDisableDashboardLiveUpdates = false;
 
-/// Whether [widget] belongs on the home board in [mode]. Express mode collects no traffic
-/// rates, so empty speed tiles would claim a zero rate; the card stays in the stored layout and
-/// returns in place when the mode switches back.
 bool dashboardWidgetVisibleIn(DashboardWidget widget, AppWorkMode mode) =>
     mode != AppWorkMode.express || widget != DashboardWidget.networkSpeed;
 
-/// The stored layout minus the cards the current mode cannot fill.
 final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>((ref) {
   final mode = ref.watch(workModeProvider);
   return [
@@ -34,18 +25,14 @@ final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>((ref) {
   ];
 });
 
-/// Why speed data is missing: express mode is a product fact, a missing channel a host fact.
 enum SpeedSource {
   available,
 
-  /// Express mode: `ExpressVpnService` never attaches `EngineDataPlane`.
   expressMode,
 
-  /// No `com.haoze.diting/vpn` channel (desktop, gallery, pure Dart tests).
   noNativeChannel,
 }
 
-/// Speed series snapshot. [revision] drives incremental redraws in `ui/line_chart.dart`.
 class SpeedSeries {
   const SpeedSeries({
     required this.samples,
@@ -56,7 +43,6 @@ class SpeedSeries {
   final List<SpeedSample> samples;
   final int revision;
 
-  /// When unsupported the page explains what is missing instead of drawing zeros.
   final SpeedSource source;
 
   bool get unsupported => source != SpeedSource.available;
@@ -64,7 +50,6 @@ class SpeedSeries {
   SpeedSample get last =>
       samples.isEmpty ? const SpeedSample.zero() : samples.last;
 
-  /// Whether any sample was non-zero; an all-zero curve means "no traffic yet".
   bool get hasTraffic => samples.any((sample) => !sample.isZero);
 
   List<double> upValues() => [for (final s in samples) s.up];
@@ -77,13 +62,10 @@ final speedSeriesProvider = NotifierProvider<SpeedSeriesNotifier, SpeedSeries>(
 );
 
 class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
-  /// Guards against overlapping polls reordering the samples.
   bool _inFlight = false;
 
-  /// A tick that fired mid-fling, waiting to run once the list is still.
   bool _queuedForIdle = false;
 
-  /// Shared timer and attachment count; two timers halve the window.
   Timer? _timer;
   int _attachments = 0;
 
@@ -97,12 +79,10 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
     return const SpeedSeries(samples: [], revision: 0);
   }
 
-  /// Pairs with [detachPolling]; no-op with [debugDisableDashboardLiveUpdates].
   void attachPolling() {
     _attachments++;
     if (debugDisableDashboardLiveUpdates || _timer != null) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
-    // Take one sample immediately so the first point appears at once.
     unawaited(tick());
   }
 
@@ -113,10 +93,7 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
     _timer = null;
   }
 
-  /// Samples the real rate; `unsupported` still appends a zero sample.
   Future<void> tick() async {
-    // Writing a new sample repaints the card; doing it mid-fling blocks the frame and the
-    // ballistic scroll appears to stop. Defer until the list is still.
     if (ScrollActivityGate.isScrolling) {
       if (!_queuedForIdle) {
         _queuedForIdle = true;
@@ -140,9 +117,6 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
     if (!ref.mounted) return;
     final next = SpeedSample(up: rates.txBps, down: rates.rxBps);
     final source = _speedSourceOf(rates);
-    // Nothing changed, so nothing needs redrawing. Both dashboard charts re-append the window and
-    // re-blur it on every revision bump, and each repaint of the home board costs a full-width
-    // raster; on an idle network this used to happen once a second for a curve that did not move.
     if (source == state.source &&
         state.samples.isNotEmpty &&
         state.samples.last == next) {
@@ -155,7 +129,6 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
     );
   }
 
-  /// Clears the curve (mode switch or tunnel restart).
   void clear() {
     state = const SpeedSeries(samples: [], revision: 0);
   }
@@ -170,8 +143,6 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
         : ref.read(vpnControllerProvider);
   }
 
-  /// Express mode never attaches `EngineDataPlane`, so unsupported rates there are a product fact,
-  /// not a missing channel.
   SpeedSource _speedSourceOf(VpnTrafficRates rates) {
     if (!rates.unsupported) return SpeedSource.available;
     final mode = ref.read(workModeProvider);
@@ -180,7 +151,6 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
   }
 }
 
-/// Today's traffic totals, sharing [trafficSnapshotProvider] with `/traffic`; null until ready.
 final trafficTotalsProvider = FutureProvider<TrafficTotals?>((ref) async {
   final snapshot = await ref.watch(trafficSnapshotProvider.future);
   return TrafficTotals(
@@ -189,7 +159,6 @@ final trafficTotalsProvider = FutureProvider<TrafficTotals?>((ref) async {
   );
 });
 
-/// Maps [PowerState] onto the four card levels.
 final coreStateProvider = Provider<CoreState>((ref) {
   return switch (ref.watch(powerProvider)) {
     PowerState.running => CoreState.running,

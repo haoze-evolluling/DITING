@@ -1,5 +1,3 @@
-/// Data for the log dashboard "statistics" card: request and data-usage totals over a chosen
-/// [TrafficWindow], each section with its own window.
 library;
 
 import 'package:diting_android/data/db/dns_cache_repository.dart';
@@ -13,7 +11,6 @@ import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// The card's two sections; each remembers its window for the app session.
 enum LogStatsSection { requests, data }
 
 final logStatsWindowProvider =
@@ -34,8 +31,6 @@ class LogStatsWindowNotifier extends Notifier<TrafficWindow> {
   void select(TrafficWindow window) => state = window;
 }
 
-/// Local start of [window]: midnight today, Monday, the 1st, or the epoch for all history.
-/// Matches the calendar windows of the traffic page.
 DateTime logStatsWindowStart(TrafficWindow window, [DateTime? now]) {
   final today = now ?? DateTime.now();
   final midnight = DateTime(today.year, today.month, today.day);
@@ -47,14 +42,10 @@ DateTime logStatsWindowStart(TrafficWindow window, [DateTime? now]) {
   };
 }
 
-/// [cached] never overlaps [blocked]: a cached answer is a passed one.
 typedef LogStatsRequests = ({int total, int blocked, int cached});
 
-/// [saved] is an estimate: cached answers in the window times the average cached response size,
-/// the bytes an upstream query would have returned.
 typedef LogStatsData = ({int saved, int uploaded, int downloaded});
 
-/// Same sources and counting as the request overview card, over [TrafficWindow] instead of today.
 final logStatsRequestsProvider =
     FutureProvider.family<LogStatsRequests, TrafficWindow>((ref, window) async {
       ref.watch(dnsLogRevisionProvider);
@@ -71,7 +62,6 @@ final logStatsRequestsProvider =
           try {
             http = await HttpRequestRepository(mainDb).dailyStats(since: since);
           } on DatabaseException {
-            // Older schema without the HTTPS table: DNS rows only.
           }
         }
       }

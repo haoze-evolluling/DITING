@@ -1,16 +1,11 @@
-//! Maps socket inodes from `/proc/net` to owning PIDs and identifies systemd-resolved.
-
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Builds inode → PID by walking every `/proc/<pid>/fd` symlink.
 pub(crate) fn socket_inode_owners() -> HashMap<u64, i32> {
     let mut owners = HashMap::new();
     let Ok(entries) = std::fs::read_dir("/proc") else {
         return owners;
     };
-    // The current process must be registered too: downstream checks `pid == self` to mark its own
-    // listener as harmless instead of a third-party conflict.
     for entry in entries.flatten() {
         if !entry.file_type().map(|kind| kind.is_dir()).unwrap_or(false) {
             continue;
@@ -38,13 +33,11 @@ fn collect_socket_fds(pid: i32, owners: &mut HashMap<u64, i32>) {
     }
 }
 
-/// Extracts the inode from a `socket:[12345]` symlink target.
 pub(crate) fn parse_socket_link(link: &str) -> Option<u64> {
     let inner = link.strip_prefix("socket:[")?.strip_suffix(']')?;
     inner.parse::<u64>().ok()
 }
 
-/// Reads `/proc/<pid>/comm`, returning an empty string when unavailable.
 pub(crate) fn process_name(pid: i32) -> String {
     match std::fs::read_to_string(Path::new("/proc").join(pid.to_string()).join("comm")) {
         Ok(name) => name.trim().to_string(),
@@ -52,7 +45,6 @@ pub(crate) fn process_name(pid: i32) -> String {
     }
 }
 
-/// Finds the running systemd-resolved PID, or 0 when it is not running.
 pub(crate) fn systemd_resolved_pid() -> i32 {
     let Ok(entries) = std::fs::read_dir("/proc") else {
         return 0;
@@ -71,13 +63,11 @@ pub(crate) fn systemd_resolved_pid() -> i32 {
     0
 }
 
-/// True when `/proc/<pid>/comm` names systemd-resolved.
 pub(crate) fn is_systemd_resolved_process(pid: i32) -> bool {
     let name = process_name(pid);
     name == "systemd-resolve" || name == "systemd-resolved"
 }
 
-/// True for the systemd-resolved stub addresses (127.0.0.53 and 127.0.0.54).
 pub(crate) fn is_resolved_stub_address(address: &str) -> bool {
     let host = match address.rfind(':') {
         Some(index) => &address[..index],

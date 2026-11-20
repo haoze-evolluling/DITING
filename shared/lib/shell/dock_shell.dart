@@ -8,11 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The tabbed shell shared by both app roots: six `StatefulShellRoute` branches, a floating
-/// [NavigationDock] on narrow layouts and a plain [NavigationBar] when the dock would not fit.
-///
-/// Android and desktop differ only in what surrounds it (startup gates, data sources),
-/// never in how the tabs are drawn, ordered or animated. Keep this the single implementation.
 class DockShell extends ConsumerWidget {
   const DockShell({super.key, required this.navigationShell});
 
@@ -25,11 +20,8 @@ class DockShell extends ConsumerWidget {
     final selected = _selectedIndex(destinations, navigationShell.currentIndex);
 
     void onSelected(int index) {
-      // The dock reports a destination index, `goBranch` wants a branch index; the dock is a
-      // subset of the six branches, so passing it through would be wrong.
       final branch = branchIndexOf(destinationLocation(destinations[index]));
       if (branch == navigationShell.currentIndex) {
-        // Re-tapping the current tab returns to the branch root (upstream).
         navigationShell.goBranch(branch, initialLocation: true);
         return;
       }
@@ -39,10 +31,8 @@ class DockShell extends ConsumerWidget {
     final fallback =
         destinations.isEmpty || _wantsFallbackBar(context, destinations, style);
     return Scaffold(
-      // Content adds its own bottom padding (`DockSpacer`); the dock floats over it.
       extendBody: true,
       body: DockInsetScope(
-        // Pages pushed over this shell sit above the scope and get the plain gap instead.
         inset: destinations.isEmpty
             ? DockInsetScope.pageBottomGap
             : fallback
@@ -61,9 +51,6 @@ class DockShell extends ConsumerWidget {
     );
   }
 
-  /// Maps a branch index to a dock index, or -1 when the branch is not in the dock. Never
-  /// fall back to 0: the dock would light up "home" and tapping it counts as tapping the
-  /// selected item, trapping the user.
   int _selectedIndex(List<BottomBarDestination> destinations, int branchIndex) {
     final location = branchLocationOf(branchIndex);
     final index = destinations.indexWhere(
@@ -73,7 +60,6 @@ class DockShell extends ConsumerWidget {
   }
 }
 
-/// Dock destination to route.
 String destinationLocation(BottomBarDestination destination) =>
     switch (destination) {
       BottomBarDestination.home => Routes.home,
@@ -84,8 +70,6 @@ String destinationLocation(BottomBarDestination destination) =>
       BottomBarDestination.settings => Routes.settings,
     };
 
-/// Route to the dock destination that owns it. The sidebar lists every branch, and a branch it
-/// cannot name would be a silent hole, so this throws instead of returning null.
 BottomBarDestination destinationOfBranch(String location) {
   for (final destination in BottomBarDestination.values) {
     if (destinationLocation(destination) == location) return destination;
@@ -117,10 +101,6 @@ class _Dock extends StatelessWidget {
         onSelected: onSelected,
       );
     } else {
-      // No `SafeArea`: the dock already folds the system bottom inset into its own bottom margin
-      // (`NavigationDock._bottomMarginOf`), so wrapping it would pad that inset a second time. The
-      // bar would then sit one inset higher while `insetOf` still reserves bar + margin + gap, and
-      // the reserved gap would be spent on the padding: content would rest against the glass.
       bar = NavigationDock(
         destinations: [
           for (final destination in destinations)
@@ -133,8 +113,6 @@ class _Dock extends StatelessWidget {
         onSelected: onSelected,
       );
     }
-    // Float↔dock swaps animate like FlClash's `AnimatedVisibility`: the leaving bar
-    // slides down and fades while the arriving one slides up into place.
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 260),
       switchInCurve: Curves.easeOutCubic,
@@ -150,8 +128,6 @@ class _Dock extends StatelessWidget {
   }
 }
 
-/// Whether the plain `NavigationBar` replaces the floating dock. It is meant for many items, so it
-/// also wins when the style asks for it: the widget and the inset scope must agree on this.
 bool _wantsFallbackBar(
   BuildContext context,
   List<BottomBarDestination> destinations,
@@ -162,8 +138,6 @@ bool _wantsFallbackBar(
       destinations.length > maxDockDestinations;
 }
 
-/// Tab switch animation lives in the shell route's `navigatorContainerBuilder`
-/// (`BranchTransitionShell`), so the shell body is the branch tree itself.
 
 class _FallbackBar extends StatelessWidget {
   const _FallbackBar({
@@ -176,10 +150,6 @@ class _FallbackBar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  /// Room the plain bar takes below content: its own height plus the system bottom inset plus the
-  /// clearance the floating dock leaves above itself. `NavigationBar` sits flush against the edge
-  /// inside its own `SafeArea`, so it pads the gesture inset itself and the reserve has to include
-  /// that inset; otherwise the bar eats the clearance and content rests against it.
   static double insetOf(BuildContext context) {
     final height =
         Theme.of(context).navigationBarTheme.height ??
@@ -191,8 +161,6 @@ class _FallbackBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bar = NavigationBar(
-      // `NavigationBar` requires 0 <= selectedIndex < length, but off-dock branches pass -1.
-      // Clamping satisfies the assert; `_unlit` below hides the resulting highlight.
       selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
       onDestinationSelected: onSelected,
       destinations: [
@@ -208,9 +176,6 @@ class _FallbackBar extends StatelessWidget {
     );
     if (selectedIndex >= 0) return bar;
 
-    // The current branch is not in the dock (e.g. `/settings` with the default three tabs). The
-    // dock floats over the page and lights nothing; this bar cannot express "none", so it must not
-    // claim the user is on the first tab either. Same bar, every destination painted unselected.
     final theme = Theme.of(context);
     final navigationBarTheme = theme.navigationBarTheme;
     final muted = theme.colorScheme.onSurfaceVariant;

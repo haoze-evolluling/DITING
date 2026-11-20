@@ -1,9 +1,6 @@
-//! Header and question parsing; the two readers upstream validation and the cache key need.
-
 use crate::bits::read_u16;
 use crate::name::unpack_name;
 
-/// The fixed 12-byte DNS message header.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MessageHeader {
     pub id: u16,
@@ -15,13 +12,11 @@ pub struct MessageHeader {
 }
 
 impl MessageHeader {
-    /// The `QR` bit (`dns.Msg.Response`).
     pub fn is_response(self) -> bool {
         self.flags & 0x8000 != 0
     }
 }
 
-/// One question section entry with the presentation name (`dns.Question.Name`).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Question {
     pub name: String,
@@ -29,7 +24,6 @@ pub struct Question {
     pub qclass: u16,
 }
 
-/// Reads the fixed header; `None` for anything shorter than 12 bytes.
 pub fn parse_header(wire: &[u8]) -> Option<MessageHeader> {
     if wire.len() < 12 {
         return None;
@@ -44,12 +38,6 @@ pub fn parse_header(wire: &[u8]) -> Option<MessageHeader> {
     })
 }
 
-/// Reads one question at `offset`.
-///
-/// `strict` selects between the two readers the Go side has: the cache key builder requires the
-/// full `name + qtype + qclass`; `dns.Msg.Unpack` accepts a message that stops right after the
-/// name (or after the type) and reports a zero field, which is what upstream validation used to
-/// see. Both follow compression pointers through the whole message.
 pub fn parse_question(wire: &[u8], offset: usize, strict: bool) -> Option<(Question, usize)> {
     let (name, mut next) = unpack_name(wire, offset, wire.len())?;
     if strict && next + 4 > wire.len() {

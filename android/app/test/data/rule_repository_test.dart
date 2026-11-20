@@ -1,6 +1,3 @@
-// Rule table SQL and app-scoped rules: the blacklist must never treat an app rule as
-// global, and an unavailable rule library must report itself as unavailable.
-
 import 'package:diting_shared/data/db/datasets.dart';
 import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
@@ -25,7 +22,6 @@ void main() {
   group('数据集规则库', _ruleDataSets);
 }
 
-/// Every work mode opens its own rules database and records the seed marker in its own container.
 void _ruleDataSets() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -67,8 +63,6 @@ void _ruleDataSets() {
     );
   });
 
-  // The startup timeout path re-opens on a fresh connection when the reusable single instance is
-  // wedged; a second, independent handle is what that recovery relies on.
   test('singleInstance=false 可在已有连接之外另开一条独立连接', () async {
     addTearDown(() async {
       final path = await databaseFactory.getDatabasesPath();
@@ -90,7 +84,6 @@ void _ruleDataSets() {
   });
 }
 
-/// Exercises the SQL against the exact 1.4.3 layout, a subset of `AppDatabase` v3
 void _ruleRepository() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -200,7 +193,6 @@ void _ruleRepository() {
         'enabled': 1,
       });
 
-      // 三张表里只有 block_rule 有行，allow / rewrite 计 0。
       expect(await RuleRepository(db).countUser(), 3);
     });
 
@@ -224,7 +216,6 @@ void _ruleRepository() {
 
       expect(pages, [2, 2, 1]);
       expect(rules, hasLength(5));
-      // 两个来源都读到了，来源标签才会是订阅而不是用户。
       expect(
         rules.every((rule) => rule.source == RuleSource.subscription),
         isTrue,

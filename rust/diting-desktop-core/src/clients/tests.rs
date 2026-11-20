@@ -100,7 +100,6 @@ fn groups_disabled_always_defaults() {
         resolver.resolve("10.1.2.3".parse().unwrap()),
         DEFAULT_GROUP.to_string()
     );
-    // The configured copy is still reported.
     assert_eq!(resolver.groups(), groups);
 }
 
@@ -180,7 +179,6 @@ fn activity_is_recorded_and_info_is_sorted() {
     assert_eq!(info.len(), 3);
     assert_eq!(info[0].ip, "10.0.0.2".parse::<std::net::IpAddr>().unwrap());
     assert_eq!(info[0].query_count, 2);
-    // Alias-only clients are listed with zero activity.
     let never = info
         .iter()
         .find(|entry| entry.name == "Never-Seen")

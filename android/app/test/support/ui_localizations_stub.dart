@@ -1,7 +1,6 @@
 import 'package:diting_shared/ui/l10n.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Minimal [UiLocalizations] for tests and the demo app; `lib/ui` asserts it is present
 class StubUiLocalizations extends UiLocalizations {
   StubUiLocalizations();
 

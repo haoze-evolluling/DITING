@@ -10,29 +10,12 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 
-/// Watches the system VPN slot after `onRevoke`, so a tunnel displaced by another app can come
-/// back once that app lets go of it.
-///
-/// `onRevoke` fires both when another app takes the slot and when the user disconnects us from
-/// the system settings. Only the first one is followed by a foreign VPN network, so a revoke that
-/// no VPN network follows within the confirmation window is treated as the user's choice.
-///
-/// Never call `VpnService.prepare` while the slot is occupied: for a pre-consented app it
-/// silently re-prepares this package and tears the other VPN down. [Listener.onReleased] only
-/// fires after the slot stayed free for the debounce window.
-///
-/// The phases, deadlines, debounce and next-poll delays live in
-/// `rust/diting-vpn-config-core/src/watchdog.rs`; this class keeps the Handler, the
-/// ConnectivityManager callback and the listener calls. All callbacks run on the main thread.
 class VpnChannelWatchdog(context: Context, private val listener: Listener) {
     interface Listener {
-        /// Another VPN holds the slot.
         fun onOccupied()
 
-        /// The slot has been free long enough; the owner may try to reclaim it.
         fun onReleased()
 
-        /// No other VPN showed up after the revoke: the user turned the tunnel off.
         fun onUserDisconnect()
     }
 
@@ -57,7 +40,6 @@ class VpnChannelWatchdog(context: Context, private val listener: Listener) {
         active = true
         val grace = VpnWatchdogNative.start(newHandle, SystemClock.elapsedRealtime())
         registerCallback()
-        // Our own network is torn down asynchronously; reading it now would count as "occupied".
         handler.postDelayed(tick, grace)
     }
 
@@ -73,7 +55,6 @@ class VpnChannelWatchdog(context: Context, private val listener: Listener) {
         }
     }
 
-    /// One native poll; returns the next delay. A user disconnect stops the watchdog first.
     private fun evaluate(): Long {
         if (!active) return 0
         val step = VpnWatchdogNative.evaluate(
@@ -95,7 +76,6 @@ class VpnChannelWatchdog(context: Context, private val listener: Listener) {
         return if (active) step.nextDelayMs else 0
     }
 
-    /// Polling covers VPNs whose callbacks this UID is not sent; the callback only makes it faster.
     private fun registerCallback() {
         val manager = connectivity ?: return
         val request = NetworkRequest.Builder()
@@ -135,12 +115,10 @@ class VpnChannelWatchdog(context: Context, private val listener: Listener) {
         private const val WORK_MODE_PREFS = "diting_settings"
         private const val KEY_WORK_MODE = "app_work_mode"
 
-        /// Settings page switch, written by Flutter; on unless the user turned it off.
         fun enabled(context: Context): Boolean =
             context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(KEY_ENABLED, true)
 
-        /// Legacy `app_work_mode`: `normal` / `express`; missing means normal.
         fun workMode(context: Context): String =
             context.getSharedPreferences(WORK_MODE_PREFS, Context.MODE_PRIVATE)
                 .getString(KEY_WORK_MODE, null) ?: "normal"

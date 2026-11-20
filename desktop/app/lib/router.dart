@@ -28,11 +28,6 @@ import 'package:diting_shared/routes/page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Desktop route table: [desktopBranchOrder], the desktop's own grouping of the shared paths. Only
-/// the pages differ from Android's table, because their data sources do.
-///
-/// No first-run redirect: the agreement, work-mode and onboarding gates belong to the Android
-/// startup flow, and a desktop session that has not accepted anything yet has no tunnel to guard.
 GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -41,8 +36,6 @@ GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
         builder: (context, state, navigationShell) =>
             DesktopShell(navigationShell: navigationShell),
         branches: [
-          // Driven by [desktopBranchOrder] so a path can never drift from the desktop information
-          // architecture; the guard test compares the two lists.
           for (final location in desktopBranchOrder)
             StatefulShellBranch(
               routes: [
@@ -62,8 +55,6 @@ GoRouter createDesktopRouter({String initialLocation = Routes.home}) {
   );
 }
 
-/// Branch root to page. Every [desktopBranchOrder] entry must be handled; the throw is a build-time
-/// tripwire for a branch added to the table without a desktop page.
 Widget _pageOf(String location) => switch (location) {
   Routes.home => const DesktopHomePage(),
   Routes.hub => const DesktopFeatureHubPage(),
@@ -71,9 +62,6 @@ Widget _pageOf(String location) => switch (location) {
   _ => throw StateError('No desktop page for branch $location'),
 };
 
-/// Sub-pages live inside the branch, so the branch's record (and its tab) stays current while the
-/// page is open. Each one hangs off the branch that owns its entry, which is why the redirects of
-/// the old six-branch table land under `home` and `hub` instead of keeping their old prefixes.
 List<RouteBase> _subRoutesOf(String location) => switch (location) {
   Routes.home => [
     GoRoute(

@@ -1,5 +1,3 @@
-/// Log mode (legacy `ui/LogRetentionSettingsScreen.kt`): `dns_log_mode`, `log_retention_days`.
-/// Crash logs live on the 故障排查 page in 数据与维护.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -66,8 +64,6 @@ class LogRetentionPage extends ConsumerWidget {
   }
 }
 
-/// Floating log window settings. The permission row is re-read on resume, since the grant happens
-/// on a system screen the app cannot observe.
 class _FloatingLogSection extends ConsumerStatefulWidget {
   const _FloatingLogSection();
 
@@ -97,8 +93,6 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
       .read(permissionStatesProvider.notifier)
       .request(AppPermission.overlay);
 
-  /// Turning it on without the permission sends the user to grant it right away; the switch stays
-  /// on, so returning with the grant needs no second tap.
   Future<void> _toggle(bool value) async {
     ref.read(floatingLogProvider.notifier).toggle(value);
     if (!value) return;

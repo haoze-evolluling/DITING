@@ -1,5 +1,3 @@
-//! Unit tests for the local asset server: the host match, the routes and the fixed headers.
-
 use super::*;
 use crate::rules::DomainRules;
 use crate::rules::{RuleSet, Rules};
@@ -36,7 +34,6 @@ fn only_the_asset_host_matches() {
     assert!(is_asset_host("local.pwhs.app"));
     assert!(is_asset_host(" Local.PWHS.app "));
     assert!(is_asset_host("local.pwhs.app:8443"));
-    // The old helper cut at the last colon whatever came before it.
     assert!(!is_asset_host("[::1]:443"));
     assert!(!is_asset_host("::1"));
     assert!(!is_asset_host("ads.local.pwhs.app"));
@@ -57,7 +54,6 @@ fn the_stylesheet_route_serves_the_scoped_css() {
         header(&response, "Content-Length"),
         Some(response.body.len().to_string().as_str())
     );
-    // The stylesheet depends on the page host, so it must not be shared between sites.
     assert_eq!(
         header(&response, "Cache-Control"),
         Some("private, max-age=300")
@@ -84,7 +80,6 @@ fn the_health_route_reports_the_payload_size() {
     assert_eq!(response.status, 200);
     assert_eq!(response.content_type, "application/json");
     assert_eq!(response.body, r#"{"status":"ok","css_bytes":4096}"#);
-    // `/health` is shareable, unlike the stylesheet.
     assert_eq!(
         header(&response, "Cache-Control"),
         Some("public, max-age=300")

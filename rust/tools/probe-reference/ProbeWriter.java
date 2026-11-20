@@ -3,11 +3,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/// Reference payload writer: the fixed layouts documented in
-/// {@code rust/diting-probe-core/src/api.rs}, written through `DataOutputStream` (big-endian).
-///
-/// <p>Package-private so both {@code ProbeParsers} (DNS replies) and {@code ProbeText}
-/// (`ping` / `traceroute` / latency) pack their answers with it.
 final class ProbeWriter {
     private final ByteArrayOutputStream out = new ByteArrayOutputStream();
     private final DataOutputStream data = new DataOutputStream(out);

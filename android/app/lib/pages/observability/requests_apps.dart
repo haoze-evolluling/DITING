@@ -1,7 +1,5 @@
 part of 'requests_page.dart';
 
-/// Display name of a package: the installed label when known, the package name otherwise
-/// (uninstalled apps keep their history).
 String _appLabelOf(WidgetRef ref, String packageName) {
   final apps = ref.watch(installedAppListProvider) ?? const [];
   for (final app in apps) {
@@ -12,7 +10,6 @@ String _appLabelOf(WidgetRef ref, String packageName) {
   return packageName;
 }
 
-/// Apps that appear in the request log, most requests first; a row opens [AppRequestsPage].
 class RequestAppsPage extends ConsumerStatefulWidget {
   const RequestAppsPage({super.key});
 
@@ -21,7 +18,6 @@ class RequestAppsPage extends ConsumerStatefulWidget {
 }
 
 class _RequestAppsPageState extends ConsumerState<RequestAppsPage> {
-  /// Filtered in Dart: the list is one row per app, small enough to hold whole.
   String _query = '';
 
   void _refresh() => ref.read(dnsLogRevisionProvider.notifier).bump();
@@ -79,7 +75,6 @@ class _RequestAppsPageState extends ConsumerState<RequestAppsPage> {
       ),
       child: PrismListView(
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 16),
-        // Header + one row per app + footer.
         itemCount: shown.length + 2,
         estimatedItemExtent: 72,
         itemBuilder: (context, index) {
@@ -135,7 +130,6 @@ class _RequestAppRow extends ConsumerWidget {
   }
 }
 
-/// Requests of one app, with the same source, status and keyword filters as [RequestsPage].
 class AppRequestsPage extends ConsumerWidget {
   const AppRequestsPage({super.key, required this.packageName});
 

@@ -1,4 +1,3 @@
-/// Painting for `mini_screen.dart`, split out to stay under the line cap.
 part of 'mini_screen.dart';
 
 class _MiniScreenPainter extends CustomPainter {
@@ -277,7 +276,6 @@ class _MiniScreenPainter extends CustomPainter {
     canvas.drawRect(bar, Paint()..color = fill);
   }
 
-  /// Glass floating bar: blur the page behind it, then layer glass and a highlight.
   void _paintGlassBar(Canvas canvas, _MiniGeometry geometry) {
     final bar = geometry.bar;
     final unit = geometry.unit;

@@ -1,9 +1,3 @@
-/// The `hub` branch's security and privacy page: the protocol-hardening switches, the record-type
-/// blocks, the ECS policy, the two built-in defence modules (rebinding and hosts), forced safe search
-/// with its rewrite TTL, and the reputation lookups with their parameters and parental control.
-///
-/// The old desktop console (`DevicesView.vue` and its `PrivacyPanel`) is the functional blueprint. The
-/// page owns no DNS logic: it reads `/api/v1/status` and posts each patch to its own endpoint.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

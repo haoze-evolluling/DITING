@@ -1,5 +1,3 @@
-//! Forced SafeSearch configuration (`/api/v1/safesearch/config`).
-
 use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::security::SAFESEARCH_SERVICES;
@@ -8,7 +6,6 @@ use diting_desktop_api::config::SafeSearchConfig;
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureSafeSearchRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureSafeSearchRequest {
@@ -20,7 +17,6 @@ pub struct ConfigureSafeSearchRequest {
     pub ttl: Option<u32>,
 }
 
-/// `ipc.SafeSearchConfigResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SafeSearchConfigResponse {

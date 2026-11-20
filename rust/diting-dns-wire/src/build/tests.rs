@@ -1,5 +1,3 @@
-//! Builder cases: round-trips through the existing readers, every rdata encoder and EDNS.
-
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use super::*;
@@ -15,7 +13,6 @@ fn record(name: &str, rtype: u16, rdata: RData) -> ResourceRecord {
     ResourceRecord::new(name, rtype, CLASS_IN, 60, rdata)
 }
 
-/// Encodes rdata with no prior message state, so names come out uncompressed.
 fn encode_rdata(rdata: &RData) -> Vec<u8> {
     let mut out = Vec::new();
     assert!(rdata.encode(&mut NameWriter::new(), &mut out));
@@ -250,7 +247,6 @@ fn svc_param_helpers_and_svcb_encoding() {
     );
     assert!(SvcParam::no_default_alpn().value.is_empty());
 
-    // Parameters are written in ascending key order, whatever order they were pushed in.
     let data = SvcbRData::new(1, "svc.example.")
         .push(SvcParam::port(443))
         .push(SvcParam::alpn(&["h2"]));
@@ -261,7 +257,6 @@ fn svc_param_helpers_and_svcb_encoding() {
     assert_eq!(encode_rdata(&RData::Svcb(data.clone())), expected);
     assert_eq!(encode_rdata(&RData::Https(data)), expected);
 
-    // Duplicate keys are invalid and make the encoder refuse the record.
     let duplicate = SvcbRData::new(1, ".")
         .push(SvcParam::port(1))
         .push(SvcParam::port(2));
@@ -388,8 +383,6 @@ fn edns_options_round_trip_and_opt_is_last() {
     assert_eq!(info.z, 0x0123);
     assert_eq!(info.options, opt.options);
 
-    // The last thing on the wire is the OPT TLV stream: an 11-byte empty OPT would end at the
-    // root/type/class/ttl/rdlen; here the unknown option is last.
     assert!(wire.ends_with(&[0xfd, 0xe9, 0x00, 0x02, 0xaa, 0xbb]));
 }
 
@@ -455,10 +448,8 @@ fn truncate_sets_tc_and_keeps_question_and_opt_when_they_fit() {
     assert!(parse_opt(&wire).is_some());
     assert!(parse_question(&wire, 12, true).is_some());
 
-    // Already within the limit: nothing to do.
     assert!(!truncate_udp(&mut wire, 512));
 
-    // Small enough for the question but not for the 11-byte OPT: the OPT is dropped.
     let mut without_opt = MessageBuilder::reply_to(&query())
         .expect("reply")
         .push_answer(record(
@@ -474,7 +465,6 @@ fn truncate_sets_tc_and_keeps_question_and_opt_when_they_fit() {
     assert_eq!(parse_header(&without_opt).unwrap().additional_count, 0);
     assert!(parse_opt(&without_opt).is_none());
 
-    // Even the header and question do not fit: the caller gets a refusal and no change.
     let mut too_small = wire.clone();
     let before = too_small.clone();
     assert!(!truncate_udp(&mut too_small, 10));

@@ -18,11 +18,6 @@ const _seedTurns = 4;
 
 enum _Reach { deep, flowing, clear }
 
-/// Fans out of [b]'s center where it flows into [a], each ray stepping as far
-/// as no distance can cross zero, to where the blend ends or deep into [a];
-/// convex, [a] holds all between the first and last of a run of those deep.
-/// Of [turns] rays, every [_seedTurns]th goes first, the rest only where the
-/// pair flows and until one cast midway lies within [tolerance] of the chord.
 Path? _bridge(
   Rect a,
   double radius,
@@ -200,10 +195,6 @@ double _smoothMin(double a, double b, double blend) {
   return lerpDouble(b, a, h)! - blend * h * (1 - h);
 }
 
-/// What [a] and [b] add to their own outlines between the centers of their
-/// facing ends: a neck, or a bulge from each toward the other. Only where they
-/// flow together, so each keeps its superellipse elsewhere, as the shader's
-/// line does.
 Path? _neck(Rect a, Rect b, double blend) {
   final from = a.right - a.shortestSide / 2;
   final to = b.left + b.shortestSide / 2;

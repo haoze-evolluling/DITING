@@ -1,6 +1,3 @@
-/// Dart side of `com.haoze.diting/troubleshooting_logs`: the per-file log manager behind
-/// 故障排查 → 日志管理. Native owns the files; every failure degrades to an empty answer so the
-/// page can show "no logs" instead of crashing.
 library;
 
 import 'package:flutter/services.dart';
@@ -23,7 +20,6 @@ enum TroubleshootLogKind {
   }
 }
 
-/// One log file in the merged timeline.
 class TroubleshootLogEntry {
   const TroubleshootLogEntry({
     required this.kind,
@@ -59,7 +55,6 @@ class TroubleshootLogEntry {
   }
 }
 
-/// A file's text plus whether the viewer had to cut it short.
 class TroubleshootLogRead {
   const TroubleshootLogRead({required this.content, required this.truncated});
 
@@ -69,7 +64,6 @@ class TroubleshootLogRead {
   static const empty = TroubleshootLogRead(content: null, truncated: false);
 }
 
-/// Where a download landed: one exact path for a single file, counts for a batch.
 class TroubleshootDownloadResult {
   const TroubleshootDownloadResult({
     this.saved = 0,
@@ -80,7 +74,6 @@ class TroubleshootDownloadResult {
   final int saved;
   final int failed;
 
-  /// `Download/<name>` for a single file; null when a batch has no single path to report.
   final String? path;
 
   bool get ok => saved > 0;
@@ -148,7 +141,6 @@ class TroubleshootingLogBridge {
   Future<TroubleshootLogRead> read(TroubleshootLogEntry entry) =>
       readByName(kind: entry.kind, name: entry.name);
 
-  /// Reads by identity alone, so the content page can be reached by route without the full entry.
   Future<TroubleshootLogRead> readByName({
     required TroubleshootLogKind kind,
     required String name,
@@ -225,11 +217,9 @@ class TroubleshootingLogBridge {
     }
   }
 
-  /// Copies one file into the Download folder; the result carries the exact path it landed at.
   Future<TroubleshootDownloadResult> download(TroubleshootLogEntry entry) =>
       _downloadCall('download', {'kind': entry.kind.tag, 'name': entry.name});
 
-  /// Copies every listed file into the Download folder, one file per log.
   Future<TroubleshootDownloadResult> downloadAll() =>
       _downloadCall('downloadAll');
 

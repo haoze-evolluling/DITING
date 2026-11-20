@@ -2,7 +2,6 @@
 
 part of 'navigation_dock.dart';
 
-/// A floating pill of destinations with a lens that springs between them, after iOS's tab bar.
 class FloatingNavigationBar extends StatefulWidget {
   const FloatingNavigationBar({
     super.key,
@@ -52,8 +51,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
 
   int get _selectedIndex => widget.selectedIndex.clamp(0, _lastIndex);
 
-  /// The current page is not in the dock. `AppShell` passes -1: nothing lights up, and a tap
-  /// commits.
   bool get _hasSelection =>
       widget.destinations.isNotEmpty && widget.selectedIndex >= 0;
 
@@ -118,7 +115,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
     }
   }
 
-  // UIKit lights the bar from the finger, washing over the rest, and spreads it as it fades.
   void _shine() {
     final glow = _glow.value;
     _touchGlow.value = LiquidGlassGlow(
@@ -159,7 +155,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
     }
   }
 
-  // UIKit keeps the lens lifted until it has risen all the way and arrived.
   void _dropLift() {
     if (!_dropping || _pointer != null || _lift.value < _liftSnap) {
       return;
@@ -202,7 +197,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
     return _leanAt(hoverAt);
   }
 
-  // A lens headed to a just-tapped destination is left for didUpdateWidget.
   void _leanLens() {
     if (_pressedIndex != null || _indexAt(_lens.target) != _selectedIndex) {
       return;
@@ -262,7 +256,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
             ? Colors.transparent
             : SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme),
         shape: _dockShape,
-        // Raw pointers rather than recognizers: a tap waiting on the arena lifts the lens late.
         child: Listener(
           behavior: HitTestBehavior.opaque,
           onPointerDown: _handlePointerDown,
@@ -274,7 +267,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
             onExit: _handleExit,
             child: Padding(
               padding: const EdgeInsets.all(_barPadding),
-              // Above the LayoutBuilder: rebuilding under one relays it out over the whole dock.
               child: RepaintBoundary(
                 child: LayoutBuilder(
                   builder: (context, constraints) {

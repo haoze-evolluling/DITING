@@ -3,11 +3,6 @@ package com.haoze.diting.log
 import android.content.Context
 import java.io.File
 
-/// One file the troubleshooting log page can list, read, delete or share.
-///
-/// Runtime captures live in `getExternalFilesDir/runtime_logs`; crash reports live in the app's
-/// private `filesDir/crash` plus the legacy `crash_logs`. [resolve] only accepts a bare name
-/// inside those directories, so a channel caller cannot address any other file.
 internal data class TroubleshootLogFile(
     val kind: String,
     val name: String,
@@ -18,13 +13,11 @@ internal object TroubleshootingLogStore {
     const val KIND_RUNTIME = "runtime"
     const val KIND_CRASH = "crash"
 
-    /// A crash report can be a whole tombstone; the viewer only needs its useful head.
     private const val MAX_READ_CHARS = 200_000
 
     private const val CRASH_DIR = "crash"
     private const val LEGACY_CRASH_DIR = "crash_logs"
 
-    /// Both kinds in one newest-first timeline, so the page can merge them directly.
     fun list(context: Context): List<TroubleshootLogFile> {
         val runtime = (RuntimeLogStore.files(context) + RuntimeEventLog.files(context)).map {
             TroubleshootLogFile(KIND_RUNTIME, it.name, it)
@@ -37,7 +30,6 @@ internal object TroubleshootingLogStore {
         return (runtime + crash).sortedByDescending { it.file.lastModified() }
     }
 
-    /// `(content, truncated)`; `(null, false)` when the name does not resolve to a readable file.
     fun read(context: Context, kind: String, name: String): Pair<String?, Boolean> {
         val file = resolve(context, kind, name) ?: return null to false
         val text = runCatching { file.readText() }.getOrNull() ?: return null to false

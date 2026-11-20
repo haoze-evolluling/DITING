@@ -1,9 +1,3 @@
-//! The desktop cache facade.
-//!
-//! `diting-dns-cache-core` owns the entry container, TTL policy and LRU. This module adds the
-//! desktop-only layer: the `:group` cache key, the Go-compatible persistence file, the exclusion
-//! patterns, the hot-entry prefetcher and the projections `/cache/*` serves.
-
 pub mod exclude;
 pub mod persist;
 
@@ -148,7 +142,6 @@ impl DesktopCache {
             .is_excluded(domain)
     }
 
-    /// How many queries the exclusion patterns have kept out of the cache so far.
     pub fn exclude_hits(&self) -> u64 {
         self.excluder
             .read()
@@ -247,8 +240,6 @@ impl DesktopCache {
         persist::load(&self.cache, path)
     }
 
-    /// Refreshes up to 64 hot entries that are about to expire. The group tag on the entry key is
-    /// preserved so a group's upstream answers stay in that group's partition.
     pub async fn prefetch(&self, resolver: &DesktopResolver) {
         let settings = self.settings();
         if !settings.enabled || !settings.prefetch_enabled {
@@ -297,8 +288,6 @@ impl DesktopCache {
             if !self.cache.refresh_begin_keyed(&entry.key) {
                 continue;
             }
-            // Cancellation (maintenance shutdown aborts the prefetch task) must not leave the
-            // claim set forever, or this key is never prefetched again.
             let _claim = RefreshClaim {
                 cache: Arc::clone(&self.cache),
                 key: entry.key.clone(),
@@ -320,7 +309,6 @@ impl DesktopCache {
     }
 }
 
-/// Releases one prefetch claim when it goes out of scope.
 struct RefreshClaim {
     cache: Arc<Cache>,
     key: Vec<u8>,

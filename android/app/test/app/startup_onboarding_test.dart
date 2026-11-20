@@ -1,5 +1,3 @@
-// First-run routing: agreement -> mode selection -> onboarding, as legacy did on startup.
-
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/app/initial_agreement.dart';
 import 'package:diting_android/pages/mode/mode_onboarding_page.dart';
@@ -7,7 +5,6 @@ import 'package:diting_android/pages/mode/mode_select_page.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// `Override` is only exported from `misc.dart`, not `flutter_riverpod.dart`.
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -32,7 +29,6 @@ void main() {
   }
 
   testWidgets('首次启动同意须知后进入模式选择', (tester) async {
-    // Fresh prefs: the agreement is the only gate already satisfied here.
     await pumpApp(tester, overrides: const []);
     expect(find.byType(InitialAgreementDialog), findsOneWidget);
 

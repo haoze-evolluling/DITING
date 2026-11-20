@@ -1,5 +1,3 @@
-//! Rule filtering, subscription lists and blocking schedules.
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Deserializer, Serialize};
@@ -7,22 +5,15 @@ use serde::{Deserialize, Deserializer, Serialize};
 use super::paths::default_filter_dir;
 use super::serde_util::{nullable_map, nullable_vec};
 
-/// Return an empty IP address for blocked names.
 pub const BLOCK_MODE_NULL_IP: &str = "null_ip";
-/// Return NXDOMAIN for blocked names.
 pub const BLOCK_MODE_NXDOMAIN: &str = "nxdomain";
-/// Return REFUSED for blocked names.
 pub const BLOCK_MODE_REFUSED: &str = "refused";
-/// Default IPv4 blocking address.
 pub const DEFAULT_BLOCKING_IPV4: &str = "0.0.0.0";
-/// Default IPv6 blocking address.
 pub const DEFAULT_BLOCKING_IPV6: &str = "::";
-/// Default interval between subscription refreshes.
 const DEFAULT_UPDATE_INTERVAL_HOURS: i32 = 24;
 
 const WEEKDAY_KEYS: [&str; 7] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
-/// A weekly blocking window.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct BlockingSchedule {
@@ -36,8 +27,6 @@ pub struct BlockingSchedule {
 }
 
 impl BlockingSchedule {
-    /// Validate the window and fill in a generated id/name. Invalid entries are dropped by the
-    /// caller, matching Go's "bad config must not disable blocking entirely" behaviour.
     pub fn normalize(&mut self) -> Result<(), String> {
         self.id = self.id.trim().to_string();
         if self.id.is_empty() {
@@ -90,7 +79,6 @@ fn parse_schedule_weekdays(days: &[String]) -> Result<(), String> {
     Ok(())
 }
 
-/// A subscription rule source.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct FilterList {
@@ -111,7 +99,6 @@ pub struct FilterList {
     pub last_error: String,
 }
 
-/// Built-in default subscription list.
 pub fn default_subscription_lists() -> Vec<FilterList> {
     vec![FilterList {
         id: "adguard-dns-filter".to_string(),
@@ -128,13 +115,10 @@ fn de_filter_lists<'de, D>(deserializer: D) -> Result<Vec<FilterList>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    // Go unmarshals `null` into a nil slice, which NormalizeFilterConfig then replaces with the
-    // built-in list. A missing key is already handled by the container default.
     Ok(Option::<Vec<FilterList>>::deserialize(deserializer)?
         .unwrap_or_else(default_subscription_lists))
 }
 
-/// Rule filter engine configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct FilterConfig {
@@ -203,13 +187,6 @@ impl Default for FilterConfig {
 }
 
 impl FilterConfig {
-    /// Mirror `NormalizeFilterConfig`.
-    ///
-    /// One deliberate deviation: the Go code drops service/group ids that are absent from the
-    /// embedded `services.json` catalog. The catalog is runtime data owned by the rule engine,
-    /// not part of this model crate, so unknown ids are retained here (trimmed and deduplicated)
-    /// and catalog validation is left to the service that owns the catalog. Dropping them here
-    /// would silently delete user selections.
     pub fn normalize(&mut self) {
         if self.block_mode.is_empty() {
             self.block_mode = BLOCK_MODE_NULL_IP.to_string();
@@ -228,8 +205,6 @@ impl FilterConfig {
         }
         retain_valid_schedules(&mut self.schedules);
 
-        // Only whitespace/dedup, like the Go implementation: validity is reported by the matcher
-        // compiler, which can produce a useful error message.
         self.bogus_nx_domain_networks =
             trim_dedup_ci(std::mem::take(&mut self.bogus_nx_domain_networks));
         self.blocked_services = trim_dedup(std::mem::take(&mut self.blocked_services));
@@ -239,7 +214,6 @@ impl FilterConfig {
     }
 }
 
-/// Retain schedules that pass validation.
 pub fn retain_valid_schedules(schedules: &mut Vec<BlockingSchedule>) {
     schedules.retain_mut(|schedule| schedule.normalize().is_ok());
 }
@@ -288,7 +262,6 @@ fn normalize_service_schedules(
     out
 }
 
-/// The built-in "bogus NXDOMAIN" address set used as a default.
 pub fn default_bogus_nx_domain_networks() -> Vec<String> {
     vec![
         "0.0.0.0/8".to_string(),
@@ -298,7 +271,6 @@ pub fn default_bogus_nx_domain_networks() -> Vec<String> {
     ]
 }
 
-/// Validate a blocking mode.
 pub fn is_valid_block_mode(mode: &str) -> bool {
     matches!(
         mode,

@@ -1,17 +1,3 @@
-//! The MITM harness: a real TLS origin, a real HTTP/1.1 client, and a bridge that turns a loopback
-//! socket into the flow channel the engine's handler consumes.
-//!
-//! Everything here is real I/O on 127.0.0.1. Only two seams are substituted, and both belong to the
-//! device in production:
-//!
-//! * the TUN device: [`spawn_flow`] accepts on a loopback listener and moves bytes between the socket
-//!   and the [`Events`] queue, exactly like the stack thread does;
-//! * the certificate authorities: the origin mints its own, and the engine's root is whatever
-//!   `startStackMitm` wrote into a scratch directory.
-//!
-//! The upstream host is a DNS name (`upstream.test`) even though the socket is loopback, because the
-//! engine verifies the upstream leaf against that ServerName and mints its own leaf for the same SNI.
-
 #![allow(dead_code)]
 
 use std::net::SocketAddr;
@@ -39,16 +25,12 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_rustls::{TlsAcceptor, TlsConnector};
 
-/// The hostname the test origins present and the engine is asked to intercept.
 pub const HOST: &str = "upstream.test";
 
-/// One origin: its CA, its listening address and what it was asked for.
 pub struct Origin {
     pub address: SocketAddr,
     pub ca_pem: String,
-    /// `(Host header, request target)` per request, in arrival order.
     pub requests: Arc<Mutex<Vec<(String, String)>>>,
-    /// The `Accept-Encoding` header of every request, for the "HTML loses it" assertion.
     pub encodings: Arc<Mutex<Vec<String>>>,
 }
 
@@ -67,7 +49,6 @@ impl Origin {
     }
 }
 
-/// A fresh origin CA plus the leaf it presents for [`HOST`].
 fn origin_pki() -> (
     CertAuthority,
     Vec<CertificateDer<'static>>,
@@ -90,17 +71,12 @@ fn now() -> i64 {
         .unwrap_or(0)
 }
 
-/// The HTML every route serves, with a `<head>` for the injector to splice into.
 pub const PAGE: &str = "<html><head><title>t</title></head><body><p>hello</p></body></html>";
 
-/// How an origin answers one request.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Route {
-    /// `text/html`, identity-encoded.
     Html,
-    /// `text/html`, gzip-encoded.
     GzipHtml,
-    /// `text/plain`, so the relay leaves it alone.
     PlainText,
 }
 
@@ -112,11 +88,7 @@ fn route_for(path: &str) -> (Route, Bytes) {
     }
 }
 
-/// A small gzip member around `data`, built once per request from a fixed dictionary.
 fn gzip(data: &[u8]) -> Vec<u8> {
-    // `flate2` is not a dependency here, so the member is hand-assembled: a stored (uncompressed)
-    // deflate block, which every decoder accepts and which keeps the assertion about the decoded
-    // page exact.
     let mut out = vec![0x1f, 0x8b, 0x08, 0x00, 0, 0, 0, 0, 0x00, 0xff];
     let mut remaining = data;
     while !remaining.is_empty() {
@@ -145,7 +117,6 @@ fn crc32(data: &[u8]) -> u32 {
     !crc
 }
 
-/// A TLS origin speaking HTTP/1.1, i.e. the "real" server behind the relay.
 pub async fn spawn_origin() -> Origin {
     let (authority, chain, key) = origin_pki();
     let mut config =
@@ -155,15 +126,12 @@ pub async fn spawn_origin() -> Origin {
             .with_no_client_auth()
             .with_single_cert(chain, key)
             .expect("the origin certificate is usable");
-    // No ALPN: the engine's upstream config offers none, exactly like Go's `tls.Config`.
     config.alpn_protocols = Vec::new();
     spawn_origin_with(config, authority.ca_pem().to_string()).await
 }
 
-/// A TLS origin that asks for a client certificate: the mTLS refusal path.
 pub async fn spawn_mtls_origin() -> Origin {
     let (authority, chain, key) = origin_pki();
-    // Any client certificate this CA signed is acceptable; the engine never sends one at all.
     let mut roots = RootCertStore::empty();
     roots
         .add(chain.first().expect("the leaf certificate").clone())
@@ -186,7 +154,6 @@ pub async fn spawn_mtls_origin() -> Origin {
     spawn_origin_with(config, authority.ca_pem().to_string()).await
 }
 
-/// A plaintext HTTP/1.1 origin for the `:80` interception path.
 pub async fn spawn_plain_origin() -> Origin {
     let listener = TcpListener::bind("127.0.0.1:0")
         .await
@@ -243,7 +210,6 @@ async fn spawn_origin_with(config: ServerConfig, ca_pem: String) -> Origin {
             let seen = Arc::clone(&seen);
             tokio::spawn(async move {
                 let Ok(tls) = acceptor.accept(stream).await else {
-                    // A client that rejects the certificate, or the mTLS request, ends here.
                     return;
                 };
                 let service = hyper::service::service_fn(move |request: Request<Incoming>| {
@@ -289,7 +255,6 @@ async fn answer(
     encodings.lock().expect("encodings").push(encoding);
 
     let (route, body) = route_for(request.uri().path());
-    // Drain the request body so keep-alive works.
     let _ = request.into_body().collect().await;
     let response = match route {
         Route::Html => http::Response::builder()
@@ -309,7 +274,6 @@ async fn answer(
     Ok(response.expect("the origin response is well formed"))
 }
 
-/// The MITM client: real TLS, real HTTP/1.1.
 pub struct Client {
     sender: hyper::client::conn::http1::SendRequest<Empty<Bytes>>,
     pub peer_certificates: Vec<CertificateDer<'static>>,
@@ -317,7 +281,6 @@ pub struct Client {
 }
 
 impl Client {
-    /// A TLS client that trusts `ca_pem` and asks for `host`.
     pub async fn connect_tls(
         address: SocketAddr,
         host: &str,
@@ -349,7 +312,6 @@ impl Client {
         Ok(Client::over(stream, peer_certificates, alpn).await)
     }
 
-    /// A plaintext client, for the `:80` path.
     pub async fn connect_plain(address: SocketAddr) -> Client {
         let tcp = TcpStream::connect(address)
             .await
@@ -378,7 +340,6 @@ impl Client {
         }
     }
 
-    /// One request; the body is read to the end.
     pub async fn request(
         &mut self,
         host: &str,
@@ -390,7 +351,6 @@ impl Client {
             .expect("the relay answers")
     }
 
-    /// The same, for the flows that end without an answer (a refusal or a reset).
     pub async fn try_request(
         &mut self,
         host: &str,
@@ -424,7 +384,6 @@ impl Client {
         Ok((status, headers, body))
     }
 
-    /// The leaf the client actually saw, as a PEM-ish debug string for assertions.
     pub fn peer_issuer_common_name(&self) -> String {
         let Some(leaf) = self.peer_certificates.first() else {
             return String::new();
@@ -438,10 +397,6 @@ impl Client {
     }
 }
 
-/// The bridge: turns one loopback connection into the flow channel the engine's handler reads.
-///
-/// Returns the address the test client dials. `target` is the flow's original destination, i.e. what
-/// the handler will dial upstream; `uid`/`app` are the attribution the gate already resolved.
 pub async fn spawn_flow(
     engine: Arc<Engine>,
     counters: Arc<TunnelCounters>,

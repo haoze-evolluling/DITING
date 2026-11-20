@@ -1,7 +1,5 @@
 part of 'tunnel_state_test.dart';
 
-/// Normal mode's root variant: the same power state machine, but the root channel instead of the
-/// VPN channel and its own persisted running flag.
 void _rootTakeover() {
   ProviderContainer container({
     required FakeVpnController normal,
@@ -33,8 +31,6 @@ void _rootTakeover() {
 
       await c.read(powerProvider.notifier).toggle();
 
-      // The native service accepts the start before its engine is up; the real state arrives
-      // through the status poll.
       expect(c.read(powerProvider), PowerState.starting);
       expect(root.startCalls, 1);
       expect(normal.startCalls, 0);

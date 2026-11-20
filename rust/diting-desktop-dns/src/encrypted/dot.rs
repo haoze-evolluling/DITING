@@ -1,11 +1,3 @@
-//! DNS over TLS (RFC 7858).
-//!
-//! A connection carries any number of length-prefixed queries, so the loop stays open until the
-//! peer closes it, a frame is malformed, or the read/idle timeout expires. SNI is only available
-//! when the handshake is driven explicitly, which is why the accept loop does not use a raw
-//! `TlsStream` split: the configured `<ClientID>.<server_name>` identity is read from the finished
-//! `ServerConnection`.
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -22,7 +14,6 @@ use super::EncryptedConfig;
 use crate::context::Transport;
 use crate::server::DnsServer;
 
-/// A peer that connects but never finishes the handshake must not pin a task forever.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub(super) async fn start(
@@ -139,8 +130,6 @@ async fn serve_connection(
     }
 }
 
-/// Reads one length-prefixed message. `None` means "close the connection": EOF, timeout, a zero
-/// length, or a short body.
 async fn read_frame<S>(stream: &mut S, timeout: Duration) -> Option<Vec<u8>>
 where
     S: AsyncRead + Unpin,
@@ -158,13 +147,11 @@ where
     }
 }
 
-/// Validates a 16-bit length prefix. Zero is rejected because a DNS message cannot be empty.
 pub(crate) fn decode_length(prefix: [u8; 2]) -> Option<usize> {
     let length = usize::from(u16::from_be_bytes(prefix));
     (length > 0).then_some(length)
 }
 
-/// Adds the 2-byte length prefix, returning `None` when the message cannot be expressed.
 pub(crate) fn encode_frame(message: &[u8]) -> Option<Vec<u8>> {
     let length = u16::try_from(message.len()).ok()?;
     if length == 0 {

@@ -1,13 +1,9 @@
-/// Dart side of `com.haoze.diting/runtime_log`: the two troubleshooting tiers under
-/// 功能中心 → 故障排查 — the on-demand `logcat` capture and the always-on structured runtime-event
-/// black box. Kept out of [PlatformBridge] because it has no crash/export coupling.
 library;
 
 import 'package:flutter/services.dart';
 
 const runtimeLogChannelName = 'com.haoze.diting/runtime_log';
 
-/// Severity tags shared with the Kotlin `RuntimeEventLog` and the Rust `runtime_event::Level`.
 abstract final class RuntimeEventLevel {
   static const debug = 0;
   static const info = 1;
@@ -16,7 +12,6 @@ abstract final class RuntimeEventLevel {
   static const fatal = 4;
 }
 
-/// Whether capture is running, plus what is on disk. Every failure degrades to "off, nothing".
 class RuntimeLogStatus {
   const RuntimeLogStatus({
     this.capturing = false,
@@ -31,20 +26,16 @@ class RuntimeLogStatus {
   final int fileCount;
   final int sizeBytes;
 
-  /// Detailed `-b all` capture vs the standard `--uid` one.
   final bool detailed;
 
-  /// The always-on event black box: its two files and their size.
   final int eventFiles;
   final int eventBytes;
 
   bool get hasLogs => fileCount > 0 || eventFiles > 0;
   bool get hasEvents => eventFiles > 0;
 
-  /// `0 B` / `12.4 KB` / `1.2 MB`; the page shows it next to the switch.
   String get sizeLabel => _label(sizeBytes);
 
-  /// The event black box's size, shown next to the structured timeline.
   String get eventSizeLabel => _label(eventBytes);
 
   static String _label(int bytes) {
@@ -87,7 +78,6 @@ class RuntimeLogBridge {
     }
   }
 
-  /// True when capture really started; false keeps the switch off instead of lying.
   Future<bool> start({bool detailed = false}) async {
     try {
       return await _channel.invokeMethod<bool>('start', {
@@ -112,7 +102,6 @@ class RuntimeLogBridge {
     }
   }
 
-  /// Switches standard/detailed; the running capture (if any) is re-armed with the new tier.
   Future<RuntimeLogStatus> setMode({required bool detailed}) async {
     try {
       final raw = await _channel.invokeMethod<Object?>('setMode', {
@@ -136,7 +125,6 @@ class RuntimeLogBridge {
     }
   }
 
-  /// The most recent structured runtime events, oldest first.
   Future<String> readEvents({int limit = 80}) async {
     try {
       return await _channel.invokeMethod<String>('readEvents', {
@@ -150,8 +138,6 @@ class RuntimeLogBridge {
     }
   }
 
-  /// Fire-and-forget: a startup milestone or a caught error goes into the always-on black box.
-  /// Never throws, so callers on the error path can ignore the future.
   Future<void> appendEvent({
     required String module,
     required String event,
@@ -166,9 +152,7 @@ class RuntimeLogBridge {
         'fields': fields,
       });
     } on MissingPluginException {
-      // The native side is absent (tests / non-Android); dropping an event is fine.
     } on PlatformException {
-      // Same: logging must never break the caller.
     }
   }
 
@@ -182,7 +166,6 @@ class RuntimeLogBridge {
     }
   }
 
-  /// Hands a (filtered) text export to the system share sheet. Never throws.
   Future<bool> shareText({
     required String text,
     String name = 'runtime-events.txt',

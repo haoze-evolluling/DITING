@@ -1,5 +1,3 @@
-//! The two documents, checked field by field: these are the bytes the engines parse.
-
 use super::*;
 
 fn preset_providers() -> Vec<Provider> {
@@ -367,7 +365,6 @@ fn server_race_mode_uses_the_picked_list_in_order() {
 fn server_race_mode_falls_back_to_the_selected_upstream() {
     let mut input = server_settings();
     input.resolution_mode_raw = "parallel_race".to_string();
-    // Nothing configured: the race list defaults to two presets, but only one exists here.
     let config = build_server(&input, &preset_upstreams()).expect("config");
     assert_eq!(config.mode, "parallel_race");
     assert_eq!(config.providers.len(), 1);

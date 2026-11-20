@@ -1,9 +1,3 @@
-/// Reverse-proxy trust for the DoH listener: the switch, the trusted sources and the forwarded header
-/// the service should believe.
-///
-/// The old desktop console's `ReverseProxyCard.vue` is the blueprint. The switch saves on the spot and
-/// the two fields are a draft that saves with its button; an unrestricted source list is warned about
-/// because anyone on that network could then claim any client address.
 library;
 
 import 'dart:async';

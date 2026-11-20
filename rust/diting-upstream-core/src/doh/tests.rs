@@ -17,7 +17,6 @@ fn the_eof_retry_happens_once_and_only_for_eof() {
     ));
     assert!(should_retry(1, "http2: server sent unexpected EOF"));
     assert!(!should_retry(2, "EOF"));
-    // Case-sensitive, like `strings.Contains(errStr, "EOF")`.
     assert!(!should_retry(1, "eof"));
     assert!(!should_retry(1, "connection refused"));
     assert!(!should_retry(1, ""));

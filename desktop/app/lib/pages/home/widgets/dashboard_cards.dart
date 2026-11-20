@@ -1,5 +1,3 @@
-/// Read-only cards of the desktop dashboard. Each one renders one slice of the polled
-/// `/api/v1/status` snapshot; the values are the service's, never a locally remembered guess.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,7 +9,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The listener itself: whether it is up, where it listens and whether the LAN can reach it.
 class DnsServiceCard extends StatelessWidget {
   const DnsServiceCard({super.key, required this.status});
 
@@ -71,7 +68,6 @@ class DnsServiceCard extends StatelessWidget {
   }
 }
 
-/// Counts since the service started, plus the live rate.
 class QueryMetricsCard extends StatelessWidget {
   const QueryMetricsCard({super.key, required this.status});
 
@@ -131,7 +127,6 @@ class QueryMetricsCard extends StatelessWidget {
   }
 }
 
-/// Two rows of two figures; the middle row of the desktop grid is built from these.
 class _MetricGrid extends StatelessWidget {
   const _MetricGrid({required this.metrics});
 
@@ -303,7 +298,6 @@ class PerformanceCard extends StatelessWidget {
   }
 }
 
-/// Which build is answering, so a bug report from this window names the running service.
 class RuntimeCard extends StatelessWidget {
   const RuntimeCard({super.key, required this.status});
 

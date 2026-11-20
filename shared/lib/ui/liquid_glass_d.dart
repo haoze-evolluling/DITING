@@ -54,7 +54,6 @@ class _LiquidGlassLayer extends Layer {
     _addFrost(builder);
   }
 
-  /// The uniforms from the pane's shape on, after where it and its texture lie.
   List<double> _look(LiquidGlassStyle style) => [
     rect.width,
     rect.height,
@@ -117,7 +116,6 @@ class _LiquidGlassLayer extends Layer {
     builder.pop();
   }
 
-  /// Draws the pane from [atlas] until its next pass; [mapping] places the slot.
   void _captureFrom(
     int pass,
     ui.Image atlas,
@@ -170,7 +168,6 @@ class _LiquidGlassLayer extends Layer {
     _captureKey = (atlas, outline, blendMode, program, uniforms);
   }
 
-  /// Frosts the pane without bending it, from the part of [atlas] behind it, which holds its blur.
   void _frostFrom(
     Canvas canvas,
     ui.Image atlas,
@@ -218,7 +215,6 @@ class _LiquidGlassLayer extends Layer {
     canvas.restore();
   }
 
-  /// Draws nothing until the host's next pass, as nothing of the pane shows.
   void _captureNothing(int pass) {
     _capturedPass = pass;
     _dropCaptured();
@@ -245,7 +241,6 @@ class _LiquidGlassLayer extends Layer {
     return recorder.endRecording();
   }
 
-  /// Thickens the tint to stand in for the frost unless the pane lies [overCapture].
   void _drawFrost(Canvas canvas, {bool overCapture = false}) {
     final tint = style.tint;
     final fill = Paint()
@@ -271,7 +266,6 @@ class _LiquidGlassLayer extends Layer {
         alpha: (style.hairline + style._hairlineSide) / 2 * 0.3,
       );
     if (outline case final outline?) {
-      // The clip keeps the inner half of a stroke twice as wide.
       canvas
         ..drawPath(outline, fill)
         ..drawPath(outline, stroke..strokeWidth = style.rimWidth * 2)
@@ -290,7 +284,6 @@ class _LiquidGlassLayer extends Layer {
   }
 }
 
-/// How far [outline] reaches from [center] on the even turns the shader reads, first toward +x.
 @visibleForTesting
 List<double> liquidGlassProfile(Path outline, Offset center) {
   const step = 2 * math.pi / _profileTurns;
@@ -369,7 +362,6 @@ const _Octant _noOctant = (
   radius: 0,
 );
 
-/// ComputeOctant in impeller/geometry/round_superellipse_param.cc, which cornerInset follows.
 _Octant _superellipseOctant(double a, double radius) {
   if (radius <= 1e-3) {
     return _noOctant;
@@ -393,7 +385,6 @@ _Octant _superellipseOctant(double a, double radius) {
 
 const _octantGap = 1 - math.sqrt1_2;
 
-/// By the ratio of an octant's side to its radius: n, and 1 / (1 - xJ / a).
 const _octantFits = [
   (2.0, 2.00000000, 1.13276676),
   (2.1, 2.18349805, 1.20311921),
@@ -431,7 +422,7 @@ List<double> _optics(double saturation, double brightness) {
   final rest = 1 - saturation;
   final kept = saturation * brightness;
   return [
-    red * rest + kept, green * rest, blue * rest, 0, 0, //
+    red * rest + kept, green * rest, blue * rest, 0, 0,
     red * rest, green * rest + kept, blue * rest, 0, 0,
     red * rest, green * rest, blue * rest + kept, 0, 0,
     0, 0, 0, 1, 0,

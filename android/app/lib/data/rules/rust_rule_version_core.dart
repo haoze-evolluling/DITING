@@ -1,10 +1,3 @@
-/// The native rule-version core: `rust/diting-rule-version-core`, loaded over `dart:ffi`.
-///
-/// Only the two pure decisions live in Rust (diff and bounded history). The database and the
-/// content hash stay here, but the diff the preview shows and the history that gets trimmed are the
-/// same implementation, so a rollback preview can never disagree with what was stored.
-///
-/// Payload: `magic "DRV1"(u32 LE) | abi(u32 LE) | JSON`. `_abiVersion` must match `ABI_VERSION`.
 library;
 
 import 'dart:convert';
@@ -12,16 +5,12 @@ import 'dart:typed_data';
 
 import 'package:diting_android/data/db/kernel_core.dart';
 
-/// Must match `ABI_VERSION` in `rust/diting-rule-version-core/src/ffi.rs`.
 const _abiVersion = 1;
 
-/// `"DRV1"` as a little-endian u32.
 const _payloadMagic = 0x31565244;
 
-/// Fixed header width: magic plus ABI version.
 const _headerBytes = 8;
 
-/// What changed between two rule sets (mirrors `RuleDiff` in Rust).
 class RuleVersionDiff {
   const RuleVersionDiff({
     required this.added,
@@ -43,7 +32,6 @@ class RuleVersionDiff {
       addedCount == 0 && removedCount == 0;
 }
 
-/// One stored rule-set snapshot.
 class RuleVersionEntry {
   const RuleVersionEntry({
     required this.hash,
@@ -74,7 +62,6 @@ class RustRuleVersionCore {
 
   final KernelCore _core;
 
-  /// Resolved library path, surfaced in diagnostics.
   String get libraryPath => _core.libraryPath;
 
   static RustRuleVersionCore? _instance;
@@ -90,7 +77,6 @@ class RustRuleVersionCore {
     ),
   );
 
-  /// The diff between two rule lists. Throws [StateError] on a rejected payload.
   RuleVersionDiff diff(List<String> oldRules, List<String> newRules) {
     final answer = _send({
       'op': 'ruleversion.diff',
@@ -107,8 +93,6 @@ class RustRuleVersionCore {
     );
   }
 
-  /// Prepends `hash` to the newest-first `existing` history, skipping an unchanged head and trimming
-  /// to `max` (kernel default when null).
   List<RuleVersionEntry> record(
     List<RuleVersionEntry> existing, {
     required String hash,

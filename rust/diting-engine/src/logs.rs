@@ -1,28 +1,3 @@
-//! The batch DNS log, the race log and the bootstrap log.
-//!
-//! `log_aggregator.go` kept three things around the Rust buffer: the flush goroutine and its
-//! lazily-armed 100 ms timer, the `encoding/json` of a drained batch, and the Kotlin callback. That
-//! is what [`Logs`] is: the buffer is [`diting_telemetry_core::LogAggregator`] (2048 slots, the 3/4
-//! high-water shed, the two drop counters), and everything around it is here.
-//!
-//! A drained batch crosses the boundary as one packed `byte[]` in the log kernel's own input layout
-//! ([`batch_payload`]), not as JSON. Kotlin hands the same buffer to `LogNative.dnsBatch`, so the
-//! rows are encoded once by the producer and are never parsed or rebuilt on the JVM side.
-//!
-//! # Flush behaviour
-//!
-//! Identical to the Go loop, because it is a battery decision, not a taste one: complete batches of
-//! [`BATCH_SIZE`] go out immediately, a partial tail waits up to [`FLUSH_INTERVAL`], and the timer
-//! is only armed while rows are pending. An idle engine therefore parks the thread instead of
-//! waking it ten times a second.
-//!
-//! # Threads
-//!
-//! One dedicated flusher thread per engine, owned by [`Logs`] and stopped when the engine is freed.
-//! The JNI implementation of [`EventSink`] attaches to the JVM once per thread (the flusher) instead
-//! of attaching on every row, and it clears any pending Java exception, so a Kotlin callback that
-//! throws cannot leave the JNI environment poisoned for the next call.
-
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, RwLock};
@@ -31,12 +6,9 @@ use std::time::Duration;
 
 use diting_telemetry_core::{LogAggregator, LogItem, PushOutcome};
 
-/// `logBatchSize`.
 pub const BATCH_SIZE: usize = 50;
-/// `logFlushInterval`.
 pub const FLUSH_INTERVAL: Duration = Duration::from_millis(100);
 
-/// One finished query race, as `RaceLogWriter.write` receives it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RaceEvent {
     pub query_name: String,
@@ -54,7 +26,6 @@ pub struct RaceEvent {
     pub error_message: String,
 }
 
-/// One bootstrap (encrypted-upstream dial) result.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct BootstrapEvent {
     pub ip_id: String,
@@ -67,44 +38,23 @@ pub struct BootstrapEvent {
     pub error_message: String,
 }
 
-/// The bootstrap log a resolver transport fires while it dials.
-///
-/// The upstream resolver owns no log buffer; the engine's [`Logs`] does, so the resolver only gets
-/// this narrow view of it. A test recorder implements the same one method.
 pub trait BootstrapSink: Send + Sync {
-    /// One dial result; it reaches Kotlin in the engine's batched
-    /// `BootstrapLogCallback.onBootstrapEvents`.
     fn bootstrap(&self, event: &BootstrapEvent);
 }
 
-/// What the engine reports to the app.
-///
-/// Both implementations are cheap and non-blocking on the caller's thread: the JNI one posts to the
-/// Kotlin object from the flusher thread, a test one just records.
 pub trait EventSink: Send + Sync {
-    /// `BatchLogCallback.onDNSQueryBatch`: one packed batch, see [`batch_payload`].
     fn batch(&self, payload: &[u8]);
-    /// `RaceLogCallback.onRaceEvents`: the sink takes ownership so the buffered batch does not
-    /// clone five strings per event.
     fn race(&self, event: RaceEvent);
-    /// `BootstrapLogCallback.onBootstrapEvents`, same ownership rule.
     fn bootstrap(&self, event: BootstrapEvent);
-    /// Whether DNS rows should be buffered at all: a sink that only carries race/bootstrap events
-    /// must not grow the 2048-row buffer for rows it will never deliver.
     fn wants_batch(&self) -> bool {
         true
     }
-    /// Delivers anything the sink itself has buffered. Called before the writer queues close, so a
-    /// batch that was still waiting for its timer does not land after them.
     fn flush(&self) {}
 }
 
-/// The engine's log plumbing: the buffer, the flusher thread and the current sink.
 pub struct Logs {
     aggregator: Arc<LogAggregator>,
     sink: Arc<RwLock<Option<Arc<dyn EventSink>>>>,
-    /// `sink.wants_batch()`, cached: [`Logs::push`] runs on every DNS query and must not take the
-    /// sink lock or a dynamic call just to learn that no batch callback is installed.
     wanted: Arc<AtomicBool>,
     wake: Sender<Wake>,
     stopped: Arc<AtomicBool>,
@@ -117,13 +67,10 @@ enum Wake {
 }
 
 impl Logs {
-    /// Starts the flusher. The thread exits when [`Logs`] is dropped or [`Logs::stop`] runs.
     pub fn new() -> Self {
         let aggregator = Arc::new(LogAggregator::new());
         let (wake, receiver) = mpsc::channel();
         let stopped = Arc::new(AtomicBool::new(false));
-        // The sink is installed later (Kotlin calls `setBatchLogCallback` after the config), so the
-        // flusher reads it through this shared cell instead of capturing one value.
         let sink: Arc<RwLock<Option<Arc<dyn EventSink>>>> = Arc::new(RwLock::new(None));
         let wanted = Arc::new(AtomicBool::new(false));
         let flusher = {
@@ -145,7 +92,6 @@ impl Logs {
         }
     }
 
-    /// Posts one row, mirroring `notifyLog`'s "batch callback first, then the single callback".
     pub fn push(&self, item: LogItem) {
         if !self.wanted.load(Ordering::Acquire) {
             return;
@@ -160,10 +106,7 @@ impl Logs {
         self.sink.read().map(|sink| sink.is_some()).unwrap_or(false)
     }
 
-    /// Installs (or replaces) the sink. Null on the Kotlin side clears it.
     pub fn set_sink(&self, sink: Option<Arc<dyn EventSink>>) {
-        // Cached before the sink becomes visible, so a racing `push` either sees the old answer or
-        // the new one, never a published sink with the cache still false.
         let wanted = sink.as_ref().is_some_and(|sink| sink.wants_batch());
         self.wanted.store(wanted, Ordering::Release);
         if let Ok(mut current) = self.sink.write() {
@@ -171,9 +114,6 @@ impl Logs {
         }
     }
 
-    /// Drains every buffered DNS row to the current sink on the caller's thread, then asks the sink
-    /// to deliver its own buffers. Called on teardown, before the writer queues close: the flusher
-    /// thread's partial batch would otherwise still be waiting for its timer.
     pub fn flush(&self) {
         let sink = self.sink.read().ok().and_then(|sink| sink.clone());
         let Some(sink) = sink else {
@@ -218,8 +158,6 @@ impl BootstrapSink for Logs {
     }
 }
 
-/// A sink for the resolvers that have no engine behind them (the default configuration and the
-/// transport tests): the event is dropped instead of buffered.
 #[derive(Debug, Default)]
 pub struct DiscardBootstrapSink;
 
@@ -228,7 +166,6 @@ impl BootstrapSink for DiscardBootstrapSink {
 }
 
 impl Logs {
-    /// Drains everything left, then stops the thread (`logAggregator.stop`).
     pub fn stop(&mut self) {
         if self.flusher.is_none() {
             return;
@@ -243,7 +180,6 @@ impl Logs {
 
 impl Default for Logs {
     fn default() -> Self {
-        // Every engine owns its own flusher; `new` is the only constructor.
         Self::new()
     }
 }
@@ -281,13 +217,11 @@ fn flush_loop(
             Err(RecvTimeoutError::Disconnected) => break,
         }
     }
-    // `drainAll` on the way out: a stopped engine must not swallow the last rows.
     if stopped.load(Ordering::Acquire) {
         while emit(&aggregator, &sink, BATCH_SIZE) == BATCH_SIZE {}
     }
 }
 
-/// Drains at most `max` rows and hands them to the sink; returns how many rows went out.
 fn emit(
     aggregator: &LogAggregator,
     sink: &Arc<RwLock<Option<Arc<dyn EventSink>>>>,
@@ -304,9 +238,6 @@ fn emit(
     rows.len()
 }
 
-// ---------------------------------------------------------------------------------------------
-// Packed batches: the log kernel's input layout, encoded once on the producer side
-// ---------------------------------------------------------------------------------------------
 
 fn push_u8(out: &mut Vec<u8>, value: u8) {
     out.push(value);
@@ -324,19 +255,11 @@ fn push_i64(out: &mut Vec<u8>, value: i64) {
     out.extend_from_slice(&value.to_be_bytes());
 }
 
-/// `u32 length | UTF-8`, the same string framing every log payload uses.
 fn push_str(out: &mut Vec<u8>, value: &str) {
     push_u32(out, value.len() as u32);
     out.extend_from_slice(value.as_bytes());
 }
 
-/// One `dns_log` batch: `u32 count` then, per row,
-/// `i64 ts | string domain | i32 type | u8 blocked | string blocked_by | string error |
-/// u8 cached | string app | string resolved | i64 elapsed`.
-///
-/// This is exactly the payload `diting_log_core::api::dns_batch` decodes, so `DnsLogWriter` can
-/// forward it without touching its contents. The `ttl` field of [`LogItem`] is not part of the log
-/// row and stays out of the batch.
 pub fn batch_payload(rows: &[LogItem]) -> Vec<u8> {
     let strings: usize = rows
         .iter()
@@ -365,7 +288,6 @@ pub fn batch_payload(rows: &[LogItem]) -> Vec<u8> {
     out
 }
 
-/// One `dns_race_log` batch, in the layout `diting_log_core::api::race_batch` decodes.
 pub fn race_batch_payload(events: &[RaceEvent]) -> Vec<u8> {
     let mut out = Vec::with_capacity(4 + events.len() * 96);
     push_u32(&mut out, events.len() as u32);
@@ -387,7 +309,6 @@ pub fn race_batch_payload(events: &[RaceEvent]) -> Vec<u8> {
     out
 }
 
-/// One `bootstrap_log` batch, in the layout `diting_log_core::api::bootstrap_batch` decodes.
 pub fn bootstrap_batch_payload(events: &[BootstrapEvent]) -> Vec<u8> {
     let mut out = Vec::with_capacity(4 + events.len() * 64);
     push_u32(&mut out, events.len() as u32);
@@ -427,34 +348,31 @@ mod tests {
         fn bootstrap(&self, _event: BootstrapEvent) {}
     }
 
-    /// Splits the packed layout the JVM receives back into its fields.
     fn decode_batch(payload: &[u8]) -> Vec<Vec<u8>> {
         let mut offset = 4usize;
         let count = u32::from_be_bytes(payload[0..4].try_into().unwrap()) as usize;
         let mut rows = Vec::with_capacity(count);
         for _ in 0..count {
             let start = offset;
-            offset += 8; // timestamp
-            offset += 4; // domain length
+            offset += 8;
+            offset += 4;
             let domain_len =
                 u32::from_be_bytes(payload[start + 8..start + 12].try_into().unwrap()) as usize;
             offset += domain_len;
-            offset += 4; // query type
-            offset += 1; // blocked
+            offset += 4;
+            offset += 1;
             for _ in 0..2 {
-                // blocked_by and error_message
                 let length =
                     u32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap()) as usize;
                 offset += 4 + length;
             }
-            offset += 1; // cached
+            offset += 1;
             for _ in 0..2 {
-                // app_name and resolved_ips
                 let length =
                     u32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap()) as usize;
                 offset += 4 + length;
             }
-            offset += 8; // elapsed
+            offset += 8;
             rows.push(payload[start..offset].to_vec());
         }
         assert_eq!(offset, payload.len(), "the batch has trailing bytes");
@@ -524,7 +442,6 @@ mod tests {
             error_message: String::new(),
         };
         let payload = race_batch_payload(&[event]);
-        // `u32 count | string query_name | i32 type | string strategy | ...`
         assert_eq!(u32::from_be_bytes(payload[0..4].try_into().unwrap()), 1);
         let length = u32::from_be_bytes(payload[4..8].try_into().unwrap()) as usize;
         assert_eq!(&payload[8..8 + length], b"Example.test");
@@ -557,7 +474,6 @@ mod tests {
         for index in 0..BATCH_SIZE {
             logs.push(item(&format!("batch{index}.test")));
         }
-        // The flusher runs on its own thread; give it a moment to drain the full batch.
         let deadline = std::time::Instant::now() + Duration::from_secs(2);
         while recorder.batches.lock().unwrap().is_empty() && std::time::Instant::now() < deadline {
             thread::sleep(Duration::from_millis(10));

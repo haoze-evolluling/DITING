@@ -1,4 +1,3 @@
-/// Per-app DNS and new-connection rate limiting for normal mode.
 library;
 
 import 'dart:async';

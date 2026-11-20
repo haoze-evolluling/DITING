@@ -1,17 +1,3 @@
-//! Pure-Rust timing for the policy kernel: no cgo, no Go, no reason-string decoding.
-//!
-//! ```text
-//! cargo run --release -p diting-policy-core --example policy_bench -- [snapshot.json | --synthetic N] [iterations]
-//! ```
-//!
-//! `--synthetic 50000` builds the same shape (and the same query mix) as
-//! `android/engine/policy_perf_test.go:largePolicySnapshotJSON`, so the numbers are directly
-//! comparable with `go test -bench BenchmarkPolicyEvaluateLargeCold`. Passing a real payload - what
-//! the app sends to `ApplyRuleSnapshot` - measures the rules a device actually runs.
-//!
-//! Two numbers come out of the query loop: the raw walk (`evaluate`, what a cache miss costs) and
-//! `answer`, the FFI entry point, which includes normalization and the decision-cache lookup.
-
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -65,7 +51,6 @@ fn main() {
         blocked as f64 * 100.0 / iterations as f64
     );
 
-    // Warm every key, then time the path a Go query actually takes: normalize + cache hit.
     for domain in &queries {
         std::hint::black_box(snapshot.answer(domain, "", 1));
     }
@@ -83,7 +68,6 @@ fn main() {
     );
 }
 
-/// `largePolicySnapshotJSON` in the Go benchmarks, minus the JSON round trip.
 fn synthetic_snapshot(rules: usize) -> Vec<u8> {
     let mut block = Vec::new();
     for i in 0..rules {
@@ -108,7 +92,6 @@ fn synthetic_snapshot(rules: usize) -> Vec<u8> {
     serde_json::to_vec(&payload).expect("serialize")
 }
 
-/// Same domain mix as `benchmarkDomains` in the Go benchmark.
 fn bench_domains(count: usize) -> Vec<String> {
     (0..count)
         .map(|i| match i % 4 {

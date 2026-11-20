@@ -1,11 +1,3 @@
-//! End-to-end checks for the parts that only exist once the tables are wired together:
-//! the DTRI subscription trie inside the seven-level walk.
-//!
-//! The `.dtri` fixtures are the ones the Rust writer produced and byte-compared against the
-//! Kotlin/JVM reference (`diting-rule-core/tests/dtri_golden.rs`); the Go engine has its own test
-//! that mmaps the same files. Driving the snapshot here proves the reader port resolves every
-//! indexable rule in the corpus to the source the corpus declares.
-
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -22,8 +14,6 @@ fn fixtures() -> PathBuf {
         .join("fixtures")
 }
 
-/// Mirrors the writer's filter: the smallest source per lowercased, dot-trimmed pattern, skipping
-/// the rule families a trie cannot hold.
 fn expected_sources(corpus: &str) -> HashMap<String, String> {
     let mut expected = HashMap::new();
     for line in corpus.lines() {
@@ -65,7 +55,6 @@ fn expected_sources(corpus: &str) -> HashMap<String, String> {
     expected
 }
 
-/// Walks the labels from the TLD down and stops at the first indexed suffix, like the reader.
 fn lookup<'a>(index: &'a HashMap<String, String>, domain: &str) -> Option<&'a str> {
     let lowered = go_lower_trim_dot(domain);
     let labels: Vec<&str> = lowered.split('.').collect();
@@ -96,9 +85,6 @@ fn snapshot_with_trie(name: &str) -> (Snapshot, HashMap<String, String>) {
 
 #[test]
 fn dtri_fixtures_resolve_through_the_snapshot() {
-    // `basic` and `sources` are pure ASCII, which is what the bloom filter's UTF-16/UTF-8
-    // mismatch allows to be exact (see "已知边界" in rust/README.md); `unicode` is checked
-    // separately below.
     for name in ["basic", "sources"] {
         let (snapshot, expected) = snapshot_with_trie(name);
         assert!(expected.len() >= 2, "{name}: corpus has no indexable rules");
@@ -127,9 +113,6 @@ fn dtri_fixtures_resolve_through_the_snapshot() {
     }
 }
 
-/// Non-ASCII patterns are a known subset: the writer hashes UTF-16 code units into the bloom while
-/// the reader hashes UTF-8 bytes, so a real hit may be filtered out before the trie walk. That is
-/// the Go reader's behaviour too; the port must not invent matches the Go engine would miss.
 #[test]
 fn unicode_fixture_is_a_subset_of_the_expected_sources() {
     let (snapshot, expected) = snapshot_with_trie("unicode");
@@ -171,7 +154,6 @@ fn disabled_rules_fall_through_to_the_parent_suffix() {
     });
     let request = RuleSnapshot::parse(json.to_string().as_bytes()).expect("parse");
     let snapshot = Snapshot::build(&request);
-    // The disabled rule is skipped; the walk continues with its parent labels.
     let decision = snapshot.evaluate(&pattern, "", 1);
     let parent_hit = pattern
         .match_indices('.')
@@ -182,8 +164,6 @@ fn disabled_rules_fall_through_to_the_parent_suffix() {
 
 #[test]
 fn subscription_special_rules_report_their_source_tag() {
-    // A subscription match must report `sub_<id>` as its reason so the log layer can attribute the
-    // block to that subscription; a custom rule keeps its readable pattern.
     let json = serde_json::json!({
         "specialBlock": [
             {"pattern": "*.ads.example", "source": "sub_7", "isWildcard": true},

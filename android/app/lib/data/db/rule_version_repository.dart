@@ -1,9 +1,3 @@
-/// R6: the stored rule-set history and its rollback source.
-///
-/// The `rule_version` table keeps the newest versions of each subscription's rule set together with
-/// the rule text itself, so a rollback can re-import the exact lines and the diff preview has
-/// something real to compare against. The table is created lazily with `IF NOT EXISTS`: existing
-/// installs open without a versioned migration, and creating a table they lack is safe.
 library;
 
 import 'dart:convert';
@@ -12,8 +6,6 @@ import 'package:diting_android/data/rules/rule_models.dart';
 import 'package:diting_android/data/rules/rust_rule_version_core.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// The stored rule lines of a parsed document, in a stable category order. Cosmetic rules are never
-/// stored, so they are not part of a version either.
 List<String> canonicalRules(CategorizedRules parsed) => [
   for (final rule in parsed.blockRules) rule.rawLine,
   for (final rule in parsed.allowRules) rule.rawLine,
@@ -22,7 +14,6 @@ List<String> canonicalRules(CategorizedRules parsed) => [
   for (final rule in parsed.urlAllowRules) rule.rawLine,
 ];
 
-/// A stored snapshot: the identity (`hash`/`rule_count`/`created_at`) plus the rules to restore.
 class StoredRuleVersion {
   const StoredRuleVersion({
     required this.id,
@@ -39,11 +30,6 @@ class StoredRuleVersion {
   final List<String> rules;
 }
 
-/// A stable, content-only hash of a rule set (FNV-1a 32-bit). It is only an identity: equality of
-/// two sets is decided by the kernel's diff, so a rare collision cannot corrupt a rollback.
-///
-/// Split into seed/update/hex so a streaming import can fold each chunk in as it arrives instead of
-/// holding the whole rule list.
 const int _ruleSetHashSeed = 0x811c9dc5;
 const int _ruleSetHashPrime = 0x01000193;
 
@@ -56,7 +42,6 @@ int ruleSetHashUpdate(int hash, Iterable<String> rules) {
       state ^= unit;
       state = (state * _ruleSetHashPrime) & 0xffffffff;
     }
-    // Separate rules with '\n' so ["ab","c"] and ["a","bc"] differ.
     state ^= 0x0a;
     state = (state * _ruleSetHashPrime) & 0xffffffff;
   }
@@ -89,7 +74,6 @@ class RuleVersionRepository {
     );
   }
 
-  /// Newest first, up to [limit]. Empty when the subscription has never been imported.
   Future<List<StoredRuleVersion>> history(String groupId, {int limit = 10}) async {
     await ensureTable();
     final rows = await _db.query(
@@ -107,8 +91,6 @@ class RuleVersionRepository {
     return rows.isEmpty ? null : rows.first;
   }
 
-  /// Records `rules` as the current version. The kernel decides whether the head is unchanged and
-  /// how much history to keep; this method only writes the new head and deletes what it dropped.
   Future<void> recordVersion({
     required String groupId,
     required String hash,
@@ -133,7 +115,6 @@ class RuleVersionRepository {
       createdAt: DateTime.now().millisecondsSinceEpoch,
       max: max,
     );
-    // Unchanged re-download: the head already carries this hash, nothing to write.
     if (existing.isNotEmpty && next.isNotEmpty && next.first.hash == existing.first.hash) {
       return;
     }
@@ -150,7 +131,6 @@ class RuleVersionRepository {
         'rules_json': jsonEncode(rules),
       });
     }
-    // Trim anything the kernel dropped from the retained window.
     final kept = {for (final entry in next) '${entry.hash}@${entry.createdAt}'};
     final all = await _db.query(
       'rule_version',

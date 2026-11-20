@@ -1,22 +1,3 @@
-//! The sharded cache container: entries, LRU, TTL deadlines, the background sweeper, statistics
-//! and the snapshot projection. This is what `dns_cache.go`, `dns_cache_types.go`,
-//! `dns_cache_policy.go` and `dns_cache_snapshot.go` used to implement in Go.
-//!
-//! Every entry keeps the upstream wire bytes verbatim plus the offsets the wire layer indexed, so
-//! a hit is one copy with the query ID and the remaining TTL rewritten — the same cost the Go
-//! container paid.
-//!
-//! Deliberate details copied from the Go implementation instead of "improved":
-//!
-//! * the shard is chosen by FNV-1a over the key bytes, and a shard holds
-//!   `DEFAULT_MAX_ENTRIES / NUM_SHARDS` entries;
-//! * a hit promotes its entry at most once per [`LRU_PROMOTE_MS`], so a hot entry does not take
-//!   the shard write lock on every query;
-//! * an expired entry is dropped lazily by the next lookup and eagerly by the sweep, and only the
-//!   sweep counts an expired entry as an eviction;
-//! * `update_policy` clears the whole cache when the cache is switched off (a disabled cache is
-//!   never read, so its memory is released right away).
-
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -26,16 +7,13 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use crate::policy::{Config, DEFAULT_MAX_ENTRIES, NUM_SHARDS};
 use crate::wire::{self, ChainTarget};
 
-/// Recency update throttle of a hot entry (`lruPromoteInterval` in Go).
 pub const LRU_PROMOTE_MS: i64 = 1000;
 
-/// How often the background sweep reclaims entries nobody asked for again (`cleanerInterval`).
 pub const SWEEP_INTERVAL: Duration = Duration::from_secs(60);
 
 const RCODE_SUCCESS: u8 = 0;
 const RCODE_NAME_ERROR: u8 = 3;
 
-/// One cached answer. `wire` is a copy with the query ID and every indexed TTL rewritten.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hit {
     pub stale: bool,
@@ -46,7 +24,6 @@ pub struct Hit {
     pub resolved_ips: String,
 }
 
-/// Counters the Go layer reports; `entry_count` is walked live, everything else is monotonic.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Stats {
     pub enabled: bool,
@@ -59,7 +36,6 @@ pub struct Stats {
     pub max_entries: u32,
 }
 
-/// One live entry in the projection the Android layer mirrors into the `dns_cache` table.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SnapshotEntry {
     pub key: Vec<u8>,
@@ -74,10 +50,6 @@ pub struct SnapshotEntry {
     pub response_size: u32,
 }
 
-/// One entry as the desktop service writes it to `cache.json`.
-///
-/// This is deliberately richer than [`SnapshotEntry`]: a restored cache must answer queries with
-/// the exact upstream bytes, TTL offsets and negative/chain metadata.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PersistEntry {
     pub key: Vec<u8>,
@@ -114,17 +86,13 @@ struct Entry {
     chain_targets: Vec<ChainTarget>,
     ip_list: Vec<String>,
     resolved_ips: String,
-    /// Recency ticket; the shard evicts the smallest one.
     lru_seq: u64,
     hit_count: AtomicU64,
     last_hit_at_ms: AtomicI64,
-    /// Set while a stale-while-revalidate refresh is in flight for this entry.
     refreshing: AtomicBool,
 }
 
 impl Entry {
-    /// Patched copy of the stored answer; `stale` is set by the caller because only the lookup
-    /// knows which branch produced it.
     fn hit(&self, query_id: u16, ttl: u32) -> Option<Hit> {
         Some(Hit {
             stale: false,
@@ -149,12 +117,9 @@ struct Cleaner {
     thread: Mutex<Option<JoinHandle<()>>>,
 }
 
-/// The cache itself; an FFI handle owns one `Arc<Cache>`.
 pub struct Cache {
     config: RwLock<Config>,
     shards: Vec<RwLock<Shard>>,
-    /// Desktop configures a capacity independently of the Android constant; 0 means the
-    /// compiled-in default. Android never calls `set_capacity`.
     capacity: AtomicUsize,
     hits: AtomicU64,
     misses: AtomicU64,
@@ -165,7 +130,6 @@ pub struct Cache {
 }
 
 impl Cache {
-    /// Builds a cache and starts the background sweeper.
     pub fn new(config: Config) -> Arc<Self> {
         let config = config.normalized();
         let per_shard = (DEFAULT_MAX_ENTRIES / NUM_SHARDS).max(1);
@@ -226,16 +190,11 @@ impl Cache {
         }
     }
 
-    /// Stops the background sweeper. Idempotent; the entries stay readable.
     pub fn close(&self) {
         *mutex_guard(&self.cleaner.stop) = true;
         self.cleaner.wake.notify_all();
         let handle = mutex_guard(&self.cleaner.thread).take();
         if let Some(handle) = handle {
-            // The sweeper holds a strong `Arc` while it sweeps; if that was the last reference,
-            // `Drop` (and therefore this join) runs on the sweeper thread itself. Joining self
-            // would panic (`EDEADLK`) or hang, and the stop flag is already set, so detaching is
-            // both safe and sufficient.
             if handle.thread().id() == std::thread::current().id() {
                 return;
             }
@@ -243,7 +202,6 @@ impl Cache {
         }
     }
 
-    /// Replaces the policy. Switching a live cache off releases its entries immediately.
     pub fn update_policy(&self, config: Config) {
         let config = config.normalized();
         let mut guard = write_guard(&self.config);
@@ -256,7 +214,6 @@ impl Cache {
         }
     }
 
-    /// The normalized configuration (used by the FFI layer to report the caller's flags).
     pub fn config(&self) -> Config {
         read_guard(&self.config).clone()
     }
@@ -268,8 +225,6 @@ impl Cache {
         }
     }
 
-    /// Looks `query` up. `count == false` is the single-flight re-check: it neither moves the
-    /// counters nor the recency, exactly like the old Go `lookup(rawQuery, false)`.
     pub fn get(&self, query: &[u8], count: bool) -> Option<Hit> {
         let config = self.config();
         if !config.enabled || query.len() < 12 {
@@ -280,9 +235,6 @@ impl Cache {
         self.get_keyed(&buffer[..parts.key_len], query_id, count)
     }
 
-    /// Looks up a caller-built key. The desktop cache appends a client-group/ECS tag to the key,
-    /// which `question_key` alone cannot express; the query ID still comes from the request so a
-    /// hit can be returned to its caller.
     pub fn get_keyed(&self, key: &[u8], query_id: u16, count: bool) -> Option<Hit> {
         let config = self.config();
         if !config.enabled || key.is_empty() {
@@ -330,9 +282,6 @@ impl Cache {
         };
 
         if let Some(hit) = hit {
-            // The counters describe answers the caller actually served: the single-flight
-            // re-check (count == false) finds stale entries while refreshing them and must not
-            // report a stale hit for that.
             if count {
                 if hit.stale {
                     self.stale_hits.fetch_add(1, Ordering::Relaxed);
@@ -355,7 +304,6 @@ impl Cache {
         None
     }
 
-    /// Stores one answer; `false` means "this answer must not be cached".
     pub fn put(&self, query: &[u8], response: &[u8]) -> bool {
         let Some((buffer, parts)) = build_key(query) else {
             return false;
@@ -363,8 +311,6 @@ impl Cache {
         self.put_keyed(&buffer[..parts.key_len], response)
     }
 
-    /// Stores an answer under a caller-built key. The key must remain `name:qtype:qclass` (with an
-    /// optional tag suffix), because the entry projects the name and type for the cache UI.
     pub fn put_keyed(&self, key: &[u8], response: &[u8]) -> bool {
         let Some((domain, qtype, qclass)) = parse_key_parts(key) else {
             return false;
@@ -372,9 +318,6 @@ impl Cache {
         self.put_keyed_meta(key, &domain, qtype, qclass, response)
     }
 
-    /// Same as [`put_keyed`](Self::put_keyed) with the entry metadata already known. The desktop
-    /// cache uses this because its group suffix (`:group`) may itself be numeric and cannot be
-    /// split reliably from the key alone.
     pub fn put_keyed_meta(
         &self,
         key: &[u8],
@@ -393,8 +336,6 @@ impl Cache {
         let Some(meta) = wire::parse_response(response) else {
             return false;
         };
-        // A truncated answer carries no complete records; replaying the TC=1 header to later
-        // clients would keep them broken even after the upstream recovered.
         if meta.truncated {
             return false;
         }
@@ -419,8 +360,6 @@ impl Cache {
             return false;
         }
 
-        // With no answers the negative path rewrites the authority TTLs; every other path
-        // rewrites the answer TTLs.
         let ttl_offsets = if meta.answer_count == 0 {
             meta.authority_ttl_offsets.clone()
         } else {
@@ -485,8 +424,6 @@ impl Cache {
         true
     }
 
-    /// Starts the single background refresh of a stale entry; `false` means one is already running
-    /// (or the entry is gone), matching the Go `refreshing.CompareAndSwap(false, true)`.
     pub fn refresh_begin(&self, query: &[u8]) -> bool {
         let Some((buffer, parts)) = build_key(query) else {
             return false;
@@ -505,7 +442,6 @@ impl Cache {
             .is_ok()
     }
 
-    /// Clears the in-flight marker once the background refresh finished.
     pub fn refresh_done(&self, query: &[u8]) {
         let Some((buffer, parts)) = build_key(query) else {
             return;
@@ -520,15 +456,11 @@ impl Cache {
         }
     }
 
-    /// Drops one entry by key. Used by the desktop exclusion path and by `/cache/clear` for a
-    /// single entry; Android has no caller.
     pub fn remove_keyed(&self, key: &[u8]) -> bool {
         let mut shard = write_guard(&self.shards[shard_index(key)]);
         shard.entries.remove(key).is_some()
     }
 
-    /// Replaces the total capacity and trims every shard to its new share. Zero restores the
-    /// compiled-in default.
     pub fn set_capacity(&self, max_entries: usize) {
         let max_entries = if max_entries == 0 {
             DEFAULT_MAX_ENTRIES
@@ -559,8 +491,6 @@ impl Cache {
         self.capacity.load(Ordering::Relaxed)
     }
 
-    /// Every live entry, for the desktop persistence writer. Android's cache never calls this:
-    /// its own cache lives in the SQLite mirror, not in a restartable file.
     pub fn export(&self) -> Vec<PersistEntry> {
         let now = Instant::now();
         let now_ms = now_wall_ms();
@@ -599,8 +529,6 @@ impl Cache {
         out
     }
 
-    /// Restores entries written by [`export`](Self::export). Entries past their stale window are
-    /// dropped; capacity trimming is the same LRU eviction a normal insert performs.
     pub fn import(&self, entries: Vec<PersistEntry>) -> usize {
         let now = Instant::now();
         let now_ms = now_wall_ms();
@@ -681,8 +609,6 @@ impl Cache {
         }
     }
 
-    /// Live entries, hottest first, capped at `limit`. Entries past their expiry are skipped: the
-    /// engine cannot serve them any more.
     pub fn snapshot(&self, limit: u32) -> Vec<SnapshotEntry> {
         if limit == 0 {
             return Vec::new();
@@ -735,8 +661,6 @@ fn build_key(query: &[u8]) -> Option<([u8; wire::MAX_KEY_LEN], wire::KeyParts)> 
     Some((buffer, parts))
 }
 
-/// Splits `name:qtype:qclass[:tag]` without assuming the name is UTF-8: the name is returned as
-/// the raw lowercased bytes the key builder wrote.
 fn parse_key_parts(key: &[u8]) -> Option<(Vec<u8>, u16, u16)> {
     let last = key.iter().rposition(|byte| *byte == b':')?;
     let previous = key[..last].iter().rposition(|byte| *byte == b':')?;
@@ -763,7 +687,6 @@ fn shard_index(key: &[u8]) -> usize {
     (fnv32(key) as usize) % NUM_SHARDS
 }
 
-/// `fnv32Bytes` in Go: FNV-1a over the key bytes.
 fn fnv32(bytes: &[u8]) -> u32 {
     let mut hash = 2166136261u32;
     for &byte in bytes {

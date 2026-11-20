@@ -1,8 +1,3 @@
-/// The appearance page's right pane: the palette gallery.
-///
-/// Every tile is a miniature of the window, not a swatch: the reader is picking how this app is
-/// painted, so the choice is shown at the shape it will be seen at. Nine palettes at three per row
-/// keep the gallery — and the pane beside it — at a height a window can show at once.
 library;
 
 import 'package:diting_desktop/pages/settings/widgets/appearance_scheme.dart';
@@ -17,14 +12,9 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Narrowest a tile may get before the gallery drops a column. At 126 the window inside is 114
-/// wide, which still shows the sidebar, the toolbar and two cards apart; below that the mini window
-/// is a smudge and the label is doing all the work.
 const double _tileMinWidth = 126;
 const double _tileGap = 12;
 
-/// Nine palettes over four columns would leave a lone orphan in the last row; three columns fill
-/// both rows evenly.
 const int _maxTileColumns = 3;
 
 class AppearanceOptionsCard extends ConsumerWidget {
@@ -103,9 +93,6 @@ class AppearanceOptionsCard extends ConsumerWidget {
   }
 }
 
-/// One palette: the window painted with it, its name under it, and a check on the tile that is in
-/// use. The check sits over the preview's corner so a selected tile gains no extra height and the
-/// name never shifts between the two states.
 class _PaletteTile extends StatelessWidget {
   const _PaletteTile({
     required this.label,

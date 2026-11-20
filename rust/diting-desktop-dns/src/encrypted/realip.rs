@@ -1,31 +1,17 @@
-//! Reverse-proxy client-IP recovery (`realip.go`).
-//!
-//! Access control and rate limiting both key on the client address, while forwarding headers can
-//! be written by anyone. The rule is therefore "trust by default nothing": a forwarding header is
-//! only read when the direct peer itself is in the trusted list. X-Forwarded-For is scanned from
-//! the right, because the leftmost entries are written by the client being identified.
-
 use std::net::{IpAddr, SocketAddr};
 
 use hyper::HeaderMap;
 
-/// Configuration for a DoH listener sitting behind a reverse proxy.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ReverseProxyConfig {
     pub enabled: bool,
-    /// Single IPs and CIDR ranges; malformed entries simply never match.
     pub trusted_sources: Vec<String>,
-    /// Extra header carrying the client IP (Cloudflare's `CF-Connecting-IP`, for example).
     pub client_ip_header: String,
 }
 
 const X_FORWARDED_FOR: &str = "x-forwarded-for";
 const X_REAL_IP: &str = "x-real-ip";
 
-/// Returns the real client IP for a DoH request.
-///
-/// `peer` is the direct socket peer. When the peer is not trusted, or when no valid forwarded value
-/// is present, the peer is returned unchanged.
 pub fn real_client_ip(
     peer: IpAddr,
     headers: &HeaderMap,
@@ -66,10 +52,6 @@ pub fn real_client_ip(
     peer
 }
 
-/// Scans an X-Forwarded-For chain right-to-left and returns the first untrusted address.
-///
-/// A malformed entry invalidates the whole header: picking a parsable segment out of a corrupt
-/// chain would make the forgery surface larger, not smaller.
 fn forwarded_for(value: &str, trusted: &[String]) -> Option<IpAddr> {
     if value.trim().is_empty() {
         return None;
@@ -83,7 +65,6 @@ fn forwarded_for(value: &str, trusted: &[String]) -> Option<IpAddr> {
     None
 }
 
-/// Parses a bare IP, an IP with a port, or a bracketed IPv6 literal.
 fn parse_header_ip(value: &str) -> Option<IpAddr> {
     let trimmed = value.trim().trim_matches('"');
     if trimmed.is_empty() {
@@ -243,8 +224,6 @@ mod tests {
             real_client_ip(ip("127.0.0.1"), &map, &trusted, "CF-Connecting-IP"),
             ip("1.1.1.1")
         );
-        // A custom header is a single address, not a chain, so a comma-separated value is invalid
-        // and the lookup falls back to the peer.
         let map = headers(&[("cf-connecting-ip", "9.9.9.9, 2.2.2.2")]);
         assert_eq!(
             real_client_ip(ip("127.0.0.1"), &map, &trusted, "cf-connecting-ip"),

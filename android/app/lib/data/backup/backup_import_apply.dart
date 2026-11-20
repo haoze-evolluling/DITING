@@ -1,8 +1,5 @@
 part of 'backup_importer.dart';
 
-// Carries out the plan: one settings write per field, one statement per operation. Both are
-// unconditional — every skip/added/updated decision was made by the core, so applying a plan twice
-// must leave the same state.
 
 extension _BackupImportApply on BackupImporter {
   Future<void> _applyPlan(
@@ -16,8 +13,6 @@ extension _BackupImportApply on BackupImporter {
       _applyWrite(settings, target, write, now);
     }
     final db = target.database;
-    // A subscription resolves its group as the plan is applied, so the ids assigned here are kept
-    // per import rather than on the extension.
     final groupIds = <String, int>{};
     for (final op in answer['ops'] as List? ?? const []) {
       if (op is! Map || db == null) continue;
@@ -90,7 +85,6 @@ extension _BackupImportApply on BackupImporter {
           'outbound_proxy_host',
           '$value',
         );
-      // An early 2.0 build wrote `outbound_proxy_app_package`, which always read empty.
       case 'outbound.app':
         store.putString(
           LegacySettings.uiContainer,
@@ -125,8 +119,6 @@ extension _BackupImportApply on BackupImporter {
       case 'httpInspection.packages':
         settings.setHttpInspectionApps(
           packages: _strings(value).toSet(),
-          // Inspection is never enabled by an import: `https_inspection_ready` depends on a locally
-          // installed CA, so enabling it would break HTTPS.
           enabled: settings.httpInspectionEnabled,
         );
       case 'httpInspection.http3':
@@ -233,7 +225,6 @@ extension _BackupImportApply on BackupImporter {
         settings.setSubscriptionAutoUpdateTimeMinutes(
           record['timeMinutes'] as int? ?? 0,
         );
-        // The cycle restarts on this device, as it would after picking the time by hand.
         settings.setSubscriptionAutoUpdateSinceMs(now.millisecondsSinceEpoch);
       default:
         debugPrint('backup import: unknown write ${write['field']}');
@@ -266,7 +257,6 @@ extension _BackupImportApply on BackupImporter {
             ),
             kind: SubscriptionKind.normalize(op['kind'] as String?),
             enabled: op['enabled'] != false,
-            // Importing the address, not its contents: the first refresh downloads.
             ruleCount: op['ruleCount'] as int? ?? 0,
             lastUpdated: op['lastUpdated'] as int? ?? 0,
             addedAt: op['addedAt'] as int? ?? 0,
@@ -319,7 +309,6 @@ extension _BackupImportApply on BackupImporter {
     final pattern = row['pattern'];
     final important = row['important'];
     final appScope = row['appScope'];
-    // `whereArgs` rejects null, so an empty appScope must use `IS NULL`.
     final rows = await db.query(
       table,
       columns: ['id'],
@@ -333,8 +322,6 @@ extension _BackupImportApply on BackupImporter {
     await _insertRuleSource(db, '${table}_source', rows.first['id']);
   }
 
-  /// Inserts [row] and marks it as user-added when it was new; an ignored duplicate keeps the
-  /// source rows it already had.
   Future<void> _insertRule(
     Database db, {
     required String table,
@@ -350,7 +337,6 @@ extension _BackupImportApply on BackupImporter {
     await _insertRuleSource(db, sourceTable, id);
   }
 
-  /// A user-added row has to be marked as such, or the exporter would never see it again.
   Future<void> _insertRuleSource(Database db, String table, Object? ruleId) =>
       db.insert(table, {
         'ruleId': ruleId,

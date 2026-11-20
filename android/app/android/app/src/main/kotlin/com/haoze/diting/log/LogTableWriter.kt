@@ -10,22 +10,12 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-/// Bounded, single-threaded writer for one log table.
-///
-/// Engine callbacks must not touch the disk: a write that waits on `busy_timeout` stalls the DNS
-/// hot path, which is why 2.1.7 opened a connection per event there. The queue and its policy (200
-/// rows or 1 s, 10k queued, 500 per transaction, 1 s → 30 s backoff) live in the log kernel
-/// (`rust/diting-log-core/src/queue.rs`); this class keeps the timer, the SQL, the compiled
-/// statement and every `AppDatabase` decision.
 internal class LogTableWriter(
     context: Context,
     private val databaseName: String,
     private val table: String,
     threadName: String,
-    /// The complete `INSERT OR IGNORE` for this table, compiled once per transaction.
     private val insertSql: String,
-    /// Binds one packed kernel row straight into the compiled statement. No `ContentValues` is
-    /// built: a DNS batch used to allocate one hash map per row just to read it back out.
     private val bind: (SQLiteStatement, ByteArray) -> Unit,
 ) {
     private val appContext = context.applicationContext
@@ -40,30 +30,20 @@ internal class LogTableWriter(
     private var scheduled = false
     private var closed = false
 
-    /// One row for the low-volume tables (bootstrap and race); the DNS batch uses [submitAll].
     fun submit(row: ByteArray) = submitAll(listOf(row))
 
-    /// Cheap enough for a per-batch callback: one JNI call packs, appends and arms a timer.
     fun submitAll(rows: List<ByteArray>) {
         if (rows.isEmpty()) return
         val decision = LogNative.queueSubmitMany(queue, rows)
         if (!decision.accepted) return
-        // Counted outside any lock: the health counter may log.
         DbWriteHealth.onDropped(decision.overflow, DropReason.OVERFLOW, table)
         schedule(decision.flushDelayMs)
     }
 
-    /// One DNS batch: the kernel counts, classifies and enqueues it in a single crossing, so the
-    /// rows never come back to Kotlin for a re-pack. Only the timer and the overflow counter are
-    /// left here, exactly like [submitAll].
     fun submitDnsBatch(stats: Long, mode: String, packed: ByteArray) {
         applyOutcome(LogNative.dnsBatchSubmit(stats, queue, mode, packed))
     }
 
-    /// One race/bootstrap batch: the kernel classifies it and hands it straight to this queue.
-    ///
-    /// The alternative (`raceRows`/`bootstrapRows` → [submitAll]) copied every row out of the
-    /// answer, re-packed the list and decoded the blobs again inside the kernel.
     fun submitKernelBatch(
         packed: ByteArray,
         submit: (queue: Long, packed: ByteArray) -> LogBatchOutcome,
@@ -82,16 +62,13 @@ internal class LogTableWriter(
         }
     }
 
-    /// Final flush on the caller's thread (the engine is already stopped), then stops the timer.
     fun close() {
         synchronized(lock) {
             if (closed) return
             closed = true
         }
-        // Rows may still arrive between the flag and the drain; the kernel drops them.
         LogNative.queueMarkClosed(queue)
         executor.shutdownNow()
-        // One pass that ignores the backoff window: nothing retries after this.
         drainQueue()
         val left = LogNative.queueClose(queue)
         DbWriteHealth.onDropped(left, DropReason.CLOSED, table)
@@ -106,7 +83,6 @@ internal class LogTableWriter(
         try {
             executor.schedule({ drain() }, delayMs, TimeUnit.MILLISECONDS)
         } catch (_: RejectedExecutionException) {
-            // Already shut down: close() commits the tail.
             synchronized(lock) { scheduled = false }
         }
     }
@@ -119,7 +95,6 @@ internal class LogTableWriter(
         }
     }
 
-    /// Writes until the queue is empty or a write must wait; a failed write already requeued its rows.
     private fun drainQueue() {
         while (true) {
             val batch = LogNative.queueTake(queue) ?: return
@@ -127,12 +102,10 @@ internal class LogTableWriter(
         }
     }
 
-    /// True when the rows are either written or permanently unpersistable (so no requeue).
     private fun write(rows: List<ByteArray>): Boolean {
         val db = when (val open = AppDatabase.open(appContext, databaseName)) {
             is AppDatabase.Open.Ready -> open.db
             AppDatabase.Open.Absent -> {
-                // No database yet on a fresh install; Dart creates the schema. Counted, not silent.
                 DbWriteHealth.onDropped(rows.size, DropReason.NO_DATABASE, table)
                 return true
             }
@@ -155,7 +128,6 @@ internal class LogTableWriter(
                 return true
             }
             AppDatabase.TableState.ERROR -> {
-                // Locked or I/O: the table is almost certainly there, so keep the rows.
                 requeue(rows)
                 LogNative.queueBackoff(queue)
                 return false
@@ -173,11 +145,6 @@ internal class LogTableWriter(
         }
     }
 
-    /// One compiled `INSERT OR IGNORE` per transaction, bound row by row from the kernel's bytes.
-    ///
-    /// The previous version materialised a `ContentValues` (a hash map plus boxed numbers) for
-    /// every row before it could bind anything. The SQL is now fixed per table, since every row
-    /// of these four streams has the same columns anyway.
     private fun insertAll(db: SQLiteDatabase, rows: List<ByteArray>) {
         db.beginTransaction()
         try {
@@ -194,7 +161,6 @@ internal class LogTableWriter(
         }
     }
 
-    /// Puts an unwritten batch back in front so the table stays chronological.
     private fun requeue(rows: List<ByteArray>) {
         val overflow = LogNative.queueRequeue(queue, rows)
         DbWriteHealth.onDropped(overflow, DropReason.OVERFLOW, table)
@@ -205,8 +171,6 @@ internal class LogTableWriter(
     }
 }
 
-/// One [LogTableWriter] per (database, table), so the engine callbacks of both data planes share
-/// the same queue instead of each creating a thread that opens its own connection.
 internal object LogTableWriters {
     private val writers = ConcurrentHashMap<String, LogTableWriter>()
 
@@ -217,12 +181,10 @@ internal object LogTableWriters {
         threadName: String,
         insertSql: String,
         bind: (SQLiteStatement, ByteArray) -> Unit,
-    // computeIfAbsent, not getOrPut: two racing callbacks must not each start a writer thread.
     ): LogTableWriter = writers.computeIfAbsent("$databaseName/$table") {
         LogTableWriter(context, databaseName, table, threadName, insertSql, bind)
     }
 
-    /// Flushes and stops every queue; called when the data plane closes.
     fun closeAll() {
         val snapshot = writers.values.toList()
         writers.clear()

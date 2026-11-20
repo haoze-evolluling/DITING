@@ -1,43 +1,8 @@
-//! The binary layout shared with `android/engine/proxy_native_payload.go`.
-//!
-//! Request (Go -> kernel):
-//!
-//! ```text
-//! | u8 layout | u8 op | body |
-//! ```
-//!
-//! Response (kernel -> Go):
-//!
-//! ```text
-//! | u8 status (0 ok, 1 error) | body |
-//! ```
-//!
-//! `str` is `u32 length | bytes` (UTF-8 required), `bytes` is `u32 length | bytes`, ports and UIDs
-//! are `i64` (Go's `int` is 64 bits wide, and the config accepts values outside 16/32 bits before
-//! validation rejects them). A drifted version, a length that disagrees with the payload or
-//! trailing bytes is a hard error, never a misread.
-//!
-//! | op | name | request body | ok body |
-//! | --- | --- | --- | --- |
-//! | 0 | configure | enabled, protocol, host, port, username, password, scope, uids | enabled, protocol, host, port, scope, uids |
-//! | 1 | socks greeting | username, password | bytes |
-//! | 2 | socks method reply | bytes | u8 method |
-//! | 3 | socks auth | username, password | bytes |
-//! | 4 | socks auth reply | bytes | (empty) |
-//! | 5 | socks request | u8 command, target | bytes |
-//! | 6 | socks udp associate | (empty) | bytes |
-//! | 7 | socks reply | bytes | u8 kind, then address or needed |
-//! | 8 | socks datagram | target, payload | bytes |
-//! | 9 | socks datagram parse | bytes | address, u8 is_ip, u32 offset |
-//! | 10 | http connect request | target, username, password | bytes |
-
 use crate::config::{NormalizedConfig, ProxyConfig};
 use crate::socks5::{self, ReplyParse};
 
-/// Must match `proxyPayloadLayoutVersion` in `android/engine/proxy_native_payload.go`.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// Opcodes, in the order of the table above.
 pub const OP_CONFIGURE: u8 = 0;
 pub const OP_SOCKS_GREETING: u8 = 1;
 pub const OP_SOCKS_METHOD_REPLY: u8 = 2;
@@ -53,7 +18,6 @@ pub const OP_HTTP_CONNECT: u8 = 10;
 const STATUS_OK: u8 = 0;
 const STATUS_ERROR: u8 = 1;
 
-/// One decoded request.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Request {
     Configure(ProxyConfig),
@@ -93,7 +57,6 @@ pub enum Request {
     },
 }
 
-/// The body of a successful response.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Response {
     Configured(NormalizedConfig),
@@ -108,7 +71,6 @@ pub enum Response {
     },
 }
 
-/// Reads a request payload.
 pub fn decode_request(payload: &[u8]) -> Option<Request> {
     let mut reader = Reader::new(payload);
     if reader.u8()? != LAYOUT_VERSION {
@@ -168,7 +130,6 @@ pub fn decode_request(payload: &[u8]) -> Option<Request> {
     Some(request)
 }
 
-/// Writes a request payload (used by the tests and the corpus replayer).
 pub fn encode_request(request: &Request) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     match request {
@@ -237,7 +198,6 @@ pub fn encode_request(request: &Request) -> Vec<u8> {
     out
 }
 
-/// Runs one decoded request.
 pub fn handle(request: Request) -> Result<Response, String> {
     match request {
         Request::Configure(config) => crate::config::normalize(config).map(Response::Configured),
@@ -276,7 +236,6 @@ pub fn handle(request: Request) -> Result<Response, String> {
     }
 }
 
-/// Encodes a response envelope.
 pub fn encode_response(result: Result<Response, String>) -> Vec<u8> {
     let mut out = Vec::with_capacity(64);
     match result {

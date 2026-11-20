@@ -1,5 +1,3 @@
-//! Generates the offline `restore-dns.sh` script next to the state file.
-
 use std::path::Path;
 
 use chrono::Local;
@@ -11,7 +9,6 @@ use crate::netutil::clean_adapter_state;
 use super::backend::{interface_name_from_state, merge_dual_stack_servers, DnsBackend};
 use super::files;
 
-/// Writes the emergency restore script for the active backend.
 pub fn generate_restore_script(
     backend: DnsBackend,
     adapters: &[AdapterState],
@@ -143,7 +140,6 @@ fn collect_snapshot_servers(adapters: &[AdapterState]) -> Vec<String> {
     servers
 }
 
-/// Minimal Go-style `%q` quoting for the shell-visible connection name and DNS lists.
 fn quote(value: &str) -> String {
     let mut quoted = String::from("\"");
     for character in value.chars() {

@@ -1,6 +1,5 @@
 part of 'mode_onboarding_page.dart';
 
-/// Centered because the buttons are pinned to the bottom.
 class _StepScaffold extends StatelessWidget {
   const _StepScaffold({
     required this.glyph,
@@ -107,9 +106,6 @@ class _TipCard extends StatelessWidget {
   }
 }
 
-/// One permission row with its live state; tapping it asks the system, so the step is actionable
-/// instead of a wall of text. A denied permission stays tappable: a second tap opens the settings
-/// screen that can still change it.
 class _PermissionRow extends ConsumerWidget {
   const _PermissionRow({
     required this.permission,
@@ -134,7 +130,6 @@ class _PermissionRow extends ConsumerWidget {
     if (snapshot.of(permission) == true) {
       return;
     }
-    // A permanently denied permission only changes through the settings screen.
     final opened = await notifier.openSystemSettings(permission);
     if (!context.mounted || !opened) {
       return;
@@ -159,8 +154,6 @@ class _PermissionRow extends ConsumerWidget {
     };
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      // The card owns the tap so the pressed state covers the whole rounded card; a tap
-      // surface nested inside the card's padding leaves square corners inside it.
       child: CommonCard(
         padding: const EdgeInsets.all(14),
         inert: granted,

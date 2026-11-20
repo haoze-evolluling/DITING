@@ -1,9 +1,3 @@
-//! Forced safe search.
-//!
-//! Search-engine names are answered with the provider's enforced CNAME/IP. A matched name whose
-//! query type has no rule (e.g. AAAA for a CNAME-only provider) is authoritative NODATA so the
-//! client cannot fall back to the unfiltered address through another query type.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

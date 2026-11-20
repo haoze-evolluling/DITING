@@ -1,34 +1,5 @@
-//! The binary layouts shared with `android/engine/resolver_schedule*.go`.
-//!
-//! Session request (one per query):
-//!
-//! ```text
-//! u8 layout | u8 strategy | u32 provider_count
-//!   per provider: text id | u8 encrypted | u8 allow_attempt
-//!                 i64 score_ns | i64 hedge_delay_ns | i64 attempt_timeout_ns
-//! u32 race_max_parallel | i64 query_budget_ns | i64 encrypted_window_ns
-//! ```
-//!
-//! Step response (one per event):
-//!
-//! ```text
-//! u8 layout | u8 hedge_mode | i64 hedge_ns | u8 grace_mode | i64 grace_ns
-//! u32 launch_count
-//!   per launch: u32 provider | i64 timeout_ns
-//! u8 terminal
-//!   terminal event:  u8 0 | u8 success | text strategy | u32 provider_count | i64 elapsed_ms
-//!                    text selected_id | i64 selected_elapsed_ms | text winner_id
-//!                    i32 winner_index | i64 winner_elapsed_ms
-//!                    u8 fallback_used | u8 fallback_success | text error_message
-//!   terminal silent: u8 1 | text message
-//! ```
-//!
-//! `text` is `u32 length | bytes`; every integer is little-endian. A drifted version byte, a length
-//! that disagrees with the payload or a trailing byte is a hard error.
-
 use crate::schedule::{Event, Hedge, Launch, Outcome, PlanInput, Provider, Step, Strategy};
 
-/// Must match `resolverSchedulePayloadLayoutVersion` in Go.
 pub const LAYOUT_VERSION: u8 = 1;
 
 const HEDGE_LEAVE: u8 = 0;
@@ -93,7 +64,6 @@ fn put_text(out: &mut Vec<u8>, text: &str) {
     out.extend_from_slice(text.as_bytes());
 }
 
-/// Decodes one session request.
 pub fn decode_plan(payload: &[u8]) -> Option<PlanInput> {
     let mut reader = Reader::new(payload)?;
     let strategy = Strategy::from_code(reader.u8()?)?;
@@ -130,7 +100,6 @@ pub fn decode_plan(payload: &[u8]) -> Option<PlanInput> {
     })
 }
 
-/// Encodes one step response.
 pub fn encode_step(step: &Step) -> Vec<u8> {
     let mut out = Vec::with_capacity(96);
     out.push(LAYOUT_VERSION);

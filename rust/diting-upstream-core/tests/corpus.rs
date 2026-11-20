@@ -1,20 +1,3 @@
-//! Replays the transport fixtures produced by the old Go implementation.
-//!
-//! * `truncation.tsv` — `isTruncatedResponse` itself (every flags byte, short buffers, nil).
-//! * `targets.tsv` — the `net.SplitHostPort` + default-port expression both resolvers opened with,
-//!   run through Go's own splitter.
-//! * `tcp_frame.tsv` — `queryPlainTCPContext` against a capture server: the exact request bytes it
-//!   wrote and the response it accepted.
-//! * `dot_frame.tsv` — `executeDoTQuery` against a real (self-signed) DoT server: request framing and
-//!   the response-length validity rules, including `0`, `4096`, `4097` and `65535`.
-//! * `doh_status.tsv` — `queryDoHContext` against `httptest` servers: the status classification and
-//!   the 65535-byte body cap.
-//! * `pool_trace.tsv` — the old `popIdleDoTConn` / `putIdleDoTConn` / `closeDoTConns` driven with
-//!   scripted connections and a scripted clock (the `lastUsed` stamps are rewritten per row).
-//! * `retry_plan.tsv` — the inline plain-UDP deadline expressions, copied verbatim into the
-//!   generator because the Go side has no callable function for them.
-//! * `doq_skip.tsv` — the inline DoQ prefix-strip expression, same reasoning.
-
 use diting_upstream_core::doh::{should_retry, status_kind, StatusKind};
 use diting_upstream_core::endpoint::{split_target, TargetProtocol};
 use diting_upstream_core::framing::{
@@ -159,7 +142,6 @@ fn the_doh_status_corpus_replays_exactly() {
             other => panic!("unknown outcome {other}"),
         };
         assert_eq!(status_kind(status), expected, "row {fields:?}");
-        // The body is only read on 200, and then capped by `io.LimitReader(resp.Body, maxReadBytes)`.
         if expected == StatusKind::Ok {
             assert_eq!(
                 result_len,
@@ -273,7 +255,6 @@ fn the_doq_skip_corpus_replays_exactly() {
     assert_eq!(count, 11);
 }
 
-/// The two tables that have no fixture of their own.
 #[test]
 fn the_mode_and_rcode_tables_are_pinned() {
     assert_eq!(strategy("single"), Strategy::Single);
@@ -285,8 +266,6 @@ fn the_mode_and_rcode_tables_are_pinned() {
     assert!(!is_policy_rejection(3) && !is_policy_rejection(2));
 }
 
-/// `should_retry` is not in a fixture either: `queryDoHContext`'s retry is only reachable when the
-/// HTTP/2 connection dies mid-flight.
 #[test]
 fn the_doh_retry_rule_is_pinned() {
     assert!(should_retry(1, "Post \"https://x\": EOF"));

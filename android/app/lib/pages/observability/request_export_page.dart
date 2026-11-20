@@ -1,5 +1,3 @@
-/// Request-log CSV export (功能: 从“请求”页导出). The user picks filters and columns here; the
-/// actual file is written by [RequestLogExportActions] behind [requestLogExportRunnerProvider].
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -39,7 +37,6 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
   RequestLogExportRange _range = RequestLogExportRange.all;
   DateTimeRange? _customRange;
 
-  /// Empty means every app, matching [RequestLogExportOptions.packages].
   final Set<String> _packages = {};
 
   final Set<RequestLogColumn> _columns = {...RequestLogColumn.values};
@@ -49,7 +46,6 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
   @override
   void initState() {
     super.initState();
-    // "Export what I am looking at": seed the record filters from the request page.
     final query = ref.read(requestFeedQueryProvider);
     _source = query.source;
     _status = query.status;
@@ -131,7 +127,6 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
       packages: {..._packages},
       range: _range,
       customStart: range?.start,
-      // The picked dates are calendar days: include the whole end day.
       customEnd: range == null
           ? null
           : DateTime(
@@ -178,8 +173,6 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
     final l10n = context.l10n;
     final normalMode = ref.watch(workModeProvider) == AppWorkMode.normal;
     final error = _validationError(l10n);
-    // A custom range starts out empty by design; the row's own hint explains what
-    // to do, so don't greet the user with a red banner the moment they tap 自定义.
     final showError =
         error != null &&
         !(_range == RequestLogExportRange.custom && _customRange == null);
@@ -366,8 +359,6 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
   }
 }
 
-/// One titled card: header, a single card holding grouped rows and chips, then an optional note.
-/// The card carries no padding so rows (a tappable [ListItem]) can reach its rounded edge.
 class _ExportCard extends StatelessWidget {
   const _ExportCard({required this.title, required this.children, this.footer});
 
@@ -397,7 +388,6 @@ class _ExportCard extends StatelessWidget {
   }
 }
 
-/// A labelled field inside an [_ExportCard]: caption above the control, optional caption below.
 class _ExportField extends StatelessWidget {
   const _ExportField({required this.label, required this.child, this.hint});
 

@@ -3,11 +3,6 @@ package com.haoze.diting.net
 import java.net.Inet6Address
 import java.net.InetAddress
 
-/// Hop-by-hop traceroute via `ping`'s TTL flag: no root, no `traceroute` binary.
-///
-/// One hop is one process run; the command, the streaming reader and the first-response stamp stay
-/// here, while the pattern work (which hop answered, was it unreachable, does this `ping` even
-/// support `-t`) lives in `rust/diting-probe-core` (`trace.rs`) behind [ProbeNative].
 internal object TraceProbe {
 
     const val DEFAULT_MAX_HOPS = 30
@@ -84,7 +79,6 @@ internal object TraceProbe {
                 listOf("ping", "-c", "1", "-W", "$PROBE_TIMEOUT_SECONDS", "-t", "$ttl", host),
             )
         }
-        // The first-response stamp needs the streaming output, so ProcessProbe.run is not reused.
         return candidates.firstNotNullOfOrNull(::streamingProbe)
     }
 
@@ -109,7 +103,6 @@ internal object TraceProbe {
             }
             ProcessSupport.waitOrKill(process, SELF_CAP_MS)
         } catch (_: Exception) {
-            // A mid-read crash still leaves usable output on some devices; let the parser decide.
         } finally {
             runCatching { process.destroy() }
         }
@@ -146,10 +139,8 @@ internal object TraceProbe {
         "hops" to hops,
         "success" to success,
         "message" to message,
-        // Always false: a MethodChannel call has no cancel path, but `fromMap` reads the key.
         "cancelled" to false,
     )
 
-    /// Hard cap per hop: `-W` covers the reply wait, the rest spawn plus a slow readLine
     private const val SELF_CAP_MS = (PROBE_TIMEOUT_SECONDS + 3) * 1000L
 }

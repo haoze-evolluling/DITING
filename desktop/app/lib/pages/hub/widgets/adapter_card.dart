@@ -1,9 +1,3 @@
-/// One adapter card: its connection state, the takeover switch, the gateway and the DNS before and
-/// after the takeover.
-///
-/// The old desktop console's `AdaptersPanel.vue` is the blueprint. The service decides whether the
-/// adapter is taken over (`/status`'s `takeover.adapters`, matched by id or name) and what DNS it had
-/// before; the card only reports both.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -25,7 +19,6 @@ class AdapterCard extends StatelessWidget {
   final DesktopAdapter adapter;
   final bool takenOver;
 
-  /// A write is in flight; every switch is disabled so two adapters cannot race.
   final bool saving;
   final ValueChanged<bool> onToggle;
 

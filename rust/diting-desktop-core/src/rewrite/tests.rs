@@ -26,7 +26,6 @@ fn exact_and_wildcard_lookups() {
 
     assert!(engine.lookup("api.test", 1).matched);
     assert!(!engine.lookup("api.other", 1).matched);
-    // Type mismatch is authoritative NODATA, not a miss.
     let nodata = engine.lookup("nas.lan", 15);
     assert!(nodata.matched);
     assert!(nodata.answers.is_empty());

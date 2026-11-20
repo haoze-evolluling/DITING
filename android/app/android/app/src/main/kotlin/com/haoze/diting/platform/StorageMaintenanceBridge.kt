@@ -8,12 +8,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/**
- * Storage lifecycle channel used by the one-time V2 migrator.
- *
- * Verification runs through the same connection pool the native writers use, so a database that
- * Dart can open but Kotlin cannot is caught before the migration marker is written.
- */
 class StorageMaintenanceBridge(private val context: Context) :
     MethodChannel.MethodCallHandler {
 

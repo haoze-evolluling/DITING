@@ -5,15 +5,9 @@ import 'package:diting_android/pages/server/server_home_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Hour label used under the 24-hour chart, e.g. `08:00`.
 String serverHourLabel(DateTime hour) =>
     '${hour.hour.toString().padLeft(2, '0')}:00';
 
-/// Rolling 24-hour DNS traffic, one bar per hour.
-///
-/// The lower part of each bar is the hour's total query count and the top segment is
-/// the blocked share. The faint full-height tracks keep the chart readable when only a
-/// few hours have traffic.
 class ServerTrafficChart extends StatelessWidget {
   const ServerTrafficChart({
     super.key,
@@ -154,7 +148,6 @@ class _TrafficPainter extends CustomPainter {
       oldDelegate.gridColor != gridColor;
 }
 
-/// A single-value ring used by the blocking and cache cards.
 class ServerPercentRing extends StatelessWidget {
   const ServerPercentRing({
     super.key,

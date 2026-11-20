@@ -1,8 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'list.dart';
 
-/// Draws a row's bottom separator from its title start, dropped while it or the next is
-/// highlighted.
 class _ListRowSeparator extends SingleChildRenderObjectWidget {
   final bool separated;
   final bool emphasized;
@@ -47,7 +45,6 @@ class _ListRowSeparator extends SingleChildRenderObjectWidget {
       ..color = _color(context)
       ..textDirection = Directionality.of(context)
       ..devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
-    // A reorder hands a row a new neighbour below without changing any of its own properties.
     if (separated) {
       renderObject.markNeedsPaint();
     }
@@ -276,7 +273,6 @@ class _RenderListRowSeparator extends RenderProxyBox {
     super.detach();
   }
 
-  /// Null while an ancestor stopped painting the row, where the transform is all zeros (NaN).
   double? _pixelOverhang() {
     final deviceBottom =
         localToGlobal(Offset(0, size.height)).dy * _devicePixelRatio;
@@ -286,8 +282,6 @@ class _RenderListRowSeparator extends RenderProxyBox {
     return deviceBottom - (deviceBottom + 1e-3).floorToDouble();
   }
 
-  /// Whether the row needs another frame; this runs after paint, when markNeedsPaint schedules
-  /// none.
   bool _realign() {
     final painted = _paintedOverhang;
     if (painted == null) {
@@ -345,7 +339,6 @@ class _RenderListRowSeparator extends RenderProxyBox {
       TextDirection.ltr => (title?.left ?? 0.0, size.width - _endIndent),
       TextDirection.rtl => (_endIndent, title?.right ?? size.width),
     };
-    // Layout is not snapped to device pixels, and a line straddling pixel rows renders blurred.
     final overhang = _pixelOverhang() ?? 0;
     _paintedOverhang = overhang;
     final bottom = size.height - overhang / _devicePixelRatio;
@@ -356,8 +349,6 @@ class _RenderListRowSeparator extends RenderProxyBox {
   }
 }
 
-/// A row moved without repainting can leave its line between device pixels; once still, it
-/// repaints.
 abstract final class _PixelRealignment {
   static final _rows = <_RenderListRowSeparator>{};
   static var _listening = false;

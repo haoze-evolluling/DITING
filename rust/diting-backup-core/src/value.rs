@@ -1,8 +1,3 @@
-//! Helpers over `serde_json::Value`.
-//!
-//! The document is loose JSON by nature (a 2.0 backup has to restore on a 2.1 build), so every read
-//! is a typed probe: a field of the wrong type is "absent", never a crash.
-
 use std::collections::BTreeMap;
 
 use serde_json::{Map, Value};
@@ -11,7 +6,6 @@ pub fn object() -> Map<String, Value> {
     Map::new()
 }
 
-/// A field that must be an object.
 pub fn as_object(value: &Value) -> Option<&Map<String, Value>> {
     value.as_object()
 }
@@ -24,7 +18,6 @@ pub fn text(value: &Value, key: &str) -> Option<String> {
     get(value, key).and_then(Value::as_str).map(str::to_string)
 }
 
-/// Trimmed, non-empty text; `None` for blank, missing or non-string.
 pub fn trimmed(value: &Value, key: &str) -> Option<String> {
     get(value, key).and_then(Value::as_str).and_then(|text| {
         let trimmed = text.trim();
@@ -36,7 +29,6 @@ pub fn boolean(value: &Value, key: &str) -> Option<bool> {
     get(value, key).and_then(Value::as_bool)
 }
 
-/// `true`/`false`, or the stored `1`/`0` of a database column.
 pub fn truthy(value: &Value, key: &str) -> Option<bool> {
     match get(value, key) {
         Some(Value::Bool(flag)) => Some(*flag),
@@ -61,13 +53,10 @@ pub fn array(value: &Value, key: &str) -> Vec<Value> {
     list(value, key).cloned().unwrap_or_default()
 }
 
-/// A string list with blank entries dropped, trimmed, de-duplicated and sorted — the shape all four
-/// app-list groups export, so two equal sets always produce byte-identical documents.
 pub fn sorted_strings(value: &Value) -> Vec<Value> {
     string_set(value).into_keys().map(Value::String).collect()
 }
 
-/// A `Set<String>` read out of a list or an object's keys, matching `_stringSet`.
 pub fn string_set(value: &Value) -> BTreeMap<String, ()> {
     let mut set = BTreeMap::new();
     match value {
@@ -101,18 +90,14 @@ pub fn set_of_strings(values: &[String]) -> BTreeMap<String, ()> {
         .collect::<BTreeMap<_, _>>()
 }
 
-/// `List.unorderedEquals` for two string lists built from `sorted_strings`.
 pub fn same_string_set(left: &Value, right: &Value) -> bool {
     string_set(left) == string_set(right)
 }
 
-/// The `_stringSet(...)` plus `jsonEncode` pair, for `bootstrap_custom_json`.
 pub fn encode_json(value: &Value) -> String {
     serde_json::to_string(value).unwrap_or_else(|_| String::from("null"))
 }
 
-/// Content comparison with ids stripped, matching `_encodeConfig`: ids are generated locally, so
-/// comparing them would mark every re-import as an update that never clears.
 pub fn config_signature(value: &Value) -> String {
     let mut entries: Vec<(String, Value)> = match value {
         Value::Object(record) => record
@@ -152,7 +137,6 @@ fn flat_signature(value: &Value) -> String {
 
 pub fn slug_of(value: &str) -> String {
     let mut output = String::new();
-    // Dart iterates UTF-16 code units, so an astral character contributes two underscores.
     for unit in value.trim().to_lowercase().encode_utf16() {
         let character = char::from_u32(u32::from(unit)).unwrap_or('\u{FFFD}');
         if character.is_ascii_lowercase() || character.is_ascii_digit() {
@@ -168,7 +152,6 @@ pub fn slug_of(value: &str) -> String {
     }
 }
 
-/// `_decimal`: a number or a numeric string, clamped to `0..=1`.
 pub fn decimal(value: &Value, key: &str) -> Option<f64> {
     match get(value, key) {
         Some(Value::Number(number)) => number.as_f64().map(|value| value.clamp(0.0, 1.0)),
@@ -177,8 +160,6 @@ pub fn decimal(value: &Value, key: &str) -> Option<f64> {
     }
 }
 
-/// Rounds to two decimals: Android stores opacity as a Java `float` (`0.8` reads back as
-/// `0.800000011920929`).
 pub fn round_opacity(value: f64) -> Value {
     let rounded = (value * 100.0).round() / 100.0;
     Value::from(rounded)

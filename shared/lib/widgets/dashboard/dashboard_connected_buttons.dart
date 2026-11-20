@@ -1,7 +1,5 @@
 part of 'dashboard_card.dart';
 
-/// M3 Expressive connected button group. Every segment shares the product's
-/// standard corner; a plain Row suffices where upstream uses RenderFlex.
 class DashboardConnectedGroup extends StatelessWidget {
   const DashboardConnectedGroup({
     super.key,

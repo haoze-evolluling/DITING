@@ -1,7 +1,3 @@
-//! The full-tunnel UDP gate's half of the MITM contract: `setFilterHttp3` must drop UDP `:443` only
-//! for the apps whose HTTPS traffic is being inspected, so their HTTP/3 falls back to TCP and the
-//! MITM can see it. A separate test binary keeps the MITM integration file within its size budget.
-
 mod support;
 
 use std::sync::Arc;

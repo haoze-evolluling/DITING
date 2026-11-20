@@ -1,9 +1,3 @@
-/// The web console's gate: the desktop window goes straight to the app, a browser must first hold a
-/// session.
-///
-/// The old desktop console did the same in `App.vue` — check `/auth/status`, show `LoginView` when the
-/// browser has no session, and only then mount the console. The native desktop window is not web, so
-/// it never authenticates and never sees a login form.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -18,7 +12,6 @@ import 'package:material_ui/material_ui.dart';
 class DesktopAuthGate extends ConsumerWidget {
   const DesktopAuthGate({super.key, required this.child});
 
-  /// The console itself: the router and every page behind it.
   final Widget child;
 
   @override
@@ -38,8 +31,6 @@ class DesktopAuthGate extends ConsumerWidget {
     } else {
       return child;
     }
-    // The gate replaces the router, so the login screen needs a navigator of its own: tooltips and
-    // the background dialog both need an Overlay and a route to open on.
     return Navigator(
       pages: [MaterialPage<void>(child: page)],
       onDidRemovePage: (_) {},
@@ -47,8 +38,6 @@ class DesktopAuthGate extends ConsumerWidget {
   }
 }
 
-/// The cold-start moment before `/auth/status` answers; the console is not mounted yet, so nothing
-/// behind the gate can fire a request with a stale token.
 class _Splash extends StatelessWidget {
   const _Splash();
 

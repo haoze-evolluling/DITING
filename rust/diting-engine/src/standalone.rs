@@ -1,20 +1,3 @@
-//! The standalone DNS server: UDP and TCP on IPv4 and IPv6, no TUN required.
-//!
-//! `StartStandalone`/`StopStandalone` in Go opened four `miekg/dns` servers. The behaviour that has
-//! to survive is small but specific:
-//!
-//! * all four binds are attempted before the engine reports success, and a failed **IPv4** bind fails
-//!   the start (the IPv6 pair is optional: a device without IPv6 still serves);
-//! * UDP reads with a 4096-byte buffer and answers the client's source address, preserving the source
-//!   port (which is what the `/proc/net/udp` UID attribution relies on, once stage 3 needs it);
-//! * TCP carries a 2-byte length prefix in both directions and closes an idle connection after
-//!   [`TCP_IDLE_TIMEOUT`];
-//! * the IPv6 sockets set `IPV6_V6ONLY`, so the dual-stack default cannot steal the IPv4 port.
-//!
-//! Each request is one task: a query can wait seconds for its upstream, and a single-threaded server
-//! loop would serialise every client behind it. A semaphore caps the number of in-flight requests so
-//! a flood degrades into dropped queries instead of an unbounded task queue (the engine has no GC).
-
 use std::net::{
     IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener as StdTcpListener,
     UdpSocket as StdUdpSocket,
@@ -32,14 +15,10 @@ use tokio::task::JoinHandle;
 use crate::engine::Engine;
 use crate::error::{EngineError, EngineResult};
 
-/// `dnsServerReadTimeout`: an idle TCP client is dropped after 15 s.
 pub const TCP_IDLE_TIMEOUT: Duration = Duration::from_secs(15);
-/// The UDP read buffer (`dns.MinMsgSize` was 512; a 4096-byte buffer matches the old read cap).
 pub const UDP_BUFFER: usize = 4096;
-/// In-flight request cap per server instance.
 pub const MAX_INFLIGHT: usize = 256;
 
-/// One running server instance.
 pub struct Standalone {
     port: u16,
     stopped: Arc<AtomicBool>,
@@ -51,7 +30,6 @@ impl Standalone {
         self.port
     }
 
-    /// Stops every loop and waits for the tasks to unwind, which closes the sockets.
     pub fn stop(mut self) {
         self.shutdown();
     }
@@ -62,8 +40,6 @@ impl Standalone {
         for task in &tasks {
             task.abort();
         }
-        // The listener task owns the bound socket after an abort; wait (bounded) for the runtime
-        // to actually drop it so a caller that restarts on the same port can rebind.
         let deadline = std::time::Instant::now() + Duration::from_millis(250);
         while tasks.iter().any(|task| !task.is_finished())
             && std::time::Instant::now() < deadline
@@ -79,8 +55,6 @@ impl Drop for Standalone {
     }
 }
 
-/// Binds and starts the four servers. The IPv4 pair is mandatory; the IPv6 pair is reported and
-/// skipped when the device has no IPv6, exactly like the old `logf`-and-continue branch.
 pub fn start(engine: Arc<Engine>, port: u16) -> EngineResult<Standalone> {
     start_on(
         engine,
@@ -90,14 +64,6 @@ pub fn start(engine: Arc<Engine>, port: u16) -> EngineResult<Standalone> {
     )
 }
 
-/// Binds only to loopback (`127.0.0.1` / `::1`).
-///
-/// Android's `nat OUTPUT REDIRECT` rewrites the destination of a local DNS query to the
-/// redirect port but leaves the reply's source address rewriting to conntrack. A listener bound
-/// to `0.0.0.0` answers from the interface address instead of the original DNS server, so a
-/// connected socket (netd, bionic's `res_nsend`) drops the reply as spoofed. Binding loopback
-/// makes the reply source the redirect destination itself, and conntrack restores the DNS
-/// server's address before the client sees it.
 pub fn start_loopback(engine: Arc<Engine>, port: u16) -> EngineResult<Standalone> {
     start_on(
         engine,
@@ -165,12 +131,6 @@ fn start_on(
     })
 }
 
-/// Binds the mandatory IPv4 pair on `port`, or on an ephemeral port when `port` is 0.
-///
-/// Port 0 means "pick one", and the UDP and TCP servers of one engine must share it. The UDP socket
-/// takes the ephemeral port and TCP has to follow; on a busy host that TCP port can already be taken
-/// (Windows and Linux keep separate ephemeral ranges), so the pair is retried a few times before the
-/// start fails.
 fn bind_ipv4_pair(address: IpAddr, port: u16) -> EngineResult<(StdUdpSocket, StdTcpListener, u16)> {
     let attempts = if port == 0 { 8 } else { 1 };
     let mut last_error = String::new();
@@ -234,7 +194,6 @@ fn new_socket(address: IpAddr, kind: Type, v6_only: bool) -> std::io::Result<Soc
     Ok(socket)
 }
 
-/// Converts the bound std sockets inside the runtime context, which `from_std` requires.
 fn to_async(
     runtime: &tokio::runtime::Runtime,
     udp: StdUdpSocket,
@@ -257,7 +216,6 @@ fn to_async_tcp(runtime: &tokio::runtime::Runtime, tcp: StdTcpListener) -> TcpLi
     TcpListener::from_std(tcp).expect("a bound TCP listener is usable")
 }
 
-/// N9: the client address the limiter keys on, in the 4- or 16-byte form it expects.
 fn rate_addr(peer: SocketAddr) -> Option<diting_ratelimit_core::Addr> {
     match peer.ip() {
         IpAddr::V4(v4) => diting_ratelimit_core::Addr::from_bytes(&v4.octets()),
@@ -265,7 +223,6 @@ fn rate_addr(peer: SocketAddr) -> Option<diting_ratelimit_core::Addr> {
     }
 }
 
-/// The monotonic-enough wall clock the token bucket refills against.
 fn now_ns() -> i64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -282,12 +239,7 @@ fn spawn_udp(
     let receiver = engine.runtime().handle().clone();
     receiver.spawn(async move {
         let socket = Arc::new(socket);
-        // A per-request buffer would allocate on every datagram; one buffer per read loop is enough
-        // because the read is awaited before the query is handed off.
         let mut buffer = vec![0u8; UDP_BUFFER];
-        // Replies travel back through this queue instead of the request task holding a socket
-        // clone: an aborted listener then releases the bound port deterministically, so a stopped
-        // engine can be restarted on the same port.
         let (replies, mut answered) = mpsc::channel::<(Vec<u8>, SocketAddr)>(MAX_INFLIGHT);
         loop {
             if stopped.load(Ordering::Acquire) {
@@ -299,7 +251,6 @@ fn spawn_udp(
                         Ok(received) => received,
                         Err(_) => continue,
                     };
-                    // N9: a rate-limited client's datagram is dropped before it costs a task slot.
                     if !engine.allow_client(rate_addr(peer).as_ref(), now_ns()) {
                         continue;
                     }
@@ -308,14 +259,11 @@ fn spawn_udp(
                     let replies = replies.clone();
                     let permit = match permits.clone().try_acquire_owned() {
                         Ok(permit) => permit,
-                        // Over the in-flight cap: drop the datagram, the client retries.
                         Err(_) => continue,
                     };
                     tokio::spawn(async move {
                         let _permit = permit;
                         if let Some(response) = crate::dns::serve(&engine, &query).await {
-                            // A closed receiver means the server stopped: the answer is dropped,
-                            // exactly like a send on a closed socket.
                             let _ = replies.send((response, peer)).await;
                         }
                     });
@@ -345,7 +293,6 @@ fn spawn_tcp(
                 Ok(accepted) => accepted,
                 Err(_) => continue,
             };
-            // N9: gate the whole connection per client address (a TCP client reuses one).
             if !engine.allow_client(rate_addr(peer).as_ref(), now_ns()) {
                 continue;
             }
@@ -361,14 +308,12 @@ fn spawn_tcp(
     })
 }
 
-/// One TCP connection: length-prefixed queries until the client leaves or idles out.
 async fn serve_tcp_connection(engine: Arc<Engine>, mut stream: TcpStream) -> std::io::Result<()> {
     let mut length = [0u8; 2];
     loop {
         let read =
             match tokio::time::timeout(TCP_IDLE_TIMEOUT, stream.read_exact(&mut length)).await {
                 Ok(Ok(read)) => read,
-                // Timeout, EOF or a broken stream: the connection is done.
                 Ok(Err(_)) | Err(_) => return Ok(()),
             };
         if read == 0 {

@@ -1,6 +1,3 @@
-// Runs the subscription SQL against the real 1.4.3 tables: `ORDER BY`,
-// conflicts, cascades.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:diting_android/data/db/subscription_models.dart';

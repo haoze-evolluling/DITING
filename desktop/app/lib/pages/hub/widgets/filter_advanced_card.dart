@@ -1,8 +1,3 @@
-/// The advanced blocking switches: response-side CNAME re-checking and allowlist-only mode.
-///
-/// The old desktop console's `RulesPanel.vue` "advanced" tab is the blueprint. Each switch saves on the
-/// spot. The bogus-NXDOMAIN correction with its address list is [BogusNxDomainCard], because a list
-/// editor inside the switch card made it the tallest card on the page.
 library;
 
 import 'dart:async';
@@ -18,7 +13,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The four addresses the console offers as one-tap entries.
 const List<String> desktopBogusPresets = [
   '0.0.0.0/8',
   '127.0.0.0/8',
@@ -26,7 +20,6 @@ const List<String> desktopBogusPresets = [
   '::1/128',
 ];
 
-/// Obvious typos only; the service is the authority on what a valid address is.
 final RegExp _addressShape = RegExp(r'^[0-9a-fA-F:.]+(/\d{1,3})?$');
 
 List<String> desktopBogusNetworks(String text) => [
@@ -133,8 +126,6 @@ class FilterAdvancedCard extends ConsumerWidget {
   }
 }
 
-/// The bogus-NXDOMAIN correction: the switch and the address list that marks an upstream answer as a
-/// hijack page.
 class BogusNxDomainCard extends ConsumerStatefulWidget {
   const BogusNxDomainCard({
     super.key,
@@ -327,8 +318,6 @@ class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
               ],
             ),
             const SizedBox(height: 10),
-            // A wrap, not a row with a leading Spacer: two English labels plus their pill padding
-            // need more width than a two-column card carries, and a row paints them over the edge.
             Wrap(
               spacing: 8,
               runSpacing: 8,

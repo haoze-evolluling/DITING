@@ -36,7 +36,6 @@ void main() {
         _row(app: 'b', domain: 'z', up: 1, down: 1),
       ]);
       expect(reports.length, 2);
-      // "a" has more total bytes, so it comes first.
       expect(reports.first.appLabel, 'a');
       expect(reports.first.connectionCount, 2);
       expect(reports.first.totalBytes, 110);

@@ -1,8 +1,3 @@
-/// The host's network adapters and which of them the service is currently taking over.
-///
-/// The old desktop console's `network/AdaptersPanel.vue` is the blueprint. `/adapters` reports the
-/// adapter's own properties (gateway, IP mode, the DNS it had before) and `/status` reports the
-/// takeover set as ids *or* names, so the page has to accept either.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -18,7 +13,6 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// `GET /api/v1/adapters` — one entry per adapter the host considers usable.
 class DesktopAdapter {
   const DesktopAdapter({
     required this.id,
@@ -50,19 +44,16 @@ class DesktopAdapter {
     hasResidualLoopback: _bool(json['hasResidualLoopback']),
   );
 
-  /// Windows GUID or the Linux interface name; also the takeover key.
   final String id;
   final String name;
   final String description;
   final int index;
 
-  /// `Up` when the adapter carries traffic; every other value is shown as-is.
   final String status;
   final String gateway;
   final bool ipv4Dhcp;
   final bool ipv6Dhcp;
 
-  /// The DNS the adapter had before any takeover; empty when it was obtained automatically.
   final List<String> ipv4Dns;
   final List<String> ipv6Dns;
   final bool isPhysical;
@@ -70,6 +61,5 @@ class DesktopAdapter {
 
   bool get isUp => status.toLowerCase() == 'up';
 
-  /// Both stacks, so a v6-only adapter still shows what it had.
   List<String> get dns => [...ipv4Dns, ...ipv6Dns];
 }

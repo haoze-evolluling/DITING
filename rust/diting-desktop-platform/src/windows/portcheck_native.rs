@@ -1,10 +1,3 @@
-//! Native port 53 listener and ICS detection.
-//!
-//! `GetExtendedTcpTable`/`GetExtendedUdpTable` return fixed-layout rows; casting them straight
-//! into the `windows-sys` MIB structs avoids the manual byte offsets the Go service had to keep in
-//! sync. A `netstat`/`sc` fallback runs only when the native calls themselves fail, so normal
-//! output is identical to the Go diagnostics.
-
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::mem::size_of;
@@ -94,8 +87,6 @@ fn fetch_mib_table(spec: &TableSpec) -> Option<Vec<u8>> {
         } else {
             buffer.as_mut_ptr() as *mut c_void
         };
-        // SAFETY: the table pointer/size pair follows the Win32 contract; on overflow the API
-        // updates `size` and writes nothing beyond the allocated buffer.
         status = unsafe {
             if spec.tcp {
                 GetExtendedTcpTable(
@@ -126,8 +117,6 @@ fn fetch_mib_table(spec: &TableSpec) -> Option<Vec<u8>> {
     }
 }
 
-/// Returns `None` only when the native query itself failed; an empty `Some` means "no matching
-/// listeners", which is not a failure and must not trigger the netstat fallback.
 fn walk_table(spec: &TableSpec, target_port: u16) -> Option<Vec<RawListener>> {
     let buffer = fetch_mib_table(spec)?;
     let count = u32::from_le_bytes([buffer[0], buffer[1], buffer[2], buffer[3]]) as usize;
@@ -141,7 +130,6 @@ fn walk_table(spec: &TableSpec, target_port: u16) -> Option<Vec<RawListener>> {
                 if offset + row_size > buffer.len() {
                     break;
                 }
-                // SAFETY: bounds checked; `read_unaligned` tolerates the Vec's byte alignment.
                 let row = unsafe {
                     ptr::read_unaligned(buffer.as_ptr().add(offset) as *const MIB_TCPROW_OWNER_PID)
                 };
@@ -223,7 +211,6 @@ fn walk_table(spec: &TableSpec, target_port: u16) -> Option<Vec<RawListener>> {
 
 fn process_name_map() -> HashMap<u32, String> {
     let mut names = HashMap::new();
-    // SAFETY: the snapshot handle is owned and closed below; entries are validated by the API.
     let snapshot = unsafe { CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) };
     if snapshot == INVALID_HANDLE_VALUE {
         return names;
@@ -249,7 +236,6 @@ fn process_name_map() -> HashMap<u32, String> {
     names
 }
 
-/// Returns the listener list plus whether at least one native table query succeeded.
 fn get_port53_listeners_native() -> (Vec<NativePortListener>, bool) {
     let names = process_name_map();
     let mut listeners = Vec::new();
@@ -305,7 +291,6 @@ async fn get_port53_listeners(executor: &dyn CommandExecutor) -> Vec<NativePortL
     fallback
 }
 
-/// Parses one `netstat -ano` family listing. Used only when the native tables are unavailable.
 pub(crate) fn parse_netstat_output(
     output: &str,
     protocol: &str,
@@ -344,7 +329,6 @@ pub(crate) fn parse_netstat_output(
     listeners
 }
 
-/// Aggregates the native listener list into the diagnostics consumed by the IPC layer.
 pub(crate) fn format_port_conflicts(
     raw_list: &[NativePortListener],
     has_ics: bool,
@@ -424,7 +408,6 @@ pub(crate) fn format_port_conflicts(
     (conflicts, has_ics, diagnostic)
 }
 
-/// One-stop native probe: listeners, ICS status, and formatted diagnostics.
 pub(crate) async fn check_port53_native(
     executor: &dyn CommandExecutor,
     available: bool,

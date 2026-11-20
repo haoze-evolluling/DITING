@@ -1,9 +1,3 @@
-/// IP quality check: queries several public IP intelligence sources in parallel and merges their
-/// answers into one report.
-///
-/// HTTP, timeouts and the localized failure sentences stay here; the egress-IP gate, every source
-/// field, the type keywords and the report summary come from `rust/diting-ip-quality-core`, so
-/// there is no second classifier to drift.
 library;
 
 import 'dart:async';
@@ -29,7 +23,6 @@ class IpSourceResult {
 
   final String status;
 
-  /// Source-reported type (residential/mobile/business/datacenter), null if unknown.
   final String? ipType;
   final int? latencyMs;
 
@@ -101,11 +94,8 @@ class IpQualityChecker {
 
   final Duration timeout;
 
-  /// `/config/user-agents` override; public IP-intel endpoints throttle unknown agents.
   final String userAgent;
 
-  /// Ordered fallback chain of "what is my egress IP" probes. Measured, not read from the NIC: the
-  /// user cares about the tunnel exit, not the LAN IP.
   final List<String> probeUrls;
 
   final String ipApiUrl;
@@ -139,7 +129,6 @@ class IpQualityChecker {
     return null;
   }
 
-  /// One GET with the shared UA and timeouts; the caller decides what a status means.
   Future<({int status, String body})> _fetch(
     HttpClient client,
     String url,
@@ -157,7 +146,6 @@ class IpQualityChecker {
       if (response.status != 200) return null;
       return RustIpQualityCore.instance.parseProbe(response.body);
     } on StateError {
-      // The native core missing or rejecting a payload is a build error, not a source failure.
       rethrow;
     } on Object {
       return null;
@@ -176,7 +164,6 @@ class IpQualityChecker {
     return Future.wait(probes);
   }
 
-  /// ip-api.com: free, no key, plain HTTP (TLS there is a paid feature).
   Future<IpSourceResult> _ipApi(HttpClient client, String ip) => _get(
     client,
     'ipApi',
@@ -187,7 +174,6 @@ class IpQualityChecker {
   Future<IpSourceResult> _ipWhoIs(HttpClient client, String ip) =>
       _get(client, 'ipWhoIs', 'ipwho.is', '$ipWhoIsUrl/$ip');
 
-  /// ipinfo.io: limited free quota; org looks like `AS15169 Google LLC`.
   Future<IpSourceResult> _ipInfo(HttpClient client, String ip) =>
       _get(client, 'ipInfo', 'ipinfo.io', '$ipInfoUrl/$ip/json');
 
@@ -222,7 +208,6 @@ class IpQualityChecker {
     } on FormatException {
       return IpSourceResult(name: name, status: '失败', detail: '响应不是合法 JSON');
     } on StateError {
-      // The native core missing or rejecting a payload is a build error, not a source failure.
       rethrow;
     } on Object catch (error) {
       return IpSourceResult(name: name, status: '失败', detail: '$error');

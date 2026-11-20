@@ -1,4 +1,3 @@
-/// Disclaimer text shown by the disclaimer page.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

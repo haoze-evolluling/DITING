@@ -1,6 +1,3 @@
-// Guards the Dart side of the runtime-log channel: the status map (including the always-on event
-// black box fields), the standard/detailed start argument, readEvents and the appendEvent forward.
-
 import 'package:diting_android/data/native/runtime_log_bridge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

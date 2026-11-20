@@ -1,9 +1,3 @@
-/// Network diagnostics hub: the physical-network overview plus four probe tools.
-///
-/// The tools used to share one page behind a segmented control. Each now lives on its own pushed
-/// page ([SpeedTestPage], [PingTestPage], [DnsLookupPage], [TraceroutePage]), so results get the
-/// full screen, a title of their own and a back button — and a long result list never competes
-/// with the other tools for vertical space.
 library;
 
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
@@ -25,7 +19,6 @@ part 'ping_test_page.dart';
 part 'dns_lookup_page.dart';
 part 'traceroute_page.dart';
 
-/// A probe tool: its glyph, its route and its copy. Order is the hub's list order.
 enum NetworkTool {
   speedTest(AppGlyphs.speed, ToolPaths.speedTest),
   ping(AppGlyphs.connections, ToolPaths.ping),
@@ -83,7 +76,6 @@ class ToolsPage extends ConsumerWidget {
   }
 }
 
-/// One tappable tool row: a tinted glyph badge, the tool name and what it measures.
 class _ToolEntry extends StatelessWidget {
   const _ToolEntry({required this.tool});
 
@@ -102,8 +94,6 @@ class _ToolEntry extends StatelessWidget {
   }
 }
 
-/// The glyph tile other hub rows use, on the raised surface inside a card so it stays visible in
-/// both light and dark mode.
 class _ToolBadge extends StatelessWidget {
   const _ToolBadge({required this.glyph});
 
@@ -125,8 +115,6 @@ class _ToolBadge extends StatelessWidget {
   }
 }
 
-/// "Current network": interface, local address and DNS server count, then the physical-network
-/// note in an inset block so it reads as secondary information instead of body text.
 class _NetworkOverviewCard extends ConsumerWidget {
   const _NetworkOverviewCard();
 

@@ -2,7 +2,6 @@
 
 part of 'snap_sheet.dart';
 
-/// Rounding may pick the other root where the discriminant vanishes.
 class _SheetSpring extends Simulation {
   _SheetSpring({
     required double from,
@@ -30,7 +29,6 @@ class _SheetSpring extends Simulation {
         (_start * math.cos(_damped * time) + sine * math.sin(_damped * time));
   }
 
-  /// Lands exactly on [to]; a controller would stop a tolerance short.
   @override
   double x(double time) => isDone(time) ? to : to + _offset(time);
 

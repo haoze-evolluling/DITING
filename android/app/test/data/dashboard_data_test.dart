@@ -1,6 +1,3 @@
-// Dashboard numbers come from the log tables the native writers keep
-// filling; these pin the 1.4.3 counting rules behind every card.
-
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_android/data/db/dns_log_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
@@ -54,7 +51,6 @@ void _realDataMapping() {
       expect(dnsResultLabelOf('REWRITTEN', isConnection: false), '覆写');
       expect(dnsResultLabelOf('BLOCKED', isConnection: false), '过滤');
       expect(dnsResultLabelOf('ERROR', isConnection: false), '失败');
-      // Unknown results render as is; mapping them to passed belongs to the view layer
       expect(
         dnsResultLabelOf('SOMETHING_NEW', isConnection: false),
         'SOMETHING_NEW',
@@ -203,7 +199,6 @@ void _realDataMapping() {
   });
 }
 
-/// Pins the dashboard header: one day window for every number, hit ratio hits / (hits + misses)
 
 void _dnsLogStats() {
   setUpAll(() {
@@ -215,7 +210,6 @@ void _dnsLogStats() {
 
   setUp(() async {
     db = await databaseFactory.openDatabase(inMemoryDatabasePath);
-    // Subset of `dns_log` that `DnsLogRepository.dailyStats` reads
     await db.execute(
       'CREATE TABLE dns_log (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
       'timestamp INTEGER NOT NULL, queryName TEXT NOT NULL, '
@@ -288,11 +282,9 @@ void _dnsLogStats() {
     });
 
     test('命中率分母含上游失败，不含被规则拦截', () async {
-      // 1 hit + 1 miss + 1 upstream failure -> hits / (hits + misses).
       await insert(result: 'PASSED', cached: true);
       await insert(result: 'PASSED', cached: false);
       await insert(result: 'ERROR', cached: false);
-      // Blocked rows never reach the cache, so they stay out of the denominator.
       await insert(result: 'BLOCKED', cached: false);
 
       final stats = await DnsLogRepository(db).dailyStats();
@@ -304,7 +296,6 @@ void _dnsLogStats() {
       await insert(result: 'PASSED', cached: false, message: 'elapsed=10ms');
       await insert(result: 'PASSED', cached: false, message: 'elapsed=30ms');
       await insert(result: 'BLOCKED', cached: false);
-      // Yesterday's row must not enter today's average or count.
       await insert(
         result: 'PASSED',
         cached: false,

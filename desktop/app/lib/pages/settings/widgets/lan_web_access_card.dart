@@ -1,8 +1,3 @@
-/// The LAN console's host-side access: the firewall rule and the admin credential.
-///
-/// The old desktop console's `LanWebCard.vue` keeps these under the URLs; here they are their own card.
-/// The firewall switch saves on the spot and reports whether the host even has a manager for it; the
-/// password is set through a dialog, because a credential is not a field to leave on screen.
 library;
 
 import 'dart:async';

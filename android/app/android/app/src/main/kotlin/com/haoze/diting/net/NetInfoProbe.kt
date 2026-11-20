@@ -9,7 +9,6 @@ import android.os.Build
 import java.net.Inet4Address
 import java.net.Inet6Address
 
-/// Physical link, not the TUN: this app's own UID is excluded from the tunnel.
 internal object NetInfoProbe {
 
     fun snapshot(context: Context): Map<String, Any?> {
@@ -20,7 +19,6 @@ internal object NetInfoProbe {
         return runCatching { read(manager) }.getOrDefault(empty())
     }
 
-    // `allNetworks` is deprecated since API 31 with no synchronous replacement.
     @Suppress("DEPRECATION")
     private fun read(manager: ConnectivityManager): Map<String, Any?> {
         val networks = manager.allNetworks.toList()
@@ -51,7 +49,6 @@ internal object NetInfoProbe {
             val host = address.hostAddress ?: return@forEach
             when (address) {
                 is Inet4Address -> ipv4.add(host)
-                // Link-local IPv6 needs a scope id to be usable in a request.
                 is Inet6Address -> if (!address.isLinkLocalAddress) ipv6.add(host)
             }
         }
@@ -67,7 +64,6 @@ internal object NetInfoProbe {
         )
     }
 
-    /// `isPrivateDnsActive` decides: some devices report a name while the feature is off.
     private fun privateDnsLabel(link: LinkProperties): String {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return "off"
         val active = runCatching { link.isPrivateDnsActive }.getOrDefault(false)
@@ -84,7 +80,6 @@ internal object NetInfoProbe {
             caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 
-    /// Shape-compatible empty snapshot: the Dart model requires non-null fields
     private fun empty(vpnActive: Boolean = false): Map<String, Any?> = mapOf(
         "interfaceName" to "",
         "localIpv4" to "",

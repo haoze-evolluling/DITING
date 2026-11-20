@@ -124,7 +124,6 @@ fn rewrite_ip_advertises_recursion() {
     let v6 = rewrite_ip(&query("github.com.", TYPE_AAAA), "2606:50c0:8000::153").unwrap();
     assert_eq!(v6.answers[0].rdata.len(), 16);
 
-    // A mapped IPv6 literal still fills a 4-byte A record (net.IP.To4).
     let mapped = rewrite_ip(&query("github.com.", TYPE_A), "::ffff:1.2.3.4").unwrap();
     assert_eq!(mapped.answers[0].rdata, vec![1, 2, 3, 4]);
 
@@ -201,8 +200,6 @@ fn query_without_question_is_rejected() {
     assert!(parse_query(&header_only).is_none());
 }
 
-/// `render` reproduces what `SetReply` + `dns.Msg.Pack` produced: the query's id, opcode and RD,
-/// the plan's rcode/RA, the question copied verbatim and the answers in order.
 #[test]
 fn render_writes_the_client_message() {
     let query_wire = query("blocked.example.", TYPE_A);
@@ -240,8 +237,6 @@ fn render_writes_the_client_message() {
     );
 }
 
-/// The A/AAAA block answers carry the owner name and the address rdata, and the CNAME rewrite
-/// carries a packed target name rather than the presentation string.
 #[test]
 fn render_writes_answer_records() {
     let query_wire = query("blocked.example.", TYPE_A);
@@ -288,7 +283,6 @@ fn render_writes_answer_records() {
     );
 }
 
-/// A plan that does not apply, and a query too broken to copy, both refuse to render.
 #[test]
 fn render_refuses_unusable_input() {
     let query_wire = query("example.", TYPE_A);

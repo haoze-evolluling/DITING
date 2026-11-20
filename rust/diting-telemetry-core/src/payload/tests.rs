@@ -64,7 +64,6 @@ fn a_bad_version_or_length_is_rejected() {
 
 #[test]
 fn invalid_utf8_is_replaced_not_rejected() {
-    // A domain with a raw 0xFF byte: Go's json.Marshal would have replaced it with U+FFFD anyway.
     let mut payload = vec![LAYOUT_VERSION, 0, 0];
     payload.extend_from_slice(&0i32.to_le_bytes());
     payload.extend_from_slice(&0i64.to_le_bytes());
@@ -118,7 +117,6 @@ fn a_flow_key_round_trips_for_both_address_widths() {
 
     let store = encode_flow_key(&key, 1234, Some(10_123));
     assert_eq!(decode_flow_store(&store), Some((key, 1234, 10_123)));
-    // The lookup decoder refuses the store payload (it has one extra field).
     assert_eq!(decode_flow_lookup(&store), None);
 }
 

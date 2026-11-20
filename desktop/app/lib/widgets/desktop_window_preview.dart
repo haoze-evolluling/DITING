@@ -1,10 +1,3 @@
-/// A miniature of this window, painted from a [ColorScheme] instead of rendered from widgets.
-///
-/// The appearance page previews palettes: a phone screenshot cannot show what a desktop window will
-/// look like, so the preview is the window itself — caption bar with its window controls, the
-/// navigation sidebar with the current branch marked, the toolbar and the card board. Only shapes
-/// are painted: nine previews built out of real cards would cost a full layout each every time a
-/// palette is tapped, and at thumbnail size no text would be legible anyway.
 library;
 
 import 'package:diting_shared/ui/ui.dart';
@@ -13,8 +6,6 @@ import 'package:material_ui/material_ui.dart';
 class DesktopWindowPreview extends StatelessWidget {
   const DesktopWindowPreview({super.key, required this.colorScheme});
 
-  /// Logical width everything is painted against; the height follows this ratio, so the preview
-  /// keeps the shape of a window at any size instead of the phone shape the mobile previews use.
   static const double logicalWidth = 320;
   static const double logicalHeight = 200;
 
@@ -36,8 +27,6 @@ class _DesktopWindowPainter extends CustomPainter {
 
   final ColorScheme colorScheme;
 
-  /// Paints against a 320x200 logical window and scales with its width, so one geometry serves
-  /// both the 150-wide palette tile and the wide preview card.
   @override
   void paint(Canvas canvas, Size size) {
     final u = size.width / DesktopWindowPreview.logicalWidth;
@@ -49,8 +38,6 @@ class _DesktopWindowPainter extends CustomPainter {
     final primary = colorScheme.primary;
     final outline = colorScheme.outlineVariant.withValues(alpha: 0.6);
 
-    // The window itself: a page-colored body, a caption bar and a hairline outline so a light
-    // preview still reads as a window standing on the card instead of melting into it.
     final window = RRect.fromRectAndRadius(
       Offset.zero & size,
       Radius.circular(11 * u),
@@ -106,8 +93,6 @@ class _DesktopWindowPainter extends CustomPainter {
     );
   }
 
-  /// The minimize / maximize / close marks at the caption's end. Drawn rather than painted as
-  /// glyphs: they are two strokes wide at thumbnail size.
   void _windowControls(Canvas canvas, Size size, double u, Color ink) {
     final paint = Paint()
       ..color = ink.withValues(alpha: 0.55)
@@ -143,8 +128,6 @@ class _DesktopWindowPainter extends CustomPainter {
     Color ink,
     Color primary,
   ) {
-    // The collapse toggle, then the three branches. The middle one is this app's feature hub and
-    // is drawn the way the real sidebar marks it: a tinted row plus the primary indicator.
     final toggle = Rect.fromLTWH(
       10 * u,
       (captionHeight + 8) * u,
@@ -192,8 +175,6 @@ class _DesktopWindowPainter extends CustomPainter {
     }
   }
 
-  /// The three branch marks: a dashboard grid, the hub tile and the about ring. Three identical
-  /// squares read as a bulleted list; one shape per branch reads as navigation.
   void _navGlyph(
     Canvas canvas,
     double left,
@@ -251,7 +232,6 @@ class _DesktopWindowPainter extends CustomPainter {
     final width = right - left;
     final toolbarTop = (captionHeight + 8) * u;
 
-    // Toolbar: the back button, the page title and the page's one primary action.
     canvas.drawCircle(
       Offset(left + 8 * u, toolbarTop + 8 * u),
       8.5 * u,
@@ -286,9 +266,6 @@ class _DesktopWindowPainter extends CustomPainter {
       primary,
     );
 
-    // The card board: one wide card with a title, two notes and a progress track, then two
-    // smaller cards — a bar chart and a switch — so every scheme shows its primary where the
-    // desktop actually uses it.
     final boardTop = toolbarTop + 22 * u;
     final wide = Rect.fromLTWH(left, boardTop, width, 74 * u);
     _rrect(canvas, wide, 9 * u, card);
@@ -350,9 +327,6 @@ class _DesktopWindowPainter extends CustomPainter {
       );
     }
 
-    // Chart bars, tallest last, so the primary reads as a trend rather than a solid block. The
-    // group is centered in its card: left-aligned bars left most of the card empty next to the
-    // switch card's fuller column.
     const heights = [10.0, 17.0, 13.0, 22.0, 16.0, 26.0];
     const barWidth = 6.0;
     const barPitch = 11.0;
@@ -373,7 +347,6 @@ class _DesktopWindowPainter extends CustomPainter {
       );
     }
 
-    // The switch card: a primary track with its knob, and the two notes that lead up to it.
     _rrect(
       canvas,
       Rect.fromLTWH(toggles.right - 26 * u, toggles.top + 8 * u, 16 * u, 9 * u),

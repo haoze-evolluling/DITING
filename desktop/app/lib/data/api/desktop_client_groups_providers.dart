@@ -1,8 +1,3 @@
-/// Client groups: the whole configuration is read and written at once, so the page owns the draft
-/// and the notifier only performs the save and re-read.
-///
-/// `/clients/groups` answers a POST with a success flag, so the save re-reads the configuration; the
-/// service may drop invalid members or schedules, and the page then shows what was actually stored.
 library;
 
 import 'dart:async';

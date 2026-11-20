@@ -5,7 +5,6 @@ import android.net.LocalSocket
 import android.net.LocalSocketAddress
 import org.json.JSONObject
 
-/// Minimal filesystem Unix-domain socket client for the app-private control protocol.
 object ServerControlSocket {
     fun request(context: Context, method: String, params: JSONObject, id: Long = 1): String {
         val payload = JSONObject()
@@ -20,8 +19,6 @@ object ServerControlSocket {
         val path = ServerPaths.socketFile(context).absolutePath
         LocalSocket().use { socket ->
             socket.connect(LocalSocketAddress(path, LocalSocketAddress.Namespace.FILESYSTEM))
-            // Android's LocalSocket creates its OS fd during connect(); setting the timeout before
-            // that throws the misleading "socket not created" IOException.
             socket.soTimeout = timeoutMs
             val writer = socket.outputStream.bufferedWriter(Charsets.UTF_8)
             writer.write(payload.trim())

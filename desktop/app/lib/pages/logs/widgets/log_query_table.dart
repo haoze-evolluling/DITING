@@ -1,11 +1,3 @@
-/// The query log as a table: the conditions the old desktop console offers, and offset paging, all
-/// of it answered by `/api/v1/querylog/search`.
-///
-/// The search conditions, the status values and the page arithmetic follow the old desktop console
-/// (`frontend/src/components/overview/QueryHistoryPanel.vue`, `frontend/src/api/querylog.ts`). Only
-/// the presentation differs: Android's request feed scrolls a `ListView` and loads more at the end;
-/// a desktop window shows the same rows as a table with a visible pager, so the reader can see
-/// where they are in a result set the service counts for them (`total`).
 library;
 
 import 'dart:async';
@@ -22,19 +14,14 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Column widths of the wide table; the domain column takes what is left.
 const double _timeWidth = 68;
 const double _statusWidth = 22;
 const double _typeWidth = 52;
 const double _clientWidth = 132;
 const double _latencyWidth = 66;
 
-/// The empty state's box. [NullStatus] aligns and scrolls, so it needs a height of its own inside
-/// a card that otherwise sizes to its rows.
 const double _emptyHeight = 260;
 
-/// A card column this wide can carry the time, type and client columns; below it the row stacks
-/// them into the domain line instead.
 const double _wideBreakpoint = 560;
 
 class LogQueryTable extends ConsumerStatefulWidget {
@@ -47,8 +34,6 @@ class LogQueryTable extends ConsumerStatefulWidget {
 }
 
 class _LogQueryTableState extends ConsumerState<LogQueryTable> {
-  /// Every keystroke would otherwise issue a search against the service; 250 ms is the debounce
-  /// Android's request feed uses.
   static const _searchDebounce = Duration(milliseconds: 250);
 
   final _domain = TextEditingController();
@@ -63,7 +48,6 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
     super.dispose();
   }
 
-  /// One debounce for both fields: typing in either restarts it, and the last edit wins.
   ValueChanged<String> _debounced(void Function(String value) apply) =>
       (String value) {
         _searchTimer?.cancel();
@@ -85,8 +69,6 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
     final l10n = context.l10n;
     final feed = ref.watch(desktopLogFeedProvider);
     final query = ref.watch(desktopLogQueryProvider);
-    // `value` keeps the previous page while the next one is in flight, so the table does not
-    // collapse to a spinner every time the reader turns a page.
     final page = feed.value;
     final rows = page?.entries ?? const <QueryLogEntry>[];
     final total = page?.total ?? 0;
@@ -203,8 +185,6 @@ class _LogQueryTableState extends ConsumerState<LogQueryTable> {
   }
 }
 
-/// The active filter in words, for the empty state's description. Uses the same labels the
-/// filter itself shows, so the two cannot disagree.
 class _TableHeader extends StatelessWidget {
   const _TableHeader();
 
@@ -272,7 +252,6 @@ class _LogRow extends StatelessWidget {
       _ => (AppGlyphs.arrowUp, colorScheme.onSurfaceVariant),
     };
     final label = DashboardText.label(context);
-    // Padding rather than a fixed height: enlarged text grows the row instead of clipping it.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
@@ -311,8 +290,6 @@ class _LogRow extends StatelessWidget {
                       Text(entry.qtype, maxLines: 1, style: label),
                   ],
                 ),
-                // The wide table has a client column; a narrow card keeps the name under the
-                // domain instead of dropping it.
                 if (!wide && entry.client.isNotEmpty)
                   Text(
                     entry.client,
@@ -368,8 +345,6 @@ class _RowDivider extends StatelessWidget {
   );
 }
 
-/// `1-25 / 1,234` plus two page buttons. Both ends are disabled when there is nothing to turn to,
-/// because the service already told the page how many rows exist.
 class _Pager extends StatelessWidget {
   const _Pager({
     required this.query,
@@ -407,7 +382,6 @@ class _Pager extends StatelessWidget {
           ),
         ),
         TextButton(
-          // A page exists only while a full page still fits after this one.
           onPressed: query.offset + DesktopLogQuery.pageSize >= total
               ? null
               : onNext,
@@ -418,8 +392,6 @@ class _Pager extends StatelessWidget {
   }
 }
 
-/// A failed search with a retry, in place of the rows. Kept to one row so a transient failure does
-/// not push the pager off the card.
 class _Failure extends StatelessWidget {
   const _Failure({required this.error, required this.onRetry});
 

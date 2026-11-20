@@ -1,13 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A short status label in a pill: tinted fill, one typographic role, one line.
-///
-/// Five page-local copies (`_StatusPill`, `_LatencyBadge`, `_Pill`, the IP-quality level badge and
-/// its type badge) drew this by hand and disagreed on the padding — 10/4, 10/5, 10/6, 12/4 — so the
-/// same-looking label sat at four different heights. The padding and type size stay parameters
-/// because each page still has its own density, but the shape, the one-line ellipsis and the
-/// colour pairing are settled here.
 class StatusPill extends StatelessWidget {
   const StatusPill({
     super.key,
@@ -24,22 +17,17 @@ class StatusPill extends StatelessWidget {
 
   final String label;
 
-  /// Fill colour; with [alpha] it is the tint, otherwise the pill is drawn solid.
   final Color color;
 
-  /// Text colour; defaults to [color], which only reads well on a tint.
   final Color? foregroundColor;
 
-  /// Tint strength, e.g. 0.12 for a status word. `null` fills with [color] at full opacity.
   final double? alpha;
 
   final EdgeInsets padding;
   final AppTextRole style;
 
-  /// Lining digits, e.g. a latency figure.
   final bool tabular;
 
-  /// An optional glyph before the label, e.g. a record type.
   final Glyph? leading;
   final double leadingSize;
 

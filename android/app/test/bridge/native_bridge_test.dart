@@ -1,6 +1,3 @@
-// Guards the Dart side of the native channels: validation order, JSON shape, enum
-// fallbacks and the one-shot contracts the native side relies on.
-
 import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
@@ -25,7 +22,6 @@ void main() {
   group('数据库写入健康度', _dbHealthBridge);
 }
 
-/// Guards the Dart side of three native channels: validation order, JSON shape, enum fallbacks
 void _nativeBridge() {
   group('OutboundProxyConfig.validationError', () {
     OutboundProxyConfig base({

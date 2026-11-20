@@ -1,5 +1,3 @@
-//! ABI round-trips: every entry point through the raw pointers the Go side passes.
-
 use super::*;
 use crate::hosts::Source;
 use crate::payload::{decode_sources, encode_sources, Reader, LAYOUT_VERSION};
@@ -137,7 +135,6 @@ fn ptr_and_reverse_read_the_same_map() {
     assert_eq!(&payload[..2], &[crate::payload::LAYOUT_VERSION, 1]);
     assert!(payload.ends_with(b"nas.home"));
 
-    // A 5-byte "address" is not an address.
     let bad = [0u8; 5];
     let mut out: *mut u8 = std::ptr::null_mut();
     let mut len: usize = 0;
@@ -175,7 +172,6 @@ fn parse_arpa_needs_no_table() {
 #[test]
 fn bad_arguments_are_rejected() {
     let mut handle: *mut HostsTable = std::ptr::null_mut();
-    // A payload that does not decode must not produce a handle.
     let garbage = [LAYOUT_VERSION, 9, 0, 0, 0, 0];
     assert_eq!(
         unsafe { diting_hosts_new(garbage.as_ptr(), garbage.len(), &mut handle) },
@@ -186,13 +182,11 @@ fn bad_arguments_are_rejected() {
         unsafe { diting_hosts_new(std::ptr::null(), 0, &mut handle) },
         0
     );
-    // A null out-parameter is a rejection, not a crash.
     assert_eq!(
         unsafe { diting_hosts_new(std::ptr::null(), 0, std::ptr::null_mut()) },
         0
     );
 
-    // Every read on a null handle is a miss.
     let mut out: *mut u8 = std::ptr::null_mut();
     let mut len: usize = 0;
     assert_eq!(
@@ -212,7 +206,6 @@ fn bad_arguments_are_rejected() {
         0
     );
 
-    // Invalid UTF-8 is rejected rather than silently lossy.
     let handle = build(&[Source::Text("127.0.0.1 localhost\n".to_string())]);
     let invalid = [0xffu8, 0xfe];
     assert_eq!(

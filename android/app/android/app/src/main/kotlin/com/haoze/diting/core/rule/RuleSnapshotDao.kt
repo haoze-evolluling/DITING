@@ -4,7 +4,6 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.haoze.diting.log.AppDatabase
 
-/** A rule row projected exactly as the legacy Room `EnabledRule`/`EnabledRuleKeyset`. */
 data class EnabledRule(
     val pattern: String,
     val source: String,
@@ -34,15 +33,8 @@ data class EnabledRuleKeyset(
     )
 }
 
-/**
- * Raw-SQLite port of the legacy Room rule DAO surface the snapshot builder needs. The rule tables
- * live in the sqflite-created database; this reader only reads, and the connection it borrows is
- * the process-wide one from [AppDatabase], so a snapshot build never competes with the log writers
- * for the file lock.
- */
 class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
 
-    /** Keyset-paged enabled subscription rules, mirroring `enabledSubscriptionRulesPageKeyset`. */
     fun forEachSubscriptionRulePage(kind: RuleKind, important: Boolean? = null, action: (EnabledRule) -> Unit) {
         val ruleTable = kind.ruleTable
         val sourceTable = kind.sourceTable
@@ -81,7 +73,6 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         }
     }
 
-    /** Enabled custom (non-subscription) rules, mirroring `enabledCustomRules`. */
     fun enabledCustomRules(kind: RuleKind): List<EnabledRule> =
         queryRules(
             RULE_COLUMNS + "${kind.ruleTable} r " +
@@ -90,7 +81,6 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
                 GROUP_BY_RULE
         )
 
-    /** Enabled subscription rules needing per-rule snapshot entries, mirroring the special query. */
     fun enabledSpecialSubscriptionRules(kind: RuleKind): List<EnabledRule> =
         queryRules(
             RULE_COLUMNS + "${kind.ruleTable} r " +
@@ -118,8 +108,6 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         result
     }
 
-    /** Enabled rewrite rules as (pattern, targetValue); duplicate patterns keep the oldest row,
-     *  matching the Dart encoder that walked a newest-first list and let older rows win. */
     fun rewriteRules(): List<Pair<String, String>> = db.rawQuery(
         "SELECT pattern, targetValue FROM rewrite_rule " +
             "WHERE enabled = 1 AND EXISTS (SELECT 1 FROM rewrite_rule_source s WHERE s.ruleId = rewrite_rule.id AND s.enabled = 1) " +
@@ -135,19 +123,8 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         result.map { (pattern, target) -> pattern to target }
     }
 
-    /// The connection belongs to [AppDatabase] and is shared with the log writers; closing it here
-    /// would pull the file out from under them, so this only drops the reference.
     fun close() = Unit
 
-    /**
-     * Cheap fingerprint of the rule tables only. The database file also holds the request-log and
-     * traffic tables, which the tunnel keeps writing while it runs, so file size and mtime can never
-     * tell whether the *rules* changed: they change on every logged query and would force a trie
-     * recompile on every start.
-     *
-     * The text itself (one line per table, joined with `|`) is the kernel's, so the writer
-     * (`writeStamp`) and this reader cannot disagree about the format.
-     */
     fun ruleFingerprint(): String {
         val parts = ArrayList<Pair<String, Triple<Long, Long, Long>?>>(8)
         for (kind in RuleKind.entries) {
@@ -159,12 +136,10 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         return RuleIndexNative.ruleFingerprint(parts)
     }
 
-    /** Rows plus the id/source sums catch edits and toggles, not only inserts and deletes. */
     private fun countFingerprint(table: String): Triple<Long, Long, Long>? {
         if (!AppDatabase.hasTable(db, table)) return null
         val columns = if (table.endsWith("_source")) "SUM(ruleId), SUM(enabled)" else "SUM(id), SUM(enabled)"
         return db.rawQuery("SELECT COUNT(*), $columns FROM $table", null).use { cursor ->
-            // `COUNT(*)` without a `GROUP BY` always yields one row; an empty table sums to 0.
             if (!cursor.moveToFirst()) Triple(0L, 0L, 0L)
             else Triple(cursor.getLong(0), cursor.getLong(1), cursor.getLong(2))
         }
@@ -187,7 +162,6 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
             " GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard, " +
                 "r.denyallow, r.isRegex, r.dnsType"
 
-        /** Opens the mode database through the shared connection; null when it has no rule tables. */
         fun open(context: Context, databaseName: String): RuleSnapshotDao? {
             val db = AppDatabase.writable(context, databaseName) ?: return null
             if (!AppDatabase.hasTable(db, "block_rule") || !AppDatabase.hasTable(db, "allow_rule")) {

@@ -1,6 +1,3 @@
-// The V2 migration: legacy rows are copied into five new stores, verified, and only then are the
-// old files removed. Interrupted or failed runs keep the old files and leave the marker unset.
-
 import 'dart:io';
 import 'dart:typed_data';
 

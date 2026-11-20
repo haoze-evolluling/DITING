@@ -1,7 +1,3 @@
-// Desktop adapter takeover (desktop parity): the adapter list from
-// `/adapters`, the takeover set from `/status`, and the three writes. Every value comes from the
-// service; a rejected write keeps the state the service still holds.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_adapters_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_adapters_page.dart';
@@ -68,13 +64,11 @@ void main() {
       findsOneWidget,
     );
 
-    // Connection state and IP mode come from the service, not from the card.
     expect(inCard('WLAN', find.text(l10n.desktopAdaptersConnected)), findsOneWidget);
     expect(
       inCard('以太网', find.text(l10n.desktopAdaptersDisconnected)),
       findsOneWidget,
     );
-    // Gateway and the adapter's original DNS are the same value, so both rows show it.
     expect(inCard('WLAN', find.text('192.168.1.1')), findsNWidgets(2));
     expect(inCard('WLAN', find.text(l10n.desktopAdaptersDhcp)), findsOneWidget);
     expect(
@@ -82,12 +76,10 @@ void main() {
       findsOneWidget,
     );
 
-    // Original DNS: the value the service reported, or the automatic label when it had none.
     expect(
       inCard('以太网', find.text(l10n.desktopAdaptersAutoDns)),
       findsOneWidget,
     );
-    // Nothing is taken over yet, so both cards report the system default.
     expect(
       find.text(l10n.desktopAdaptersEffectiveSystem),
       findsNWidgets(2),
@@ -105,7 +97,6 @@ void main() {
     expect(backend.adapterTakeovers, [
       {'adapterId': 'wlan-guid', 'enable': true},
     ]);
-    // The switch, the protecting chip and the effective-DNS line all follow the service.
     expect(find.text(l10n.desktopAdaptersProtecting), findsWidgets);
     expect(
       inCard('WLAN', find.text(l10n.desktopAdaptersEffectiveLoopback)),
@@ -153,7 +144,6 @@ void main() {
       find.text(l10n.desktopAdaptersActionFailed('write rejected')),
       findsOneWidget,
     );
-    // The rejected write changed nothing on screen: the card still reports the service's answer.
     expect(
       inCard('WLAN', find.text(l10n.desktopAdaptersEffectiveSystem)),
       findsOneWidget,

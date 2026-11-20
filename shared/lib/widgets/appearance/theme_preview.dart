@@ -1,7 +1,3 @@
-/// Theme previews shared by the Android appearance pages and the desktop appearance card.
-///
-/// Nine thumbnails are built from the same cached schemes: computing a full `ThemeData` per
-/// thumbnail cost 30-40 ms on the first frame, so only the `ColorScheme` is derived here.
 library;
 
 import 'dart:async';
@@ -13,12 +9,8 @@ import 'package:diting_shared/widgets/appearance/mini_screen.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The appearance pages ask for the same few schemes on every rebuild, one per thumbnail. Keys are
-/// palette x brightness x pure black: a few dozen at most.
 final _demoSchemes = <(Color, Brightness, bool), ColorScheme>{};
 
-/// The scheme [buildAppTheme] would resolve, without building the rest of a `ThemeData`: nine
-/// thumbnails each building a full theme cost the color page a 30 ms first frame.
 ColorScheme demoColorScheme({
   required Color seed,
   required Brightness brightness,
@@ -30,8 +22,6 @@ ColorScheme demoColorScheme({
 
 final _warmingSchemes = <(Color, Brightness, bool)>{};
 
-/// Fills the cache for every palette while the app is idle, one scheme per task. Each takes about
-/// 3 ms; the color page shows all nine, so computing them on its first frame cost 30-40 ms.
 void warmDemoSchemes({
   required Brightness brightness,
   required bool pureBlack,
@@ -48,8 +38,6 @@ void warmDemoSchemes({
   }
 }
 
-/// Light and dark schemes for one preview, computed once so the same parameters do
-/// not rebuild `ThemeData` on every row.
 ({ColorScheme light, ColorScheme dark}) previewSchemes({
   required Color seed,
   required bool pureBlack,

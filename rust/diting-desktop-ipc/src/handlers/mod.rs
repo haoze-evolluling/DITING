@@ -1,7 +1,3 @@
-//! HTTP handlers, one module per Go `server_*.go` family.
-
-// The error type is the ready-to-send response; boxing it would only add an allocation on the
-// error path without making the success path cheaper.
 #![allow(clippy::result_large_err)]
 
 pub mod auth;
@@ -36,7 +32,6 @@ use crate::server::Server;
 
 pub type Resp = Response<Full<Bytes>>;
 
-/// Everything a handler needs, extracted before the body is consumed.
 pub struct Ctx<'a> {
     pub method: &'a Method,
     pub query: HashMap<String, String>,
@@ -82,7 +77,6 @@ impl<'a> Ctx<'a> {
             .map_err(|error| bad_request(format!("解析请求 JSON 失败: {error}")))
     }
 
-    /// Parses JSON, falling back to `Default` for an empty body (Go silently ignores it).
     pub fn json_or_default<T: DeserializeOwned + Default>(&self) -> Result<T, Resp> {
         if self.body.iter().all(|byte| byte.is_ascii_whitespace()) {
             Ok(T::default())
@@ -91,7 +85,6 @@ impl<'a> Ctx<'a> {
         }
     }
 
-    /// Rejects requests whose method is not in `allowed`.
     pub fn require_method(&self, allowed: &[Method], message: &str) -> Result<(), Resp> {
         if allowed.iter().any(|method| method == self.method) {
             Ok(())
@@ -101,7 +94,6 @@ impl<'a> Ctx<'a> {
     }
 }
 
-/// Percent-decodes a query string; `+` becomes a space and malformed escapes are kept verbatim.
 pub fn parse_query(query: &str) -> HashMap<String, String> {
     let mut out = HashMap::new();
     for pair in query.split('&') {
@@ -143,7 +135,6 @@ fn percent_decode(value: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// Serializes the standard envelope.
 pub fn json_response<T: Serialize>(status: StatusCode, payload: &ApiResponse<T>) -> Resp {
     let body = serde_json::to_vec(payload).unwrap_or_else(|_| b"{\"success\":false}".to_vec());
     let mut response = Response::new(Full::new(Bytes::from(body)));
@@ -205,7 +196,6 @@ pub fn not_found(message: impl Into<String>) -> Resp {
     )
 }
 
-/// Maps a controller failure onto the Go status code and the optional conflict payload.
 pub fn controller_error(error: ControllerError) -> Resp {
     if let Some(conflict) = error.conflict {
         return json_response(
@@ -219,7 +209,6 @@ pub fn controller_error(error: ControllerError) -> Resp {
     internal_error(error.message)
 }
 
-/// Controller failures that Go reports as client input errors.
 pub fn client_error(error: ControllerError) -> Resp {
     bad_request(error.message)
 }
@@ -243,7 +232,6 @@ pub fn plain_text(status: StatusCode, message: &str) -> Resp {
     )
 }
 
-/// Token extraction shared by HTTP auth and the WebSocket/mobileconfig handlers.
 pub fn extract_token(ctx: &Ctx<'_>) -> String {
     if let Some(value) = ctx.header("authorization") {
         if let Some(token) = value.strip_prefix("Bearer ") {
@@ -258,17 +246,14 @@ pub fn extract_token(ctx: &Ctx<'_>) -> String {
     ctx.query_get("token").unwrap_or("").to_string()
 }
 
-/// Whether the request may act without credentials.
 pub fn verified(server: &Server, ctx: &Ctx<'_>) -> bool {
     server.verify_token(&extract_token(ctx), ctx.remote, ctx.headers)
 }
 
-/// Client address without the port, used for throttling and status.
 pub fn client_ip(ctx: &Ctx<'_>) -> String {
     ctx.remote.ip().to_string()
 }
 
-/// True when the TCP peer is loopback (Origin is checked separately where required).
 pub fn is_loopback(ctx: &Ctx<'_>) -> bool {
     ctx.remote.ip().is_loopback()
 }

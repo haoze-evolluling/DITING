@@ -1,8 +1,3 @@
-/// Dart side of `com.haoze.diting/root_dns`: normal mode's no-VPN root DNS takeover.
-///
-/// The controller implements the same `VpnController` contract as the tunnel channels, so the
-/// power state machine does not need a second lifecycle. Only [prepare] differs: there is no
-/// system consent dialog — the native start reports whether root is actually available.
 library;
 
 import 'package:flutter/services.dart';
@@ -11,7 +6,6 @@ import 'vpn_bridge.dart';
 
 const rootDnsChannelName = 'com.haoze.diting/root_dns';
 
-/// Result of `su -c id -u`, cached only by the caller; a probe never blocks app startup.
 class RootDnsProbe {
   const RootDnsProbe({required this.available, this.message = ''});
 
@@ -19,7 +13,6 @@ class RootDnsProbe {
 
   final bool available;
 
-  /// Why the probe failed, already user-facing; empty when [available].
   final String message;
 
   factory RootDnsProbe.fromMap(Object? raw) {
@@ -32,7 +25,6 @@ class RootDnsProbe {
   }
 }
 
-/// One probe through the native bridge; a missing channel means this host has no root takeover.
 Future<RootDnsProbe> probeRootDns() async {
   try {
     final raw = await MethodChannel(rootDnsChannelName)
@@ -54,7 +46,6 @@ class MethodChannelRootDnsController implements VpnController {
   @override
   void Function(bool granted)? onPrepareResult;
 
-  /// No system dialog exists; the native `start` performs the root probe and reports the reason.
   @override
   Future<bool> prepare() async => true;
 

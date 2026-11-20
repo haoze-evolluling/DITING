@@ -1,30 +1,7 @@
-//! C ABI surface and the payload the Go side decodes.
-//!
-//! One call per stamp: parsing happens when a provider is configured or a stamp is pasted into the
-//! editor, never on the query path, so the boundary cost does not matter and the whole record can
-//! cross in one buffer.
-//!
-//! Wire format of the returned buffer (little-endian, strings are `u16 len` + UTF-8 bytes):
-//!
-//! ```text
-//! u8  layout version (1) | u8 proto id | u64 props
-//! str protocol | str server_addr | str provider_name | str path | str url | str server
-//! u16 pin count    | pin count × 32 bytes
-//! u16 bootstrap count | bootstrap count × str
-//! ```
-//!
-//! `diting_stamp_parse` returns a status: `0` means the payload is a record, `1` means the payload
-//! is the rejection message (same bytes the Go parser used to return as `error`), `2` means the
-//! arguments were unusable. The caller owns the buffer either way and releases it with
-//! [`diting_stamp_free`].
-
 use crate::stamp::{self, Stamp};
 
-/// Bumped whenever the payload layout or the parsing semantics change; the Go loader refuses a
-/// library whose value does not match what it was compiled against.
 pub const ABI_VERSION: u32 = 1;
 
-/// Payload layout version, written as the first byte so the Go decoder can reject a mismatch.
 pub const PAYLOAD_LAYOUT_VERSION: u8 = 1;
 
 pub const STATUS_OK: u32 = 0;
@@ -62,7 +39,6 @@ fn encode_stamp(stamp_record: &Stamp) -> Vec<u8> {
     buffer
 }
 
-/// Hands `bytes` to the caller as a pointer/length pair [`diting_stamp_free`] can rebuild.
 fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     let mut boxed = bytes.into_boxed_slice();
     let length = boxed.len();
@@ -71,19 +47,11 @@ fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     (pointer, length)
 }
 
-/// Payload layout version, so the Go loader can tell a stale artifact from a fresh one.
 #[no_mangle]
 pub extern "C" fn diting_stamp_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Parses `len` UTF-8 bytes at `input` and returns a buffer the caller must release with
-/// [`diting_stamp_free`]. `out_ptr`/`out_len` receive the buffer; the return value is one of the
-/// `STATUS_*` codes.
-///
-/// # Safety
-/// `input` must point to `len` readable bytes when `len` is non-zero, and both out parameters
-/// must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_stamp_parse(
     input: *const u8,
@@ -118,10 +86,6 @@ pub unsafe extern "C" fn diting_stamp_parse(
     status
 }
 
-/// Releases a buffer returned by [`diting_stamp_parse`].
-///
-/// # Safety
-/// `pointer`/`len` must be exactly what the parse call returned, released once.
 #[no_mangle]
 pub unsafe extern "C" fn diting_stamp_free(pointer: *mut u8, len: usize) {
     if pointer.is_null() {
@@ -206,11 +170,11 @@ mod tests {
         let mut bin = vec![0x02u8];
         bin.extend_from_slice(&3u64.to_le_bytes());
         bin.extend_from_slice(&lp("1.1.1.1"));
-        bin.push(HASH_LEN as u8); // one pin, and it is the last element of the VLP
+        bin.push(HASH_LEN as u8);
         bin.extend_from_slice(&hash);
         bin.extend_from_slice(&lp("cloudflare-dns.com"));
         bin.extend_from_slice(&lp("/dns-query"));
-        bin.push(0x00); // empty bootstrap-IP VLP
+        bin.push(0x00);
         format!("sdns://{}", URL_SAFE_NO_PAD.encode(&bin))
     }
 

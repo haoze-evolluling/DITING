@@ -1,14 +1,3 @@
-//! The loopback harness the transport cases are driven by: DNS wire helpers, a plain UDP/TCP
-//! upstream, a test PKI and the DoT/DoH/DoQ origins.
-//!
-//! Everything here is real I/O on 127.0.0.1: no mocked TLS, no injected DNS parser. Only two seams
-//! are substituted, and both are the network's job in production: the certificate authority is
-//! minted per test instead of loaded from `.go-mitm/ca.crt`, and the upstream DNS server answers
-//! from a canned record instead of from the internet.
-//!
-//! [`wire`] is the raw-IP side of the TUN tests: it crafts the packets a TUN read would deliver and
-//! parses the packets the stack wrote, through a checksum-verifying parser.
-
 #![allow(dead_code)]
 
 pub mod mitm;
@@ -40,29 +29,27 @@ use tokio_rustls::TlsAcceptor;
 
 const DNS_MESSAGE: &str = "application/dns-message";
 
-// ---- DNS wire helpers ---------------------------------------------------------------------------
 
 pub fn query_wire(name: &str, id: u16) -> Vec<u8> {
     let mut out = vec![0u8; 12];
     out[0..2].copy_from_slice(&id.to_be_bytes());
-    out[2] = 0x01; // RD
-    out[5] = 1; // QDCOUNT
+    out[2] = 0x01;
+    out[5] = 1;
     for label in name.trim_end_matches('.').split('.') {
         out.push(label.len() as u8);
         out.extend_from_slice(label.as_bytes());
     }
     out.push(0);
-    out.extend_from_slice(&1u16.to_be_bytes()); // A
-    out.extend_from_slice(&1u16.to_be_bytes()); // IN
+    out.extend_from_slice(&1u16.to_be_bytes());
+    out.extend_from_slice(&1u16.to_be_bytes());
     out
 }
 
-/// The question echoed with one A record.
 pub fn answer_wire(query: &[u8], address: [u8; 4], ttl: u32) -> Vec<u8> {
     let mut out = query.to_vec();
     out[2] = 0x81;
     out[3] = 0x80;
-    out[7] = 1; // ANCOUNT
+    out[7] = 1;
     out.extend_from_slice(&[0xc0, 0x0c]);
     out.extend_from_slice(&1u16.to_be_bytes());
     out.extend_from_slice(&1u16.to_be_bytes());
@@ -72,17 +59,14 @@ pub fn answer_wire(query: &[u8], address: [u8; 4], ttl: u32) -> Vec<u8> {
     out
 }
 
-/// A header-only answer with `TC=1`: what a small-buffer upstream sends.
 pub fn truncated_wire(query: &[u8]) -> Vec<u8> {
     let mut out = query.to_vec();
-    out[2] = 0x83; // QR | TC | RD
+    out[2] = 0x83;
     out[3] = 0x80;
     out
 }
 
-// ---- plain UDP/TCP upstreams --------------------------------------------------------------------
 
-/// A UDP upstream answering `answer` (or truncating) and counting the queries it saw.
 pub fn spawn_udp_upstream(answer: [u8; 4], truncate: bool) -> (SocketAddr, Arc<AtomicUsize>) {
     spawn_udp_socket(
         std::net::UdpSocket::bind("127.0.0.1:0").expect("bind the fake upstream"),
@@ -91,8 +75,6 @@ pub fn spawn_udp_upstream(answer: [u8; 4], truncate: bool) -> (SocketAddr, Arc<A
     )
 }
 
-/// The same on an already-bound socket, so the TCP and UDP halves of the truncation case can share
-/// one port the way a real upstream does.
 pub fn spawn_udp_socket(
     socket: std::net::UdpSocket,
     answer: [u8; 4],
@@ -123,7 +105,6 @@ pub fn spawn_udp_socket(
     (address, count)
 }
 
-/// A TCP upstream on an already-bound listener, so the truncation fallback can be observed.
 pub fn spawn_tcp_listener(
     listener: std::net::TcpListener,
     answer: [u8; 4],
@@ -157,11 +138,8 @@ pub fn spawn_tcp_listener(
     (address, count)
 }
 
-// ---- the test PKI -------------------------------------------------------------------------------
 
-/// A root CA plus one leaf for `host`, minted the way the MITM path mints leaves.
 pub struct TestPki {
-    /// The root CA PEM the client has to trust.
     pub ca_pem: String,
     chain: Vec<rustls::pki_types::CertificateDer<'static>>,
     key: PrivateKeyDer<'static>,
@@ -192,7 +170,6 @@ impl TestPki {
         roots
     }
 
-    /// A TLS server config with the given ALPN list.
     pub fn server_config(&self, alpn: &[&[u8]]) -> Arc<ServerConfig> {
         let mut config =
             ServerConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
@@ -213,9 +190,7 @@ pub fn unix_seconds() -> i64 {
         .unwrap_or(0)
 }
 
-// ---- DoT origin ---------------------------------------------------------------------------------
 
-/// A DoT server: one 2-byte framed request and answer per connection, connections counted.
 pub async fn spawn_dot(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     let acceptor = TlsAcceptor::from(pki.server_config(&[]));
     let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind DoT");
@@ -256,9 +231,7 @@ pub async fn spawn_dot(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     (address, connections)
 }
 
-// ---- DoH origin ---------------------------------------------------------------------------------
 
-/// A DoH origin speaking HTTP/2 (and 1.1): `/dns-query` answers, anything else is a 403.
 pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mutex<Vec<Version>>>) {
     let acceptor = TlsAcceptor::from(pki.server_config(&[b"h2", b"http/1.1"]));
     let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind DoH");
@@ -299,7 +272,6 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
                             Response::builder()
                                 .status(StatusCode::OK)
                                 .header(http::header::CONTENT_TYPE, DNS_MESSAGE)
-                                // N7: advertise an HTTP/3 endpoint the way a real DoH origin does.
                                 .header("alt-svc", format!("h3=\":{h3_port}\"; ma=60"))
                                 .body(Full::new(Bytes::from(answer_wire(
                                     &query,
@@ -320,17 +292,12 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
     (address, connections, versions)
 }
 
-// ---- DoH3 origin --------------------------------------------------------------------------------
 
-/// A minimal DoH-over-HTTP/3 origin: it accepts a bidirectional stream, skips the client's HEADERS
-/// frame, takes the DATA payload as the query and answers with an empty HEADERS frame plus the
-/// answer in a DATA frame.
 pub async fn spawn_doh3(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     let bind: SocketAddr = "127.0.0.1:0".parse().expect("a valid bind");
     spawn_doh3_on(pki, bind).await
 }
 
-/// The same origin on a chosen address, so it can share a port with the DoH/TCP origin.
 pub async fn spawn_doh3_on(pki: &TestPki, bind: SocketAddr) -> (SocketAddr, Arc<AtomicUsize>) {
     let tls = pki.server_config(&[b"h3"]);
     let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
@@ -358,8 +325,8 @@ pub async fn spawn_doh3_on(pki: &TestPki, bind: SocketAddr) -> (SocketAddr, Arc<
                     };
                     let answer = answer_wire(&query, [4, 3, 2, 1], 60);
                     let mut out = Vec::new();
-                    h3_frame(&mut out, 0x01, &[0x00, 0x00]); // empty HEADERS field section
-                    h3_frame(&mut out, 0x00, &answer); // DATA
+                    h3_frame(&mut out, 0x01, &[0x00, 0x00]);
+                    h3_frame(&mut out, 0x00, &answer);
                     if send.write_all(&out).await.is_err() {
                         return;
                     }
@@ -372,8 +339,6 @@ pub async fn spawn_doh3_on(pki: &TestPki, bind: SocketAddr) -> (SocketAddr, Arc<
     (address, connections)
 }
 
-/// A DoH3 origin that completes the QUIC handshake but never answers a request, so an HTTP/3
-/// attempt can only end through the client's own timeout.
 pub async fn spawn_doh3_silent_on(pki: &TestPki, bind: SocketAddr) -> SocketAddr {
     let tls = pki.server_config(&[b"h3"]);
     let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
@@ -383,8 +348,6 @@ pub async fn spawn_doh3_silent_on(pki: &TestPki, bind: SocketAddr) -> SocketAddr
     let address = endpoint.local_addr().expect("local addr");
 
     tokio::spawn(async move {
-        // Keep the connections alive but never accept a stream: the request is read by nobody,
-        // which is exactly the stalled exchange the fallback has to survive.
         let mut connections = Vec::new();
         while let Some(incoming) = endpoint.accept().await {
             if let Ok(connection) = incoming.await {
@@ -396,7 +359,6 @@ pub async fn spawn_doh3_silent_on(pki: &TestPki, bind: SocketAddr) -> SocketAddr
     address
 }
 
-/// Concatenates the DATA frames of a client request (HEADERS are skipped).
 fn h3_data(bytes: &[u8]) -> Option<Vec<u8>> {
     let mut rest = bytes;
     let mut data = Vec::new();
@@ -450,8 +412,6 @@ fn h3_varint_read(buf: &[u8]) -> Option<(u64, usize)> {
     Some((value, len))
 }
 
-// ---- DoQ origin ---------------------------------------------------------------------------------
-/// A DoQ server: one bidirectional stream per query, connections counted.
 pub async fn spawn_doq(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     let tls = pki.server_config(&[b"doq"]);
     let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
@@ -495,7 +455,6 @@ pub async fn spawn_doq(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     (address, connections)
 }
 
-// ---- the resolver under test --------------------------------------------------------------------
 
 #[derive(Default)]
 pub struct Recorder {

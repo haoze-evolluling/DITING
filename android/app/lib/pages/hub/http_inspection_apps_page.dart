@@ -13,7 +13,6 @@ class _HttpInspectionAppsPageState
   final _search = TextEditingController();
   String _query = '';
 
-  /// Same 250 ms debounce as 1.4.3 `AppPickerScreen`.
   Timer? _debounce;
 
   @override
@@ -32,8 +31,6 @@ class _HttpInspectionAppsPageState
 
   void _bump() => ref.read(legacySettingsRevisionProvider.notifier).bump();
 
-  /// Every change is persisted immediately, since the parent page reads the same keys; the
-  /// master switch is left alone, matching `saveHttpInspectionApps`.
   void _write(Set<String> packages) {
     final settings = ref.read(legacySettingsProvider);
     settings.setHttpInspectionApps(

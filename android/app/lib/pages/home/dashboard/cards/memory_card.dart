@@ -8,8 +8,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Memory card, after FlClash widgets/memory_info.dart. The headline is whole-process
-/// PSS, the legend heap allocation; never add them, PSS also counts shared pages.
 class MemoryCard extends ConsumerStatefulWidget {
   const MemoryCard({super.key, this.onDetail});
 
@@ -66,7 +64,6 @@ class _MemoryCardState extends ConsumerState<MemoryCard>
                 ),
             ],
           ),
-          // Samples land every 2 s; only the figures rebuild, not the card and its header.
           const _MemoryFigures(),
         ],
       ),
@@ -164,7 +161,6 @@ class _Legend extends StatelessWidget {
   final Color color;
   final bool available;
 
-  /// When set, also shows the byte count as a share of total device memory.
   final int? percentOf;
 
   @override
@@ -196,7 +192,6 @@ class _Legend extends StatelessWidget {
   }
 }
 
-/// Segments sum to PSS so the bar always fills; a half-empty bar reads as missing data.
 class _CompositionBar extends StatelessWidget {
   const _CompositionBar({required this.segments});
 
@@ -219,8 +214,6 @@ class _CompositionBar extends StatelessWidget {
                   for (final segment in segments)
                     if (segment.bytes > 0)
                       Expanded(
-                        // Flex in per-mille: a 0.3% segment must not be rounded up to a visible
-                        // sliver.
                         flex: (segment.bytes * 1000 ~/ total).clamp(1, 1000),
                         child: ColoredBox(color: segment.color),
                       ),

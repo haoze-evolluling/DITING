@@ -1,5 +1,3 @@
-//! NetworkManager backend (`nmcli con mod` per active connection).
-
 use diting_desktop_api::platform_types::{AdapterInfo, AdapterState};
 
 use crate::error::{PlatformError, PlatformResult};
@@ -9,7 +7,6 @@ use crate::netutil::clean_adapter_state;
 use super::interface_name_from_state;
 use crate::linux::dnsstate::command_exists;
 
-/// Points every active connection at the local loopback resolver.
 pub(crate) async fn apply(
     executor: &dyn CommandExecutor,
     _adapters: &[AdapterInfo],
@@ -40,7 +37,6 @@ pub(crate) async fn apply(
     Ok(())
 }
 
-/// Restores each active connection from the matching snapshot.
 pub(crate) async fn restore(
     executor: &dyn CommandExecutor,
     adapters: &[AdapterState],
@@ -71,7 +67,6 @@ pub(crate) async fn restore(
     }
 }
 
-/// Flushes caches through `resolvectl` when available; otherwise there is nothing to do.
 pub(crate) async fn flush(executor: &dyn CommandExecutor) -> PlatformResult<()> {
     if command_exists("resolvectl") {
         executor

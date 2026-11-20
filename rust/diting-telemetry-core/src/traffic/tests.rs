@@ -37,7 +37,6 @@ fn record_adds_both_sides_and_tick_swaps_the_deltas() {
             },
         ]
     );
-    // Totals survive the swap; the deltas are gone, so the next tick is silent.
     assert_eq!(tracker.totals(1000), Some((6, 8)));
     assert!(tracker.tick().is_empty());
     assert_eq!(tracker.unique_uids(), 2);
@@ -71,7 +70,6 @@ fn only_uids_with_traffic_appear_in_a_tick() {
     tracker.record(2, 0, 2);
     let deltas = tracker.tick();
     assert_eq!(deltas.len(), 2);
-    // Counters stay in the map even when a tick has nothing to report.
     assert_eq!(tracker.unique_uids(), 2);
     assert!(tracker.tick().is_empty());
 }

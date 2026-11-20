@@ -1,16 +1,3 @@
-//! The two queues the session needs: ingress events and egress packets.
-//!
-//! Go's `bufferedTun` used a 2048-slot channel with `sync.Pool`, a non-blocking send and a
-//! drop-and-count policy: a full outbound queue must never stall the packet loop (TCP retransmits).
-//! The ingress side had no queue at all because gVisor read the device directly; here the reader is
-//! its own thread, so ingress needs the same bound and the same policy: drop the packet, count it.
-//!
-//! Commands from flow handlers (socket writes, close, DNS answers) share the ingress queue so the
-//! stack thread has one place to wait on and one waker. Control commands are never dropped: a lost
-//! `Abort`/`CloseWrite`/expire would leave a flow parked forever. Datagrams are the one lossy kind —
-//! UDP has no delivery guarantee anyway — so they are shed once the queue is far above capacity,
-//! which keeps a burst of upstream replies from growing the queue without bound.
-
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
@@ -21,37 +8,22 @@ use tokio::sync::Semaphore;
 
 use crate::netstack::TcpKey;
 
-/// Queue length at which further lossy commands (datagrams only) are dropped. Commands have no
-/// fixed channel bound of their own, so this is what keeps a stalled stack thread from growing the
-/// queue without limit.
 const COMMAND_HIGH_WATER: usize = 16 * 1024;
 
-/// One unit of work for the stack thread.
 #[derive(Debug)]
 pub enum Event {
-    /// A packet read from the TUN.
     Packet(Vec<u8>),
-    /// Bytes the handler wants written to a TCP flow's client. The optional reservation is the
-    /// per-flow write budget the producer acquired before queueing (relay flows only); the stack
-    /// refunds it as bytes reach the socket, so the backlog stays bounded without truncating.
     Write(TcpKey, Vec<u8>, Option<Arc<Semaphore>>),
-    /// The handler is done sending (FIN towards the client).
     CloseWrite(TcpKey),
-    /// The handler gives up on the flow (RST).
     Abort(TcpKey),
-    /// A datagram to send back to the client, from the original destination.
     Datagram {
         local: IpEndpoint,
         peer: IpEndpoint,
         payload: Vec<u8>,
     },
-    /// A UDP relay task ended: forget its 4-tuple so the next datagram dials again. The generation
-    /// identifies the task that ended, so a late expire from an old relay cannot remove the new
-    /// relay that has already been created for the same 4-tuple.
     UdpExpire { key: TcpKey, generation: u64 },
 }
 
-/// The bounded ingress queue.
 pub struct Events {
     state: Mutex<EventsState>,
     changed: Condvar,
@@ -77,7 +49,6 @@ impl Events {
         }
     }
 
-    /// Queues one packet, dropping it (and counting) when the queue is full.
     pub fn push_packet(&self, packet: Vec<u8>) {
         let mut state = self.lock();
         if state.closed {
@@ -92,8 +63,6 @@ impl Events {
         self.changed.notify_one();
     }
 
-    /// Queues one command. Control commands are never dropped; a datagram is shed once the backlog
-    /// hits [`COMMAND_HIGH_WATER`].
     pub fn push_command(&self, event: Event) {
         let mut state = self.lock();
         if state.closed {
@@ -110,7 +79,6 @@ impl Events {
         self.changed.notify_one();
     }
 
-    /// Pops one event, waiting up to `timeout`. `None` on timeout or when the queue was closed.
     pub fn pop(&self, timeout: Duration) -> Option<Event> {
         let mut state = self.lock();
         if state.events.is_empty() && !state.closed {
@@ -126,7 +94,6 @@ impl Events {
         state.events.pop_front()
     }
 
-    /// Wakes the stack thread and makes every later push a no-op.
     pub fn close(&self) {
         self.lock().closed = true;
         self.changed.notify_all();
@@ -149,7 +116,6 @@ impl Events {
     }
 }
 
-/// The bounded egress queue: stack thread → writer thread.
 pub struct Egress {
     state: Mutex<EgressState>,
     changed: Condvar,
@@ -175,7 +141,6 @@ impl Egress {
         }
     }
 
-    /// Queues one packet for the TUN, dropping it when the writer is behind.
     pub fn push(&self, packet: Vec<u8>) {
         if self.closed.load(Ordering::Acquire) {
             return;
@@ -190,7 +155,6 @@ impl Egress {
         self.changed.notify_one();
     }
 
-    /// Pops one packet, waiting up to `timeout`.
     pub fn pop(&self, timeout: Duration) -> Option<Vec<u8>> {
         let mut state = self.lock();
         if state.packets.is_empty() && !self.closed.load(Ordering::Acquire) {
@@ -241,7 +205,6 @@ mod tests {
         events.push_packet(vec![3]);
         assert_eq!(events.dropped(), 1);
         assert_eq!(events.len(), 2);
-        // Commands are never dropped, even when the queue is full.
         let key = TcpKey::new(
             "10.0.0.1:53".parse().expect("local"),
             "10.0.0.2:1234".parse().expect("remote"),

@@ -7,13 +7,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Switches the home-screen icon by enabling exactly one of the `activity-alias` entries declared
-/// in `AndroidManifest.xml` (`.LauncherDefault`, `.LauncherAdguard`).
-///
-/// Android has no API to repaint an installed activity's icon at runtime; the supported pattern is
-/// one alias per style with only one enabled at a time. PackageManager persists those component
-/// flags across restarts, but Dart also mirrors the choice into preferences and re-applies it on
-/// launch, in case an update or a manifest change reset the flags.
 class LauncherIconBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {
@@ -22,8 +15,6 @@ class LauncherIconBridge(private val activity: Activity) : MethodChannel.MethodC
         private const val STYLE_DEFAULT = "default"
         private const val STYLE_ADGUARD = "adguard"
 
-        /// Full class names of the manifest aliases. They resolve against the manifest package
-        /// (`com.haoze.diting`), not the applicationId.
         private const val DEFAULT_ALIAS = "com.haoze.diting.LauncherDefault"
         private const val ADGUARD_ALIAS = "com.haoze.diting.LauncherAdguard"
 
@@ -55,8 +46,6 @@ class LauncherIconBridge(private val activity: Activity) : MethodChannel.MethodC
     private fun componentName(alias: String): ComponentName =
         ComponentName(activity.packageName, alias)
 
-    /// The AdGuard alias is the only one ever explicitly enabled, so a non-enabled value means the
-    /// manifest default (`LauncherDefault`) is in effect.
     private fun currentStyle(): String = try {
         val state = activity.packageManager.getComponentEnabledSetting(
             componentName(ADGUARD_ALIAS)
@@ -67,15 +56,12 @@ class LauncherIconBridge(private val activity: Activity) : MethodChannel.MethodC
             STYLE_DEFAULT
         }
     } catch (error: Exception) {
-        // A renamed/removed alias must never crash the settings page.
         STYLE_DEFAULT
     }
 
     private fun applyStyle(style: String): Boolean = try {
         val packageManager = activity.packageManager
         val target = STYLES.getValue(style)
-        // Enable the target first so the launcher always has exactly one entry, then retire the
-        // rest. DONT_KILL_APP keeps this session (and a running tunnel) alive.
         packageManager.setComponentEnabledSetting(
             componentName(target),
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,

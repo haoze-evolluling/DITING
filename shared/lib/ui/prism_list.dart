@@ -1,11 +1,4 @@
-// Ported from FlClash's prism_ui `PrismListView` / `SliverPrismList`, which
 // themselves vendor super_sliver_list (Copyright (c) 2024 Matej Knopp, Superlist
-// and the contributors, MIT).
-//
-// A plain [SliverList] lays out every row it passes while a scrollbar drag jumps
-// across the list, so a far jump costs a layout per row. This list places rows
-// it has not laid out yet at [estimatedItemExtent] instead, so the jump is
-// cheap; it then corrects the offset as rows come into view.
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
@@ -13,7 +6,6 @@ import 'package:super_sliver_list/super_sliver_list.dart';
 
 export 'package:super_sliver_list/super_sliver_list.dart' show ListController;
 
-/// The app's lazily built sliver list.
 class SliverPrismList extends StatelessWidget {
   static const defaultEstimatedItemExtent = 64.0;
 
@@ -38,8 +30,6 @@ class SliverPrismList extends StatelessWidget {
     this.addRepaintBoundaries = true,
   }) : assert(listController == null || (gap == 0 && itemExtent == null));
 
-  // A nonzero estimate for a null index is taken as every row's extent, which
-  // skips a provider call per unlaid row.
   double _estimate(int? index, double crossAxisExtent) {
     final extent = itemExtent ?? estimatedItemExtent;
     if (gap == 0) {
@@ -95,7 +85,6 @@ class SliverPrismList extends StatelessWidget {
   }
 }
 
-/// A scroll view whose layout is [SliverPrismList].
 class PrismListView extends BoxScrollView {
   final int itemCount;
   final IndexedWidgetBuilder itemBuilder;

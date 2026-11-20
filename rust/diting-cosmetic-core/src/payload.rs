@@ -1,45 +1,14 @@
-//! The binary layout shared with `android/engine/mitm_cosmetic_native.go`.
-//!
-//! Little endian, a layout byte first. Five payloads cross the boundary:
-//!
-//! * `text` — the `<link>` tag the reader splices in, and the normalized page hostname the local
-//!   asset server looks rules up with.
-//! * `rules` — Go's `encoding/json` decode of the pushed rule set, compiled once per push.
-//! * `response` — the local asset server's answer: status, content type, headers, body.
-//! * `text list` — the host suffixes, so a fixture can pin the walk.
-//!
-//! The rewritten response bytes never do — the kernel rewrites the caller's buffer in place, because
-//! copying every chunk through a payload would double the work on the hot path.
-//!
-//! ```text
-//! text:      u8 layout | u32 len | bytes
-//! text list: u8 layout | u32 count | text × count
-//! rules:     u8 layout | u8 state
-//!            | [state == 2] u32 n | text × n      (globalHide)
-//!                           u32 n | text × n      (globalException)
-//!                           u32 nd | (text domain | u32 n | text × n | u32 n | text × n) × nd
-//! response:  u8 layout | u16 status | text content_type | u32 n | (text name | text value) × n
-//!            | text body
-//! ```
-//!
-//! `state` is `0` empty, `1` invalid, `2` loaded.
-
 use std::collections::HashMap;
 
 use crate::local::Response;
 use crate::rules::{DomainRules, RuleSet, Rules};
 
-/// Layout version of the payloads below; `cosmeticPayloadLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// `decodedRulesStateEmpty` in Go: the payload was empty or whitespace.
 pub const STATE_EMPTY: u8 = 0;
-/// `decodedRulesStateInvalid` in Go: `json.Unmarshal` rejected the payload.
 pub const STATE_INVALID: u8 = 1;
-/// `decodedRulesStateLoaded` in Go: a decoded rule set follows.
 pub const STATE_LOADED: u8 = 2;
 
-/// Encodes a string payload: the `<link>` tag or the normalized hostname.
 pub fn encode_text(text: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(5 + text.len());
     out.push(LAYOUT_VERSION);
@@ -48,7 +17,6 @@ pub fn encode_text(text: &[u8]) -> Vec<u8> {
     out
 }
 
-/// Decodes [`encode_text`].
 pub fn decode_text(data: &[u8]) -> Result<String, String> {
     let mut reader = Reader::new(data)?;
     let length = reader.u32("text length")? as usize;
@@ -59,7 +27,6 @@ pub fn decode_text(data: &[u8]) -> Result<String, String> {
         .map_err(|err| format!("payload text is not UTF-8: {err}"))
 }
 
-/// Encodes a rule set: Go's decode of one `SetCosmeticRules` payload.
 pub fn encode_rules(rules: &RuleSet) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     match rules {
@@ -69,7 +36,6 @@ pub fn encode_rules(rules: &RuleSet) -> Vec<u8> {
             out.push(STATE_LOADED);
             put_texts(&mut out, &loaded.global_hide);
             put_texts(&mut out, &loaded.global_exception);
-            // Go sorts the domains so the payload is deterministic; a map has no order of its own.
             let mut domains: Vec<(&String, &DomainRules)> = loaded.domains.iter().collect();
             domains.sort_by(|left, right| left.0.cmp(right.0));
             out.extend_from_slice(&(domains.len() as u32).to_le_bytes());
@@ -83,7 +49,6 @@ pub fn encode_rules(rules: &RuleSet) -> Vec<u8> {
     out
 }
 
-/// Decodes [`encode_rules`].
 pub fn decode_rules(data: &[u8]) -> Result<RuleSet, String> {
     let mut reader = Reader::new(data)?;
     let state = reader.u8("rules state")?;
@@ -99,7 +64,6 @@ pub fn decode_rules(data: &[u8]) -> Result<RuleSet, String> {
                 let domain = reader.text("domain")?;
                 let hide = reader.texts("domain hide")?;
                 let exception = reader.texts("domain exception")?;
-                // A duplicate domain key keeps the last entry, like `json.Unmarshal` into a map.
                 domains.insert(domain, DomainRules { hide, exception });
             }
             RuleSet::Loaded(Rules {
@@ -114,14 +78,12 @@ pub fn decode_rules(data: &[u8]) -> Result<RuleSet, String> {
     Ok(rules)
 }
 
-/// Encodes a host-suffix list.
 pub fn encode_text_list(items: &[String]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     put_texts(&mut out, items);
     out
 }
 
-/// Decodes [`encode_text_list`].
 pub fn decode_text_list(data: &[u8]) -> Result<Vec<String>, String> {
     let mut reader = Reader::new(data)?;
     let items = reader.texts("text list")?;
@@ -129,7 +91,6 @@ pub fn decode_text_list(data: &[u8]) -> Result<Vec<String>, String> {
     Ok(items)
 }
 
-/// Encodes one local asset server response.
 pub fn encode_response(response: &Response) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&response.status.to_le_bytes());
@@ -143,8 +104,6 @@ pub fn encode_response(response: &Response) -> Vec<u8> {
     out
 }
 
-/// A decoded [`encode_response`] payload: the body is the interesting part, the headers are copied
-/// into `http.Header` verbatim.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResponsePayload {
     pub status: u16,
@@ -153,7 +112,6 @@ pub struct ResponsePayload {
     pub body: String,
 }
 
-/// Decodes [`encode_response`].
 pub fn decode_response(data: &[u8]) -> Result<ResponsePayload, String> {
     let mut reader = Reader::new(data)?;
     let status = reader.u16("status")?;

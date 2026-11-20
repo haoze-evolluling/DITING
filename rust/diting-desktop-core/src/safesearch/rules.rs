@@ -1,10 +1,5 @@
-//! The built-in SafeSearch rule table.
-//!
-//! Transcribed line-for-line from AdGuard Home's `internal/filtering/safesearch/rules/*.txt`
 //! (GPL-3.0), exactly as `safesearch_rules.go` carried it. The parser in [`super`] turns each
-//! `|domain^$dnsrewrite=NOERROR;<TYPE>;<VALUE>` line into a compiled rule.
 
-/// Service identifier and the raw AdGuard-style rule lines.
 pub(crate) const RULE_TEXTS: &[(&str, &str)] = &[
     (
         "bing",

@@ -1,16 +1,3 @@
-//! Replays the fixtures generated from the pre-migration Go implementation
-//! (`android/engine/zz_cert_fixture_gen_test.go` before it was deleted):
-//!
-//! * `legacy_ca.crt` / `legacy_ca.key` - a root CA written by the old `generateCA` + `saveCA`, which
-//!   the kernel must still load (upgrade path: an APK that updates must not invalidate the CA the
-//!   user already installed);
-//! * `legacy_ca_info.tsv` - the subject, validity window, serial and SKI the old code produced, plus
-//!   the SAN list it minted for four hosts;
-//! * `ev.tsv` - `isExtendedValidation` over the policy lists the old code saw.
-//!
-//! The fixture CA lives from 2026-11-06 to 2036-11-04; the replay pins `now` one day before its
-//! `NotAfter` so the test does not expire with it.
-
 use std::collections::HashMap;
 use std::fs;
 
@@ -100,7 +87,6 @@ fn the_legacy_ca_still_loads() {
         not_after
     );
 
-    // The old PEM is returned byte for byte, so `GetCACertPEM` keeps handing the installed CA out.
     assert_eq!(authority.ca_pem(), read("legacy_ca.crt"));
 
     let ski = {
@@ -144,7 +130,6 @@ fn leaves_from_the_legacy_ca_carry_the_old_sans() {
         assert_eq!(dns_of(&cert), expected_names, "SAN of {host}");
         assert_eq!(issued.not_after_unix, pinned_now + LEAF_VALIDITY_AFTER_SECS);
 
-        // What the kernel's own SAN helper says must agree with the certificate it wrote.
         let helper: Vec<String> = dns_names(host)
             .unwrap()
             .into_iter()

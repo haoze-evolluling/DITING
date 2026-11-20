@@ -1,7 +1,3 @@
-/// The rule engine's subscription lists and the counters the console shows above them.
-///
-/// `GET /api/v1/filter/lists` answers with a bare list; `GET /api/v1/filter/stats` carries the
-/// counters. Writes are per-list: add, update (name/URL/enabled), delete and refresh.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -12,7 +8,6 @@ int _int(Object? value) => switch (value) {
 
 bool _bool(Object? value) => value == true;
 
-/// `core.FilterStats`, as `/filter/stats` reports it.
 class DesktopFilterSummary {
   const DesktopFilterSummary({
     required this.enabled,
@@ -67,17 +62,14 @@ class DesktopFilterSummary {
   final int blocked;
   final int allowed;
 
-  /// 0..1, as the service computes it.
   final double blockRate;
 
-  /// Whether the current instant is inside the time plan's window (always true when no plan is on).
   final bool scheduleActive;
 
   final bool paused;
   final Duration pausedRemaining;
 }
 
-/// One `core.FilterList`.
 class DesktopFilterList {
   const DesktopFilterList({
     required this.id,
@@ -113,7 +105,6 @@ class DesktopFilterList {
   final int rulesCount;
   final DateTime? lastUpdated;
 
-  /// `ok` | `unchanged` | `cached` | `failed`; empty before the first pull.
   final String lastStatus;
   final String lastError;
 
@@ -128,7 +119,6 @@ class DesktopFilterList {
     lastError: lastError,
   );
 
-  /// The update endpoint replaces name, URL and the switch; the counters stay the service's.
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
@@ -137,7 +127,6 @@ class DesktopFilterList {
   };
 }
 
-/// The list page's answer: the total the service counted plus the rows themselves.
 class DesktopFilterLists {
   const DesktopFilterLists({required this.total, required this.lists});
 

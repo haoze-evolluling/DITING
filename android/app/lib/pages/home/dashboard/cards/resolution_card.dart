@@ -9,8 +9,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Resolution mode card: segmented control, explanation, current endpoints. It replaced the fixed
-/// home block, so it drags, removes and adds like the other dashboard cards.
 class ResolutionCard extends ConsumerWidget {
   const ResolutionCard({super.key});
 
@@ -19,7 +17,6 @@ class ResolutionCard extends ConsumerWidget {
     final resolution = ref.watch(resolutionModeProvider);
     final scale = DashboardDensityScope.scaleOf(context);
     final colorScheme = context.colorScheme;
-    // Edit mode greys the body only; the segmented control would still switch modes on tap.
     final editing = ref.watch(dashboardEditingProvider);
     return DashboardCard(
       semanticLabel: context.l10n.resolutionModeTitle,
@@ -103,8 +100,6 @@ class ResolutionCard extends ConsumerWidget {
   }
 }
 
-/// One line per endpoint in use, in the order the engine tries them (primary first), so the card
-/// matches the resolution page; single mode has just one.
 final _endpointLinesProvider = Provider<List<String>>((ref) {
   final resolution = ref.watch(resolutionModeProvider);
   final selectedId = ref.watch(selectedProviderProvider);
@@ -121,7 +116,6 @@ final _endpointLinesProvider = Provider<List<String>>((ref) {
   return endpoints.isEmpty ? [currentL10n.resolutionNoProvider] : endpoints;
 });
 
-/// One-line explanation of what the selected mode actually does.
 String describeResolutionMode(ResolutionMode mode, AppL10n l10n) =>
     switch (mode) {
       ResolutionMode.single => l10n.resolutionSingleSummary,

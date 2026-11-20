@@ -1,5 +1,3 @@
-// 谛听 (DITING) 开发者工具箱各模块业务逻辑控制器
-
 window.DNSModule = {
   lastAnswers: [],
 
@@ -380,8 +378,6 @@ window.BuildModule = {
   },
 };
 
-// 版本号维护：desktop/app/pubspec.yaml 是桌面端唯一真源，
-// 服务端 / NSIS / deb 都由构建脚本从这里取版本号。
 const VERSION_DESKTOP_GROUPS = ['desktop'];
 const VERSION_ANDROID_GROUPS = ['android'];
 

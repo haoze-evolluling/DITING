@@ -1,10 +1,3 @@
-//! Replays the domain-matching corpus produced by the old Go `domainMatches`.
-//!
-//! Each row is one allowed set (semicolon-joined, empty for the empty set) and one query, with the
-//! boolean the Go implementation returned. The corpus covers exact matches, label-boundary
-//! misses, parent entries, one versus two trailing dots, ASCII case, U+0130's Go-specific fold,
-//! surrounding spaces (never trimmed by the query walk) and empty queries.
-
 use std::collections::HashSet;
 
 use diting_allowlist_core::domain_matches;

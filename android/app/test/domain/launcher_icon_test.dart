@@ -1,5 +1,3 @@
-// Launcher icon style: persistence, the native switch call, and launch-time reconcile.
-
 import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/state/launcher_icon_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';

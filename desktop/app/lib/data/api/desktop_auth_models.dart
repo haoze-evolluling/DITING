@@ -1,8 +1,3 @@
-/// The web console's credential state, one session, and the login background it renders.
-///
-/// The old desktop console's `views/LoginView.vue` plus `composables/useAuthForm.ts` are the
-/// blueprint. The service decides whether an admin exists, whether a login is locked out and how long
-/// a session lives; the page only shows those answers.
 library;
 
 bool _bool(Object? value) => value == true;
@@ -13,7 +8,6 @@ int _int(Object? value) => switch (value) {
   _ => 0,
 };
 
-/// `GET /api/v1/auth/status` (public).
 class DesktopAuthStatus {
   const DesktopAuthStatus({
     required this.initialized,
@@ -36,18 +30,15 @@ class DesktopAuthStatus {
         ),
       );
 
-  /// Whether an admin password has been set; before that the console opens in setup mode.
   final bool initialized;
   final bool webEnabled;
 
-  /// The service always answers `false` here; a session is proven by calling a protected route.
   final bool authenticated;
   final String username;
   final bool locked;
   final Duration lockoutRemaining;
 }
 
-/// `POST /api/v1/auth/login`.
 class DesktopSession {
   const DesktopSession({
     required this.token,
@@ -68,7 +59,6 @@ class DesktopSession {
   final DateTime expiresAt;
 }
 
-/// `GET|POST|DELETE /api/v1/auth/background`.
 class DesktopLoginBackground {
   const DesktopLoginBackground({
     required this.type,
@@ -89,16 +79,12 @@ class DesktopLoginBackground {
         ),
       );
 
-  /// `none`, `url` (an external image) or `custom` (the image the service stores).
   final String type;
 
-  /// Absolute URL, or a service-relative path for `custom`; empty when there is no image.
   final String url;
 
-  /// Dark overlay strength, 0–100.
   final int opacity;
 
-  /// Blur radius in CSS pixels, 0–20.
   final int blur;
   final DateTime updatedAt;
 

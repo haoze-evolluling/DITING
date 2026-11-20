@@ -26,11 +26,9 @@ class _FakeSource extends FloatingLogSource {
   Future<int> blockedSince(int since) async => 0;
 }
 
-/// Records window calls instead of resizing a real overlay.
 class _FakeWindow extends FloatingLogWindowChannel {
   final calls = <String>[];
 
-  /// Stands in for the native resize, which the test surface does not do by itself.
   void Function(Size size)? onResize;
 
   @override
@@ -90,7 +88,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Collapsed: only the bubble.
     expect(find.text('ads.example.com'), findsNothing);
     await tester.tap(find.bySemanticsLabel('打开悬浮窗日志'));
     await tester.pumpAndSettle();
@@ -98,18 +95,15 @@ void main() {
     expect(find.text('ads.example.com'), findsOneWidget);
     expect(find.text('api.example.com'), findsOneWidget);
 
-    // The blocked chip narrows the list to the blocked row.
     await tester.tap(find.text(RequestStatus.blocked.label).first);
     await tester.pumpAndSettle();
     expect(find.text('ads.example.com'), findsOneWidget);
     expect(find.text('api.example.com'), findsNothing);
 
-    // Tapping a row unfolds its details in place.
     await tester.tap(find.text('ads.example.com'));
     await tester.pumpAndSettle();
     expect(find.text('复制域名'), findsOneWidget);
 
-    // Clear hides the rows already shown; the source is never asked to delete anything.
     await tester.tap(find.byTooltip('更多'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('清空列表'));
@@ -117,13 +111,11 @@ void main() {
     expect(find.text('ads.example.com'), findsNothing);
     expect(find.text('列表已清空，新的请求会继续出现。'), findsOneWidget);
 
-    // Minimise returns to the bubble.
     await tester.tap(find.byTooltip('收起为悬浮球'));
     await tester.pumpAndSettle();
     expect(window.calls.last, 'collapse');
     expect(find.bySemanticsLabel('打开悬浮窗日志'), findsOneWidget);
 
-    // Stop the polling timers before the test ends.
     await tester.pumpWidget(const SizedBox());
   });
 }

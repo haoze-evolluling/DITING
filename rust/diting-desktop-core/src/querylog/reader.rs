@@ -1,9 +1,3 @@
-//! Reverse JSON-Lines reader for persisted query history.
-//!
-//! Port of the former Go service's `internal/querylog/reader.go`: files are scanned newest-date first,
-//! each file is read backwards in 64 KiB blocks, corrupt lines are skipped, and counting mode
-//! keeps scanning after the candidate page is full so `Total` stays stable across offsets.
-
 use std::fs::File;
 use std::io::{self, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
@@ -15,10 +9,6 @@ const READ_BLOCK_SIZE: usize = 64 * 1024;
 const MAX_LINE_SIZE: usize = 64 * 1024;
 const DAY_MS: i64 = 24 * 60 * 60 * 1000;
 
-/// Read one file newest → oldest, invoking `visit` per line.
-///
-/// `visit` returns `true` to continue and `false` to stop. Unparseable (partial / corrupt) lines
-/// are silently skipped.
 pub(crate) fn read_file_reverse<F>(path: &Path, mut visit: F) -> io::Result<()>
 where
     F: FnMut(&Record) -> bool,
@@ -63,7 +53,6 @@ where
     Ok(())
 }
 
-/// Parse one line; returns `true` when iteration should stop.
 fn emit_line<F>(line: &[u8], visit: &mut F) -> bool
 where
     F: FnMut(&Record) -> bool,
@@ -96,11 +85,6 @@ fn trim_ascii_space(mut bytes: &[u8]) -> &[u8] {
     bytes
 }
 
-/// Scan `paths` (oldest file first) in reverse, newest records first.
-///
-/// In counting mode (`need_count`) every match is counted even after `need` candidates were
-/// collected; in quick mode scanning stops once `need` is exceeded. Returns the match count seen
-/// up to the point scanning stopped.
 pub(crate) fn search_files_reverse<F>(
     paths: &[PathBuf],
     query: &SearchQuery,
@@ -145,10 +129,6 @@ where
     total
 }
 
-/// File-backed portion of a paginated search (newest first).
-///
-/// Only records older than the memory ring's oldest timestamp are scanned, so page totals remain
-/// exact without double-counting memory hits.
 pub(crate) fn search_files(
     dir: &Path,
     query: &SearchQuery,

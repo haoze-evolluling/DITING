@@ -1,15 +1,7 @@
-/// Automation rule / profile / event models (A1 / A3 / A14).
-///
-/// The condition-action *logic* is evaluated by the Kotlin `AutomationEngine`; this file only types
-/// the documents stored in `automation_rule` / `automation_profile` / `automation_event` so the
-/// editor, the list and the audit timeline agree on one shape. `spec_json` and `payload_json` are
-/// kept as opaque maps here — their schema is validated where they are produced (the editor) and
-/// where they are consumed (the engine), never re-invented per screen.
 library;
 
 import 'dart:convert';
 
-/// One condition-action rule row.
 class AutomationRule {
   const AutomationRule({
     required this.id,
@@ -28,10 +20,8 @@ class AutomationRule {
   final bool enabled;
   final int priority;
 
-  /// `all` / `any`: how multiple conditions combine.
   final String match;
 
-  /// `{trigger, conditions, actions}`; see `AutomationSpec` below for the canonical keys.
   final Map<String, Object?> spec;
   final int lastRunAt;
   final int createdAt;
@@ -89,8 +79,6 @@ class AutomationRule {
   );
 }
 
-/// One configuration profile (A3): a one-tap snapshot of work mode / upstream set / rule-group
-/// states / feature toggles.
 class AutomationProfile {
   const AutomationProfile({
     required this.id,
@@ -103,7 +91,6 @@ class AutomationProfile {
   final String id;
   final String name;
 
-  /// `{workMode, upstreamSet, ruleGroupStates, featureToggles}`.
   final Map<String, Object?> payload;
   final int createdAt;
   final int updatedAt;
@@ -138,7 +125,6 @@ class AutomationProfile {
   };
 }
 
-/// One audit row: when a rule fired and what it did.
 class AutomationEvent {
   const AutomationEvent({
     this.id = 0,
@@ -174,7 +160,6 @@ class AutomationEvent {
   };
 }
 
-/// The canonical trigger / condition / action tokens shared by the editor and the engine.
 abstract final class AutomationSpec {
   static const triggerManual = 'manual';
   static const triggerSchedule = 'schedule';
@@ -187,7 +172,6 @@ abstract final class AutomationSpec {
   static const actionToggleRuleGroup = 'toggle_rule_group';
   static const actionBlockServices = 'block_services';
 
-  /// A brand-new empty rule document.
   static Map<String, Object?> blank() => {
     'trigger': {'type': triggerManual},
     'conditions': <Object?>[],
@@ -197,7 +181,6 @@ abstract final class AutomationSpec {
   };
 }
 
-/// Keeps only the map items of a JSON array; a non-list yields an empty list.
 List<Map<String, Object?>> _mapList(Object? raw) {
   if (raw is! List) return const [];
   return [
@@ -215,7 +198,6 @@ Map<String, Object?> _decodeMap(Object? raw) {
   return const {};
 }
 
-/// A collision-resistant id without pulling a uuid package: microseconds plus a per-process counter.
 int _sequence = 0;
 String newAutomationId(String prefix) {
   _sequence += 1;

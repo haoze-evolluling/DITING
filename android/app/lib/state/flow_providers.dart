@@ -1,4 +1,3 @@
-/// N4 实时连接视图的状态：合并引擎的增量快照为一份按最近活跃排序的连接表。
 library;
 
 import 'package:diting_android/data/native/flow_bridge.dart';
@@ -32,7 +31,6 @@ class FlowViewNotifier extends Notifier<FlowViewState> {
   @override
   FlowViewState build() => const FlowViewState();
 
-  /// Pulls the delta since the last cursor (or the whole table when [full]) and merges it in.
   Future<void> refresh({bool full = false}) async {
     final since = full ? 0 : state.nextSeq;
     final snapshot = await ref

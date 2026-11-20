@@ -1,9 +1,3 @@
-/// Prompt text for the two analysis modes.
-///
-/// The four-section structure and the badge words (【高危】/【建议加入白名单】…) are what the Markdown
-/// viewer colours, so the text is part of the rendered report's contract. It lives in
-/// `rust/diting-agent-core/src/prompt.rs`: both prompts are addressed to the model, so neither is
-/// localised.
 library;
 
 import 'package:diting_android/data/agent/rust_agent_core.dart';
@@ -18,7 +12,6 @@ class AgentAnalysisRequest {
   final String userPrompt;
 }
 
-/// Builds a domain analysis request with the four prompt sections users expect.
 AgentAnalysisRequest buildDomainAnalysisRequest({
   required String domain,
   required String systemPrompt,

@@ -1,14 +1,3 @@
-//! Payload codecs shared by the `summary` and `prompt` entries.
-//!
-//! The traffic summary crosses the boundary in both directions (the Dart side keeps the typed
-//! record for the UI, the kernel renders it and folds it into a prompt), so its layout lives in one
-//! place instead of being spelled out at each call site:
-//!
-//! ```text
-//! dns | blocked | rewritten | cached | http | blockedHttp | bypassedHttp | unavailable?
-//! | topCount | (domain, count) * topCount
-//! ```
-
 use crate::traffic::Summary;
 use crate::wire::{Reader, Writer};
 

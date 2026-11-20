@@ -1,8 +1,3 @@
-/// The recognised clients and their limits.
-///
-/// Every write answers with a success flag only, so each one re-reads the state it touched: an alias
-/// save reloads the client list, a limit save reloads `/status`. A rejected write keeps what was on
-/// screen and returns the service's reason.
 library;
 
 import 'dart:async';
@@ -61,7 +56,6 @@ class DesktopTrafficNotifier extends Notifier<DesktopTrafficState> {
     }
   }
 
-  /// An empty name clears the alias, which is how the old console's dialog behaved.
   Future<DesktopApiException?> setAlias(String ip, String name) async {
     try {
       await ref

@@ -1,32 +1,6 @@
-//! The binary layouts the container shares with `android/engine/dns_cache_native*.go`.
-//!
-//! Everything is little endian and every payload starts with a layout byte, so a mismatched
-//! Go/Rust pair is a loud rejection instead of a misread field. `bytes` is a `u32` length
-//! followed by raw bytes (names are wire-decoded byte strings, not necessarily UTF-8); `text` is
-//! the same shape with a UTF-8 guarantee.
-//!
-//! ```text
-//! config:   u8 layout | u8 flags | i64 max_ttl | i64 fixed_ttl | i64 min_ttl
-//!           | i64 stale_seconds | i64 negative_seconds | text mode
-//! hit:      u8 layout | u8 stale | u8 flags | u32 wire_len | wire
-//!           | u16 chain_target_count | (u8 kind | text domain)×
-//!           | u16 ip_count | text× | text resolved_ips
-//! stats:    u8 layout | u8 flags | u64 hits | u64 misses | u64 stale | u64 negative
-//!           | u64 evictions | u32 entry_count | u32 max_entries
-//! snapshot: u8 layout | u32 count
-//!           count × (bytes key | bytes query_name | u16 qtype | u16 qclass
-//!                    | i64 created_ms | i64 expires_ms | i64 last_hit_ms
-//!                    | u64 hit_count | u32 original_ttl | u32 response_size)
-//! ```
-//!
-//! `config.flags` carries the four booleans the Go caller passes in (enabled, min TTL, stale
-//! fallback, negative TTL). `hit.flags` only carries `is_negative`. `kind` is `0` CNAME and `1`
-//! SVCB, exactly like the wire layer reports chain targets.
-
 use crate::cache::{Hit, SnapshotEntry, Stats};
 use crate::policy::{Config, TtlMode};
 
-/// Layout version of every payload below; `dnsCachePayloadLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 2;
 
 const CONFIG_ENABLED: u8 = 1 << 0;
@@ -37,7 +11,6 @@ const CONFIG_NEGATIVE_TTL: u8 = 1 << 3;
 const HIT_NEGATIVE: u8 = 1 << 0;
 const STATS_ENABLED: u8 = 1 << 0;
 
-/// Decodes the configuration `dns_cache_native.go` encodes.
 pub fn decode_config(data: &[u8]) -> Result<Config, String> {
     let mut reader = Reader::new(data, "config");
     let layout = reader.u8("layout")?;
@@ -67,7 +40,6 @@ pub fn decode_config(data: &[u8]) -> Result<Config, String> {
     })
 }
 
-/// Encodes one lookup result.
 pub fn encode_hit(hit: &Hit) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION, u8::from(hit.stale)];
     let mut flags = 0u8;
@@ -89,7 +61,6 @@ pub fn encode_hit(hit: &Hit) -> Vec<u8> {
     out
 }
 
-/// Encodes the counters the Go layer reports.
 pub fn encode_stats(stats: &Stats) -> Vec<u8> {
     let mut out = Vec::with_capacity(1 + 1 + 5 * 8 + 8);
     out.push(LAYOUT_VERSION);
@@ -108,7 +79,6 @@ pub fn encode_stats(stats: &Stats) -> Vec<u8> {
     out
 }
 
-/// Encodes the projection the Android layer mirrors into the `dns_cache` table.
 pub fn encode_snapshot(entries: &[SnapshotEntry]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&(entries.len() as u32).to_le_bytes());

@@ -1,56 +1,34 @@
-//! Go-compatible `time.Duration` JSON representation.
-//!
-//! Go serializes `time.Duration` as an integer number of nanoseconds and a handful of config
-//! structs additionally accept a duration string such as `"5s"` or `"168h"` on input. The
-//! [`DurationValue`] newtype reproduces both sides of that contract:
-//!
-//! * deserialize from a Go duration string **or** an integer number of nanoseconds;
-//! * serialize as an integer number of nanoseconds.
-//!
-//! The parser mirrors `time.ParseDuration` closely enough for configuration files: signed
-//! sequences of decimal numbers with `ns`, `us`, `µs`, `μs`, `ms`, `s`, `m` and `h` units,
-//! including fractions (`"1.5h"`) and compounds (`"1h30m"`). Bare numbers other than `"0"`
-//! are rejected, exactly like Go.
-
 use std::fmt;
 
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-/// A duration expressed as nanoseconds, matching Go's `time.Duration` JSON form.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DurationValue(pub i64);
 
 impl DurationValue {
-    /// Zero duration.
     pub const ZERO: Self = Self(0);
 
-    /// Build a duration from a nanosecond count.
     pub const fn from_nanos(nanos: i64) -> Self {
         Self(nanos)
     }
 
-    /// Build a duration from a whole number of seconds.
     pub const fn from_secs(seconds: i64) -> Self {
         Self(seconds * 1_000_000_000)
     }
 
-    /// Build a duration from a whole number of milliseconds.
     pub const fn from_millis(millis: i64) -> Self {
         Self(millis * 1_000_000)
     }
 
-    /// Build a duration from a whole number of hours.
     pub const fn from_hours(hours: i64) -> Self {
         Self(hours * 3_600 * 1_000_000_000)
     }
 
-    /// Nanoseconds as stored on the wire.
     pub const fn as_nanos(self) -> i64 {
         self.0
     }
 
-    /// Whole seconds (truncating), for callers that need a human-facing value.
     pub const fn as_secs(self) -> i64 {
         self.0 / 1_000_000_000
     }
@@ -80,10 +58,6 @@ impl<'de> Deserialize<'de> for DurationValue {
     }
 }
 
-/// Deserialize a duration field, treating JSON `null` as the supplied default.
-///
-/// Serde's container-level defaults only cover *missing* fields; Go's custom unmarshallers leave
-/// the pre-populated default untouched when the key is present but `null`.
 pub fn deserialize_or_default<'de, D>(
     deserializer: D,
     default: DurationValue,
@@ -142,7 +116,6 @@ impl<'de> Visitor<'de> for DurationVisitor {
         if !value.is_finite() {
             return Err(E::custom("duration must be finite"));
         }
-        // Go converts float64 nanoseconds directly with time.Duration(val).
         Ok(DurationValue(value as i64))
     }
 
@@ -168,7 +141,6 @@ impl<'de> Visitor<'de> for DurationVisitor {
     }
 }
 
-/// Error returned when a string is not a valid Go duration.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DurationParseError {
     message: String,
@@ -188,7 +160,6 @@ fn invalid(original: &str) -> DurationParseError {
     }
 }
 
-/// Parse a Go `time.ParseDuration` compatible string into nanoseconds.
 pub fn parse_go_duration(input: &str) -> Result<i64, DurationParseError> {
     let original = input;
     let mut text = input;
@@ -224,7 +195,6 @@ pub fn parse_go_duration(input: &str) -> Result<i64, DurationParseError> {
     Ok(signed as i64)
 }
 
-/// Parse one `<number><unit>` component, returning nanoseconds and the remaining input.
 fn parse_component(text: &str) -> Option<(i128, &str)> {
     let bytes = text.as_bytes();
     let mut index = 0;
@@ -244,8 +214,6 @@ fn parse_component(text: &str) -> Option<(i128, &str)> {
     if index < bytes.len() && bytes[index] == b'.' {
         index += 1;
         while index < bytes.len() && bytes[index].is_ascii_digit() {
-            // Go stops accumulating fraction digits once the scale would overflow; extra digits
-            // merely lose precision rather than rejecting the value.
             if scale <= 1_000_000_000_000_000_000 {
                 fraction = fraction
                     .checked_mul(10)?
@@ -268,14 +236,12 @@ fn parse_component(text: &str) -> Option<(i128, &str)> {
     Some((nanos, &text[index + unit_len..]))
 }
 
-/// Match the longest supported unit prefix and return its nanosecond multiplier.
 fn match_unit(text: &str) -> Option<(i128, usize)> {
-    // Longest first so `ms` wins over `m`, and `µs`/`μs` (multi-byte) win over `s`.
     const UNITS: [(&str, i128); 8] = [
         ("ns", 1),
         ("us", 1_000),
-        ("µs", 1_000), // U+00B5 MICRO SIGN
-        ("μs", 1_000), // U+03BC GREEK SMALL LETTER MU
+        ("µs", 1_000),
+        ("μs", 1_000),
         ("ms", 1_000_000),
         ("s", 1_000_000_000),
         ("m", 60 * 1_000_000_000),

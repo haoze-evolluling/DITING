@@ -1,8 +1,3 @@
-/// The LAN web console: `/api/v1/web/status` and the admin credential state it carries.
-///
-/// The old desktop console's `LanWebCard.vue` is the blueprint. `firewallBackend == "none"` means the
-/// host has no firewall manager to configure, so the port is already open and the page hides the
-/// allow-rule switch instead of pretending it can toggle something.
 library;
 
 bool _bool(Object? value) => value == true;
@@ -18,7 +13,6 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// `GET /api/v1/web/status`.
 class DesktopWebStatus {
   const DesktopWebStatus({
     required this.enabled,
@@ -50,15 +44,12 @@ class DesktopWebStatus {
   final String listenAddress;
   final List<String> lanAddresses;
 
-  /// Browser URLs on the LAN; empty when no IPv4 interface was found.
   final List<String> webUrls;
   final bool firewallAllowed;
 
-  /// Empty or unknown values are treated as "supported", as the console did.
   final String firewallBackend;
   final bool initialized;
 
-  /// Empty before the first setup.
   final String username;
 
   bool get firewallSupported => firewallBackend != 'none';

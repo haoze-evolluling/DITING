@@ -1,8 +1,5 @@
-//! Server-owned file layout.
-
 use std::path::{Path, PathBuf};
 
-/// Every mutable file the server owns.
 #[derive(Debug, Clone)]
 pub struct ServerPaths {
     pub data_dir: PathBuf,
@@ -40,8 +37,6 @@ impl ServerPaths {
         self
     }
 
-    /// Creates the roots with the app UID's ownership. On Android the root helper may need to run
-    /// this before dropping privileges, so ownership is fixed by the caller.
     pub fn ensure_dirs(&self) -> std::io::Result<()> {
         std::fs::create_dir_all(&self.data_dir)?;
         std::fs::create_dir_all(&self.rules_dir)?;

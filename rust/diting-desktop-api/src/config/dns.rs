@@ -1,16 +1,11 @@
-//! DNS listener, IPC, takeover and web-console configuration.
-
 use serde::{Deserialize, Deserializer, Serialize};
 
 use super::duration::{self, DurationValue};
 use super::serde_util::nullable_vec;
 
-/// Default ANY-query minimal response mode: return NOTIMP.
 pub const ANY_MODE_NOTIMP: &str = "notimp";
-/// RFC 8482 minimal response mode: NOERROR with `HINFO "RFC8482"`.
 pub const ANY_MODE_RFC8482: &str = "rfc8482";
 
-/// Local DNS listener configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DNSConfig {
@@ -61,7 +56,6 @@ impl Default for DNSConfig {
 }
 
 impl DNSConfig {
-    /// Fill in defaults and clamp values exactly like `normalizeConfig` does for the DNS block.
     pub fn normalize(&mut self) {
         if self.udp_addresses.is_empty() && self.tcp_addresses.is_empty() {
             self.udp_addresses = vec!["127.0.0.1:53".to_string(), "[::1]:53".to_string()];
@@ -76,7 +70,6 @@ impl DNSConfig {
         if self.edns_padding < 0 {
             self.edns_padding = 0;
         }
-        // An unknown mode must not leave ANY queries entirely unhandled.
         if self.block_any_mode != ANY_MODE_NOTIMP && self.block_any_mode != ANY_MODE_RFC8482 {
             self.block_any_mode = ANY_MODE_NOTIMP.to_string();
         }
@@ -104,7 +97,6 @@ where
     duration::deserialize_or_default(deserializer, DurationValue::from_hours(7 * 24))
 }
 
-/// Local privileged service IPC configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct IPCConfig {
@@ -121,7 +113,6 @@ impl Default for IPCConfig {
     }
 }
 
-/// System adapter DNS takeover configuration.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct TakeoverConfig {
@@ -129,7 +120,6 @@ pub struct TakeoverConfig {
     pub state_file_path: String,
 }
 
-/// Login page background / visual configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct LoginBgConfig {
@@ -153,7 +143,6 @@ impl Default for LoginBgConfig {
     }
 }
 
-/// LAN web management console configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct WebConfig {
@@ -182,7 +171,6 @@ impl Default for WebConfig {
 }
 
 impl WebConfig {
-    /// Mirror the web-console portion of `normalizeConfig`.
     pub fn normalize(&mut self) {
         if self.listen_port <= 0 {
             self.listen_port = 15353;

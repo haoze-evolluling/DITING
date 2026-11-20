@@ -11,8 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Provider management (upstream `ProviderManagementScreen`): current provider summary,
-/// protocol switcher, built-in and custom providers. Built-in entries are selectable only.
 class ProviderManagementPage extends ConsumerStatefulWidget {
   const ProviderManagementPage({super.key});
 
@@ -161,8 +159,6 @@ class _ProviderManagementPageState
               onChanged: (value) => setState(() => _protocol = value),
             ),
           ),
-          // Custom providers come first: they are the ones the user maintains here, the built-in
-          // list below only offers presets to switch to.
           if (customs.isNotEmpty)
             generateSection(
               title: context.l10n.providerMgmtCustom,

@@ -1,4 +1,3 @@
-/// Appearance settings menu, mirroring the legacy `APPEARANCE_SETTINGS`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -36,8 +35,6 @@ class ThemePage extends ConsumerWidget {
       title: context.l10n.appearanceTitle,
       body: PageBody(
         children: [
-          // Large preview: the legacy app has none, but all nine sub pages build
-          // their thumbnails on the same MiniScreen.
           const _ThemePreview(),
           generateSection(
             title: context.l10n.appearanceInterfaceSection,
@@ -78,7 +75,6 @@ class ThemePage extends ConsumerWidget {
                 ),
                 onPressed: () => context.push(SystemPaths.bottomBar),
               ),
-              // Retained entries, after the legacy ones.
               ListItem.toggle(
                 title: Text(context.l10n.appearancePureBlack),
                 subtitle: Text(
@@ -146,7 +142,6 @@ class ThemePage extends ConsumerWidget {
                 onChanged: (value) =>
                     ref.read(hapticProvider.notifier).toggle(value),
               ),
-              // Retained entries, after the legacy ones.
               ListItem<BottomBarStyle>.options(
                 title: Text(context.l10n.appearanceBottomBarStyle),
                 subtitle: Text(

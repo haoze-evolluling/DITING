@@ -1,5 +1,3 @@
-//! Filter engine, subscription lists, schedules and pause (`/api/v1/filter/*`).
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -10,7 +8,6 @@ use diting_desktop_core::filter::{CheckHostResult, PauseState, RewriteResult};
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `core.FilterStats` wire shape.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilterStats {
@@ -27,7 +24,6 @@ pub struct FilterStats {
     pub paused_until_ms: i64,
 }
 
-/// `core.RewriteRecord` in a check result.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RewriteRecordDto {
@@ -37,7 +33,6 @@ pub struct RewriteRecordDto {
     pub ttl: u32,
 }
 
-/// `core.RewriteResult`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RewriteResultDto {
@@ -46,7 +41,6 @@ pub struct RewriteResultDto {
     pub summary: Vec<String>,
 }
 
-/// `core.CheckHostResult`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CheckHostResponse {
@@ -88,7 +82,6 @@ fn rewrite_dto(result: RewriteResult) -> RewriteResultDto {
     }
 }
 
-/// `FilterListsResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilterListsResponse {
@@ -96,14 +89,12 @@ pub struct FilterListsResponse {
     pub lists: Vec<FilterList>,
 }
 
-/// `FilterRulesResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilterRulesResponse {
     pub rules: Vec<String>,
 }
 
-/// `FilterActionRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilterActionRequest {
@@ -111,7 +102,6 @@ pub struct FilterActionRequest {
     pub id: String,
 }
 
-/// `UpdateRulesRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateRulesRequest {
@@ -119,7 +109,6 @@ pub struct UpdateRulesRequest {
     pub rules: Vec<String>,
 }
 
-/// `CheckDomainRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CheckDomainRequest {
@@ -129,7 +118,6 @@ pub struct CheckDomainRequest {
     pub qtype: String,
 }
 
-/// `ScheduleConfigResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScheduleConfigResponse {
@@ -139,7 +127,6 @@ pub struct ScheduleConfigResponse {
     pub active_id: String,
 }
 
-/// `ConfigureScheduleRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureScheduleRequest {
@@ -149,7 +136,6 @@ pub struct ConfigureScheduleRequest {
     pub schedules: Option<Vec<BlockingSchedule>>,
 }
 
-/// `FilterPauseRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilterPauseRequest {
@@ -159,7 +145,6 @@ pub struct FilterPauseRequest {
     pub duration_sec: i64,
 }
 
-/// `FilterPauseResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FilterPauseResponse {
@@ -180,7 +165,6 @@ impl From<PauseState> for FilterPauseResponse {
     }
 }
 
-/// `ConfigureBlockedServicesRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureBlockedServicesRequest {
@@ -192,7 +176,6 @@ pub struct ConfigureBlockedServicesRequest {
     pub schedules: Option<HashMap<String, Vec<BlockingSchedule>>>,
 }
 
-/// Selection and schedule state behind `/filter/services`.
 #[derive(Debug, Clone, Default)]
 pub struct BlockedServicesState {
     pub blocked_ids: Vec<String>,
@@ -201,7 +184,6 @@ pub struct BlockedServicesState {
     pub schedules: HashMap<String, Vec<BlockingSchedule>>,
 }
 
-/// Maps a DNS type mnemonic to its numeric value; unknown names fall back to `A`.
 pub fn qtype_from_name(name: &str) -> u16 {
     match name.trim().to_ascii_uppercase().as_str() {
         "" | "A" => 1,
@@ -242,7 +224,6 @@ impl AppRuntime {
         self.filter.config()
     }
 
-    /// Replaces the whole filter config, normalizes it and persists the engine's result.
     pub fn update_filter_config(&self, config: FilterConfig) -> Result<(), ControllerError> {
         self.filter.configure(config);
         let normalized = self.filter.config();

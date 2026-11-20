@@ -1,10 +1,3 @@
-//! The client side of the TUN tests: packet exchange helpers and a hand-written TCP client.
-//!
-//! The `Session` writes packets into a [`MemoryLink`] asynchronously (three threads plus tokio), so
-//! every assertion is "wait for the packet that matches". The client speaks raw IP on purpose: it
-//! has no configured address at all, so a stack that only accepted its own addresses could not
-//! answer, and the egress is verified through the checksum-verifying parser in [`super::wire`].
-
 use std::time::{Duration, Instant};
 
 use diting_engine::tunnel::MemoryLink;
@@ -12,10 +5,8 @@ use smoltcp::wire::{IpEndpoint, TcpControl};
 
 use super::wire;
 
-/// How long one end-to-end packet round trip may take on a loaded CI host.
 pub const WAIT: Duration = Duration::from_secs(5);
 
-/// The next outbound packet the predicate accepts, or `None` after `timeout`.
 pub fn wait_for(
     link: &MemoryLink,
     timeout: Duration,
@@ -55,7 +46,6 @@ pub fn wait_udp(
     .and_then(|packet| wire::parse_udp(&packet))
 }
 
-/// A TCP client with just enough sequencing to hold a conversation: SYN, ACK, data, FIN.
 pub struct Client {
     pub local: IpEndpoint,
     pub remote: IpEndpoint,
@@ -123,7 +113,6 @@ impl Client {
         packet
     }
 
-    /// SYN → SYN-ACK → ACK, asserting the SYN-ACK comes from the destination the client dialed.
     pub fn connect(&mut self, link: &MemoryLink) {
         let expected = self.remote;
         let local = self.local;

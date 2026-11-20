@@ -1,9 +1,3 @@
-/// Font settings page (upstream `views/font_family.dart`).
-///
-/// The app bundles no fonts: the list is the system default plus whatever TTF/OTF files the user
-/// imported. Android exposes no system-font enumeration API without a native channel, so there is
-/// nothing to scan for — a fixed list of vendor family names would only ever render in the fallback
-/// face on most devices.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -28,7 +22,6 @@ class FontFamilyPage extends ConsumerStatefulWidget {
 }
 
 class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
-  /// Importing reads and parses a file, so the button shows a spinner while the picker is open.
   bool _importing = false;
 
   @override
@@ -41,8 +34,6 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
       body: PageBody(
         dockSpacer: false,
         children: [
-          // Font size entry: the slider lives in `/font-size`, so the
-          // subtitle shows the current scale here.
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: CommonCard(
@@ -135,7 +126,6 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
       );
       return;
     }
-    // Refresh the list, then switch to the new font so the user sees it applied.
     ref.invalidate(importedFontsProvider);
     _select(font.family);
     showAppSnack(
@@ -167,8 +157,6 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
     if (confirmed != true || !mounted) {
       return;
     }
-    // Fall back first: the engine keeps the registered bytes for the process lifetime, so the
-    // selection has to move before the entry disappears.
     if (ref.read(selectedFontFamilyProvider) == font.family) {
       _select(null);
     }
@@ -185,7 +173,6 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
   }
 }
 
-/// Sample text rendered in the candidate face, labelled with the name the user picked.
 class _PreviewHero extends StatelessWidget {
   const _PreviewHero({required this.family, required this.label});
 
@@ -226,8 +213,6 @@ class _PreviewHero extends StatelessWidget {
   }
 }
 
-/// One selectable font. `Aa` is drawn in the candidate face so the list itself previews each entry;
-/// imported entries get a delete button in the trailing slot.
 class _FontRow extends StatelessWidget {
   const _FontRow({
     required this.label,
@@ -290,7 +275,6 @@ class _FontRow extends StatelessWidget {
   }
 }
 
-/// Import entry point, styled as a card so it reads as an action rather than another list row.
 class _ImportCard extends StatelessWidget {
   const _ImportCard({required this.isImporting, required this.onPressed});
 

@@ -1,11 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Theme-derived accents for the server dashboard.
-///
-/// The dashboard keeps its data visuals in the selected palette instead of mixing fixed
-/// success / warning hues into every card. Semantic status colours stay on status dots and
-/// exception labels, where they carry meaning rather than decoration.
 abstract final class ServerHomeColors {
   static Color accent(BuildContext context) => context.colorScheme.primary;
 

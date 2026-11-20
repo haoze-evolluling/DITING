@@ -1,26 +1,3 @@
-//! The JNI side of the callbacks: the three Kotlin objects and the calls into them.
-//!
-//! The callbacks are stored as `GlobalRef`s inside an `Arc<CallbackSink>`, which is the engine's
-//! [`EventSink`]. Calls never arrive on the JNI thread that installed them: the DNS batch comes
-//! from the engine's log flusher, and race/bootstrap events are folded into one packed batch by a
-//! dedicated thread here. Each thread attaches to the JVM once
-//! (`attach_current_thread_permanently`) instead of re-attaching per row.
-//!
-//! Race and bootstrap results used to cross the boundary one at a time, with five and eight
-//! arguments (most of them fresh Java strings). Under `smart_prediction` the race log fires for
-//! every upstream resolution, so that was dozens of crossings per page load. Both are now appended
-//! to a bounded channel and handed over as one `byte[]` per batch, in the layouts
-//! [`crate::logs::race_batch_payload`] and [`crate::logs::bootstrap_batch_payload`] spell.
-//!
-//! Two rules keep the JVM environment clean:
-//!
-//! * a Java exception thrown by a callback is cleared after the call and reported as a failed call —
-//!   leaving it pending would make the *next* JNI call fail with a confusing error;
-//! * signature mismatches are the caller's problem, not the data path's: a null callback is a no-op.
-//!
-//! The signature strings are copied verbatim from the Kotlin interfaces; the JVM smoke test declares
-//! the same methods, so a typo fails the build rather than the device.
-
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender, SyncSender};
 use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
@@ -34,21 +11,14 @@ use crate::logs::{
     bootstrap_batch_payload, race_batch_payload, BootstrapEvent, EventSink, RaceEvent,
 };
 
-/// `BatchLogCallback.onDNSQueryBatch(byte[])`.
 pub const BATCH_SIGNATURE: &str = "([B)V";
-/// `RaceLogCallback.onRaceEvents(byte[])`.
 pub const RACE_BATCH_SIGNATURE: &str = "([B)V";
-/// `BootstrapLogCallback.onBootstrapEvents(byte[])`.
 pub const BOOTSTRAP_BATCH_SIGNATURE: &str = "([B)V";
 
-/// Events one race/bootstrap batch may carry before the flusher hands them over.
 const EVENT_BATCH_SIZE: usize = 64;
-/// How long a partial race/bootstrap batch waits for more events.
 const EVENT_FLUSH_INTERVAL: Duration = Duration::from_millis(200);
-/// Events the event holders may buffer ahead of the flusher before rows start being dropped.
 const EVENT_CHANNEL_CAPACITY: usize = 1_024;
 
-/// Which callback is being installed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Slot {
     Batch,
@@ -56,17 +26,14 @@ pub enum Slot {
     Bootstrap,
 }
 
-/// One buffered race/bootstrap result, or a request to deliver them now (teardown).
 enum Pending {
     Race(RaceEvent),
     Bootstrap(BootstrapEvent),
     Flush(Sender<()>),
 }
 
-/// A callback slot the flusher thread reads while Kotlin installs or clears it.
 type SlotRef = Arc<Mutex<Option<GlobalRef>>>;
 
-/// The three Kotlin callback objects, plus the JVM they live in.
 pub struct CallbackSink {
     vm: Option<Arc<JavaVM>>,
     batch: Mutex<Option<GlobalRef>>,
@@ -77,8 +44,6 @@ pub struct CallbackSink {
 }
 
 impl CallbackSink {
-    /// Captures the current JVM. `Err` when the entry point was not called from a JVM thread, which
-    /// can only happen in a host test.
     pub fn new(env: &mut JNIEnv<'_>) -> Result<Self, jni::errors::Error> {
         let vm = Arc::new(env.get_java_vm()?);
         let race: SlotRef = Arc::new(Mutex::new(None));
@@ -103,7 +68,6 @@ impl CallbackSink {
         })
     }
 
-    /// A sink with no JVM, for host tests that only exercise the engine.
     pub fn headless() -> Self {
         Self {
             vm: None,
@@ -131,7 +95,6 @@ impl CallbackSink {
         *current = env.new_global_ref(&callback).ok();
     }
 
-    /// True when a batch callback is installed: rows are only queued while one is.
     pub fn has_batch(&self) -> bool {
         self.batch
             .lock()
@@ -139,7 +102,6 @@ impl CallbackSink {
             .unwrap_or(false)
     }
 
-    /// True when any of the three callbacks is installed.
     pub fn has_any(&self) -> bool {
         self.has_batch()
             || self.slot_ref(&self.race).is_some()
@@ -178,7 +140,6 @@ impl EventSink for CallbackSink {
         let Some(sender) = &self.events else {
             return;
         };
-        // A full channel drops the row rather than stalling the DNS worker.
         let _ = sender.try_send(Pending::Race(event));
     }
 
@@ -197,11 +158,7 @@ impl EventSink for CallbackSink {
         let Some(sender) = &self.events else {
             return;
         };
-        // Blocking send: the flusher drains in order, so the marker is reached after every event
-        // already queued. The ack lets teardown wait for the delivery instead of racing it.
         let (ack, wait) = mpsc::channel();
-        // Bounded enqueue: the flusher is the only consumer and it may be parked inside a Kotlin
-        // callback, so an unconditional `send` could hang teardown on the JNI thread forever.
         let deadline = Instant::now() + EVENT_FLUSH_INTERVAL * 25;
         let mut marker = Pending::Flush(ack);
         loop {
@@ -212,7 +169,6 @@ impl EventSink for CallbackSink {
                 }
                 Err(mpsc::TrySendError::Full(returned)) => {
                     if Instant::now() >= deadline {
-                        // Give up: the queued events are still delivered by the flusher's timer.
                         return;
                     }
                     marker = returned;
@@ -226,7 +182,6 @@ impl EventSink for CallbackSink {
 
 impl Drop for CallbackSink {
     fn drop(&mut self) {
-        // Closing the channel ends the flusher after its final batch.
         self.events.take();
         let flusher = self
             .flusher
@@ -239,7 +194,6 @@ impl Drop for CallbackSink {
     }
 }
 
-/// Drains the race/bootstrap channel in batches and hands each stream to Kotlin.
 fn flush_events(
     vm: &JavaVM,
     race_slot: &SlotRef,
@@ -248,7 +202,6 @@ fn flush_events(
 ) {
     let mut races: Vec<RaceEvent> = Vec::new();
     let mut bootstraps: Vec<BootstrapEvent> = Vec::new();
-    // Block until the first event of a batch, then drain everything already queued.
     loop {
         let mut ack: Option<Sender<()>> = None;
         match receiver.recv() {
@@ -302,7 +255,6 @@ fn push_pending(event: Pending, races: &mut Vec<RaceEvent>, bootstraps: &mut Vec
     match event {
         Pending::Race(event) => races.push(event),
         Pending::Bootstrap(event) => bootstraps.push(event),
-        // The flusher handles a flush marker before calling this.
         Pending::Flush(_) => {}
     }
 }
@@ -313,7 +265,6 @@ fn reference(slot: &SlotRef) -> Option<GlobalRef> {
         .clone()
 }
 
-/// Attaches the calling thread, makes one `byte[]` call, then clears a Java exception.
 fn deliver_bytes(vm: &JavaVM, target: &GlobalRef, method: &str, signature: &str, payload: &[u8]) {
     let Ok(mut env) = vm.attach_current_thread_permanently() else {
         return;
@@ -330,8 +281,6 @@ fn deliver_bytes(vm: &JavaVM, target: &GlobalRef, method: &str, signature: &str,
     }
 }
 
-/// Installs or clears one callback on the engine and keeps the sink installed while any callback
-/// remains (race/bootstrap events are buffered by the sink, not by the DNS log buffer).
 pub fn set_sink(
     env: &mut JNIEnv<'_>,
     engine: &Arc<Engine>,

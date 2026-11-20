@@ -4,31 +4,17 @@ import 'dart:ui' show ClipOp, lerpDouble;
 
 import 'package:material_ui/material_ui.dart';
 
-/// The single corner-radius standard for the whole product.
-///
-/// Every rounded surface — cards, sheets, dialogs, inputs, popups, chips,
-/// buttons, badges, avatars, switches, progress bars — must reference
-/// [AppCorner.standard] directly, or through [AppRadius.standard] /
-/// [AppShape.standard]. Changing this one constant restyles the entire app.
-///
-/// [none] (0) is the only other permitted value, reserved for structural edges
-/// that must stay square: a sheet flush with the screen edge, or the inner edge
-/// of a grouped list where only the first/last row rounds.
 abstract final class AppCorner {
-  /// The one standard corner radius, in logical pixels.
   static const double standard = 24;
 
-  /// No rounding. Reserved for structural edges that must stay square.
   static const double none = 0;
 }
 
 abstract final class AppRadius {
-  /// The standard [BorderRadius] (all corners at [AppCorner.standard]).
   static const BorderRadius standard = BorderRadius.all(
     Radius.circular(AppCorner.standard),
   );
 
-  /// Square corners for structural edges only.
   static const BorderRadius none = BorderRadius.zero;
 
   static BorderRadius all(double corner) => BorderRadius.circular(corner);
@@ -46,12 +32,10 @@ abstract final class AppRadius {
 }
 
 abstract final class AppShape {
-  /// The standard superellipse shape (all corners at [AppCorner.standard]).
   static const RoundedSuperellipseBorder standard = RoundedSuperellipseBorder(
     borderRadius: AppRadius.standard,
   );
 
-  /// Square corners for structural edges only.
   static const RoundedSuperellipseBorder none = RoundedSuperellipseBorder();
 
   static const AppInputBorder input = AppInputBorder();
@@ -218,13 +202,11 @@ extension AppShapeThemeExt on ThemeData {
   ThemeData get withAppShapes => copyWith(
     cardTheme: cardTheme.copyWith(shape: AppShape.standard),
     dialogTheme: dialogTheme.copyWith(shape: AppShape.standard),
-    // A bottom sheet is flush with the bottom edge, so only its top corners round.
     bottomSheetTheme: bottomSheetTheme.copyWith(
       shape: AppShape.top(AppCorner.standard),
     ),
     snackBarTheme: snackBarTheme.copyWith(shape: AppShape.standard),
     tooltipTheme: tooltipTheme.copyWith(
-      // A decoration replaces Material's tooltip colours too, so restate them.
       decoration: ShapeDecoration(
         shape: AppShape.standard,
         color: switch (brightness) {
@@ -242,8 +224,6 @@ extension AppShapeThemeExt on ThemeData {
     ),
     inputDecorationTheme: inputDecorationTheme.copyWith(
       border: AppShape.input,
-      // A helper line explains the format of a field ("每行一个 IP") and is often a full sentence;
-      // at one line it was cut with an ellipsis on every form that used it.
       helperMaxLines: 2,
       errorMaxLines: 2,
     ),
@@ -259,11 +239,6 @@ extension AppShapeThemeExt on ThemeData {
     progressIndicatorTheme: progressIndicatorTheme.copyWith(
       borderRadius: AppRadius.standard,
     ),
-    // The date and time pickers are the only Material dialogs the app does not build itself.
-    // Their outer shape comes from their own theme slots, not `dialogTheme`, so without these
-    // they keep M3 defaults (a 28 date dialog, a square range dialog, a 28 time dialog) and
-    // break the standard. `hourMinuteShape` is a real surface too; the tiny day-period toggle
-    // and the Checkbox deliberately keep their compact radii and are not standardised here.
     datePickerTheme: datePickerTheme.copyWith(
       shape: AppShape.standard,
       rangePickerShape: AppShape.standard,

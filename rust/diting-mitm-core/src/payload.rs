@@ -1,36 +1,11 @@
-//! The binary layout shared with `android/engine/mitm_filter_native.go`.
-//!
-//! Everything is little endian and the payload starts with a layout byte, so a mismatched
-//! Go/Rust pair is a loud rejection instead of a misread field. `text` is a `u32` length followed
-//! by UTF-8 bytes.
-//!
-//! ```text
-//! report: u8 layout | u8 flags | u32 count | u32 threshold | i64 ttl_ms | text host | text reason
-//!         | text write_error
-//! ```
-//!
-//! `report.flags` carries three booleans: bit 0 `recorded` (the failure streak was counted), bit 1
-//! `blacklisted` (the host is blacklisted after the call) and bit 2 `added` (this call wrote the
-//! entry, so `reason`/`ttl_ms`/`write_error` are filled in). The same shape is returned by both
-//! entry points, so the Go side has one decoder: a `record_failure` call can set all three, a
-//! `blacklist` call sets `added` and `blacklisted`, and leaves `count`/`threshold` at zero.
-//!
-//! `host` is the normalized (lowercased, trimmed) host the kernel used, so the Go log lines print
-//! exactly what the decision was made on; `reason` is only filled in when a blacklist entry was
-//! added and `ttl_ms` is the entry lifetime that was applied. `write_error` carries the reason a
-//! blacklist line could not be appended to the persistent file (empty when the append worked or
-//! no path is configured) so the Go side can keep logging that warning.
-
 use crate::filter::FailureReport;
 
-/// Layout version of every payload below; `mitmFilterPayloadLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 1;
 
 const REPORT_RECORDED: u8 = 1 << 0;
 const REPORT_BLACKLISTED: u8 = 1 << 1;
 const REPORT_ADDED: u8 = 1 << 2;
 
-/// Encodes one [`FailureReport`] (or a blacklist-only report).
 pub fn encode_report(report: &FailureReport) -> Vec<u8> {
     let mut flags = 0u8;
     if report.recorded {
@@ -70,7 +45,6 @@ fn push_text(out: &mut Vec<u8>, value: &str) {
     out.extend_from_slice(value.as_bytes());
 }
 
-/// Reads a report back; used by the ABI round-trip tests and by nothing else.
 #[cfg(test)]
 pub(crate) fn decode_report(data: &[u8]) -> Result<FailureReport, String> {
     let mut reader = Reader::new(data);

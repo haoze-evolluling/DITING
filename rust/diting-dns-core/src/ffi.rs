@@ -1,29 +1,3 @@
-//! The C ABI `android/engine/dns_core_native.go` loads with `dlopen`.
-//!
-//! | symbol | meaning |
-//! | --- | --- |
-//! | `diting_dns_abi_version` | ABI number the loader validates |
-//! | `diting_dns_query_info` | the logged name/type of one raw query |
-//! | `diting_dns_validate` | one response checked against the query it answers |
-//! | `diting_dns_extract` | everything the engine reads off one raw answer |
-//! | `diting_dns_free_bytes` | drop a payload this library returned |
-//! | `diting_dns_blocks_new` | the per-engine dynamic block tracker |
-//! | `diting_dns_blocks_free` | drop a tracker and its state |
-//! | `diting_dns_blocks_reset` | forget every domain counter (a new DNS config was applied) |
-//! | `diting_dns_blocks_response` | the block response mode for one blocked query |
-//! | `diting_dns_reply_block` | the configured block reply for one query (rcode + records) |
-//! | `diting_dns_reply_local_asset` | the local asset host reply |
-//! | `diting_dns_reply_ddr` | the DDR (RFC 9462) NXDOMAIN reply |
-//! | `diting_dns_reply_servfail` | the SERVFAIL reply of the error paths |
-//! | `diting_dns_reply_rewrite_ip` | the DNS-stage rewrite reply (A/AAAA) |
-//! | `diting_dns_reply_rewrite_cname` | the CNAME redirect reply copied from a resolved answer |
-//! | `diting_dns_rewrite_new` | build the per-domain rewrite table from the pushed rules |
-//! | `diting_dns_rewrite_lookup` | the normalized rewrite entry for one domain (suffix walk) |
-//! | `diting_dns_rewrite_free` | drop a rewrite table |
-//!
-//! Every duration and timestamp is nanoseconds and comes from Go; the kernel never reads a clock.
-//! A null tracker echoes the fallback mode back, exactly like "dynamic response disabled".
-
 use std::slice;
 
 use crate::block::{BlockConfig, DynamicBlocks};
@@ -35,24 +9,17 @@ use crate::payload::{
 use crate::reply;
 use crate::rewrite_table::RewriteTable;
 
-/// Must match `dnsCoreABIVersion` in `android/engine/dns_core_native.go`.
 pub const ABI_VERSION: u32 = 3;
 
 const STATUS_OK: u32 = 0;
 const STATUS_BAD_ARGUMENT: u32 = 1;
 const STATUS_BAD_PAYLOAD: u32 = 2;
 
-/// ABI version of the library.
 #[no_mangle]
 pub extern "C" fn diting_dns_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Reports the `parseDNSQuery` view of one raw query.
-///
-/// # Safety
-///
-/// `query` must be readable for `query_len` bytes and `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_query_info(
     query: *const u8,
@@ -74,11 +41,6 @@ pub unsafe extern "C" fn diting_dns_query_info(
     STATUS_OK
 }
 
-/// Validates one raw response against one raw query.
-///
-/// # Safety
-///
-/// Both slices must be readable for their lengths and `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_validate(
     query: *const u8,
@@ -114,12 +76,6 @@ pub unsafe extern "C" fn diting_dns_validate(
     STATUS_OK
 }
 
-/// Extracts the engine-facing view of one raw answer. An unparsable answer is
-/// [`STATUS_BAD_PAYLOAD`], not a semi-filled report.
-///
-/// # Safety
-///
-/// `response` must be readable for `response_len` bytes and `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_extract(
     response: *const u8,
@@ -142,8 +98,6 @@ pub unsafe extern "C" fn diting_dns_extract(
     STATUS_OK
 }
 
-/// Hands a boxed payload to Go: the allocation's capacity is its length, so Go can free it with
-/// that length through [`diting_dns_free_bytes`].
 unsafe fn write_payload(encoded: Vec<u8>, out: *mut *mut u8, out_len: *mut usize) {
     let mut boxed = encoded.into_boxed_slice();
     let length = boxed.len();
@@ -153,11 +107,6 @@ unsafe fn write_payload(encoded: Vec<u8>, out: *mut *mut u8, out_len: *mut usize
     *out_len = length;
 }
 
-/// Frees a payload returned by this library.
-///
-/// # Safety
-///
-/// `pointer`/`length` must be a pair this library produced and not freed yet.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_free_bytes(pointer: *mut u8, length: usize) {
     if !pointer.is_null() && length > 0 {
@@ -165,17 +114,11 @@ pub unsafe extern "C" fn diting_dns_free_bytes(pointer: *mut u8, length: usize) 
     }
 }
 
-/// Creates the dynamic block tracker of one engine.
 #[no_mangle]
 pub extern "C" fn diting_dns_blocks_new() -> *mut DynamicBlocks {
     Box::into_raw(Box::new(DynamicBlocks::new()))
 }
 
-/// Drops a tracker created by [`diting_dns_blocks_new`].
-///
-/// # Safety
-///
-/// `handle` must come from [`diting_dns_blocks_new`] and must not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_blocks_free(handle: *mut DynamicBlocks) {
     if !handle.is_null() {
@@ -183,11 +126,6 @@ pub unsafe extern "C" fn diting_dns_blocks_free(handle: *mut DynamicBlocks) {
     }
 }
 
-/// Forgets every per-domain counter.
-///
-/// # Safety
-///
-/// The handle must be valid for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_blocks_reset(handle: *const DynamicBlocks) {
     if let Some(blocks) = handle.as_ref() {
@@ -195,14 +133,6 @@ pub unsafe extern "C" fn diting_dns_blocks_reset(handle: *const DynamicBlocks) {
     }
 }
 
-/// Resolves the block response mode for one blocked query.
-///
-/// `domain` is already normalized by Go (trimmed, lowercased, no trailing dot). A handle that
-/// cannot be read, a non-UTF-8 domain or a null handle all echo `fallback` back.
-///
-/// # Safety
-///
-/// `domain` must be readable for `domain_len` bytes; the handle must be valid for the call.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_blocks_response(
     handle: *const DynamicBlocks,
@@ -231,7 +161,6 @@ pub unsafe extern "C" fn diting_dns_blocks_response(
     )
 }
 
-/// Borrows a UTF-8 text argument. Go hands these into a call and never keeps the pointer.
 unsafe fn text<'a>(pointer: *const u8, length: usize) -> Option<&'a str> {
     if length == 0 {
         return Some("");
@@ -242,7 +171,6 @@ unsafe fn text<'a>(pointer: *const u8, length: usize) -> Option<&'a str> {
     std::str::from_utf8(slice::from_raw_parts(pointer, length)).ok()
 }
 
-/// Borrows a byte-slice argument.
 unsafe fn bytes<'a>(pointer: *const u8, length: usize) -> Option<&'a [u8]> {
     if length == 0 {
         return Some(&[]);
@@ -253,7 +181,6 @@ unsafe fn bytes<'a>(pointer: *const u8, length: usize) -> Option<&'a [u8]> {
     Some(slice::from_raw_parts(pointer, length))
 }
 
-/// Encodes a plan (or reports a bad query) into `out` / `out_len`.
 unsafe fn write_plan(
     plan: Option<reply::ReplyPlan>,
     out: *mut *mut u8,
@@ -266,11 +193,6 @@ unsafe fn write_plan(
     STATUS_OK
 }
 
-/// The configured block reply for one query.
-///
-/// # Safety
-///
-/// `query` must be readable for `query_len` bytes; `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_reply_block(
     query: *const u8,
@@ -288,11 +210,6 @@ pub unsafe extern "C" fn diting_dns_reply_block(
     write_plan(reply::block(query, mode as u8), out, out_len)
 }
 
-/// The local asset host reply.
-///
-/// # Safety
-///
-/// `query` must be readable for `query_len` bytes; `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_reply_local_asset(
     query: *const u8,
@@ -309,11 +226,6 @@ pub unsafe extern "C" fn diting_dns_reply_local_asset(
     write_plan(reply::local_asset(query), out, out_len)
 }
 
-/// The DDR (RFC 9462) reply.
-///
-/// # Safety
-///
-/// `query` must be readable for `query_len` bytes; `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_reply_ddr(
     query: *const u8,
@@ -330,11 +242,6 @@ pub unsafe extern "C" fn diting_dns_reply_ddr(
     write_plan(reply::ddr(query), out, out_len)
 }
 
-/// The SERVFAIL reply.
-///
-/// # Safety
-///
-/// `query` must be readable for `query_len` bytes; `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_reply_servfail(
     query: *const u8,
@@ -351,11 +258,6 @@ pub unsafe extern "C" fn diting_dns_reply_servfail(
     write_plan(reply::servfail(query), out, out_len)
 }
 
-/// The DNS-stage rewrite reply for one address.
-///
-/// # Safety
-///
-/// `query` / `ip` must be readable for their lengths; `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_reply_rewrite_ip(
     query: *const u8,
@@ -374,11 +276,6 @@ pub unsafe extern "C" fn diting_dns_reply_rewrite_ip(
     write_plan(reply::rewrite_ip(query, ip), out, out_len)
 }
 
-/// The CNAME redirect reply, copying the matching A/AAAA records of `resolved`.
-///
-/// # Safety
-///
-/// `query` / `target` / `resolved` must be readable for their lengths; `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_reply_rewrite_cname(
     query: *const u8,
@@ -403,11 +300,6 @@ pub unsafe extern "C" fn diting_dns_reply_rewrite_cname(
     write_plan(reply::rewrite_cname(query, target, resolved), out, out_len)
 }
 
-/// Builds a rewrite table from the `(domain, targets)` payload Go sends.
-///
-/// # Safety
-///
-/// `payload` must be readable for `payload_len` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_rewrite_new(
     payload: *const u8,
@@ -422,14 +314,6 @@ pub unsafe extern "C" fn diting_dns_rewrite_new(
     Box::into_raw(Box::new(RewriteTable::build(&entries)))
 }
 
-/// Looks up one domain in a rewrite table.
-///
-/// A missing entry is still a successful call (`found = 0`); a null handle is `STATUS_BAD_ARGUMENT`.
-///
-/// # Safety
-///
-/// The handle must be valid for the call; `domain` must be readable for `domain_len` bytes;
-/// `out` / `out_len` writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_rewrite_lookup(
     handle: *const RewriteTable,
@@ -448,11 +332,6 @@ pub unsafe extern "C" fn diting_dns_rewrite_lookup(
     STATUS_OK
 }
 
-/// Drops a rewrite table created by [`diting_dns_rewrite_new`].
-///
-/// # Safety
-///
-/// `handle` must come from [`diting_dns_rewrite_new`] and must not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_rewrite_free(handle: *mut RewriteTable) {
     if !handle.is_null() {

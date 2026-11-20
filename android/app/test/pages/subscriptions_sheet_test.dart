@@ -1,17 +1,13 @@
-// 本地 TXT 订阅入口回归：「订阅方式」行在一次界面重做里被整行删掉，于是新建订阅只能填网络
-// 地址，本地文件订阅再也建不出来。这里守住「新增可选本地文件、编辑不可改订阅方式」。
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/pages/subscriptions/subscriptions_page.dart';
 import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// `Override` is only exported from `misc.dart`, not `flutter_riverpod.dart`.
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/app_host.dart';
 
-/// Starts with a deep-linked address already pending, as `DitingApp` would set it before navigation.
 class _SeededImportNotifier extends PendingSubscriptionImportNotifier {
   @override
   String? build() => 'https://example.com/rules.txt';
@@ -63,7 +59,6 @@ void main() {
     expect(find.text('订阅方式'), findsOneWidget);
     expect(find.text('订阅地址'), findsOneWidget);
 
-    // 整行可点，菜单里选「本地文件」后地址框换成选文件行。
     await tester.tap(find.text('订阅方式'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('本地文件'));
@@ -93,8 +88,6 @@ void main() {
       ],
     );
 
-    // The page opened the add sheet by itself and prefilled the address (the field and the mirror
-    // preview both show it, hence `findsWidgets`).
     expect(find.text('https://example.com/rules.txt'), findsWidgets);
   });
 }

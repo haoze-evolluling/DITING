@@ -1,11 +1,3 @@
-/// The protocol-privacy switches: EDE, private PTR, single-label names and EDNS padding.
-///
-/// The old desktop console's `PrivacyPanel.vue` (first card) is the blueprint. Every switch saves on
-/// the spot through `/dns/privacy/configure` (or `/dns/unqualified/configure`), and the page re-reads
-/// `/status`, so a rejected change flips back on its own.
-///
-/// The record-type blocks (ECH, ANY, IPv6) sit beside this card as [PrivacyBlockCard]: one card of
-/// seven switches was taller than the window and grouped two different ideas.
 library;
 
 import 'dart:async';

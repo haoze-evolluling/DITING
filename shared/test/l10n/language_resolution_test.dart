@@ -1,19 +1,9 @@
-// Regression cover for the "跟随系统" (follow system) language path.
-//
-// The reported symptom was an English UI on a Chinese device: `MaterialApp.locale == null`
-// resolves through `basicLocaleListResolution`, whose last resort is `supportedLocales.first`.
-// gen-l10n sorts that list alphabetically, so the fallback silently became English for an
-// empty locale list (engine not ready yet) and for every language the app does not ship —
-// while the product rule (`languageInterfaceFooter`) is that those show Chinese.
-// `preferred-supported-locales` in `l10n.yaml` pins Chinese first; these tests keep it that way.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/app/l10n/ui_strings.dart';
 import 'package:diting_shared/ui/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The delegate list the app roots mount; keep in step with `DitingApp` / `DesktopApp`.
 const _delegates = <LocalizationsDelegate<dynamic>>[
   AppUiLocalizations.delegate,
   AppL10n.delegate,
@@ -23,7 +13,6 @@ const _delegates = <LocalizationsDelegate<dynamic>>[
 Widget _probe() => MaterialApp(
   localizationsDelegates: _delegates,
   supportedLocales: AppL10n.supportedLocales,
-  // No `locale`: this is the "follow system" path under test.
   home: Builder(
     builder: (context) => Column(
       children: [
@@ -45,23 +34,17 @@ void main() {
       Locale resolve(List<Locale> preferred) =>
           basicLocaleListResolution(preferred, AppL10n.supportedLocales);
 
-      // Chinese devices, including the script-tagged form Android sends.
       expect(resolve(const [Locale('zh', 'CN')]), const Locale('zh'));
       expect(resolve(const [Locale('zh', 'TW')]), const Locale('zh'));
       expect(
         resolve(const [Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant')]),
         const Locale('zh'),
       );
-      // English keeps matching by language, so an en device never falls back to Chinese.
       expect(resolve(const [Locale('en', 'US')]), const Locale('en'));
-      // No resources for the language, and the ambiguous cases: Chinese, not English.
       expect(resolve(const [Locale('ja', 'JP')]), const Locale('zh'));
       expect(resolve(const [Locale('fr')]), const Locale('zh'));
       expect(resolve(const [Locale('und')]), const Locale('zh'));
-      // The engine reports no locale before the platform hands one over.
       expect(resolve(const []), const Locale('zh'));
-      // A later preferred language still wins over the fallback: the device asked for English
-      // second, so it is not a "no resources" case.
       expect(resolve(const [Locale('ja', 'JP'), Locale('en', 'US')]), const Locale('en'));
     });
   });

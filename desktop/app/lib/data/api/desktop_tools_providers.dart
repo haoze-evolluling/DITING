@@ -1,8 +1,3 @@
-/// The port diagnosis and its autofix.
-///
-/// The probe runs on demand, not on a poll: it opens and closes the DNS port, so repeating it every
-/// few seconds would be a side effect the user did not ask for. Both the check and the fix adopt the
-/// result the service answers with.
 library;
 
 import 'dart:async';
@@ -73,11 +68,9 @@ class DesktopEmergencyRestoreState {
 
   final DesktopEmergencyRestore? result;
 
-  /// A restore is in flight; the button is disabled until the service answers.
   final bool busy;
 }
 
-/// The emergency restore, run only when the user confirms: it rewrites the host's DNS settings.
 class DesktopEmergencyRestoreNotifier
     extends Notifier<DesktopEmergencyRestoreState> {
   @override

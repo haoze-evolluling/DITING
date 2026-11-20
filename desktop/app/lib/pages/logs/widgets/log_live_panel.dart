@@ -1,11 +1,3 @@
-/// The live query stream: what the service pushes over `/api/v1/events`, filtered on the client
-/// because it is a bounded buffer, not a search.
-///
-/// The behaviour is the old desktop console's `LiveQueryPanel.vue`: a scrolling buffer of at most
-/// 500 queries, newest first, with pause and clear, a free-text filter, a record-type filter, a
-/// response-code filter and a "blocked only" toggle. The counts at the bottom are counted over the
-/// buffer that is on screen and are labelled as such — they are not the service's 24-hour totals,
-/// which the summary card above already shows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -22,14 +14,10 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Tall enough for a handful of rows at any text scale; the list scrolls inside it so the cards
-/// below stay where they are while queries keep arriving.
 const double _listHeight = 320;
 
-/// Width of the search field in the controls row; the pickers take what is left.
 const double _searchWidth = 240;
 
-/// The response codes the console filters on, in the order it offers them.
 const List<String> _rcodes = ['NOERROR', 'NXDOMAIN', 'SERVFAIL'];
 
 class LogLivePanel extends ConsumerStatefulWidget {
@@ -42,8 +30,6 @@ class LogLivePanel extends ConsumerStatefulWidget {
 class _LogLivePanelState extends ConsumerState<LogLivePanel> {
   final _search = TextEditingController();
 
-  /// View state, not data: filtering 500 rows needs no provider, and it must not survive a
-  /// rebuild of the branch.
   String _needle = '';
   String _qtype = '';
   String _rcode = '';
@@ -55,8 +41,6 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
     super.dispose();
   }
 
-  /// The same three conditions the console applies: text over domain and client, one record type,
-  /// one response code, plus the blocked-only switch.
   bool _matches(DesktopLiveQuery entry) {
     if (_onlyBlocked && !entry.blocked) return false;
     if (_qtype.isNotEmpty && entry.qtype != _qtype) return false;
@@ -82,8 +66,6 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
             glyph: AppGlyphs.requests,
             title: l10n.desktopLiveTitle,
             leading: [_ConnectionChip(live: live)],
-            // Clearing the buffer is a card-level action, not one more control in the filter row:
-            // as a text button it wrapped onto a line of its own under the pickers.
             trailing: [
               DashboardIconButton(
                 glyph: AppGlyphs.delete,
@@ -165,8 +147,6 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
     ];
     return LayoutBuilder(
       builder: (context, constraints) {
-        // The pickers and buttons need room of their own; below that the search field takes a
-        // whole row and the controls wrap under it.
         final inline = constraints.maxWidth >= 720;
         return Wrap(
           spacing: 10,
@@ -215,7 +195,6 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
     );
   }
 
-  /// Counted over the buffer on screen, which is what the labels say.
   Widget _footer(
     BuildContext context,
     DesktopLiveState live,
@@ -276,8 +255,6 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
   }
 }
 
-/// Whether the socket is up, or the list is frozen on purpose. Three states, because "listening"
-/// over a socket that is not connected would be a claim the app cannot back.
 class _ConnectionChip extends StatelessWidget {
   const _ConnectionChip({required this.live});
 
@@ -327,7 +304,6 @@ class _BlockedOnlyToggle extends StatelessWidget {
   }
 }
 
-/// One pushed query: the disposition, the record type, the name, the latency, and who asked.
 class _LiveRow extends StatelessWidget {
   const _LiveRow({required this.entry});
 

@@ -1,9 +1,3 @@
-/// OpenAI-compatible chat client. Endpoints: DeepSeek `https://api.deepseek.com`, Zhipu
-/// `.../api/paas/v4`, SiliconFlow `.../v1`.
-///
-/// The transport is here (sockets, timeouts, cancellation); everything that decides what is sent and
-/// what the answer means is in `rust/diting-agent-core/src/api.rs`. Failures come back as kinds so
-/// the sentences below stay in the app's localisation.
 library;
 
 import 'dart:async';
@@ -48,25 +42,18 @@ class AgentApiException implements Exception {
   String toString() => message;
 }
 
-/// Cancels one in-flight request by force-closing its socket. A model answer takes tens of seconds,
-/// so "stop waiting" has to interrupt the request rather than just ignore its result; streaming
-/// would be the other answer, but it rewrites the transport and every fake-server test for a purely
-/// cosmetic gain.
 class AgentCancelToken {
   bool _cancelled = false;
   void Function()? _onCancel;
 
   bool get isCancelled => _cancelled;
 
-  /// Throws [AgentApiException] when the token was already cancelled, so callers cannot start a
-  /// request that is doomed from the start.
   void throwIfCancelled() {
     if (_cancelled) throw AgentApiException(currentL10n.agentApiCancelled);
   }
 
   void _register(void Function() onCancel) {
     _onCancel = onCancel;
-    // Cancelled while the socket was being opened: honour it now.
     if (_cancelled) onCancel();
   }
 
@@ -110,17 +97,14 @@ class AgentApiClient {
   final Duration readTimeout;
   final Duration modelsTimeout;
 
-  /// `/config/user-agents` override; some gateways reject the default one.
   final String userAgent;
 
-  /// Base URL to `/chat/completions`; OpenAI and DeepSeek need the `/v1` segment.
   static String resolveChatCompletionsEndpoint(String rawBaseUrl) =>
       _endpoint(() => RustAgentCore.instance.chatEndpoint(rawBaseUrl));
 
   static String resolveModelsEndpoint(String rawBaseUrl) =>
       _endpoint(() => RustAgentCore.instance.modelsEndpoint(rawBaseUrl));
 
-  /// The kernel reports a blank address as a kind; the sentence is the app's.
   static String _endpoint(String Function() resolve) {
     try {
       return resolve();
@@ -132,8 +116,6 @@ class AgentApiClient {
     }
   }
 
-  /// Model list. Never hardcoded (it goes stale); `data`, `models` and `result` shapes are all
-  /// accepted.
   Future<List<String>> fetchModels({
     required String baseUrl,
     required String apiKey,
@@ -149,7 +131,6 @@ class AgentApiClient {
       return RustAgentCore.instance.parseModels(body);
     } on AgentKernelException catch (error) {
       throw switch (error.failure) {
-        // `jsonDecode` used to surface this one as-is.
         AgentKernelFailure.invalidJson => const FormatException('响应不是合法的 JSON'),
         AgentKernelFailure.noModelListJson => AgentApiException(
           currentL10n.agentApiNoModelListJson,
@@ -165,7 +146,6 @@ class AgentApiClient {
     }
   }
 
-  /// Connectivity probe: one very short message, to check key and model name.
   Future<AgentChatResult> testConnection(AgentChatConfig config) {
     if (!config.hasKey) {
       throw AgentApiException(currentL10n.agentApiKeyEmpty);
@@ -230,7 +210,6 @@ class AgentApiClient {
       );
     } on AgentKernelException catch (error) {
       throw switch (error.failure) {
-        // `jsonDecode` used to surface this one as-is.
         AgentKernelFailure.invalidJson => const FormatException('响应不是合法的 JSON'),
         AgentKernelFailure.notJsonObject => AgentApiException(
           currentL10n.agentApiResponseNotJsonObject,
@@ -257,8 +236,6 @@ class AgentApiClient {
     }
     final client = HttpClient()..connectionTimeout = connectTimeout;
     cancelToken?.throwIfCancelled();
-    // Closing the client is the only way to abort a pending read; the awaits below then fail with
-    // a socket/HTTP error, which is mapped back to "cancelled" in the catch blocks.
     cancelToken?._register(() => client.close(force: true));
     try {
       final request = await client.openUrl(method, uri).timeout(timeout);
@@ -294,7 +271,6 @@ class AgentApiClient {
     } on AgentApiException {
       rethrow;
     } on Object catch (error) {
-      // A cancelled request surfaces as SocketException/HttpException from the closed client.
       if (cancelToken?.isCancelled ?? false) {
         throw AgentApiException(currentL10n.agentApiCancelled);
       }
@@ -321,7 +297,6 @@ class AgentApiClient {
     }
   }
 
-  /// HTTP status plus server `error.message` becomes an actionable sentence.
   static String _describe({required int status, required String body}) {
     final result = RustAgentCore.instance.describeStatus(status, body);
     final hint = switch (result.kind) {

@@ -1,9 +1,3 @@
-/// The `hub` branch's query log page: the live stream, the searchable history and the retention
-/// policy.
-///
-/// These three are queries and settings, not readings, so they left the dashboard when it became a
-/// page of figures. The live stream and the table keep their old blueprints
-/// (`LiveQueryPanel.vue`, `QueryHistoryPanel.vue`); the policy card is `QueryLogConfigCard.vue`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

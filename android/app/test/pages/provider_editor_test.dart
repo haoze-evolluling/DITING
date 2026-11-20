@@ -1,6 +1,3 @@
-// The custom-provider dialog asks for host and port on separate lines and pre-fills the protocol's
-// default port (plain DNS 53, DoT 853), which is what reaches `user_providers_json`.
-
 import 'dart:convert';
 
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
@@ -9,7 +6,6 @@ import 'package:diting_android/state/network_tools_providers.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// `Override` is only exported from `misc.dart`, not `flutter_riverpod.dart`.
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -73,7 +69,6 @@ void _editor() {
     await tester.tap(inDialog(find.text('DNS')));
     await tester.pumpAndSettle();
 
-    // 名称、地址、端口三个独立的输入框。
     final inputs = fields(tester);
     expect(inputs, hasLength(3));
     expect(inputs[1].decoration?.labelText, '地址');
@@ -240,7 +235,6 @@ void _editor() {
   });
 }
 
-/// Answers every probe with one canned sample and records what reached the channel.
 class _FakeRunner implements DnsLatencyRunner {
   _FakeRunner(this.sample);
 

@@ -1,8 +1,3 @@
-/// The rewrite TTL of the forced safe-search answers.
-///
-/// The old desktop console's `SafeSearchCard.vue` keeps this number in the same card as the provider
-/// list; here it is its own card, because the list already fills one and a half. The number is a
-/// draft that saves with its button, and the service's clamped answer is adopted afterwards.
 library;
 
 import 'dart:async';

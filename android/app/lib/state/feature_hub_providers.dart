@@ -1,5 +1,3 @@
-/// Hidden card set and the log long-press hint; keys must match `featureKey` in
-/// `lib/data/mock_feature_hub.dart`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,13 +6,10 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// `HiddenFeaturesStore.PREFS_NAME` (global UI container).
 const hiddenFeaturesContainer = LegacySettings.uiContainer;
 
-/// `HiddenFeaturesStore.KEY_HIDDEN_FEATURES`.
 const hiddenFeaturesKey = 'hidden_features_set';
 
-/// The same key list in source order, pinned against `mock_feature_hub.dart` by the tests.
 const hiddenFeatureKeysInFile = <String>[
   'provider_management',
   'resolution_mode',
@@ -43,15 +38,12 @@ const hiddenFeatureKeysInFile = <String>[
   'app_info',
 ];
 
-/// Currently hidden feature keys, persisted. Readers watch the revision, or the hub keeps stale
-/// cards.
 class HiddenFeatureKeysNotifier extends Notifier<Set<String>> {
   @override
   Set<String> build() {
     ref.watch(legacySettingsRevisionProvider);
     final store = ref.watch(legacyPrefsStoreProvider);
     final value = store.read(hiddenFeaturesContainer, hiddenFeaturesKey);
-    // The bridge delivers a List, and old installs may hold a JSON string.
     if (value is List) {
       return {
         for (final item in value)
@@ -88,11 +80,6 @@ final hiddenFeatureKeysProvider =
       HiddenFeatureKeysNotifier.new,
     );
 
-/// Visible hub categories for the current mode, localized with the caller's `context.l10n`.
-///
-/// The resources are a family argument instead of `currentL10n` on purpose: the provider only
-/// recomputes when a dependency changes, and a language switch touches none of them, so reading
-/// the global would keep the previous language's cards until the app restarts.
 final visibleFeatureCategoriesProvider =
     Provider.family<List<MockFeatureCategory>, AppL10n>((ref, l10n) {
       final express = ref.watch(workModeProvider) == AppWorkMode.express;
@@ -104,7 +91,6 @@ final visibleFeatureCategoriesProvider =
       );
     });
 
-/// Whether the log card's long-press hint was acknowledged. Session-only, 1.4.3 has no storage key.
 class LogLongPressHintNotifier extends Notifier<bool> {
   @override
   bool build() => true;

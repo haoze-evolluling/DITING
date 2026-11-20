@@ -2,7 +2,6 @@ import 'package:diting_android/data/server/server_client.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 
-/// In-memory server backend for route and layout tests.
 class FakeServerClient implements ServerClient {
   FakeServerClient({
     ServerStatus? status,

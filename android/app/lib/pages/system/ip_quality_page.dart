@@ -1,4 +1,3 @@
-/// IP quality (upstream `features/ip_quality/ip_quality_sheet.dart`).
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,7 +10,6 @@ import 'package:diting_android/widgets/status_pill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The four IP type badge values (upstream `IpType`).
 enum IpType {
   residential(AppGlyphs.account),
   mobile(AppGlyphs.devices),
@@ -30,7 +28,6 @@ enum IpType {
   };
 }
 
-/// IP quality level (upstream `IpQualityLevel`, with matching three-tier colors).
 enum IpQualityLevel {
   good,
   normal,
@@ -43,7 +40,6 @@ enum IpQualityLevel {
   };
 }
 
-/// Result of one source (upstream `IpQualitySourceStatus`).
 enum IpQualitySourceStatus {
   ok,
   noType,
@@ -64,7 +60,6 @@ enum IpQualitySourceStatus {
   bool get isError => this != ok;
 }
 
-/// Parses a string enum; unknown values become failures instead of crashing.
 IpQualitySourceStatus _statusOf(String raw) => switch (raw) {
   '命中' => IpQualitySourceStatus.ok,
   '无类型' => IpQualitySourceStatus.noType,
@@ -98,7 +93,6 @@ class _IpQualityPageState extends ConsumerState<IpQualityPage> {
   @override
   void initState() {
     super.initState();
-    // Re-probe on entry: the egress IP may have changed since the last run.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) ref.read(ipQualityProvider.notifier).detect();
     });
@@ -131,7 +125,6 @@ class _IpQualityPageState extends ConsumerState<IpQualityPage> {
   }
 }
 
-/// `StatelessWidget` so both the page and `showIpQualitySheet` can use it.
 class IpQualitySheet extends StatelessWidget {
   const IpQualitySheet({
     super.key,
@@ -141,7 +134,6 @@ class IpQualitySheet extends StatelessWidget {
     this.onRetry,
   });
 
-  /// The real probe result; `null` means no successful probe yet.
   final IpQualityReport? report;
   final IpQualityStage stage;
   final String? error;
@@ -151,8 +143,6 @@ class IpQualitySheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     if (report == null) {
-      // Without a report, speak per stage: spinner, reason and retry, or a hint. No
-      // hard-coded sample is shown.
       return _EmptyReport(stage: stage, error: error, onRetry: onRetry);
     }
     final current = report!;
@@ -215,15 +205,11 @@ class IpQualitySheet extends StatelessWidget {
                   spacing: 8,
                   children: [
                     _TypeBadge(type: type),
-                    // The ASN is capped and may ellipsize, otherwise a long org name
-                    // overflows the card (`RIGHT OVERFLOWED BY 51 PIXELS`).
                     if (current.asn.isNotEmpty)
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 120),
                         child: MetaChip(label: current.asn),
                       ),
-                    // The org name must be `Expanded`: `Spacer` only distributes leftover
-                    // space, so an unconstrained `Text` overflows the `Row`.
                     Expanded(
                       child: Text(
                         current.organization,
@@ -271,7 +257,6 @@ class IpQualitySheet extends StatelessWidget {
   }
 }
 
-/// Placeholder before any report exists; no constant sample is rendered.
 class _EmptyReport extends StatelessWidget {
   const _EmptyReport({required this.stage, this.error, this.onRetry});
 
@@ -387,8 +372,6 @@ class _SourceRow extends StatelessWidget {
         color: color,
       ),
       title: Text(source.name),
-      // `Wrap` rather than `Row`: four text segments overflow a `Row` on narrow screens
-      // with large text.
       subtitle: Wrap(
         spacing: 8,
         runSpacing: 2,
@@ -413,7 +396,6 @@ class _SourceRow extends StatelessWidget {
                   .of(context)
                   .copyWith(fontFeatures: appTabularFigures),
             ),
-          // The reason is shown: "failed" alone cannot tell rate limiting apart.
           if (detail != null && detail.isNotEmpty)
             Text(detail, style: AppTextRole.supportingText.of(context)),
         ],

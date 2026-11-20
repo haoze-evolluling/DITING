@@ -1,7 +1,3 @@
-//! DNS backend detection and dispatch.
-//!
-//! Detection order matches Go: systemd-resolved → NetworkManager → direct `/etc/resolv.conf`.
-
 mod networkmanager;
 mod resolvconf;
 mod resolved;
@@ -16,16 +12,11 @@ use crate::netutil::is_loopback_or_local_ip;
 
 use super::dnsstate::command_exists;
 
-/// The system facility used to own per-interface DNS.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsBackend {
-    /// No manageable backend was detected.
     None,
-    /// `systemd-resolved` via `resolvectl`.
     SystemdResolved,
-    /// NetworkManager via `nmcli`.
     NetworkManager,
-    /// The static `/etc/resolv.conf` file.
     ResolvConf,
 }
 
@@ -40,7 +31,6 @@ impl DnsBackend {
     }
 }
 
-/// Detects the active backend without modifying any system configuration.
 pub async fn detect_backend(executor: &dyn CommandExecutor) -> DnsBackend {
     if is_systemd_resolved_active(executor).await {
         return DnsBackend::SystemdResolved;
@@ -74,7 +64,6 @@ async fn is_network_manager_active(executor: &dyn CommandExecutor) -> bool {
     }
 }
 
-/// Points the selected adapters at the local loopback resolver.
 pub(crate) async fn apply(
     executor: &dyn CommandExecutor,
     backend: DnsBackend,
@@ -87,7 +76,6 @@ pub(crate) async fn apply(
     }
 }
 
-/// Restores adapters from a pre-takeover snapshot.
 pub(crate) async fn restore(
     executor: &dyn CommandExecutor,
     backend: DnsBackend,
@@ -100,7 +88,6 @@ pub(crate) async fn restore(
     }
 }
 
-/// Flushes the resolver cache owned by the backend, if any.
 pub(crate) async fn flush(
     executor: &dyn CommandExecutor,
     backend: DnsBackend,
@@ -112,7 +99,6 @@ pub(crate) async fn flush(
     }
 }
 
-/// Interface name used in backend commands (ID, then Name).
 pub(crate) fn interface_name_from_adapter(adapter: &AdapterInfo) -> &str {
     if adapter.id.is_empty() {
         &adapter.name
@@ -121,7 +107,6 @@ pub(crate) fn interface_name_from_adapter(adapter: &AdapterInfo) -> &str {
     }
 }
 
-/// Interface name used when restoring a snapshot.
 pub(crate) fn interface_name_from_state(adapter: &AdapterState) -> &str {
     if adapter.id.is_empty() {
         &adapter.name
@@ -130,12 +115,10 @@ pub(crate) fn interface_name_from_state(adapter: &AdapterState) -> &str {
     }
 }
 
-/// True when a server address is our own loopback takeover address.
 pub(crate) fn is_residual_loopback_server(server: &str) -> bool {
     is_loopback_or_local_ip(server)
 }
 
-/// Merges IPv4 and IPv6 snapshot servers, dropping blanks, duplicates and loopback addresses.
 pub(crate) fn merge_dual_stack_servers(adapter: &AdapterState) -> Vec<String> {
     let mut seen = HashSet::new();
     let mut servers = Vec::new();

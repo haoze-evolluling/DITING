@@ -15,9 +15,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Status detail: the card only fits run time, the provider name and today's query count. This
-/// page adds what the card had to drop — core state wording per work mode, the full service
-/// counters (hit / block / latency / hit rate), and the provider's protocol and address.
 class StatusDetailPage extends ConsumerWidget {
   const StatusDetailPage({super.key});
 
@@ -36,8 +33,6 @@ class StatusDetailPage extends ConsumerWidget {
         DashboardDetailHero(
           glyph: AppGlyphs.clock,
           label: context.l10n.statusUptime,
-          // Not running has no figure: "未计时" says it in words where a lone em dash looked
-          // like a stray line under the label.
           value: core.isRunning
               ? stats.uptimeLabel
               : context.l10n.statusNotTiming,
@@ -177,7 +172,6 @@ class StatusDetailPage extends ConsumerWidget {
                     ),
                     StatItem(
                       label: context.l10n.statusAverageLatency,
-                      // No unit on a missing value: "— ms" reads as a broken number.
                       value: stats.averageLatencyMs <= 0
                           ? '—'
                           : '${stats.averageLatencyMs}',
@@ -238,7 +232,6 @@ class StatusDetailPage extends ConsumerWidget {
     );
   }
 
-  /// Wording and colour for the tunnel core.
   static ({Glyph glyph, Color color, String summary}) _healthOf(
     CoreState core,
     ColorScheme colorScheme,
@@ -260,8 +253,6 @@ class StatusDetailPage extends ConsumerWidget {
   }
 }
 
-/// Last measured latency of one provider. A provider that has never been probed stores `-1`, which
-/// used to be rendered as the literal `-1 ms`; [providerLatencyLabel] turns it into 未测速.
 class _LatencyBadge extends StatelessWidget {
   const _LatencyBadge({required this.provider});
 

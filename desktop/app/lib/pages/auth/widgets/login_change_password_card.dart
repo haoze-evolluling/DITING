@@ -1,9 +1,3 @@
-/// The login page's change-password form.
-///
-/// The old console kept this in `LoginModal.vue`, opened from the LAN console card; the web login page
-/// itself only offered login and first-run setup. The service exposes `/auth/password`, which needs the
-/// current password from a remote browser, so the same credential can be rotated from the login page —
-/// and the service invalidates every other session when it succeeds.
 library;
 
 import 'dart:async';
@@ -24,7 +18,6 @@ class LoginChangePasswordCard extends ConsumerStatefulWidget {
 
   final String username;
 
-  /// Back to the login form; the credential has already changed by then.
   final VoidCallback onBack;
 
   @override

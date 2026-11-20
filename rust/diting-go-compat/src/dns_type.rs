@@ -1,11 +1,3 @@
-//! `github.com/miekg/dns`'s `StringToType`, the table rule modifiers are resolved against.
-//!
-//! Both kernels look tokens up in this table: the Android policy kernel parses `dnsType`
-//! (`"AAAA"`, `"~A|AAAA"`) and the desktop filter kernel parses `$dnstype=` the same way, so the
-//! table has to match the Go map entry for entry. Generated from `dns.StringToType`
-//! (miekg/dns v1.1.62); the unit tests below pin the entries the modifiers actually use.
-
-/// `dns.StringToType`: record type mnemonic -> numeric type.
 const STRING_TO_TYPE: &[(&str, u16)] = &[
     ("A", 1),
     ("AAAA", 28),
@@ -96,9 +88,7 @@ const STRING_TO_TYPE: &[(&str, u16)] = &[
     ("ZONEMD", 63),
 ];
 
-/// `dns.StringToType[token]`, case-sensitive like the Go map lookup (callers uppercase first).
 pub fn string_to_type(token: &str) -> Option<u16> {
-    // Same shape as the Go map lookup: the caller passes an already uppercased token.
     STRING_TO_TYPE
         .iter()
         .find(|(name, _)| *name == token)

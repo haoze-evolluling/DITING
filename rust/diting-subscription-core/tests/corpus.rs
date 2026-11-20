@@ -1,5 +1,3 @@
-//! Replays the fixtures captured from the Dart implementation before it was replaced.
-
 use serde_json::{Map, Value};
 
 use diting_subscription_core::model::{

@@ -1,5 +1,3 @@
-//! The CONNECT bytes, including the headers `net/http` adds on its own.
-
 use super::*;
 
 #[test]
@@ -25,14 +23,12 @@ fn credentials_are_standard_base64() {
         .strip_prefix(expected_prefix)
         .and_then(|rest| rest.strip_suffix("\r\n\r\n"))
         .expect("the authorization header must precede the blank line");
-    // Standard alphabet with padding (no `-`/`_`), and it carries `user:pass`.
     assert!(!token.contains('-') && !token.contains('_'), "{token}");
     assert_eq!(token.len() % 4, 0);
 }
 
 #[test]
 fn an_empty_username_or_password_still_authenticates() {
-    // The old condition was `username != "" || password != ""`.
     for (user, pass) in [("only-user", ""), ("", "only-pass")] {
         let text = String::from_utf8(connect_request("h:1", user, pass)).unwrap();
         assert!(text.contains("Proxy-Authorization: Basic "), "{text}");

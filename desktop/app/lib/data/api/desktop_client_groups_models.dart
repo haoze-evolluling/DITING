@@ -1,8 +1,3 @@
-/// Client groups and the options a group can bind: `/api/v1/clients/groups`.
-///
-/// The old desktop console's `ClientGroupsCard.vue` is the blueprint. A group is matched by longest
-/// prefix over its members; an empty rule-list selection inherits every subscription and an empty
-/// upstream selection inherits the main chain, which is why both are stored as plain lists.
 library;
 
 import 'package:diting_desktop/data/api/desktop_schedule_models.dart';
@@ -20,7 +15,6 @@ List<String> _strings(Object? value) => switch (value) {
 Map<String, Object?> _map(Object? value) =>
     value is Map ? value.cast<String, Object?>() : const {};
 
-/// One group. The page edits a draft of this shape and saves the whole list at once.
 class DesktopClientGroup {
   const DesktopClientGroup({
     this.id = '',
@@ -53,16 +47,12 @@ class DesktopClientGroup {
   final String name;
   final bool enabled;
 
-  /// IPs or CIDR ranges.
   final List<String> clients;
 
-  /// Empty inherits every subscription.
   final List<String> ruleListIds;
 
-  /// Empty inherits the global blocking mode.
   final String blockMode;
 
-  /// Empty inherits the main upstream chain.
   final List<String> upstreamIds;
 
   final bool scheduleEnabled;
@@ -107,7 +97,6 @@ class DesktopClientGroup {
   };
 }
 
-/// A subscription a group can bind.
 class DesktopGroupRuleList {
   const DesktopGroupRuleList({
     required this.id,
@@ -129,7 +118,6 @@ class DesktopGroupRuleList {
   String get label => name.isEmpty ? id : name;
 }
 
-/// An upstream node a group can bind.
 class DesktopGroupUpstream {
   const DesktopGroupUpstream({
     required this.id,
@@ -149,7 +137,6 @@ class DesktopGroupUpstream {
   final String server;
 }
 
-/// `GET /api/v1/clients/groups`.
 class DesktopClientGroups {
   const DesktopClientGroups({
     required this.enabled,

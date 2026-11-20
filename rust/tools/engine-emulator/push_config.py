@@ -47,8 +47,6 @@ def adb(*args: str, serial: str | None = None, stdin: bytes | None = None) -> st
 
 
 def build_prefs(dns_config: str, port: int, ad_block: bool) -> str:
-    # The keys the service reads; `selected_upstream_id`/`custom_upstreams` are UI-only. Query logging
-    # is forced on so the engine's own error rows land in `dns_log` and the probe run leaves evidence.
     return (
         "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n"
         "<map>\n"
@@ -74,7 +72,7 @@ def main() -> int:
 
     with open(args.config, encoding="utf-8") as handle:
         config = handle.read().strip()
-    json.loads(config)  # fail early on a malformed document
+    json.loads(config)
     prefs = build_prefs(config, args.port, args.ad_block)
 
     adb("shell", "am", "force-stop", "com.haoze.diting", serial=args.serial)
@@ -88,9 +86,6 @@ def main() -> int:
     print("[device] prefs written", flush=True)
 
     if not args.skip_install:
-        # A force-stopped package is in the "stopped" state and receives no broadcasts at all, so
-        # the replace broadcast would be dropped. Launching the activity once clears that state;
-        # the install that follows kills the process and delivers `MY_PACKAGE_REPLACED`.
         adb(
             "shell",
             "am",
@@ -104,11 +99,6 @@ def main() -> int:
         adb("install", "-r", args.apk, serial=args.serial)
         print("[device] reinstalled; waiting for MY_PACKAGE_REPLACED", flush=True)
 
-    # The receiver starts the service, which binds UDP/TCP before `startStandalone` returns. The port
-    # alone is not a readiness signal: the previous instance's socket can outlive the reinstall for a
-    # moment, and probing then would query the *old* engine and silently test the wrong config. The
-    # service's own log line is unambiguous, and it also carries the failure text when a config is
-    # rejected.
     adb("forward", f"tcp:{args.host_port}", f"tcp:{args.port}", serial=args.serial)
     deadline = time.time() + 60
     while time.time() < deadline:

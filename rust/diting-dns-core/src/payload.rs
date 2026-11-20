@@ -1,45 +1,14 @@
-//! The binary layouts shared with `android/engine/dns_core_payload.go`.
-//!
-//! Query info (kernel -> Go):
-//!
-//! ```text
-//! | u8 layout | u8 valid | u16 qtype | u16 name_len | bytes name |
-//! ```
-//!
-//! Validation (kernel -> Go):
-//!
-//! ```text
-//! | u8 layout | u8 status | u16 rcode |
-//! ```
-//!
-//! Answer extraction (kernel -> Go):
-//!
-//! ```text
-//! | u8 layout | u16 rcode | u8 flags | u16 question_len | bytes question
-//! | u16 address_count | count × ( u8 rrtype | u32 ttl | u16 len | bytes address )
-//! | u16 chain_count   | count × ( u8 kind | u16 len | bytes domain )
-//! | u16 ip_count      | count × ( u16 len | bytes ip )
-//! | u16 resolved_len  | bytes resolved_ips |
-//! ```
-//!
-//! `flags` bit 0 is "blocked". Every frame pins the same layout; a drifted version byte, a length
-//! that disagrees with the payload or trailing bytes are hard errors, never a misread.
-
 use crate::message::Extracted;
 
-/// Layout of every frame in this file; must match `dnsCorePayloadLayoutVersion` in Go.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// The answer is a null block (`isUpstreamBlockedMsg`).
 pub const FLAG_BLOCKED: u8 = 1 << 0;
-/// The reply advertises recursion availability (`dns.Msg.RecursionAvailable`).
 pub const FLAG_RECURSION_AVAILABLE: u8 = 1 << 0;
 
 const QUERY_HEADER: usize = 1 + 1 + 2 + 2;
 const VALIDATION_LEN: usize = 1 + 1 + 2;
 const EXTRACT_HEADER: usize = 1 + 2 + 1;
 
-/// Encodes the `parseDNSQuery` result.
 pub fn encode_query_info(valid: bool, name: &str, qtype: u16) -> Vec<u8> {
     let text = name.as_bytes();
     let mut out = Vec::with_capacity(QUERY_HEADER + text.len());
@@ -51,7 +20,6 @@ pub fn encode_query_info(valid: bool, name: &str, qtype: u16) -> Vec<u8> {
     out
 }
 
-/// Reads the query info payload.
 pub fn decode_query_info(payload: &[u8]) -> Option<(bool, String, u16)> {
     if payload.len() < QUERY_HEADER || payload[0] != LAYOUT_VERSION {
         return None;
@@ -70,7 +38,6 @@ pub fn decode_query_info(payload: &[u8]) -> Option<(bool, String, u16)> {
     Some((valid, name.to_string(), qtype))
 }
 
-/// Encodes one validation outcome.
 pub fn encode_validation(status: u8, rcode: u16) -> Vec<u8> {
     let mut out = Vec::with_capacity(VALIDATION_LEN);
     out.push(LAYOUT_VERSION);
@@ -79,7 +46,6 @@ pub fn encode_validation(status: u8, rcode: u16) -> Vec<u8> {
     out
 }
 
-/// Reads one validation outcome.
 pub fn decode_validation(payload: &[u8]) -> Option<(u8, u16)> {
     if payload.len() != VALIDATION_LEN || payload[0] != LAYOUT_VERSION {
         return None;
@@ -88,7 +54,6 @@ pub fn decode_validation(payload: &[u8]) -> Option<(u8, u16)> {
     Some((payload[1], rcode))
 }
 
-/// Encodes one extracted answer.
 pub fn encode_extracted(extracted: &Extracted) -> Vec<u8> {
     let question = extracted.question_name.as_bytes();
     let mut out = Vec::with_capacity(
@@ -131,7 +96,6 @@ pub fn encode_extracted(extracted: &Extracted) -> Vec<u8> {
     out
 }
 
-/// Reads one extracted answer (used by the Rust tests and the FFI round trip).
 pub fn decode_extracted(payload: &[u8]) -> Option<Extracted> {
     let mut reader = Reader::new(payload);
     reader.expect_layout()?;
@@ -191,13 +155,6 @@ fn push_text(out: &mut Vec<u8>, bytes: &[u8]) {
     out.extend_from_slice(bytes);
 }
 
-/// Encodes one reply plan (kernel -> Go).
-///
-/// ```text
-/// | u8 layout | u8 status | u16 rcode | u8 flags | u16 answer_count |
-///   count × ( u16 rrtype | u16 class | u32 ttl | u16 name_len | bytes name
-///           | u16 rdata_len | bytes rdata )
-/// ```
 pub fn encode_reply(plan: &crate::reply::ReplyPlan) -> Vec<u8> {
     let mut out = Vec::with_capacity(6 + plan.answers.len() * 12);
     out.push(LAYOUT_VERSION);
@@ -219,7 +176,6 @@ pub fn encode_reply(plan: &crate::reply::ReplyPlan) -> Vec<u8> {
     out
 }
 
-/// Reads one reply plan (used by the Rust tests and the FFI round trip).
 pub fn decode_reply(payload: &[u8]) -> Option<crate::reply::ReplyPlan> {
     let mut reader = Reader::new(payload);
     reader.expect_layout()?;
@@ -259,7 +215,6 @@ pub fn decode_reply(payload: &[u8]) -> Option<crate::reply::ReplyPlan> {
     })
 }
 
-/// Encodes one rewrite lookup result (kernel -> Go).
 pub fn encode_lookup(entry: Option<&diting_config_core::rewrite::Entry>) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION, u8::from(entry.is_some())];
     if let Some(entry) = entry {
@@ -270,7 +225,6 @@ pub fn encode_lookup(entry: Option<&diting_config_core::rewrite::Entry>) -> Vec<
     out
 }
 
-/// The three normalized fields of one rewrite lookup.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LookupResult {
     pub cname: String,
@@ -278,7 +232,6 @@ pub struct LookupResult {
     pub ip6: String,
 }
 
-/// Reads one rewrite lookup result.
 pub fn decode_lookup(payload: &[u8]) -> Option<Option<LookupResult>> {
     let mut reader = Reader::new(payload);
     reader.expect_layout()?;
@@ -306,7 +259,6 @@ pub fn decode_lookup(payload: &[u8]) -> Option<Option<LookupResult>> {
     }
 }
 
-/// Encodes the `(domain, targets)` pairs Go sends when a rule set is pushed.
 pub fn encode_rewrite_entries(entries: &[(String, Vec<String>)]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&(entries.len() as u32).to_le_bytes());
@@ -320,7 +272,6 @@ pub fn encode_rewrite_entries(entries: &[(String, Vec<String>)]) -> Vec<u8> {
     out
 }
 
-/// Reads the rewrite-rule payload Go sends.
 pub fn decode_rewrite_entries(payload: &[u8]) -> Option<Vec<(String, Vec<String>)>> {
     let mut reader = Reader::new(payload);
     reader.expect_layout()?;

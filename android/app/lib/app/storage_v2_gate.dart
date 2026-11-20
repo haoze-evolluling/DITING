@@ -1,7 +1,3 @@
-/// First-launch gate for the one-time V2 storage migration.
-///
-/// The gate runs before the app's provider tree exists, so it only touches prefs, sqflite and the
-/// native storage channel. It replaces itself with the real app by calling [onReady].
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -21,7 +17,6 @@ class StorageV2GateApp extends StatefulWidget {
 
   final LegacyPrefsStore store;
 
-  /// Starts the real application. Called once, after the stores verify.
   final Future<void> Function() onReady;
 
   final StorageV2Native native;

@@ -1,7 +1,3 @@
-/// The service catalogue's selection and per-service plans.
-///
-/// `/filter/services` answers with the whole state after every write, so the page adopts that answer
-/// directly instead of re-reading; a rejected write keeps the previous state and returns the reason.
 library;
 
 import 'dart:async';
@@ -60,15 +56,12 @@ class DesktopServicesNotifier extends Notifier<DesktopServicesState> {
     return _write({'ids': ids.toList(), 'groups': data.blockedGroups.toList()});
   }
 
-  /// Blocking a whole group drops that group's individually blocked services, exactly like the
-  /// console: keeping them would make them stay blocked after the group is switched off.
   Future<DesktopApiException?> toggleGroup(DesktopServiceGroup group) {
     final data = state.data;
     if (data == null) return Future.value(null);
     final groups = {...data.blockedGroups};
     var ids = {...data.blockedIds};
     if (groups.remove(group.id)) {
-      // Unblocking the group leaves the individual choices as they were.
     } else {
       groups.add(group.id);
       final inGroup = {
@@ -83,7 +76,6 @@ class DesktopServicesNotifier extends Notifier<DesktopServicesState> {
   Future<DesktopApiException?> clearAll() =>
       _write({'ids': const <String>[], 'groups': const <String>[]});
 
-  /// Saves one service's weekly plan; an empty list removes the plan (back to always blocking).
   Future<DesktopApiException?> saveSchedules(
     String serviceId,
     List<DesktopSchedule> schedules,

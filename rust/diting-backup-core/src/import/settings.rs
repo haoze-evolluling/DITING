@@ -1,18 +1,11 @@
-//! Appearance and system groups; local values win where a key is already set.
-//!
-//! Only fields the app can act on are merged: the background image and its switch stay local, since
-//! a file path from another device points at nothing here.
-
 use serde_json::{json, Value};
 
 use super::{same_order, strings, Outcome, Plan};
 use crate::groups::Group;
 use crate::value::{boolean, decimal, get, integer, number, text};
 
-/// Below this many tabs the bottom bar cannot be laid out, so the local list is kept.
 const BOTTOM_BAR_MIN: usize = 2;
 
-/// Android stores opacity as a Java `float`; `putFloat(0.8)` reads back as `0.800000011920929`.
 const OPACITY_TOLERANCE: f64 = 0.001;
 
 fn apply_text(
@@ -72,8 +65,6 @@ fn apply_int(
     }
 }
 
-/// A value the app stores raw (`bool` or `int`), compared against the raw local value so an
-/// unchanged key does not report an update.
 fn apply_raw(
     outcome: &mut Outcome,
     plan: &mut Plan,
@@ -88,7 +79,6 @@ fn apply_raw(
     if !incoming.is_boolean() && !incoming.is_number() {
         return;
     }
-    // Raw prefs are compared as stored: an unset key accepts the file's value.
     if get(current, stored) == Some(incoming) {
         outcome.skipped += 1;
         return;
@@ -110,7 +100,6 @@ pub fn appearance(
     }
     let mut outcome = Outcome::new(Group::Appearance);
 
-    // Theme and palette: a device that already picked one keeps it.
     for (key, field) in [
         ("themeMode", "appearance.themeMode"),
         ("palette", "appearance.palette"),
@@ -138,7 +127,6 @@ pub fn appearance(
         }
     }
 
-    // The glass mode is device capability, so an incoming value replaces the local one.
     apply_text(
         &mut outcome,
         plan,
@@ -156,8 +144,6 @@ pub fn appearance(
         current,
     );
 
-    // This build has one shared `componentOpacity`; old backups held five separate keys, so each
-    // present value is written back to its legacy key.
     let component = decimal(value, "componentOpacity");
     for key in [
         "homePowerButtonOpacity",
@@ -262,7 +248,6 @@ pub fn system(
         "logRetentionDays",
         current,
     );
-    // The panel size is stored raw, so a device that never touched it accepts the file's value.
     if let Some(size) = integer(value, "floatingLogPanelSize") {
         if integer(current, "floating_log_panel_size") == Some(size) {
             outcome.skipped += 1;
@@ -272,7 +257,6 @@ pub fn system(
         }
     }
 
-    // After the speed switch: the list is the newer, more precise value and also sets it.
     if let Some(Value::Array(_)) = get(value, "notificationStatsItems") {
         let ids = strings(get(value, "notificationStatsItems").unwrap_or(&Value::Null));
         if same_order(
@@ -310,8 +294,6 @@ pub fn system(
         }
     }
 
-    // Address rules, encrypted-DNS blocking and HTTP/3 share one entry point; each keeps its local
-    // value when the file does not carry it.
     let address_rules = boolean(value, "addressRulesEnabled");
     let encrypted_dns = boolean(value, "encryptedDnsBlockingEnabled");
     let http3 = boolean(value, "http3Enabled");
@@ -434,7 +416,6 @@ pub fn system(
     Ok(outcome)
 }
 
-/// Clamped policy values; a missing or non-numeric field keeps the local value.
 fn clamp_field(policy: &Value, local: &Value, key: &str, min: i64, max: i64) -> i64 {
     number(policy, key)
         .map(|value| (value.trunc() as i64).clamp(min, max))

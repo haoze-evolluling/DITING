@@ -1,5 +1,3 @@
-/// Read/write access to the legacy subscription tables; column names and ordering mirror the legacy
-/// Room DAOs, because upgraded installs keep them.
 library;
 
 import 'package:diting_android/data/db/subscription_models.dart';
@@ -12,7 +10,6 @@ class SubscriptionRepository {
 
   final Database _db;
 
-  /// Called after every write so the provider layer can bump its revision.
   final SubscriptionWriteHook? onChanged;
 
   void _changed() => onChanged?.call();
@@ -28,8 +25,6 @@ class SubscriptionRepository {
     ),
   );
 
-  /// Remote and enabled, ungrouped or in a group with auto-update on; the `LEFT JOIN` is what lets
-  /// ungrouped rows through.
   Future<List<SubscriptionRecord>> allAutoUpdatableRemote() async => _records(
     await _db.rawQuery(
       'SELECT sub.* FROM subscription sub '
@@ -63,7 +58,6 @@ class SubscriptionRepository {
   Future<SubscriptionRecord?> byId(int id) async =>
       _first(await _db.query('subscription', where: 'id = ?', whereArgs: [id]));
 
-  /// The same address may exist once per kind (`(url, kind)` unique index).
   Future<SubscriptionRecord?> byUrlAndKind(
     String url,
     SubscriptionKind kind,
@@ -85,8 +79,6 @@ class SubscriptionRepository {
     ),
   );
 
-  /// Both clauses matter: groups imported in one batch share `addedAt`, and `NOCASE` keeps the chip
-  /// row stable across rebuilds.
   Future<List<SubscriptionGroupRecord>> groups() async {
     final rows = await _db.query(
       'subscription_group',
@@ -116,7 +108,6 @@ class SubscriptionRepository {
     return SubscriptionAutoUpdateItemRecord.parseAll(rows);
   }
 
-  /// Returns the id of an existing `(url, kind)` row instead of inserting a duplicate.
   Future<int> insert(SubscriptionRecord record) async {
     final existing = await byUrlAndKind(record.url, record.kind);
     if (existing != null) {
@@ -166,8 +157,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Rewrites the user-editable columns. A changed address or kind invalidates the cached
-  /// validators, otherwise the next update could get a 304 for content it never imported.
   Future<void> updateConfig(
     int id, {
     required String name,
@@ -240,8 +229,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Records a successful import. `ruleSetHash` is the content hash of the stored rules, so the
-  /// version history (R6) and the subscription row agree on which snapshot is current.
   Future<void> markImported(
     int id, {
     required int ruleCount,
@@ -269,7 +256,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Records a 304 without touching `ruleCount` or `lastUpdated`; the content is unchanged.
   Future<void> markNotModified(
     int id, {
     required int attemptedAt,
@@ -292,8 +278,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Increments the failure counter rather than setting it to 1, because retry backoff depends on
-  /// the count.
   Future<void> markUpdateFailed(
     int id, {
     required String error,
@@ -308,8 +292,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Clears counts and validators after the rule tables are wiped; a stale validator would earn a
-  /// 304 and leave the UI showing rules the database no longer holds.
   Future<void> resetAfterRuleCleanup() async {
     await _db.update('subscription', {
       'ruleCount': 0,
@@ -321,7 +303,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// The cascade relies on `PRAGMA foreign_keys`, set per connection when opening.
   Future<void> deleteById(int id) async {
     await _db.delete('subscription', where: 'id = ?', whereArgs: [id]);
     _changed();
@@ -336,7 +317,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Returns the id of an existing group with the same case-insensitive name.
   Future<int> insertGroup({
     required String name,
     bool autoUpdateEnabled = true,
@@ -375,8 +355,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  /// Ungroups the group's subscriptions, then deletes the group row; both statements must share one
-  /// transaction, or a failure leaves subscriptions pointing at a missing group.
   Future<void> dissolveGroup(int id) async {
     await _db.transaction((txn) async {
       await txn.update(

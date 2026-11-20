@@ -1,5 +1,3 @@
-/// MITM root-CA state: `available` and `installed` are separate, and an untrusted CA disables
-/// inspection.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,8 +6,6 @@ import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Overridden in `main()`; the default reports a missing certificate, true of any host without the
-/// engine.
 final caCertificateServiceProvider = Provider<CaCertificateService>(
   (ref) => const UnavailableCaCertificateService(),
 );
@@ -24,8 +20,6 @@ class CaCertificateRevision extends Notifier<int> {
 final caCertificateRevisionProvider =
     NotifierProvider<CaCertificateRevision, int>(CaCertificateRevision.new);
 
-/// Current CA state plus the three page actions; they go through the controller to avoid a second
-/// `inspect()`.
 class CaCertificateController extends AsyncNotifier<CaCertificateState> {
   @override
   Future<CaCertificateState> build() async {
@@ -36,7 +30,6 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
     return state;
   }
 
-  /// Deletes `ca.crt`/`ca.key` and mints a new pair, so `https_inspection_ready` drops.
   Future<CaCertificateState> regenerate() async {
     final service = ref.read(caCertificateServiceProvider);
     final state = await _guard(() => service.inspect(regenerate: true));
@@ -44,7 +37,6 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
     return state;
   }
 
-  /// Re-reads the CA without regenerating it, e.g. after the "install certificate" screen.
   Future<CaCertificateState> refresh() async {
     final service = ref.read(caCertificateServiceProvider);
     final state = await _guard(service.inspect);
@@ -52,7 +44,6 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
     return state;
   }
 
-  /// Hands the CA to the system installer; the failure text is what the page shows.
   Future<CaInstallResult> install() async {
     try {
       return await ref.read(caCertificateServiceProvider).install();
@@ -65,7 +56,6 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
     }
   }
 
-  /// Copies the CA into Download; needed when the system installer is missing.
   Future<CaSaveResult> saveToDownloads() async {
     try {
       return await ref.read(caCertificateServiceProvider).saveToDownloads();
@@ -85,11 +75,9 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
   void _publish(CaCertificateState next) {
     state = AsyncData(next);
     _syncLegacyFlags(next);
-    // SharedPreferences writes are unobservable; every reader must be invalidated.
     ref.read(legacySettingsRevisionProvider.notifier).bump();
   }
 
-  /// Folds channel failures into the state; the CA page has an `error` row.
   Future<CaCertificateState> _guard(
     Future<CaCertificateState> Function() call,
   ) async {
@@ -115,8 +103,6 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
     }
   }
 
-  /// Drops the master switch while the CA is untrusted; never bumps the legacy revision, which
-  /// would loop.
   void _syncLegacyFlags(CaCertificateState state) {
     final settings = ref.read(legacySettingsProvider);
     if (settings.httpsInspectionReady != state.ready) {
@@ -131,7 +117,6 @@ class CaCertificateController extends AsyncNotifier<CaCertificateState> {
   }
 }
 
-/// The platform's message when it has one, else a localized fallback.
 String _platformMessageOr(PlatformException error, String fallback) {
   final message = error.message ?? '';
   return message.trim().isEmpty ? fallback : message;
@@ -142,7 +127,6 @@ final caCertificateStateProvider =
       CaCertificateController.new,
     );
 
-/// Reads the CA without throwing; false until the first inspect completes.
 final caReadyProvider = Provider<bool>((ref) {
   return ref.watch(caCertificateStateProvider).value?.ready ?? false;
 });

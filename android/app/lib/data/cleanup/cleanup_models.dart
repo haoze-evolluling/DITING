@@ -40,10 +40,8 @@ enum CleanupAction {
     CleanupAction.allData => l10n.cleanupAllData,
   };
 
-  /// Whether the process must exit after this action; both also clear `initial_agreement_accepted`.
   bool get exitsApp => CleanupPlan.instance.exitsApp(name);
 
-  /// Whether the engine must reload afterwards, or it keeps using the stale copy.
   bool get affectsEngine => CleanupPlan.instance.affectsEngine(name);
 }
 
@@ -58,14 +56,12 @@ class CleanupResult {
 
   final CleanupAction action;
 
-  /// Removed rows / files / keys. Zero is a valid result, not a failure.
   final int removed;
 
   final String? detail;
 
   bool get failed => detail != null && removed == 0;
 
-  /// User-facing message; with zero rows it says there was nothing to clean.
   String get message {
     if (removed > 0) {
       final suffix = detail == null ? '' : '（$detail）';

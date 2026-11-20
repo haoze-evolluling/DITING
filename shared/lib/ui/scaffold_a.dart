@@ -106,8 +106,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     );
   }
 
-  // A bar's field at its end folds back once left empty, as a toolbar search
-  // field does on macOS; one across the bar waits for its cancel button.
   void _handleSearchFocusChange() {
     if (_searchFocusNode.hasFocus ||
         _searchFillsBar ||
@@ -144,7 +142,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     return true;
   }
 
-  // Kept-alive pages and pages under another route stay mounted too.
   bool get _isFrontmost {
     if (!mounted ||
         context.getInheritedWidgetOfExactType<PageActivityScope>()?.isActive ==
@@ -203,7 +200,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     _searchFocusNode.unfocus();
     _updateSearchState((state) => state?.copyWith(query: null));
     _moveSearch(open: false);
-    // The covered bar, search button included, returns with the next frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _searchOrigin.value =
@@ -276,11 +272,7 @@ class CommonScaffoldState extends State<CommonScaffold>
     _searchFillsBar = _isCompactBar(context, ViewScope.isMobileOf(context));
     _searchDocked = form.hasDockedSearch;
     final bottomInset = BottomInsetScope.of(context);
-    // A detent sheet fills the height its detent gives it and clips its own
-    // corners; any other bottom sheet sizes to its content and brings both.
     final hugsContent = isCompact && !SheetOverhangScope.fillsDetentOf(context);
-    // The page's bar floats over its body, which leaves the bar's height at
-    // its top through MediaQuery padding, as extendBodyBehindAppBar does.
     final barFloats = !isCompact;
     final sortableBody = SortModeScope(sorting: _sorting, child: widget.body);
     final body = SafeArea(
@@ -296,7 +288,6 @@ class CommonScaffoldState extends State<CommonScaffold>
               : isCompact
               ? sheetAppBarHeight
               : 0.0;
-          // A wrapper toggled with the strip would remount the body.
           final content = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: hugsContent ? MainAxisSize.min : MainAxisSize.max,

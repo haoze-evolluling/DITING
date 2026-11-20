@@ -1,5 +1,3 @@
-//! Linux DNS takeover manager: snapshot, apply, roll back and restore.
-
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
@@ -22,7 +20,6 @@ struct ManagerState {
     adapters: Vec<AdapterState>,
 }
 
-/// Linux DNS manager backed by the auto-detected system DNS backend.
 pub struct LinuxDnsManager {
     executor: Arc<dyn CommandExecutor>,
     state_store: Arc<dyn StateStore>,
@@ -51,7 +48,6 @@ impl LinuxDnsManager {
         }
     }
 
-    // Detection is asynchronous in Rust, so the backend is resolved on first use and cached.
     async fn backend(&self) -> DnsBackend {
         *self
             .backend
@@ -116,8 +112,6 @@ impl DnsManager for LinuxDnsManager {
                     )));
                 }
                 Err(restore_error) => {
-                    // Keep the state file: it is the only clue for the next start if rollback
-                    // also failed.
                     return Err(PlatformError::message(format!(
                         "接管网卡 DNS 失败: {error}（回滚亦失败: {restore_error}，已保留状态文件）"
                     )));
@@ -222,9 +216,6 @@ impl DnsManager for LinuxDnsManager {
         };
 
         if result.is_ok() {
-            // Only forget the snapshot once the adapters were actually restored. Clearing it after
-            // a failed restore (as the old code did) removes the only way to recover the original
-            // DNS, potentially leaving the host on 127.0.0.1 with no state file.
             {
                 let mut state = self.lock_state();
                 state.active = false;
@@ -233,7 +224,6 @@ impl DnsManager for LinuxDnsManager {
             let _ = self.state_store.clear();
         }
 
-        // Always scan for residual loopback DNS, regardless of the previous state.
         let _ = self.reset_residual_loopback_dns().await;
         result
     }
@@ -312,7 +302,6 @@ impl DnsManager for LinuxDnsManager {
     }
 }
 
-/// Converts a scanned adapter into a cleaned snapshot entry.
 fn adapter_info_to_state(adapter: &AdapterInfo) -> AdapterState {
     clean_adapter_state(&AdapterState {
         id: adapter.id.clone(),

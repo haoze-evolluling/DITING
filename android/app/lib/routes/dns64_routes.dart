@@ -3,7 +3,6 @@ import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
-/// N8 DNS64。
 abstract final class Dns64Paths {
   static const root = '/network/dns64';
 }

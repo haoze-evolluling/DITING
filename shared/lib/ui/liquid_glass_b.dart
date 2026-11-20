@@ -76,7 +76,6 @@ class LiquidGlassStyle {
           );
   }
 
-  /// Thicker than [LiquidGlassStyle.regular], for rows over anything; it takes a [LiquidGlassRim].
   factory LiquidGlassStyle.menu(ColorScheme colorScheme) {
     final dark = colorScheme.brightness == Brightness.dark;
     return dark
@@ -177,7 +176,6 @@ class LiquidGlassStyle {
   final double hairline;
   final double? hairlineSide;
 
-  /// Eases in from bare air, as glass materializes by bending, not fading.
   LiquidGlassStyle scale(double t) {
     final amount = t.clamp(0.0, 1.0);
     return LiquidGlassStyle(
@@ -302,7 +300,6 @@ class LiquidGlassStyle {
 
   double get _hairlineSide => hairlineSide ?? hairline;
 
-  /// The standard tier's: no colors parted, and a haze for the whole frost.
   LiquidGlassStyle get _standard {
     if (haze == 0 && dispersion == 0) {
       return this;
@@ -328,7 +325,6 @@ class LiquidGlassStyle {
   }
 }
 
-/// An iOS 27 menu's or alert's, measured over white.
 List<BoxShadow> glassMenuShadows(ColorScheme colorScheme, [double depth = 1]) {
   final strength = colorScheme.brightness == Brightness.dark ? 1.5 : 1.0;
   final alpha = strength * depth;

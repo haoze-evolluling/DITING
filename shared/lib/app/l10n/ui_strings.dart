@@ -2,10 +2,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/l10n.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The [UiLocalizations] the app runs with. `UiLocalizations.of` asserts the delegate is
-/// registered, so every vendored widget in `lib/ui` depends on it. The strings come from the same
-/// ARB resources as the pages (`lib/l10n/app_<locale>.arb`), so adding a language needs no change
-/// here. The tests keep their own stub.
 class AppUiLocalizations extends UiLocalizations {
   AppUiLocalizations(this.locale) : _l10n = lookupAppL10n(locale);
 

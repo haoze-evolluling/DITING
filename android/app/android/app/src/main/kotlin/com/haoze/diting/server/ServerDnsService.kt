@@ -19,8 +19,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import org.json.JSONObject
 
-/// Supervises the standalone Rust DNS process. Root starts through `su` on port 53; otherwise the
-/// executable runs as the app UID on 1053. A 53 bind failure is reported, never silently downgraded.
 class ServerDnsService : Service() {
     private val worker = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "diting-server-supervisor")

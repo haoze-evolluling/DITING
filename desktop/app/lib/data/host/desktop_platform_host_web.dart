@@ -1,8 +1,3 @@
-/// Web host: the browser file picker used by the login background dialog.
-///
-/// The bundle is served to a browser as the LAN web console. The picker is plain DOM: a hidden
-/// `<input type="file">` whose `FileReader` result becomes the `data:image/...;base64,` URL the
-/// service accepts.
 library;
 
 import 'dart:async';
@@ -11,10 +6,8 @@ import 'dart:js_interop_unsafe';
 
 import 'desktop_image_size.dart';
 
-/// The origin the page was loaded from, which is also the API base for the web console.
 Uri? get desktopPageOrigin => Uri.base;
 
-/// Picks one image and returns it as a `data:image/...;base64,` URL; null when nothing was picked.
 Future<String?> pickDesktopImageDataUrl() {
   final completer = Completer<String?>();
   final document = globalContext.getProperty<JSObject>('document'.toJS);
@@ -64,7 +57,6 @@ Future<String?> pickDesktopImageDataUrl() {
       reader.callMethod<JSAny?>('readAsDataURL'.toJS, file);
     }).toJS,
   );
-  // A cancelled picker never fires `change`; without this the dialog would wait forever.
   input.setProperty(
     'oncancel'.toJS,
     ((JSAny? _) {
@@ -75,13 +67,6 @@ Future<String?> pickDesktopImageDataUrl() {
   return completer.future;
 }
 
-/// Shrinks a picked image with the same canvas pipeline the old console used
-/// (`utils/imageCompressor.ts`): fit inside 1920×1080, prefer WebP at quality 0.82 (falling back to
-/// JPEG, then PNG), and re-encode at ≤1280×720 / 0.72 when the payload is still above 1.5MB.
-///
-/// SVG is returned untouched — it is already small and rasterising it would only lose sharpness.
-/// Any failure (undecodable file, no 2D context) returns the original payload: the service then
-/// validates and caps it, which is better than dropping the user's picture.
 Future<String?> compressDesktopImageDataUrl(String dataUrl) {
   if (dataUrl.startsWith('data:image/svg')) {
     return Future.value(dataUrl);
@@ -170,8 +155,6 @@ Future<String?> compressDesktopImageDataUrl(String dataUrl) {
   return completer.future;
 }
 
-/// WebP first (smaller at the same quality), JPEG next; a browser that does not support the type
-/// silently returns PNG, which is why the prefix decides rather than the requested type.
 String _encode(JSObject canvas, double quality) {
   for (final type in const ['image/webp', 'image/jpeg']) {
     final encoded = canvas

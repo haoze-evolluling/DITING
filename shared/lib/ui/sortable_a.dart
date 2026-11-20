@@ -2,7 +2,6 @@
 
 part of 'sortable.dart';
 
-/// Springs in from the row trailing edge, where the card clips it; only a width change relayouts.
 class SortableTrailing extends StatefulWidget {
   const SortableTrailing({super.key, required this.item, this.child});
 

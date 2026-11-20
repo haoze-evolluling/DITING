@@ -1,12 +1,8 @@
-/// Site categories for the site-latency card and its detail page, plus the card's slot count.
-///
-/// Order here is the order the detail page stacks its groups.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/icons/icons.dart';
 
-/// The dashboard card draws a 2x2 grid, so the user picks exactly this many sites.
 const dashboardSiteCount = 4;
 
 enum SiteCategory {
@@ -30,6 +26,5 @@ enum SiteCategory {
     SiteCategory.game => l10n.siteCategoryGame,
   };
 
-  /// Section header glyph; the board's own icons carry the brand, these carry the topic.
   final Glyph glyph;
 }

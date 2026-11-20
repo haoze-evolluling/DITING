@@ -1,24 +1,13 @@
-//! The provider catalog: the preset rows, the `user_providers_json` records, and the one document
-//! row both end up in.
-//!
-//! Parsing is the 1.4.3 filter (unknown protocol, blank id/name, a DoH row without `https://`, a
-//! bad host or port are dropped) and the writer keeps the five prefs fields plus the document
-//! spelling. A record that was *stored* by an older build must read back identically, which is why
-//! the fields and their order are fixed here.
-
 use serde::Serialize;
 
 use crate::protocol::{self, Protocol};
 
-/// One provider: a preset row, a stored custom record, or a row picked for the document.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
     pub id: String,
     pub name: String,
     pub protocol: Protocol,
-    /// DoH endpoint; empty for PLAIN / DOT.
     pub url: String,
-    /// PLAIN / DOT host; empty for DoH.
     pub host: String,
     pub port: i32,
 }
@@ -35,12 +24,10 @@ impl Provider {
         }
     }
 
-    /// `host:port`, bracketed when the host is a bare IPv6 literal.
     pub fn host_port(&self) -> String {
         protocol::join_host_port(&self.host, self.port)
     }
 
-    /// What the management UI edits: the DoH URL, or `host:port`.
     pub fn address(&self) -> String {
         if self.protocol == Protocol::Doh {
             self.url.clone()
@@ -50,7 +37,6 @@ impl Provider {
     }
 }
 
-/// `user_providers_json` row, exactly as 1.4.3 wrote it.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ProviderRecord<'a> {
@@ -62,10 +48,6 @@ struct ProviderRecord<'a> {
     port: i32,
 }
 
-/// `_splitAddress`: DoH keeps the whole text as its URL, everything else becomes host + port.
-///
-/// A missing colon means "host only, default port"; a non-numeric port also falls back to the
-/// protocol default, which is what let 1.4.3 store `dot.example:abc` as DoT/853.
 pub fn split_address(protocol: Protocol, address: &str) -> (String, String, i32) {
     let trimmed = address.trim();
     if protocol == Protocol::Doh {
@@ -92,10 +74,6 @@ pub fn split_address(protocol: Protocol, address: &str) -> (String, String, i32)
     (String::new(), host.to_string(), port)
 }
 
-/// Reads `user_providers_json`, dropping the rows 1.4.3 drops.
-///
-/// A field of the wrong JSON type makes the row unusable; the Dart original threw on those, which
-/// would have aborted the whole config build, so a corrupt file now simply loses that row.
 pub fn parse_user_providers(raw: Option<&str>) -> Vec<Provider> {
     let Some(raw) = raw else {
         return Vec::new();
@@ -142,7 +120,6 @@ pub fn parse_user_providers(raw: Option<&str>) -> Vec<Provider> {
     providers
 }
 
-/// The prefs document: `[{id, name, protocol, url, host, port}]`.
 pub fn encode_user_providers(providers: &[Provider]) -> String {
     let records: Vec<ProviderRecord<'_>> = providers
         .iter()
@@ -158,7 +135,6 @@ pub fn encode_user_providers(providers: &[Provider]) -> String {
     serde_json::to_string(&records).unwrap_or_else(|_| String::from("[]"))
 }
 
-/// Add-or-replace by id: the list order survives an edit, and a new id appends.
 pub fn upsert_user_provider(
     providers: &[Provider],
     id: &str,
@@ -212,7 +188,6 @@ mod tests {
             split_address(Protocol::Dot, "dot.example.com:abc"),
             (String::new(), "dot.example.com".to_string(), 853)
         );
-        // A colon at the very start is not a separator: the whole text stays the host.
         assert_eq!(
             split_address(Protocol::Plain, ":53"),
             (String::new(), ":53".to_string(), 53)
@@ -241,7 +216,6 @@ mod tests {
         assert!(parse_user_providers(Some("not json")).is_empty());
         assert!(parse_user_providers(Some("{}")).is_empty());
         assert!(parse_user_providers(Some("[1,2]")).is_empty());
-        // Wrongly typed fields lose the row instead of aborting the build.
         assert!(parse_user_providers(Some(r#"[{"id":1,"name":"x","protocol":"DOT"}]"#)).is_empty());
         assert!(parse_user_providers(Some(
             r#"[{"id":"a","name":"","protocol":"DOT","host":"h","port":853}]"#

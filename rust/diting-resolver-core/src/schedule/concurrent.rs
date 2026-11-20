@@ -1,9 +1,3 @@
-//! The parallel_race / smart_prediction attempt tree.
-//!
-//! Launches radiate from [`super::Schedule::launched`], results fold back in, and the two timers
-//! (staggered hedge, encrypted preference window) decide when the next candidate starts or when a
-//! held plain answer wins.
-
 use super::*;
 
 impl Schedule {
@@ -34,8 +28,6 @@ impl Schedule {
             concurrent.primary_elapsed_ms = elapsed_ms;
         }
         if ok {
-            // A plain answer in a mixed race waits for the encrypted attempts in flight; the first
-            // plain answer is the one held, later ones are dropped (they were dropped before too).
             let hold = concurrent.prefer_encrypted_window_ns > 0
                 && !encrypted
                 && concurrent.inflight_encrypted > 0;
@@ -57,8 +49,6 @@ impl Schedule {
                 return concurrent.request_next();
             }
         }
-        // The old loop-top check: a buffered plain answer wins as soon as no encrypted attempt is
-        // left in flight.
         if let Some(buffered) = concurrent.buffered_plain {
             if concurrent.inflight_encrypted == 0 {
                 return self.terminal(true, Some(buffered), since_start_ns);
@@ -70,7 +60,6 @@ impl Schedule {
         Step::idle()
     }
 
-    /// Builds the closing event and marks the session decided.
     pub(super) fn terminal(
         &self,
         success: bool,
@@ -90,7 +79,6 @@ impl Schedule {
         let fallback_success =
             concurrent.track_fallback && winner_position.is_some_and(|pos| pos > 0);
         let selected_id = if self.strategy == Strategy::ParallelRace {
-            // The race plan never set a primary, so the field was empty before too.
             String::new()
         } else {
             concurrent
@@ -137,7 +125,6 @@ impl Concurrent {
         self.request_next()
     }
 
-    /// Hands out the next candidate; the caller confirms it with [`Schedule::launched`].
     pub(super) fn request_next(&mut self) -> Step {
         let Some(&provider) = self.candidates.get(self.next) else {
             return Step::idle();

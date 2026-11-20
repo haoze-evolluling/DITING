@@ -71,7 +71,6 @@ fn trailing_bytes_are_rejected() {
 #[test]
 fn invalid_utf8_is_rejected() {
     let mut encoded = encode_mark("", "ab", "dest", 1, 6, "");
-    // layout(1) + port(4) + protocol(4) + prefix_len(4) = 13 starts the app bytes.
     encoded[13] = 0xff;
     assert_eq!(decode_mark(&encoded), None);
 }

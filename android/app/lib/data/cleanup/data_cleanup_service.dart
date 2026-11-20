@@ -1,5 +1,4 @@
 // ignore_for_file: prefer_initializing_formals
-// False positive: fields are private `_xxx`, and Dart forbids named parameters starting with `_`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -18,7 +17,6 @@ import 'package:sqflite/sqflite.dart';
 
 export 'cleanup_models.dart';
 
-/// Runs every cleanup action, sharing the prefs store, database cache and channels.
 class DataCleanupService {
   DataCleanupService({
     required LegacyPrefsStore prefs,
@@ -40,8 +38,6 @@ class DataCleanupService {
   final PlatformBridge _platform;
   final OutboundProxyStore _outboundProxy;
 
-  /// Seed marker version code; must match startup seeding. A lower value re-seeds on the next
-  /// launch, a higher one skips upgrade seeds entirely.
   final int _appVersionCode;
 
   final CaCertificateService _ca;
@@ -49,7 +45,6 @@ class DataCleanupService {
   final CleanupDatabases _databases;
   LegacySettings get _settings => LegacySettings(_prefs);
 
-  /// 0 without the channel; actions that also clear prefs must still run.
   Future<int> _platformCall(Future<int> Function() call) async {
     try {
       return await call();
@@ -61,7 +56,6 @@ class DataCleanupService {
 
   CleanupPlan get _plan => CleanupPlan.instance;
 
-  /// Never rethrows: the caller needs a reason after the confirmation dialog.
   Future<CleanupResult> run(CleanupAction action) async {
     try {
       return switch (action) {
@@ -103,7 +97,6 @@ class DataCleanupService {
   CleanupResult _result(CleanupAction action, int removed, {String? detail}) =>
       CleanupResult(action: action, removed: removed, detail: detail);
 
-  /// Per-table tolerance: a missing table must not skip the others.
   Future<CleanupResult> _clearLogs() async {
     var removed = 0;
     for (final db in await _databases.runtimeDatabases()) {
@@ -114,7 +107,6 @@ class DataCleanupService {
     return _result(CleanupAction.logs, removed);
   }
 
-  /// Main database only: the express database lacks `app_traffic_daily`.
   Future<CleanupResult> _clearTraffic() async {
     final db = await _databases.main;
     final removed = db == null
@@ -123,7 +115,6 @@ class DataCleanupService {
     return _result(CleanupAction.traffic, removed);
   }
 
-  /// The engine keeps its own in-memory LRU, which is not cleared here.
   Future<CleanupResult> _clearDnsCache() async {
     var removed = 0;
     for (final db in await _databases.runtimeDatabases()) {
@@ -132,7 +123,6 @@ class DataCleanupService {
     return _result(CleanupAction.dnsCache, removed);
   }
 
-  /// Each dataset keeps its own copy of the health samples.
   CleanupResult _resetWeights(CleanupAction action, String key) {
     var removed = 0;
     for (final container in _plan.weightContainers) {
@@ -141,8 +131,6 @@ class DataCleanupService {
     return _result(action, removed);
   }
 
-  /// Clears rules, then re-seeds the preset whitelist; otherwise hosts that must stay reachable
-  /// stay blocked.
   Future<CleanupResult> _clearDomainRules() async {
     final preset = await loadPresetEntries(load: _loadPresetAsset);
     var removed = 0;
@@ -153,7 +141,6 @@ class DataCleanupService {
           count += await deleteAllRows(txn, pair.sourceTable);
           count += await deleteAllRows(txn, pair.table);
         }
-        // Only IPv4/IPv6 rewrites here; CNAME rewrites belong to address rules.
         final rewriteWhere = _plan.domainRewriteWhere;
         count += await deleteRowsWhere(
           txn,
@@ -185,7 +172,6 @@ class DataCleanupService {
         );
         return count;
       });
-      // Only the main dataset is re-seeded.
       if (_plan.seedPresetOnMain &&
           preset.isNotEmpty &&
           _databases.isMain(db)) {
@@ -196,7 +182,6 @@ class DataCleanupService {
     return _result(CleanupAction.domainRules, removed);
   }
 
-  /// Clears all `go_url_rule` rows and the CNAME half of `rewrite_rule`.
   Future<CleanupResult> _clearAddressRules() async {
     var removed = 0;
     for (final db in await _databases.ruleDatabases()) {
@@ -231,7 +216,6 @@ class DataCleanupService {
         for (final table in _plan.subscriptionTables) {
           count += await deleteAllRows(txn, table);
         }
-        // Subscription-owned rules use `sub_<id>` sources; `staging_sub_` is mid-import.
         for (final pair in _plan.subscriptionRulePairs) {
           count += await deleteRowsWhere(
             txn,
@@ -246,14 +230,12 @@ class DataCleanupService {
     return _result(CleanupAction.subscriptions, removed);
   }
 
-  /// All app lists together, or the page and the engine disagree on what is allowed.
   CleanupResult _resetAppRules() {
     var removed = 0;
     final container = _plan.appRulesContainer;
     for (final key in _plan.appRuleKeys) {
       if (_removeKey(container, key)) removed++;
     }
-    // Reset `https_inspection_ready` too, or the next tunnel start assumes the CA works.
     if (_prefs.read(container, _plan.httpsInspectionReadyKey) != null) {
       _settings.setHttpsInspectionReady(false);
       removed++;
@@ -261,7 +243,6 @@ class DataCleanupService {
     return _result(CleanupAction.appRules, removed);
   }
 
-  /// Credentials live in the AndroidKeyStore, so the reset goes through native.
   Future<CleanupResult> _resetOutboundProxy() async {
     await _outboundProxy.reset();
     return _result(
@@ -271,7 +252,6 @@ class DataCleanupService {
     );
   }
 
-  /// `inspect(regenerate: true)` is the only call that deletes the CA files.
   Future<CleanupResult> _resetCaCertificate() async {
     await _ca.inspect(regenerate: true);
     _settings.setHttpsInspectionReady(false);
@@ -282,7 +262,6 @@ class DataCleanupService {
     );
   }
 
-  /// Both halves must run, or stale files or a lying UI remain.
   Future<CleanupResult> _clearCustomBackground() async {
     var removed = await _platformCall(_platform.clearCustomBackgroundCache);
     for (final key in _plan.customBackgroundKeys) {
@@ -291,7 +270,6 @@ class DataCleanupService {
     return _result(CleanupAction.customBackground, removed);
   }
 
-  /// Also clears the "do not remind" entries; there is no way to restore them.
   CleanupResult _resetSettingsGuides() {
     var removed = 0;
     for (final key in _plan.settingsGuideKeys) {
@@ -304,16 +282,13 @@ class DataCleanupService {
     return _result(CleanupAction.settingsGuides, removed);
   }
 
-  /// Automation is global and lives outside the mode databases.
   static const _automationPrefsContainer = 'automation_prefs';
 
-  /// Every action in order, summing counts; a failing step does not stop the rest.
   Future<CleanupResult> _clearAllLocalData() async {
     var removed = 0;
     for (final name in _plan.allDataOrder) {
       removed += (await run(CleanupAction.values.byName(name))).removed;
     }
-    // Also clears mirror templates (one copy per rule database) and the recognition cache.
     for (final db in await _databases.ruleDatabases()) {
       for (final table in _plan.allDataTables) {
         removed += await deleteAllRows(db, table);
@@ -325,7 +300,6 @@ class DataCleanupService {
         removed += await deleteAllRows(automation, table);
       }
     }
-    // Cooldown and last-run keys live here and would otherwise outlive the rules they describe.
     for (final key in _prefs.readAll(_automationPrefsContainer).keys.toList()) {
       if (_removeKey(_automationPrefsContainer, key)) removed++;
     }
@@ -335,14 +309,12 @@ class DataCleanupService {
     return _result(CleanupAction.allData, removed);
   }
 
-  /// A key holding its default value still counts as removed.
   bool _removeKey(String container, String key) {
     final existed = _prefs.read(container, key) != null;
     if (existed) _prefs.remove(container, key);
     return existed;
   }
 
-  /// The stored install version wins over the value passed in.
   int get _versionCodeOrFallback {
     final raw = _prefs.read(LegacySettings.uiContainer, 'app_version_code');
     return raw is int && raw > 0 ? raw : _appVersionCode;

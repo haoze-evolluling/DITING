@@ -1,15 +1,10 @@
-//! DNS rewrite rules and local authoritative zones.
-
 use serde::{Deserialize, Serialize};
 
 use super::serde_util::{is_zero_u32, nullable_vec};
 
-/// Default rewrite record TTL.
 pub const DEFAULT_REWRITE_TTL: u32 = 60;
-/// Default authoritative-zone TTL.
 pub const DEFAULT_ZONE_TTL: u32 = 300;
 
-/// A single non-shortcut rewrite record (MX / SRV / NS / PTR / HTTPS / SVCB).
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct RewriteRecord {
@@ -18,7 +13,6 @@ pub struct RewriteRecord {
     pub value: String,
 }
 
-/// One DNS rewrite rule.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct RewriteRule {
@@ -46,7 +40,6 @@ pub struct RewriteRule {
     pub rcode: String,
 }
 
-/// DNS rewrite configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct RewriteConfig {
@@ -67,7 +60,6 @@ impl Default for RewriteConfig {
 }
 
 impl RewriteConfig {
-    /// Mirror `NormalizeRewriteConfig`.
     pub fn normalize(&mut self) {
         if self.ttl == 0 {
             self.ttl = DEFAULT_REWRITE_TTL;
@@ -75,7 +67,6 @@ impl RewriteConfig {
     }
 }
 
-/// One locally authoritative zone.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ZoneEntry {
@@ -85,7 +76,6 @@ pub struct ZoneEntry {
     pub enabled: bool,
 }
 
-/// Local authoritative zone configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ZoneConfig {
@@ -106,11 +96,6 @@ impl Default for ZoneConfig {
 }
 
 impl ZoneConfig {
-    /// Mirror `NormalizeZoneConfig`.
-    ///
-    /// Zones are intentionally not truncated to the engine limits here: normalization output is
-    /// persisted, so silently dropping entries would delete user input. The engine reports
-    /// over-limit zones at build time.
     pub fn normalize(&mut self) {
         if self.ttl == 0 {
             self.ttl = DEFAULT_ZONE_TTL;

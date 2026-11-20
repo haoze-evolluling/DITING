@@ -1,10 +1,3 @@
-//! Pure-Rust cost of parsing a subscription list, without the FFI round trip or Go's decoding.
-//!
-//! `cargo run --release -p diting-filter-core --example parse_bench -- <corpus>`
-//!
-//! The corpus is a plain list file (one rule per line). Five runs, best one reported, because the
-//! first pass pays for the lazy IDNA tables.
-
 use std::time::Instant;
 
 use diting_filter_core::parse::parse_document;

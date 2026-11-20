@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
-/// Dashboard density, matching upstream layout.dart: mobile below 640px width.
 enum DashboardDensity {
   standard,
   compact,
@@ -22,7 +21,6 @@ enum DashboardDensity {
 
 const minDesktopWidth = 640.0;
 
-/// Two columns need enough room for a title, a badge and a switch; below this a card stacks.
 const minTwoColumnWidth = 760.0;
 const minStandardHeight = 824.0;
 const mobileMaxWidth = 560.0;
@@ -32,8 +30,6 @@ int dashboardColumnsOf(double width) => width < minTwoColumnWidth ? 1 : 2;
 double dashboardMobileSideOf(double width) =>
     math.max(16, (width - mobileMaxWidth) / 2);
 
-/// Every fixed height is scaled by [scale] so enlarged text is not clipped. lib/ui scales
-/// text itself; dashboard cards hard-code heights, which must be scaled explicitly.
 class DashboardDensityScope extends InheritedWidget {
   const DashboardDensityScope({
     super.key,
@@ -58,8 +54,6 @@ class DashboardDensityScope extends InheritedWidget {
       density != oldWidget.density || scale != oldWidget.scale;
 }
 
-/// Puts [DashboardDensityScope] above the dashboard subtree. Density needs a
-/// LayoutBuilder, text scale comes from MediaQuery; home and the log dashboard share it.
 class DashboardDensityScopeHost extends StatelessWidget {
   const DashboardDensityScopeHost({super.key, required this.child});
 

@@ -1,5 +1,3 @@
-/// Automation state (A1 / A3 / A14): one database handle, one write revision, and the read/action
-/// providers the editor, list and timeline share.
 library;
 
 import 'dart:async';
@@ -11,17 +9,14 @@ import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Automation is global, not per mode, so it has its own database.
 final automationDatabaseFileProvider = Provider<String>((ref) {
   return StorageContract.globalDatabase;
 });
 
-/// `null` on a fresh install before the Dart schema exists.
 final automationDatabaseProvider = FutureProvider<Database?>(
   (ref) => AppDatabase.open(ref.watch(automationDatabaseFileProvider)),
 );
 
-/// Bumped after every write so every read provider reloads.
 class AutomationRevisionNotifier extends Notifier<int> {
   @override
   int build() => 0;
@@ -39,7 +34,6 @@ Future<AutomationRepository?> _repository(Ref ref) async {
   return db == null ? null : AutomationRepository(db);
 }
 
-/// Write actions shared by every automation screen.
 class AutomationController {
   AutomationController(this._ref);
 

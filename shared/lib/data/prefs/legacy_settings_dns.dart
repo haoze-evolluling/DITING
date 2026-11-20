@@ -1,7 +1,5 @@
 part of 'legacy_settings.dart';
 
-/// DNS-domain settings: providers, cache policy, block response, bootstrap and the inspection
-/// switches.
 extension LegacyDnsSettings on LegacySettings {
   bool get vpnRunning =>
       _bool(LegacySettings.uiContainer, 'vpn_running', false);
@@ -29,7 +27,6 @@ extension LegacyDnsSettings on LegacySettings {
 
   String? get userProvidersJson => _string(dnsContainer, 'user_providers_json');
 
-  /// As recorded by the Go resolver: EWMA milliseconds, absent without history.
   Map<String, int> get providerLatenciesMs {
     final raw = _string(dnsContainer, 'provider_health_json');
     if (raw == null || raw.isEmpty) return const {};
@@ -51,7 +48,6 @@ extension LegacyDnsSettings on LegacySettings {
     return result;
   }
 
-  /// Written verbatim; the legacy contract expects `id`/`name`/`protocol`/`url`/`host`/`port`.
   void setUserProvidersJson(String json) =>
       _store.putString(dnsContainer, 'user_providers_json', json);
 
@@ -64,7 +60,6 @@ extension LegacyDnsSettings on LegacySettings {
   List<String> get primaryBackupProviderIds =>
       _idList('primary_backup_provider_ids');
 
-  /// A separate historical key from `parallel_race_provider_ids`; backups must keep the name.
   List<String> get raceProviderIds => _idList('race_provider_ids');
 
   void setRaceProviderIds(List<String> ids) =>
@@ -79,15 +74,12 @@ extension LegacyDnsSettings on LegacySettings {
     jsonEncode(ids),
   );
 
-  /// Only `DNS` / `DoT` / `DoH`; a restore without it falls back to `DNS` and loses the race
-  /// protocol.
   String get presetDnsServiceRaw =>
       _string(dnsContainer, 'preset_dns_service') ?? 'DNS';
 
   void setPresetDnsServiceRaw(String value) =>
       _store.putString(dnsContainer, 'preset_dns_service', value);
 
-  /// Home race probe domain; backups must carry the effective value, not an empty string.
   String get raceTestDomain =>
       _string(dnsContainer, 'race_test_domain') ?? 'mihoyo.com';
 
@@ -112,7 +104,6 @@ extension LegacyDnsSettings on LegacySettings {
     jsonEncode(ids),
   );
 
-  /// Single mode has no candidate list: the selection lives in `selected_provider_id`.
   List<String> providerIdsOf(String resolutionMode) => switch (resolutionMode) {
     'smart_prediction' => smartPredictionProviderIds,
     'parallel_race' => parallelRaceProviderIds,
@@ -133,8 +124,6 @@ extension LegacyDnsSettings on LegacySettings {
     }
   }
 
-  /// Display order arranged on the service display page, shared by the provider picker and the
-  /// race selection lists. Empty means catalog order.
   List<String> get providerDisplayOrderIds =>
       _idList('provider_display_order_ids', fallback: const []);
 
@@ -144,7 +133,6 @@ extension LegacyDnsSettings on LegacySettings {
     jsonEncode(ids),
   );
 
-  /// Stored as sorted JSON arrays, like the legacy `writeStringSet`.
   Set<String> get homeVisibleProtocols =>
       _stringSet('home_visible_protocols') ?? const {'DNS', 'DOH', 'DOT'};
 
@@ -199,10 +187,8 @@ extension LegacyDnsSettings on LegacySettings {
   int get cacheStaleFallbackSeconds =>
       _int(dnsContainer, 'dns_cache_stale_fallback_seconds_v2', 300);
 
-  /// Absent on installs predating presets, where the UI derives the preset from the stored policy.
   String? get cachePresetRaw => _string(dnsContainer, 'dns_cache_preset_v3');
 
-  /// Writes all nine keys so the engine reads a consistent policy.
   void applyCachePreset({
     required String storageValue,
     required bool enabled,
@@ -267,7 +253,6 @@ extension LegacyDnsSettings on LegacySettings {
   int get dynamicBlockNxDomainDurationSeconds =>
       _int(dnsContainer, 'dynamic_block_nxdomain_duration_seconds', 300);
 
-  /// Clamps to 2-100 / 10-300 / 60-3600; out-of-range input must never reach the engine.
   void setDynamicBlockPolicy({
     required bool enabled,
     required int requestThreshold,
@@ -311,7 +296,6 @@ extension LegacyDnsSettings on LegacySettings {
   void setBootstrapEnabled(bool value) =>
       _store.putBool(dnsContainer, 'bootstrap_enabled', value);
 
-  /// The caller filters ids against the built-in catalog before writing.
   void setBootstrapPresetIds(Set<String> ids) => _store.putString(
     dnsContainer,
     'bootstrap_preset_ids',
@@ -321,7 +305,6 @@ extension LegacyDnsSettings on LegacySettings {
   void setBootstrapCustomJson(String json) =>
       _store.putString(dnsContainer, 'bootstrap_custom_json', json);
 
-  /// Global rather than dataset-scoped; only the CA flow turns `http_inspection_enabled` on.
   bool get http3InspectionEnabled =>
       _bool(LegacySettings.uiContainer, 'http3_inspection_enabled', false);
 
@@ -356,29 +339,24 @@ extension LegacyDnsSettings on LegacySettings {
     );
   }
 
-  /// U10 隐私套件：阻断 HTTPS(65) / SVCB(64) 记录类型，避免通过这些记录泄露访问意图。
   bool get blockHttpsSvcbRecordTypes =>
       _bool(LegacySettings.uiContainer, 'block_https_svcb_record_types', false);
 
   void setBlockHttpsSvcbRecordTypes(bool value) =>
       _store.putBool(LegacySettings.uiContainer, 'block_https_svcb_record_types', value);
 
-  /// U10 隐私套件：DNS 重绑定保护，拒绝把公网域名解析到私有/回环地址。
   bool get dnsRebindingProtection =>
       _bool(LegacySettings.uiContainer, 'dns_rebinding_protection', false);
 
   void setDnsRebindingProtection(bool value) =>
       _store.putBool(LegacySettings.uiContainer, 'dns_rebinding_protection', value);
 
-  /// N8 DNS64：IPv6-only 网络下用固定前缀 64:ff9b::/96 从 A 记录合成 AAAA。
   bool get dns64Enabled =>
       _bool(LegacySettings.uiContainer, 'dns64_enabled', false);
 
   void setDns64Enabled(bool value) =>
       _store.putBool(LegacySettings.uiContainer, 'dns64_enabled', value);
 
-  /// Normal-mode connection rate limiting. The keys live in the global UI container on purpose,
-  /// matching the other DNS feature switches.
   bool get connectionRateLimitEnabled =>
       _bool(LegacySettings.uiContainer, 'connection_rate_limit_enabled', false);
 
@@ -406,8 +384,6 @@ extension LegacyDnsSettings on LegacySettings {
     value,
   );
 
-  /// View over the express data set's container. Production code selects the active data set via
-  /// `activeDataSetProvider`; this stays for data-set-scoped reads and tests.
   LegacySettings forExpress() =>
       LegacySettings(_store, dnsContainer: LegacySettings.expressContainer);
 }

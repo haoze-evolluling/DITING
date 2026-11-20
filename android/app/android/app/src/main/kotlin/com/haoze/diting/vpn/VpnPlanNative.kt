@@ -31,11 +31,6 @@ internal data class VpnStartDefaults(
     val inspectionEnabled: Boolean,
 )
 
-/// Native VPN plan kernel (`rust/diting-vpn-config-core`).
-///
-/// Kotlin still builds the interface and runs the ConnectivityManager probe; every TUN address,
-/// DNS server, route, MTU, IPv6 decision and excluded-package union comes from here. The library is
-/// required: a build that forgot `python rust/build_android.py` throws before `establish()`.
 internal class VpnPlanNative private constructor() {
     external fun routePlan(
         mode: String,
@@ -88,10 +83,8 @@ internal class VpnPlanNative private constructor() {
             return parsePlan(raw)
         }
 
-        /// False for explicit `enabled` / `disabled`, so no ConnectivityManager walk is needed.
         fun ipv6ProbeNeeded(ipv6Mode: String): Boolean = instance.ipv6ProbeNeeded(ipv6Mode)
 
-        /// Defaults the quick-settings tile replays before the user has ever started a tunnel.
         val startDefaults: VpnStartDefaults by lazy {
             val raw = requireNotNull(instance.startDefaults()) {
                 "native VPN start defaults returned no value"
@@ -132,8 +125,6 @@ internal class VpnPlanNative private constructor() {
     }
 }
 
-/// Applies one native plan to a `VpnService.Builder`; per-route failures keep the legacy logs and
-/// let the rest of the tunnel come up.
 internal fun VpnPlan.applyTo(builder: VpnService.Builder, tag: String) {
     addresses.forEach { builder.addAddress(it.address, it.prefix) }
     dnsServers.forEach(builder::addDnsServer)

@@ -29,12 +29,6 @@ import com.haoze.diting.tile.QuickSettingsTileUpdater
 import com.haoze.diting.vpn.VpnServiceForeground
 import java.util.concurrent.Executors
 
-/// Normal mode without `VpnService`: a foreground service that runs the engine's standalone DNS
-/// server on a high loopback port and makes root redirect every local port-53 query to it.
-///
-/// The engine runs as the app UID, so it does not need root itself; root is only used for the
-/// iptables chains, Private DNS and the cache flush. Stopping removes the chains before the
-/// listener goes away, so a stop can never leave the device with a dead DNS route.
 class RootDnsService : Service() {
     private val worker = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "diting-root-dns")
@@ -65,8 +59,6 @@ class RootDnsService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
-                // Set before queueing: a launch already on the worker stops at its next checkpoint
-                // instead of finishing a takeover the user just cancelled.
                 stopRequested = true
                 worker.execute { stopAll(stopSelf = true) }
                 return START_NOT_STICKY
@@ -76,9 +68,6 @@ class RootDnsService : Service() {
                 return START_NOT_STICKY
             }
         }
-        // The platform requires startForeground within 5 s of a startForegroundService call, so
-        // every failure path below has already promoted. Re-promoting a running service only
-        // repaints the same notification.
         if (!promoteToForeground(notificationText())) {
             fail(getString(R.string.root_dns_start_failed))
             return START_NOT_STICKY
@@ -108,11 +97,7 @@ class RootDnsService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        // Root cleanup has to happen before the process can be reclaimed: a redirect left behind
-        // points every DNS query at a port nothing listens on.
         runCatching { stopInternal() }
-        // No join: the process may be reclaimed at any time, and a cold start repairs a rule set
-        // a killed teardown left behind.
         worker.shutdown()
         super.onDestroy()
     }
@@ -131,8 +116,6 @@ class RootDnsService : Service() {
             return
         }
         if (DitingVpnService.isRunning || ExpressVpnService.isRunning) {
-            // Both modes own the same DNS path; running them together would redirect the tunnel's
-            // own resolver and leave the engine feeding answers to a dead listener.
             fail(getString(R.string.root_dns_vpn_running))
             return
         }
@@ -141,8 +124,6 @@ class RootDnsService : Service() {
             return
         }
         try {
-            // A previous run may have died without its onDestroy. The chains are ours, so they are
-            // rebuilt from scratch below; removing them first also releases a stale port forward.
             RootDnsRules.removeAll()
 
             val current = Engine()
@@ -161,7 +142,6 @@ class RootDnsService : Service() {
                 throw IllegalStateException(ruleError)
             }
             if (!RootDnsRules.disablePrivateDns(this)) {
-                // Port 53 is still redirected; only Private DNS (DoT on 853) can bypass it.
                 Log.w(TAG, "Private DNS left unchanged; DoT clients may bypass the takeover")
             }
             RootDnsRules.flushCaches()
@@ -202,18 +182,11 @@ class RootDnsService : Service() {
         plane.attachCacheMirror(current)
 
         current.setFilterDNS(true)
-        // Root mode is not a TUN: AAAA answers remain valid, so do not suppress them.
         current.setBlockIpv6(false)
-        // Same pause / allowlist-only values every other mode replays after start.
         BlockPauseLink.applyTo(this, current)
         EngineRuleLoader.apply(this, current, RuleDataset.NORMAL, TAG)
     }
 
-    /// Binds the standalone DNS server, trying the preferred ports in order.
-    ///
-    /// Loopback only: the redirect target is `127.0.0.1:<port>`, and a reply from any other local
-    /// address would fail the client's connected-socket source check before conntrack can undo
-    /// the redirect.
     private fun startServer(current: Engine): Int {
         var lastError = ""
         for (port in PORTS) {
@@ -243,7 +216,6 @@ class RootDnsService : Service() {
         }
     }
 
-    /// Stops the service in response to a stop action or a stopSelf; idempotent.
     private fun stopAll(stopSelf: Boolean) {
         stopRequested = true
         stopInternal()
@@ -256,8 +228,6 @@ class RootDnsService : Service() {
         stopRequested = true
         val hadRules = RootDnsRuntime.rulesInstalled(this)
         if (hadRules) {
-            // Chains and Private DNS go first: until they are gone, redirecting to a listener that
-            // is about to close would fail every query.
             if (RootDnsRules.teardown(this)) {
                 RootDnsRuntime.markRulesInstalled(this, false)
             }
@@ -366,8 +336,6 @@ class RootDnsService : Service() {
         private const val NOTIFICATION_ID = 5302
         private const val KEY_LOG_MODE = "dns_log_mode"
 
-        /// Preferred listener ports; the first one that binds wins. Deliberately not 53: the
-        /// engine runs as the app UID, and root only owns the redirect into this port.
         private val PORTS = intArrayOf(15353, 15354, 15355, 15356)
 
         const val ACTION_START = "com.haoze.diting.root.START"
@@ -413,7 +381,6 @@ class RootDnsService : Service() {
         fun stopIntent(context: Context): Intent =
             Intent(context, RootDnsService::class.java).setAction(ACTION_STOP)
 
-        /// Rebuilds the last start intent for the quick settings tile and the widget.
         fun restoreIntent(context: Context): Intent? {
             val dnsConfig = lastDnsConfig(context) ?: return null
             return startIntent(context, dnsConfig)
@@ -428,7 +395,6 @@ class RootDnsService : Service() {
             }
         }
 
-        /// Null on success, otherwise the reason to show.
         fun applyDnsConfig(context: Context, dnsConfig: String): String? {
             if (dnsConfig.isBlank()) return "缺少 DNS 配置"
             val current = RootDnsRuntime.engine ?: return "服务未运行"
@@ -454,8 +420,6 @@ class RootDnsService : Service() {
         fun setPersistedRunning(context: Context, value: Boolean) =
             RootDnsRuntime.setPersistedRunning(context, value)
 
-        /// Cold-start repair: a crash between install and teardown leaves the redirect pointing at
-        /// a dead listener, which breaks DNS for the whole device until it is removed.
         fun reconcileStaleRules(context: Context) {
             if (!RootDnsRuntime.rulesInstalled(context)) return
             if (RootDnsRuntime.running || RootDnsRuntime.starting) return

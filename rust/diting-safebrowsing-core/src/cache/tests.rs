@@ -1,6 +1,3 @@
-//! Behaviour ported from the Go `hashCache` cases: dedupe by prefix, negative answers cached,
-//! expiry, size limit and LRU order. Time is injected, so nothing here sleeps.
-
 use super::*;
 use crate::hash::HASH_SIZE;
 
@@ -96,7 +93,6 @@ fn least_recently_used_entry_is_evicted() {
     cache.store(&[hash(1)], &[hash(1)], 10);
     cache.store(&[hash(2)], &[hash(2)], 20);
 
-    // A hit promotes hash(1), so hash(2) becomes the eviction candidate.
     assert!(cache.lookup(&[hash(1)], 30).blocked);
     cache.store(&[hash(3)], &[hash(3)], 40);
 

@@ -1,13 +1,3 @@
-//! Replays the stage 0 baseline corpus.
-//!
-//! Two kinds of test:
-//!
-//! * `fixtures_are_current` regenerates every corpus in memory and compares it with the committed
-//!   file. A deliberate semantic change has to be followed by
-//!   `cargo run -p diting-corpus --bin gen-corpus`, so drift can never hide;
-//! * one replay per corpus, asserting the frozen bytes against the *current* implementation, so a
-//!   regression names the corpus it broke instead of just failing the freshness check.
-
 use std::fs;
 
 use diting_corpus::{contract, dns, fixture_dir, mitm, tun};

@@ -1,4 +1,3 @@
-/// Minimal WebDAV client: PROPFIND, MKCOL, PUT, GET. Credentials stay in memory.
 library;
 
 import 'dart:convert';
@@ -28,7 +27,6 @@ class DavCredentials {
     path: _normalizePath(path),
   );
 
-  /// A missing leading slash makes PROPFIND hit the parent, so normalize both ends.
   static String _normalizePath(String raw) {
     var value = raw.trim();
     if (value.isEmpty) return '/diting/';
@@ -41,7 +39,6 @@ class DavCredentials {
 
   String fileUrl(String name) => '$server$path$name';
 
-  /// Never logged or persisted.
   String get basicAuthHeader {
     final raw = '$username:$password';
     return 'Basic ${base64Encode(utf8.encode(raw))}';
@@ -71,10 +68,8 @@ class DavClient {
     this.userAgent = appFallbackUserAgent,
   });
 
-  /// 20s: a self-hosted LAN server answers quickly; beyond that it is unreachable.
   final Duration timeout;
 
-  /// `/config/user-agents` override; some WebDAV gateways log or filter on UA.
   final String userAgent;
 
   Future<DavProbeResult> probe(DavCredentials rawCredentials) async {
@@ -86,7 +81,6 @@ class DavClient {
           return const DavProbeResult.ok(created: false);
         }
         if (status == 404) {
-          // A missing directory is normal on first use; failing to create it is not.
           final created = await _mkcol(client, credentials);
           return created
               ? const DavProbeResult.ok(created: true)
@@ -98,7 +92,6 @@ class DavClient {
         );
       });
     } on SocketException catch (error) {
-      // Unreachable address, DNS failure and closed port look alike to users.
       return DavProbeResult.failed(currentL10n.davProbeConnect(error.message));
     } on HandshakeException {
       return DavProbeResult.failed(currentL10n.davProbeTls);
@@ -171,7 +164,6 @@ class DavClient {
     });
   }
 
-  /// One client per operation; it is force-closed so an abandoned socket cannot outlive the call.
   Future<T> _withClient<T>(Future<T> Function(HttpClient client) action) async {
     final client = HttpClient()..connectionTimeout = timeout;
     try {
@@ -181,7 +173,6 @@ class DavClient {
     }
   }
 
-  /// Opens [url] with the headers every WebDAV request shares.
   Future<HttpClientRequest> _openRequest(
     HttpClient client,
     String method,
@@ -206,7 +197,6 @@ class DavClient {
       credentials.directoryUrl,
       credentials,
     );
-    // Depth 0 asks for this resource only; no child listing is needed.
     request.headers.set('Depth', '0');
     request.headers.contentType = ContentType('application', 'xml');
     final body = utf8.encode(
@@ -232,7 +222,6 @@ class DavClient {
     request.headers.contentLength = 0;
     final response = await request.close().timeout(timeout);
     await response.drain<void>();
-    // 201 means created; 405 means it already exists, which is fine under races.
     return response.statusCode == 201 || response.statusCode == 405;
   }
 

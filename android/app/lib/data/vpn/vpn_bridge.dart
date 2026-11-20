@@ -1,5 +1,3 @@
-/// Dart side of `com.haoze.diting/vpn`. Dart decides policy, the platform side applies it; abstract
-/// so state tests need no device.
 library;
 
 import 'package:flutter/services.dart';
@@ -7,23 +5,17 @@ import 'package:flutter/services.dart';
 const vpnChannelName = 'com.haoze.diting/vpn';
 const expressVpnChannelName = 'com.haoze.diting/express_vpn';
 
-/// The tunnel-like services that share the same lifecycle methods. The root channel is the
-/// normal mode's no-VPN variant; its `reloadRules` no-ops when nothing is running.
 const dataPlaneChannelNames = [
   vpnChannelName,
   expressVpnChannelName,
   'com.haoze.diting/root_dns',
 ];
 
-/// Best-effort in-place rule reload for whichever data plane is running, after a subscription or
-/// rule change. The non-running mode's channel simply no-ops. A missing platform (desktop/tests)
-/// throws `MissingPluginException` and is swallowed — reloading rules must never fail a rule edit.
 Future<void> requestVpnRuleReload() async {
   for (final name in dataPlaneChannelNames) {
     try {
       await MethodChannel(name).invokeMethod<bool>('reloadRules');
     } catch (_) {
-      // No native channel, or the service is not running: nothing to reload.
     }
   }
 }
@@ -44,23 +36,16 @@ class VpnStartRequest {
   final String dnsConfig;
   final String outboundProxy;
 
-  /// App that owns the loopback proxy port. Excluded from the TUN: Android lets only one app
-  /// bind that port, so its upstream sockets must not be captured or they loop back into it.
   final String proxyAppPackage;
   final bool bypassLan;
   final String ipv6Mode;
 
-  /// `excluded_app_packages`: bypass the TUN via `addDisallowedApplication`.
   final List<String> excludedPackages;
 
-  /// `blocked_app_packages`: resolved to UIDs for `Engine.setBlockedUIDs`.
   final List<String> blockedPackages;
 
-  /// `http_inspection_app_packages`: resolved to UIDs for `Engine.setMitmAllowedUIDs`.
   final List<String> inspectionPackages;
 
-  /// `http_inspection_enabled` AND `https_inspection_ready`: without the CA in the user trust
-  /// store, MITM would break every HTTPS request.
   final bool inspectionEnabled;
 }
 
@@ -99,20 +84,13 @@ class VpnStatus {
   final bool running;
   final bool persisted;
 
-  /// Native start is still in progress (root mode loads rules and installs rules before it
-  /// reports running). The tunnel services answer `running` almost immediately, so this is false
-  /// there.
   final bool starting;
 
-  /// Another VPN took the slot and the service waits to reconnect; [running] is false meanwhile.
   final bool reclaiming;
   final String? error;
 
-  /// When the service actually came up, reported by the native side. Null while stopped or on a
-  /// build that does not report it.
   final DateTime? startedAt;
 
-  /// Engine counters; empty when the tunnel has not started.
   final Map<String, Object?> stats;
 
   factory VpnStatus.fromMap(Object? raw) {
@@ -130,14 +108,11 @@ class VpnStatus {
   }
 }
 
-/// Converts a native epoch-millis field to a `DateTime`; missing or non-positive means "unknown".
 DateTime? epochMillis(Object? raw) {
   final millis = raw is num ? raw.toInt() : 0;
   return millis > 0 ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
 }
 
-/// One traffic sample in bytes per second. [unsupported] means no counters at all, which differs
-/// from an idle 0 B/s.
 class VpnTrafficRates {
   const VpnTrafficRates({
     required this.running,
@@ -172,8 +147,6 @@ class VpnTrafficRates {
 abstract class VpnController {
   void Function(bool granted)? onPrepareResult;
 
-  /// True when the app already holds VPN permission; otherwise opens the system dialog and returns
-  /// false.
   Future<bool> prepare();
 
   Future<VpnStartResult> start(VpnStartRequest request);
@@ -182,10 +155,8 @@ abstract class VpnController {
 
   Future<VpnStatus> status();
 
-  /// Live up/down rates, polled at 1 Hz. A missing channel returns idle rates.
   Future<VpnTrafficRates> trafficRates();
 
-  /// Hot-applies [dnsConfig] to the running engine; null on success, otherwise the reason.
   Future<String?> applyDnsConfig(String dnsConfig);
 }
 
@@ -199,8 +170,6 @@ class MethodChannelVpnController implements VpnController {
   @override
   void Function(bool granted)? onPrepareResult;
 
-  /// Installing the handler needs an initialized binding, so it waits for the first platform call
-  /// (provider tests build this without one).
   void _ensureHandler() {
     if (_handlerInstalled) return;
     _channel.setMethodCallHandler(_handleCall);
@@ -269,7 +238,6 @@ class MethodChannelVpnController implements VpnController {
       final raw = await _channel.invokeMethod<Object?>('trafficRates');
       return VpnTrafficRates.fromMap(raw);
     } on MissingPluginException {
-      // No native implementation (desktop host, tests): not 0 B/s and not an error.
       return const VpnTrafficRates(
         running: false,
         txBps: 0,

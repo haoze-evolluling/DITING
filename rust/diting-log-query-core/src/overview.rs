@@ -1,5 +1,3 @@
-//! The dashboard snapshot: one JSON answer the page renders without re-counting anything.
-
 use serde_json::{json, Value};
 
 use crate::classify;

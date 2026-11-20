@@ -1,15 +1,3 @@
-//! Byte-level parity with the Kotlin DTRI writer.
-//!
-//! The `.dtri` fixtures are produced by `rust/tools/dtri-reference/DTRIReference.java`, a desktop
-//! port of `MappedSubscriptionRuleIndex.compile`; the Rust writer must emit exactly the same bytes.
-//! Regenerate with:
-//!
-//! ```bash
-//! java rust/tools/dtri-reference/DTRIReference.java \
-//!     rust/diting-rule-core/tests/fixtures/basic.rules.txt \
-//!     rust/diting-rule-core/tests/fixtures/basic.dtri
-//! ```
-
 use std::fs;
 use std::path::PathBuf;
 
@@ -34,7 +22,6 @@ fn fixture(name: &str) -> PathBuf {
         .join(name)
 }
 
-/// Same corpus format as the Java reference: tab separated, `~` is null and `=` is "".
 fn parse_corpus(text: &str) -> Vec<OwnedRule> {
     text.lines()
         .filter(|line| !line.is_empty())

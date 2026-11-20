@@ -1,40 +1,17 @@
-//! The callback thread: every Kotlin callback is delivered from one dedicated thread.
-//!
-//! The Go engine called `BatchLogCallback.onDNSQueryBatch` from whichever goroutine had a batch ready,
-//! and gomobile attached that goroutine to the JVM on the way in. Under Rust the producer is a tokio
-//! worker or, here, the TUN worker thread; letting those threads into the JVM would mean an
-//! attach/detach (or a permanently attached foreign worker) on the data path, and a slow Kotlin
-//! callback would stall packet processing.
-//!
-//! So the data plane only ever does `try_send`: one named thread owns the JVM attachment, drains the
-//! queue, and calls Java. Three properties fall out of that and each one is tested:
-//!
-//! * **one thread** — the JVM sees every callback from the same thread, which is what makes Kotlin
-//!   callbacks safe to write without extra synchronisation (the app's log writer assumes it);
-//! * **bounded** — a full queue drops the payload and counts it instead of blocking the TUN worker;
-//! * **isolated** — a panic in the handler is caught, so one bad callback cannot take the thread down
-//!   and silently stop all future logging.
-//!
-//! The handler is created *on* the new thread (`factory`), which is where the JNI adapter attaches to
-//! the JVM once for the thread's lifetime.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError};
 use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
-/// What the callback thread did so far.
 #[derive(Debug, Clone, Default)]
 pub struct CallbackStats {
     pub delivered: u64,
     pub dropped: u64,
     pub panics: u64,
-    /// The name the JVM will see (`Thread.currentThread().getName()`).
     pub thread: String,
 }
 
-/// One queue, one thread, one handler.
 pub struct Dispatcher {
     name: String,
     tx: Mutex<Option<SyncSender<String>>>,
@@ -45,11 +22,6 @@ pub struct Dispatcher {
 }
 
 impl Dispatcher {
-    /// Spawns the callback thread.
-    ///
-    /// `factory` runs on the new thread before the first payload, so the JNI adapter can attach there
-    /// exactly once; `capacity` is how many payloads may be queued before [`Dispatcher::dispatch`]
-    /// starts dropping.
     pub fn spawn<F>(
         name: &str,
         capacity: usize,
@@ -79,7 +51,6 @@ impl Dispatcher {
         }))
     }
 
-    /// Queues one payload. `false` means the queue was full and the payload was dropped.
     pub fn dispatch(&self, payload: String) -> bool {
         let sender = self
             .tx
@@ -103,7 +74,6 @@ impl Dispatcher {
         }
     }
 
-    /// Closes the queue and waits for the thread. Idempotent.
     pub fn stop(&self) {
         self.tx.lock().unwrap_or_else(|err| err.into_inner()).take();
         let handle = self
@@ -140,11 +110,8 @@ fn run<F>(
     F: FnMut(&str),
 {
     let (delivered, panics) = counters;
-    // On the callback thread: the JNI adapter attaches to the JVM here, once.
     let mut handler = factory();
     while let Ok(payload) = queue.recv() {
-        // A panicking callback must not end the thread: the app would lose every later log line with
-        // no diagnostic at all.
         match catch_unwind(AssertUnwindSafe(|| handler(&payload))) {
             Ok(()) => {
                 delivered.fetch_add(1, Ordering::SeqCst);
@@ -178,8 +145,6 @@ mod tests {
         let seen = Arc::new(AtomicUsize::new(0));
         let recorded = threads.clone();
         let counter = seen.clone();
-        // The queue must hold every payload this test produces (4 x 250) so the assertion of "no
-        // payload was lost" is about the single-thread callback, not about back-pressure drops.
         let dispatcher = Dispatcher::spawn("diting-test-callback", 2048, move || {
             move |_payload: &str| {
                 recorded
@@ -191,7 +156,6 @@ mod tests {
         })
         .expect("spawn");
 
-        // Produce from several threads, the way tokio workers would.
         let producers: Vec<_> = (0..4)
             .map(|index| {
                 let dispatcher = dispatcher.clone();
@@ -207,8 +171,6 @@ mod tests {
         }
         wait_for(&dispatcher, 1000);
 
-        // Copy the thread ids out and release the lock: the handler takes it too, and holding it
-        // across `stop` would deadlock the join below.
         let observed: Vec<ThreadId> = {
             let threads = threads.lock().unwrap_or_else(|err| err.into_inner());
             threads.clone()
@@ -228,7 +190,6 @@ mod tests {
 
     #[test]
     fn a_full_queue_drops_and_counts_instead_of_blocking_the_producer() {
-        // Nothing drains the queue while the gate is shut, so one payload has to be dropped.
         let gate = Arc::new((StdMutex::new(false), std::sync::Condvar::new()));
         let waiting = gate.clone();
         let dispatcher = Dispatcher::spawn("diting-test-full", 1, move || {
@@ -242,7 +203,6 @@ mod tests {
         .expect("spawn");
 
         assert!(dispatcher.dispatch("first".to_string()));
-        // The handler is still parked, so the queue (capacity 1) is full.
         let started = Instant::now();
         assert!(!dispatcher.dispatch("second".to_string()));
         assert!(
@@ -251,7 +211,6 @@ mod tests {
         );
         assert_eq!(dispatcher.stats().dropped, 1);
 
-        // Let the handler out, then let the first payload be delivered.
         let (lock, ready) = &*gate;
         *lock.lock().unwrap_or_else(|err| err.into_inner()) = true;
         ready.notify_all();

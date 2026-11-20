@@ -1,6 +1,3 @@
-//! The static catalog. Keys mirror the Dart `CleanupAction` names so a missing action fails loudly
-//! in `CleanupPlan.action` instead of silently cleaning nothing.
-
 use serde_json::{json, Value};
 
 fn actions() -> Value {
@@ -34,7 +31,6 @@ fn rule_pairs() -> Value {
     ])
 }
 
-/// The complete document; a fresh `Value` per call so the FFI layer never hands out shared state.
 pub fn plan() -> Value {
     json!({
         "actions": actions(),

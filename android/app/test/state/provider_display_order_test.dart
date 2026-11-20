@@ -1,6 +1,3 @@
-// The service display page arranges the provider order; the provider picker ("选择竞速服务商")
-// reuses that order, so it must be persisted and read back instead of following catalog order.
-
 import 'dart:convert';
 
 import 'package:diting_android/data/mock_data.dart';
@@ -107,7 +104,6 @@ void _order() {
     );
     await tester.pumpAndSettle();
 
-    // A rounded top on the first provider row would split the card at the group switch.
     ItemPosition positionOf(String title) => tester
         .widget<ItemPositionProvider>(
           find
@@ -126,7 +122,6 @@ void _order() {
 
   testWidgets('拖动行后写回顺序', (tester) async {
     final prefs = store();
-    // Tall enough for the whole page: an off-screen row cannot receive the drag.
     tester.view.physicalSize = const Size(1170, 5600);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -138,15 +133,12 @@ void _order() {
     );
     await tester.pumpAndSettle();
 
-    // `ReorderableListView`s follow the page sections: DNS, DoH, DoT.
     Finder dohList() => find.byType(ReorderableListView).at(1);
     Finder rowText(String name) =>
         find.descendant(of: dohList(), matching: find.text(name));
     double topOf(String name) => tester.getTopLeft(rowText(name)).dy;
     expect(topOf('阿里云'), lessThan(topOf('Google')));
 
-    // The DoH rows use the handle to move; the row itself only toggles, so the drag starts
-    // immediately on the handle.
     final handle = find.descendant(
       of: find.descendant(of: dohList(), matching: find.byType(ListItem)).last,
       matching: find.byWidgetPredicate(
@@ -179,7 +171,6 @@ MockProvider _providerOf(String id) => MockProvider(
   latencyMs: -1,
 );
 
-/// Custom providers are the ones the user maintains, so they sit above the built-in presets.
 void _management() {
   TestWidgetsFlutterBinding.ensureInitialized();
 

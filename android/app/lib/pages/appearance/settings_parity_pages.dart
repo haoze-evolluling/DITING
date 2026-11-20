@@ -1,4 +1,3 @@
-/// Notifications, background and language sub pages; keys in `notification_settings_prefs`.
 library;
 
 import 'dart:async';
@@ -22,8 +21,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Notification settings. The keys live in `notification_settings_prefs`: the
-/// foreground service reads that container, so writing elsewhere silently does nothing.
 class ThemeNotificationPage extends ConsumerStatefulWidget {
   const ThemeNotificationPage({super.key});
 
@@ -43,7 +40,6 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
     final settings = ref.read(notificationSettingsProvider);
     _running = TextEditingController(text: settings.runningText);
     _stopped = TextEditingController(text: settings.stoppedText);
-    // Labels follow the in-app language; refreshed here so a language switch reaches the shade.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       writeNotificationStatLabels(
@@ -61,8 +57,6 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
     super.dispose();
   }
 
-  /// The services read the text from prefs, so a running notification only picks the edit up when
-  /// it is told to rebuild. Debounced: typing must not repaint the shade on every keystroke.
   void _refreshNotification() {
     _refreshDebounce?.cancel();
     _refreshDebounce = Timer(const Duration(milliseconds: 300), () {
@@ -98,7 +92,6 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
             enabled: settings.persistent,
             onChanged: _refreshNotification,
           ),
-          // The header also supplies the gap a titled section leaves above it.
           ListHeader(title: context.l10n.notificationTextSection),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -135,8 +128,6 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
                 glyph: AppGlyphs.lock,
                 title: context.l10n.notificationSystemPermission,
                 subtitle: context.l10n.notificationSystemPermissionSubtitle,
-                // Opening the page directly beats a hint: the hint only told people what
-                // to do and left them to find it in Settings.
                 onPressed: () => ref
                     .read(permissionStatesProvider.notifier)
                     .openSystemSettings(AppPermission.notification),
@@ -149,8 +140,6 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
   }
 }
 
-/// App background. Picking goes through the native `PickVisualMedia` channel; without
-/// it the page still works and only "add image" reports that it is unavailable.
 class ThemeBackgroundPage extends ConsumerWidget {
   const ThemeBackgroundPage({super.key});
 
@@ -237,7 +226,6 @@ class _WallpaperGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Thumbnails use a phone-like 9:16 ratio in three columns.
     const aspectRatio = 9 / 16;
     final rows = <Widget>[];
     for (var i = 0; i < uris.length; i += 3) {
@@ -274,8 +262,6 @@ class _WallpaperGrid extends StatelessWidget {
       context: context,
       child: CommonDialog(
         title: context.l10n.backgroundDeleteTitle,
-        // The last action is destructive: `destructive` tints it red on a filled
-        // background, consistent with the other confirmation dialogs.
         destructive: true,
         actions: [
           TextButton(
@@ -294,7 +280,6 @@ class _WallpaperGrid extends StatelessWidget {
   }
 }
 
-/// One wallpaper thumbnail, checked when selected.
 class _WallpaperThumbnail extends StatefulWidget {
   const _WallpaperThumbnail({
     required this.uri,
@@ -474,8 +459,6 @@ class SettingsBackgroundPage extends ConsumerWidget {
                 glyph: AppGlyphs.battery,
                 title: context.l10n.foregroundIgnoreBattery,
                 subtitle: context.l10n.foregroundIgnoreBatterySubtitle,
-                // Asks the system instead of describing the screen path; the request shows the
-                // "always run in background" dialog when the ROM allows it.
                 onPressed: () => ref
                     .read(permissionStatesProvider.notifier)
                     .request(AppPermission.batteryOptimization),
@@ -488,8 +471,6 @@ class SettingsBackgroundPage extends ConsumerWidget {
   }
 }
 
-/// Root probe status plus a tap-to-retry action. The probe runs only while the takeover switch is
-/// on, so a normal settings visit never invokes `su`.
 class _RootTakeoverProbeRow extends ConsumerWidget {
   const _RootTakeoverProbeRow({required this.onRefresh});
 
@@ -522,8 +503,6 @@ class _RootTakeoverProbeRow extends ConsumerWidget {
   }
 }
 
-/// The interface language list. Every entry of [AppLanguageMode] is offered; adding a language
-/// only needs a new `lib/l10n/app_<code>.arb` and one enum entry.
 class SettingsLanguagePage extends ConsumerWidget {
   const SettingsLanguagePage({super.key});
 

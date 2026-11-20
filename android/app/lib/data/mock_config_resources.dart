@@ -1,5 +1,3 @@
-/// Kept-resource demo data. Initial values only; mutable copies live in
-/// `lib/state/config_providers_resources.dart`.
 library;
 
 class MockUserAgent {
@@ -9,23 +7,16 @@ class MockUserAgent {
     this.isDefault = false,
   });
 
-  /// The actual User-Agent string sent on the wire.
   final String value;
 
-  /// The user-facing label shown on the card. Empty for rows saved before names
-  /// existed; [displayName] then falls back to [value] so nothing breaks.
   final String name;
 
-  /// Built-in presets can be selected but not removed or renamed.
   final bool isDefault;
 
-  /// What the card shows: the name, not the raw UA string.
   String get displayName => name.trim().isEmpty ? value : name;
 }
 
 const mockUserAgents = <MockUserAgent>[
-  // Built-in presets: common browsers, kept for bypassing UA-sniffing servers.
-  // Built-ins cannot be deleted; the core falls back to its own UA otherwise.
   MockUserAgent(
     name: 'Chrome / Android',
     value:
@@ -57,7 +48,6 @@ const mockUserAgents = <MockUserAgent>[
         'Gecko/20100101 Firefox/127.0',
     isDefault: true,
   ),
-  // Editable examples of user-added agents.
   MockUserAgent(
     name: 'Chrome / Windows',
     value:

@@ -1,33 +1,15 @@
-//! Answer-record walk with owner names and raw rdata.
-//!
-//! The reply builder needs more than [`crate::parse_response`] exposes: the A/AAAA records it
-//! copies out of a rewritten answer keep their own owner name, class, TTL and rdata. This walk
-//! returns exactly those fields, decoded with the same presentation escaping the rest of the wire
-//! layer uses (`unpack_name`), so Go can fill a `dns.RR` without re-parsing the message.
-
 use crate::bits::{read_u16, read_u32};
 use crate::name::unpack_name;
 
-/// One answer-section record.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Record {
-    /// `dns.RR_Header.Name`, already escaped for presentation.
     pub name: String,
-    /// `dns.RR_Header.Rrtype`.
     pub rrtype: u16,
-    /// `dns.RR_Header.Class`.
     pub class: u16,
-    /// `dns.RR_Header.Ttl`.
     pub ttl: u32,
-    /// The record body exactly as it appears on the wire (A/AAAA: the address bytes).
     pub rdata: Vec<u8>,
 }
 
-/// Reads the answer section of one message.
-///
-/// Like the cache walk, a message that ends exactly on a record boundary is accepted with the
-/// records the header declared but did not carry dropped; that is the only leniency
-/// `dns.Msg.Unpack` had here.
 pub fn parse_answer_records(wire: &[u8]) -> Option<Vec<Record>> {
     if wire.len() < 12 {
         return None;

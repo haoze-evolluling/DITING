@@ -15,7 +15,6 @@ fn a_positive_flow_uid_lives_for_two_seconds() {
     assert_eq!(cache.len(), 1);
     assert_eq!(cache.lookup(&key(40_000), 1_999_999_999), Some(10_123));
     assert_eq!(cache.lookup(&key(40_000), 2_000_000_000), None);
-    // The expired row is still counted, exactly like the Go map.
     assert_eq!(cache.len(), 1);
 }
 
@@ -32,12 +31,10 @@ fn a_negative_flow_uid_lives_for_half_a_second() {
 
 #[test]
 fn the_flow_key_truncates_like_the_go_struct_assignment() {
-    // Ports go through uint16, the protocol through uint8.
     assert_eq!(key(70_000), key(70_000 - 65_536));
     let wide = FlowKey::new(addr(2), 1, addr(9), 2, 261);
     let narrow = FlowKey::new(addr(2), 1, addr(9), 2, 5);
     assert_eq!(wide, narrow);
-    // The two address widths stay distinct, as netip.Addr made them.
     assert_ne!(
         Addr::from_bytes(&[0, 0, 0, 0]).unwrap(),
         Addr::from_bytes(&[0u8; 16]).unwrap()
@@ -54,12 +51,10 @@ fn the_flow_cache_prunes_expired_rows_before_resetting() {
     }
     assert_eq!(cache.len(), FLOW_UID_CACHE_MAX_ENTRIES as u32);
 
-    // Still inside every TTL: nothing to prune, so the whole map is dropped.
     cache.store(key(100_000), 2000, 1_000_000_000);
     assert_eq!(cache.len(), 1);
     assert_eq!(cache.lookup(&key(100_000), 1_000_000_001), Some(2000));
 
-    // Past every TTL: the prune frees the room, so the live rows are not dropped.
     for index in 0..FLOW_UID_CACHE_MAX_ENTRIES - 1 {
         cache.store(key(index as i32), 1000, 0);
     }
@@ -97,7 +92,6 @@ fn the_package_cache_resets_at_its_cap_without_pruning() {
     }
     assert_eq!(cache.len(), UID_PACKAGE_CACHE_MAX_ENTRIES as u32);
 
-    // No prune pass: the whole map is dropped even though every row is still live.
     cache.store(9999, "com.late", 1);
     assert_eq!(cache.len(), 1);
     assert_eq!(cache.lookup(0, 1), None);

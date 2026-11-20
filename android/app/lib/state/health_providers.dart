@@ -1,4 +1,3 @@
-/// U1 保护健康评分的数据采集：把各子系统的状态汇成 [HealthInput]，交给纯函数打分。
 library;
 
 import 'package:diting_android/data/db/subscription_models.dart';
@@ -11,10 +10,8 @@ import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// 关键权限：没有 VPN 权限保护根本起不来；通知权限关系到前台状态可见与快捷动作。
 const _criticalPermissions = [AppPermission.vpn, AppPermission.notification];
 
-/// 保护健康报告。任一数据源不可用时降级而不是报错，避免把「读不到」误报成「不健康」。
 final healthReportProvider = FutureProvider<HealthReport>((ref) async {
   final core = ref.watch(coreStateProvider);
   final stats = ref.watch(serviceStatsProvider);
@@ -26,8 +23,6 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
         orElse: () => const <SubscriptionEntry>[],
       );
 
-  // Root takeover never asks for the VPN consent; scoring it as missing would report a healthy
-  // setup as broken. Root availability is checked at start (and on the settings page) instead.
   final rootTakeover =
       ref.watch(workModeProvider) == AppWorkMode.normal &&
       ref.watch(rootDnsTakeoverProvider);
@@ -42,7 +37,6 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
         .where((permission) => perms.states[permission] == true)
         .length;
   } catch (_) {
-    // 权限渠道不可用：按已授予处理，宁可少报也不谎报缺权限。
     granted = critical.length;
   }
 
@@ -53,7 +47,6 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
     try {
       if (entry.health == SubscriptionHealth.failed) failedSubs++;
     } catch (_) {
-      // 订阅健康需要原生分类器；不可用时不计失败。
     }
   }
 

@@ -1,12 +1,3 @@
-/// Native substring index over one rule table.
-///
-/// The rules page narrows a whole table on every keystroke: pattern or target, case-insensitive
-/// `contains`. On a subscription-sized table that is 25-35 ms of lowercasing plus scanning on the UI
-/// isolate per key. [`RuleSearchIndex`] hands the rows to Rust once (folded there, exactly like
-/// `String.toLowerCase`, see `rust/diting-rule-core/src/search.rs`) and then asks for row indices.
-///
-/// The library is required: a rejected payload throws out of [`match`] instead of quietly scanning
-/// in Dart. Payload layout lives in `src/search_ffi.rs`.
 library;
 
 import 'dart:convert';
@@ -14,38 +5,27 @@ import 'dart:typed_data';
 
 import 'package:diting_android/data/rules/rust_rule_core.dart';
 
-/// One searchable row: the pattern plus the optional target column the rules page matches too.
 typedef RuleSearchEntry = ({String pattern, String? target});
 
-/// `"DRS1"` read as a little-endian u32; the first field of every build payload.
 const _buildMagic = 0x31535244;
 
-/// Must match `SEARCH_ABI_VERSION` in `rust/diting-rule-core/src/search_ffi.rs`.
 const _searchAbiVersion = 1;
 
-/// `u32::MAX`, the "no target" marker on the wire.
 const _noneLength = 0xFFFFFFFF;
 
 class RuleSearchIndex {
-  /// [entries] is called once, the first time a query needs the index: a table that is never
-  /// searched (startup paging, a toggle with an empty search box) never pays for folding it.
   RuleSearchIndex(this._entries);
 
   final List<RuleSearchEntry> Function() _entries;
 
   int? _handle;
 
-  /// Row indices whose pattern or target contains [needle], ascending. Throws [StateError] when
-  /// the native index cannot serve the query.
-  ///
-  /// `needle` is folded natively, so it can be passed as typed.
   Uint32List match(String needle) {
     final core = RustRuleCore.instance;
     final handle = _handle ??= core.buildSearchIndex(_encode(_entries()));
     return core.matchSearchIndex(handle, needle);
   }
 
-  /// Releases the native rows. The provider calls this when the table it was built from changes.
   void dispose() {
     final handle = _handle;
     _handle = null;
@@ -53,7 +33,6 @@ class RuleSearchIndex {
   }
 }
 
-/// Encodes one build payload: header, then `pattern` and `target?` per row.
 Uint8List _encode(List<RuleSearchEntry> entries) {
   final writer = _PayloadWriter(12 + entries.length * 32);
   writer.u32(_buildMagic);
@@ -71,8 +50,6 @@ Uint8List _encode(List<RuleSearchEntry> entries) {
   return writer.take();
 }
 
-/// Growable little-endian writer; `BytesBuilder` would allocate a list per `u32`, which on a
-/// 100k-row table is the kind of per-row garbage this module exists to avoid.
 class _PayloadWriter {
   _PayloadWriter(int capacity) : _bytes = Uint8List(capacity < 64 ? 64 : capacity);
 
@@ -85,12 +62,6 @@ class _PayloadWriter {
     _length += 4;
   }
 
-  /// Length prefix plus bytes.
-  ///
-  /// ASCII — which is what rule patterns are, after normalization — is copied straight from the
-  /// UTF-16 code units, because `utf8.encode` allocates a `Uint8List` per string: on a 100k-row
-  /// table that alone cost ~40 ms, against ~17 ms for the byte loop. The rare non-ASCII row falls
-  /// back to the real encoder.
   void string(String value) {
     final units = value.codeUnits;
     _reserve(4 + units.length);

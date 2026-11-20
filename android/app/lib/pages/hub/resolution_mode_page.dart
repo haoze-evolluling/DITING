@@ -10,8 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Resolution mode home (upstream `ResolutionModeHomeScreen`): current mode, built-in
-/// protocol and four mode cards, all driven by the existing `ResolutionMode` state.
 class ResolutionModePage extends ConsumerStatefulWidget {
   const ResolutionModePage({super.key});
 
@@ -150,7 +148,6 @@ class ResolutionModeConfigPage extends ConsumerStatefulWidget {
 
 class _ResolutionModeConfigPageState
     extends ConsumerState<ResolutionModeConfigPage> {
-  /// Local filter; null follows the built-in protocol until the user picks one here.
   ProviderProtocol? _protocol;
 
   ResolutionMode get _mode => switch (widget.modeId) {
@@ -173,12 +170,9 @@ class _ResolutionModeConfigPageState
       showAppSnack(context, context.l10n.resolutionMinProviders);
       return;
     }
-    // The notifier owns the order: it appends new ids and keeps the stored sequence.
     ref.read(raceProvidersProvider.notifier).toggle(provider.id);
   }
 
-  /// Swaps the row with its neighbour inside [visibleIds] (the current protocol group), so the
-  /// arrows always move what the user sees and other protocols keep their stored slots.
   void _move(List<String> visibleIds, String id, int delta) {
     final index = visibleIds.indexOf(id);
     final target = index + delta;
@@ -186,8 +180,6 @@ class _ResolutionModeConfigPageState
       return;
     }
     final other = visibleIds[target];
-    // Swap the two stored slots rather than the whole list, so the order lives in the notifier
-    // (which persists it) instead of a page-local copy that could drift.
     final next = ref.read(raceProvidersProvider).toList();
     final from = next.indexOf(id);
     final to = next.indexOf(other);
@@ -196,7 +188,6 @@ class _ResolutionModeConfigPageState
     }
     next[from] = other;
     next[to] = id;
-    // Primary-to-backup order is persisted (the engine tries providers in list order).
     ref.read(raceProvidersProvider.notifier).reorder(next);
   }
 
@@ -214,7 +205,6 @@ class _ResolutionModeConfigPageState
     final valid = _single
         ? providers.any((provider) => provider.id == selectedId)
         : selectedCount >= RaceProvidersNotifier.minCount;
-    // Render the stored order: it is what the engine tries, so the first row is the primary.
     final ordered = [
       for (final id in raceIds)
         ...catalog.where(
@@ -319,7 +309,6 @@ class _ResolutionModeConfigPageState
                 ),
             ],
           ),
-          // DNS64 只影响 IPv6-only 网络下的 AAAA 合成，单列一张一级卡过于零碎，收进解析策略页。
           generateSection(
             title: context.l10n.hubModuleMore,
             items: [

@@ -1,7 +1,3 @@
-// A rule edit must reach whichever data plane is running: normal or express tunnel.
-// `requestVpnRuleReload` fans out to both channels and each native side no-ops when its mode is
-// stopped, so this pins the wiring (a missing channel would silently drop hot reload).
-
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,9 +1,3 @@
-//! Platform capability traits.
-//!
-//! These mirror the former Go service's `internal/platform/interfaces.go`. The service composes one
-//! implementation per OS and the IPC layer talks only to these traits, which keeps the handlers
-//! testable with in-memory fakes.
-
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -19,8 +13,6 @@ pub trait AdapterScanner: Send + Sync {
     async fn active_physical_adapters(&self) -> PlatformResult<Vec<AdapterInfo>>;
 }
 
-/// DNS takeover contract. Implementations must roll back on failure and clean the state file, and
-/// must restore the snapshot atomically on `restore*`.
 #[async_trait]
 pub trait DnsManager: Send + Sync {
     async fn takeover(&self, adapters: &[AdapterInfo]) -> PlatformResult<()>;
@@ -28,14 +20,12 @@ pub trait DnsManager: Send + Sync {
     async fn restore(&self) -> PlatformResult<()>;
     async fn restore_single(&self, adapter_id: &str) -> PlatformResult<()>;
     async fn restore_adapters(&self, adapters: &[AdapterState]) -> PlatformResult<()>;
-    /// Resets any DNS setting that still points at the local loopback resolver.
     async fn reset_residual_loopback_dns(&self) -> PlatformResult<()>;
     fn is_takeover_active(&self) -> bool;
     fn taken_over_adapters(&self) -> Vec<AdapterState>;
     async fn flush_dns_cache(&self) -> PlatformResult<()>;
 }
 
-/// The narrow slice of [`DnsManager`] crash recovery needs; tests can implement only this.
 #[async_trait]
 pub trait Restorer: Send + Sync {
     async fn restore_adapters(&self, adapters: &[AdapterState]) -> PlatformResult<()>;
@@ -48,7 +38,6 @@ pub trait StateStore: Send + Sync {
     fn clear(&self) -> PlatformResult<()>;
     fn file_path(&self) -> &Path;
 
-    /// Restores a leftover active takeover and clears the state file. Returns whether healing ran.
     async fn check_and_self_heal(&self, restorer: Option<&dyn Restorer>) -> PlatformResult<bool> {
         let Some(state) = self.load()? else {
             return Ok(false);
@@ -79,7 +68,6 @@ pub trait PortChecker: Send + Sync {
     ) -> PlatformResult<PortCheckResult>;
 }
 
-/// Windows elevates through UAC; Linux has no equivalent, so it runs as the current user.
 #[async_trait]
 pub trait PrivilegedExecutor: Send + Sync {
     async fn run_elevated(&self, exe: &str, args: &[String]) -> PlatformResult<()>;
@@ -95,12 +83,8 @@ pub trait ServiceManager: Send + Sync {
     async fn install(&self, exe_path: &str) -> PlatformResult<()>;
     async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()>;
     async fn uninstall(&self) -> PlatformResult<()>;
-    /// Resolving the executable may shell out (Linux probes the unit through `systemctl`), so it is
-    /// asynchronous and never blocks a runtime worker.
     async fn locate_executable(&self) -> PlatformResult<String>;
 
-    /// Installs the service with extra command-line flags forwarded by the hosted process (for
-    /// example `-config`/`-port`). Platforms whose unit file is fixed ignore them.
     async fn install_with_args(&self, exe_path: &str, args: &[String]) -> PlatformResult<()> {
         let _ = args;
         self.install(exe_path).await
@@ -111,8 +95,6 @@ pub trait ServiceManager: Send + Sync {
         exe_path: &str,
         args: &[String],
     ) -> PlatformResult<()> {
-        // Installation may legitimately fail when the service already exists; starting is the
-        // desired outcome in that case.
         let _ = self.install_with_args(exe_path, args).await;
         self.start().await
     }

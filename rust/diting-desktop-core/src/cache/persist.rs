@@ -1,10 +1,3 @@
-//! Go-compatible `cache.json` persistence (`cachePersistVersion = 1`).
-//!
-//! The file shape is part of the upgrade path: an existing Go installation's cache must load in
-//! the Rust service, and the Rust writer keeps the same version so a rollback can still read it.
-//! A version mismatch discards the whole cache, which is the old behaviour and intentionally safer
-//! than guessing what an unknown field means.
-
 use std::path::Path;
 
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -52,7 +45,6 @@ pub struct PersistStatus {
     pub saved_at: i64,
 }
 
-/// Writes the whole cache atomically.
 pub fn save(cache: &Cache, path: &Path) -> Result<PersistStatus, String> {
     if path.as_os_str().is_empty() {
         return Err("cache persist: empty path".to_string());
@@ -105,7 +97,6 @@ pub fn save(cache: &Cache, path: &Path) -> Result<PersistStatus, String> {
     })
 }
 
-/// Loads a cache file. A missing file is not an error (`Ok(0)`), matching the Go startup path.
 pub fn load(cache: &Cache, path: &Path) -> Result<usize, String> {
     if path.as_os_str().is_empty() {
         return Err("cache load: empty path".to_string());

@@ -169,7 +169,6 @@ fn a_compiled_image_validates_against_its_own_header() {
 fn a_short_or_foreign_header_is_rejected() {
     assert_eq!(validate_header(&[], 0), Validation::Header);
     assert_eq!(validate_header(&[0; 8], 8), Validation::Header);
-    // A header that claims to be DTRI but is truncated.
     let image = compile(&[rule("ads.example.com", "sub_1")]);
     assert_eq!(
         validate_header(&image[..20], image.len() as u64),
@@ -185,7 +184,7 @@ fn a_short_or_foreign_header_is_rejected() {
 fn a_newer_version_is_not_read() {
     let image = compile(&[rule("ads.example.com", "sub_1")]);
     let mut header = header_of(&image);
-    header[7] = 2; // version 2
+    header[7] = 2;
     assert_eq!(
         validate_header(&header, image.len() as u64),
         Validation::Version
@@ -219,7 +218,6 @@ fn sections_that_do_not_cover_the_file_are_rejected() {
         validate_header(&header, length + 1),
         Validation::Sections { expected: length }
     );
-    // A section size that makes the arithmetic go negative is a length mismatch, not a panic.
     let mut broken = header.clone();
     broken[24..28].copy_from_slice(&i32::MIN.to_be_bytes());
     assert!(matches!(
@@ -232,7 +230,6 @@ fn sections_that_do_not_cover_the_file_are_rejected() {
 fn only_plain_rules_are_plain() {
     let plain = rule("ads.example.com", "sub_1");
     assert!(is_plain(&plain));
-    // Every field the trie cannot hold flips the predicate.
     assert!(!is_plain(&Rule {
         is_wildcard: true,
         ..plain.clone()
@@ -261,7 +258,6 @@ fn only_plain_rules_are_plain() {
         dns_type: Some("A"),
         ..plain.clone()
     }));
-    // An empty optional is "not set", exactly like `isNullOrEmpty()`.
     assert!(is_plain(&Rule {
         app_scope: Some(""),
         denyallow: Some(""),

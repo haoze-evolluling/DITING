@@ -15,25 +15,18 @@ class SegmentedControl<T> extends StatelessWidget {
 
   static const double _height = 44;
 
-  /// Line height of one `subheadline` line; the wrapped bar reserves two of them.
   static const double _lineHeight = 20;
   static const double _inset = 4;
 
-  /// Two text lines, the inset on both sides and a little slack. The lines are scaled by the
-  /// text scaler, so a large font grows the bar instead of overflowing it.
   static double _wrappedHeight(BuildContext context) =>
       2 * MediaQuery.textScalerOf(context).scale(_lineHeight) + 2 * _inset + 4;
 
-  /// Room between a label and the segment edge; also the margin used when deciding whether the
-  /// labels still fit on one line.
   static const double _labelPadding = 8;
 
   final List<(T, String)> segments;
   final T value;
   final ValueChanged<T> onChanged;
 
-  /// Whether [label] is wider than a segment. Measured with the emphasized style because the
-  /// selected segment is the widest variant.
   static bool _overflows(
     BuildContext context,
     String label,
@@ -58,8 +51,6 @@ class SegmentedControl<T> extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final count = segments.length;
     final index = segments.indexWhere((segment) => segment.$1 == value);
-    // Long labels (English mode, large text scales) get a second line instead of an ellipsis, so
-    // every option stays readable; short ones keep the compact single-line bar.
     return LayoutBuilder(
       builder: (context, constraints) {
         final segmentWidth = (constraints.maxWidth - 2 * _inset) / count;
@@ -116,7 +107,6 @@ class SegmentedControl<T> extends StatelessWidget {
                               splashFactory: option == value
                                   ? NoSplash.splashFactory
                                   : null,
-                              // A null onTap would unfocus the selected segment.
                               onTap: option == value
                                   ? () {}
                                   : () => onChanged(option),

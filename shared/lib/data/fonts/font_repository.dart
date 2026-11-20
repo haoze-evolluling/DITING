@@ -1,5 +1,3 @@
-/// User-supplied fonts: import a TTF/OTF, register it with the engine, and remember it across
-/// restarts. The app bundles no fonts of its own, so this is the only source of non-system faces.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,9 +9,6 @@ import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// One imported font. [family] is the `TextStyle.fontFamily` key handed to the engine; it is
-/// derived from the file name at import time and stays stable, because renaming the family would
-/// require re-registering the bytes under a new key.
 @immutable
 class ImportedFont {
   const ImportedFont({
@@ -63,7 +58,6 @@ class ImportedFont {
   int get hashCode => Object.hash(family, label, path);
 }
 
-/// Outcome of an import, so the page can tell "user backed out" from "bad file".
 class FontImportResult {
   const FontImportResult({this.font, this.cancelled = false, this.error});
 
@@ -83,12 +77,6 @@ class FontImportResult {
   bool get isOk => font != null;
 }
 
-/// Owns the imported-font list: reads it from settings, registers the bytes with the engine, and
-/// keeps both in sync when the user imports or deletes.
-///
-/// Registration must happen before the first frame, because `ThemeData.fontFamily` is resolved
-/// when the theme is built — a family the engine has never seen silently falls back to the system
-/// default. [registerAll] is therefore called from `main()` before `runApp`.
 class FontRepository {
   FontRepository({required this.settings, PlatformBridge? bridge})
     : _bridge = bridge ?? PlatformBridge();
@@ -96,7 +84,6 @@ class FontRepository {
   final LegacySettings settings;
   final PlatformBridge _bridge;
 
-  /// Families currently registered with the engine, so a second call does not pay for the decode.
   static final Set<String> _registered = <String>{};
 
   List<ImportedFont> get fonts => settings.importedFonts;
@@ -113,8 +100,6 @@ class FontRepository {
     return null;
   }
 
-  /// Registers every stored font; failures are dropped from the list so a file deleted outside the
-  /// app cannot leave a dead entry behind. Returns the fonts that loaded.
   Future<List<ImportedFont>> registerAll() async {
     final fonts = this.fonts;
     if (fonts.isEmpty) {
@@ -139,8 +124,6 @@ class FontRepository {
     return loaded;
   }
 
-  /// Opens the system picker and imports the chosen file. The family name is the file's base name,
-  /// de-duplicated with a numeric suffix so two `Inter.ttf` copies stay distinguishable.
   Future<FontImportResult> import() async {
     final picked = await _bridge.pickFontFile();
     if (picked.cancelled) {
@@ -168,9 +151,6 @@ class FontRepository {
     return FontImportResult(font: font);
   }
 
-  /// Removes the font from the list and deletes the copied file. The engine keeps the registered
-  /// bytes for the lifetime of the process; clearing the selection is what makes the UI stop using
-  /// them, so callers select the system default first when the deleted font was active.
   Future<void> delete(ImportedFont font) async {
     final remaining = [
       for (final item in fonts)
@@ -192,8 +172,6 @@ class FontRepository {
       return false;
     }
     try {
-      // `FontLoader` is the supported path for registering bytes at runtime; the family it
-      // registers under must match the `fontFamily` used in `TextStyle`.
       final loader = FontLoader(font.family)
         ..addFont(Future<ByteData>.value(bytes));
       await loader.load();
@@ -217,7 +195,6 @@ class FontRepository {
     }
   }
 
-  /// `Inter-Regular.ttf` → `Inter-Regular`: the extension says nothing about the face.
   static String _baseName(String fileName) {
     final dot = fileName.lastIndexOf('.');
     final stem = dot > 0 ? fileName.substring(0, dot) : fileName;
@@ -226,7 +203,6 @@ class FontRepository {
   }
 }
 
-/// Storage for the imported list: the settings layer keeps the raw JSON, the shape lives here.
 extension ImportedFontSettings on LegacySettings {
   List<ImportedFont> get importedFonts {
     final raw = importedFontsRaw;

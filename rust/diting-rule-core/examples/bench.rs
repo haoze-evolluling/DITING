@@ -1,10 +1,3 @@
-//! Pure-Rust timing of the parse + payload encode, so the Dart benchmark can attribute the cost
-//! between "native parse" and "FFI + decode".
-//!
-//! ```bash
-//! cd rust && cargo run --release --example bench [lines]
-//! ```
-
 use diting_rule_core::document::parse_document;
 use diting_rule_core::ffi::encode;
 
@@ -49,7 +42,6 @@ fn main() {
         let payload = encode(&parsed);
         let encode_elapsed = started.elapsed().as_micros();
 
-        // The first run also allocates the arena/string buffers for every rule, so it is dropped.
         if run > 0 {
             best_parse = best_parse.min(parse_elapsed);
             best_encode = best_encode.min(encode_elapsed);

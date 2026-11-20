@@ -1,8 +1,3 @@
-/// The schedule editor shared by the global time plan and a single service's weekly plan.
-///
-/// The old desktop console's `ScheduleEditor.vue` is the blueprint: one block per window with a
-/// name, a switch, two `HH:MM` clocks and seven weekday toggles (none means every day). Rows are a
-/// local draft; the page decides when to save them.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -70,7 +65,6 @@ class _ScheduleEditorState extends State<ScheduleEditor> {
     widget.onChanged(rows);
   }
 
-  /// A switch or a weekday changes what is drawn, so the editor repaints before telling the page.
   void _refresh() {
     setState(() {});
     _emit();

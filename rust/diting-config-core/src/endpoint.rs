@@ -1,26 +1,8 @@
-//! Upstream endpoint validation: `validateDNSProvider` and `parseDoQURL`.
-//!
-//! Three endpoint forms reach this module and each has its own rule set:
-//!
-//! * `PLAIN` / `DOT` take `host:port`. `net.SplitHostPort` decides the split, and the host must then
-//!   be either empty-free and colon-free, or a real IPv6 literal (`[1.1.1.1:53]:53` splits to the
-//!   *host* `1.1.1.1:53`, which cannot be dialed). Hostnames are fine — only the shape is checked.
-//! * `DOH` takes a URL that `url.ParseRequestURI` accepts, with an `https` scheme and a non-empty
-//!   host. `https://dns.google:443/x`, `HTTPS://…`, userinfo, an empty port and a `#fragment` all
-//!   pass, while a non-digit port, a space in the host, a bad percent escape and control bytes do
-//!   not.
-//! * `DOQ` takes the loose form `parseDoQURL` parses: any of the `quic://` / `https://` / `doq://`
-//!   prefixes, an optional path, then `host:port` with the port defaulting to 853.
-
 use diting_go_compat::netaddr::{parse_ip, split_host_port};
 
 use crate::protocol::{validated_protocol, Protocol};
 use crate::quote::go_quote;
 
-/// `validateDNSProvider`: validates one provider and returns its protocol.
-///
-/// `protocol` is the raw config value; the strict table upper-cases it first, so the error text
-/// carries the upper-cased spelling.
 pub fn validate_provider(protocol: &str, server: &str, url: &str) -> Result<Protocol, String> {
     let protocol = validated_protocol(protocol)?;
     match protocol {
@@ -31,7 +13,6 @@ pub fn validate_provider(protocol: &str, server: &str, url: &str) -> Result<Prot
     Ok(protocol)
 }
 
-/// The `PLAIN` / `DOT` branch: `net.SplitHostPort`, then the IPv6-literal rule.
 fn validate_host_port(protocol: Protocol, server: &str) -> Result<(), String> {
     let name = protocol.name();
     let host = match split_host_port(server) {
@@ -43,8 +24,6 @@ fn validate_host_port(protocol: Protocol, server: &str) -> Result<(), String> {
             ))
         }
     };
-    // Only a real IPv6 literal may still contain a colon after the split: anything else means the
-    // address itself had a port appended (`[1.1.1.1:53]:53`) and cannot dial.
     if host.is_empty() || (host.contains(':') && parse_ip(host).is_none()) {
         return Err(format!(
             "invalid {name} endpoint {}: host is not a valid IP literal",
@@ -69,8 +48,6 @@ fn validate_doq(url: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// `parseDoQURL`: strip one of the three prefixes, drop the path, then `host:port` (853 if the split
-/// fails, which is what the old helper returned for a bare host).
 pub fn parse_doq_url(url: &str) -> (String, String) {
     let mut rest = url;
     for prefix in ["quic://", "https://", "doq://"] {
@@ -87,28 +64,20 @@ pub fn parse_doq_url(url: &str) -> (String, String) {
     }
 }
 
-/// The port `parseDoQURL` falls back to.
 pub const DEFAULT_DOQ_PORT: &str = "853";
 
-/// What [`parse_request_uri`] keeps: the lower-cased scheme and the authority's host (with port).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RequestUri {
     pub scheme: String,
     pub host: String,
 }
 
-/// `url.ParseRequestURI`, reduced to what the DoH check reads.
-///
-/// Returns `None` where Go returns an error. The error *texts* are not reproduced because the caller
-/// replaces them with `invalid DOH URL %q` anyway; the accept/reject set is what matters and is
-/// pinned by the corpus.
 pub fn parse_request_uri(text: &str) -> Option<RequestUri> {
     if text.bytes().any(|byte| byte < 0x20 || byte == 0x7f) {
-        return None; // "invalid control character in URL"
+        return None;
     }
     let (scheme, rest) = split_scheme(text)?;
     let Some(authority_and_path) = rest.strip_prefix("//") else {
-        // `https:opaque` parses but has no host; `dns.google` has no scheme at all.
         return Some(RequestUri {
             scheme,
             host: String::new(),
@@ -123,10 +92,10 @@ pub fn parse_request_uri(text: &str) -> Option<RequestUri> {
         None => authority,
     };
     if authority.contains('%') || authority.contains(' ') || authority.contains('\\') {
-        return None; // `invalid URL escape` / `invalid character in host name`
+        return None;
     }
     if !valid_authority_port(authority) {
-        return None; // `invalid port ":abc" after host`
+        return None;
     }
     Some(RequestUri {
         scheme,
@@ -134,7 +103,6 @@ pub fn parse_request_uri(text: &str) -> Option<RequestUri> {
     })
 }
 
-/// `getScheme`: `[A-Za-z][A-Za-z0-9+.-]*` before the first colon, lower-cased.
 fn split_scheme(text: &str) -> Option<(String, &str)> {
     let index = text.find(':')?;
     let scheme = &text[..index];
@@ -149,8 +117,6 @@ fn split_scheme(text: &str) -> Option<(String, &str)> {
     Some((scheme.to_ascii_lowercase(), &text[index + 1..]))
 }
 
-/// The port, when the authority carries one, must be digits only (an empty port is allowed).
-/// A bracketed IPv6 host is split at its closing bracket.
 fn valid_authority_port(authority: &str) -> bool {
     let port = if let Some(rest) = authority.strip_prefix('[') {
         let Some(close) = rest.find(']') else {

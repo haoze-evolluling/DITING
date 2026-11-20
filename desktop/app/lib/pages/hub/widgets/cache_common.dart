@@ -1,6 +1,3 @@
-/// Small, shared pieces of the cache page: policy names, entry states and the two shapes the
-/// console repeats (a labelled switch and a thin fill bar). Nothing here decides cache state; the
-/// service does.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -13,9 +10,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The one write path the cache policy cards share: post the whole config, then say what the service
-/// answered. A rejection is reported with the service's reason, because it clamps the numbers and the
-/// card must not pretend the value on screen was applied.
 Future<void> saveCacheSetting(
   BuildContext context,
   WidgetRef ref,
@@ -70,8 +64,6 @@ String desktopCacheFilterLabel(
   };
 }
 
-/// A title, an explanation and a switch: the console's repeated row shape. The switch carries the
-/// whole row's tap so a narrow window does not need a pixel-perfect hit on the track.
 class CacheToggleRow extends StatelessWidget {
   const CacheToggleRow({
     super.key,
@@ -124,8 +116,6 @@ class CacheToggleRow extends StatelessWidget {
   }
 }
 
-/// A thin fill bar: the hit rate and the capacity are both "part of a whole", and a bar reads
-/// faster than a second figure. The value is clamped, so a shrunk limit cannot overdraw.
 class CacheBar extends StatelessWidget {
   const CacheBar({super.key, required this.value, this.height = 6, this.color});
 
@@ -144,13 +134,9 @@ class CacheBar extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // The track has to sit one step above the block it is drawn on; `tone` is the block's
-          // own colour, which made the bar invisible inside a tile.
           DecoratedBox(
             decoration: ShapeDecoration(color: colors.track, shape: shape),
           ),
-          // A fraction, not a fixed-width box: a box with no child collapses to zero height and
-          // the fill silently disappeared.
           FractionallySizedBox(
             alignment: AlignmentDirectional.centerStart,
             widthFactor: fill,

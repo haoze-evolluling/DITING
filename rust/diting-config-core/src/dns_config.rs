@@ -1,16 +1,8 @@
-//! `ApplyDNSConfig`'s validation pass, in one kernel call.
-//!
-//! The old code normalized and validated in a fixed order, and the error that surfaced was the first
-//! one that failed: mode, then "no providers", then the single-mode provider count, then each
-//! provider (protocol, then its endpoint). That order is user-visible — a config with both a bad
-//! mode and a bad provider reports the mode — so it is reproduced here rather than in the caller.
-
 use crate::dynamic::DynamicBlock;
 use crate::endpoint::validate_provider;
 use crate::mode::canonical_dns_mode;
 use crate::protocol::{parse_response_type_upper, Protocol, ResponseType};
 
-/// One incoming provider, exactly the JSON fields `dnsProviderConfig` carries.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Provider {
     pub id: String,
@@ -20,7 +12,6 @@ pub struct Provider {
     pub weight: i64,
 }
 
-/// One provider after normalization: the protocol name upper-cased and resolved.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NormalizedProvider {
     pub id: String,
@@ -30,7 +21,6 @@ pub struct NormalizedProvider {
     pub weight: i64,
 }
 
-/// The whole normalized config.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NormalizedConfig {
     pub mode: &'static str,
@@ -39,7 +29,6 @@ pub struct NormalizedConfig {
     pub providers: Vec<NormalizedProvider>,
 }
 
-/// Normalizes and validates a DNS config; the error is the text `ApplyDNSConfig` returned.
 pub fn normalize(
     mode: &str,
     block_response: &str,
@@ -70,7 +59,6 @@ pub fn normalize(
 
     Ok(NormalizedConfig {
         mode,
-        // `ApplyDNSConfig` upper-cased the value before parsing it; `SetBlockResponseType` does not.
         block_response: parse_response_type_upper(block_response),
         dynamic,
         providers: normalized,

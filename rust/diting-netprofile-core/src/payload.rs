@@ -1,6 +1,3 @@
-//! JSON decoding for the C ABI. Requests are JSON objects; a shape that does not fit is `None`, so a
-//! drifted caller fails loudly instead of silently resolving against an empty profile list.
-
 use serde_json::Value;
 
 use crate::profile::{NetworkContext, NetworkMatch, Profile};
@@ -42,7 +39,6 @@ fn text_list(value: Option<&Value>) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Decodes the network context object.
 pub fn decode_context(request: &Value) -> NetworkContext {
     let context = request.get("networkCtx").cloned().unwrap_or(Value::Null);
     NetworkContext {
@@ -67,7 +63,6 @@ fn decode_match(profile: &Value) -> NetworkMatch {
     }
 }
 
-/// Decodes the profile list; a profile without an `id` is dropped (an unnamed reference is useless).
 pub fn decode_profiles(request: &Value) -> Vec<Profile> {
     let Some(items) = request.get("profiles").and_then(Value::as_array) else {
         return Vec::new();
@@ -104,7 +99,6 @@ pub fn decode_profiles(request: &Value) -> Vec<Profile> {
         .collect()
 }
 
-/// The optional fallback profile id.
 pub fn fallback_id(request: &Value) -> String {
     text(request, "fallbackId")
 }

@@ -1,7 +1,3 @@
-// Desktop hub upstream page (desktop parity): the console's
-// scheduling modes, configured servers, bootstrap DNS, split routes and independent fallback chain.
-// Every number and name must come from the service; a save posts the whole config and re-reads it.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_upstream_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_upstream_page.dart';
@@ -61,7 +57,6 @@ void main() {
     await pumpUpstream(tester, size: const Size(390, 844));
 
     expect(find.byType(DesktopUpstreamPage), findsOneWidget);
-    // One column: the Bootstrap card sits above the fallback card instead of beside it.
     final bootstrap = tester.getTopLeft(
       find.text(l10nOf(tester).desktopUpstreamBootstrapTitle),
     );
@@ -96,7 +91,6 @@ void main() {
       l10n.desktopUpstreamModeRace,
       l10n.desktopUpstreamModeSmart,
     ]) {
-      // The current mode also appears in the header chip.
       expect(find.text(label), findsWidgets);
     }
 
@@ -132,7 +126,6 @@ void main() {
     expect(body['providers'], isA<List<Object?>>());
     expect((body['providers'] as List).length, 2);
     expect(body['bootstrap'], isA<Map<String, Object?>>());
-    // An explicit empty fallback chain means "off"; omitting it would keep the old chain.
     expect(body['fallbackProviders'], isEmpty);
     expect(body['fallbackOnRcode'], [2, 5]);
     expect(tester.takeException(), isNull);
@@ -288,7 +281,6 @@ void main() {
       find.text(l10n.desktopUpstreamSaveFailed('write rejected')),
       findsOneWidget,
     );
-    // The service never accepted the change, so the mode chip still shows the old one.
     expect(find.text(l10n.desktopUpstreamModeBackup), findsWidgets);
     expect(tester.takeException(), isNull);
   });

@@ -1,8 +1,3 @@
-/// One copyable value row: the old console's `CopyRow`, drawn with the shared card pieces.
-///
-/// The LAN DNS page lists several addresses to paste into a router or a phone, so the copy affordance
-/// is a row of its own rather than a button per card. Kept here so the two pages that need it cannot
-/// drift into two different shapes.
 library;
 
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
@@ -16,7 +11,6 @@ class DesktopCopyRow extends StatelessWidget {
 
   final String value;
 
-  /// A short kind label, e.g. `IPv4` or `IPv6`; omitted when the value speaks for itself.
   final String? tag;
 
   @override

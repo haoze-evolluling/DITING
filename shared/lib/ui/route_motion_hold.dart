@@ -49,10 +49,8 @@ class _RouteMotion {
   }
 }
 
-/// Whether a route transition or a drag moves this page or covers it.
 bool isRouteMoving(BuildContext context) => _RouteMotion(context).isMoving;
 
-/// Holds list refreshes while the page's route moves, replaying the latest once it settles.
 mixin RouteMotionHoldMixin<T extends StatefulWidget> on State<T> {
   ModalRoute<Object?>? _route;
   _RouteMotion? _motion;
@@ -103,7 +101,6 @@ mixin RouteMotionHoldMixin<T extends StatefulWidget> on State<T> {
   }
 }
 
-/// Calls [didSettleRoute] once the route that brought the page in has settled.
 mixin RouteSettledMixin<T extends StatefulWidget> on State<T> {
   var _settleScheduled = false;
   var _routeSettled = false;
@@ -137,9 +134,6 @@ ScrollCacheExtent? arrivalScrollCacheExtent(bool routeSettled) {
   return routeSettled ? null : const ScrollCacheExtent.pixels(0);
 }
 
-/// Builds a scroll body with no cache extent while its route slides in, so the transition's first
-/// frame only builds what is on screen; the rows below follow once the route settles. A page that
-/// is not arriving (a tab root, a rebuilt page) starts settled and never rebuilds for it.
 class RouteArrivalScope extends StatefulWidget {
   const RouteArrivalScope({super.key, required this.builder});
 

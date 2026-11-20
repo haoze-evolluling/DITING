@@ -1,5 +1,3 @@
-// Guards the shipped recognition member list: bad entries must void the whole file.
-
 import 'dart:io';
 
 import 'package:diting_android/data/db/rust_recognition_core.dart';
@@ -13,7 +11,6 @@ void main() {
   group('名单解析', _recognitionMembers);
 }
 
-/// Guards list parsing: duplicate names, bad avatar names and missing fields must void the file
 void _recognitionMembers() {
   group('内核目录', () {
     test('缓存键、上限与头像取舍都来自 Rust', () {
@@ -109,7 +106,6 @@ void _recognitionMembers() {
     });
 
     test('仓库根目录的那份名单可以被解析', () {
-      // This file is pushed to GitHub: a parse failure downgrades every client
       final raw = File('../../recognition_members.json').readAsStringSync();
       final members = parseRecognitionMembers(raw);
       expect(members.sponsors.length, greaterThan(5));

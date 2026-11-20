@@ -2,7 +2,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Dashboard palette, after upstream views/dashboard/style.dart.
 class DashboardColors {
   const DashboardColors._({
     required this.page,
@@ -24,7 +23,6 @@ class DashboardColors {
       tone: SurfaceLevel.block.colorOf(colorScheme),
       tone2: SurfaceLevel.inset.colorOf(colorScheme),
       track: colorScheme.surfaceContainerHighest,
-      // Upload curve: primary mixed 45% with the card color, distinct but same family.
       series2: Color.alphaBlend(
         colorScheme.primary.withValues(alpha: 0.45),
         card,
@@ -44,8 +42,6 @@ class DashboardColors {
   final Color warn;
 }
 
-/// Elevation shadows. Design values are CSS `blur`, twice Flutter's blurRadius (Flutter
-/// maps radius r to sigma = 0.577r + 0.5), so every value goes through [blur].
 abstract final class DashboardShadows {
   static List<BoxShadow> e1(BuildContext context) =>
       context.colorScheme.brightness == Brightness.dark ? _e1Dark : _e1Light;
@@ -85,14 +81,7 @@ abstract final class DashboardShadows {
   static final _e2Dark = [_shadow(0x80, 2, 6), _shadow(0xB3, 32, 64, -12)];
 }
 
-/// Corner radii for the dashboard come from the single product standard
-/// [AppCorner.standard]. Dashboard cards are no longer a special, larger case so
-/// a card here reads as the same surface as everywhere else.
-/// Dashboard text roles. All figures use tabular digits so rows do not jitter.
-///
 abstract final class DashboardText {
-  /// The card's own name. Full-strength ink: on a desktop card the title, the note under it and
-  /// the figures all used to sit in the same grey, which left the card without a first line.
   static TextStyle cardTitle(BuildContext context) =>
       AppTextRole.cardTitle.of(context);
 
@@ -132,11 +121,8 @@ EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {
   ),
 };
 
-/// Vertical gap between dashboard cards; the gap comes from the enclosing
-/// Column(spacing:).
 const double dashboardCardGap = 16;
 
-/// Bytes to `1.2 MB`, base 1000 to match the traffic page.
 String dashboardTraffic(num bytes) {
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   var value = bytes.toDouble();
@@ -149,8 +135,6 @@ String dashboardTraffic(num bytes) {
   return '$text ${units[unit]}';
 }
 
-/// Count with thousands separators; above 100k switches to compact form so it
-/// does not overflow a narrow card.
 String dashboardCount(int count) {
   if (count >= 100000) {
     return '${(count / 1000).toStringAsFixed(0)}k';
@@ -166,6 +150,5 @@ String dashboardCount(int count) {
   return buffer.toString();
 }
 
-/// Speed text, e.g. `12.3 KB/s`.
 String dashboardSpeed(num bytesPerSecond) =>
     '${dashboardTraffic(bytesPerSecond)}/s';

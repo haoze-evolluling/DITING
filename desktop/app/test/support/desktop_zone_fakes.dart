@@ -1,5 +1,3 @@
-/// Fixtures for the local authoritative zones, and the service-side rebuild the fake performs after
-/// a save so the card can be asserted against what the service would report.
 library;
 
 const String desktopZoneLanContent =
@@ -12,7 +10,6 @@ const String desktopZoneIntraContent =
     '@   IN SOA ns.intra.example.com. admin.intra.example.com. (1 7200 3600 1209600 300)\n'
     'nas IN A 10.0.0.20\n';
 
-/// A `GET /api/v1/dns/zone/config` payload: two zones, one enabled, one disabled.
 Map<String, Object?> zonePayload({
   bool enabled = true,
   int ttl = 300,
@@ -55,8 +52,6 @@ Map<String, Object?> zonePayload({
   };
 }
 
-/// The per-zone build result the fake reports: an enabled zone with an apex loads two names, a
-/// disabled one is reported as not loaded with the reason the real engine gives.
 List<Map<String, Object?>> zoneStates(List<Map<String, Object?>> zones) => [
   for (final zone in zones)
     {
@@ -68,8 +63,6 @@ List<Map<String, Object?>> zoneStates(List<Map<String, Object?>> zones) => [
     },
 ];
 
-/// What `POST /api/v1/dns/zone/config` leaves behind: the body merged over the config, then the
-/// zones rebuilt the way the engine would.
 Map<String, Object?> zoneConfigAfter(
   Map<String, Object?> config,
   Map<String, Object?> body,
@@ -111,7 +104,6 @@ Map<String, Object?> zoneConfigAfter(
   };
 }
 
-/// A `POST /api/v1/dns/zone/test` answer. `success` is the engine's own verdict, not the request's.
 Map<String, Object?> zoneTestPayload({
   bool success = true,
   List<String> records = const ['www.lan. 300 IN A 192.168.1.10'],

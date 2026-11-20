@@ -1,15 +1,3 @@
-//! Pure-Rust timing for the desktop rule index: no Go, no payload decoding.
-//!
-//! ```text
-//! cargo run --release -p diting-filter-core --example filter_bench -- [rules] [iterations] [realistic]
-//! ```
-//!
-//! The synthetic rule set and query mix mirror `rule_matcher_bench_test.go` (same rule families in
-//! the same proportions, same `i % 5` domain mix), so the number here is the pure walk and the
-//! difference to `go test -bench BenchmarkRuleMatcherMatch` is the C ABI crossing plus payload
-//! decoding. Passing `realistic` switches to the production-like mix (99% plain domains, 1%
-//! wildcards, 0.1% regexes), which is `BenchmarkRuleMatcherMatchRealistic` on the Go side.
-
 use std::time::Instant;
 
 use diting_filter_core::rule::{
@@ -35,7 +23,6 @@ fn main() {
 
     let domains = domains(1024, index.total_rules() as usize);
 
-    // Warm up one pass so the first iteration does not pay page faults for the whole index.
     for domain in domains.iter().take(256) {
         let _ = index.match_domain(domain, 1);
     }
@@ -60,8 +47,6 @@ fn main() {
     );
 }
 
-/// Same families and proportions as the Go benchmark: allow, wildcard, regex, `$dnstype`,
-/// `$denyallow`, `$dnsrewrite`, plain block.
 fn rule_set(size: usize) -> Vec<Rule> {
     let mut rules = Vec::with_capacity(size);
     for i in 0..size {
@@ -101,7 +86,6 @@ fn rule_set(size: usize) -> Vec<Rule> {
     rules
 }
 
-/// Production-like mix: almost everything is a plain domain.
 fn rule_set_realistic(size: usize) -> Vec<Rule> {
     let mut rules = Vec::with_capacity(size);
     for i in 0..size {
@@ -124,7 +108,6 @@ fn rule_set_realistic(size: usize) -> Vec<Rule> {
     rules
 }
 
-/// The same `i % 5` mix of clean / trie / wildcard / regex / rewrite queries as the Go benchmark.
 fn domains(size: usize, rules: usize) -> Vec<String> {
     let mut domains = Vec::with_capacity(size);
     for i in 0..size {
@@ -140,7 +123,6 @@ fn domains(size: usize, rules: usize) -> Vec<String> {
     domains
 }
 
-/// `buildWildcardRegex` from the Go parser, reproduced for the synthetic set.
 fn wildcard_source(pattern: &str) -> String {
     let mut source = String::from("(?i)^(?:.*\\.)?");
     for ch in pattern.chars() {

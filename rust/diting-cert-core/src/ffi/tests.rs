@@ -1,5 +1,3 @@
-//! The C ABI: statuses, payload shapes and the handle lifecycle.
-
 use super::*;
 
 struct Payload {
@@ -148,7 +146,6 @@ fn load_adopts_a_persisted_pair() {
 #[test]
 fn operation_errors_are_status_three_with_a_message() {
     let (handle, texts) = generate(1_794_052_800);
-    // Expired for the second handle's clock, but the same CA: force the key-mismatch path.
     let mut loaded: *mut CertAuthority = std::ptr::null_mut();
     let mut payload = Payload {
         pointer: std::ptr::null_mut(),

@@ -1,4 +1,3 @@
-/// R2 命中排行：被拦截最多的域名和命中原因，点域名可跳规则测试解释判定。
 library;
 
 import 'package:diting_android/pages/logs/logs_overview_card.dart';
@@ -123,7 +122,6 @@ class HitRankingPage extends ConsumerWidget {
                   countOf(row.count),
                   style: AppTextRole.bodyStrong.of(context).toTabular,
                 ),
-                // 一键解释：把域名预填进规则测试，按当前规则复现判定。
                 onTap: () => context.push(
                   '/hub/rules/test?domain=${Uri.encodeComponent(row.label)}',
                 ),

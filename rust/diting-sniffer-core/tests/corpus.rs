@@ -1,11 +1,3 @@
-//! Replays the corpus generated from the pre-migration Go implementation.
-//!
-//! `tests/fixtures/sni.tsv` and `http.tsv` were produced by `parseClientHelloSNI`,
-//! `looksLikeHTTPRequest` and `parseHTTPHost` in `android/engine/mitm_sniffer.go` while those
-//! functions were still the live implementation. Each file contains the hand-written cases plus
-//! every prefix and a set of byte corruptions of one well-formed input, so truncation and clamped
-//! lengths are pinned byte for byte.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -25,7 +17,6 @@ fn rows(name: &str) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// `-` stands for "no bytes"; anything else is lower-case hex.
 fn blob(text: &str) -> Vec<u8> {
     if text == "-" {
         return Vec::new();

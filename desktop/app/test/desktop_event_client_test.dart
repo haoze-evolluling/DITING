@@ -1,7 +1,3 @@
-// The push channel is what makes the live list live, so its wire format is pinned here: which
-// event types become queries, how a query is classified, and where the socket points. A payload
-// this build cannot read has to disappear rather than become a blank row.
-
 import 'dart:convert';
 
 import 'package:diting_desktop/data/api/desktop_api_client.dart';

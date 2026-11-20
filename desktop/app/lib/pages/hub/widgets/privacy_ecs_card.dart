@@ -1,7 +1,3 @@
-/// The EDNS Client Subnet card: the switch, the strip switch, the fake subnet and the save button.
-///
-/// The old desktop console's `PrivacyPanel.vue` (ECS card) is the blueprint. The two switches save on
-/// the spot; the subnet is a draft that saves with its button.
 library;
 
 import 'dart:async';

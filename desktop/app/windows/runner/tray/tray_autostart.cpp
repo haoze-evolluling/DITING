@@ -6,8 +6,6 @@
 
 namespace {
 
-// Kept identical to the old desktop so an existing install keeps its entry
-// (the service's own login check also looks for this exact value name).
 constexpr wchar_t kRunKeyPath[] =
     L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 constexpr wchar_t kRunValueName[] = L"DitingDNS";
@@ -53,7 +51,7 @@ std::wstring ExecutablePath() {
   }
 }
 
-}  // namespace
+}
 
 namespace tray_autostart {
 
@@ -112,4 +110,4 @@ bool SetEnabled(bool enable, std::wstring* error) {
   return true;
 }
 
-}  // namespace tray_autostart
+}

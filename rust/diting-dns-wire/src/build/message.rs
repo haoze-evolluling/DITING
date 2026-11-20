@@ -1,9 +1,3 @@
-//! Message synthesis: a small, move-based builder on top of the existing readers.
-//!
-//! The builder owns the header flags and the three resource-record sections. [`MessageBuilder::finish`]
-//! serializes them with [`NameWriter`] so repeated owner names and the legal rdata names share
-//! compression pointers, then appends the OPT pseudo-record last in the additional section.
-
 use crate::build::edns::OptBuilder;
 use crate::build::name::NameWriter;
 use crate::build::rdata::RData;
@@ -18,10 +12,8 @@ const FLAG_AD: u16 = 0x0020;
 const FLAG_CD: u16 = 0x0010;
 const RCODE_MASK: u16 = 0x000f;
 
-/// One resource record ready to be written into a section.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResourceRecord {
-    /// Owner name in presentation form (escaped like [`crate::unpack_name`] output).
     pub name: String,
     pub rtype: u16,
     pub class: u16,
@@ -41,7 +33,6 @@ impl ResourceRecord {
     }
 }
 
-/// A DNS query or response being assembled.
 #[derive(Debug, Clone)]
 pub struct MessageBuilder {
     id: u16,
@@ -54,11 +45,6 @@ pub struct MessageBuilder {
 }
 
 impl MessageBuilder {
-    /// Starts a reply to `query`, or returns `None` when it is not a single-question request.
-    ///
-    /// The ID and the first question are echoed verbatim, the RD and CD bits are copied and QR is
-    /// set. Everything else (AA, RA, TC, rcode and the answer sections) starts empty so the caller
-    /// spells out what the synthesized answer means.
     pub fn reply_to(query: &[u8]) -> Option<Self> {
         let header = parse_header(query)?;
         if header.is_response() || header.question_count != 1 {
@@ -76,7 +62,6 @@ impl MessageBuilder {
         })
     }
 
-    /// Starts a recursive query (`RD=1`) with one question and ID zero.
     pub fn query(name: &str, qtype: u16, qclass: u16) -> Self {
         Self {
             id: 0,
@@ -93,13 +78,11 @@ impl MessageBuilder {
         }
     }
 
-    /// Overrides the message ID (for example a fresh random ID for a query).
     pub fn set_id(mut self, id: u16) -> Self {
         self.id = id;
         self
     }
 
-    /// Replaces the low four rcode bits. Extended rcodes live in [`OptBuilder::ext_rcode`].
     pub fn set_rcode(mut self, rcode: u8) -> Self {
         self.flags = (self.flags & !RCODE_MASK) | (u16::from(rcode) & RCODE_MASK);
         self
@@ -144,24 +127,20 @@ impl MessageBuilder {
         self
     }
 
-    /// Attaches the OPT pseudo-record, which [`finish`](Self::finish) writes last.
     pub fn with_opt(mut self, opt: OptBuilder) -> Self {
         self.opt = Some(opt);
         self
     }
 
-    /// Same as [`with_opt`](Self::with_opt); kept for call sites that read better as a setter.
     pub fn set_opt(self, opt: OptBuilder) -> Self {
         self.with_opt(opt)
     }
 
-    /// Removes a previously attached OPT record.
     pub fn clear_opt(mut self) -> Self {
         self.opt = None;
         self
     }
 
-    /// Serializes the message, or returns `None` on an unencodable name/section.
     pub fn finish(self) -> Option<Vec<u8>> {
         let question_count = u16::try_from(self.questions.len()).ok()?;
         let answer_count = u16::try_from(self.answers.len()).ok()?;
@@ -195,7 +174,6 @@ impl MessageBuilder {
             encode_record(record, &mut names, &mut out)?;
         }
         if let Some(opt) = &self.opt {
-            // The OPT record is always the last record of the additional section.
             if !opt.encode(&mut out) {
                 return None;
             }

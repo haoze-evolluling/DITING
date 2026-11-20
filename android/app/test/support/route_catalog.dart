@@ -1,11 +1,7 @@
-// Route tables shared by `ui_shell_test.dart` and `ui_behavior_test.dart`:
-// every hub card target and every page without path parameters.
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/server_routes.dart';
 
-/// First-level pages, everything without path parameters.
-/// First-level pages, everything without path parameters; shared with `layout_regression_test.dart`
 final Map<String, String> topLevelRoutes = {
   '首页': DashboardPaths.dashboard,
   '状态详情': HomeDetailPaths.status,
@@ -101,8 +97,6 @@ final Map<String, String> topLevelRoutes = {
   '模式引导': Routes.modeOnboarding,
 };
 
-/// Second-level pages with path parameters: ids must exist in the mock data, or the branch proves
-/// nothing
 final Map<String, String> idRoutes = {
   '规则-黑名单': Routes.rulesOf('block'),
   '规则-白名单': Routes.rulesOf('allow'),

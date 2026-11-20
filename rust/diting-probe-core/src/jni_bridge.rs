@@ -1,20 +1,9 @@
-//! JNI entry points for the Kotlin diagnostics tools (`com.haoze.diting.net.ProbeNative`).
-//!
-//! Every request is one `ByteArray` (or one `String`) and every answer is one `ByteArray` (or one
-//! `String`); the layouts live in [`crate::api`]. A null answer means "the kernel could not decode
-//! this call" — a missing library, a payload from a newer Kotlin side, or a panic — and
-//! `ProbeNative.kt` turns that into an `IllegalStateException` instead of guessing.
-//!
-//! There is no C ABI here: only Kotlin calls this kernel, so the JDK's naming convention is the
-//! whole boundary.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JByteArray, JObject, JString};
 use jni::sys::{jboolean, jbyteArray, jstring, JNI_FALSE, JNI_TRUE};
 use jni::JNIEnv;
 
-/// `ProbeNative.sanitizeHost(String): String?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_sanitizeHost<'local>(
     mut env: JNIEnv<'local>,
@@ -31,7 +20,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_sanitizeHost<'local
     }
 }
 
-/// `ProbeNative.isIpLiteral(String): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_isIpLiteral<'local>(
     mut env: JNIEnv<'local>,
@@ -48,7 +36,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_isIpLiteral<'local>
     }
 }
 
-/// `ProbeNative.traceResponseLine(String): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_traceResponseLine<'local>(
     mut env: JNIEnv<'local>,
@@ -65,7 +52,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_traceResponseLine<'
     }
 }
 
-/// `ProbeNative.dohEndpoint(String, String): String?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_dohEndpoint<'local>(
     mut env: JNIEnv<'local>,
@@ -84,7 +70,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_dohEndpoint<'local>
     }
 }
 
-/// `ProbeNative.buildDnsQuery(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_buildDnsQuery<'local>(
     env: JNIEnv<'local>,
@@ -102,7 +87,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_buildDnsQuery<'loca
     }
 }
 
-/// `ProbeNative.dnsResponseSucceeded(ByteArray): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_dnsResponseSucceeded<'local>(
     env: JNIEnv<'local>,
@@ -119,7 +103,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_dnsResponseSucceede
     }
 }
 
-/// `ProbeNative.parseDnsServerReply(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_parseDnsServerReply<'local>(
     env: JNIEnv<'local>,
@@ -137,7 +120,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_parseDnsServerReply
     }
 }
 
-/// `ProbeNative.pingSummary(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_pingSummary<'local>(
     env: JNIEnv<'local>,
@@ -155,7 +137,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_pingSummary<'local>
     }
 }
 
-/// `ProbeNative.latencyStats(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_latencyStats<'local>(
     env: JNIEnv<'local>,
@@ -173,7 +154,6 @@ pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_latencyStats<'local
     }
 }
 
-/// `ProbeNative.traceHop(ByteArray): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_net_ProbeNative_traceHop<'local>(
     env: JNIEnv<'local>,

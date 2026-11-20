@@ -30,7 +30,6 @@ fn embed_places_the_ipv4_address_behind_each_prefix_length() {
     ] {
         let engine = engine(&[prefix]);
         assert_eq!(hex(&engine.map(v4)), expected, "{prefix}");
-        // The `u` byte is reserved and must stay zero.
         assert_eq!(engine.map(v4)[8], 0, "{prefix}");
     }
 }
@@ -86,21 +85,15 @@ fn exclusions_cover_loopback_link_local_and_synthesized_addresses() {
     link_local[15] = 1;
     assert!(engine.excluded(&link_local));
 
-    // The configured prefix itself is excluded so a second pass cannot recurse.
     let synthesized = engine.map([192, 0, 2, 1]);
     assert!(engine.excluded(&synthesized));
 
-    // A normal global address is not.
     let global = crate::addr::parse_addr("2606:4700:4700::1111").unwrap().1;
     assert!(!engine.excluded(&global));
 
-    // Every IPv4 address matches the mapped default exclusion's collapsed network — the quirk the
-    // old `IPNet.Contains` exhibited and the corpus pins.
     assert!(engine.excluded(&[1, 2, 3, 4]));
     assert!(engine.excluded(&map_v4([1, 2, 3, 4])));
-    // Odd widths are neither unspecified nor inside a network.
     assert!(!engine.excluded(&[1, 2, 3, 4, 5]));
-    // The non-nil empty `net.IP` is `false` here; Go handles `nil` before calling.
     assert!(!engine.excluded(&[]));
 }
 
@@ -112,7 +105,6 @@ fn has_valid_aaaa_survives_only_when_an_address_is_outside_the_exclusion_set() {
     let mut loopback = [0u8; 16];
     loopback[15] = 1;
     assert!(!engine.has_valid_aaaa(&[&loopback]));
-    // The configured prefix is excluded, so a synthesized address is never "valid" on its own.
     assert!(!engine.has_valid_aaaa(&[&engine.map([192, 0, 2, 1])]));
     let global = crate::addr::parse_addr("2606:4700:4700::1111").unwrap().1;
     assert!(engine.has_valid_aaaa(&[&loopback, &global]));
@@ -142,7 +134,6 @@ fn rejected_prefixes_report_the_index_the_user_typed() {
 fn blank_entries_are_skipped_without_shifting_the_reported_index() {
     let prefixes = vec!["   ".to_string(), "2001:db8::/28".to_string()];
     let rejection = Engine::new(true, &prefixes).unwrap_err();
-    // The index is the position in the configured list, blanks included: Go quotes `Prefixes[i]`.
     assert_eq!(rejection.index, 1);
 }
 

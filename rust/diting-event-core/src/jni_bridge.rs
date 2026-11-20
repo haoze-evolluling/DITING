@@ -1,9 +1,3 @@
-//! JNI entry points for `com.haoze.diting.automation.EventNative`.
-//!
-//! Kotlin collects the live values from the running service and asks this crate for the encoded
-//! envelope, so the frozen schema has exactly one implementation. A failure returns null and the
-//! caller skips the broadcast instead of emitting a malformed event.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -35,7 +29,6 @@ fn to_jstring(env: &JNIEnv<'_>, value: String) -> jstring {
     }
 }
 
-/// `EventNative.buildStateChanged(String, boolean, boolean, boolean, long, long, String): String`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_automation_EventNative_buildStateChanged<'local>(
     mut env: JNIEnv<'local>,
@@ -71,7 +64,6 @@ pub extern "system" fn Java_com_haoze_diting_automation_EventNative_buildStateCh
     }
 }
 
-/// `EventNative.schemaVersion(): String`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_automation_EventNative_schemaVersion<'local>(
     env: JNIEnv<'local>,

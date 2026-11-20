@@ -1,8 +1,3 @@
-/// The hub's service page: where the app connects, and what the host service reports.
-///
-/// The old desktop console's `ServicePanel.vue` is the functional blueprint. The connection half is
-/// editable because it is the app's own configuration; the core-service half is read-only because
-/// the HTTP API only exposes its status.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

@@ -124,7 +124,6 @@ void _appScopedRules() {
   });
 
   test('全局规则页不展示带 appScope 的规则', () {
-    // RulesNotifier must drop app-scoped rules, or the blacklist treats an app rule as global
     final container = ProviderContainer(
       overrides: [
         initialRulesProvider.overrideWith(
@@ -154,10 +153,7 @@ void _appScopedRules() {
   });
 }
 
-// Data-layer behavior of app-scoped rules: providers classify results, reporting "unavailable" not
-// empty
 
-/// Fixed state for one-shot override of the initial-rules provider.
 class _ScopedInitialRules extends InitialRulesNotifier {
   _ScopedInitialRules(this._initial);
 

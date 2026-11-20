@@ -8,12 +8,9 @@ import androidx.core.app.NotificationCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 
-/// Foreground notification while a displaced tunnel waits for the VPN slot. It replaces the
-/// running notification under the same id, so the service stays in the foreground.
 object VpnWatchNotification {
     enum class Phase { CHECKING, OCCUPIED, NEEDS_CONSENT }
 
-    /// Distinct from the running notification's request codes (0 and 1).
     private const val REQUEST_OPEN = 2
     private const val REQUEST_STOP = 3
 
@@ -25,7 +22,6 @@ object VpnWatchNotification {
         stopIntent: Intent,
         phase: Phase,
     ) {
-        // Opening with the tile's start request lets the app run the consent dialog and start.
         val open = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             if (phase == Phase.NEEDS_CONSENT) putExtra(MainActivity.EXTRA_AUTO_START_VPN, true)

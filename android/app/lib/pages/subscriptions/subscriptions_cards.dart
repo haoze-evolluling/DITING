@@ -1,7 +1,5 @@
 part of 'subscriptions_page.dart';
 
-/// Built from `CommonCard` + `ListItem` so the design system owns radius, pressed state and
-/// fills. `SubscriptionImportState` drives three looks: `ready`, `importing` and `failed`.
 class _SubscriptionCard extends StatelessWidget {
   const _SubscriptionCard({
     required this.entry,
@@ -18,15 +16,12 @@ class _SubscriptionCard extends StatelessWidget {
 
   final bool isUpdating;
 
-  /// Any update is running, so every update entry point is disabled to avoid concurrent
-  /// writes to the same data.
   final bool busy;
   final ValueChanged<bool> onToggle;
   final VoidCallback onUpdate;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
-  /// Opens the full edit sheet (address, kind, group, mirror).
   final VoidCallback onConfigure;
 
   @override
@@ -36,8 +31,6 @@ class _SubscriptionCard extends StatelessWidget {
     final mirror = entry.record.mirrorTemplate;
     return CommonCard(
       isError: hasError,
-      // A disabled subscription dims the whole card: showing it only on the switch makes
-      // "rules not applied" look like a bug.
       child: Opacity(
         opacity: entry.enabled ? 1 : 0.6,
         child: Column(
@@ -76,7 +69,6 @@ class _SubscriptionCard extends StatelessWidget {
                     popupBuilder: (_) => CommonPopupMenu(
                       items: [
                         CommonPopupMenuItem(
-                          // Local rows re-read the picked file instead of downloading it.
                           label: entry.isRemote
                               ? context.l10n.subsUpdateNow
                               : context.l10n.subsReimport,
@@ -86,7 +78,6 @@ class _SubscriptionCard extends StatelessWidget {
                         CommonPopupMenuItem(
                           label: context.l10n.subsEdit,
                           glyph: AppGlyphs.sliders,
-                          // Saving may re-download, which must not overlap a running update.
                           onPressed: busy ? null : onConfigure,
                         ),
                         CommonPopupMenuItem(
@@ -139,8 +130,6 @@ class _SubscriptionCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    // A local row stores its SAF address, which is far too long to show; the
-                    // file name (last path segment) is what the user recognises.
                     entry.isRemote ? entry.url : _fileNameOf(entry.url),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -200,7 +189,6 @@ class _SubscriptionCard extends StatelessWidget {
     );
   }
 
-  /// Last segment of a `content://` address, which is the file name the picker reported.
   static String _fileNameOf(String uri) {
     final segment = Uri.tryParse(uri)?.pathSegments.lastOrNull ?? uri;
     return segment.isEmpty ? uri : segment;
@@ -225,8 +213,6 @@ class _SubscriptionCard extends StatelessWidget {
       };
 }
 
-/// Epoch milliseconds to `MM-dd HH:mm`. Minutes are enough because updates happen on an
-/// hourly scale, and seconds would make two updates in the same minute look identical.
 String _formatTimestamp(int epochMs) {
   final time = DateTime.fromMillisecondsSinceEpoch(epochMs);
   String two(int value) => value.toString().padLeft(2, '0');

@@ -1,5 +1,3 @@
-// 功能中心卡片网格：卡片数为奇数时，最后一张只占半宽，与上方列对齐而不是铺满整行。
-
 import 'package:diting_android/pages/hub/feature_hub_grid.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +27,6 @@ void main() {
         ),
       ),
     );
-    // Localizations and implicit size animations settle only after the first frame.
     await tester.pumpAndSettle();
   }
 

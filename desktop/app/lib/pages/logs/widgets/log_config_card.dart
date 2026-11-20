@@ -1,9 +1,3 @@
-/// The query log's own settings: whether anything is recorded, how much is kept in memory, whether
-/// history is written to disk and for how long, and whether client details are stored.
-///
-/// The behaviour is the old desktop console's `QueryLogConfigCard.vue`: the three switches apply
-/// immediately (and flip back if the service rejects them), the two numbers travel with the save
-/// button, and the on-disk directory is read-only because it belongs to the service's data layout.
 library;
 
 import 'dart:async';
@@ -20,7 +14,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Wide enough for `10000` and its label; two of them share a row in a desktop window.
 const double _numberWidth = 190;
 
 class LogConfigCard extends ConsumerStatefulWidget {
@@ -31,8 +24,6 @@ class LogConfigCard extends ConsumerStatefulWidget {
 }
 
 class _LogConfigCardState extends ConsumerState<LogConfigCard> {
-  /// The two numbers as typed. Empty until the first answer arrives, which is what tells the form
-  /// it has values to show; a later save must not overwrite what is being typed.
   String _maxEntries = '';
   String _retentionDays = '';
   bool _invalid = false;
@@ -53,8 +44,6 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
     );
   }
 
-  /// The button's job: the typed numbers, or a note that they are not usable. Switches keep their
-  /// own immediate path and send the numbers the service already holds.
   void _submitNumbers(DesktopQueryLogConfig config) {
     final maxEntries = int.tryParse(_maxEntries);
     final retentionDays = int.tryParse(_retentionDays);
@@ -140,8 +129,6 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
           onChanged: (value) => save(config.copyWith(enabled: value)),
         ),
         if (config.enabled) ...[
-          // The column spaces its children by 10; a field needs more, because its floating label
-          // sits above the border and would otherwise touch the toggle's note.
           Padding(
             padding: const EdgeInsets.only(top: AppGap.xs),
             child: Wrap(
@@ -222,8 +209,6 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
   }
 }
 
-/// One switch with its own explanation. The row owns the tap — the switch is pointer-transparent —
-/// so there is one target per boolean, and the row keeps its ripple and focus ring.
 class _ToggleRow extends StatelessWidget {
   const _ToggleRow({
     required this.title,
@@ -279,8 +264,6 @@ class _ToggleRow extends StatelessWidget {
   }
 }
 
-/// Before the first answer, and after a failed one: the form needs real values, so it is not drawn
-/// with guesses.
 class _Unavailable extends StatelessWidget {
   const _Unavailable({
     required this.isLoading,

@@ -1,7 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'focus.dart';
 
-/// Moves focus to the first control on open, or to the one on top for a covered route.
 class _RemoteFocusLanding extends StatefulWidget {
   const _RemoteFocusLanding({required this.child});
 
@@ -38,7 +37,6 @@ class _RemoteFocusLandingState extends State<_RemoteFocusLanding> {
     }
   }
 
-  // Flutter hands focus to a covered route too, via the enclosing scope asked for in Route.didAdd.
   static NavigatorState? _navigatorOfCoveredRoute(FocusNode focus) {
     for (final node in [focus, ...focus.ancestors]) {
       final context = node.context;

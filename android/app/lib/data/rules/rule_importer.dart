@@ -1,9 +1,3 @@
-/// Writes parsed rules into the rule tables. Active = row and a source row enabled; dedupe is
-/// explicit because older databases lack the unique index.
-///
-/// The statements, their dedupe predicates and the counters come from
-/// `rust/diting-rule-store-core`; this file queues them into `sqflite` batches and reads back the
-/// number of source rows each one wrote.
 library;
 
 import 'package:diting_android/data/db/rust_rule_store_core.dart';
@@ -37,16 +31,13 @@ class RuleImportSummary {
   final int typeSkippedCount;
   final int badfilteredCount;
 
-  /// Rules written or reused; the only count safe to show as "N imported".
   int get insertedCount =>
       blockCount + allowCount + rewriteCount + urlBlockCount + urlAllowCount;
 
-  /// Parsed but not stored: the engine has no injection path for cosmetic rules.
   int get notAppliedCount => cosmeticCount;
 
   bool get isEmpty => insertedCount == 0;
 
-  /// Sum of two summaries, so a document applied chunk by chunk reports whole-document totals.
   RuleImportSummary merge(RuleImportSummary other) => RuleImportSummary(
     blockCount: blockCount + other.blockCount,
     allowCount: allowCount + other.allowCount,
@@ -67,8 +58,6 @@ String subscriptionSourceTag(int subscriptionId) => 'sub_$subscriptionId';
 class RuleImporter {
   RuleImporter(this._db, {this.chunkSize = 1000});
 
-  /// Rows per orphan-delete page, read from the core so the sweep and its tests agree on one
-  /// number.
   static final int orphanPageSize = _orphanPageSize();
 
   static int _orphanPageSize() {
@@ -89,8 +78,6 @@ class RuleImporter {
   final Database _db;
   final int chunkSize;
 
-  /// Imports parsed rules under [source]; [kind] is `SubscriptionKind.storageValue`, [enabled] the
-  /// subscription switch.
   Future<RuleImportSummary> import(
     CategorizedRules parsed, {
     required String source,
@@ -101,14 +88,6 @@ class RuleImporter {
     final domainOnly = kind != 'hosts';
     final counts = <String, int>{};
 
-    /// Plans and runs one family, one `chunkSize`-rule chunk at a time.
-    ///
-    /// The old import planned the whole subscription in one native call and decoded three SQL
-    /// statements per rule into a single map. That decoded plan was the largest allocation in the
-    /// pipeline (far larger than the rule text itself) and the one that exhausted memory on a large
-    /// subscription. Bounding each native call to one chunk keeps the resident plan flat regardless
-    /// of subscription size; the SQL still dedupes across chunks because each runs in its own
-    /// transaction and `WHERE NOT EXISTS` sees the rows earlier chunks committed.
     Future<void> runFamily<P>(
       String family,
       String familyKey,
@@ -162,8 +141,6 @@ class RuleImporter {
       );
     }
 
-    // Counters that are not statement results. The native plan used to report these over the whole
-    // document; with per-chunk planning they are computed here from the parsed summary.
     return RuleImportSummary(
       blockCount: counts['block'] ?? 0,
       allowCount: counts['allow'] ?? 0,
@@ -183,13 +160,6 @@ class RuleImporter {
     );
   }
 
-  /// Deletes one source's rules. Only source rows go: a rule row may be shared.
-  ///
-  /// Two short steps instead of one long transaction: the source rows go in a single statement set,
-  /// then the orphans are swept in bounded id-range batches. A `DELETE ... WHERE id NOT IN
-  /// (SELECT ...)` over a subscription-sized table held the write lock for minutes, which starved
-  /// every other reader and writer of the mode database (see the 2026-10-27 log: 183 failed
-  /// `PRAGMA journal_mode` probes, no successful open at all).
   Future<void> removeRulesBySource(String source) async {
     final plan = RustRuleStoreCore.instance.plan({
       'op': 'removeSource',
@@ -209,7 +179,6 @@ class RuleImporter {
     }
   }
 
-  /// Sets `enabled` on all source rows of [source]; the shared rule row keeps its own flag.
   Future<void> setSourceEnabled(String source, bool enabled) async {
     final plan = RustRuleStoreCore.instance.plan({
       'op': 'setSourceEnabled',
@@ -227,10 +196,6 @@ class RuleImporter {
     });
   }
 
-  /// Drops rule rows that no source references; they would only inflate counts.
-  ///
-  /// Each page is its own transaction, so the write lock is never held longer than one page's worth
-  /// of deletes, and the loop yields so queued reads still get a turn.
   Future<void> _sweepOrphans(Map orphan) async {
     final selectSql = '${orphan['selectSql']}';
     final selectArgs = sqlArgs(orphan['selectArgs']);
@@ -249,12 +214,6 @@ class RuleImporter {
     }
   }
 
-  /// Runs one batch inside a transaction, with all statements queued in a single platform round
-  /// trip: three statements per rule in one call instead of three calls per rule, which is what made
-  /// a 1000-rule chunk take seconds and hold the write lock meanwhile.
-  ///
-  /// Returns the number of source rows written: the statement the core marks `changes` is followed
-  /// by `SELECT changes()`, exactly like the legacy loop.
   Future<int> _runBatch(List steps) async {
     if (steps.isEmpty) return 0;
     var inserted = 0;
@@ -291,7 +250,6 @@ class RuleImporter {
     return inserted;
   }
 
-  /// The rewrite-rule shape `import_plan` reads; the core reads these snake-free names.
   static Map<String, Object?> _rewriteJson(ParsedRewriteRule rule) => {
     'pattern': rule.pattern,
     'targetType': rule.targetType,
@@ -299,8 +257,6 @@ class RuleImporter {
     'rawLine': rule.rawLine,
   };
 
-  /// Mirrors the native `keep_url_rule`: `go_url_rule` has no `appScope` column, so a scoped url
-  /// rule is skipped rather than stored as a global block.
   static bool _keepUrlRule(ParsedUrlRule rule) {
     final scope = rule.appScope;
     return scope == null || scope.trim().isEmpty;

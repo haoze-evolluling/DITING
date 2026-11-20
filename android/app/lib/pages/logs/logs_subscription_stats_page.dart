@@ -10,8 +10,6 @@ import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Subscription rule block rate. Numerator counts BLOCKED DNS rows and blocked/invalid HTTPS
-/// rows carrying a blockSubscriptionId, matching upstream; missing data is never invented.
 class LogsSubscriptionStatsPage extends ConsumerWidget {
   const LogsSubscriptionStatsPage({super.key});
 
@@ -54,9 +52,6 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
     );
   }
 
-  /// Stats sections as slivers. The per-subscription list is built on demand: the table grows
-  /// with the number of imported subscriptions, and inflating it eagerly was the same first-frame
-  /// trap the rule lists hit.
   List<Widget> _statsSlivers(
     BuildContext context,
     AsyncValue<SubscriptionInterceptionSnapshot> asyncStats,
@@ -98,8 +93,6 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
       );
     }
 
-    // The numerator is exactly the per-subscription hit total, so the page never shows two
-    // different block counts side by side.
     final blocked = snapshot.items.fold(0, (sum, item) => sum + item.hits);
     final hasData = snapshot.totalRequests > 0;
     final passed = snapshot.totalRequests - blocked;
@@ -168,11 +161,9 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
             final item = snapshot.items[index];
             final dimmed = item.deleted || !item.enabled;
             return ListItem(
-              // Same column as the race page's badge rows, which this list mirrors.
               leading: LeadingSlot(
                 child: IconBadge(
                   glyph: item.deleted ? AppGlyphs.warning : AppGlyphs.rules,
-                  // The row card owns the card level; the badge needs the next one up.
                   color: SurfaceLevel.block.colorOf(colorScheme),
                   foregroundColor: item.deleted
                       ? colorScheme.onSurfaceVariant
@@ -188,8 +179,6 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              // The rate is the page's subject, so it gets the figure slot on the right instead
-              // of repeating the same percentage inside the subtitle.
               trailing: Text(
                 percentOf(item.rate),
                 style: AppTextRole.bodyStrong

@@ -1,6 +1,3 @@
-// Regression coverage for the legacy-compatibility cleanup: superseded values are no longer
-// adapted or migrated, while malformed/missing data degrades safely to the current defaults.
-
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_android/data/log_dashboard_widgets.dart';
 import 'package:diting_android/state/dashboard_layout_providers.dart';

@@ -1,19 +1,7 @@
-//! Reverse-name parsing: `ParseIPFromArpa` before the move.
-//!
-//! Both the hosts resolver (`LookupPTR`) and the rewrite engine (`LookupPTR`) turned
-//! `x.x.x.x.in-addr.arpa` / the 32-nibble `ip6.arpa` form back into an address. One copy is left,
-//! here, and `ParseIPFromArpa` in Go is a call into it — the two callers can no longer disagree
-//! about how many labels make a name, or which nibble is the low one.
-
 use diting_go_compat::text::go_lower;
 
 use crate::ip::{collapse_v6, parse_ip, Addr};
 
-/// `ParseIPFromArpa`: `None` when the name is not a well-formed reverse name.
-///
-/// The name is lowercased and stripped of trailing dots first (`strings.ToLower(strings.Trim(…))`),
-/// so `1.1.168.192.IN-ADDR.ARPA.` is fine. An IPv4 reverse name must have exactly four labels, an
-/// IPv6 one exactly 32 single-nibble labels; anything else has no address behind it.
 pub fn parse_arpa(name: &str) -> Option<Addr> {
     let lowered = go_lower(name);
     let trimmed = lowered.trim_end_matches('.').trim_start_matches('.');
@@ -22,8 +10,6 @@ pub fn parse_arpa(name: &str) -> Option<Addr> {
         if parts.len() != 4 {
             return None;
         }
-        // Reversed back to the dotted quad Go then ran through `net.ParseIP`, which is where a
-        // leading zero or an empty label gets rejected.
         let text = format!("{}.{}.{}.{}", parts[3], parts[2], parts[1], parts[0]);
         return parse_ip(&text);
     }

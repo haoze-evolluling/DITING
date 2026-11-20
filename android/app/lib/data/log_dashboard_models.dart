@@ -4,8 +4,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 
 enum LogRowStatus { passed, filtered, failed, bypassed, cached }
 
-/// DNS resolution quality from today's `dns_log` rows. [cacheHitRate] divides by `passed + error`
-/// only.
 class LogDnsQuality {
   const LogDnsQuality({
     required this.averageLatencyMs,
@@ -22,7 +20,6 @@ class LogDnsQuality {
   final int latencySamples;
   final double cacheHitRate;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogDnsQuality &&
@@ -59,14 +56,12 @@ class LogTrafficBreakdown {
   final int error;
   final int bypassed;
 
-  /// Cache hits, a subset of [passed]; the legacy UI gave it its own legend.
   final int cached;
 
   double get blockRate => total == 0 ? 0 : blocked / total;
 
   double get cacheRate => total == 0 ? 0 : cached / total;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogTrafficBreakdown &&
@@ -100,7 +95,6 @@ class LogRaceSummary {
 
   double get successRate => requests == 0 ? 0 : successes / requests;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogRaceSummary &&
@@ -130,7 +124,6 @@ class LogBootstrapSummary {
 
   double get successRate => attempts == 0 ? 0 : successes / attempts;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogBootstrapSummary &&
@@ -161,7 +154,6 @@ class LogOffModeStats {
   final int raceRequests;
   final int bootstrapAttempts;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogOffModeStats &&
@@ -175,7 +167,6 @@ class LogOffModeStats {
       Object.hash(cacheEntries, cacheHits, raceRequests, bootstrapAttempts);
 }
 
-/// One recent request. [time] is derived from the row `timestamp`, never a literal.
 class LogRecentRequest {
   const LogRecentRequest({
     required this.time,
@@ -196,7 +187,6 @@ class LogRecentRequest {
   final String resultLabel;
   final LogRowStatus status;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogRecentRequest &&
@@ -228,7 +218,6 @@ class LogCacheHotspot {
   final int responseSize;
   final int hitCount;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogCacheHotspot &&
@@ -259,7 +248,6 @@ class LogRaceWinner {
   final int wins;
   final double averageElapsedMs;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogRaceWinner &&
@@ -288,7 +276,6 @@ class LogBootstrapIp {
 
   double get successRate => attempts == 0 ? 0 : successes / attempts;
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogBootstrapIp &&
@@ -325,7 +312,6 @@ class LogSubscriptionBlock {
     return enabled ? currentL10n.commonEnabled : currentL10n.subscriptionDisabled;
   }
 
-  // Value equality lets an unchanged refresh skip rebuilding the cards.
   @override
   bool operator ==(Object other) =>
       other is LogSubscriptionBlock &&

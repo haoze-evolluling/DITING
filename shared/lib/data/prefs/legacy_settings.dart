@@ -1,5 +1,3 @@
-/// Typed view over the legacy preference keys; names, containers and defaults match the legacy app
-/// verbatim.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -22,7 +20,6 @@ class LegacySettings {
 
   final LegacyPrefsStore _store;
 
-  /// DNS/tunnel keys. Express swaps the container but keeps UI keys on [uiContainer].
   final String dnsContainer;
 
   static const uiContainer = 'dns_vpn_prefs';
@@ -33,7 +30,6 @@ class LegacySettings {
 
   static const expressRunningContainer = 'express_vpn_prefs';
 
-  /// The foreground service reads this container, not `dns_vpn_prefs`.
   static const notificationContainer = 'notification_settings_prefs';
 
   static String defaultRunningSentence(AppL10n l10n) => l10n.taglineRunning;
@@ -41,7 +37,6 @@ class LegacySettings {
 
   static const defaultBottomBarIds = ['home', 'feature_hub', 'log_dashboard'];
 
-  /// Ids the legacy app accepts; unknown ones from a restored backup are dropped.
   static const bottomBarIdValues = {
     'home',
     'feature_hub',
@@ -67,31 +62,25 @@ class LegacySettings {
 
   static const subscriptionAutoUpdatePresetHours = [6, 12, 24, 48];
 
-  /// `interval` (every N hours), `daily` or `every_other_day` at a local wall-clock time.
   static const subscriptionAutoUpdateScheduleKey =
       'subscription_auto_update_schedule';
 
-  /// Minutes after local midnight for the daily / every-other-day schedules.
   static const subscriptionAutoUpdateTimeKey =
       'subscription_auto_update_time_minutes';
 
   static const defaultSubscriptionAutoUpdateTimeMinutes = 4 * 60;
 
-  /// Epoch ms when the timed schedule was last chosen or retimed (see `AutoUpdatePlan.sinceMs`).
   static const subscriptionAutoUpdateSinceKey =
       'subscription_auto_update_schedule_since';
 
-  /// Raw legacy keys for backups; pages should use the named accessors.
   LegacyPrefsStore get rawStore => _store;
 
-  /// Dataset-scoped: every data set seeds its own rule database, so the marker cannot be shared.
   bool get defaultWhitelistInitialized =>
       _bool(dnsContainer, 'default_whitelist_initialized', false);
 
   int get defaultWhitelistSeededVersion =>
       _int(dnsContainer, 'default_whitelist_seeded_version', 0);
 
-  /// `versionCode * 1000 + 2`, the legacy marker value.
   void markDefaultWhitelistSeeded(int versionCode) {
     _store.putBool(dnsContainer, 'default_whitelist_initialized', true);
     _store.putLong(
@@ -101,8 +90,6 @@ class LegacySettings {
     );
   }
 
-  /// Unknown ids drop, duplicates collapse, fewer than two restore defaults, and the list is cut at
-  /// four.
   List<String> get bottomBarIds {
     final raw = _string(uiContainer, 'bottom_bar_destinations');
     if (raw == null || raw.trim().isEmpty) {
@@ -147,7 +134,6 @@ class LegacySettings {
     );
   }
 
-  /// V2 storage lifecycle: idle, copying, verified or cleaned.
   int get storageV2State =>
       _int(workModeContainer, StorageContract.stateKey, StorageContract.stateIdle);
 
@@ -157,7 +143,6 @@ class LegacySettings {
     state,
   );
 
-  /// Acknowledged write for the migration's commit point; see [LegacyPrefsStore.putIntAwaiting].
   Future<void> commitStorageV2State(int state) => _store.putIntAwaiting(
     workModeContainer,
     StorageContract.stateKey,
@@ -170,15 +155,12 @@ class LegacySettings {
     return millis > 0 ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
   }
 
-  /// Epoch millis exceed 32 bits, so this must use the long channel or it truncates to a negative
-  /// int.
   void setStorageV2CompletedAt(DateTime time) => _store.putLong(
     workModeContainer,
     StorageContract.completedAtKey,
     time.millisecondsSinceEpoch,
   );
 
-  /// Last deferral or failure reason; null after a successful migration.
   String? get storageV2Error =>
       _string(workModeContainer, StorageContract.errorKey);
 
@@ -218,8 +200,6 @@ class LegacySettings {
   bool get workModeSelected =>
       _bool(workModeContainer, 'work_mode_initial_selected', false);
 
-  /// Set once the permission guide has been walked through; without it every mode change
-  /// replays onboarding, because the flag used to live only in memory.
   bool get modeOnboardingCompleted =>
       _bool(workModeContainer, 'mode_onboarding_completed', false);
 
@@ -229,13 +209,11 @@ class LegacySettings {
   void setWorkModeSelected(bool value) =>
       _store.putBool(workModeContainer, 'work_mode_initial_selected', value);
 
-  /// Removes both keys rather than storing false, as the legacy store did.
   void clearWorkModeSelection() {
     _store.remove(workModeContainer, 'app_work_mode');
     _store.remove(workModeContainer, 'work_mode_initial_selected');
   }
 
-  /// Dataset-aware: `dns_vpn_prefs` or `diting_express_prefs`.
   String get resolutionModeRaw =>
       _string(dnsContainer, 'dns_resolution_mode') ?? 'single';
 
@@ -259,15 +237,12 @@ class LegacySettings {
     return const {};
   }
 
-  /// Stored via `putStringSet`; the bridge serialises it as a string array.
   void setExcludedPackages(Set<String> packages) =>
       _store.putStringSet(uiContainer, 'excluded_app_packages', {
         for (final item in packages)
           if (item.trim().isNotEmpty) item,
       });
 
-  /// Package -> allowed domains for `Engine.setAppAllowlist`. Malformed JSON yields an empty map,
-  /// not a throw: one corrupt write would break every tunnel start.
   Map<String, Set<String>> get appAllowlistRules {
     final raw = _string(uiContainer, 'app_allowlist_rules_json');
     if (raw == null || raw.trim().isEmpty) return const {};
@@ -334,8 +309,6 @@ class LegacySettings {
   bool get httpInspectionEnabled =>
       _bool(uiContainer, 'http_inspection_enabled', false);
 
-  /// Needs `https_inspection_ready` and the `go-v1` marker: the boolean survives a CA reset, the
-  /// marker proves the current engine wrote the cert.
   bool get httpsInspectionReady =>
       _bool(uiContainer, 'https_inspection_ready', false) &&
       _string(uiContainer, 'https_inspection_ca_backend') == 'go-v1';
@@ -349,7 +322,6 @@ class LegacySettings {
     );
   }
 
-  /// Ready, enabled and at least one app selected; an empty list inspects nothing.
   bool get httpsInspectionOperational =>
       httpsInspectionReady &&
       httpInspectionEnabled &&
@@ -381,7 +353,6 @@ class LegacySettings {
     return value is int ? value : fallback;
   }
 
-  /// Falls back to the two default race providers when missing or malformed.
   List<String> _idList(
     String key, {
     List<String> fallback = const ['preset_alidns_dns', 'preset_dnspod_dns'],
@@ -405,7 +376,6 @@ class LegacySettings {
     return value is num ? value.toDouble() : fallback;
   }
 
-  /// Accepts a JSON array string and the list form used by `putStringSet` values.
   Set<String>? _stringSet(String key, {String? container}) {
     final value = _store.read(container ?? dnsContainer, key);
     if (value is List) {
@@ -427,7 +397,6 @@ class LegacySettings {
     }
   }
 
-  /// Sorted JSON array, matching the legacy `writeStringSet` output.
   static String _encodeSet(Set<String> values) =>
       jsonEncode(values.toList()..sort());
 

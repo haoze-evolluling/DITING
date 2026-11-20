@@ -1,56 +1,19 @@
-//! The C ABI `desktop/service/internal/core/dns64_native.go` loads with pure Go dlopen.
-//!
-//! | symbol | meaning |
-//! | --- | --- |
-//! | `diting_dns64_abi_version` | ABI number the loader validates |
-//! | `diting_dns64_new` | build a synthesizer from the configured prefixes |
-//! | `diting_dns64_free` | drop one |
-//! | `diting_dns64_free_bytes` | drop a payload this library returned |
-//! | `diting_dns64_info` | enabled flag + configured prefix count |
-//! | `diting_dns64_embed` | `MapIPv4ToIPv6`: embed behind the first prefix |
-//! | `diting_dns64_embed_net` | `EmbedIPv4InIPv6`: embed behind a 16-byte prefix + length |
-//! | `diting_dns64_synthesize` | the AAAA addresses for one A record |
-//! | `diting_dns64_excluded` | `IsExcluded` |
-//! | `diting_dns64_has_valid` | `HasValidAAAARecords` over extracted addresses |
-//!
-//! Status codes, shared by every function:
-//!
-//! * `0` — ok
-//! * `1` — bad argument (null handle or pointer, or an address that is not 4 bytes wide)
-//! * `2` — the payload did not decode
-//! * `3` — the prefix text is not a CIDR (`net.ParseCIDR` would fail)
-//! * `4` — the prefix parsed but is not an RFC 6052 length (this includes every IPv4 CIDR)
-//!
-//! `diting_dns64_new` also writes the index of the offending prefix, so Go can quote the entry the
-//! user typed instead of the text after trimming. The error *wording* stays in Go: it is the text
-//! the old constructor produced.
-
 use std::slice;
 
 use crate::engine::Engine;
 use crate::payload::{decode_addresses, decode_prefixes, encode_result};
 use crate::prefix::{Prefix, DNS64_PREFIX_LENGTHS};
 
-/// Must match `dns64NativeABIVersion` in `desktop/service/internal/core/dns64_native.go`.
 pub const ABI_VERSION: u32 = 1;
 
-/// A prefix string was not a CIDR. `diting_dns64_new` reports it; nothing else can produce it.
 const STATUS_PREFIX_PARSE: u32 = 3;
-/// A prefix parsed but is not an RFC 6052 length, or the mask is not an IPv6 one.
 const STATUS_PREFIX_LENGTH: u32 = 4;
 
-/// ABI version of the library.
 #[no_mangle]
 pub extern "C" fn diting_dns64_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Builds a synthesizer, writing the handle to `out` and the index of a rejected prefix to
-/// `out_index` (left untouched on success).
-///
-/// # Safety
-///
-/// `prefixes` must be readable for `prefixes_len` bytes; `out` and `out_index` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_new(
     enabled: u8,
@@ -85,11 +48,6 @@ pub unsafe extern "C" fn diting_dns64_new(
     }
 }
 
-/// Drops a synthesizer created by [`diting_dns64_new`].
-///
-/// # Safety
-///
-/// `handle` must come from [`diting_dns64_new`] and must not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_free(handle: *mut Engine) {
     if !handle.is_null() {
@@ -97,11 +55,6 @@ pub unsafe extern "C" fn diting_dns64_free(handle: *mut Engine) {
     }
 }
 
-/// Frees a payload returned by this library.
-///
-/// # Safety
-///
-/// `pointer`/`length` must be a pair this library produced and not freed yet.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_free_bytes(pointer: *mut u8, length: usize) {
     if !pointer.is_null() && length > 0 {
@@ -109,11 +62,6 @@ pub unsafe extern "C" fn diting_dns64_free_bytes(pointer: *mut u8, length: usize
     }
 }
 
-/// Writes the enabled flag and the configured prefix count.
-///
-/// # Safety
-///
-/// `handle` must be a live handle; `out_enabled` and `out_prefixes` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_info(
     handle: *const Engine,
@@ -132,11 +80,6 @@ pub unsafe extern "C" fn diting_dns64_info(
     0
 }
 
-/// `MapIPv4ToIPv6`: writes the 16 synthesized bytes to `out`.
-///
-/// # Safety
-///
-/// `v4` must be readable for `v4_len` bytes; `out` must be writable for 16 bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_embed(
     handle: *const Engine,
@@ -153,14 +96,6 @@ pub unsafe extern "C" fn diting_dns64_embed(
     write_bytes(out, &engine.map(v4))
 }
 
-/// `EmbedIPv4InIPv6`: the same embedding, driven by the prefix bytes Go already holds.
-///
-/// `prefix` is the 16-byte `IPNet.IP.To16()` and `ones` its mask length; the Go helper has already
-/// rejected 32-bit masks, so a prefix length outside the RFC 6052 set is the only other refusal.
-///
-/// # Safety
-///
-/// `prefix` must be readable for 16 bytes, `v4` for `v4_len` bytes, `out` writable for 16 bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_embed_net(
     prefix: *const u8,
@@ -185,11 +120,6 @@ pub unsafe extern "C" fn diting_dns64_embed_net(
     write_bytes(out, &candidate.embed(v4))
 }
 
-/// The AAAA addresses for one A record: one per configured prefix, in order.
-///
-/// # Safety
-///
-/// `v4` must be readable for `v4_len` bytes; `out_ptr`/`out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_synthesize(
     handle: *const Engine,
@@ -212,11 +142,6 @@ pub unsafe extern "C" fn diting_dns64_synthesize(
     write_payload(encode_result(&engine.synthesize(address)), out_ptr, out_len)
 }
 
-/// `IsExcluded` for one address of 4, 16, 0 (empty) or any other width, matching `net.IP`.
-///
-/// # Safety
-///
-/// `address` must be readable for `address_len` bytes; `out` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_excluded(
     handle: *const Engine,
@@ -237,11 +162,6 @@ pub unsafe extern "C" fn diting_dns64_excluded(
     0
 }
 
-/// `HasValidAAAARecords`: `1` when at least one address survives the exclusion set.
-///
-/// # Safety
-///
-/// `data` must be readable for `data_len` bytes; `out` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns64_has_valid(
     handle: *const Engine,

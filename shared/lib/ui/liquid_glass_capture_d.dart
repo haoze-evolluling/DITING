@@ -41,7 +41,6 @@ class _Behind {
   final LiquidGlassStyle style;
   final Matrix4 toHost;
 
-  /// The host, else the nearest offscreen layer: a backdrop filter there reads only its texture.
   final ContainerLayer root;
   final Matrix4 rootToHost;
   final Set<ContainerLayer> ancestors;
@@ -63,7 +62,6 @@ class _Behind {
   Color veil = const Color(0x00000000);
 }
 
-/// The transform a layer gives its children now; [Layer.applyTransform] may answer from last frame.
 Matrix4? _geometry(ContainerLayer layer) {
   Matrix4 applied(Layer child) {
     final matrix = Matrix4.identity();

@@ -9,9 +9,6 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-/// AES-GCM wrapper for the outbound-proxy credentials, byte-compatible with the legacy
-/// `encryptProxySecret` / `decryptProxySecret`: an upgrade install must decrypt saved
-/// credentials, so the alias, IV length and tag size are fixed. Failures yield "".
 internal object ProxySecretCodec {
 
     private const val KEYSTORE = "AndroidKeyStore"
@@ -34,7 +31,6 @@ internal object ProxySecretCodec {
         if (value.isNullOrEmpty()) return ""
         return runCatching {
             val payload = Base64.decode(value, Base64.NO_WRAP)
-            // Check the range first: copyOfRange would throw outside runCatching on truncation.
             require(payload.size > IV_LENGTH) { "payload too short" }
             val iv = payload.copyOfRange(0, IV_LENGTH)
             val cipher = Cipher.getInstance(TRANSFORMATION)

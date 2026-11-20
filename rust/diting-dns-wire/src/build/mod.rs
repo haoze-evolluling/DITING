@@ -1,9 +1,3 @@
-//! Synthesis half of the wire layer: message/record builders and the EDNS option layer.
-//!
-//! The readers in the crate root stay the single source of truth for parsing. This module only
-//! adds the inverse direction the desktop service needs (block/rewrite/hosts/zone/safesearch/DDR/
-//! ANY/DNS64/error responses) plus the EDNS helpers (ECS, EDE, padding, cookie, NSID).
-
 mod edns;
 mod message;
 mod name;

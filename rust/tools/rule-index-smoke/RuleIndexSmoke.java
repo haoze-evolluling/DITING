@@ -7,11 +7,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/// Host-JVM smoke test for the rule-index helper entries.
-///
-/// It proves the seven exported symbols match the signatures Kotlin declares (name and argument
-/// order) and that every payload round trips. The semantics belong to the Rust tests; this only
-/// checks the boundary, so it needs nothing but a JVM and `diting_rule_core.dll`/`.so`.
 public final class RuleIndexSmoke {
     private static int checks;
 
@@ -30,7 +25,6 @@ public final class RuleIndexSmoke {
         System.out.println("rule-index smoke ok: " + checks + " checks");
     }
 
-    /// The dataset tags: NORMAL (0), EXPRESS (1), DNS_MODE (2).
     private static void paths(RuleIndexNative native_) {
         Reader normal = new Reader(native_.paths(0));
         check(normal.string().equals("rule-index"), "normal root");
@@ -43,14 +37,12 @@ public final class RuleIndexSmoke {
 
         Reader express = new Reader(native_.paths(1));
         check(express.string().equals("rule-index/express"), "express root");
-        // Only the root differs, so the tails are shared.
         Reader normalTails = new Reader(native_.paths(0));
         normalTails.string();
         for (int index = 0; index < 6; index++) {
             check(express.string().equals(normalTails.string()), "express tail " + index);
         }
 
-        // DNS mode writes its own artifacts (server mode hot-reloads them), so it has its own root.
         Reader dnsMode = new Reader(native_.paths(2));
         check(dnsMode.string().equals("rule-index/dns"), "dns mode root");
         Reader dnsTails = new Reader(native_.paths(0));
@@ -85,7 +77,6 @@ public final class RuleIndexSmoke {
                 "a newer version is not read");
 
         byte[] noNodes = image.clone();
-        // nodes = 0
         noNodes[8] = 0;
         noNodes[9] = 0;
         noNodes[10] = 0;
@@ -94,22 +85,21 @@ public final class RuleIndexSmoke {
                 "zero nodes is rejected");
     }
 
-    /// A root-only DTRI header: magic, version 1, one node, no edges/sources, one bloom bit.
     private static byte[] minimalImage() {
         int header = 9 * 4;
         int bloomBytes = 1;
         int nodes = 1;
         int nodeSize = 12;
         byte[] image = new byte[header + bloomBytes + nodes * nodeSize];
-        writeInt(image, 0, 0x44545249); // DTRI
-        writeInt(image, 4, 1); // version
+        writeInt(image, 0, 0x44545249);
+        writeInt(image, 4, 1);
         writeInt(image, 8, nodes);
-        writeInt(image, 12, 0); // edges
-        writeInt(image, 16, 0); // sources
-        writeInt(image, 20, 1); // bloomBits
+        writeInt(image, 12, 0);
+        writeInt(image, 16, 0);
+        writeInt(image, 20, 1);
         writeInt(image, 24, bloomBytes);
-        writeInt(image, 28, 0); // labelsBytes
-        writeInt(image, 32, 0); // sourcesBytes
+        writeInt(image, 28, 0);
+        writeInt(image, 32, 0);
         return image;
     }
 
@@ -121,7 +111,6 @@ public final class RuleIndexSmoke {
     }
 
     private static void plan(RuleIndexNative native_) {
-        // block: compiled + loaded; allow: loaded + not indexed.
         byte[] packed = pack(out -> {
             out.writeByte(2);
             out.writeByte(1);
@@ -241,7 +230,6 @@ public final class RuleIndexSmoke {
         check(rows.string().equals("::"), "second target");
     }
 
-    // --- payload helpers --------------------------------------------------------------------
 
     private interface Writer {
         void write(DataOutputStream out) throws IOException;

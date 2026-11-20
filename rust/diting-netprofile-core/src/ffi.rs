@@ -1,12 +1,7 @@
-//! C ABI for a `dart:ffi` caller. One entry (`call`) with an `op` field decides the request shape;
-//! payloads are JSON and the header stays fixed — `magic "DNP1" | abi` — so the Dart loader refuses a
-//! mismatched library.
-
 use serde_json::Value;
 
 use crate::{payload, profile};
 
-/// Bumped whenever a payload layout or a semantic changes.
 pub const ABI_VERSION: u32 = 1;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DNP1");
@@ -43,9 +38,6 @@ fn into_buffer(mut bytes: Vec<u8>) -> (*mut u8, usize) {
     (pointer, length)
 }
 
-/// # Safety
-/// `out_len` must be writable; `bytes` is `None` (rejected payload, reported as null) or a finished
-/// buffer whose ownership moves to the caller.
 unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     if out_len.is_null() {
         return std::ptr::null_mut();
@@ -63,8 +55,6 @@ unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     }
 }
 
-/// # Safety
-/// `text`/`len` must describe one readable UTF-8 JSON payload; `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_netprofile_core_call(
     text: *const u8,
@@ -81,13 +71,11 @@ pub unsafe extern "C" fn diting_netprofile_core_call(
     respond(answer, out_len)
 }
 
-/// Payload layout version; the Dart loader compares it against its own constant.
 #[no_mangle]
 pub extern "C" fn diting_netprofile_core_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Allocates `size` zeroed bytes; release with [`diting_netprofile_core_free`].
 #[no_mangle]
 pub extern "C" fn diting_netprofile_core_alloc(size: usize) -> *mut u8 {
     if size == 0 {
@@ -99,8 +87,6 @@ pub extern "C" fn diting_netprofile_core_alloc(size: usize) -> *mut u8 {
     pointer
 }
 
-/// # Safety
-/// `pointer`/`size` must come from [`diting_netprofile_core_alloc`] or a `*_core_*` entry.
 #[no_mangle]
 pub unsafe extern "C" fn diting_netprofile_core_free(pointer: *mut u8, size: usize) {
     if pointer.is_null() || size == 0 {

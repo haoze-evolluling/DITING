@@ -1,4 +1,3 @@
-/// Settings page: the legacy "other settings" list condensed into three groups and three rows.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -10,9 +9,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The only app-bar action (wrench) opens the developer options hub, the single entry point for
-/// pages the legacy app had no menu for. Cards already offered by the feature hub (cache, log
-/// retention) are not repeated here; what remains is grouped by run, app/system and guidance.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -40,7 +36,6 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
-          // Cache and log retention are first-class feature-hub cards, so they are not repeated.
           generateSection(
             title: context.l10n.settingsSystemSection,
             items: [

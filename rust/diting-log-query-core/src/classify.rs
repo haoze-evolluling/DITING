@@ -1,10 +1,5 @@
-//! Row classification: the frozen markers that decide what a `dns_log` / `http_request_log` row
-//! means. Labels stay in Dart (they are localised); the buckets are decided here once.
-
 use serde_json::{json, Value};
 
-/// A connection row, not a DNS query: `queryType = 0`, a `TCP `/`UDP ` name or the connection
-/// marker in the message.
 pub fn dns_is_connection(query_type: i64, query_name: &str, message: Option<&str>) -> bool {
     query_type == 0
         || query_name.starts_with("TCP ")
@@ -26,7 +21,6 @@ pub fn dns_is_rewritten(result: &str, message: Option<&str>) -> bool {
         })
 }
 
-/// Display bucket token for the dashboard (`LogRowStatus`): `passed|filtered|failed|bypassed|cached`.
 pub fn dns_log_status(result: &str, is_connection: bool, cached: bool) -> &'static str {
     if result == "BLOCKED" {
         return "filtered";
@@ -43,7 +37,6 @@ pub fn dns_log_status(result: &str, is_connection: bool, cached: bool) -> &'stat
     "passed"
 }
 
-/// Request-page bucket token (`RequestStatus`): `passed|rewritten|blocked|error|bypassed`.
 pub fn dns_request_status(
     result: &str,
     is_connection: bool,
@@ -63,7 +56,6 @@ pub fn dns_request_status(
     }
 }
 
-/// `statusOfOutcome`: the raw outcome to the request-page bucket.
 pub fn http_request_status(outcome: &str) -> &'static str {
     match outcome {
         "allowed" => "passed",
@@ -74,7 +66,6 @@ pub fn http_request_status(outcome: &str) -> &'static str {
     }
 }
 
-/// `httpRowStatusOf`: the dashboard folds `rewritten` into passed.
 pub fn http_log_status(outcome: &str) -> &'static str {
     match outcome {
         "allowed" | "rewritten" => "passed",
@@ -88,8 +79,6 @@ pub fn http_outcome_is_passed(outcome: &str) -> bool {
     http_log_status(outcome) == "passed"
 }
 
-/// Parses a decimal integer the way Dart's `int.tryParse` does for these values: optional sign,
-/// then digits, and nothing else.
 fn try_parse_int(value: &str) -> Option<i64> {
     let bytes = value.as_bytes();
     let (sign, digits) = match bytes.first() {
@@ -107,7 +96,6 @@ fn try_parse_int(value: &str) -> Option<i64> {
     Some(sign * number)
 }
 
-/// `DnsLogMessage.parse`: comma tokens split on their first `=`, known keys only, later values win.
 pub fn dns_message(message: Option<&str>) -> Value {
     let mut app = None;
     let mut resolved = None;
@@ -150,7 +138,6 @@ pub fn dns_message(message: Option<&str>) -> Value {
     })
 }
 
-/// `elapsedMsOf`: first `elapsed=<digits>ms` anywhere in the message, non-negative.
 pub fn elapsed_ms(message: Option<&str>) -> Option<i64> {
     let message = message.filter(|text| !text.is_empty())?;
     let mut start = 0;

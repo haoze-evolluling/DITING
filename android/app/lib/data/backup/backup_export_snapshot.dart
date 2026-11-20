@@ -1,14 +1,5 @@
 part of 'backup_exporter.dart';
 
-// Snapshot of one export, keyed by group. The core reads exactly these fields; anything it needs and
-// does not find is treated as "not set", never as an error.
-//
-// This is the only place that knows how the app stores a setting (getter names, defaults, which
-// container), and the only place that touches SQLite. The user-row filter has to run in SQL: reading
-// a subscription-sized table and dropping its rows here materialized every row in the ART heap,
-// which is what once killed the process during an export (2026-10-31 log: heap climbed to
-// 255MB/256MB and the last three seconds were GC-thrash). `*_source(source)` is indexed, so the join
-// only touches user rows.
 
 extension _BackupExportSnapshot on BackupExporter {
   Future<Map<String, Object?>> _snapshot(
@@ -16,7 +7,6 @@ extension _BackupExportSnapshot on BackupExporter {
     Set<BackupGroup> selected,
   ) async {
     final fields = <String, Object?>{};
-    // The rewrite table serves two groups; read it once per export.
     List<Map<String, Object?>>? rewriteRows;
     for (final group in BackupGroup.values) {
       if (!selected.contains(group)) continue;
@@ -71,8 +61,6 @@ extension _BackupExportSnapshot on BackupExporter {
     final settings = source.settings;
     return {
       'itemsJson': settings.userProvidersJson,
-      // Presets first, then the user's own providers: the core resolves a reference by
-      // `(name, protocol)` when the id it was written with no longer exists.
       'catalog': [
         for (final provider in defaultDnsProviders(currentL10n))
           {
@@ -126,7 +114,6 @@ extension _BackupExportSnapshot on BackupExporter {
     };
   }
 
-  /// Protocol, host, port and target app only; no credentials.
   Map<String, Object?> _outbound(BackupExportSource source) {
     final settings = source.settings;
     return {
@@ -141,7 +128,6 @@ extension _BackupExportSnapshot on BackupExporter {
   Future<Map<String, Object?>> _subscriptions(Database? db) async {
     if (db == null) return const {'groups': [], 'items': []};
     final repository = SubscriptionRepository(db);
-    // `mirror_template` has no repository layer; early databases may lack the table.
     var templates = const <Map<String, Object?>>[];
     if (await _hasTable(db, 'mirror_template')) {
       templates = await db.query(
@@ -200,8 +186,6 @@ extension _BackupExportSnapshot on BackupExporter {
     ),
   };
 
-  /// User-origin rows of [table], filtered inside SQLite; a rule with several user sources appears
-  /// once.
   Future<List<Map<String, Object?>>> _userRuleRows(
     Database? db, {
     required String table,

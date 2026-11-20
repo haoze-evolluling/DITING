@@ -12,8 +12,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Upload and download side by side, after FlClash widgets/traffic.dart: each tile bleeds
-/// its curve under the figures, so the chart is the tile's background rather than a strip.
 class NetworkSpeedCard extends ConsumerWidget {
   const NetworkSpeedCard({super.key, this.onDetail});
 
@@ -21,8 +19,6 @@ class NetworkSpeedCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Only the source shapes the tiles. Samples land every second and are watched by the
-    // figures and the chart alone, so the header and tile frames do not rebuild with them.
     final source = ref.watch(speedSeriesProvider.select((s) => s.source));
     final scale = DashboardDensityScope.scaleOf(context);
     return DashboardCard(
@@ -80,13 +76,11 @@ enum _SpeedDirection {
       totals == null ? null : (this == upload ? totals.up : totals.down);
 }
 
-/// Number and unit, so the unit can shrink next to a large figure: `1.2` + `MB`.
 (String, String) _split(String text) {
   final at = text.lastIndexOf(' ');
   return at < 0 ? (text, '') : (text.substring(0, at), text.substring(at + 1));
 }
 
-/// Value plus its unit, sized from the surrounding tile.
 class _SpeedFigure extends StatelessWidget {
   const _SpeedFigure({
     required this.value,
@@ -124,8 +118,6 @@ class _SpeedFigure extends StatelessWidget {
   }
 }
 
-/// Keeps one shape at every width: the chart takes what the tile's aspect ratio leaves
-/// under the text, down to [_minChartHeight].
 class _SpeedTile extends StatelessWidget {
   const _SpeedTile({required this.direction, required this.source});
 
@@ -189,8 +181,6 @@ class _SpeedTile extends StatelessWidget {
                               values: direction.valuesOf(series),
                               revision: series.revision,
                               capacity: speedSampleCapacity,
-                              // Same as upstream: idle jitter must not pin the curve to full
-                              // height.
                               minScale: 8 * 1024,
                               color: color,
                               baselineRatio: 1,

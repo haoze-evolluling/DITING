@@ -1,5 +1,3 @@
-/// Dart side of `com.haoze.diting/platform`: recents hiding, battery-optimization allowlist, crash
-/// logs and text export. Notification settings bypass this channel.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,16 +6,12 @@ import 'package:flutter/services.dart';
 
 const platformChannelName = 'com.haoze.diting/platform';
 
-/// Every method returns "unavailable" instead of throwing when the channel is missing, and every
-/// caller has a degraded state for it.
 class PlatformBridge {
   PlatformBridge({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel(platformChannelName);
 
   final MethodChannel _channel;
 
-  /// Applies `excludeFromRecents` to every task of this app. False means no task list yet, not a
-  /// failure: the value is persisted and reapplied on the next `onResume`.
   Future<bool> applyRecentsPrivacy({required bool hide}) async {
     try {
       final result = await _channel.invokeMethod<bool>('applyRecentsPrivacy', {
@@ -105,8 +99,6 @@ class PlatformBridge {
     }
   }
 
-  /// Deletes downloaded update packages; [includeTemp] also clears the temp cache. Not doable
-  /// through sqflite, which only sees `databases/`.
   Future<int> clearUpdateCache({bool includeTemp = true}) async {
     try {
       final result = await _channel.invokeMethod<int>('clearUpdateCache', {
@@ -133,13 +125,6 @@ class PlatformBridge {
     }
   }
 
-  /// Opens the system save picker and keeps the chosen document open, so the JSON can be streamed
-  /// into it with [appendExportChunk].
-  ///
-  /// The single-string variant is gone on purpose: it forced the whole document through the Dart
-  /// heap, the channel and a byte array at once, which is what ran the process out of memory on a
-  /// subscription-sized dataset. On Android 11+ the app-private external dir is hard to reach even
-  /// from a file manager, so the picker is still the way out.
   Future<DocumentExportHandle> beginExportDocument({
     required String name,
     String mimeType = 'application/json',
@@ -159,7 +144,6 @@ class PlatformBridge {
     }
   }
 
-  /// Writes one chunk; false means the document is gone and the export must stop.
   Future<bool> appendExportChunk({
     required int handle,
     required String chunk,
@@ -192,14 +176,11 @@ class PlatformBridge {
     }
   }
 
-  /// Closes and deletes a half-written export.
   Future<void> abortExportDocument() async {
     try {
       await _channel.invokeMethod<bool>('abortExportDocument');
     } on MissingPluginException {
-      // Nothing was written, so there is nothing to clean up.
     } on PlatformException {
-      // Same: the file is only a partial export the user can delete.
     }
   }
 
@@ -216,8 +197,6 @@ class PlatformBridge {
     }
   }
 
-  /// Opens the document picker and keeps a long-lived read grant, so a local-file rule
-  /// subscription can be re-imported later without asking the user to pick it again.
   Future<PersistedTextFile> pickPersistableTextFile() async {
     try {
       final raw = await _channel.invokeMethod<Object?>(
@@ -233,8 +212,6 @@ class PlatformBridge {
     }
   }
 
-  /// Opens the document picker for a font file; the bytes are copied into app storage natively, so
-  /// the returned path stays readable without a URI grant.
   Future<FontPickResult> pickFontFile() async {
     try {
       final raw = await _channel.invokeMethod<Object?>('pickFontFile');
@@ -246,18 +223,14 @@ class PlatformBridge {
     }
   }
 
-  /// Deletes a font copied in by [pickFontFile]; unknown paths are ignored natively.
   Future<void> deleteFontFile(String path) async {
     try {
       await _channel.invokeMethod<void>('deleteFontFile', {'path': path});
     } on MissingPluginException {
-      // Without the channel there is no copied file to delete.
     } on PlatformException {
-      // A file that is already gone needs no cleanup.
     }
   }
 
-  /// Re-reads a file picked earlier; the persisted grant is what makes this work after a restart.
   Future<PersistedTextRead> readPersistedText(String uri) async {
     try {
       final raw = await _channel.invokeMethod<Object?>('readPersistedText', {
@@ -273,19 +246,14 @@ class PlatformBridge {
     }
   }
 
-  /// Drops the stored grant when the subscription is deleted.
   Future<void> releasePersistedText(String uri) async {
     try {
       await _channel.invokeMethod<void>('releasePersistedText', {'uri': uri});
     } on MissingPluginException {
-      // Nothing to release without the channel.
     } on PlatformException {
-      // A grant that is already gone needs no cleanup.
     }
   }
 
-  /// Memory used by this process and by the device; a missing channel yields
-  /// [ProcessMemory.available] false so the card shows a dash.
   Future<ProcessMemory> memoryInfo() async {
     try {
       final raw = await _channel.invokeMethod<Object?>('memoryInfo');
@@ -333,7 +301,6 @@ class DocumentSaveResult {
   }
 }
 
-/// An open export document, ready to receive chunks.
 class DocumentExportHandle {
   const DocumentExportHandle({
     this.handle,
@@ -353,7 +320,6 @@ class DocumentExportHandle {
       name = null,
       cancelled = false;
 
-  /// Native side handle; null when the picker was cancelled or failed.
   final int? handle;
   final String? name;
   final bool cancelled;
@@ -405,7 +371,6 @@ class DocumentOpenResult {
   }
 }
 
-/// Result of picking a rule file for a local-file subscription.
 class PersistedTextFile {
   const PersistedTextFile({
     this.uri,
@@ -431,17 +396,14 @@ class PersistedTextFile {
       persisted = false,
       cancelled = false;
 
-  /// `content://` address stored as the subscription's `url`, so its grant can be re-read.
   final String? uri;
   final String? name;
   final String? text;
 
-  /// False when the picker did not grant persistable access; the file then has to be re-picked.
   final bool persisted;
   final bool cancelled;
   final String? error;
 
-  /// A cancelled pick is not an error.
   bool get isOk => cancelled || error == null;
   String get displayName => name ?? '';
 
@@ -458,7 +420,6 @@ class PersistedTextFile {
   }
 }
 
-/// Result of picking a TTF/OTF file the user wants to use as the app font.
 class FontPickResult {
   const FontPickResult({
     this.path,
@@ -481,14 +442,12 @@ class FontPickResult {
       bytes = 0,
       cancelled = false;
 
-  /// Absolute path inside the app's private `files/fonts` directory.
   final String? path;
   final String? name;
   final int bytes;
   final bool cancelled;
   final String? error;
 
-  /// A cancelled pick is not an error.
   bool get isOk => cancelled || (error == null && path != null);
 
   static FontPickResult fromMap(Object? raw) {
@@ -503,7 +462,6 @@ class FontPickResult {
   }
 }
 
-/// Result of re-reading a previously picked rule file.
 class PersistedTextRead {
   const PersistedTextRead({this.text, this.error});
 

@@ -1,9 +1,3 @@
-/// The local hosts resolver: its switch, the TTL the service answers with and whether the host's own
-/// hosts file is read as well.
-///
-/// The old desktop console's `PrivacyPanel.vue` (hosts block) is the blueprint. The switch saves on
-/// the spot; the system-file switch is disabled while the resolver itself is off, because a
-/// sub-switch of a stopped module would be a lie.
 library;
 
 import 'dart:async';

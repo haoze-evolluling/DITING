@@ -1,11 +1,9 @@
-/// Form issue banners (upstream `features/form/custom_issue.dart`).
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// All three severities share the banner structure and differ only in color and glyph.
 class InfoBanner extends StatelessWidget {
   const InfoBanner({
     super.key,
@@ -29,7 +27,6 @@ class InfoBanner extends StatelessWidget {
   final String message;
   final Glyph? glyph;
 
-  /// `null` infers the severity from `glyph`.
   final Color? color;
   final Color? foregroundColor;
   final List<Widget>? actions;
@@ -83,7 +80,6 @@ class InfoBanner extends StatelessWidget {
   }
 }
 
-/// Error bar: a shorter alias for `InfoBanner.error`.
 class ErrorBanner extends StatelessWidget {
   const ErrorBanner({super.key, required this.message});
 
@@ -93,7 +89,6 @@ class ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) => InfoBanner.error(message: message);
 }
 
-/// Per-row hints live on `FormRow.invalid`; a submit finding four fields needs one place.
 class CustomIssuesBanner extends StatelessWidget {
   const CustomIssuesBanner({super.key, required this.issues, this.title});
 

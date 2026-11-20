@@ -13,7 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Home page / dashboard: power, tagline, then the editable card board.
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -23,8 +22,6 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage>
     with WidgetsBindingObserver, PageVisibilityMixin<HomePage> {
-  /// Capture the notifier while mounted: dispose() cannot call ref.read, Riverpod 3
-  /// throws when ref is used on an unmounted widget.
   SpeedSeriesNotifier? _speed;
   LogLiveRefreshNotifier? _logRefresh;
   bool _polling = false;
@@ -33,16 +30,10 @@ class _HomePageState extends ConsumerState<HomePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // The provider's own timer drives the curve; home and /traffic share one series,
-    // and a second timer would halve the 60-point window. Tests disable it.
     _speed = ref.read(speedSeriesProvider.notifier);
-    // Cache, bootstrap and log cards read tables the native writers fill while the tunnel
-    // runs; without this timer they would only refresh on a manual bump. Tests disable it.
     _logRefresh = ref.read(logLiveRefreshProvider.notifier);
   }
 
-  /// Timers only run while home is the branch in front; the kept-alive tabs must not keep
-  /// querying the database behind another page's scroll.
   @override
   void onPageVisibilityChanged(bool visible) {
     if (visible == _polling) return;
@@ -59,8 +50,6 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // The notification action can stop the tunnel while the app is in the
-      // background; re-read the native status instead of trusting local state.
       ref.read(powerProvider.notifier).syncStatus();
     }
   }
@@ -92,8 +81,6 @@ class _HomePageState extends ConsumerState<HomePage>
               : context.l10n.homeEditDashboard,
           onPressed: () => ref.read(dashboardEditingProvider.notifier).toggle(),
         ),
-        // The mode is already in the title, so the bar uses a round icon of the same
-        // size as its neighbour instead of a text pill wedged between two buttons.
         actions: [
           if (!editing)
             IconButton(
@@ -104,8 +91,6 @@ class _HomePageState extends ConsumerState<HomePage>
         ],
         body: PageBody(
           children: [
-            // Edit mode hides the fixed blocks so only cards remain and the drag targets
-            // are obvious.
             if (!editing)
               ...buildHomeHeadline(
                 context: context,

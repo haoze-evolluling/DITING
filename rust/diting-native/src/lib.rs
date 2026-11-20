@@ -1,17 +1,3 @@
-//! The single Android native artifact.
-//!
-//! `libditing_native.so` contains the tunnel engine's JNI facade, every Flutter/Kotlin UI kernel
-//! and the LAN server runtime. Sharing one LTO unit removes the duplicate DNS/TLS/HTTP code that
-//! used to be linked into `libditing_engine.so` and `libditing_server.so` separately.
-//!
-//! Server mode still needs its own process (root bind and privilege drop), so the APK also ships a
-//! tiny `libditing_server.so` launcher. The launcher loads this library and calls
-//! [`diting_server_main`]; it does not link the runtime statically.
-//!
-//! The `pub use` statements keep the dependency rlibs in the final link. Their `#[no_mangle]`
-//! JNI/C ABI entry points remain exported; the merged library was verified with `llvm-nm` to export
-//! the full union of the former engine and kernels symbols.
-
 #![allow(unused_imports)]
 
 use std::ffi::CStr;
@@ -22,19 +8,13 @@ pub use diting_engine;
 pub use diting_kernels;
 pub use diting_server;
 
-/// Version of the merged artifact. Loaders can probe this before looking up other symbols.
 pub const NATIVE_ABI_VERSION: u32 = 1;
 
-/// Returns [`NATIVE_ABI_VERSION`] so a `dart:ffi` / JNI loader can validate the merged library.
 #[no_mangle]
 pub extern "C" fn diting_native_abi_version() -> u32 {
     NATIVE_ABI_VERSION
 }
 
-/// Server entry point used by the tiny launcher. `argv[0]` is the launcher path and is ignored.
-///
-/// # Safety
-/// `argv` must point to `argc` valid NUL-terminated strings, as passed to a normal `main`.
 #[no_mangle]
 pub unsafe extern "C" fn diting_server_main(argc: c_int, argv: *const *const c_char) -> c_int {
     if argc < 0 || (argc > 0 && argv.is_null()) {

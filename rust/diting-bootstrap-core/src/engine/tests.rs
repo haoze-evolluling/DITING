@@ -10,7 +10,6 @@ fn entries(pairs: &[(&str, f64)]) -> Vec<(String, f64)> {
         .collect()
 }
 
-/// A roll that stays below every exploration rate, and one that never explores.
 const NO_EXPLORE: f64 = 0.5;
 
 #[test]
@@ -31,12 +30,10 @@ fn weighted_draw_follows_the_configured_weights() {
     let kernel = BootstrapKernel::new();
     let list = entries(&[("slow", 1.0), ("fast", 3.0)]);
 
-    // roll 0.5 * 4 = 2: after the first weight (1) there is 1 left, the second (3) crosses zero.
     let fast = kernel.plan(&list, T0, NO_EXPLORE, 0.5, 0);
     assert_eq!(fast.primary, Some(1));
     assert_eq!(fast.fallbacks, vec![0]);
 
-    // roll 0.1 * 4 = 0.4 < 1, so the first endpoint wins.
     let slow = kernel.plan(&list, T0, NO_EXPLORE, 0.1, 0);
     assert_eq!(slow.primary, Some(0));
     assert_eq!(slow.fallbacks, vec![1]);
@@ -47,7 +44,6 @@ fn exploration_uses_the_injected_index() {
     let kernel = BootstrapKernel::new();
     let list = entries(&[("a", 1.0), ("b", 1.0)]);
 
-    // Cold sample counts keep the exploration rate at 8%, so 0.01 explores.
     let pick_second = kernel.plan(&list, T0, 0.01, 0.0, 3);
     assert!(pick_second.exploration);
     assert_eq!(pick_second.primary, Some(1));

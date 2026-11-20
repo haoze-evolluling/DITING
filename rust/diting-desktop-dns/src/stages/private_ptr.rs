@@ -1,9 +1,3 @@
-//! RFC 6303 / RFC 7793 private reverse zones.
-//!
-//! Reverse lookups for RFC 1918, CGNAT, link-local, ULA and loopback space must never leave the
-//! machine. When hosts/rewrite produced nothing, this stage answers NXDOMAIN with a zone-apex SOA
-//! so negative caching aggregates per zone rather than per address.
-
 use async_trait::async_trait;
 use diting_dns_wire::build::{RData, ResourceRecord, TYPE_PTR};
 use diting_dns_wire::{CLASS_IN, TYPE_PTR as TYPE_PTR_QUERY};
@@ -121,7 +115,6 @@ pub fn is_private_reverse_zone(domain: &str) -> bool {
         .any(|suffix| clean == *suffix || clean.ends_with(&format!(".{suffix}")))
 }
 
-/// The most specific matching suffix, dot-terminated. `None` when not a private zone.
 pub fn private_reverse_zone_apex(domain: &str) -> Option<String> {
     let clean = normalized_name(domain);
     let mut best: Option<&str> = None;
@@ -137,7 +130,6 @@ pub fn private_reverse_zone_apex(domain: &str) -> Option<String> {
     best.map(|suffix| format!("{suffix}."))
 }
 
-/// Parses `1.1.168.192.in-addr.arpa` or a 32-nibble `ip6.arpa` name.
 pub fn parse_ptr_ip(name: &str) -> Option<std::net::IpAddr> {
     let clean = normalized_name(name);
     if let Some(rest) = clean.strip_suffix(".in-addr.arpa") {
@@ -212,7 +204,6 @@ impl Stage for PrivatePtrStage {
     }
 }
 
-/// Builds a PTR answer when the client resolver knows the address (used by the client stage).
 pub fn ptr_answer(ctx: &DnsContext, host: &str, ttl: u32) -> Option<Vec<u8>> {
     let target = crate::stages::util::normalize_trailing_dot(host);
     start_reply(ctx)?

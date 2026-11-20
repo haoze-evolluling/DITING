@@ -1,9 +1,3 @@
-/// The `hub` branch's encrypted DNS server: the DoT / DoH / DoQ listeners, their network parameters,
-/// the certificate, discovery, reverse-proxy trust and the mobile profile.
-///
-/// The old desktop console (`DevicesView.vue` and its `encrypted/EncryptedDNSPanel`) is the functional
-/// blueprint. The page owns no TLS logic: it reads `/api/v1/encrypted/dns/status` and adopts the whole
-/// status the service answers with after every write.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

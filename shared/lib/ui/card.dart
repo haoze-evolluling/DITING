@@ -122,18 +122,12 @@ class CommonCard extends StatelessWidget {
   final bool enterAnimated;
   final bool enterActionsOnRight;
 
-  /// A selected card keeps its fill unless [fillsSelection]; callers mark it.
   final bool isSelected;
   final bool fillsSelection;
   final bool isError;
   final void Function()? onPressed;
   final Widget child;
 
-  /// Inset between the card's edge and [child]. The card's own pressed state covers this
-  /// inset, but a tappable child (a `ListItem`, an `InkWell`) is laid out inside it, so its
-  /// highlight would stop short of the edge with square corners: give such a child the inset
-  /// itself and leave this null, so the row fills the card and the card's rounded shape clips
-  /// its highlight.
   final EdgeInsets? padding;
   final double? radius;
   final OutlinedBorder? shape;
@@ -145,7 +139,6 @@ class CommonCard extends StatelessWidget {
     required bool ringed,
   }) {
     if (!ringed || !states.contains(WidgetState.focused)) {
-      // A caller that passes a [shape] with a side (a selected tile's outline) keeps it.
       return shape?.side ?? BorderSide.none;
     }
     final colorScheme = context.colorScheme;
@@ -271,7 +264,6 @@ class CommonCard extends StatelessWidget {
   }
 }
 
-/// A focus node left out of the traversal between cards: a card that must not be a stop.
 class SkipTraversalFocusNode extends FocusNode {
   @override
   bool get skipTraversal => true;

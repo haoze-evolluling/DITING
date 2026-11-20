@@ -1,5 +1,3 @@
-//! Direct `/etc/resolv.conf` backend for minimal distributions without resolved/NM.
-
 use std::path::Path;
 
 use diting_desktop_api::platform_types::AdapterState;
@@ -8,13 +6,10 @@ use crate::error::{PlatformError, PlatformResult};
 use crate::exec::CommandExecutor;
 use crate::linux::dnsstate::{self, RESOLV_CONF_ORIGINAL_PATH};
 
-/// Rewrites `/etc/resolv.conf` to the local resolver, backing up the original first.
 pub(crate) async fn apply(executor: &dyn CommandExecutor) -> PlatformResult<()> {
     if let Ok(content) = dnsstate::read_resolv_conf() {
         dnsstate::write_backup_content("resolv.conf", &content)
             .map_err(|error| PlatformError::message(format!("备份 resolv.conf 失败: {error}")))?;
-        // The offline restore script reads this exact path; it must be written together with the
-        // takeover or the script's preferred branch never exists.
         dnsstate::write_resolv_conf_original(&content).map_err(|error| {
             PlatformError::message(format!("备份 /etc/resolv.conf.diting.orig 失败: {error}"))
         })?;
@@ -27,7 +22,6 @@ pub(crate) async fn apply(executor: &dyn CommandExecutor) -> PlatformResult<()> 
     flush(executor).await
 }
 
-/// Restores the backed-up file, falling back to public resolvers when none exists.
 pub(crate) async fn restore(
     executor: &dyn CommandExecutor,
     _adapters: &[AdapterState],
@@ -40,13 +34,10 @@ pub(crate) async fn restore(
         }
     };
     dnsstate::write_resolv_conf_atomically(&content)?;
-    // The original is no longer useful after a successful restore and would otherwise be picked
-    // up as a stale "older original" by the next takeover.
     let _ = std::fs::remove_file(Path::new(RESOLV_CONF_ORIGINAL_PATH));
     flush(executor).await
 }
 
-/// Flushes resolved caches when resolvectl happens to be installed.
 pub(crate) async fn flush(executor: &dyn CommandExecutor) -> PlatformResult<()> {
     if dnsstate::command_exists("resolvectl") {
         executor

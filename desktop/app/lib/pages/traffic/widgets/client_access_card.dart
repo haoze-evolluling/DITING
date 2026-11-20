@@ -1,8 +1,3 @@
-/// The client ACL: the allow whitelist and the explicit blocklist, each edited as one entry per line.
-///
-/// The old desktop console's `ClientsPanel.vue` access card is the blueprint. Both lists are saved
-/// together; an empty whitelist means "no restriction", and whether an address or CIDR is valid is
-/// the service's call.
 library;
 
 import 'dart:async';

@@ -1,9 +1,3 @@
-//! C ABI for the `dart:ffi` caller.
-//!
-//! Three shapes: the two documents (one call each), and three record-list entries whose first byte
-//! selects the operation. Every output starts with `magic "DDC1" | abi`; the Dart loader refuses a
-//! library whose version does not match what it was compiled against.
-
 use crate::bootstrap::{self, BootstrapRow};
 use crate::document::{self, BootstrapEntry};
 use crate::input;
@@ -13,7 +7,6 @@ use crate::providers::{self, Provider};
 use crate::upstreams::{self, ServerUpstream};
 use crate::wire::{Reader, Writer};
 
-/// Bumped whenever a payload layout or a document field changes.
 pub const ABI_VERSION: u32 = 3;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DDC1");
@@ -48,8 +41,6 @@ fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     (pointer, length)
 }
 
-/// # Safety
-/// `out_len` must be writable; `bytes` is `None` for a rejected payload.
 unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     if out_len.is_null() {
         return std::ptr::null_mut();
@@ -67,8 +58,6 @@ unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     }
 }
 
-/// # Safety
-/// `input` must point to `len` readable bytes.
 unsafe fn reader_at<'a>(input: *const u8, len: usize) -> Reader<'a> {
     if input.is_null() || len == 0 {
         Reader::new(&[])
@@ -145,14 +134,11 @@ fn read_cache_policy(reader: &mut Reader<'_>) -> Option<CachePolicy> {
     })
 }
 
-/// Payload layout version; the Dart loader compares it against its own constant.
 #[no_mangle]
 pub extern "C" fn diting_dns_config_core_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Allocates `size` zeroed bytes for the caller to fill. Release it with
-/// [`diting_dns_config_core_free`].
 #[no_mangle]
 pub extern "C" fn diting_dns_config_core_alloc(size: usize) -> *mut u8 {
     if size == 0 {
@@ -164,11 +150,6 @@ pub extern "C" fn diting_dns_config_core_alloc(size: usize) -> *mut u8 {
     pointer
 }
 
-/// Releases a buffer returned by any entry point below, or by
-/// [`diting_dns_config_core_alloc`].
-///
-/// # Safety
-/// `pointer`/`len` must be exactly what the matching call returned, released once.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_config_core_free(pointer: *mut u8, len: usize) {
     if pointer.is_null() {
@@ -177,14 +158,6 @@ pub unsafe extern "C" fn diting_dns_config_core_free(pointer: *mut u8, len: usiz
     drop(Vec::from_raw_parts(pointer, len, len));
 }
 
-/// The tunnel's `ApplyDNSConfig` document plus the rows the UI shows.
-///
-/// Input: `flags | connection flags | settings fields | connection rate/burst | preset providers
-/// | preset bootstrap`. Output:
-/// `mode | document | picked providers | bootstrap entries`.
-///
-/// # Safety
-/// `input` must point to `len` readable bytes and `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_config_core_tunnel(
     input: *const u8,
@@ -211,13 +184,6 @@ pub unsafe extern "C" fn diting_dns_config_core_tunnel(
     respond(Some(writer.finish()), out_len)
 }
 
-/// Server mode's `applyDnsConfig` document plus the upstreams it picked.
-///
-/// Output: `port | mode | document | picked upstreams`, in engine attempt order (one row for
-/// `single`, the whole race list otherwise).
-///
-/// # Safety
-/// Same contract as [`diting_dns_config_core_tunnel`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_config_core_server(
     input: *const u8,
@@ -243,18 +209,6 @@ pub unsafe extern "C" fn diting_dns_config_core_server(
     respond(Some(writer.finish()), out_len)
 }
 
-/// `user_providers_json` helpers: `op u8 | fields`.
-///
-/// * `0` split address: `protocol | address` -> `url | host | port`.
-/// * `1` parse: `opt raw` -> records.
-/// * `2` encode: records -> `json`.
-/// * `3` upsert: `records | id | name | protocol | address` -> records.
-/// * `4` join host and port: `host | port` -> `host:port`.
-/// * `5` parse custom bootstrap rows: `opt raw` -> rows (`id | name | ip | enabled`).
-/// * `6` encode custom bootstrap rows: rows -> `json`.
-///
-/// # Safety
-/// Same contract as [`diting_dns_config_core_tunnel`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_config_core_providers(
     input: *const u8,
@@ -337,16 +291,6 @@ pub unsafe extern "C" fn diting_dns_config_core_providers(
     respond(Some(writer.finish()), out_len)
 }
 
-/// Cache presets: `op u8 | fields`.
-///
-/// * `0` derive from policy: `policy fields` -> preset index.
-/// * `1` current preset: `opt preset | policy fields` -> preset index.
-/// * `2` preset values: `index` -> the nine prefs values.
-/// * `3` server-mode cache: `preset` -> values plus the negative TTL.
-/// * `4` storage spelling: `index` -> `conservative` / `balanced` / `high_hit_rate`.
-///
-/// # Safety
-/// Same contract as [`diting_dns_config_core_tunnel`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_config_core_presets(
     input: *const u8,
@@ -406,16 +350,6 @@ pub unsafe extern "C" fn diting_dns_config_core_presets(
     respond(Some(writer.finish()), out_len)
 }
 
-/// Server-mode custom upstreams: `op u8 | fields`.
-///
-/// * `0` parse: `opt raw` -> records.
-/// * `1` encode: records -> `json`.
-/// * `2` validate: `name | protocol | address | port` -> kind (`6` is ok).
-/// * `3` normalize address: `protocol | address` -> address.
-/// * `4` server host port: `address | port` -> `host:port`.
-///
-/// # Safety
-/// Same contract as [`diting_dns_config_core_tunnel`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_dns_config_core_upstreams(
     input: *const u8,

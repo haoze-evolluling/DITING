@@ -1,8 +1,3 @@
-/// The weekly timetable (A12 / R7): the schedule-triggered rules laid out per weekday.
-///
-/// A timetable entry is a normal automation rule whose trigger is `schedule` and whose action is
-/// typically `block_services`; building one reuses the rule editor rather than a second editor. The
-/// window (`days` / `startMin` / `endMin`) is read from the rule's `spec_json`.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';

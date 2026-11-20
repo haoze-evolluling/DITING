@@ -1,6 +1,4 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-// Brand marks from Simple Icons (CC0-1.0; trademarks belong to their owners). The `path d` goes
-// through `GlyphPath` rather than `flutter_svg`, so every icon shares one render and theming path.
 part of 'app_glyphs.dart';
 
 const _g_github_ = Glyph([

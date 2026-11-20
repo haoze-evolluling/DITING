@@ -21,8 +21,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'app_rules_detail.dart';
 
-/// Per-app rules (upstream `AppRuleManagementScreen`): master switch, search and configured
-/// apps; picking an app swaps to the detail panel within the same route.
 class AppRulesPage extends ConsumerStatefulWidget {
   const AppRulesPage({super.key});
 
@@ -61,8 +59,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
     });
   }
 
-  /// Rebuilds the draft from prefs when another page changed the keys. `/apps` deletes apps from
-  /// `app_allowlist_rules_json`, and a stale draft would write a removed allow rule back on save.
   AppRulesDraft _draftOf(LegacySettings settings) {
     final key = appRulesKey(
       settings.appAllowlistEnabled,
@@ -94,8 +90,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
     final draft = _draftOf(settings);
     final snapshot = ref.watch(installedAppsProvider);
     final apps = snapshot.value?.apps ?? const <InstalledApp>[];
-    // Fall back to the list when the selected app disappears after uninstall. Only a local
-    // field is set: scheduling a frame from `build` is not allowed.
     final app = _selected == null
         ? null
         : apps.where((item) => item.packageName == _selected).firstOrNull;
@@ -106,8 +100,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
         if (didPop) {
           return;
         }
-        // Back inside the page walks out of the detail panel first; only leaving the page asks
-        // about the pending rules.
         if (showing != null) {
           setState(() => _selected = null);
           return;
@@ -125,8 +117,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
     );
   }
 
-  /// Same question as the blocked/excluded pickers: the draft here is also saved by an explicit
-  /// button, so leaving without it would silently drop the edits.
   Future<bool> _confirmLeave(AppRulesDraft draft) async {
     final choice = await showUnsavedChangesDialog(
       context,
@@ -223,7 +213,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   title: context.l10n.appRulesMasterSection,
                   items: [
                     ListItem.toggle(
-                      // The app list below is led by 40dp icons; match its column.
                       leading: const LeadingSlot(
                         child: GlyphIcon(AppGlyphs.verified),
                       ),
@@ -387,7 +376,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
     setState(draft.clearAll);
   }
 
-  /// Drops one locally edited allowlisted domain; the change lands on save.
   void _removeDomain(AppRulesDraft draft, String packageName, String domain) =>
       setState(() => draft.removeDomain(packageName, domain));
 
@@ -447,7 +435,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
         .delete(app.packageName, rule);
   }
 
-  /// Standard destructive confirm; false when dismissed or after the page is gone.
   Future<bool> _confirmDestructive(
     String title,
     Widget content,

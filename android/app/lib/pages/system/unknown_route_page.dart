@@ -1,4 +1,3 @@
-/// Fallback page for unmatched routes.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,8 +7,6 @@ import 'package:material_ui/material_ui.dart';
 class UnknownRoutePage extends StatelessWidget {
   const UnknownRoutePage({super.key, required this.location});
 
-  /// The address the user actually opened, shown so both users and developers can
-  /// report or locate it.
   final String location;
 
   @override
@@ -17,8 +14,6 @@ class UnknownRoutePage extends StatelessWidget {
     final colorScheme = context.colorScheme;
     return CommonScaffold(
       title: context.l10n.unknownRouteTitle,
-      // The body starts at y=0 under the floating app bar, so a centered column would
-      // slide under it on narrow screens or large text; `AppBarClearance` reserves room.
       body: AppBarClearance(
         child: Center(
           child: SingleChildScrollView(

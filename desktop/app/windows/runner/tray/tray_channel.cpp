@@ -5,8 +5,6 @@
 
 namespace {
 
-// Method channel strings arrive UTF-8 encoded; the Win32 menu/tooltip APIs
-// take UTF-16.
 std::wstring Utf16FromUtf8(const std::string& value) {
   if (value.empty()) {
     return std::wstring();
@@ -23,8 +21,6 @@ std::wstring Utf16FromUtf8(const std::string& value) {
   return result;
 }
 
-// Copies |key| into |out| when the map carries it, leaving the zh default in
-// place otherwise - a partially translated locale must not blank the menu.
 void ReadLabel(const flutter::EncodableMap& map, const char* key,
                std::wstring* out) {
   const auto entry = map.find(flutter::EncodableValue(std::string(key)));
@@ -61,7 +57,7 @@ void ApplyLabels(const flutter::EncodableMap& map, TrayLabels* labels) {
   ReadLabel(map, "balloon_minimized_body", &labels->balloon_minimized_body);
 }
 
-}  // namespace
+}
 
 TrayChannel::TrayChannel(flutter::BinaryMessenger* messenger, TrayIcon* tray)
     : tray_(tray),
@@ -76,8 +72,6 @@ TrayChannel::TrayChannel(flutter::BinaryMessenger* messenger, TrayIcon* tray)
 }
 
 TrayChannel::~TrayChannel() {
-  // Detach before |tray_| goes away: the engine may still dispatch a queued
-  // call during shutdown.
   channel_->SetMethodCallHandler(nullptr);
 }
 

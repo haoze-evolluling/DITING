@@ -1,19 +1,3 @@
-//! The answers the engine writes itself: the local asset server and the CNAME-rewrite redirect.
-//!
-//! `mitm_local_relay.go` + `mitm_local_server.go`, both halves:
-//!
-//! * the *routing* (`/cosmetic.css`, `/health`, 404), the status, the content type, the five fixed
-//!   headers and the stylesheet body are [`diting_cosmetic_core::respond`];
-//! * the *HTTP plumbing* (a keep-alive request loop, `http.StatusText`, the body reader) is hyper
-//!   here, exactly like the relay.
-//!
-//! Plus the four small responses the relay needs anyway: the 403 `writeBlockedHTTPResponse` emits, a
-//! 502 for a broken upstream, and the `authority_parts` split that handles bracketed IPv6 literals.
-//!
-//! Nothing in this module dials anything. A local asset request is answered without a network round
-//! trip, which is the whole point of `.pwhs.app`: the stylesheet has to arrive even when the page
-//! itself is being filtered.
-
 use std::convert::Infallible;
 use std::sync::Arc;
 
@@ -28,12 +12,10 @@ use crate::engine::Engine;
 use crate::mitm::http::{full_response, BoxError, Protocol, ResponseBody};
 use crate::mitm::settings::MitmSettings;
 
-/// `IsLocalAssetHost`.
 pub fn is_asset_host(host: &str) -> bool {
     diting_cosmetic_core::is_asset_host(host)
 }
 
-/// `ServeLocalAsset`: the kernel's routing table as a hyper response.
 pub fn asset_response(
     request: &Request<Incoming>,
     settings: &MitmSettings,
@@ -61,12 +43,6 @@ pub fn asset_response(
     )
 }
 
-/// `writeBlockedHTTPResponse`: the 403 the request rules answer with.
-///
-/// The body is Go's, byte for byte. Go also set `Content-Length: 16` for that 17-byte body, which
-/// hyper refuses to frame (`payload claims content-length of 17, custom content-length header claims
-/// 16` — a hard error in `h1`), so the length is left to hyper. A client sees the same body; the
-/// difference is that the message is no longer truncated or de-framed by a wrong header.
 pub fn blocked_response() -> Response<ResponseBody> {
     full_response(
         StatusCode::FORBIDDEN,
@@ -76,7 +52,6 @@ pub fn blocked_response() -> Response<ResponseBody> {
     )
 }
 
-/// The upstream gave up: a fixed 502 instead of Go's silent close.
 pub fn bad_gateway(reason: &str) -> Response<ResponseBody> {
     full_response(
         StatusCode::BAD_GATEWAY,
@@ -86,10 +61,6 @@ pub fn bad_gateway(reason: &str) -> Response<ResponseBody> {
     )
 }
 
-/// The one request loop of a flow that never has an upstream: local assets, or a rewrite redirect.
-///
-/// `mode` decides the answer per request, so both cases share the HTTP plumbing, the keep-alive and
-/// the error handling.
 pub async fn serve_local<C>(client: C, mode: LocalMode) -> Result<(), BoxError>
 where
     C: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -106,14 +77,10 @@ where
         .map_err(|error| -> BoxError { Box::new(error) })
 }
 
-/// What a local-only flow answers.
 pub enum LocalMode {
-    /// `serveLocalAssetTLS` / `serveLocalAssetPlaintext`: the cosmetic stylesheet and `/health`.
     Assets { engine: Arc<Engine> },
-    /// `serveRewriteRedirect`: a 302 to the CNAME target, request URI appended.
     Redirect {
         target: String,
-        // The four fields the `rewritten` log row needs.
         engine: Arc<Engine>,
         package: String,
         protocol: Protocol,
@@ -165,7 +132,6 @@ impl LocalMode {
     }
 }
 
-/// Splits a `Host` header into host and port, handling bracketed IPv6 literals.
 pub fn authority_parts(authority: &str, default_port: u16) -> (String, u16) {
     let authority = authority.trim();
     if let Some(rest) = authority.strip_prefix('[') {
@@ -187,7 +153,6 @@ pub fn authority_parts(authority: &str, default_port: u16) -> (String, u16) {
     }
 }
 
-/// `req.URL.Query().Get(name)`: `&`-split, `=` split, `%XX` and `+` decoded.
 pub fn query_param(query: &str, name: &str) -> Option<String> {
     for pair in query.split('&') {
         if pair.is_empty() {
@@ -204,7 +169,6 @@ pub fn query_param(query: &str, name: &str) -> Option<String> {
     None
 }
 
-/// `url.QueryUnescape`, without the error path: a malformed escape is kept verbatim.
 fn unescape(value: &str) -> Option<String> {
     let bytes = value.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());

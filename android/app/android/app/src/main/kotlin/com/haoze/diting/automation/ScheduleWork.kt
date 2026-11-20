@@ -7,9 +7,6 @@ import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 
-/// WorkManager 兜底任务（A7）：闹钟被 Doze/厂商策略吞掉时，由一次性兜底任务或周期心跳补一次 tick。
-///
-/// 与 ScheduleAlarmReceiver 行为一致：记录 last_tick 并广播 SCHEDULE_TICK；任务自身不做规则求值。
 class ScheduleWork(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
         val context: Context = applicationContext

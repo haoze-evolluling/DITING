@@ -1,6 +1,3 @@
-// Rule control is shared across work modes, but the URL-rules / HTTPS entry only exists on the
-// normal full tunnel; express must not offer it.
-
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/routes/hub_routes.dart';
@@ -53,19 +50,15 @@ void main() {
     expect(find.text('URL 规则与内容过滤'), findsOneWidget);
   });
 
-  // The blocking policy group is split into several sub-sections, and scenario automation now
-  // lives here as a secondary entry. Subscriptions and network-privacy stay in the feature hub.
   testWidgets('规则控制页按子类拆分拦截策略并包含场景自动化入口', (tester) async {
     await pump(tester, AppWorkMode.normal.storageValue);
     expect(find.text('规则测试'), findsOneWidget);
     expect(find.text('临时暂停'), findsOneWidget);
     expect(find.text('命中排行'), findsOneWidget);
     expect(find.text('拦截响应'), findsOneWidget);
-    // 低频域名规则列表已下沉到本页，仍可从这里进入。
     expect(find.text('域名黑名单'), findsOneWidget);
     expect(find.text('域名白名单'), findsOneWidget);
     expect(find.text('域名覆写'), findsOneWidget);
-    // 场景自动化入口在页面底部，需要滚动到可视区。
     await tester.scrollUntilVisible(
       find.text('场景自动化'),
       300,

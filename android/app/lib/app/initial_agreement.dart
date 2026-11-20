@@ -1,6 +1,3 @@
-/// First-launch terms and disclaimer. 1.4.3 showed `InitialAgreementDialog` once from
-/// `MainActivity` and stored `initial_agreement_accepted`; the gate mounts in `DitingApp.builder`
-/// so it covers overlay routes too. Wording is verbatim from `ui/MainActivityDialogs.kt`.
 library;
 
 import 'dart:ui' show ImageFilter;
@@ -11,8 +8,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Gates the app behind the first-launch agreement; returns [child] untouched once
-/// accepted, adding no layout level afterwards.
 class InitialAgreementGate extends ConsumerStatefulWidget {
   const InitialAgreementGate({super.key, required this.child});
 
@@ -24,7 +19,6 @@ class InitialAgreementGate extends ConsumerStatefulWidget {
 }
 
 class _InitialAgreementGateState extends ConsumerState<InitialAgreementGate> {
-  /// Set when the user declines; scoped to this run, asked again next launch.
   var _declined = false;
 
   @override
@@ -35,7 +29,6 @@ class _InitialAgreementGateState extends ConsumerState<InitialAgreementGate> {
     }
     return Stack(
       children: [
-        // Blur the content behind: upstream's dialog was modal.
         ExcludeSemantics(
           child: ImageFiltered(
             imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
@@ -66,8 +59,6 @@ class _InitialAgreementGateState extends ConsumerState<InitialAgreementGate> {
   }
 }
 
-/// Screen shown after declining. It does not kill the process: `SystemNavigator.pop()` is treated
-/// as a crash by some vendor ROMs, and "review again" keeps a mis-tap reversible.
 class _DeclinedNotice extends StatelessWidget {
   const _DeclinedNotice({required this.onReopen});
 
@@ -105,8 +96,6 @@ class _DeclinedNotice extends StatelessWidget {
   }
 }
 
-/// The terms dialog; the wording is the verbatim upstream agreement text, now kept in the ARB
-/// resources so both languages stay in one place.
 class InitialAgreementDialog extends StatelessWidget {
   const InitialAgreementDialog({
     super.key,
@@ -119,9 +108,6 @@ class InitialAgreementDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Three paragraphs of legal text are the app's longest body copy. Unlike a short question such
-    // as "delete this?", it wants full width: the 20 inset plus 20 body padding widens the body by
-    // ~44% on a 411dp screen.
     return CommonDialog(
       title: context.l10n.agreementTitle,
       width: double.infinity,
@@ -137,8 +123,6 @@ class InitialAgreementDialog extends StatelessWidget {
           child: Text(context.l10n.agreementAccept),
         ),
       ],
-      // Must scroll: three paragraphs do not fit a small screen at large text. Line height 1.6
-      // (default 1.33) keeps dense CJK body text legible.
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.5,

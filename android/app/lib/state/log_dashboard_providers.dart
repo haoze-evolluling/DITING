@@ -1,4 +1,3 @@
-/// Data layer for the drill-down pages; overview cards and race queries live in their own files.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -9,8 +8,6 @@ import 'package:diting_android/state/subscription_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Range for the race and bootstrap pages, matching legacy `RaceStatsRange` and
-/// `BootstrapStatsRange`.
 enum LogStatsRange {
   today,
   sevenDays,
@@ -22,7 +19,6 @@ enum LogStatsRange {
     LogStatsRange.all => l10n.commonAll,
   };
 
-  /// Window start; null means no lower bound.
   DateTime? startOf(DateTime now) {
     final dayStart = DateTime(now.year, now.month, now.day);
     return switch (this) {
@@ -33,8 +29,6 @@ enum LogStatsRange {
   }
 }
 
-/// Range for the subscription interception page, with the legacy
-/// `SubscriptionInterceptionStatsRange` labels.
 enum SubscriptionStatsRange {
   today,
   sevenDays,
@@ -73,7 +67,6 @@ final bootstrapStatsRangeProvider =
       BootstrapStatsRangeNotifier.new,
     );
 
-/// Selected subscription interception window.
 class SubscriptionStatsRangeNotifier extends Notifier<SubscriptionStatsRange> {
   @override
   SubscriptionStatsRange build() => SubscriptionStatsRange.today;
@@ -89,8 +82,6 @@ final subscriptionStatsRangeProvider =
       SubscriptionStatsRangeNotifier.new,
     );
 
-/// Supplementary `dns_cache.lastHitAt` query matching `DnsCacheRepository.entries`; null means
-/// never hit.
 final cacheLastHitProvider = FutureProvider<Map<String, int?>>((ref) async {
   ref.watch(dnsLogRevisionProvider);
   final db = await ref.watch(activeLogDatabaseProvider.future);
@@ -127,7 +118,6 @@ class BootstrapStatsSnapshot {
   final int successes;
   final int failures;
 
-  /// Attempt-weighted average elapsed time; 0 when there are no samples.
   final double averageElapsedMs;
   final List<BootstrapIpStat> ips;
 
@@ -142,7 +132,6 @@ final bootstrapStatsProvider = FutureProvider<BootstrapStatsSnapshot>((
   final db = await ref.watch(activeLogDatabaseProvider.future);
   if (db == null) return const BootstrapStatsSnapshot.empty();
 
-  // `recentStats` takes a window length, so "today" is time since midnight.
   final now = DateTime.now();
   final start = range.startOf(now);
   final window = start == null
@@ -175,11 +164,9 @@ class SubscriptionInterceptionItem {
   final String name;
   final bool enabled;
 
-  /// The subscription was deleted but its hits remain in the logs.
   final bool deleted;
   final int hits;
 
-  /// Share of all recorded requests (0..1).
   final double rate;
 
   String get statusLabel {
@@ -202,11 +189,9 @@ class SubscriptionInterceptionSnapshot {
       items = const [],
       missingColumn = false;
 
-  /// All recorded DNS and HTTPS requests in the window (the rate denominator).
   final int totalRequests;
   final List<SubscriptionInterceptionItem> items;
 
-  /// An older store may lack `blockSubscriptionId`, so no rate can be computed.
   final bool missingColumn;
 }
 
@@ -222,15 +207,12 @@ SubscriptionInterceptionItem _interceptionItemOf(Map<String, Object?> row) {
   );
 }
 
-/// SQL: the denominator is every row of both tables, the numerator only `result = BLOCKED`
-/// rows.
 final subscriptionInterceptionProvider =
     FutureProvider<SubscriptionInterceptionSnapshot>((ref) async {
       ref.watch(dnsLogRevisionProvider);
       final range = ref.watch(subscriptionStatsRangeProvider);
       final db = await ref.watch(activeLogDatabaseProvider.future);
       if (db == null) return const SubscriptionInterceptionSnapshot.empty();
-      // Logs live in the mode's logs store; the subscription catalog lives in its rules store.
       final subscriptionDb = await ref.watch(
         subscriptionDatabaseProvider.future,
       );
@@ -269,7 +251,6 @@ final subscriptionInterceptionProvider =
           ),
         ];
 
-        // Express has no `http_request_log`: no HTTPS records, DNS side unaffected.
         var httpsAvailable = true;
         try {
           total += count(
@@ -324,8 +305,6 @@ final subscriptionInterceptionProvider =
           items: items,
         );
       } on DatabaseException catch (error) {
-        // Older databases lack `subscriptionId` (added in 1.4.3); report the gap instead of an
-        // all-zero table.
         if (error.toString().contains('no such column')) {
           return const SubscriptionInterceptionSnapshot(
             totalRequests: 0,

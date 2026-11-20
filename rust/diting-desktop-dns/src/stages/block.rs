@@ -1,9 +1,3 @@
-//! The block response shared by local rules, safe browsing and the response recheck.
-//!
-//! `BlockMode` is a global (or per-group) policy: whatever layer blocked the query, the client
-//! must see the same failure shape. `null_ip` answers 0.0.0.0/:: for A/AAAA and NODATA otherwise;
-//! `nxdomain` and `refused` use the corresponding rcode.
-
 use diting_desktop_api::config::filter::{
     BLOCK_MODE_NXDOMAIN, BLOCK_MODE_REFUSED, DEFAULT_BLOCKING_IPV4, DEFAULT_BLOCKING_IPV6,
 };
@@ -16,7 +10,6 @@ use crate::stages::util::{respond, start_reply};
 
 pub const DEFAULT_RULE_TTL: u32 = 60;
 
-/// Builds and installs the configured block response on `ctx`.
 pub fn respond_blocked(ctx: &mut DnsContext, policy: &BlockResponseConfig) {
     let Some(builder) = start_reply(ctx) else {
         return;

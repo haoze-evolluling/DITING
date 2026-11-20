@@ -1,8 +1,3 @@
-/// The recognised LAN clients, one block per address: its name, its access state, how much it asked
-/// and when, plus the alias / whitelist / blocklist actions.
-///
-/// The old desktop console's `ClientsPanel.vue` table is the blueprint; the rows are blocks instead
-/// of a table so a 390 px window does not need horizontal scrolling.
 library;
 
 import 'dart:async';
@@ -194,7 +189,6 @@ class DesktopClientListCard extends ConsumerWidget {
   }
 }
 
-/// The inset a pill button keeps around its label; the action row cancels it so labels line up.
 const double _actionInset = 16;
 
 Widget _action(
@@ -309,9 +303,6 @@ class _ClientRow extends StatelessWidget {
               ),
             ],
           ),
-          // The actions start on the row text's own line: a pill button pads its label by 16, so
-          // the row is shifted back by exactly that instead of leaving the three labels indented
-          // against the block's other lines.
           Transform.translate(
             offset: const Offset(-_actionInset, 0),
             child: Wrap(

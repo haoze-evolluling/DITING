@@ -1,18 +1,11 @@
 part of 'backup_importer.dart';
 
-// The local side of the merge: the core compares the file against these values, so this is where
-// the app's storage layout (containers, raw keys, table columns) is described. Nothing here decides
-// anything — an absent value means "not set on this device".
-//
-// Rule rows are read unfiltered by source on purpose: a preset rule that the user also added counts
-// as present, which is what the dedupe key checks.
 
 extension _BackupImportSnapshot on BackupImporter {
   Future<Map<String, Object?>> _current(BackupImportTarget target) async {
     final settings = target.settings;
     final store = target.store;
     final db = target.database;
-    // Both rewrite groups read one table.
     List<Map<String, Object?>>? rewriteRows;
     return {
       'providers': {
@@ -105,7 +98,6 @@ extension _BackupImportSnapshot on BackupImporter {
         'dnsLogMode': settings.dnsLogModeRaw,
         'hideFromRecents': settings.hideFromRecentsEnabled,
         'floatingLogEnabled': settings.floatingLogEnabled,
-        // Stored raw, so "never touched" stays distinguishable from "set to the default".
         'floating_log_panel_size': store.read(
           LegacySettings.uiContainer,
           'floating_log_panel_size',

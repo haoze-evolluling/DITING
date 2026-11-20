@@ -1,20 +1,7 @@
-//! Go `net.IP` semantics over raw address bytes.
-//!
-//! The kernels receive addresses as the bytes a DNS record carried, so the Go behaviour has to be
-//! reproduced byte for byte: `net.IP.String()` (dotted quad, IPv4-mapped folding, `netip`'s
-//! zero-run rules, `"?"` + hex for a body that is not 4 or 16 bytes, `"<nil>"` for an empty one),
-//! `To4`, `IsLoopback` and equality against `net.IPv4zero` / `net.IPv6zero`.
-//!
-//! `net.IPv4zero` is the 16-byte `::ffff:0.0.0.0` form, which is why a 4-byte `0.0.0.0` record and
-//! its mapped form compare equal to it while a plain 16-byte `::` does not. That asymmetry decides
-//! "is this answer a null block" in `diting-dns-core`, so it is spelled out here.
-
 use std::fmt::Write as _;
 
-/// `net.IPv4zero` in its 16-byte form: `::ffff:0.0.0.0`.
 const V4_IN_V6_PREFIX: [u8; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff];
 
-/// `net.IP.To4`: a 4-byte body, or a 16-byte IPv4-mapped body folded to its last four bytes.
 pub fn to4(bytes: &[u8]) -> Option<[u8; 4]> {
     match bytes.len() {
         4 => Some([bytes[0], bytes[1], bytes[2], bytes[3]]),
@@ -23,7 +10,6 @@ pub fn to4(bytes: &[u8]) -> Option<[u8; 4]> {
     }
 }
 
-/// `net.IP.IsLoopback`: `127.0.0.0/8` after the IPv4 fold, else `::1`.
 pub fn is_loopback(bytes: &[u8]) -> bool {
     match to4(bytes) {
         Some(v4) => v4[0] == 127,
@@ -31,7 +17,6 @@ pub fn is_loopback(bytes: &[u8]) -> bool {
     }
 }
 
-/// `ip.Equal(net.IPv4zero)`.
 pub fn equals_ipv4_zero(bytes: &[u8]) -> bool {
     match bytes.len() {
         4 => bytes.iter().all(|byte| *byte == 0),
@@ -40,13 +25,10 @@ pub fn equals_ipv4_zero(bytes: &[u8]) -> bool {
     }
 }
 
-/// `ip.Equal(net.IPv6zero)`: only a 16-byte all-zero body. A 4-byte `0.0.0.0` does *not* equal
-/// `::`, because `Equal` with mismatched lengths compares against the v4-in-v6 prefix.
 pub fn equals_ipv6_zero(bytes: &[u8]) -> bool {
     bytes.len() == 16 && bytes.iter().all(|byte| *byte == 0)
 }
 
-/// `net.IP.String()`.
 pub fn go_ip_string(bytes: &[u8]) -> String {
     match bytes.len() {
         0 => "<nil>".to_string(),
@@ -78,8 +60,6 @@ fn dotted(bytes: &[u8; 4]) -> String {
     format!("{}.{}.{}.{}", bytes[0], bytes[1], bytes[2], bytes[3])
 }
 
-/// `netip.Addr`'s IPv6 text: the leftmost longest run of at least two zero segments becomes `::`,
-/// segments print as lowercase hex without leading zeros, and nothing else is shortened.
 fn ipv6(bytes: &[u8]) -> String {
     let mut segments = [0u16; 8];
     for (index, segment) in segments.iter_mut().enumerate() {
@@ -139,7 +119,6 @@ mod tests {
         mapped[11] = 0xff;
         mapped[12..].copy_from_slice(&[9, 8, 7, 6]);
         assert_eq!(to4(&mapped), Some([9, 8, 7, 6]));
-        // The prefix must be exactly the mapped one.
         let mut wrong = mapped;
         wrong[9] = 1;
         assert_eq!(to4(&wrong), None);

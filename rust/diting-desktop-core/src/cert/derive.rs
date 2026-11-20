@@ -1,17 +1,6 @@
-//! Certificate SAN derivation, mirroring `core.DeriveCertNames`.
-//!
-//! The caller almost always supplies only a server name and a listen address, so the SANs are
-//! filled in from those: a hostname becomes a DNS SAN, a concrete IP becomes an IP SAN, and a
-//! wildcard address is skipped — `0.0.0.0` names no host at all and would only add a meaningless
-//! subject alternative name.
-
 use std::collections::HashSet;
 use std::net::IpAddr;
 
-/// Returns `(dns_names, ip_addresses)` for a self-signed certificate.
-///
-/// `listen_address` may be a bare host (`127.0.0.1`), a host with a port (`127.0.0.1:53`), or a
-/// bracketed IPv6 endpoint (`[::1]:853`).
 pub fn derive_cert_names(server_name: &str, listen_address: &str) -> (Vec<String>, Vec<String>) {
     let mut seen = HashSet::new();
     let mut dns_names = Vec::new();
@@ -22,13 +11,10 @@ pub fn derive_cert_names(server_name: &str, listen_address: &str) -> (Vec<String
         add_host(host, &mut seen, &mut dns_names, &mut ip_addresses);
     }
 
-    // Go sorts the DNS SANs so a regenerated certificate has a stable encoding.
     dns_names.sort();
     (dns_names, ip_addresses)
 }
 
-/// Splits an optional port the way `net.SplitHostPort` does for the shapes a listen address can
-/// take. A bare IPv6 literal is returned whole rather than split at its last colon.
 pub fn host_part(listen_address: &str) -> Option<&str> {
     let address = listen_address.trim();
     if address.is_empty() {

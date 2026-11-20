@@ -6,7 +6,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Tapping appends the card at the end and closes, so no disabled state is needed.
 class DashboardEditSheet extends ConsumerWidget {
   const DashboardEditSheet({super.key});
 
@@ -15,8 +14,6 @@ class DashboardEditSheet extends ConsumerWidget {
     final widgets = ref.watch(dashboardWidgetsProvider);
     final mode = ref.watch(workModeProvider);
     final notifier = ref.read(dashboardWidgetsProvider.notifier);
-    // A card the current mode cannot fill is not offered: adding it would close the sheet on a
-    // card that never appears.
     final available = [
       for (final widget in DashboardWidget.values)
         if (!widgets.contains(widget) && dashboardWidgetVisibleIn(widget, mode))
@@ -41,7 +38,6 @@ class DashboardEditSheet extends ConsumerWidget {
               ),
             )
           : ListView(
-              // The sheet title floats over the body, so this top padding is required.
               padding: EdgeInsets.only(
                 top: context.contentTopPadding,
                 bottom: 24,

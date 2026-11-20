@@ -1,7 +1,5 @@
 part of 'outbound_proxy_pages.dart';
 
-/// Proxy app selection (upstream `OutboundProxyAppsScreen`). Single select that writes
-/// straight into `OutboundProxyStore`, matching upstream's `singleSelect` with `onSave`.
 class OutboundProxyAppsPage extends ConsumerStatefulWidget {
   const OutboundProxyAppsPage({super.key});
 
@@ -14,12 +12,9 @@ class _OutboundProxyAppsPageState extends ConsumerState<OutboundProxyAppsPage> {
   final _search = TextEditingController();
   String _query = '';
 
-  /// In-memory only: 1.4.3 `OutboundProxySettingsScreen` passes empty change callbacks here, so the
-  /// picker never persisted its filter or sort.
   AppListFilter _filter = AppListFilter.user;
   AppListSort _sort = AppListSort.labelAsc;
 
-  /// Same 250 ms debounce as 1.4.3 `AppPickerScreen`.
   Timer? _debounce;
 
   @override

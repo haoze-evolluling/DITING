@@ -4,13 +4,7 @@ import android.content.Context
 import com.haoze.diting.log.RequestStats
 import com.haoze.diting.log.TrafficRateMonitor
 
-/// The optional detail line under the status text: request counts and the speed readout, in the
-/// order the user chose. Labels come from Dart (`stats_labels`) so they follow the in-app
-/// language; the Chinese fallbacks and the number/speed formatting live in
-/// `rust/diting-notification-core`, which only sees the ordered ids and the counters.
 object NotificationStatsLine {
-    /// Null when nothing is enabled, so the caller keeps the body to the status text alone.
-    /// [withSpeed] is false where no traffic monitor runs (express mode).
     fun compose(context: Context, withSpeed: Boolean): String? {
         val items = NotificationSettings.statsItems(context)
         if (items.isEmpty()) return null

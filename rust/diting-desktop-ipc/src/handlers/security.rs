@@ -1,5 +1,3 @@
-//! `/api/v1/dns/{access,ratelimit,dns64,unqualified,privacy,rebind,hosts,ecs}/configure`.
-
 use hyper::http::Method;
 
 use diting_desktop_app::controller::security::{

@@ -1,9 +1,3 @@
-/// The cache policy: the TTL calculation mode and the two lifetime bounds.
-///
-/// The old desktop console's `CacheConfigCard.vue` is the blueprint. The mode saves on the spot; the
-/// two numbers are a draft that travels with the save button. The fallback and prefetch halves of the
-/// old card are [CacheFallbackCard] and [CachePrefetchCard], because one card of five numbers and four
-/// switches was taller than the window.
 library;
 
 import 'dart:async';
@@ -22,7 +16,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Wide enough for `86400` and its label; two of them share a row in a desktop window.
 const double _numberWidth = 190;
 
 class CacheConfigCard extends ConsumerStatefulWidget {
@@ -33,8 +26,6 @@ class CacheConfigCard extends ConsumerStatefulWidget {
 }
 
 class _CacheConfigCardState extends ConsumerState<CacheConfigCard> {
-  /// The numbers as typed. Empty until the first answer arrives, which is what tells the form it
-  /// has values to show; a later poll must not overwrite what is being typed.
   String _maxTtl = '';
   String _minTtl = '';
   bool _invalid = false;
@@ -197,8 +188,6 @@ class _NumberField extends StatelessWidget {
     return SizedBox(
       width: _numberWidth,
       child: TextFormField(
-        // `initialValue` with a key tied to the label keeps the field's own text while a poll
-        // rebuilds the card; the draft is what a save reads.
         initialValue: value,
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],

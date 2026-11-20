@@ -1,19 +1,3 @@
-//! The relay itself: accept a flow, terminate TLS with a minted leaf, and pipe HTTP/1.1 through.
-//!
-//! This is `mitmTLSFlow` + `relayHTTPFlow` with `net/http` replaced by hyper 1.x. The decision order
-//! is kept:
-//!
-//! 1. client-first TLS handshake with a leaf minted for the SNI (a pinning client aborts here, which
-//!    is the cheap outcome: no upstream radio is touched);
-//! 2. upstream TLS handshake with certificate verification, then the EV/mTLS refusal check;
-//! 3. per request: strip `Accept-Encoding` for HTML clients, relay the request, then splice the
-//!    cosmetic `<link>` into HTML responses while they stream.
-//!
-//! What stays out of the spike on purpose: the TUN flow, the gate/filter decisions, connection
-//! logging, UID attribution and the local asset/302 rewrite responders. They are already Rust
-//! kernels or belong to stage 3/4; the spike only has to answer whether rustls + hyper reproduce the
-//! HTTP and TLS semantics the Go relay depended on.
-
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex as StdMutex};
 
@@ -32,16 +16,11 @@ use crate::cert::CertStore;
 use crate::upstream::UpstreamTls;
 use crate::{inject, BoxError, ResponseBody};
 
-/// The protocol label the Go engine logged for TLS flows.
 pub const PROTOCOL_HTTPS: &str = "HTTPS";
-/// `logHTTPEvent(flow, host, "HTTPS", "handshake_failed", "client_tls")`.
 pub const STATUS_HANDSHAKE_FAILED: &str = "handshake_failed";
-/// `logHTTPEvent(flow, host, "HTTPS", "upstream_failed", "upstream_tls")`.
 pub const STATUS_UPSTREAM_FAILED: &str = "upstream_failed";
-/// `logHTTPEvent(flow, host, protocol, "allowed", "")`.
 pub const STATUS_ALLOWED: &str = "allowed";
 
-/// One relay observation, the `logHTTPEvent(flow, host, protocol, status, reason)` tuple.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HttpEvent {
     pub host: String,
@@ -50,15 +29,10 @@ pub struct HttpEvent {
     pub reason: String,
 }
 
-/// Everything the relay needs that is not part of the two TLS configs.
 #[derive(Debug, Clone, Default)]
 pub struct ProxyOptions {
-    /// Dial this address instead of resolving the request host. The real engine dials the TUN flow's
-    /// original destination (`flow.serverIP:serverPort`), which is exactly this indirection.
     pub dial_override: Option<SocketAddr>,
-    /// Whether cosmetic rules exist (`cosmeticRulesEmpty()` in Go). Injection is off without them.
     pub inject_css: bool,
-    /// Go's `GetDynamicTLSConfigForHost(defaultHost)`: the flow hostname for clients that omit SNI.
     pub default_host: Option<String>,
 }
 
@@ -69,7 +43,6 @@ struct ProxyInner {
     events: StdMutex<Vec<HttpEvent>>,
 }
 
-/// A MITM relay bound to one certificate store and one upstream trust config.
 #[derive(Clone)]
 pub struct Proxy {
     inner: Arc<ProxyInner>,
@@ -87,7 +60,6 @@ impl Proxy {
         }
     }
 
-    /// The listen-and-spawn loop; one task per intercepted flow.
     pub async fn serve(self, listener: TcpListener) -> std::io::Result<()> {
         loop {
             let (stream, _peer) = listener.accept().await?;
@@ -100,7 +72,6 @@ impl Proxy {
         }
     }
 
-    /// One intercepted flow, start to finish.
     pub async fn serve_connection(&self, stream: TcpStream) -> std::io::Result<()> {
         let _ = stream.set_nodelay(true);
 
@@ -134,7 +105,6 @@ impl Proxy {
             .map_err(std::io::Error::other)
     }
 
-    /// The events recorded so far (the spike's stand-in for the Go log callbacks).
     pub fn events(&self) -> Vec<HttpEvent> {
         self.inner
             .events
@@ -173,7 +143,6 @@ impl Proxy {
     }
 }
 
-/// One request/response exchange.
 async fn handle_request(
     proxy: Proxy,
     upstream: Arc<AsyncMutex<Upstream>>,
@@ -225,19 +194,15 @@ async fn handle_request(
     Ok(response)
 }
 
-/// The upstream connection a client connection is relayed over, reused across keep-alive requests.
 #[derive(Default)]
 struct Upstream {
-    /// `host:port` the live connection belongs to.
     key: Option<String>,
     send: Option<hyper::client::conn::http1::SendRequest<Incoming>>,
     task: Option<JoinHandle<()>>,
 }
 
-/// What one attempt produced.
 enum Sent {
     Response(Response<Incoming>),
-    /// The upstream must not be intercepted (EV certificate or mTLS request).
     Refused(&'static str),
 }
 
@@ -250,9 +215,6 @@ impl Upstream {
         request: Request<Incoming>,
     ) -> Result<Sent, BoxError> {
         let key = format!("{host}:{port}");
-        // Reconnect when the live connection is known to be dead (`is_ready() == false`), not when a
-        // send failed: nothing has been handed over yet, so the request can still be sent as-is and
-        // no body is ever replayed. Go dialled per client connection and never had to decide this.
         let stale = self.send.as_ref().is_some_and(|send| !send.is_ready());
         if self.send.is_none() || stale || self.key.as_deref() != Some(key.as_str()) {
             self.close();
@@ -282,7 +244,6 @@ impl Upstream {
         match send.send_request(request).await {
             Ok(response) => Ok(Sent::Response(response)),
             Err(err) => {
-                // Go wrote the request and gave up when the write failed; it never replayed a body.
                 self.close();
                 Err(Box::new(err))
             }
@@ -304,7 +265,6 @@ impl Drop for Upstream {
     }
 }
 
-/// The upstream host and port for a request: absolute-form URI, then `Host`, then the SNI.
 fn target(request: &Request<Incoming>, sni: &Option<String>) -> (String, u16) {
     if let Some(authority) = request.uri().authority() {
         return (
@@ -322,7 +282,6 @@ fn target(request: &Request<Incoming>, sni: &Option<String>) -> (String, u16) {
     (sni.clone().unwrap_or_default(), 443)
 }
 
-/// Splits a `Host` header into host and port, handling bracketed IPv6 literals.
 pub fn authority_parts(authority: &str) -> (String, u16) {
     let authority = authority.trim();
     if let Some(rest) = authority.strip_prefix('[') {
@@ -353,7 +312,6 @@ fn content_type(response: &Response<Incoming>) -> String {
         .to_string()
 }
 
-/// The spike's stand-in for "the relay gave up": a fixed 502 instead of Go's silent close.
 fn bad_gateway(reason: &str) -> Response<ResponseBody> {
     let body = http_body_util::Full::new(Bytes::from(format!("DITING relay: {reason}\n")))
         .map_err(|never| match never {})

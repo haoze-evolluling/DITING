@@ -17,7 +17,6 @@ class LineChart extends StatefulWidget {
 
   final List<double> values;
 
-  /// Advances by one per sample appended to [values]; a clear or any other change starts over.
   final int revision;
 
   final int capacity;
@@ -26,7 +25,6 @@ class LineChart extends StatefulWidget {
 
   final Color color;
 
-  /// Where the zero line sits, as a share of the height from the top.
   final double baselineRatio;
 
   @override
@@ -121,7 +119,6 @@ class _Series {
     return sum / weight;
   }
 
-  /// Catmull-Rom slopes, clamped so no control point and no curve dips below 0.
   static List<double> slopesOf(List<double> values) {
     final last = values.length - 1;
     return [

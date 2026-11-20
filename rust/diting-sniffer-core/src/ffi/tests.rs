@@ -1,9 +1,6 @@
-//! Tests through the C ABI, the way `android/engine/mitm_sniffer_native.go` drives it.
-
 use super::*;
 use crate::payload::{decode, KIND_HTTP, KIND_TLS, KIND_UNKNOWN};
 
-/// Calls the ABI, copies the payload and frees it, exactly like the Go wrapper.
 unsafe fn classify_through_abi(data: &[u8]) -> (u8, Vec<u8>) {
     let mut pointer: *mut u8 = std::ptr::null_mut();
     let mut length = 0usize;
@@ -33,7 +30,6 @@ fn classifies_all_three_kinds_through_the_abi() {
             classify_through_abi(b"not a request"),
             (KIND_UNKNOWN, Vec::new())
         );
-        // A TLS gate with a body the parser cannot read: still TLS, empty host.
         assert_eq!(
             classify_through_abi(&[0x16, 0x03, 0x01, 0x00, 0x00]),
             (KIND_TLS, Vec::new())

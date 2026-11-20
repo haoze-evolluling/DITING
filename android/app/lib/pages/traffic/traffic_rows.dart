@@ -1,15 +1,11 @@
 part of 'traffic_page.dart';
 
-/// Bytes for the active sort field. The share bar follows it: sorting by upload while drawing
-/// the total would put bar length and rank out of step.
 int _highlightedBytes(AppTrafficDaily row, TrafficSort sort) => switch (sort) {
   TrafficSort.total => row.totalBytes,
   TrafficSort.download => row.rxBytes,
   TrafficSort.upload => row.txBytes,
 };
 
-/// One app row: name, package, share bar, up/down bytes. The share bar is hand-drawn from
-/// two DecoratedBox widgets, since a LinearProgressIndicator vanishes on the card color.
 class AppTrafficRow extends StatelessWidget {
   const AppTrafficRow({
     super.key,
@@ -22,8 +18,6 @@ class AppTrafficRow extends StatelessWidget {
   final AppTrafficDaily row;
   final int total;
 
-  /// Current sort field. The share bar follows it: sorting by upload while drawing
-  /// the total would put bar length and rank out of step.
   final TrafficSort sort;
   final VoidCallback onTap;
 
@@ -107,7 +101,6 @@ class ShareBar extends StatelessWidget {
   }
 }
 
-/// Per-app traffic detail (upstream AppTrafficDetailDialog.kt).
 class _AppTrafficDetailSheet extends StatelessWidget {
   const _AppTrafficDetailSheet({
     required this.row,
@@ -128,7 +121,6 @@ class _AppTrafficDetailSheet extends StatelessWidget {
     return CommonScaffold(
       title: row.appName.isEmpty ? row.packageName : row.appName,
       body: ListView(
-        // The sheet title floats over the body, so without this gap it covers line one.
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
           Padding(
@@ -170,8 +162,6 @@ class _AppTrafficDetailSheet extends StatelessWidget {
                   ),
                   KeyValueRow(
                     label: context.l10n.trafficStartDate,
-                    // For dateRange and allHistory, date is the earliest day in the group
-                    // (upstream min(date)), not the latest update.
                     value: row.date.isEmpty ? '—' : row.date,
                     tabular: true,
                   ),
@@ -207,7 +197,6 @@ class _AppTrafficDetailSheet extends StatelessWidget {
     );
   }
 
-  /// updated_at is a millisecond timestamp, shown as `yyyy-MM-dd HH:mm`.
   static String _updatedAtLabel(int millis) {
     final time = DateTime.fromMillisecondsSinceEpoch(millis);
     String two(int value) => value.toString().padLeft(2, '0');
@@ -216,7 +205,6 @@ class _AppTrafficDetailSheet extends StatelessWidget {
   }
 }
 
-/// Upstream TrafficAttributionDialog.kt: why this app is credited and why no live rate.
 class _AttributionSheet extends StatelessWidget {
   const _AttributionSheet();
 
@@ -270,7 +258,6 @@ class _AttributionSheet extends StatelessWidget {
   }
 }
 
-/// One title/body pair of the attribution sheet.
 class _AttributionSection extends StatelessWidget {
   const _AttributionSection({required this.title, required this.body});
 

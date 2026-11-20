@@ -3,13 +3,7 @@ import com.haoze.diting.log.LogNative;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-/// The runtime-log capture group of the smoke test: the file listing, the export document, the
-/// `logcat` plan, the per-file budget and the `dns_cache` projection.
-///
-/// Split out of `LogSmoke` to keep both files short; it shares the payload helpers there.
 public final class RuntimeSmoke {
-    /// The runtime-log capture group: the file listing, the export document, the `logcat` plan,
-    /// the per-file budget and the `dns_cache` projection.
     public static void run(LogNative native_, long now) {
     byte[] listing = LogSmoke.pack(out -> {
         out.writeInt(4);
@@ -95,7 +89,6 @@ public final class RuntimeSmoke {
     });
     LogSmoke.Reader mirrorRows = new LogSmoke.Reader(native_.mirrorRows(snapshot));
     LogSmoke.check(mirrorRows.count() == 1, "one mirrored row");
-    // `u32 count | rows(u32 length | bytes)`: DnsCacheMirror binds one blob per row.
     LogSmoke.Reader mirrorRow = new LogSmoke.Reader(mirrorRows.blob());
     LogSmoke.check(mirrorRow.string().equals("10|example.com|1"), "cache key");
     LogSmoke.check(mirrorRow.string().equals("example.com"), "query name");

@@ -13,9 +13,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Bootstrap resolution settings (upstream `BootstrapSettingsScreen`). Reads and writes
-/// `bootstrap_enabled`, `bootstrap_preset_ids` and `bootstrap_custom_json` in
-/// `dns_vpn_prefs`; counts come from `bootstrap_log`.
 class BootstrapSettingsPage extends ConsumerWidget {
   const BootstrapSettingsPage({super.key});
 
@@ -24,7 +21,6 @@ class BootstrapSettingsPage extends ConsumerWidget {
     final settings = ref.watch(legacySettingsProvider);
     final enabled = settings.bootstrapEnabled;
     final selected = settings.bootstrapPresetIds.toSet();
-    // `bootstrap_custom_json` holds a `{id,name,ip,enabled}` array; parsing lives in the kernel.
     final custom = parseCustomBootstrapEntries(settings.bootstrapCustomJson);
     final stats = ref.watch(bootstrapStatsProvider);
     final statById = {
@@ -148,8 +144,6 @@ class BootstrapSettingsPage extends ConsumerWidget {
   }
 }
 
-/// 24-hour aggregate of `bootstrap_log` in the active mode's log database; empty on a fresh
-/// install or when bootstrap probing never ran.
 final bootstrapStatsProvider = FutureProvider<List<BootstrapIpStat>>((
   ref,
 ) async {
@@ -162,7 +156,6 @@ Future<List<BootstrapIpStat>> _readStats(Database db) async {
   try {
     return await BootstrapLogRepository(db).recentStats();
   } on DatabaseException {
-    // Older installs may predate the table; an empty list is the honest answer.
     return const [];
   }
 }

@@ -1,22 +1,3 @@
-//! Rust core for the Android app's network diagnostics tools.
-//!
-//! The Kotlin probes (`PingProbe`, `TraceProbe`, `DnsServerProbe`, `DnsLookupProbe`,
-//! `DnsLatencyTester`, `NetHost`) keep every socket, process, timer and `ConnectivityManager`
-//! read; what moves here is the part that reads bytes and text:
-//!
-//! * [`host`] - `NetHost.sanitize` and the "is this a literal IP" gate.
-//! * [`dns`] - the hand-built A/AAAA query, the "did the resolver answer" check, the custom
-//!   server's answer walk (over [`diting_dns_wire`], the reader the DNS kernels already use) and
-//!   the DoH endpoint rule.
-//! * [`ping`] - `ping` output parsing (replies, loss, per-sequence gaps, the min/avg/max/mdev
-//!   block) and the sample arithmetic the latency tester shares.
-//! * [`trace`] - one `ping -t <ttl>` run's hop classification.
-//! * [`api`] - the request/answer payload layouts, so every codec is testable without a JVM.
-//! * [`jni_bridge`] - the entry points `com.haoze.diting.net.ProbeNative` declares.
-//!
-//! There is no Kotlin implementation left to fall back to: a missing library or a payload from a
-//! different layout version fails the probe instead of running a second parser.
-
 pub mod api;
 pub mod dns;
 pub mod host;

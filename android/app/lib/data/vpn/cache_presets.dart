@@ -1,8 +1,3 @@
-/// The three DNS cache presets. Each overwrites nine `dns_cache_*_v2` keys the engine reads
-/// directly, so the UI must write exactly these values.
-///
-/// The numbers and the derivation from raw keys live in
-/// `rust/diting-dns-config-core/src/presets.rs`; only the labels are localised here.
 library;
 
 import 'package:diting_android/data/vpn/rust_dns_config_core.dart';
@@ -17,7 +12,6 @@ enum DnsCachePreset {
 
   const DnsCachePreset(this.storageValue);
 
-  /// The prefs spelling; the declaration order is the kernel's preset index.
   final String storageValue;
 
   String label(AppL10n l10n) => switch (this) {
@@ -48,8 +42,6 @@ enum DnsCachePreset {
     return null;
   }
 
-  /// Derive a preset from the raw keys so installs predating `dns_cache_preset_v3` still show a
-  /// sensible option.
   static DnsCachePreset fromPolicy(LegacySettings settings) =>
       values[RustDnsConfigCore.instance.cachePresetFromPolicy(
         mode: settings.cacheModeRaw,
@@ -61,8 +53,6 @@ enum DnsCachePreset {
       )];
 
   static DnsCachePreset current(LegacySettings settings) {
-    // The kernel has no custom entry; the marker lives only in the prefs, and the raw values
-    // behind it are read by [DnsCacheCustomPolicy].
     if (settings.cachePresetRaw == DnsCachePreset.custom.storageValue) {
       return DnsCachePreset.custom;
     }
@@ -78,7 +68,6 @@ enum DnsCachePreset {
   }
 
   void applyTo(LegacySettings settings, {required bool enabled}) {
-    // Custom keeps whatever the user already tuned; only the marker and enable flag change.
     if (this == DnsCachePreset.custom) {
       DnsCacheCustomPolicy.read(settings).write(settings, enabled: enabled);
       return;
@@ -98,10 +87,6 @@ enum DnsCachePreset {
   }
 }
 
-/// The nine raw keys behind [DnsCachePreset.custom], exposed as editable values.
-///
-/// The engine accepts `follow_dns_ttl` / `limit_max_ttl` / `fixed_ttl`; every duration is clamped
-/// to 30–86400 seconds when written, matching `LegacySettings.applyCachePreset`.
 class DnsCacheCustomPolicy {
   const DnsCacheCustomPolicy({
     required this.mode,
@@ -192,7 +177,6 @@ String cacheSummaryOf(LegacySettings settings) {
   return cachePolicySummary(settings, currentL10n);
 }
 
-/// The one-line policy description used by the switch and by `cacheSummaryOf`.
 String cachePolicySummary(LegacySettings settings, AppL10n l10n) {
   final preset = DnsCachePreset.current(settings);
   if (preset != DnsCachePreset.custom) {
@@ -221,8 +205,6 @@ String cachePolicySummary(LegacySettings settings, AppL10n l10n) {
   return '${preset.label(l10n)} · ${parts.join(' · ')}';
 }
 
-/// Whole hours and minutes where possible, otherwise seconds; keeps custom values readable
-/// without another per-field formatter.
 String formatCacheSeconds(AppL10n l10n, int seconds) {
   if (seconds >= 3600 && seconds % 3600 == 0) {
     return l10n.cacheDurationHours(seconds ~/ 3600);

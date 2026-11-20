@@ -1,9 +1,3 @@
-//! WebSocket event hub and the DNS query observer.
-//!
-//! The hub is deliberately lock-free for DNS workers: `broadcast` takes a short `std::sync::Mutex`
-//! over the client table and uses `try_send`, so a stalled browser can never back-pressure the
-//! resolver. Slow clients are removed the moment their bounded queue overflows.
-
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -21,7 +15,6 @@ use diting_desktop_core::querylog::{
 };
 use diting_desktop_dns::stages::metrics::QueryObserver;
 
-/// A pushed event (`{type,timestamp,data}`).
 #[derive(Debug, Clone, Serialize)]
 pub struct Event {
     #[serde(rename = "type")]
@@ -40,7 +33,6 @@ impl Event {
     }
 }
 
-/// Broadcast fan-out for connected console clients.
 pub struct WsHub {
     next_id: AtomicU64,
     clients: Mutex<HashMap<u64, mpsc::Sender<Event>>>,
@@ -60,7 +52,6 @@ impl WsHub {
         }
     }
 
-    /// Registers a client; the returned receiver is bounded so overflow is observable.
     pub fn register(&self) -> (u64, mpsc::Receiver<Event>) {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let (sender, receiver) = mpsc::channel(64);
@@ -78,7 +69,6 @@ impl WsHub {
             .remove(&id);
     }
 
-    /// Non-blocking fan-out; slow or closed clients are dropped.
     pub fn broadcast(&self, event: Event) {
         let mut clients = self
             .clients
@@ -103,7 +93,6 @@ impl WsHub {
     }
 }
 
-/// Runs one WebSocket connection until it closes or stops reading.
 pub async fn run_client<S>(stream: S, mut receiver: mpsc::Receiver<Event>)
 where
     S: futures_util::Sink<Message, Error = tokio_tungstenite::tungstenite::Error>
@@ -151,7 +140,6 @@ where
     }
 }
 
-/// One query event pushed to consoles.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueryEventData {
@@ -176,7 +164,6 @@ pub struct QueryEventData {
     pub error_message: String,
 }
 
-/// Observer installed into the DNS pipeline by the service binary.
 pub struct DesktopQueryObserver {
     hub: Arc<WsHub>,
     querylog: Arc<QueryLog>,
@@ -211,7 +198,6 @@ fn rcode_name(ctx: &diting_desktop_dns::context::DnsContext) -> String {
     let Some(response) = ctx.response.as_ref() else {
         return String::new();
     };
-    // DNS header: byte 3 holds the 4-bit RCODE in its low nibble.
     if response.len() < 4 {
         return String::new();
     }
@@ -226,7 +212,6 @@ fn rcode_name(ctx: &diting_desktop_dns::context::DnsContext) -> String {
     }
 }
 
-/// Extracts the fields shared by the query-log record and the WebSocket event.
 struct QueryProjection {
     domain: String,
     qtype: String,

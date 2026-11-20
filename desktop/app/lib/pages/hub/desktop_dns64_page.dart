@@ -1,9 +1,3 @@
-/// The `hub` branch's DNS64 page: the IPv6-only transition synthesizer, its prefix list and the
-/// protections the service applies on its own.
-///
-/// The old desktop console (`ResolveView.vue` and its `network/DNS64Panel.vue`) is the functional
-/// blueprint. The page owns no synthesis logic: it reads `dns64` from `/api/v1/status`, posts the
-/// whole form to `/api/v1/dns/dns64/configure`, and shows what the service re-reads.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

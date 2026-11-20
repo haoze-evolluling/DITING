@@ -1,24 +1,16 @@
-//! Cache-key building of the first question (`appendQuestionKey`).
-
 use crate::bits::read_u16;
 
-/// Longest key `appendQuestionKey` can build: a 255-byte name plus `:65535:65535`.
 pub const MAX_KEY_LEN: usize = 256 + 12;
-/// Jump limit of the key builder (`appendQuestionKey`), not of the name decoder.
 const MAX_KEY_POINTER_JUMPS: usize = 64;
 
-/// The question of a query turned into the cache key.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuestionKey {
-    /// `name:qtype:qclass`, lowercased, without the trailing dot of the name.
     pub key: Vec<u8>,
-    /// Length of the name part at the front of `key`.
     pub name_len: usize,
     pub qtype: u16,
     pub qclass: u16,
 }
 
-/// Split parts of a key built by [`write_question_key`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct KeyParts {
     pub key_len: usize,
@@ -27,13 +19,6 @@ pub struct KeyParts {
     pub qclass: u16,
 }
 
-/// Builds the cache key of the first question in `wire` directly into `out` (no heap allocation).
-///
-/// Returns `None` for anything the Go builder rejected — short buffers, `qdCount == 0`, reserved
-/// label types, truncated labels, more than 64 compression jumps — or when `out` is too small.
-/// A compression chain longer than [`MAX_KEY_LEN`] is rejected here; the Go builder would have
-/// grown its buffer instead, but such a response cannot pass the 255-byte name budget of
-/// [`parse_response`], so it could never have matched a cache entry anyway.
 pub fn write_question_key(wire: &[u8], out: &mut [u8]) -> Option<KeyParts> {
     if wire.len() < 12 || read_u16(wire, 4)? == 0 {
         return None;
@@ -103,7 +88,6 @@ pub fn write_question_key(wire: &[u8], out: &mut [u8]) -> Option<KeyParts> {
     })
 }
 
-/// Builds the cache key of the first question in `wire`.
 pub fn question_key(wire: &[u8]) -> Option<QuestionKey> {
     let mut buffer = [0u8; MAX_KEY_LEN];
     let parts = write_question_key(wire, &mut buffer)?;

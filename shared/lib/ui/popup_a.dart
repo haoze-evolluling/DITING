@@ -2,7 +2,6 @@
 
 part of 'popup.dart';
 
-// Soft and wide like HyperOS menus rather than a Material elevation.
 List<BoxShadow> _cardShadows(ColorScheme colorScheme, [double depth = 1]) {
   final strength = colorScheme.brightness == Brightness.dark ? 3.0 : 1.0;
   final alpha = strength * depth;
@@ -30,7 +29,6 @@ const _dismissDuration = Duration(milliseconds: 500);
 
 const _shrinkDuration = Duration(milliseconds: 200);
 
-/// How far a popup with no control to return into shrinks toward its anchor as it fades.
 const _dismissScale = 0.8;
 
 double _secondsOf(Duration duration) =>
@@ -40,22 +38,14 @@ final _openSeconds = _secondsOf(_openDuration);
 
 final _dismissSeconds = _secondsOf(_dismissDuration);
 
-// iOS 27 returns a menu into its button as one drop of glass: the platter dips
-// away, then shrinks into the button, which re-forms out of a droplet and rises
-// past its place. iOS lays a menu over its button; one here opens beside it, so
-// it dips half as far, or the two would part.
 final _droplet = SpringSimulation(dropletSpring, 0, 1, 0);
 const _dropletBlend = 28.0;
 const _dropletContentOut = 0.1;
 const _dropletGlyphIn = 0.47;
 const _dropletGlyphCurve = Cubic(0.25, 0.1, 0.25, 1);
 
-// Inside the button by then, the platter stops swelling it and the glass eases
-// back to the button's, so the last frame is the button itself.
 const _dropletAbsorbed = Interval(0.6, 0.9, curve: Curves.easeInOut);
 
-// As measured on iOS 27: one spring opens the menu, a later one squares off its
-// capsule corners.
 final _open = SpringSimulation(
   SpringDescription.withDampingRatio(mass: 1, stiffness: 400, ratio: 0.754),
   0,
@@ -107,12 +97,10 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   final PopupAnchorResolver anchorOf;
   final PopupPlacement placement;
 
-  /// Whether the popup opens from a sheet's [ElevatedSurfaceTheme], below its navigator.
   final bool elevated;
 
   final Color sourceColor;
 
-  /// A snapshot of the source control, drawn inside the platter while the control is hidden.
   final ValueListenable<ui.Image?>? sourceImage;
 
   final bool modal;
@@ -135,8 +123,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
   Duration get reverseTransitionDuration =>
       sourceImage == null ? _shrinkDuration : _dismissDuration;
 
-  // A controller reverses over the share of its duration it had run, so a
-  // popup closed while opening would rush the return its morph times in full.
   @override
   bool didPop(T? result) {
     final controller = this.controller!;
@@ -147,8 +133,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
 
   final _unfolded = ValueNotifier<bool>(false);
 
-  /// Whether the platter shows rather than the cards, which on glass stand
-  /// bare meanwhile so that one pane, the platter's, bends what lies behind.
   final _platter = ValueNotifier<bool>(true);
 
   final _pin = _PopupPin();
@@ -170,8 +154,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
 
   void _updatePlatter() {
     final animation = this.animation!;
-    // A popup with a control to return into does so on the platter; one
-    // without dissolves as it stood when it began to close.
     if (animation.status == AnimationStatus.reverse) {
       if (sourceImage != null) {
         _platter.value = true;
@@ -197,7 +179,6 @@ class CommonPopupRoute<T> extends PopupRoute<T> {
     }
   }
 
-  /// A popup that returns into its control runs a picked item once landed, so nothing rebuilds.
   void _runPicked(VoidCallback action) {
     if (sourceImage == null) {
       action();

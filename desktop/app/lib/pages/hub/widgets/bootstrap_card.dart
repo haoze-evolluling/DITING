@@ -1,6 +1,3 @@
-/// Bootstrap DNS: the servers used to resolve an encrypted upstream's host name before the TLS
-/// handshake. The console's `BootstrapConfigCard.vue` is the blueprint: the switch applies at once,
-/// at least one server is kept, and each server can be probed.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

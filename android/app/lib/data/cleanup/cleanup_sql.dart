@@ -7,8 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Opens each database file once per session: "clear all local data" runs a dozen actions and
-/// `AppDatabase.open` re-checks the file every call.
 class CleanupDatabases {
   CleanupDatabases(this._open);
 
@@ -23,14 +21,10 @@ class CleanupDatabases {
 
   String get normalLogsFile => DataSet.normal.logsDatabase;
 
-  /// Normal mode's log database: the only one with `app_traffic_daily`.
   Future<Database?> get main => of(normalLogsFile);
 
-  /// Global automation store, shared by every mode.
   Future<Database?> get app => of(StorageContract.globalDatabase);
 
-  /// Existing rule databases in a fixed order (normal, express), so map iteration order
-  /// cannot make tests flaky.
   Future<List<Database>> ruleDatabases() async {
     final databases = <Database>[];
     for (final dataSet in DataSet.values) {
@@ -40,7 +34,6 @@ class CleanupDatabases {
     return databases;
   }
 
-  /// Databases holding runtime tables (logs, cache) in a fixed mode order.
   Future<List<Database>> runtimeDatabases() async {
     final databases = <Database>[];
     for (final dataSet in DataSet.values) {
@@ -50,19 +43,15 @@ class CleanupDatabases {
     return databases;
   }
 
-  /// Whether [db] is the normal data set's rule database, the only one cleanup re-seeds.
   bool isMain(Database db) => db.path == _cache[normalRulesFile]?.path;
 }
 
-/// Deletes all rows; a missing table returns 0 and logs why.
 Future<int> deleteAllRows(DatabaseExecutor db, String table) =>
     _guard(() => db.delete(table), 'delete $table');
 
-/// Deletes matching rows; a missing table or column returns 0.
 Future<int> deleteRowsWhere(DatabaseExecutor db, String table, String where) =>
     _guard(() => db.delete(table, where: where), 'delete $table ($where)');
 
-/// Deletes rule rows that no source row references (`NOT EXISTS`).
 Future<int> deleteOrphanRows(
   DatabaseExecutor db,
   String ruleTable,
@@ -73,8 +62,6 @@ Future<int> deleteOrphanRows(
   'NOT EXISTS (SELECT 1 FROM $sourceTable s WHERE s.ruleId = $ruleTable.id)',
 );
 
-/// Zeroes subscription import metadata after the rule tables are cleared. A stale ETag would get a
-/// 304 and the rules would never come back.
 Future<void> resetSubscriptionImportState(
   DatabaseExecutor db, {
   required String table,
@@ -99,8 +86,6 @@ Future<void> deleteOrphanAutoUpdateItems(
   }
 }
 
-/// Reads the preset whitelist asset; callers must skip seeding on an empty result or the flag is
-/// set with nothing seeded.
 Future<List<({String domain, String group})>> loadPresetEntries({
   Future<String> Function()? load,
 }) async {

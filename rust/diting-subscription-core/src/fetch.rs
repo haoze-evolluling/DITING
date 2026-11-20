@@ -1,13 +1,8 @@
-//! Download policy: which addresses one update tries, in which order, when a mirror may fall back
-//! to the direct address, and what a response status means. The HTTP stack and the progress
-//! callback stay in Dart.
-
 use serde_json::{json, Value};
 
 use crate::payload;
 use crate::url::{self, UrlParts};
 
-/// Ordered attempts for one row; the last one never allows another fallback.
 fn attempts(request: &Value) -> Vec<Value> {
     let record = payload::child(request, "record");
     let record_value = Value::Object(record.clone());
@@ -50,7 +45,6 @@ fn attempts(request: &Value) -> Vec<Value> {
         None
     };
     if let Some(global) = global {
-        // A row without its own template always falls back to the direct address.
         targets.push(json!({
             "url": global,
             "usedMirror": true,
@@ -65,10 +59,6 @@ pub fn targets(request: &Value) -> Value {
     json!({ "targets": attempts(request) })
 }
 
-/// What to do with one response: `retry` drops the validators and asks again, `content` reads the
-/// body, `notModified` keeps the stored rules and `failed` carries the status.
-///
-/// A 412 only retries while validators were actually sent; otherwise it is a plain failure.
 pub fn verdict(request: &Value) -> Value {
     let Some(status) = payload::integer(request, "status") else {
         return json!({ "kind": "failed", "status": 0 });
@@ -86,7 +76,6 @@ pub fn verdict(request: &Value) -> Value {
     json!({ "kind": kind, "status": status })
 }
 
-/// Validator headers for the request; an empty or missing value sends nothing.
 pub fn headers(request: &Value) -> Value {
     let mut answer = serde_json::Map::new();
     if !payload::flag_or(request, "useValidators", true) {

@@ -1,15 +1,3 @@
-//! The desktop upstream resolver.
-//!
-//! The transport, scheduling and statistics live in `diting-engine`; this module adds the three
-//! desktop-only layers the Android engine does not need:
-//!
-//! * conditional routes: longest-suffix selection of a dedicated upstream;
-//! * a fallback chain with its own timeout and SERVFAIL/REFUSED triggers;
-//! * per-client-group upstreams selected by provider id.
-//!
-//! Everything is published as one immutable [`ResolverSet`] so the query path never sees a
-//! half-applied configuration.
-
 pub mod settings;
 pub mod trust;
 
@@ -39,8 +27,6 @@ impl BootstrapSink for SilentBootstrap {
     fn bootstrap(&self, _event: &BootstrapEvent) {}
 }
 
-/// The published configuration: one primary resolver, an optional fallback, route resolvers and
-/// group resolvers.
 pub struct ResolverSet {
     primary: Resolver,
     fallback: Option<Resolver>,
@@ -62,19 +48,14 @@ impl ResolverSet {
         self.provider_count
     }
 
-    /// Per-provider statistics of the primary chain, keyed by configured provider id.
     pub fn provider_stats(&self) -> Vec<(String, diting_resolver_core::stats::Snapshot)> {
         self.primary.provider_stats()
     }
 
-    /// Resolves one wire query. `group` is the client group id; empty or `default` means the main
-    /// chain. Conditional routes are consulted only when no group owns the query.
     pub async fn resolve(&self, query: &[u8], group: &str) -> Result<Vec<u8>, String> {
         self.resolve_attributed(query, group).await.0
     }
 
-    /// Same as [`resolve`](Self::resolve), plus the provider id that answered or was last tried.
-    /// A fallback replaces the primary's attribution because its answer is what reaches the client.
     pub async fn resolve_attributed(
         &self,
         query: &[u8],
@@ -140,8 +121,6 @@ impl ResolverSet {
         }
     }
 
-    /// Closes every pooled connection. Called on shutdown and before a reconfiguration replaces
-    /// this set.
     pub fn shutdown(&self) {
         self.primary.shutdown();
         if let Some(fallback) = &self.fallback {
@@ -156,7 +135,6 @@ impl ResolverSet {
     }
 }
 
-/// The mutable handle the service publishes on every configuration change.
 pub struct DesktopResolver {
     current: RwLock<Arc<ResolverSet>>,
     trust: Arc<diting_engine::resolver::UpstreamTrust>,
@@ -204,8 +182,6 @@ impl DesktopResolver {
             .clone()
     }
 
-    /// Builds and publishes a new resolver set. `groups` maps a group id to the provider ids it
-    /// uses; unknown ids are ignored, which matches the Go "compile-time prune" rule.
     pub fn configure(
         &self,
         settings: &ResolverSettings,
@@ -299,7 +275,6 @@ impl DesktopResolver {
         self.current().resolve(query, group).await
     }
 
-    /// Attribution-aware variant used by the DNS forward stage.
     pub async fn resolve_attributed(
         &self,
         query: &[u8],
@@ -308,7 +283,6 @@ impl DesktopResolver {
         self.current().resolve_attributed(query, group).await
     }
 
-    /// Per-provider statistics keyed by configured id; empty before the first configure.
     pub fn provider_stats(&self) -> Vec<(String, diting_resolver_core::stats::Snapshot)> {
         self.current().provider_stats()
     }

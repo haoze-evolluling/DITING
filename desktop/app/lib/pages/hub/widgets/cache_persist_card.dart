@@ -1,9 +1,3 @@
-/// Cache persistence: whether the in-memory answers are written to disk, how often, and where.
-///
-/// The old desktop console's `CachePersistCard.vue` is the blueprint: the switch applies at once, the
-/// interval travels on its own (clamped to 30–86400) and the file path is read-only because the service
-/// owns the data layout. The two manual operations are [CacheSnapshotCard], because a settings card and
-/// a pair of destructive-ish buttons answer different questions.
 library;
 
 import 'dart:async';
@@ -26,7 +20,6 @@ const int _maxInterval = 86400;
 class CachePersistCard extends ConsumerStatefulWidget {
   const CachePersistCard({super.key, required this.persist});
 
-  /// The service's persistence status; null when this build of the service does not report it.
   final DesktopCachePersist? persist;
 
   @override
@@ -46,8 +39,6 @@ class _CachePersistCardState extends ConsumerState<CachePersistCard> {
         .save(next);
     if (!mounted) return error;
     if (error == null) {
-      // The file path, the interval the service actually runs and the last write failure all come
-      // from the status endpoint, so a successful save re-reads it.
       unawaited(ref.read(desktopCacheSnapshotProvider.notifier).refresh());
     }
     showDesktopMessage(
@@ -59,8 +50,6 @@ class _CachePersistCardState extends ConsumerState<CachePersistCard> {
     return error;
   }
 
-  /// Empty or non-positive falls back to the service default; anything else is clamped, exactly as
-  /// the console does. Zero is not "never" here: the service cannot tell it from a missing field.
   Future<void> _submitInterval(DesktopCacheConfig config) async {
     final raw = int.tryParse(_interval);
     final seconds = raw == null || raw <= 0
@@ -71,7 +60,6 @@ class _CachePersistCardState extends ConsumerState<CachePersistCard> {
       context.l10n.desktopCachePersistIntervalSaved,
     );
     if (error != null || !mounted) return;
-    // Show what the service kept: it clamps the interval, so the typed value is not the answer.
     final saved = ref.read(desktopCacheConfigProvider).config;
     if (saved != null) {
       setState(() => _interval = '${saved.effectivePersistIntervalSeconds}');

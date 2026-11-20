@@ -1,9 +1,3 @@
-//! EDNS Client Subnet privacy and spoofing (RFC 7871).
-//!
-//! Two modes: strip the client's real subnet (privacy) or replace it with a configured subnet
-//! (geo-unlocking while hiding the client). The mutation happens on the outgoing query, after the
-//! cache key was already computed from the question, so grouping and caching stay stable.
-
 use std::net::IpAddr;
 
 use async_trait::async_trait;
@@ -75,7 +69,6 @@ impl Stage for EcsStage {
     }
 }
 
-/// Parses `1.2.3.0/24` or `2001:db8::/32`. A bare address is treated as a full-length prefix.
 pub fn parse_subnet(text: &str) -> Result<(IpAddr, u8), String> {
     let (address, prefix) = match text.split_once('/') {
         Some((address, prefix)) => (address, Some(prefix)),

@@ -1,11 +1,5 @@
 package com.haoze.diting.log;
 
-/// Host-JVM copy of the `LogNative` declarations, used only by `LogSmoke` to prove that the
-/// exported JNI symbols match the signatures Kotlin declares (name *and* argument order).
-///
-/// The body of every method is native, so a mismatch is an `UnsatisfiedLinkError` or a wrong answer
-/// rather than a compile error; the Kotlin file is the real contract and this one is checked against
-/// it by `python rust/verify.py --smoke`.
 public final class LogNative {
     public native byte[] dnsBatch(long stats, int modeTag, byte[] packed, long nowMs);
 

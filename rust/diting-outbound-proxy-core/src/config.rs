@@ -1,16 +1,8 @@
-//! App-facing outbound-proxy configuration.
-//!
-//! The engine rules are imported from `diting-proxy-core::config`; this file only adds the three
-//! things the Flutter/Kotlin side knows and the engine does not: the proxy app package, the
-//! installed-package set and the per-app target list. Validation keeps the legacy order so the
-//! first offending field is still the one the UI points at.
-
 use diting_proxy_core::config::{
     normalize_host, normalize_protocol, normalize_scope, valid_credentials, valid_port, SCOPE_APPS,
 };
 use serde_json::Value;
 
-/// One decoded app configuration; status fields are storage/UI state and do not matter here.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct AppConfig {
     pub enabled: bool,
@@ -25,7 +17,6 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
-    /// Reads the Dart map; defaults are the legacy form defaults.
     pub fn from_value(value: &Value) -> Option<Self> {
         let object = value.as_object()?;
         let text = |key: &str, fallback: &str| {
@@ -61,8 +52,6 @@ impl AppConfig {
         })
     }
 
-    /// Targets that would actually be proxied: blank names and the proxy app itself are dropped,
-    /// duplicates are removed, and the result is sorted for the engine JSON.
     pub fn effective_targets(&self) -> Vec<String> {
         let mut targets: Vec<String> = Vec::new();
         for package in &self.target_packages {
@@ -76,9 +65,6 @@ impl AppConfig {
         targets
     }
 
-    /// The first rejected field as a stable token; the Dart caller owns the localized sentence.
-    /// The order matches the legacy `validationError`: host, port, app presence, self, installed,
-    /// credentials, per-app targets.
     pub fn validation_error(
         &self,
         self_package: Option<&str>,
@@ -113,8 +99,6 @@ impl AppConfig {
         None
     }
 
-    /// The exact JSON `Engine.configureOutboundProxy` decodes. The key order is the legacy one and
-    /// `port` stays a number, because a string would leave the Go struct's `Port` zero.
     pub fn engine_json(&self) -> String {
         let protocol = normalize_protocol(&self.protocol).unwrap_or("socks5");
         let mut parts = vec![
@@ -139,22 +123,17 @@ impl AppConfig {
 }
 
 fn escape(value: &str) -> String {
-    // The legacy encoder only escaped backslashes and quotes.
     value.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
-/// `socks5` / `http`, anything else falling back to `socks5`.
 pub fn protocol_or_default(value: &str) -> &'static str {
     normalize_protocol(value).unwrap_or("socks5")
 }
 
-/// `apps` exactly, anything else falling back to `all`.
 pub fn scope_or_default(value: &str) -> &'static str {
     normalize_scope(value)
 }
 
-/// Deduplicates package names in their original order. Package names cannot contain newlines, so a
-/// newline-separated payload is the smallest JNI layout that keeps the filtering rule here.
 pub fn filter_targets(text: &str) -> String {
     let mut targets: Vec<&str> = Vec::new();
     for line in text.split('\n') {
@@ -174,8 +153,6 @@ fn text_like(value: &Value) -> String {
     }
 }
 
-/// Newline-separated package names from the engine JSON, or `None` when there is no `packages`
-/// array (the caller then leaves the document untouched).
 pub fn packages_of(proxy_json: &str) -> Option<String> {
     let value: Value = serde_json::from_str(proxy_json).ok()?;
     let packages = value.as_object()?.get("packages")?.as_array()?;
@@ -188,7 +165,6 @@ pub fn packages_of(proxy_json: &str) -> Option<String> {
     )
 }
 
-/// Replaces `packages` with the resolved `uids`; `None` means "not a per-app document".
 pub fn apply_uids(proxy_json: &str, uids_csv: &str) -> Option<String> {
     let mut value: Value = serde_json::from_str(proxy_json).ok()?;
     let object = value.as_object_mut()?;

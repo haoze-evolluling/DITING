@@ -1,9 +1,3 @@
-/// The `hub` branch's custom rules: the AdGuard syntax guide and the editor that replaces the whole
-/// list on save.
-///
-/// The old desktop console (`ProtectView.vue`, `RulesPanel.vue` "custom" tab) is the functional
-/// blueprint. The page owns no rule parsing: it reads `/api/v1/filter/rules`, posts the list to the
-/// same endpoint, and shows the list the service re-reads.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -42,8 +36,6 @@ class DesktopFilterRulesPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          // A stable slot: inserting the notice only when stale would shift the editor's
-          // position and rebuild its State, discarding a draft the user is still editing.
           state.isStale
               ? StaleStatusNotice(onRetry: retry)
               : const SizedBox.shrink(),

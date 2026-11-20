@@ -1,10 +1,3 @@
-//! `dns_state.json`, the crash-recovery snapshot of the pre-takeover adapter DNS.
-//!
-//! The write is deliberate about ordering: temporary file, fsync-free atomic rename, and on
-//! Windows a best-effort delete first (some filesystems refuse to replace a locked target). A
-//! half-written state file would make the service restore the wrong DNS after a crash, so the
-//! reader treats unparsable content as an error rather than silently starting fresh.
-
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -20,7 +13,6 @@ pub struct FileStateStore {
 }
 
 impl FileStateStore {
-    /// Uses the platform default state file when `path` is empty.
     pub fn new(path: impl AsRef<Path>) -> Self {
         let path = path.as_ref();
         let file_path = if path.as_os_str().is_empty() {

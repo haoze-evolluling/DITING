@@ -1,7 +1,3 @@
-// The web console login page: the same Flutter bundle is served to a browser, and only the browser
-// authenticates — the native Windows window is never web. Every branch below is a promise the old
-// console's `LoginView.vue` made.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_desktop/data/api/desktop_auth_providers.dart';
@@ -67,12 +63,10 @@ void main() {
       desktopBackgroundShrinkSize(1920, 1080),
       (width: 1280, height: 720),
     );
-    // 0.75 of the first pass wins when the caps allow it.
     expect(
       desktopBackgroundShrinkSize(800, 600),
       (width: 600, height: 450),
     );
-    // Never below the console's floor.
     expect(
       desktopBackgroundShrinkSize(100, 100),
       (width: desktopBackgroundMinWidth, height: desktopBackgroundMinHeight),

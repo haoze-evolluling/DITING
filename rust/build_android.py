@@ -109,17 +109,10 @@ from pathlib import Path
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 JNI_LIBS_DIR = PROJECT_ROOT / "android" / "app" / "android" / "app" / "src" / "main" / "jniLibs"
-# One shared library plus one executable ship per ABI. The engine-side kernels are statically
-# linked into `libditing_native.so`; the UI kernels are also linked into it instead of keeping a
-# separate `libditing_kernels.so`. `libditing_server.so` is an executable, not a shared library.
-# The desktop-only kernels are not part of the APK and are built by their own `cargo test`/desktop
-# steps.
 NATIVE_LIBRARY = "libditing_native.so"
 LAUNCHER_BINARY = "diting-server-launcher"
 SERVER_LIBRARY = "libditing_server.so"
 ANDROID_API = 28
-# LTO keeps `#[no_mangle]` roots, but a future change to the dependency graph could silently drop
-# one object file. Check one entry point per boundary instead of trusting the link.
 REQUIRED_NATIVE_EXPORTS = (
     "diting_native_abi_version",
     "diting_server_main",
@@ -130,7 +123,6 @@ REQUIRED_NATIVE_EXPORTS = (
     "diting_kernels_abi_version",
 )
 
-# Gradle ABI name -> Rust target triple.
 TARGETS = {
     "arm64": ("arm64-v8a", "aarch64-linux-android"),
     "x86_64": ("x86_64", "x86_64-linux-android"),
@@ -248,9 +240,6 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
     environment = dict(os.environ)
     environment[f"CARGO_TARGET_{triple.upper().replace('-', '_')}_LINKER"] = str(clang)
-    # `ring` (pulled in by rustls/quinn for the encrypted DNS transports) compiles C and per-arch
-    # assembly through `cc`, which looks up `CC_<target>`/`AR_<target>` and otherwise guesses a bare
-    # `clang`. The target-prefixed NDK wrapper is what actually carries the sysroot.
     environment[f"CC_{triple.replace('-', '_')}"] = str(clang)
     environment[f"AR_{triple.replace('-', '_')}"] = str(llvm_ar)
     command = [
@@ -289,8 +278,6 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         return None
     shutil.copy2(launcher_artifact, destination / SERVER_LIBRARY)
     log(f"{launcher_artifact.name} -> {destination / SERVER_LIBRARY}")
-    # Remove artifacts from the previous three-library layout and the older 34-library layout so a
-    # stale `jniLibs` directory does not package them again.
     for stale_name in ("libditing_engine.so", "libditing_kernels.so"):
         stale = destination / stale_name
         if stale.exists():

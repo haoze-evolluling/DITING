@@ -13,10 +13,6 @@ import 'package:material_ui/material_ui.dart';
 part 'mode_onboarding_widgets.dart';
 part 'mode_onboarding_steps.dart';
 
-/// Three-step onboarding: choose mode, request permissions, key tips. Step 2 both explains each
-/// permission and opens the real system dialog, because a page that only describes them leaves the
-/// service unprotected: without POST_NOTIFICATIONS the foreground notification is dropped, and
-/// without the VPN consent the tunnel cannot start at all.
 class ModeOnboardingPage extends ConsumerStatefulWidget {
   const ModeOnboardingPage({super.key});
 
@@ -47,8 +43,6 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
     );
   }
 
-  /// Finish onboarding: write the flag and return home. go(Routes.home) rather than pop,
-  /// because this page is reached both by pushReplacement and by push.
   void _finish() {
     ref.read(onboardingProvider.notifier).complete();
     ref.read(workModeSelectedProvider.notifier).markSelected();
@@ -71,9 +65,6 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
           },
         ),
       ],
-      // The app bar floats over the body (extendBodyBehindAppBar) and this page uses a bare
-      // Column, so without this clearance the progress bar and hero icon would be drawn under
-      // the status bar.
       body: AppBarClearance(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,7 +116,6 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
   }
 }
 
-/// Three-segment progress bar: passed 40% opaque, current primary, pending surface.
 class _StepIndicator extends StatelessWidget {
   const _StepIndicator({required this.steps, required this.current});
 

@@ -3,7 +3,6 @@ import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-/// Hand-written stand-ins for the upstream's freezed models; `copyWith` keeps freezed's rules.
 const _keep = Object();
 
 @immutable

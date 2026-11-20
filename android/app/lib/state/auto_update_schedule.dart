@@ -1,11 +1,3 @@
-/// When subscriptions fall due: every N hours since the last attempt, or at a local wall-clock
-/// time every day / every other day.
-///
-/// The decision rules — the 3-day look-back, the anchor day, every-other-day parity and "due from
-/// `lastAttemptAt`, not `lastUpdated`" — live in `rust/diting-subscription-core/src/schedule.rs`.
-/// This file only converts the local calendar around `now` and `since` into a `day → slot` table:
-/// `DateTime` is the one piece the kernel cannot own, and the table is what keeps DST handling
-/// exactly as the legacy implementation had it.
 library;
 
 import 'package:diting_android/data/db/subscription_models.dart';
@@ -28,8 +20,6 @@ enum AutoUpdateSchedule {
   bool get isTimed => this != AutoUpdateSchedule.interval;
 }
 
-/// The schedule plus the values each mode needs; [timeMinutes] and [sinceMs] only matter for
-/// the timed modes.
 class AutoUpdatePlan {
   const AutoUpdatePlan({
     required this.schedule,
@@ -41,15 +31,10 @@ class AutoUpdatePlan {
   final AutoUpdateSchedule schedule;
   final int intervalHours;
 
-  /// Minutes after local midnight.
   final int timeMinutes;
 
-  /// When the timed schedule was last chosen or retimed. Slots before it do not count, so picking
-  /// 04:00 at noon waits for tomorrow instead of firing at once; every-other-day counts its cycle
-  /// from the first slot at or after it.
   final int sinceMs;
 
-  /// Due from `lastAttemptAt`, not `lastUpdated`: a 304-only row would otherwise look due forever.
   bool isDue(SubscriptionRecord record, int nowMs) {
     final answer = _evaluate([
       {'id': record.id, 'lastAttemptAt': record.lastAttemptAt},
@@ -57,7 +42,6 @@ class AutoUpdatePlan {
     return (answer['due'] as List? ?? const []).isNotEmpty;
   }
 
-  /// Next due time (epoch ms); null when no subscription is eligible.
   int? nextDueAt(List<SubscriptionRecord> records, int nowMs) {
     if (records.isEmpty) return null;
     final answer = _evaluate([
@@ -81,8 +65,6 @@ class AutoUpdatePlan {
         ? 0
         : localDayNumber(DateTime.fromMillisecondsSinceEpoch(sinceMs - 1));
 
-    // The kernel needs the last three days (look-back), the next few (next slot) and both sides
-    // of `since` (anchor). Building a fixed window around each anchor keeps every lookup local.
     final slots = <int, Map<String, Object?>>{};
     void addAround(DateTime anchor) {
       final base = DateTime(anchor.year, anchor.month, anchor.day);
@@ -117,7 +99,6 @@ class AutoUpdatePlan {
     });
   }
 
-  /// Days since 1970-01-01 of [time]'s local calendar date, independent of the UTC offset.
   static int localDayNumber(DateTime time) =>
       DateTime.utc(time.year, time.month, time.day).millisecondsSinceEpoch ~/
       Duration.millisecondsPerDay;

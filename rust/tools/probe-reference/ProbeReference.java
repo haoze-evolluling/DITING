@@ -7,74 +7,40 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Corpus generator for the Android diagnostics probes.
- *
- * <p>The parsers live in {@code ProbeParsers} (host text and DNS wire) and {@code ProbeText}
- * (`ping` / `traceroute` output and the latency arithmetic), both line-for-line JVM ports of the
- * Kotlin the app used. This file holds the inputs (real {@code ping} / {@code ping6} / toybox
- * output, traceroute hops, hand-built DNS replies) and writes the fixtures under
- * {@code rust/diting-probe-core/tests/fixtures/}, which {@code tests/corpus.rs} replays against the
- * Rust kernel:
- *
- * <pre>
- *   javac -d /tmp/probe-ref rust/tools/probe-reference/*.java
- *   java -cp /tmp/probe-ref ProbeReference --corpus rust/diting-probe-core/tests/fixtures
- * </pre>
- *
- * <p>Each fixture stores the payload the Rust kernel must answer, in the layout documented in
- * {@code rust/diting-probe-core/src/api.rs}, so a fixture pins the parse result and the payload
- * layout at the same time. Text fields are escaped ({@code \}, {@code 
-}, {@code 
-},
- * {@code 	}) and byte fields are lowercase hex.
- */
 public final class ProbeReference {
 
-    // ---------------------------------------------------------------------------------------
-    // Corpus generation
-    // ---------------------------------------------------------------------------------------
 
     private static final String[] PING_OUTPUTS = {
-        // iputils, IPv4, one lost packet, mdev reported.
         "PING example.com (93.184.216.34) 56(84) bytes of data.\n"
             + "64 bytes from 93.184.216.34: icmp_seq=1 ttl=57 time=12.3 ms\n"
             + "64 bytes from 93.184.216.34: icmp_seq=3 ttl=57 time=15.1 ms\n"
             + "\n--- example.com ping statistics ---\n"
             + "3 packets transmitted, 2 received, 33.3333% packet loss, time 2003ms\n"
             + "rtt min/avg/max/mdev = 12.300/13.700/15.100/1.400 ms\n",
-        // iputils, IPv6, no ttl in the reply line, a lost middle packet.
         "PING 2001:db8::1(2001:db8::1) 56 data bytes\n"
             + "64 bytes from 2001:db8::1: icmp_seq=1 ttl=64 time=1.05 ms\n"
             + "64 bytes from 2001:db8::1: icmp_seq=3 ttl=64 time=1.44 ms\n"
             + "\n--- 2001:db8::1 ping statistics ---\n"
             + "3 packets transmitted, 2 received, 33.3333% packet loss, time 2027ms\n"
             + "rtt min/avg/max/mdev = 1.050/1.245/1.440/0.195 ms\n",
-        // busybox/toybox: zero-based sequence, `seq=` and totals on one line.
         "PING 1.1.1.1 (1.1.1.1): 56 data bytes\n"
             + "64 bytes from 1.1.1.1: seq=0 ttl=57 time=8.664 ms\n"
             + "64 bytes from 1.1.1.1: seq=1 ttl=57 time=9.100 ms\n"
             + "\n--- 1.1.1.1 ping statistics ---\n"
             + "2 packets transmitted, 2 packets received, 0% packet loss\n"
             + "round-trip min/avg/max = 8.664/8.882/9.100 ms\n",
-        // No statistics block at all: the counts come from the reply lines.
         "64 bytes from 1.2.3.4: icmp_seq=1 ttl=57 time=12.5 ms\n"
             + "2 packets transmitted, 1 received, 50% packet loss\n",
-        // Unparsable percentage and a missing `<n> received`.
         "64 bytes from 1.2.3.4: icmp_seq=2 ttl=57 time=20.0 ms\n"
             + "2 packets transmitted, 1.2.3% packet loss\n",
-        // Every packet lost, and the RTT block says so.
         "PING 10.255.255.1 (10.255.255.1) 56(84) bytes of data.\n"
             + "\n--- 10.255.255.1 ping statistics ---\n"
             + "4 packets transmitted, 0 received, 100% packet loss, time 3070ms\n",
-        // Duplicate sequence numbers keep the last line (`associateBy`).
         "64 bytes from 1.2.3.4: icmp_seq=1 ttl=57 time=10.0 ms\n"
             + "64 bytes from 1.2.3.4: icmp_seq=1 ttl=57 time=99.0 ms\n"
             + "2 packets transmitted, 2 received, 0% packet loss\n",
-        // A reply line without `time=` is not a reply at all.
         "From 10.0.0.1 icmp_seq=1 Destination Host Unreachable\n"
             + "2 packets transmitted, 0 received, 100% packet loss\n",
-        // No statistics line: the caller falls back to isReachable/TCP timing.
         "ping: unknown host nope.invalid\n",
         "",
     };
@@ -148,7 +114,6 @@ public final class ProbeReference {
         return text.toString();
     }
 
-    /** Crafted replies; each entry is {ipv4, wire bytes}. */
     private static List<Object[]> dnsReplies() {
         List<Object[]> replies = new ArrayList<>();
         replies.add(new Object[] {true, reply(true, 0, 0x8100, List.of(
@@ -168,7 +133,7 @@ public final class ProbeReference {
         replies.add(new Object[] {true, reply(true, 3, 0x8103, List.of())});
         replies.add(new Object[] {true, reply(true, 5, 0x8105, List.of())});
         replies.add(new Object[] {true, reply(true, 2, 0x8102, List.of())});
-        replies.add(new Object[] {true, reply(true, 0, 0x8102, List.of())}); // TC set
+        replies.add(new Object[] {true, reply(true, 0, 0x8102, List.of())});
         replies.add(new Object[] {true, reply(true, 14, 0x810E, List.of())});
         replies.add(new Object[] {true, shortReply()});
         replies.add(new Object[] {true, noIdBitReply()});
@@ -185,19 +150,17 @@ public final class ProbeReference {
     }
 
     private static byte[] noIdBitReply() {
-        // The Kotlin gate reads response[0] (the ID high bit), not the QR flag.
         byte[] wire = reply(true, 0, 0x0100, List.of(record(1, 1, 60, new byte[] {1, 1, 1, 1})));
         return wire;
     }
 
     private static byte[] extraAnswerCountReply() {
         byte[] wire = reply(true, 0, 0x8100, List.of(record(1, 1, 60, new byte[] {1, 1, 1, 1})));
-        wire[7] = 2; // ANCOUNT = 2, one record present
+        wire[7] = 2;
         return wire;
     }
 
     private static byte[] truncatedAnswerReply() {
-        // ANCOUNT = 1, and the record's rdata is cut short: `readFully` hit EOF.
         byte[] wire = reply(true, 0, 0x8100, List.of(record(1, 1, 60, new byte[] {1, 1, 1, 1})));
         byte[] cut = new byte[wire.length - 2];
         System.arraycopy(wire, 0, cut, 0, cut.length);
@@ -248,7 +211,7 @@ public final class ProbeReference {
         DataOutputStream data = new DataOutputStream(out);
         try {
             data.writeByte(0xC0);
-            data.writeByte(0x0C); // owner name: pointer to the question name
+            data.writeByte(0x0C);
             data.writeShort(type);
             data.writeShort(klass);
             data.writeInt((int) ttl);
@@ -268,11 +231,10 @@ public final class ProbeReference {
             data.writeByte(idHighBit ? 0x81 : 0x01);
             data.writeByte(0x34);
             data.writeShort(flags);
-            data.writeShort(1); // QDCOUNT
-            data.writeShort(records.size()); // ANCOUNT
-            data.writeShort(0); // NSCOUNT
-            data.writeShort(0); // ARCOUNT
-            // q.example.com A IN
+            data.writeShort(1);
+            data.writeShort(records.size());
+            data.writeShort(0);
+            data.writeShort(0);
             data.write(new byte[] {1, 'q', 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e', 3, 'c', 'o', 'm', 0});
             data.writeShort(1);
             data.writeShort(1);
@@ -284,9 +246,6 @@ public final class ProbeReference {
         return out.toByteArray();
     }
 
-    // ---------------------------------------------------------------------------------------
-    // Fixture emission
-    // ---------------------------------------------------------------------------------------
 
     private static String escape(String value) {
         StringBuilder text = new StringBuilder();
@@ -369,7 +328,6 @@ public final class ProbeReference {
         }
         Files.writeString(directory.resolve("latency.tsv"), latency.toString(), StandardCharsets.UTF_8);
 
-        // isSuccess has no payload: one hex reply per line plus the expected bit.
         StringBuilder success = new StringBuilder();
         success.append("# replyHex\tsuccess\n");
         for (Object[] entry : dnsReplies()) {

@@ -1,4 +1,3 @@
-/// Choice group with thumbnails (upstream `PreviewChoiceGroup`).
 library;
 
 import 'package:diting_shared/ui/ui.dart';
@@ -15,10 +14,8 @@ class PreviewChoice<T> {
   final T value;
   final String label;
 
-  /// Thumbnail on the left; the caller constrains its size.
   final Widget pictogram;
 
-  /// Optional one-line note when the label alone cannot tell items apart.
   final String? description;
 }
 
@@ -44,8 +41,6 @@ class PreviewChoiceGroup<T> extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InfoHeader(info: info),
-        // Horizontal padding comes from `generateSection`/`ListFooter`, which each
-        // add 16; adding it here too would indent the header by 32.
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Column(

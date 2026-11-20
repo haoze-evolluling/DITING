@@ -10,7 +10,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Server lifecycle, listening address and the config facts that shape it.
 class ServerStatusOverview extends StatelessWidget {
   const ServerStatusOverview({
     super.key,
@@ -217,7 +216,6 @@ String _uptimeLabel(Duration uptime, AppL10n l10n) {
   return l10n.durationSeconds(seconds);
 }
 
-/// Four configuration shortcuts, one tap away from the home dashboard.
 class ServerQuickActions extends StatelessWidget {
   const ServerQuickActions({super.key, required this.config});
 

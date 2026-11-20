@@ -26,14 +26,10 @@ part 'navigation_dock_f.dart';
 const double _barHeight = 62;
 const double _barPadding = 4;
 
-/// The floating dock is a pill, not the app's standard corner: its outer surface
-/// and every inner highlight (hover, lens, focus, clip) must share this exact
-/// shape so their corner curvature stays concentric and never looks disjointed.
 const _dockShape = StadiumBorder();
 const double _edgeMargin = 21;
 const double _shadowRoom = 8;
 
-/// Quiet space [NavigationDock.insetOf] keeps below content, clear of the bar's shadow.
 const double dockContentGap = 16;
 const double _hitSlop = 8;
 const double _maxItemExtent = 86;
@@ -135,7 +131,6 @@ Rect _lensRect({
   );
 }
 
-/// Spaces destinations as iOS's tab bar does, overhanging by [_barPadding].
 ({double pitch, double lens, double inset}) _dockLayout(
   double span,
   int count,

@@ -9,7 +9,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Bootstrap DNS stats from the real `bootstrap_log` table, one row per probe.
 class LogsBootstrapPage extends ConsumerStatefulWidget {
   const LogsBootstrapPage({super.key});
 
@@ -19,7 +18,6 @@ class LogsBootstrapPage extends ConsumerStatefulWidget {
 
 class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
     with PageVisibilityMixin<LogsBootstrapPage> {
-  /// Probes land here continuously while the tunnel resolves; follow them without a tap.
   LogLiveRefreshNotifier? _logRefresh;
   bool _polling = false;
 

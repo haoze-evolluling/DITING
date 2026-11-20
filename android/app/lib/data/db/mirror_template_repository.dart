@@ -1,5 +1,3 @@
-/// Read/write access to the legacy `mirror_template` table; templates carry `{url}` placeholders
-/// substituted natively, so they are stored verbatim. The schema is never created here.
 library;
 
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
@@ -28,7 +26,6 @@ class MirrorTemplateRecord {
       );
 }
 
-/// Called after a write so the provider can bump its revision.
 typedef MirrorTemplateWriteHook = void Function();
 
 class MirrorTemplateRepository {
@@ -54,7 +51,6 @@ class MirrorTemplateRepository {
     return rows.isEmpty ? null : MirrorTemplateRecord.fromRow(rows.first);
   }
 
-  /// Inserts a template, returning null when the name is taken instead of replacing it.
   Future<int?> insert({required String name, required String template}) async {
     final prepared = RustSubscriptionCore.instance.call({
       'op': 'prepare.mirror',
@@ -74,7 +70,6 @@ class MirrorTemplateRepository {
     return id;
   }
 
-  /// Renames and retargets a template; false when the name is taken.
   Future<bool> update({
     required int id,
     required String name,

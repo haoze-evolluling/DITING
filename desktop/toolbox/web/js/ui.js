@@ -1,6 +1,3 @@
-// 谛听 (DITING) 开发者工具箱通用 DOM 辅助
-// 所有动态文本一律走 textContent / createTextNode，避免路径、域名中的特殊字符破坏 HTML。
-
 window.UI = {
   el(tag, props = {}, ...children) {
     const node = document.createElement(tag);

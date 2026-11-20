@@ -1,14 +1,3 @@
-//! The DoT idle connection pool.
-//!
-//! `resolver_dot.go` kept `map[string][]*dotConnEntry` behind `dotMu`: the tail was the newest
-//! connection, `popIdleDoTConn` popped from the tail (LIFO), discarded entries older than 15 s, and
-//! `putIdleDoTConn` appended while the per-host list stayed below 4. Here the *policy* owns the
-//! list; the `*tls.Conn` values stay in Go under their numeric ids, because a socket is not
-//! something a kernel can hold.
-//!
-//! The caller probes liveness (`isAlive`) and closes the sockets; the kernel only answers "which id
-//! is the next candidate", "this one is past its idle window" and "keep it or close it".
-
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 
@@ -19,16 +8,12 @@ struct Entry {
     last_used_ms: i64,
 }
 
-/// What [`DotPool::acquire`] found.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Acquired {
-    /// The newest entry still inside the idle window: probe it and reuse it if it is alive.
     Idle(u64),
-    /// Older than [`TUNING::dot_idle_timeout_ms`]: the caller closes it and asks again.
     Expired(u64),
 }
 
-/// One resolver's idle DoT connections, one list per dial target.
 pub struct DotPool {
     state: Mutex<HashMap<String, Vec<Entry>>>,
 }
@@ -40,8 +25,6 @@ impl DotPool {
         }
     }
 
-    /// `popIdleDoTConn`'s policy half: pop the newest entry and classify it. `None` means the list
-    /// for this target is empty (dial a fresh connection).
     pub fn acquire(&self, host: &str, now_ms: i64) -> Option<Acquired> {
         let mut state = self.lock();
         let (entry, empty) = {
@@ -52,7 +35,6 @@ impl DotPool {
         if empty {
             state.remove(host);
         }
-        // `time.Since(lastUsed) <= dotIdleTimeout` keeps the entry; anything older is expired.
         if now_ms.saturating_sub(entry.last_used_ms) > TUNING.dot_idle_timeout_ms {
             Some(Acquired::Expired(entry.id))
         } else {
@@ -60,8 +42,6 @@ impl DotPool {
         }
     }
 
-    /// `putIdleDoTConn`: keep the connection when the host still has room, otherwise report that the
-    /// caller has to close it.
     pub fn release(&self, host: &str, id: u64, now_ms: i64) -> bool {
         let mut state = self.lock();
         let entries = state.entry(host.to_string()).or_default();
@@ -76,7 +56,6 @@ impl DotPool {
         }
     }
 
-    /// Every id currently pooled, so the caller can close those sockets. The pool is emptied.
     pub fn close_all(&self) -> Vec<u64> {
         let mut state = self.lock();
         let mut ids = Vec::new();
@@ -86,7 +65,6 @@ impl DotPool {
         ids
     }
 
-    /// Idle entries for one target (test/telemetry helper).
     pub fn len(&self, host: &str) -> u32 {
         self.lock()
             .get(host)

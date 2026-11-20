@@ -1,5 +1,3 @@
-/// Block response settings: the fixed mode in `block_response_mode` plus the dynamic policy keys
-/// with hard clamps; `buildDnsConfig` publishes both.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

@@ -1,8 +1,3 @@
-//! Elevation checks.
-//!
-//! Windows reports the UAC elevation token (Administrator group membership alone is not enough —
-//! an unelevated admin cannot write interface DNS settings). Linux reports effective UID 0.
-
 #[cfg(windows)]
 pub fn is_elevated() -> bool {
     use windows_sys::Win32::Foundation::CloseHandle;
@@ -12,8 +7,6 @@ pub fn is_elevated() -> bool {
     use windows_sys::Win32::System::Threading::{GetCurrentProcess, OpenProcessToken};
 
     let mut token = std::ptr::null_mut();
-    // SAFETY: the pseudo handle is valid for the lifetime of the process and `token` is a valid
-    // out-pointer; the returned handle is closed below.
     unsafe {
         if OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token) == 0 {
             return false;
@@ -34,7 +27,6 @@ pub fn is_elevated() -> bool {
 
 #[cfg(unix)]
 pub fn is_elevated() -> bool {
-    // SAFETY: `geteuid` has no preconditions.
     unsafe { libc::geteuid() == 0 }
 }
 

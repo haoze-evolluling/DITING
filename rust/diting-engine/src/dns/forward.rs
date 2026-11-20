@@ -1,15 +1,3 @@
-//! Cache → single flight → upstream, and the answer inspection every forwarding path runs.
-//!
-//! The shape is `standaloneForward`'s:
-//!
-//! * a fresh cache hit answers immediately (`cached=true` in the log);
-//! * a stale hit inside the stale window answers too, and one background refresh per entry is
-//!   started so a burst of stale hits cannot spawn a resolver call each;
-//! * otherwise the query goes upstream through the single-flight coalescer, which stores what it
-//!   resolved (`dnsCache.singleFlight`);
-//! * the answer is inspected: a null-block answer counts as blocked (`upstream_dns`), and a chain
-//!   target is re-evaluated against the policy before the answer is handed over.
-
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -19,7 +7,6 @@ use diting_dns_wire::ChainTarget;
 use super::{block, row, servfail};
 use crate::engine::Engine;
 
-/// One forwarding pass for `domain`/`qtype`.
 pub async fn forward(
     engine: &Arc<Engine>,
     query: &[u8],
@@ -30,8 +17,6 @@ pub async fn forward(
 ) -> Option<Vec<u8>> {
     let cache = engine.cache();
 
-    // N8: with DNS64 on, an AAAA answer must never come from cache — an empty AAAA cached before the
-    // switch was flipped would shadow synthesis for its whole TTL.
     let dns64_active = qtype == TYPE_AAAA && engine.dns64().is_some();
 
     if cache.is_enabled() && !dns64_active {
@@ -158,12 +143,6 @@ pub async fn forward(
     }
 }
 
-/// The policy re-evaluation of a CNAME/SVCB chain target (`checkResponseChainTargets`).
-///
-/// Every target is evaluated as the query's own type, and the first block wins: a block page served
-/// through a CNAME is still a block. The chain is attacker controlled, so `diting-response-core`
-/// bounds it first — unique, cycle-aware, at most eight deep — instead of walking an arbitrarily long
-/// alias list.
 fn blocked_chain(
     engine: &Arc<Engine>,
     targets: &[ChainTarget],
@@ -176,8 +155,6 @@ fn blocked_chain(
     if !engine.policy().is_active() || !engine.policy().has_rules() {
         return None;
     }
-    // Borrowed: this runs on every cache hit and every forwarded answer, and the previous version
-    // cloned every chain target into a `Vec<String>` only for the planner to clone them again.
     let plan = diting_response_core::plan_strs(
         targets.iter().map(|target| target.domain.as_str()),
         diting_response_core::DEFAULT_MAX_DEPTH,
@@ -192,9 +169,6 @@ fn blocked_chain(
     None
 }
 
-/// The client gets the upstream wire, not a re-packed copy: only the transaction id has to follow
-/// the client's question. A shared single-flight answer carries the leader's id, which is why this
-/// runs on every forwarded answer.
 fn with_client_id(mut response: Vec<u8>, query: &[u8]) -> Vec<u8> {
     if response.len() >= 2 && query.len() >= 2 {
         response[0] = query[0];
@@ -203,13 +177,7 @@ fn with_client_id(mut response: Vec<u8>, query: &[u8]) -> Vec<u8> {
     response
 }
 
-/// One background refresh of a stale entry: resolve, store, release the claim.
-///
-/// The claim is released in every outcome (a failed refresh must not block the next one), which is
-/// `defer dnsCache.endStaleRefresh(raw)` in the old code.
 pub async fn refresh(engine: Arc<Engine>, query: Vec<u8>) {
-    // Release the claim even if this task is cancelled (engine stop, runtime shutdown): a leaked
-    // claim would suppress revalidation of the entry for the rest of its life.
     let _claim = RefreshClaim {
         engine: Arc::clone(&engine),
         query: query.clone(),
@@ -221,7 +189,6 @@ pub async fn refresh(engine: Arc<Engine>, query: Vec<u8>) {
     }
 }
 
-/// Releases the stale-refresh claim on drop, including cancellation.
 struct RefreshClaim {
     engine: Arc<Engine>,
     query: Vec<u8>,

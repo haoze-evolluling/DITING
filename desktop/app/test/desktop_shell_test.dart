@@ -1,7 +1,3 @@
-// Desktop rebuild guards (desktop parity): the shell is the FlClash
-// sidebar on a wide window and a three-item dock on a narrow one, the branch table is the desktop's
-// own three branches, and no desktop-only visual language may appear.
-
 import 'dart:io';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -51,7 +47,6 @@ void _skeleton() {
     ];
     expect(paths, desktopBranchOrder);
     expect(desktopBranchOrder, hasLength(3));
-    // The merged desktop grouping must not shrink the Android tab bar.
     expect(branchOrder, hasLength(6));
   });
 
@@ -60,7 +55,6 @@ void _skeleton() {
       await _pumpDesktop(tester, initialLocation: location);
 
       expect(find.byType(CommonScaffold), findsOneWidget);
-      // The title comes from the ARB, never from a literal in the page.
       final scaffold = tester.widget<CommonScaffold>(
         find.byType(CommonScaffold),
       );
@@ -72,7 +66,6 @@ void _skeleton() {
         Routes.about => DesktopAboutPage,
         _ => throw StateError('No desktop page for branch $location'),
       };
-      // Every branch is wired to a real page: no placeholder empty state is left behind.
       expect(find.byType(expected), findsOneWidget);
       expect(find.byType(AppBarClearance), findsNothing);
       expect(tester.takeException(), isNull);
@@ -87,8 +80,6 @@ void _skeleton() {
 }
 
 void _visualLanguage() {
-  // Each entry is a pattern the desktop rebuild may not reintroduce. The list is intentionally
-  // source-level: a widget test cannot tell "same colours by accident" from "same design system".
   const banned = <String, String>{
     'Material 图标字体': r'\bIcons\.',
     '手写圆角': r'BorderRadius\.circular\(',
@@ -135,7 +126,6 @@ void _responsive() {
     expect(find.byType(NavigationSidebar), findsOneWidget);
     expect(find.byType(NavigationDock), findsNothing);
     expect(find.byType(NavigationBar), findsNothing);
-    // Nothing floats over the page, so pages reserve only the plain bottom gap.
     expect(
       DockInsetScope.of(tester.element(find.byType(CommonScaffold))),
       DockInsetScope.pageBottomGap,
@@ -185,8 +175,6 @@ void _responsive() {
       tester.getSize(find.byType(NavigationSidebar)).width,
       lessThan(collapsedWidth),
     );
-    // Collapsed, the labels are clipped away and every row is identified by its tooltip.
-    // Collapsed, only the icons are inside the clip, so the row is hit through its glyph.
     final rows = find.descendant(
       of: find.byType(NavigationSidebar),
       matching: find.byType(AnimatedGlyph),

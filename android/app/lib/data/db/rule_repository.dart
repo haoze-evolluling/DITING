@@ -1,8 +1,3 @@
-/// Read/write access to the legacy rule tables; `*_source` join tables carry provenance (`preset`,
-/// `useradd`, `sub_<id>`) and a rule applies only when it and one of its sources are enabled.
-///
-/// Every predicate, table name and row mapping comes from `rust/diting-rule-store-core`; this file
-/// runs the statements inside `sqflite` transactions and nothing else.
 library;
 
 import 'package:diting_android/data/db/rust_rule_store_core.dart';
@@ -16,11 +11,8 @@ class RuleRepository {
 
   final Database _db;
 
-  /// Legacy database file this handle was opened from; null for ad-hoc handles (tests, cleanup).
   final String? sourceFile;
 
-  /// Table pairs per kind and the user-source names, both read from the core so they exist in
-  /// exactly one place.
   static final ({
     Map<RuleKind, ({String table, String sourceTable})> tables,
     List<String> userSources,
@@ -30,11 +22,8 @@ class RuleRepository {
   static final Map<RuleKind, ({String table, String sourceTable})> _tables =
       _core.tables;
 
-  /// Sources that [clearUser] may delete; `preset` and `sub_*` are kept.
   static final List<String> userSources = _core.userSources;
 
-  /// Rows per [loadAllPaged] page: 100k rules is ~125 queries, and one page never dominates the
-  /// heap.
   static const loadPageSize = 800;
 
   static ({
@@ -82,11 +71,6 @@ class RuleRepository {
   Future<List<MockRule>> loadKind(RuleKind kind) async =>
       _loadKindPage(kind, await _subscriptionNames());
 
-  /// Full-table load in `id` pages, one [onPage] call per page.
-  ///
-  /// [loadAll] has to hold a whole table and every parsed rule at once; on a subscription-sized
-  /// dataset that is what pushed the heap to its 256MB limit during startup. Paging keeps the peak
-  /// at one page and lets the caller publish each page as it arrives.
   Future<void> loadAllPaged(
     void Function(RuleKind kind, List<MockRule> page) onPage, {
     int pageSize = loadPageSize,
@@ -114,10 +98,6 @@ class RuleRepository {
     return {for (final row in rows) row['id'] as int: row['name'] as String};
   }
 
-  /// One `id` range of a rule table, or the whole table when [limit] is null.
-  ///
-  /// The `*_source` rows are joined in rather than fetched as their own full table: the two reads
-  /// used to exist side by side, so this halves the peak for the same result.
   Future<List<MockRule>> _loadKindPage(
     RuleKind kind,
     Map<int, String> subscriptionNames, {
@@ -134,8 +114,6 @@ class RuleRepository {
     return _rowsToRules(kind, rows, subscriptionNames);
   }
 
-  /// Groups the joined rows back into rules; consecutive rows share an `id` because of the
-  /// `ORDER BY r.id DESC`.
   List<MockRule> _rowsToRules(
     RuleKind kind,
     List<Map<String, Object?>> rows,
@@ -167,7 +145,6 @@ class RuleRepository {
     appInverted: rule['appInverted'] == true,
   );
 
-  /// One rule's identity: the predicate that finds it and the row a new one is written with.
   static Map<String, Object?> _identity(
     RuleKind kind, {
     String flavor = 'global',
@@ -191,7 +168,6 @@ class RuleRepository {
   static Map<String, Object?> _row(Map<String, Object?> identity) =>
       ((identity['row'] as Map?) ?? const {}).cast<String, Object?>();
 
-  /// Adds the `useradd` provenance row for [ruleId], leaving an existing one alone.
   static Future<void> _ensureUserAdd(
     DatabaseExecutor txn,
     String sourceTable,
@@ -202,7 +178,6 @@ class RuleRepository {
     'enabled': 1,
   }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
-  /// Inserts a user rule and its `useradd` source, reusing a row with the same identity.
   Future<MockRule> add(RuleKind kind, String pattern, {String? target}) async {
     final tables = _tables[kind]!;
     final identity = _identity(
@@ -241,8 +216,6 @@ class RuleRepository {
     whereArgs: [id],
   );
 
-  /// [promotePreset] turns a preset rule into a user rule, so a preset reset cannot revert the
-  /// edit.
   Future<void> update(
     RuleKind kind,
     int id,
@@ -293,7 +266,6 @@ class RuleRepository {
   Future<void> delete(RuleKind kind, int id) =>
       _db.delete(_tables[kind]!.table, where: 'id = ?', whereArgs: [id]);
 
-  /// Removes user-owned sources and any rules left without a source.
   Future<int> clearUser(RuleKind kind) async {
     final tables = _tables[kind]!;
     return _db.transaction<int>((txn) async {
@@ -318,11 +290,6 @@ class RuleRepository {
     });
   }
 
-  /// How many user-origin rules exist across the three kinds, counted inside SQLite.
-  ///
-  /// The backup overview only needs the number: loading the tables through [loadKind] to count
-  /// them in Dart allocated the whole dataset on subscription-sized databases, which is what
-  /// crashed the config export.
   Future<int> countUser() async {
     final placeholders = List.filled(userSources.length, '?').join(',');
     var total = 0;

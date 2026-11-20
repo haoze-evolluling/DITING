@@ -1,7 +1,5 @@
 part of 'tools_page.dart';
 
-/// DNS lookup page backed by `DiagnosticsRunner.lookupDns`. Resolver choice is `SYSTEM` or `CUSTOM`
-/// (real UDP query); `viaTunnel` asks the tunnel engine. Every result carries its `source`.
 class DnsLookupPage extends ConsumerStatefulWidget {
   const DnsLookupPage({super.key});
 
@@ -50,12 +48,9 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
       return;
     }
     final viaTunnel = ref.read(networkToolFlagsProvider).dnsLookupViaTunnel;
-    // Only the custom non-tunnel case carries a server; the rest use the system resolver.
     final server = !viaTunnel && _serverMode == _DnsServerMode.custom
         ? _server.text.trim()
         : null;
-    // An empty custom server is treated as "system" natively, so reject it before the
-    // request: the user would think they tested their own server.
     if (server != null && server.isEmpty) {
       setState(() => _hostError = context.l10n.toolCustomDnsError);
       return;
@@ -88,8 +83,6 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
     final colorScheme = context.colorScheme;
     final flags = ref.watch(networkToolFlagsProvider);
     final result = _result;
-    // In tunnel mode the tunnel picks the server, so the switcher is hidden rather than
-    // disabled: a greyed control implies it becomes usable later.
     final showServerMode = !flags.dnsLookupViaTunnel;
     final showEmpty = result == null && !_running && _hostError == null;
     return CommonScaffold(
@@ -254,13 +247,9 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
     );
   }
 
-  /// Who this query actually asked; it must be spelled out, since after editing the server
-  /// field without re-running the result still belongs to the previous server.
   String _serverLabel(bool viaTunnel) {
     if (viaTunnel) return context.l10n.toolTunnelEngine;
     if (_serverMode == _DnsServerMode.custom) return _server.text.trim();
-    // The system's address is not part of the result (the native side returns only the
-    // answer), so say so rather than inventing one.
     return context.l10n.toolDnsSystem;
   }
 }

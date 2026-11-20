@@ -10,11 +10,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// List-style cards of the log dashboard, shared by home and `/logs`.
-///
-/// Each card watches its own slice of the overview snapshot (see
-/// `state/log_dashboard_overview_providers.dart`), so the 10 s refresh rebuilds only the cards whose
-/// figures moved. A `null` slice means "not loaded yet", which is how cells show a dash, not `0`.
 
 String _figure(int? value) => value == null ? '—' : dashboardCount(value);
 
@@ -175,7 +170,6 @@ class FilteredRecentLogCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final all = ref.watch(logOverviewRecentRequestsProvider);
     final colorScheme = context.colorScheme;
-    // Keep only blocked / failed / bypass: the rows this mode actually persists.
     final rows = [
       for (final row in all)
         if (row.status != LogRowStatus.passed &&
@@ -350,8 +344,6 @@ class PrivacyModeCard extends StatelessWidget {
   }
 }
 
-/// Resolution efficiency card. Average latency shows a dash when there is no timing sample,
-/// not `0 ms`.
 class ResolutionPerfCard extends ConsumerWidget {
   const ResolutionPerfCard({super.key});
 
@@ -387,7 +379,6 @@ class ResolutionPerfCard extends ConsumerWidget {
           DashboardRateRow(
             label: context.l10n.logAverageLatency,
             value: latencyValue,
-            // Latency is not a ratio, so it renders the value alone with no bar.
             progress: null,
           ),
           SizedBox(height: 14 * scale),

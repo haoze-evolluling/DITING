@@ -62,9 +62,6 @@ class EmojiText extends StatelessWidget {
     this.style,
   });
 
-  /// Emoji need no family of their own any more: the app bundles no fonts, so they resolve through
-  /// the platform's colour-emoji fallback like any other glyph. The class stays because the popup
-  /// measures labels through [widthOf] before laying them out.
   static TextSpan spanOf(String text, TextStyle? style) =>
       TextSpan(text: text, style: style);
 

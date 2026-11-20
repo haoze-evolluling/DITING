@@ -1,21 +1,3 @@
-//! The decision cache, moved out of the Go engine (`android/engine/policy_decision_cache.go`).
-//!
-//! Go used to sit between the call sites and the kernel: normalize the domain, look the key up in a
-//! sharded CLOCK cache, and only on a miss cross the FFI boundary. That split made the Go side keep
-//! three things the kernel could own itself: the key dimensions, the eviction policy and the
-//! hot-key prewarming after a rule reload. All three live here now; a query is one call.
-//!
-//! Key: the normalized domain, plus the app name only when the snapshot has app-dependent rules,
-//! and the qtype only when some rule carries a `dnsType` constraint. Otherwise all apps and query
-//! types share one entry per domain.
-//!
-//! Eviction: each shard is a fixed ring swept by a CLOCK hand with frequency aging, so a lookup
-//! only takes a read lock and bumps atomics; hit counts drive both eviction and prewarm ranking.
-//!
-//! Reasons: the FFI hands Go a pointer into a cached reason, so every non-empty reason is interned
-//! in an append-only pool owned by the cache. Evicting the entry that produced it therefore cannot
-//! free the bytes a query is about to copy out; the pool lives exactly as long as the snapshot.
-
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::hash::{BuildHasher, Hash, Hasher};
@@ -23,16 +5,12 @@ use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex, PoisonError, RwLock};
 
 pub(crate) const SHARD_COUNT: usize = 16;
-pub(crate) const SHARD_CAPACITY: usize = 512; // 8192 entries in total
+pub(crate) const SHARD_CAPACITY: usize = 512;
 pub(crate) const PREWARM_TOP_N: usize = 512;
 
 const BUCKET_COUNT: usize = 1024;
 const NO_ENTRY: u32 = u32::MAX;
 
-/// A reason string that can be handed across the FFI boundary.
-///
-/// Non-empty reasons are interned in the snapshot's cache, so their bytes stay alive until the
-/// snapshot is freed even when the entry that produced them has already been evicted.
 #[derive(Clone, Default)]
 pub struct Reason(Option<Arc<str>>);
 
@@ -53,7 +31,6 @@ impl Reason {
     }
 }
 
-/// One cached key, owned so prewarming can run after the shard's read lock is released.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Key {
     pub domain: Box<str>,
@@ -154,9 +131,6 @@ impl Shard {
             self.entries.push(entry);
             return;
         }
-        // CLOCK with frequency aging: a recently used entry gets a second chance, and a
-        // frequently used one has its hit count halved instead of being evicted, so a burst of
-        // one-off domains cannot flush hot domains.
         loop {
             let victim = self.hand;
             let (referenced, hits) = {
@@ -197,7 +171,6 @@ fn write<'a, T>(lock: &'a RwLock<T>) -> std::sync::RwLockWriteGuard<'a, T> {
     lock.write().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// The per-snapshot cache: sharded CLOCK entries plus the reason pool.
 pub struct DecisionCache {
     seed: RandomState,
     app_sensitive: bool,
@@ -217,7 +190,6 @@ impl DecisionCache {
         }
     }
 
-    /// Folds the dimensions no rule in this snapshot reads, exactly like `cacheKey` did in Go.
     fn effective<'a>(&self, app: &'a str, qtype: u16) -> (&'a str, u16) {
         (
             if self.app_sensitive { app } else { "" },
@@ -233,7 +205,6 @@ impl DecisionCache {
         hasher.finish()
     }
 
-    /// Interns a reason so the pointer the FFI hands out stays valid for the snapshot's lifetime.
     pub fn intern(&self, reason: &str) -> Reason {
         if reason.is_empty() {
             return Reason::empty();
@@ -259,8 +230,6 @@ impl DecisionCache {
         Some((entry.blocked, entry.reason.clone()))
     }
 
-    /// Inserts a verdict when the key is absent. `hits` lets prewarming carry a ranking without
-    /// carrying the previous snapshot's counts.
     pub fn put(
         &self,
         domain: &str,
@@ -290,7 +259,6 @@ impl DecisionCache {
         });
     }
 
-    /// Up to `limit` keys with the highest hit counts, for prewarming the next snapshot.
     pub fn hottest(&self, limit: usize) -> Vec<Key> {
         let mut ranked: Vec<(u32, Key)> = Vec::new();
         for shard in &self.shards {
@@ -355,7 +323,6 @@ mod tests {
         assert!(blocked);
         assert_eq!(reason.as_str(), "*.example");
         assert_eq!(cache.hottest(4).len(), 1);
-        // A different app or qtype is a different key.
         assert!(cache.get("ads.example", "com.b", 1).is_none());
         assert!(cache.get("ads.example", "com.a", 28).is_none());
     }
@@ -371,7 +338,6 @@ mod tests {
             cache.intern("ads.example"),
             1,
         );
-        // The app and qtype never reach the key, so every app and qtype hits this entry.
         let (blocked, _) = cache.get("ads.example", "com.b", 28).expect("hit");
         assert!(blocked);
     }
@@ -382,7 +348,6 @@ mod tests {
         for i in 0..SHARD_CAPACITY {
             shard.insert(entry(i as u64, &format!("d{i}.example")));
         }
-        // Make the first entry hot: it survives both the reference bit and the frequency aging.
         for _ in 0..8 {
             let index = shard.find(0, "d0.example", "", 0).expect("present");
             let victim = &shard.entries[index as usize];
@@ -406,7 +371,6 @@ mod tests {
         cache.put("cold.example", "", 0, false, cache.intern("cold"), 1);
         cache.put("warm.example", "", 0, false, cache.intern("warm"), 3);
         cache.put("hot.example", "", 0, false, cache.intern("hot"), 9);
-        // Never looked up: hits stay 0, so it is not a prewarm candidate.
         cache.put("unused.example", "", 0, false, Reason::empty(), 0);
         let hot = cache.hottest(2);
         assert_eq!(hot.len(), 2);
@@ -453,7 +417,6 @@ mod tests {
                 })
             })
             .collect();
-        // Prewarm races the workers on purpose: it only touches the new snapshot's own cache.
         next.prewarm_from(&previous);
         for worker in workers {
             worker.join().expect("a query thread panicked");

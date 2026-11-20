@@ -1,9 +1,5 @@
 package com.haoze.diting.proxy;
 
-/// Host-JVM smoke test for the outbound-proxy kernel's JNI boundary.
-///
-/// It proves the five exported symbols match the signatures `OutboundProxyNative.kt` declares and
-/// that the package/UID rewrite round trips. The rules themselves belong to the Rust tests.
 public final class OutboundProxyNative {
     private static int checks;
 

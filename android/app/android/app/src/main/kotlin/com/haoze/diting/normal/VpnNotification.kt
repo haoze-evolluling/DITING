@@ -14,9 +14,6 @@ import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.platform.NotificationStatsLine
 
-/// Builds the full-tunnel foreground notification. The channel id and stop action stay owned by
-/// the service: a channel id cannot be renamed without losing the user's importance setting. The
-/// notification is rebuilt every second while a detail item is on, hence setOnlyAlertOnce.
 object VpnNotification {
     fun build(
         context: Context,
@@ -37,7 +34,6 @@ object VpnNotification {
             Intent(context, DitingVpnService::class.java).setAction(stopAction),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        // “暂停 1 小时”：广播给 AutomationReceiver（签名权限 CONTROL 保护），只写暂停截止时间。
         val pauseIntent = PendingIntent.getBroadcast(
             context,
             2,
@@ -61,7 +57,6 @@ object VpnNotification {
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("$label · 普通模式")
             .setContentText(body)
-            // Without an explicit BigTextStyle the two-line detail readout is ellipsised.
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(openIntent)
             .addAction(0, "停止", stopIntent)
@@ -74,8 +69,6 @@ object VpnNotification {
             .build()
     }
 
-    /// Re-renders the notification in place. No-op unless a detail item is on: the ticker calls
-    /// this every second and the body only changes when the counts or the rate do.
     fun refresh(
         context: Context,
         channelId: String,
@@ -86,7 +79,6 @@ object VpnNotification {
         rerender(context, channelId, notificationId, stopAction)
     }
 
-    /// Unconditional rebuild for settings changes (custom text, detail items, persistent).
     fun rerender(
         context: Context,
         channelId: String,

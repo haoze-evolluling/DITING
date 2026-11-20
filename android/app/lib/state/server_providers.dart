@@ -1,4 +1,3 @@
-/// Riverpod state for server mode. Tests inject a fake [ServerClient].
 library;
 
 import 'package:diting_android/data/server/server_client.dart';
@@ -49,7 +48,6 @@ class ServerController extends AsyncNotifier<ServerSnapshot> {
     state = AsyncData(await _loadAll());
   }
 
-  /// Polls only the cheap native status plus the rolling statistics.
   Future<void> refreshLive() async {
     final current = state.value;
     if (current == null) return;
@@ -145,7 +143,6 @@ class ServerLogRevision extends Notifier<int> {
 final serverLogRevisionProvider =
     NotifierProvider<ServerLogRevision, int>(ServerLogRevision.new);
 
-/// Paged query history; the revision invalidates every open page after clear/refresh.
 final serverQueryLogProvider =
     FutureProvider.autoDispose.family<ServerQueryResult, ServerLogQuery>(
       (ref, query) async {

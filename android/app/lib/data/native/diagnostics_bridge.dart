@@ -1,6 +1,3 @@
-/// Dart side of `com.haoze.diting/diagnostics`: probe results arrive as plain maps. Panels bypass
-/// the tunnel (this app's UID is in `addDisallowedApplication`) unless a `*ViaTunnel` flag
-/// reproduces a per-tool escape hatch.
 library;
 
 import 'package:flutter/services.dart';
@@ -62,8 +59,6 @@ class PingSummary {
   final bool success;
   final String? message;
 
-  /// True when the system `ping` binary was missing and the probe used `InetAddress.isReachable` or
-  /// TCP timing, so the numbers measure a handshake, not ICMP.
   final bool measuredWithFallback;
 
   static PingSummary fromMap(Map<Object?, Object?> map) {
@@ -167,8 +162,6 @@ class DnsAnswer {
   );
 }
 
-/// Result of one manual DNS lookup. `source` is `upstream`, `rewrite`, `blocked`, `cache` or
-/// `error`; only `upstream` means the query reached a resolver.
 class DnsLookupResult {
   const DnsLookupResult({
     required this.domain,
@@ -243,19 +236,14 @@ class NetworkInfoSnapshot {
 }
 
 abstract class DiagnosticsRunner {
-  /// [count] is clamped to 1-20, [timeoutSeconds] applies per reply.
   Future<PingSummary> ping(
     String target, {
     int count = 4,
     int timeoutSeconds = 3,
   });
 
-  /// [maxHops] is clamped to 1-30. Hops come back all at once: a traceroute finishes in seconds on
-  /// mobile.
   Future<TraceResult> traceRoute(String target, {int maxHops = 30});
 
-  /// Resolves through the tunnel's decision path when [viaTunnel], otherwise asks [server] over
-  /// UDP; a null or empty [server] means the device resolver, which [viaTunnel] ignores.
   Future<DnsLookupResult> lookupDns(
     String domain, {
     bool viaTunnel = false,
@@ -272,7 +260,6 @@ class MethodChannelDiagnosticsRunner implements DiagnosticsRunner {
 
   final MethodChannel _channel;
 
-  /// A rejected or empty answer becomes an empty map, so every result falls back to its defaults.
   static Map<Object?, Object?> _snapshot(Object? raw) =>
       raw is Map ? Map<Object?, Object?>.from(raw) : const {};
 
@@ -310,8 +297,6 @@ class MethodChannelDiagnosticsRunner implements DiagnosticsRunner {
       'domain': domain,
       'viaTunnel': viaTunnel,
       'ipv4': ipv4,
-      // Empty string and null both mean "system" natively; pass it explicitly so "absent" is never
-      // a separate case.
       'server': server ?? '',
     });
     return DnsLookupResult.fromMap(_snapshot(raw));

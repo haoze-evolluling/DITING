@@ -1,7 +1,3 @@
-// U8/U7: the phase-3 pages must render in English at a narrow width and a larger font without a
-// layout overflow. Every route is pumped through the real app shell so the surrounding chrome is
-// included; an overflow surfaces as a FlutterError from `takeException`.
-
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/pages/system/unknown_route_page.dart';
 import 'package:diting_shared/state/settings_providers.dart';
@@ -16,7 +12,6 @@ import '../support/test_hooks.dart';
 void main() {
   installGlobalTestHooks();
 
-  // The phase-3 surfaces, deliberately the densest ones (toggle rows, count steppers, history lists).
   const keys = [
     '隐私套件',
     'DNS64',
@@ -49,7 +44,6 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(tester.takeException(), isNull, reason: '$key（$route）在英语窄屏下溢出');
-      // The page must actually mount rather than fall back to the unknown-route page.
       expect(find.byType(UnknownRoutePage), findsNothing, reason: '$key 未注册');
     }
   });
@@ -59,8 +53,6 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
 
-    // `zh` and `zh_TW` both resolve to the bundled Chinese ARB; `en` to English. Three locales,
-    // each rendered through the real shell, must stay overflow-free.
     for (final locale in const [Locale('zh'), Locale('en'), Locale('zh', 'TW')]) {
       for (final key in keys) {
         final route = topLevelRoutes[key]!;

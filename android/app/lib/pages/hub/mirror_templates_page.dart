@@ -2,8 +2,6 @@
 
 part of 'subscription_tools_pages.dart';
 
-/// Mirror templates (upstream `MirrorTemplateScreen`), stored in the legacy
-/// `mirror_template` table through `MirrorTemplateRepository` so they survive a restart.
 class MirrorTemplatesPage extends ConsumerWidget {
   const MirrorTemplatesPage({super.key});
 
@@ -103,8 +101,6 @@ class MirrorTemplatesPage extends ConsumerWidget {
         .read(mirrorTemplateActionsProvider)
         .create(name: result.name, template: result.template);
     if (id == null && context.mounted) {
-      // The unique index on the name rejects the insert; report it instead of silently
-      // doing nothing.
       showAppSnack(context, context.l10n.mirrorTplDuplicate);
     }
   }
@@ -174,8 +170,6 @@ class MirrorTemplatesPage extends ConsumerWidget {
   }
 }
 
-/// Mirror template editor. The controller is owned by the dialog: disposing it from
-/// `whenComplete` fires on `pop` while the `TextField` is still animating out.
 class _TemplateDialog extends StatefulWidget {
   const _TemplateDialog({this.initial});
 

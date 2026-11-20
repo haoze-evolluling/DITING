@@ -1,9 +1,3 @@
-/// The automation rule editor (A1 / A13): trigger + match + actions over one `spec_json` document.
-///
-/// The editor is deliberately small — one trigger, a network condition when the trigger is
-/// `network`, and up to three common actions (pause, block services, switch profile). The document
-/// it writes is the same shape `AutomationEngine` evaluates, so the preview and the runtime read
-/// one schema.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
@@ -20,7 +14,6 @@ import 'package:material_ui/material_ui.dart';
 class AutomationEditPage extends ConsumerStatefulWidget {
   const AutomationEditPage({super.key, required this.ruleId});
 
-  /// `new` for a fresh rule, otherwise the row id.
   final String ruleId;
 
   @override
@@ -66,7 +59,6 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
   }
 
   Future<void> _load() async {
-    // Catalog is Rust-owned; a missing core degrades to "no presets", never a crash.
     try {
       final answer = RustServicesCore.instance.catalog();
       final raw = answer['services'];

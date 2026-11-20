@@ -11,20 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/// Host-JVM smoke test for the TUN data plane's JNI boundary.
-///
-/// It proves the four things the Rust tests cannot:
-///
-/// 1. the exported symbols match the names and argument orders `TunSession` (and the Kotlin facade)
-///    declares;
-/// 2. `protect(long)` really reaches a JVM object before Rust dials, and a `false` answer stops the
-///    dial instead of leaking an unprotected connection;
-/// 3. every `onPacket` callback arrives on one and the same JVM thread, and a callback that throws
-///    neither kills that thread nor poisons the JNI environment for the next call;
-/// 4. `stop` and `free` are safe to call while packets are flowing (no crash, no callback after stop).
-///
-/// The packet *source* is the spike's in-memory loopback (a host has no `/dev/tun`); the upstream is a
-/// real `ServerSocket` in this JVM, so the protected dial and the writes are real sockets.
 public final class TunSmoke {
     static int checks;
 
@@ -41,7 +27,6 @@ public final class TunSmoke {
         System.out.println("tun spike smoke ok: " + checks + " checks");
     }
 
-    /// One full session: protect, dial, 1000 callbacks on one thread, stats, stop.
     private static void happyPath(Drain drain) {
         TunSession session = new TunSession();
         check(session.handle() != 0, "session handle");
@@ -74,8 +59,6 @@ public final class TunSmoke {
         check(protectedFd.get() > 0, "protect received a real descriptor: " + protectedFd.get());
         check(threads.size() == 1, "all callbacks on one thread: " + threads);
         String stats = session.getStats();
-        // The Rust side names the thread; on Windows the JVM reports the OS name as "Thread-N", so the
-        // name is asserted from the stats document instead of `Thread.currentThread().getName()`.
         check(stats.contains("\"thread\":\"diting-tun-callback\""),
                 "the callback thread is the dedicated one: " + stats);
         check(stats.contains("\"delivered\":1000"), "stats delivered: " + stats);
@@ -94,7 +77,6 @@ public final class TunSmoke {
         session.close();
     }
 
-    /// A callback that throws must be cleared, not left pending: the next batch still arrives.
     private static void throwingCallback(Drain drain) {
         TunSession session = new TunSession();
         session.setProtector(fd -> true);
@@ -113,13 +95,11 @@ public final class TunSmoke {
         session.feed(60);
         check(session.waitForCallbacks(60, 10_000), "callbacks continue after a Java exception");
         check(delivered.get() == 60, "every callback ran: " + delivered.get());
-        // The JNI environment is still usable from this thread after the cleared exception.
         check(session.getStats().contains("\"panics\":0"), "stats call still works after the exception");
         session.stop();
         session.close();
     }
 
-    /// `protect` returning false must abort the dial: the server sees no connection at all.
     private static void refusedProtect(Drain drain) {
         TunSession session = new TunSession();
         int acceptedBefore = drain.accepted.get();
@@ -146,7 +126,6 @@ public final class TunSmoke {
         session.close();
     }
 
-    /// `feed` after `stop` must not resurrect the pipeline, and `stop` must be idempotent.
     private static void stopThenFeed(Drain drain) {
         TunSession session = new TunSession();
         AtomicInteger delivered = new AtomicInteger();
@@ -164,8 +143,6 @@ public final class TunSmoke {
         session.close();
     }
 
-    /// `free` while packets are in flight: the registry entry goes away, the threads wind down, the
-    /// process survives. A `getStats` on the released handle answers `{}` instead of crashing.
     private static void freeWhileRunning(Drain drain) {
         TunSession session = new TunSession();
         session.setProtector(fd -> true);
@@ -177,7 +154,6 @@ public final class TunSmoke {
         check(TunSession.statsForRawHandle(stale).equals("{}"),
                 "a released handle answers {}");
 
-        // The old handle must be a lookup miss, not a use-after-free.
         check(session.handle() == 0, "close() zeroed the handle");
         TunSession survivor = new TunSession();
         check(survivor.getStats().contains("\"live\":1"), "only the survivor is registered");
@@ -209,7 +185,6 @@ public final class TunSmoke {
         }
     }
 
-    /// A loopback server that accepts and drains everything the protected connection writes.
     static final class Drain implements AutoCloseable {
         final AtomicInteger accepted = new AtomicInteger();
         private final ServerSocket server;
@@ -247,10 +222,8 @@ public final class TunSmoke {
             try (Socket open = socket; InputStream input = socket.getInputStream()) {
                 byte[] buffer = new byte[4096];
                 while (input.read(buffer) >= 0) {
-                    // Discard: the assertion is that the bytes arrive at all.
                 }
             } catch (Exception ignored) {
-                // The proxy closes the socket when the session stops.
             }
         }
 

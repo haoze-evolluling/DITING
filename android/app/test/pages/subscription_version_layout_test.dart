@@ -1,6 +1,3 @@
-// U9: the subscription version page keeps its subscription list beside the history on a tablet and
-// falls back to the dropdown on a phone.
-
 import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/pages/hub/subscription_version_page.dart';
@@ -82,7 +79,6 @@ void main() {
         ),
       ),
     );
-    // Resolve the provider futures and the history query without waiting on the loading spinner.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
@@ -93,7 +89,6 @@ void main() {
 
     expect(find.text('订阅 A'), findsOneWidget);
     expect(find.text('订阅 B'), findsOneWidget);
-    // Two-pane keeps every subscription visible; no picker menu is needed.
     expect(find.byType(PopupSelectButton<int>), findsNothing);
     expect(tester.takeException(), isNull);
   });

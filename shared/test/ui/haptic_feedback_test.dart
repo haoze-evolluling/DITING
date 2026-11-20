@@ -168,7 +168,6 @@ void main() {
     expect(value, isTrue);
     expect(haptics, ['HapticFeedbackType.lightImpact']);
 
-    // The repeat guard runs on a real-time stopwatch, so fake-time pumping does not expire it.
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 40)),
     );

@@ -1,7 +1,3 @@
-// Desktop hub rewrite page (desktop parity): the console's engine
-// switch, default lifetime and rule table. Every figure must come from the service; a switch, a TTL
-// or a rule save posts to `/dns/rewrite/*` and the page then shows what the service re-read.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_rewrite_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
@@ -35,9 +31,7 @@ void main() {
   Finder inEngine(Finder matching) =>
       find.descendant(of: find.byType(RewriteEngineCard), matching: matching);
 
-  /// The page is taller than a window, so a control below the fold has to be scrolled to first.
 
-  /// Lets the current snackbar expire, so the next action's message is the one on screen.
 
   test('缺字段按零值解析，失败应答码替换类型徽标', () {
     final rule = DesktopRewriteRule.fromJson(const {'domain': 'lan'});
@@ -87,7 +81,6 @@ void main() {
     expect(find.text(l10n.desktopRewriteEngineOn), findsOneWidget);
     expect(find.text(l10n.desktopRewriteRulesCount(5)), findsOneWidget);
 
-    // Names, type chips, targets and the lifetimes the service reported.
     expect(find.text('host.lan'), findsOneWidget);
     expect(find.text(l10n.desktopRewriteTypeIp), findsOneWidget);
     expect(find.text('192.168.1.100 · fd00::100'), findsOneWidget);
@@ -211,8 +204,6 @@ void main() {
     final l10n = l10nOf(tester);
 
     await tapAt(tester, find.byTooltip(l10n.desktopRewriteEdit).at(3));
-    // The rule carries no shortcut field, so the editor opens on its record list with both values
-    // already in place.
     expect(inDialog(find.text('MX')), findsOneWidget);
     expect(inDialog(find.text('A')), findsOneWidget);
     expect(inDialog(find.text('32 mail.lan')), findsWidgets);
@@ -244,7 +235,6 @@ void main() {
       ),
       'off.lan',
     );
-    // The picker itself is a button; its menu item carries the code.
     await tapAt(tester, inDialog(find.text(l10n.desktopRewriteRcodeNone)));
     await tapAt(tester, find.text('REFUSED').last);
     expect(find.text(l10n.desktopRewriteRcodeWarning), findsOneWidget);
@@ -363,7 +353,6 @@ void main() {
     await pumpRewrite(tester, size: const Size(620, 900));
     final l10n = l10nOf(tester);
 
-    // 窄卡片放不下五列，表头消失、域名整行显示，寿命并入类型徽标那一行。
     expect(find.text(l10n.desktopRewriteDomain), findsNothing);
     expect(find.text('host.lan'), findsOneWidget);
     expect(find.text(l10n.desktopRewriteSeconds(120)), findsOneWidget);

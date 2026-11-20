@@ -1,32 +1,20 @@
-//! Upstream resolver, provider and bootstrap configuration.
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
 use super::serde_util::{is_zero_f64, is_zero_i32, nullable_map, nullable_vec};
 
-/// Upstream transport protocols, stored exactly as shared with the frontend.
 pub const PROTOCOL_PLAIN: &str = "PLAIN";
-/// DNS-over-HTTPS.
 pub const PROTOCOL_DOH: &str = "DOH";
-/// DNS-over-TLS.
 pub const PROTOCOL_DOT: &str = "DOT";
-/// DNS-over-QUIC.
 pub const PROTOCOL_DOQ: &str = "DOQ";
-/// DNS-over-HTTPS over HTTP/3.
 pub const PROTOCOL_DOH3: &str = "DOH3";
 
-/// Single-provider scheduling mode.
 pub const MODE_SINGLE: &str = "single";
-/// Primary/backup failover mode.
 pub const MODE_PRIMARY_BACKUP: &str = "primary_backup";
-/// Parallel race mode.
 pub const MODE_PARALLEL_RACE: &str = "parallel_race";
-/// Smart prediction mode.
 pub const MODE_SMART_PREDICTION: &str = "smart_prediction";
 
-/// One upstream provider.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ProviderConfig {
@@ -40,7 +28,6 @@ pub struct ProviderConfig {
     pub pin: String,
 }
 
-/// One bootstrap DNS server.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct BootstrapServer {
@@ -51,7 +38,6 @@ pub struct BootstrapServer {
     pub weight: f64,
 }
 
-/// Bootstrap resolver configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct BootstrapConfig {
@@ -69,7 +55,6 @@ impl Default for BootstrapConfig {
     }
 }
 
-/// The default bootstrap servers (`DefaultConfig`).
 pub fn default_bootstrap_servers() -> Vec<BootstrapServer> {
     vec![
         BootstrapServer {
@@ -87,7 +72,6 @@ pub fn default_bootstrap_servers() -> Vec<BootstrapServer> {
     ]
 }
 
-/// The default upstream providers (`DefaultConfig`).
 pub fn default_providers() -> Vec<ProviderConfig> {
     vec![
         ProviderConfig {
@@ -105,7 +89,6 @@ pub fn default_providers() -> Vec<ProviderConfig> {
     ]
 }
 
-/// Whole upstream resolver configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ResolverConfig {
@@ -127,7 +110,6 @@ pub struct ResolverConfig {
     pub fallback_providers: Vec<ProviderConfig>,
     #[serde(skip_serializing_if = "is_zero_i32")]
     pub fallback_timeout_ms: i32,
-    /// Deliberately not skipped: `null` (use defaults) and `[]` (disable every trigger) differ.
     pub fallback_on_rcode: Option<Vec<i32>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fallback_on_error: Option<bool>,
@@ -150,7 +132,6 @@ impl Default for ResolverConfig {
 }
 
 impl ResolverConfig {
-    /// Mirror the upstream portion of `normalizeConfig`.
     pub fn normalize(&mut self) {
         if self.mode.is_empty() {
             self.mode = MODE_PRIMARY_BACKUP.to_string();

@@ -61,7 +61,6 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
   @override
   bool get enableGestures => super.enableGestures && !_hidden;
 
-  // A thumb already held keeps its drag, or its scrub would never end.
   bool get _sheetHides => !_dragging && !(_sheetOpen?.value ?? true);
 
   void _watchSheet() {
@@ -160,7 +159,6 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     widget.onScrub?.call(_scrubRate);
   }
 
-  // The thumb maps to an absolute offset; feed the base class the scaled delta only.
   @override
   void handleThumbPressUpdate(Offset localPosition) {
     final origin = _scrubOrigin;
@@ -209,7 +207,6 @@ class _AppScrollbarState extends RawScrollbarState<_AppScrollbar> {
     _scrubPosition = null;
     _scrubRate = 1.0;
     _syncEmphasis();
-    // A fling would throw away the precision the slowed scrub just bought.
     super.handleThumbPressEnd(position, slowed ? Velocity.zero : velocity);
     _endScrub();
     widget.onScrub?.call(null);
@@ -268,7 +265,6 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
   @override
   void initState() {
     super.initState();
-    // Lazy lists refine maxScrollExtent during layout without a notification.
     widget.controller.addListener(_syncPosition);
   }
 
@@ -313,7 +309,6 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
       return;
     }
     setState(() => _scrubRate = null);
-    // Lingers so letting go and grabbing again does not blink the hint.
     _hideTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() => _hintVisible = false);
@@ -342,7 +337,6 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
             1.0,
           )
         : 1.0;
-    // Reversed lists place the thumb at (1 - fraction).
     final thumbExtent = max(
       _minThumbLength,
       track * fractionVisible,
@@ -362,7 +356,6 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
     final barPadding = behavior is BaseScrollBehavior
         ? behavior.scrollbarPadding
         : EdgeInsets.zero;
-    // A finger on the thumb covers the bar's edge, so the hint keeps clear.
     final hintGap = isTouchPlatform(Theme.of(context).platform) ? 40.0 : 20.0;
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -376,7 +369,6 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
             final fraction =
                 ((metrics.pixels - metrics.minScrollExtent) / scrollableExtent)
                     .clamp(0.0, 1.0);
-            // Continuous clamp keeps the pill clear of the bottom inset.
             final half = _pillHeight / 2;
             final limit =
                 (constraints.maxHeight - bottomInset - _bottomInsetGap).clamp(
@@ -402,7 +394,6 @@ class _FloatingScrollbarState extends State<FloatingScrollbar> {
               onScrub: _handleScrub,
               child: widget.child,
             ),
-            // Outlives the label, so the fade-out still ends and unmounts it.
             if (_hintMounted)
               Positioned(
                 right: hintGap,

@@ -7,16 +7,12 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 
-/// Native side of `com.haoze.diting/dns_latency`. Dart owns the provider catalog and
-/// passes host/port/protocol down. Probes block for seconds, so they run on a worker
-/// pool and every answer is posted back to the platform thread.
 class DnsLatencyBridge(context: Context) :
     MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "com.haoze.diting/dns_latency"
 
-        /// Daemon threads so a hung probe never keeps the process alive
         private val workers = Executors.newCachedThreadPool { runnable ->
             Thread(runnable, "diting-dns-latency").apply { isDaemon = true }
         }
@@ -47,7 +43,6 @@ class DnsLatencyBridge(context: Context) :
             return
         }
         workers.execute {
-            // Each probe is isolated: one failing provider must not abort the run.
             val samples = specs.map { spec ->
                 runCatching { DnsLatencyTester.probeAverage(spec, domain, attempts) }
                     .getOrElse { error ->
@@ -71,7 +66,6 @@ class DnsLatencyBridge(context: Context) :
     private fun toSpec(map: Map<String, Any?>): DnsLatencyTester.Spec? {
         val id = (map["id"] as? String)?.takeIf { it.isNotBlank() } ?: return null
         val url = (map["url"] as? String).orEmpty()
-        // DoH may carry only a url; plain DNS and DoT need a host to open a socket.
         val host = (map["host"] as? String).orEmpty()
         if (host.isBlank() && url.isBlank()) return null
         return DnsLatencyTester.Spec(

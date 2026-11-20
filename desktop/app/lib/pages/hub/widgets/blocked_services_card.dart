@@ -1,8 +1,3 @@
-/// The built-in app and site blocking card: search, group filters, one tile per service with its
-/// plan state and rules, and the per-service weekly plan dialog.
-///
-/// The old desktop console's `ServicesPanel.vue` is the blueprint. Every toggle posts the selection
-/// and adopts the whole state the service answers with, so a rejected change never stays on screen.
 library;
 
 import 'dart:async';
@@ -20,10 +15,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One compact tile carries a name, its rule count and three controls. The controls sit on the
-/// name's line, flush with the tile's right edge, so a row of tiles never leaves a dead strip under
-/// the title; the rule count and its chips get the line below. Narrower than this the name would be
-/// squeezed down to a few characters beside the controls, so the grid drops a column instead.
 const double _minTileWidth = 260;
 const double _tileGap = 8;
 const int _maxColumns = 5;
@@ -230,8 +221,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     final expanded = filtered.where((item) => item.id == _expanded);
     return LayoutBuilder(
       builder: (context, constraints) {
-        // A short result list (a filter or a narrow catalogue) uses one column per service instead
-        // of leaving the right end of the card empty because the last row is not full.
         final fit = _columnsOf(constraints.maxWidth);
         final columns = filtered.length < fit ? filtered.length : fit;
         return Column(
@@ -257,8 +246,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
                   ],
                 ),
               ),
-            // The rules of the opened tile are long lines, not tile content: they get the full
-            // width under the grid instead of widening one tile in the middle of a run.
             if (expanded.isNotEmpty)
               _RulesPanel(
                 service: expanded.first,
@@ -271,7 +258,6 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     );
   }
 
-  /// As many equal columns as the card fits, so one row shows several services at once.
   int _columnsOf(double width) {
     final fit = ((width + _tileGap) / (_minTileWidth + _tileGap)).floor();
     if (fit < 1) return 1;
@@ -387,9 +373,6 @@ class _ServiceTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 2,
         children: [
-          // The name and its three controls share one line, so the tile's right edge is used
-          // instead of left as a dead strip under a lone title. A long name ellipsizes rather than
-          // pushing the controls onto a line of their own.
           Row(
             spacing: 6,
             children: [
@@ -411,7 +394,6 @@ class _ServiceTile extends StatelessWidget {
   }
 }
 
-/// The rules of the tile whose eye is on: full width under the grid, one rule per line.
 class _RulesPanel extends StatelessWidget {
   const _RulesPanel({
     required this.service,

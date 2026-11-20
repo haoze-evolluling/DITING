@@ -145,7 +145,6 @@ void main() {
       theme.textTheme.bodyLarge?.fontFamily,
       system.black.bodyLarge?.fontFamily,
     );
-    // The Han fallback chain is also a customisation; the desktop drops it too.
     expect(
       theme.textTheme.bodyLarge?.fontFamilyFallback,
       system.black.bodyLarge?.fontFamilyFallback,

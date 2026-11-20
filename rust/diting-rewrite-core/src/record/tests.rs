@@ -1,8 +1,5 @@
-//! The vectors the Go tests (`rewrite_records_test.go`) and the old `buildRewriteRR` branches pin.
-
 use super::*;
 
-/// Builds a record and unwraps it; `qtype` defaults to the record's own type when `None`.
 fn record_of(type_name: &str, value: &str) -> Record {
     let code = lookup_type(type_name).expect("the type is supported");
     build("host.lan", code, type_name, value, 60)
@@ -34,7 +31,6 @@ fn mx_and_srv_split_their_fields() {
             target: "sip.lan.".to_string()
         }
     );
-    // Fields are split like `strings.Fields`, so extra whitespace is not a field.
     assert_eq!(
         record_of("MX", "  32   example.mail "),
         Record::Mx {
@@ -62,9 +58,7 @@ fn name_targets_are_validated_and_qualified() {
         record_of("CNAME", "target.example.com"),
         Record::Cname("target.example.com.".to_string())
     );
-    // Single-label intranet hostnames are legal targets.
     assert_eq!(record_of("CNAME", "nas"), Record::Cname("nas.".to_string()));
-    // An IP address is not a target name.
     assert!(rejection("CNAME", "10.0.0.1").contains("不是合法的域名"));
     assert!(rejection("NS", "").contains("不是合法的域名"));
 }
@@ -85,13 +79,11 @@ fn txt_keeps_its_text_and_needs_one() {
 #[test]
 fn addresses_are_typed_and_aaaa_rejects_ipv4() {
     assert_eq!(record_of("A", "10.1.2.3"), Record::A([10, 1, 2, 3]));
-    // An IPv4-mapped IPv6 literal is an IPv4 address for `To4`.
     assert_eq!(record_of("A", "::ffff:10.1.2.3"), Record::A([10, 1, 2, 3]));
     assert_eq!(
         record_of("AAAA", "fe80::1"),
         Record::Aaaa([0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
     );
-    // The IPv4 literal must not become `::ffff:10.0.0.5`.
     assert!(rejection("AAAA", "10.0.0.5").contains("不是合法的 IPv6 地址"));
     assert!(rejection("A", "::1.2.3.4").contains("不是合法的 IPv4 地址"));
     assert!(rejection("A", "10.0.0.256").contains("不是合法的 IPv4 地址"));
@@ -114,7 +106,6 @@ fn https_parses_every_supported_parameter() {
     };
     assert!(https);
     assert_eq!(priority, 1);
-    // `.` means the query name itself.
     assert_eq!(target, ".");
     assert_eq!(
         params,
@@ -149,7 +140,6 @@ fn https_parses_every_supported_parameter() {
 
 #[test]
 fn https_rejects_broken_parameters() {
-    // The hints take one address, like AdGuard Home's parser.
     assert!(rejection("HTTPS", "1 . ipv4hint=1.2.3.4,5.6.7.8").contains("ipv4hint"));
     assert!(rejection("HTTPS", "1 . ipv6hint=nonsense").contains("ipv6hint"));
     assert!(rejection("HTTPS", "1 . alpn=h2 alpn=h3").contains("重复出现"));
@@ -163,7 +153,6 @@ fn https_rejects_broken_parameters() {
     assert!(rejection("HTTPS", "1").contains("至少需要"));
     assert!(rejection("HTTPS", "high .").contains("SVCB 优先级无效"));
     assert!(rejection("HTTPS", "1 10.0.0.1").contains("不是合法的域名"));
-    // A quoted value is unwrapped like `strings.Trim(value, "\"")` did.
     let record = record_of("HTTPS", "1 . dohpath=\"/dns-query\"");
     let Record::Svcb { params, .. } = record else {
         panic!("expected an SVCB record");
@@ -173,13 +162,11 @@ fn https_rejects_broken_parameters() {
 
 #[test]
 fn only_cname_answers_other_query_types() {
-    // The type mismatch is the caller's `NODATA` signal.
     assert_eq!(build("host.lan", TYPE_A, "MX", "32 mail.lan", 60), Ok(None));
     assert_eq!(
         build("host.lan", TYPE_MX, "SRV", "1 2 3 target", 60),
         Ok(None)
     );
-    // CNAME is a property of the name, so every query type gets it.
     for qtype in [TYPE_A, TYPE_AAAA, TYPE_MX, TYPE_CNAME, TYPE_HTTPS] {
         let record = build("host.lan", qtype, "cname", "target.example", 30).expect("legal");
         assert_eq!(
@@ -205,7 +192,6 @@ fn the_owner_name_is_qualified() {
     assert_eq!(owner_of("host.lan."), "host.lan.");
     assert_eq!(owner_of(""), ".");
     assert_eq!(owner_of("."), ".");
-    // An escaped trailing dot is not a label separator, so the name is not absolute.
     assert_eq!(owner_of("host\\."), "host\\..");
 }
 
@@ -214,7 +200,6 @@ fn unknown_types_and_values_are_rejected() {
     assert!(build("host", TYPE_A, "BOGUS", "whatever", 60)
         .expect_err("unknown type")
         .contains("不支持的记录类型"));
-    // A type that exists in DNS but not in the rewrite grammar, e.g. SOA.
     assert!(build("host", 6, "soa", "whatever", 60).is_err());
 }
 

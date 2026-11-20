@@ -1,44 +1,14 @@
-//! Flow attribution: 5-tuple → UID → package, with the kernels' TTL caches in front.
-//!
-//! `socket_uid_resolver.go` + `uid_cache.go` in Rust. The decision half (TTLs, the 1024/256 entry
-//! caps, the negative-cache window and the prune-vs-reset behaviour) already lives in
-//! [`diting_telemetry_core`]; this module keeps the two Kotlin callbacks and the lookup order:
-//!
-//! ```text
-//! profile cache (2 s hit / 500 ms miss) → UIDResolver.resolveUID(...) → cache
-//! package cache (60 s)                 → AppUidResolver.packageForUid(...) → cache
-//! ```
-//!
-//! The direction is the one `UidPackageCache.kt` documents: **local = the app**, remote = the
-//! destination the app dialed. Android's `getConnectionOwnerUid` wants exactly that pair, and Go hit
-//! the same trap ("direction inversion") when it first wired tun2socks' endpoints backwards.
-//!
-//! # Blocking
-//!
-//! A miss is a binder round trip. The resolver runs on the stack thread (a plain Rust thread, not a
-//! tokio worker), which is where Go's flow goroutines ran theirs too. The caches keep the common
-//! case — every packet of an established flow — to a mutex lookup.
-
 use std::sync::{Arc, RwLock};
 
 use diting_telemetry_core::uidcache::Addr;
 use diting_telemetry_core::{FlowKey, FlowUidCache, UidPackageCache};
 use smoltcp::wire::IpEndpoint;
 
-/// `ProtocolTCP`.
 pub const PROTOCOL_TCP: i32 = 6;
-/// `ProtocolUDP`.
 pub const PROTOCOL_UDP: i32 = 17;
-/// `UIDUnknown`: an unattributable flow never matches an explicit rule.
 pub const UID_UNKNOWN: i32 = -1;
 
-/// `UIDResolver.resolveUID(protocol, localAddress, localPort, remoteAddress, remotePort)`.
 pub trait UidResolver: Send + Sync + 'static {
-    /// The UID that owns the app endpoint, or a non-positive value when it cannot be resolved.
-    ///
-    /// The addresses cross as the 4- or 16-byte wire form: Kotlin hands `getConnectionOwnerUid` an
-    /// `InetAddress`, so formatting two strings here and parsing them back in the JVM was pure
-    /// work on every attribution miss.
     fn resolve(
         &self,
         protocol: i32,
@@ -49,12 +19,10 @@ pub trait UidResolver: Send + Sync + 'static {
     ) -> i32;
 }
 
-/// `AppUidResolver.packageForUid(uid)`; an empty string means "unknown".
 pub trait AppUidResolver: Send + Sync + 'static {
     fn package_for(&self, uid: i32) -> String;
 }
 
-/// One engine's attribution state.
 pub struct Attribution {
     flows: FlowUidCache,
     packages: UidPackageCache,
@@ -86,8 +54,6 @@ impl Attribution {
         *self.app_slot() = Some(resolver);
     }
 
-    /// Drops both callbacks (the caches are bounded and expire on their own; Go cleared the
-    /// Kotlin-side cache, which lives in `UidPackageCache.kt` and is called from there).
     pub fn clear(&self) {
         *self.uid_slot() = None;
         *self.app_slot() = None;
@@ -101,7 +67,6 @@ impl Attribution {
         *self.app_slot() = None;
     }
 
-    /// The UID owning `app`, resolving and caching it on a miss.
     pub fn uid_for(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint, now_ns: i64) -> i32 {
         let (app_bytes, server_bytes) = (
             crate::netstack::address_bytes(app.addr),
@@ -131,7 +96,6 @@ impl Attribution {
         uid
     }
 
-    /// The package name behind `uid`, or an empty string when it is unknown.
     pub fn package_for(&self, uid: i32, now_ns: i64) -> String {
         if uid == UID_UNKNOWN {
             return String::new();
@@ -147,7 +111,6 @@ impl Attribution {
         name
     }
 
-    /// The name the connection log shows: the package, `uid:N`, or `unknown`.
     pub fn display_name(&self, uid: i32, now_ns: i64) -> String {
         let package = self.package_for(uid, now_ns);
         if !package.is_empty() {
@@ -172,7 +135,6 @@ impl Attribution {
     }
 }
 
-/// The monotonic clock the caches want (they never read one themselves).
 pub fn now_ns() -> i64 {
     crate::resolver::now_ns()
 }
@@ -233,7 +195,6 @@ mod tests {
         attribution.install_uid_resolver(counter.clone());
         let (app, server) = endpoints();
         assert_eq!(attribution.uid_for(PROTOCOL_TCP, app, server, 0), -1);
-        // The negative window is 500 ms.
         assert_eq!(
             attribution.uid_for(PROTOCOL_TCP, app, server, 600_000_000),
             -1

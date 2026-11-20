@@ -2,7 +2,6 @@
 import 'package:diting_shared/ui/color.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// `.agents/surfaces.md` explains the levels and why dark mode never steps down.
 enum SurfaceLevel {
   page,
   card,
@@ -92,7 +91,6 @@ extension ElevatedSurfaceExt on ColorScheme {
   }
 }
 
-/// The scheme sheets present with; `.agents/surfaces.md` has the reason.
 class ElevatedColorScheme extends ThemeExtension<ElevatedColorScheme> {
   const ElevatedColorScheme(this.colorScheme);
 
@@ -201,7 +199,6 @@ extension AppSurfaceThemeExt on ThemeData {
 const _focusRingWidth = 2.0;
 const _focusRingGap = 1.0;
 
-/// The focus ring of `.agents/surfaces.md`; [standsOff] clears an edge that would hide it.
 BorderSide focusRingSide(ColorScheme colorScheme, {bool standsOff = false}) =>
     BorderSide(
       color: colorScheme.primary,

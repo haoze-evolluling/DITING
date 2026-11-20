@@ -1,6 +1,3 @@
-//! CA generation, persisted-root validation and leaf minting, pinned field by field against the
-//! profile `crypto/x509` produced.
-
 use const_oid::db::rfc5280::ID_CE_SUBJECT_KEY_IDENTIFIER;
 use der::Decode;
 use p256::pkcs8::EncodePrivateKey;
@@ -13,7 +10,6 @@ use x509_cert::{der::referenced::OwnedToRef, Certificate};
 use super::*;
 use crate::ca::dns_names as ca_dns_names;
 
-/// A fixed instant: 2026-11-07T12:00:00Z.
 const NOW: i64 = 1_794_052_800;
 
 fn certificate(pem_text: &str) -> Certificate {
@@ -95,7 +91,6 @@ fn generated_ca_matches_the_old_template() {
         NOW + CA_VALIDITY_AFTER_SECS
     );
 
-    // The key PEM is SEC1 with the named curve, and it matches the certificate.
     let block = pem::decode(&generated.ca_key_pem).expect("key PEM");
     assert_eq!(block.label, "EC PRIVATE KEY");
     let loaded = match CertAuthority::load(authority.ca_pem(), &generated.ca_key_pem, NOW) {
@@ -145,7 +140,6 @@ fn issued_leaf_matches_the_old_template() {
 
     assert_eq!(san_names(&cert), vec!["www.example.com", "*.example.com"]);
 
-    // AKI is the CA's subject key identifier.
     let aki: AuthorityKeyIdentifier = extension(&cert).expect("authority key identifier");
     let ca_ski: SubjectKeyIdentifier =
         extension(authority.ca_certificate()).expect("CA subject key identifier");
@@ -199,7 +193,6 @@ fn the_leaf_key_is_shared_and_reloads() {
         secret.public_key().to_encoded_point(false).as_bytes()
     );
 
-    // A leaf key is not the CA key: loading the CA with it must fail.
     assert_eq!(
         load_error(CertAuthority::load(authority.ca_pem(), &first.key_pem, NOW)),
         "CA private key does not match certificate public key"
@@ -240,7 +233,6 @@ fn load_rejects_a_foreign_subject() {
     rdns[1] = rdn(COMMON_NAME, "Someone Else").unwrap();
     tampered.tbs_certificate.issuer = tampered.tbs_certificate.subject.clone();
     let pem_text = pem::encode("CERTIFICATE", &tampered.to_der().unwrap());
-    // The signature no longer matches, but the subject check runs first.
     let error = load_error(CertAuthority::load(&pem_text, &generated.ca_key_pem, NOW));
     assert_eq!(error, "loaded certificate has an outdated subject");
 }

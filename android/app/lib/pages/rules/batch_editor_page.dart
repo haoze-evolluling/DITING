@@ -7,8 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Batch import: one large text field, live parse counts, one submit button. No file
-/// picker: the demo has no filesystem permission and real usage mostly pastes copied rules.
 class BatchEditorPage extends ConsumerStatefulWidget {
   const BatchEditorPage({super.key});
 
@@ -19,14 +17,11 @@ class BatchEditorPage extends ConsumerStatefulWidget {
 class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
   final _controller = TextEditingController();
 
-  /// Target table. Defaults to block, since most bulk imports are block rules.
   var _kind = RuleKind.block;
 
   @override
   void initState() {
     super.initState();
-    // Listen to the controller rather than using onChanged: paste, undo and the clear
-    // button all bypass onChanged but still notify the controller.
     _controller.addListener(_onTextChanged);
   }
 
@@ -74,7 +69,6 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
     if (!mounted) {
       return;
     }
-    // Leave once imported: the user came only to paste a block of rules.
     context.pop();
   }
 
@@ -105,13 +99,9 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
     return CommonScaffold(
       title: context.l10n.batchAddTitle,
       resizeToAvoidBottomInset: true,
-      // The app bar floats over the body, so the body reserves status bar plus toolbar
-      // height or the section header would be drawn underneath it.
       body: ListView(
         padding: EdgeInsets.fromLTRB(16, 8 + context.appBarInset, 16, 16),
         children: [
-          // Target table above the text field: pick where first, then paste.
-          // padding is zero because this ListView already pads 16 horizontally.
           generateSection(
             padding: EdgeInsets.zero,
             title: context.l10n.batchTarget,
@@ -127,8 +117,6 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
             ],
           ),
           const SizedBox(height: 12),
-          // Fixed height 360 shows a screenful without pushing the button off-screen.
-          // borderRadius must be explicit: FilledInputTheme defaults to AppRadius.standard.
           SizedBox(
             height: 360,
             child: FilledInputTheme(
@@ -150,8 +138,6 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
             ),
           ),
           const SizedBox(height: 12),
-          // Parse counts sit right under the text field: they explain the pasted content,
-          // and the further away they are the less they look related to it.
           CommonCard(
             child: StatStrip(
               stats: [
@@ -176,8 +162,6 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
             ),
           ),
           const SizedBox(height: 12),
-          // Submit sits at the end of the body, not the app bar: the item count is the last
-          // confirmation point before the user commits, and an icon cannot show it.
           TonalButton(
             label: context.l10n.ruleBatchImportCount(parsed.accepted.length),
             onPressed: canSubmit ? _submit : null,

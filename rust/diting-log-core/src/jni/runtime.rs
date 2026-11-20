@@ -1,6 +1,3 @@
-//! The runtime-log capture group: the file listing and export document, the `logcat` plan and byte
-//! budget, and the `dns_cache` projection.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JByteArray, JObject};
@@ -12,7 +9,6 @@ use crate::api;
 use crate::capture::Session;
 use crate::runtime_event::{Gate, Level};
 
-/// `LogNative.storeIndex(packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_storeIndex<'local>(
     mut env: JNIEnv<'local>,
@@ -23,7 +19,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_storeIndex<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.storeDocument(packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_storeDocument<'local>(
     mut env: JNIEnv<'local>,
@@ -34,7 +29,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_storeDocument<'local>
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.capturePlan(pid, uid, detailed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_capturePlan<'local>(
     env: JNIEnv<'local>,
@@ -47,7 +41,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_capturePlan<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.captureSessionNew(): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionNew(
     _env: JNIEnv<'_>,
@@ -56,7 +49,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionNew(
     guarded(|| Some(Box::into_raw(Box::new(Session::new())) as jlong)).unwrap_or(0)
 }
 
-/// `LogNative.captureSessionFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionFree(
     _env: JNIEnv<'_>,
@@ -71,7 +63,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionFree(
     }));
 }
 
-/// `LogNative.captureLine(handle, packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureLine<'local>(
     mut env: JNIEnv<'local>,
@@ -89,7 +80,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureLine<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.mirrorLayout(): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorLayout<'local>(
     env: JNIEnv<'local>,
@@ -99,7 +89,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorLayout<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.mirrorRows(packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorRows<'local>(
     mut env: JNIEnv<'local>,
@@ -110,9 +99,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorRows<'local>(
     answer_bytes(&env, answer)
 }
 
-// --- runtime events ---------------------------------------------------------------------------
 
-/// `LogNative.runtimeEventNew(minLevelTag, dedupWindowMs): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventNew(
     _env: JNIEnv<'_>,
@@ -128,7 +115,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventNew(
         .unwrap_or(0)
 }
 
-/// `LogNative.runtimeEventFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventFree(
     _env: JNIEnv<'_>,
@@ -143,7 +129,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventFree(
     }));
 }
 
-/// `LogNative.runtimeEventSetLevel(handle, minLevelTag)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventSetLevel(
     _env: JNIEnv<'_>,
@@ -160,7 +145,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventSetLevel(
     }));
 }
 
-/// `LogNative.runtimeEventLine(handle, packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventLine<'local>(
     mut env: JNIEnv<'local>,

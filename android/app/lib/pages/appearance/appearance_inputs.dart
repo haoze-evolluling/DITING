@@ -1,4 +1,3 @@
-/// Shared inputs for the appearance pages: fields and slider rows in grouped cards.
 library;
 
 import 'package:diting_shared/ui/ui.dart';
@@ -23,8 +22,6 @@ class FieldGroupCard extends StatelessWidget {
   }
 }
 
-/// Label above a multi-line field. [FilledInputTheme] disables floating labels, so
-/// it cannot live in `InputDecoration.labelText`.
 class LabeledTextField extends StatelessWidget {
   const LabeledTextField({
     super.key,
@@ -68,8 +65,6 @@ class LabeledTextField extends StatelessWidget {
   }
 }
 
-/// A card row with a label, a percentage and a slider, hosted in
-/// `DecorationListItem` host so the row shares the group card and dividers.
 class SliderCardRow extends StatelessWidget {
   const SliderCardRow({
     super.key,

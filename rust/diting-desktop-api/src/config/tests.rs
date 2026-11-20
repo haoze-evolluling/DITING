@@ -181,12 +181,10 @@ fn roundtrip_representative_config() {
     assert_eq!(config.dns.write_timeout, DurationValue::from_secs(3));
     assert!(config.dns.allow_lan);
     assert!(!config.dns.enable_ede);
-    // Container-level defaults fill fields the JSON omitted.
     assert!(config.dns.block_private_ptr);
     assert_eq!(config.dns.block_any_mode, "rfc8482");
     assert!(config.dns.tcp_addresses.is_empty());
 
-    // `normalizeConfig` does not canonicalize the scheduling mode; only empty values are filled.
     assert_eq!(config.upstream.mode, "backup");
     assert_eq!(config.upstream.providers.len(), 1);
     assert_eq!(config.upstream.bootstrap.servers.len(), 1);
@@ -198,11 +196,9 @@ fn roundtrip_representative_config() {
             .map(String::as_str),
         Some("tls://192.168.1.1")
     );
-    // Empty list is preserved, distinct from `null`.
     assert_eq!(config.upstream.fallback_on_rcode, Some(Vec::new()));
 
     assert_eq!(config.cache.max_entries, 512);
-    // Persist interval is clamped to the 30s minimum.
     assert_eq!(config.cache.persist_interval_seconds, 30);
     assert_eq!(config.cache.max_ttl_seconds, 3600);
 
@@ -246,7 +242,6 @@ fn roundtrip_representative_config() {
         paths::default_query_log_dir().to_string_lossy()
     );
 
-    // Missing top-level sections keep their Go defaults.
     assert!(config.hosts.enabled);
     assert!(config.rebind.enabled);
 

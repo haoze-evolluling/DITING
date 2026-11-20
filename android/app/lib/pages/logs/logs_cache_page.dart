@@ -10,12 +10,6 @@ import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// DNS cache table from the real `dns_cache` table. The engine's in-memory LRU is authoritative;
-/// `DnsCacheMirror` mirrors its top entries into this table every 10 s.
-///
-/// The mirror caps the table at 200 rows, but the page builds rows lazily anyway: reading a
-/// bounded table eagerly is a latent trap, and every other bulk list in the app already behaves
-/// this way.
 class LogsCachePage extends ConsumerStatefulWidget {
   const LogsCachePage({super.key});
 
@@ -28,7 +22,6 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
   final _search = TextEditingController();
   var _query = '';
 
-  /// The native mirror rewrites `dns_cache` every 10 s; the list follows it without a tap.
   LogLiveRefreshNotifier? _logRefresh;
   bool _polling = false;
 
@@ -80,8 +73,6 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
   }
 
   Widget _buildBody(AsyncValue<List<DnsCacheRecord>> asyncEntries) {
-    // Check hasValue first: a refresh keeps the old value alongside isLoading, and
-    // looking at isLoading alone would flash the loading state and lose scroll.
     if (!asyncEntries.hasValue) {
       if (asyncEntries.hasError) {
         return Center(
@@ -98,7 +89,6 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
       return LogsPageLoading(label: context.l10n.logsLoadingCache);
     }
     final entries = _visible(asyncEntries.requireValue);
-    // Last-hit time is a separate column because DnsCacheRecord has no lastHitAt.
     final lastHits = ref.watch(cacheLastHitProvider).value ?? const {};
     if (entries.isEmpty) {
       return SliverPageBody(
@@ -213,7 +203,6 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
     );
   }
 
-  /// The mirror caps the table at 200 rows, so filtering here is cheaper than a second DB read.
   List<DnsCacheRecord> _visible(List<DnsCacheRecord> all) {
     if (_query.isEmpty) return all;
     return [

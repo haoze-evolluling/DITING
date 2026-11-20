@@ -12,9 +12,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Backup and migration (upstream `ConfigTransferScreen`): export writes through the system
-/// document
-/// picker, import reads and merges the chosen file. Both share the [BackupGroup] checklist.
 class ConfigTransferPage extends ConsumerStatefulWidget {
   const ConfigTransferPage({super.key});
 
@@ -25,7 +22,6 @@ class ConfigTransferPage extends ConsumerStatefulWidget {
 class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
   final Set<BackupGroup> _selected = {...BackupGroup.values};
 
-  /// The running action; while non-null both entries are disabled so no second picker opens.
   String? _busy;
 
   bool get _allSelected => _selected.length == BackupGroup.values.length;
@@ -204,7 +200,6 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
     );
   }
 
-  /// A dash while the counts load; showing 0 would read as "no rules on this device".
   String _figure(int? value) => value == null ? '—' : '$value';
 
   Widget _metric(BuildContext context, String label, String value) =>
@@ -256,8 +251,6 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
     try {
       result = await ref.read(backupActionsProvider).importFromDocument();
     } finally {
-      // Clear the progress before the dialog opens, otherwise "waiting for the backup file"
-      // stays behind it and looks like the import is still running.
       if (mounted) setState(() => _busy = null);
     }
     if (!mounted) return;
@@ -272,7 +265,6 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
   }
 }
 
-/// Reports only what happened: added, updated and skipped counts per group.
 class _ImportResultDialog extends StatelessWidget {
   const _ImportResultDialog({required this.result});
 

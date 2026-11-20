@@ -1,9 +1,3 @@
-//! JNI entry points for `com.haoze.diting.platform.NotificationNative`.
-//!
-//! Kotlin reads SharedPreferences and the counters, then asks this crate how to read them and how
-//! to format the line. A null `compose` answer means no detail line, so the caller keeps only the
-//! status text.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JObject, JString};
@@ -23,7 +17,6 @@ fn to_jstring(env: &JNIEnv<'_>, value: String) -> jstring {
     }
 }
 
-/// `NotificationNative.statsItems(String, boolean, boolean): String`, newline-separated.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_statsItems<'local>(
     mut env: JNIEnv<'local>,
@@ -42,7 +35,6 @@ pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_statsIt
     }
 }
 
-/// `NotificationNative.runningText(String, String, String): String`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_runningText<'local>(
     mut env: JNIEnv<'local>,
@@ -67,8 +59,6 @@ pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_running
     }
 }
 
-/// `NotificationNative.compose(String, String, long, long, long, long, long, long, boolean,
-/// long, long): String?`.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_compose<'local>(
     mut env: JNIEnv<'local>,

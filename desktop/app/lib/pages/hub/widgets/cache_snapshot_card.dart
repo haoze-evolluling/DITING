@@ -1,9 +1,3 @@
-/// The two manual persistence operations: write the current cache to the file now, or read the last
-/// file back.
-///
-/// The old desktop console's `CachePersistCard.vue` keeps these under the persistence switch; here they
-/// are their own card, because they act on the file rather than configure it. A restore is confirmed
-/// first: it overwrites entries that are still valid.
 library;
 
 import 'dart:async';
@@ -21,7 +15,6 @@ import 'package:material_ui/material_ui.dart';
 class CacheSnapshotCard extends ConsumerWidget {
   const CacheSnapshotCard({super.key, required this.persist});
 
-  /// The service's persistence status; null when this build of the service does not report it.
   final DesktopCachePersist? persist;
 
   Future<void> _load(BuildContext context, WidgetRef ref) async {

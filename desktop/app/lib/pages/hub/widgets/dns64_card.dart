@@ -1,10 +1,3 @@
-/// The DNS64 synthesizer: the engine switch, what it does and the protections the service applies on
-/// its own.
-///
-/// The old desktop console's `DNS64Panel.vue` is the blueprint. The switch saves the moment it moves and
-/// both writes re-read `/status`, so a prefix the service rejected never stays on screen as if it had
-/// been applied. The prefix list is [Dns64PrefixesCard], because a five-line editor next to the long
-/// explanation made one card taller than the window.
 library;
 
 import 'dart:async';

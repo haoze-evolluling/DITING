@@ -7,14 +7,12 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 
-/// Native side of `com.haoze.diting/outbound_proxy`; key names stay verbatim from the legacy store.
 class OutboundProxyBridge(private val context: Context) :
     MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "com.haoze.diting/outbound_proxy"
 
-        /// Same container the legacy app used
         private const val PREFS_NAME = "dns_vpn_prefs"
 
         private const val KEY_ENABLED = "outbound_proxy_enabled"
@@ -33,13 +31,10 @@ class OutboundProxyBridge(private val context: Context) :
         private const val DEFAULT_PORT = 7890
         private const val DEFAULT_STATUS = "disabled"
 
-        /// Keystore unwrap costs tens of ms and `read` runs per page build, so it runs off-thread.
         private val worker = Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "diting-outbound-proxy").apply { isDaemon = true }
         }
 
-        /// Called by the VPN services from the engine's status callback. The service shares this
-        /// process with the UI, so a plain `apply()` is visible to the next `read`.
         fun publishStatus(context: Context, state: String, message: String) {
             context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .edit()
@@ -78,7 +73,6 @@ class OutboundProxyBridge(private val context: Context) :
             ),
             "host" to (preferences.getString(KEY_HOST, DEFAULT_HOST) ?: DEFAULT_HOST),
             "port" to preferences.getInt(KEY_PORT, DEFAULT_PORT),
-            // Decryption failure yields "": the page asks again, as the old password is gone.
             "username" to ProxySecretCodec.decrypt(
                 preferences.getString(KEY_USERNAME, null),
             ),
@@ -93,7 +87,6 @@ class OutboundProxyBridge(private val context: Context) :
         )
     }
 
-    /// Leaves the two `status` keys alone, so a write never blanks the last error.
     private fun write(call: MethodCall) {
         prefs().edit()
             .putBoolean(KEY_ENABLED, call.argument<Boolean>("enabled") ?: false)

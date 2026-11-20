@@ -1,5 +1,3 @@
-//! Thread-safe certificate manager, ported from `cert_manager.go`.
-
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
@@ -17,7 +15,6 @@ use super::material::{
 };
 use super::{IMPORTED_CERT_FILE, IMPORTED_KEY_FILE, SELF_SIGNED_CERT_FILE, SELF_SIGNED_KEY_FILE};
 
-/// Read-only certificate summary exposed to the UI (Go's `certInfo` DTO).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct CertInfo {
@@ -46,16 +43,11 @@ struct State {
     material: Option<Material>,
 }
 
-/// Manages the encrypted-DNS server certificate.
-///
-/// Certificate material lives only on disk; the in-memory state keeps the parsed PEM so
-/// [`CertManager::tls_config`] can rebuild a rustls configuration without re-reading files.
 pub struct CertManager {
     inner: RwLock<State>,
 }
 
 impl CertManager {
-    /// Create a manager and load whatever the configuration points at.
     pub fn new(dir: impl Into<PathBuf>, config: CertConfig) -> Self {
         let mut config = config;
         normalize_cert_config(&mut config);
@@ -72,7 +64,6 @@ impl CertManager {
         manager
     }
 
-    /// Replace the certificate configuration and reload the material.
     pub fn configure(&self, config: CertConfig) {
         let mut config = config;
         normalize_cert_config(&mut config);
@@ -83,22 +74,18 @@ impl CertManager {
         self.reload();
     }
 
-    /// Change the self-signed certificate directory without reloading (mirrors Go's `SetDir`).
     pub fn set_dir(&self, dir: impl Into<PathBuf>) {
         self.write_state().dir = dir.into();
     }
 
-    /// Current configuration copy.
     pub fn config(&self) -> CertConfig {
         self.read_state().config.clone()
     }
 
-    /// Current self-signed certificate directory.
     pub fn dir(&self) -> PathBuf {
         self.read_state().dir.clone()
     }
 
-    /// Reload certificate material from the current configuration.
     pub fn reload(&self) {
         let (dir, config) = {
             let state = self.read_state();
@@ -121,7 +108,6 @@ impl CertManager {
         }
     }
 
-    /// Build a rustls server configuration for the loaded certificate.
     pub fn tls_config(&self, alpn: Vec<Vec<u8>>) -> Result<Arc<rustls::ServerConfig>, String> {
         let (cert_pem, key_pem) = {
             let state = self.read_state();
@@ -153,7 +139,6 @@ impl CertManager {
         Ok(Arc::new(config))
     }
 
-    /// Read-only certificate summary for the UI.
     pub fn info(&self) -> CertInfo {
         let state = self.read_state();
         let mut info = CertInfo {
@@ -185,7 +170,6 @@ impl CertManager {
         info
     }
 
-    /// Lifecycle state of the current certificate.
     pub fn health(&self) -> CertHealth {
         let state = self.read_state();
         let source = state.config.source.as_str();
@@ -209,7 +193,6 @@ impl CertManager {
         health
     }
 
-    /// Ensure a self-signed certificate exists; returns `true` when one was generated.
     pub fn ensure_self_signed(&self, config: CertConfig) -> Result<bool, String> {
         let mut config = config;
         normalize_cert_config(&mut config);
@@ -221,8 +204,6 @@ impl CertManager {
         let cert_path = dir.join(SELF_SIGNED_CERT_FILE);
         let key_path = dir.join(SELF_SIGNED_KEY_FILE);
 
-        // Reuse only files we own: an imported PEM recorded under source=file must not be
-        // mistaken for our self-signed material (Go's BUG-64).
         if cert_path.is_file() && key_path.is_file() && self.owned_by_self_signed() {
             self.configure(with_source(config, CERT_SOURCE_SELF_SIGNED));
             return Ok(false);
@@ -236,7 +217,6 @@ impl CertManager {
         Ok(true)
     }
 
-    /// Unconditionally issue a new self-signed certificate.
     pub fn regenerate_self_signed(&self, config: CertConfig) -> Result<(), String> {
         let mut config = config;
         normalize_cert_config(&mut config);
@@ -260,10 +240,7 @@ impl CertManager {
         Ok(())
     }
 
-    /// Validate and import a PEM certificate/key pair.
     pub fn import_pem(&self, cert_pem: &[u8], key_pem: &[u8]) -> Result<(), String> {
-        // Parse, verify the pair and only then touch the directory: writing a mismatched pair
-        // would surface as a TLS handshake failure on the next start, far from the user's action.
         parse_pair(cert_pem, key_pem)?;
 
         let dir = self.dir();
@@ -284,16 +261,11 @@ impl CertManager {
         Ok(())
     }
 
-    /// Decode a PKCS#12 archive and import its leaf certificate and private key as PEM.
-    ///
-    /// Mirrors Go's `ImportPKCS12`, which also normalizes the archive into the imported PEM pair
-    /// so later loads never depend on the original archive or its password again.
     pub fn import_pkcs12(&self, pfx: &[u8], password: &str) -> Result<(), String> {
         let (cert_pem, key_pem) = decode_pkcs12(pfx, password)?;
         self.import_pem(&cert_pem, &key_pem)
     }
 
-    /// Paths of the certificate and private key currently in effect.
     pub fn current_paths(&self) -> (PathBuf, PathBuf) {
         let (dir, config) = {
             let state = self.read_state();
@@ -305,7 +277,6 @@ impl CertManager {
         }
     }
 
-    /// Report whether the on-disk fixed-name files belong to the self-signed source.
     fn owned_by_self_signed(&self) -> bool {
         let state = self.read_state();
         let source = state.config.source.as_str();
@@ -319,8 +290,6 @@ impl CertManager {
         if !same_file_path(Path::new(&state.config.cert_file), &expected) {
             return false;
         }
-        // Legacy versions wrote imported PEMs to server.crt too. Only trust the file name when
-        // the loaded leaf really is self-signed.
         state
             .material
             .as_ref()

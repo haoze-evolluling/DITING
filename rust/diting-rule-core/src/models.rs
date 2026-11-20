@@ -1,10 +1,5 @@
-//! Rule models. Field-for-field mirrors of `android/app/lib/data/rules/rule_models.dart`;
-//! the Dart side rebuilds its own objects from the FFI payload, so field order matters there
-//! (see `ffi.rs`) as much as the semantics do.
-
 use std::collections::HashSet;
 
-/// `RewriteTargetType` values as they are stored in the database.
 pub const REWRITE_IPV4: &str = "IPv4";
 pub const REWRITE_IPV6: &str = "IPv6";
 pub const REWRITE_CNAME: &str = "CNAME";
@@ -57,7 +52,6 @@ pub struct ParsedCosmeticRule {
     pub is_exception: bool,
 }
 
-/// Result of parsing one line; one line may expand into several rules.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CategorizedLine {
     pub block_rules: Vec<ParsedRule>,
@@ -111,7 +105,6 @@ impl CategorizedLine {
     }
 }
 
-/// Whole-document parse result; the counters are the ones the import summary reports.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CategorizedRules {
     pub block_rules: Vec<ParsedRule>,

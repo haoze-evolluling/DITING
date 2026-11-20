@@ -1,14 +1,8 @@
-//! The writer-queue payloads: one submitted row and one batch of rows to write.
-
 use super::Writer;
 use crate::payload::Reader;
 use crate::queue::Queue;
 
-// ---------------------------------------------------------------------------------------------
-// Writer queues: the caller packs one row, the kernel decides when it is written
-// ---------------------------------------------------------------------------------------------
 
-/// `u32 count | rows(u32 length | bytes)`: packed rows, one per queued log entry.
 fn write_rows(writer: &mut Writer, rows: &[Vec<u8>]) {
     writer.u32(rows.len() as u32);
     for row in rows {
@@ -25,10 +19,8 @@ fn read_rows(reader: &mut Reader<'_>) -> Option<Vec<Vec<u8>>> {
     Some(rows)
 }
 
-/// Refuse a payload that claims more rows than any queue can hold, instead of trusting `count`.
 const MAX_ROWS_PER_PAYLOAD: usize = 65_536;
 
-/// The two queue parameter sets, selected by the Kotlin writer's payload tag.
 pub fn queue_settings(tag: u8) -> Option<crate::queue::Settings> {
     match tag {
         0 => Some(crate::queue::LOG_TABLE),
@@ -37,7 +29,6 @@ pub fn queue_settings(tag: u8) -> Option<crate::queue::Settings> {
     }
 }
 
-/// One `submit`; answers with `u8 accepted`, then the overflow count and the flush delay.
 pub fn queue_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let row = reader.blob()?.to_vec();
@@ -47,8 +38,6 @@ pub fn queue_submit(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8
     Some(submit_answer(queue, queue.submit(row, now_ms)))
 }
 
-/// One `submitMany`: the same layout as `submit`, with the rows counted in a single call so the
-/// Kotlin DNS writer no longer crosses the JNI boundary once per row.
 pub fn queue_submit_many(queue: &Queue, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let rows = read_rows(&mut reader)?;
@@ -72,7 +61,6 @@ fn submit_answer(queue: &Queue, outcome: Option<crate::queue::Submit>) -> Vec<u8
     writer.into_vec()
 }
 
-/// The next transaction's rows, or `u8 0` when nothing is queued.
 pub fn queue_take(queue: &Queue) -> Vec<u8> {
     let mut writer = Writer::new();
     match queue.take() {
@@ -85,7 +73,6 @@ pub fn queue_take(queue: &Queue) -> Vec<u8> {
     writer.into_vec()
 }
 
-/// A failed write's rows go back in front; answers with the overflow count.
 pub fn queue_requeue(queue: &Queue, payload: &[u8]) -> Option<u32> {
     let mut reader = Reader::new(payload);
     let rows = read_rows(&mut reader)?;
@@ -117,9 +104,9 @@ mod tests {
         let queue = Queue::new(LOG_TABLE);
         let answer = queue_submit(&queue, &submit_payload("first"), 0).unwrap();
         let mut reader = Reader::new(&answer);
-        assert_eq!(reader.u8(), Some(1)); // accepted
-        assert_eq!(reader.u32(), Some(0)); // no overflow
-        assert_eq!(reader.u8(), Some(0)); // batch not full
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u32(), Some(0));
+        assert_eq!(reader.u8(), Some(0));
         assert_eq!(reader.i64(), Some(LOG_TABLE.flush_interval_ms));
         assert!(reader.finish());
     }
@@ -132,9 +119,9 @@ mod tests {
             .collect();
         let answer = queue_submit_many(&queue, &rows_payload(&rows), 0).unwrap();
         let mut reader = Reader::new(&answer);
-        assert_eq!(reader.u8(), Some(1)); // accepted
-        assert_eq!(reader.u32(), Some(0)); // no overflow
-        assert_eq!(reader.u8(), Some(1)); // the batch is full
+        assert_eq!(reader.u8(), Some(1));
+        assert_eq!(reader.u32(), Some(0));
+        assert_eq!(reader.u8(), Some(1));
         assert_eq!(reader.i64(), Some(0));
         assert!(reader.finish());
         assert_eq!(queue.pending_len(), LOG_TABLE.batch_size as u32);
@@ -188,7 +175,6 @@ mod tests {
         assert_eq!(reader.blob(), Some(&row("2")[..]));
         assert!(reader.finish());
 
-        // The take answer carries its presence byte, so a requeue payload is rebuilt from the rows.
         let mut requeue = Writer::new();
         requeue.u32(3);
         requeue.blob(&row("0"));
@@ -218,7 +204,6 @@ mod tests {
     #[test]
     fn drift_is_a_failed_decode() {
         let queue = Queue::new(LOG_TABLE);
-        // A truncated blob and a trailing byte are both drift.
         assert_eq!(queue_submit(&queue, &[0, 0, 0, 4, 1], 0), None);
         let mut padded = submit_payload("row");
         padded.push(0);

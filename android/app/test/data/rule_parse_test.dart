@@ -1,6 +1,3 @@
-// Rule parsing and import: a semantic drift silently blocks too much or too little, and
-// the importer must keep the 1.4.3 `*_rule` / `*_rule_source` contract.
-
 import 'package:diting_android/data/rules/rule_domain_utils.dart';
 import 'package:diting_android/data/rules/rule_importer.dart';
 import 'package:diting_android/data/rules/rule_models.dart';
@@ -14,10 +11,6 @@ void main() {
   group('规则入库', _ruleImporter);
 }
 
-/// Equivalent of 1.4.3's `AdGuardRuleParserTest`: a semantic drift silently blocks too much
-/// or too little. The parser is the Rust core now, so these are fixed expectations on its
-/// document output; build the library first (`cargo build --release` in `rust/`), exactly like the
-/// app needs it.
 void _ruleParser() {
   test('域名 / 修饰符 / 放行规则', () {
     final parsed = parseCategorized(
@@ -99,7 +92,6 @@ void _ruleParser() {
 
   group('整份文本', () {
     test('混合文本按族归类', () {
-      // Matches Kotlin's `trimIndent()`: dropped blank lines would add an extra ignored entry
       const text =
           '! Title: Unified List\n'
           '# Comment line\n'
@@ -187,8 +179,6 @@ void _ruleParser() {
   });
 }
 
-/// Runs the importer against the real 1.4.3 tables: rules land in `*_rule` with a `sub_<id>`
-/// source row, re-imports do not duplicate, and deleting a subscription drops orphan rules
 void _ruleImporter() {
   setUpAll(() {
     sqfliteFfiInit();
@@ -310,11 +300,9 @@ void _ruleImporter() {
       kind: 'domain',
       enabled: true,
     );
-    // Same source again: the source row exists, so the insert is ignored.
     expect(second.blockCount, 0);
     expect(await count('block_rule'), 1, reason: '设备库没有唯一索引，必须靠查重复用');
 
-    // Another subscription with the same pattern reuses the rule row.
     final other = await importer.import(
       parsed,
       source: subscriptionSourceTag(2),
@@ -342,7 +330,6 @@ void _ruleImporter() {
   });
 
   test('孤儿清理按页删除，超过一页也能清空', () async {
-    // 一页之外的孤儿行如果没被扫到，就是分批改写引入的静默数据残留。
     final importer = RuleImporter(db);
     final total = RuleImporter.orphanPageSize + 50;
     final lines = [for (var i = 0; i < total; i++) '||bulk$i.example.com^'];
@@ -410,7 +397,6 @@ void _ruleImporter() {
       kind: 'domain',
       enabled: true,
     );
-    // Dropping the scope would turn it into a global URL block, so skip the rule.
     expect(summary.urlBlockCount, 0);
     expect(await count('go_url_rule'), 0);
   });

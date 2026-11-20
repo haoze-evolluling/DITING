@@ -3,16 +3,7 @@
 
 #include <string>
 
-// Localized text used by the notification-area icon, its context menu and its
-// balloons.
-//
-// The app pushes the strings of the active locale through the `diting/tray`
-// method channel after the first frame (see `TrayChannel::Configure`). The
-// defaults below repeat the zh entries of the shared ARB resources, so a tray
-// that outlives the Flutter side - or one created for a `--minimized` start
-// whose first `configure` is still pending - never shows empty labels.
 struct TrayLabels {
-  // Window title, also used as the icon tooltip and as balloon title.
   std::wstring tooltip = L"谛听 (DITING) DNS 控制台";
 
   std::wstring open_window = L"打开主界面";
@@ -37,11 +28,10 @@ struct TrayLabels {
   std::wstring balloon_autostart_on = L"已开启开机自启动";
   std::wstring balloon_autostart_off = L"已关闭开机自启动";
 
-  // Prefix glued in front of a native (Win32 / UAC) failure description.
   std::wstring balloon_failed = L"操作失败：";
   std::wstring balloon_minimized_body =
       L"谛听已最小化到系统托盘，并在后台继续运行。\n"
       L"点击托盘图标可重新打开主界面。";
 };
 
-#endif  // RUNNER_TRAY_TRAY_LABELS_H_
+#endif

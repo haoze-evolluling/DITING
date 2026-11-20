@@ -1,9 +1,7 @@
-/// Backup file: `{format, version, data}`; `data` is keyed by [BackupGroup.key].
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
-/// Backup groups; declaration order is the export screen order.
 enum BackupGroup {
   providers('providers'),
   bootstrap('bootstrap'),
@@ -23,7 +21,6 @@ enum BackupGroup {
 
   const BackupGroup(this.key);
 
-  /// Key in `data`. Never rename: existing backups depend on it.
   final String key;
 
   String title(AppL10n l10n) => switch (this) {
@@ -71,15 +68,10 @@ enum BackupGroup {
 }
 
 abstract final class BackupFormat {
-  /// Top-level `format` value. Changing it invalidates every existing backup.
   static const magic = 'diting-backup';
 
-  /// Version this build writes. 2 dropped the 1.4.3 flat fields (rules, apps, settings at the top
-  /// level) that every backup used to carry next to `data`; nothing else changed. Version 1 wrote
-  /// the same grouped `data`, so it still restores and only newer files are refused.
   static const version = 2;
 
-  /// Highest version this build parses; newer backups are rejected.
   static const maxReadableVersion = 2;
 
   static const fileNamePrefix = 'DITING-backup';

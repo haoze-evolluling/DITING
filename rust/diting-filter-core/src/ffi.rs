@@ -1,24 +1,3 @@
-//! The C ABI the Go service drives (see `desktop/service/internal/core/filter_native.go` and
-//! `parse_native.go`).
-//!
-//! Entry points, all falling back on a status word so a failure is never silent:
-//!
-//! | symbol | meaning |
-//! | --- | --- |
-//! | `diting_filter_abi_version` | ABI number the loader validates |
-//! | `diting_filter_build` | build an index from the rule payload, returns a handle + stats |
-//! | `diting_filter_match` | match one normalized domain, returns a decision payload |
-//! | `diting_filter_parse_rules` | parse a whole list, returns the parsed lines |
-//! | `diting_filter_parse_rule` | parse one line, returns zero or one parsed line |
-//! | `diting_filter_free` | drop an index |
-//! | `diting_filter_free_bytes` | drop a payload this library returned |
-//!
-//! Status words: `0` success, `1` rejected (payload carries the reason as UTF-8), `2` bad
-//! arguments (null pointer, wrong length). A handle is an opaque `Box<FilterIndex>`; it is immutable
-//! once built, so concurrent `match` calls need no lock on this side (Go still swaps indexes under
-//! its own mutex, because freeing one must not race with a match in flight). Parsing keeps no
-//! state: the caller owns the text and the reply is one flat payload.
-
 use std::ffi::c_void;
 use std::slice;
 
@@ -27,27 +6,17 @@ use crate::parse::{parse_document, parse_line};
 use crate::parse_payload::{decode_request, encode_parsed_lines};
 use crate::payload::{decode_rules, encode_decision, encode_stats};
 
-/// Must match `filterNativeABIVersion` in `desktop/service/internal/core/filter_native.go`.
 pub const ABI_VERSION: u32 = 2;
 
 const STATUS_OK: u32 = 0;
 const STATUS_REJECTED: u32 = 1;
 const STATUS_BAD_ARGS: u32 = 2;
 
-/// ABI version of the library.
 #[no_mangle]
 pub extern "C" fn diting_filter_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Builds an index from `input`.
-///
-/// On `STATUS_OK` `handle_out` receives the index and `payload_out`/`payload_len` the build stats.
-/// On `STATUS_REJECTED` only the payload is written and it holds the error text.
-///
-/// # Safety
-///
-/// All pointers must be valid for writes; `input` must be readable for `input_len` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_filter_build(
     input: *const u8,
@@ -84,12 +53,6 @@ pub unsafe extern "C" fn diting_filter_build(
     }
 }
 
-/// Matches one normalized domain (`domain` is lowercase, trimmed, no trailing dot).
-///
-/// # Safety
-///
-/// `handle` must come from [`diting_filter_build`] and not be freed yet; `domain` must be readable
-/// for `domain_len` bytes; `payload_out`/`payload_len` must be valid for writes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_filter_match(
     handle: *mut c_void,
@@ -106,7 +69,6 @@ pub unsafe extern "C" fn diting_filter_match(
         return STATUS_BAD_ARGS;
     }
 
-    // A match never mutates the index, so a shared reference is enough.
     let index = &*handle.cast::<FilterIndex>();
     let bytes = if domain_len == 0 {
         &[][..]
@@ -125,15 +87,6 @@ pub unsafe extern "C" fn diting_filter_match(
     STATUS_OK
 }
 
-/// Parses a whole rule list.
-///
-/// The input is one [`decode_request`] payload; on `STATUS_OK` the reply holds every parsed line in
-/// list order, and on `STATUS_REJECTED` it holds the reason as UTF-8.
-///
-/// # Safety
-///
-/// `input` must be readable for `input_len` bytes; `payload_out`/`payload_len` must be valid for
-/// writes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_filter_parse_rules(
     input: *const u8,
@@ -144,11 +97,6 @@ pub unsafe extern "C" fn diting_filter_parse_rules(
     run_parse(input, input_len, payload_out, payload_len, true)
 }
 
-/// Parses a single line; the reply holds zero or one parsed line.
-///
-/// # Safety
-///
-/// Same contract as [`diting_filter_parse_rules`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_filter_parse_rule(
     input: *const u8,
@@ -159,7 +107,6 @@ pub unsafe extern "C" fn diting_filter_parse_rule(
     run_parse(input, input_len, payload_out, payload_len, false)
 }
 
-/// Shared body of the two parser entry points: decode, parse, encode.
 unsafe fn run_parse(
     input: *const u8,
     input_len: usize,
@@ -197,11 +144,6 @@ unsafe fn run_parse(
     }
 }
 
-/// Drops an index built by [`diting_filter_build`].
-///
-/// # Safety
-///
-/// `handle` must come from [`diting_filter_build`] and must not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_filter_free(handle: *mut c_void) {
     if !handle.is_null() {
@@ -209,11 +151,6 @@ pub unsafe extern "C" fn diting_filter_free(handle: *mut c_void) {
     }
 }
 
-/// Frees a payload returned by this library.
-///
-/// # Safety
-///
-/// `pointer`/`length` must be a pair this library produced and not freed yet.
 #[no_mangle]
 pub unsafe extern "C" fn diting_filter_free_bytes(pointer: *mut u8, length: usize) {
     if !pointer.is_null() && length > 0 {
@@ -221,8 +158,6 @@ pub unsafe extern "C" fn diting_filter_free_bytes(pointer: *mut u8, length: usiz
     }
 }
 
-/// Hands a `Vec<u8>` to the caller; the length travels with the pointer so the caller can rebuild
-/// the same allocation in [`diting_filter_free_bytes`].
 unsafe fn write_payload(bytes: Vec<u8>, out: *mut *mut u8, out_len: *mut usize) {
     let mut boxed = bytes.into_boxed_slice();
     *out_len = boxed.len();
@@ -235,17 +170,16 @@ mod tests {
     use super::*;
     use crate::payload::{NO_CODE, NO_INDEX};
 
-    /// Builds a payload the Go side would send: one plain blocklist rule for `ads.test`.
     fn rule_payload() -> Vec<u8> {
         let mut out = vec![crate::payload::LAYOUT_VERSION];
         out.extend_from_slice(&1u32.to_le_bytes());
-        out.push(0); // flags
-        out.extend_from_slice(&0u16.to_le_bytes()); // dnstype
+        out.push(0);
+        out.extend_from_slice(&0u16.to_le_bytes());
         out.extend_from_slice(&8u16.to_le_bytes());
         out.extend_from_slice(b"ads.test");
-        out.extend_from_slice(&0u16.to_le_bytes()); // regex source
-        out.extend_from_slice(&0u16.to_le_bytes()); // denyallow
-        out.extend_from_slice(&0u16.to_le_bytes()); // to
+        out.extend_from_slice(&0u16.to_le_bytes());
+        out.extend_from_slice(&0u16.to_le_bytes());
+        out.extend_from_slice(&0u16.to_le_bytes());
         out
     }
 
@@ -270,7 +204,6 @@ mod tests {
             )
         };
         assert_eq!(status, STATUS_OK);
-        // Stats: layout, one rule, no exclusions, no uncompiled patterns.
         let stats = unsafe { payload_slice(out, out_len) };
         assert_eq!(stats[0], crate::payload::LAYOUT_VERSION);
         assert_eq!(&stats[1..5], &1u32.to_le_bytes());
@@ -383,14 +316,12 @@ mod tests {
             )
         };
         assert_eq!(status, STATUS_BAD_ARGS);
-        // Freeing null is a no-op rather than a crash.
         unsafe {
             diting_filter_free(std::ptr::null_mut());
             diting_filter_free_bytes(std::ptr::null_mut(), 0);
         }
     }
 
-    /// Rebuilds the byte slice the library handed out.
     unsafe fn payload_slice(pointer: *mut u8, length: usize) -> &'static [u8] {
         if pointer.is_null() || length == 0 {
             return &[];

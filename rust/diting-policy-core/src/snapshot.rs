@@ -1,15 +1,3 @@
-//! Snapshot building and the seven-level decision walk.
-//!
-//! The engine keeps the snapshot lifecycle (building the snapshot, the atomic swap, the delayed
-//! release) and this crate owns the matching tables, the wildcard index, the DTRI lookup, the
-//! priority order, the domain normalization and the decision cache. The pieces live next door:
-//! [`crate::tables`] holds the buckets and matching
-//! helpers, [`crate::decision`] the verdict type and [`crate::cache`] the per-snapshot cache.
-//!
-//! [`Snapshot::evaluate`] is the raw walk and expects a normalized domain; [`Snapshot::answer`] is
-//! the FFI entry point and does the normalization itself. Neither allocates for a plain miss
-//! beyond what a lookup needs; only a non-empty reason is interned once in the cache.
-
 mod query;
 
 pub use query::Answer;
@@ -30,7 +18,6 @@ use crate::tables::{
 use crate::text::go_lower_trim;
 use crate::wildcard_index::WildcardIndex;
 
-/// `policySnapshot`, including the decision cache the Go side used to own.
 pub struct Snapshot {
     filter_enabled: bool,
     has_rules: bool,
@@ -67,7 +54,6 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
-    /// `applySnapshot`: builds every table.
     pub fn build(request: &RuleSnapshot) -> Snapshot {
         let filter_enabled = request.filter_enabled.unwrap_or(true);
         let mut snapshot = Snapshot {
@@ -303,7 +289,6 @@ impl Snapshot {
         }
     }
 
-    /// `finalizeLookup`: which dimensions the decision cache has to keep apart.
     fn finalize_lookup(&mut self) {
         self.app_sensitive = !self.app_buckets.is_empty();
         for list in [
@@ -336,14 +321,10 @@ impl Snapshot {
         }
     }
 
-    /// True when the walk would actually run: filtering is enabled by the user *and* rules exist.
-    /// `flags()` bit0 is only "rules present", so this is the right gate for optional callers (the
-    /// connection-layer host filter) that should not pay their cost when filtering is switched off.
     pub fn filtering_active(&self) -> bool {
         self.filter_enabled && self.has_rules
     }
 
-    /// Flags used by the Go caller: bit0 `hasRules`, bit1 `appSensitive`, bit2 `qtypeSensitive`.
     pub fn flags(&self) -> u32 {
         let mut flags = 0;
         if self.has_rules {
@@ -358,9 +339,6 @@ impl Snapshot {
         flags
     }
 
-    /// `evaluateNormalized`: the seven priority levels, in order. The domain must already be
-    /// normalized ([`crate::text::normalize_domain`]); [`Snapshot::answer`] is the entry point
-    /// that does it.
     pub fn evaluate<'a>(&'a self, domain: &str, app_name: &str, qtype: u16) -> Decision<'a> {
         if !self.filter_enabled {
             return Decision::pass();
@@ -369,7 +347,6 @@ impl Snapshot {
             return Decision::pass();
         }
 
-        // Level 1: app-specific $important blocks.
         if !app_name.is_empty() {
             if let Some(bucket) = self.app_buckets.get(app_name) {
                 if let Some(reason) = match_domain_or_suffix(domain, &bucket.important) {
@@ -390,7 +367,6 @@ impl Snapshot {
             }
         }
 
-        // Level 2: global $important blocks.
         for rule in &self.important_inverted {
             if skipped_inverted(rule, app_name) {
                 continue;
@@ -420,7 +396,6 @@ impl Snapshot {
             return Decision::block(source);
         }
 
-        // Level 3: app-specific whitelist.
         if !app_name.is_empty() {
             if let Some(bucket) = self.app_buckets.get(app_name) {
                 if match_domain_or_suffix_set(domain, &bucket.allow) {
@@ -441,7 +416,6 @@ impl Snapshot {
             }
         }
 
-        // Level 4: global whitelist.
         for rule in &self.allow_inverted {
             if skipped_inverted(rule, app_name) {
                 continue;
@@ -480,7 +454,6 @@ impl Snapshot {
             return Decision::allow();
         }
 
-        // Level 5: app-specific normal blocks.
         if !app_name.is_empty() {
             if let Some(bucket) = self.app_buckets.get(app_name) {
                 if let Some(reason) = match_domain_or_suffix(domain, &bucket.block) {
@@ -501,7 +474,6 @@ impl Snapshot {
             }
         }
 
-        // Level 6: global normal blocks.
         for rule in &self.block_inverted {
             if skipped_inverted(rule, app_name) {
                 continue;
@@ -531,7 +503,6 @@ impl Snapshot {
             return Decision::block(source);
         }
 
-        // Level 7: default pass.
         Decision::pass()
     }
 }

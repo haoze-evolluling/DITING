@@ -1,8 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'legacy_settings.dart';
 
-/// Which sites the dashboard's speed card draws. Null when the user never picked, so the built-in
-/// four apply; unknown ids are dropped here and the catalog pads a short list back to four.
 extension LegacySettingsSites on LegacySettings {
   List<String>? get dashboardSiteIds {
     final raw = _string(LegacySettings.uiContainer, 'dashboard_site_ids');

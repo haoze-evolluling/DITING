@@ -58,7 +58,6 @@ void _engineStats() {
       addTearDown(c.dispose);
       final stats = c.read(serviceStatsProvider.notifier);
 
-      // The UI process was recreated: nothing local remembers the start, only the service does.
       stats.applyNative(
         {'queries': 1},
         running: true,
@@ -93,8 +92,6 @@ void _engineStats() {
   });
 }
 
-/// The on-demand switch and the SSID table were persisted but never applied, so the tunnel kept
-/// running whatever network the device joined. These pin the rule that now drives it.
 void _onDemand() {
   ProviderContainer container({
     required FakeVpnController vpn,
@@ -134,14 +131,12 @@ void _onDemand() {
     return instance;
   }
 
-  /// The last network the whitelist was applied to; `null` means the key is absent.
   String? readLastSsid(ProviderContainer c) =>
       c
               .read(legacyPrefsStoreProvider)
               .read('diting_config_resources', 'on_demand_last_ssid')
           as String?;
 
-  /// Settles the asynchronous status sync `PowerNotifier.build` starts for a persisted tunnel.
   Future<void> settle(ProviderContainer instance) async {
     instance.read(powerProvider);
     await Future<void>.delayed(Duration.zero);
@@ -228,8 +223,6 @@ void _onDemand() {
     });
   });
 
-  /// Start and resume re-evaluate the whitelist without force; these pin the "only act on a
-  /// network change" rule that keeps a manual start/stop from being overridden on every launch.
   group('启动/回前台重估', () {
     test('首次评估只记录网络，不动隧道', () async {
       final vpn = FakeVpnController();

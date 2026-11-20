@@ -1,4 +1,3 @@
-/// User agents and on-demand connection in one notifier: every operation replaces a whole table.
 library;
 
 import 'package:diting_android/data/http/request_user_agent.dart';
@@ -17,7 +16,6 @@ class ConfigResources {
 
   final List<MockUserAgent> userAgents;
 
-  /// Selected user agent; null means no override (subscription or engine default).
   final String? selectedUserAgent;
   final List<MockSsidRule> ssidRules;
   final bool onDemand;
@@ -39,7 +37,6 @@ class ConfigResources {
 }
 
 class ConfigResourcesNotifier extends Notifier<ConfigResources> {
-  /// Writes one table back to prefs; a `state` listener cannot tell which table changed.
   ConfigResourceStore get _store =>
       ConfigResourceStore(ref.read(legacyPrefsStoreProvider));
 
@@ -55,8 +52,6 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
     );
   }
 
-  /// Adds a custom agent. [name] is the card label; when omitted (older callers)
-  /// the card falls back to showing [value].
   bool addUserAgent(String value, {String? name}) {
     final trimmed = value.trim();
     final label = (name ?? '').trim();
@@ -91,7 +86,6 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
             ))) {
       return false;
     }
-    // Read the selection before `_put`: afterwards it already holds the new value.
     final selectedWasOriginal = state.selectedUserAgent == original;
     final next = state.copyWith(
       userAgents: [
@@ -104,7 +98,6 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
                 )
               : item,
       ],
-      // Follow the rename when the edited entry was selected, or it points at nothing.
       selectedUserAgent: selectedWasOriginal ? trimmed : null,
     );
     state = next;
@@ -113,7 +106,6 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
     return true;
   }
 
-  /// Built-in agents cannot be removed: the engine falls back and the setting looks unapplied.
   void removeUserAgent(String value) {
     if (state.userAgents.any((item) => item.value == value && item.isDefault)) {
       return;
@@ -128,7 +120,6 @@ class ConfigResourcesNotifier extends Notifier<ConfigResources> {
     );
     state = next;
     _store.saveUserAgents(next.userAgents);
-    // Persist the cleared selection too, or a restart shows "selected" for a missing agent.
     if (selectedWasRemoved) _store.saveSelectedUserAgent(null);
   }
 
@@ -202,8 +193,6 @@ final configResourcesProvider =
       ConfigResourcesNotifier.new,
     );
 
-/// The `User-Agent` every outbound HTTP client sends. Watching this provider is what makes
-/// `/config/user-agents` a real setting instead of a stored string.
 final requestUserAgentProvider = Provider<String>(
   (ref) => resolveRequestUserAgent(
     ref.watch(

@@ -1,9 +1,3 @@
-//! Per-query accounting.
-//!
-//! The outer middleware in Go measured the whole chain and then handed the finished context to the
-//! metrics/query-log/WebSocket callbacks. Here the observer receives the same context after every
-//! other postlude has run, so it sees the final rcode, the cache marker and the filter attribution.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -12,7 +6,6 @@ use diting_desktop_core::metrics::MetricsTracker;
 use crate::context::DnsContext;
 use crate::pipeline::{Stage, StageResult};
 
-/// Receives one finished query. Implementations must not block: the DNS worker awaits them.
 pub trait QueryObserver: Send + Sync {
     fn observe(&self, ctx: &DnsContext);
 }

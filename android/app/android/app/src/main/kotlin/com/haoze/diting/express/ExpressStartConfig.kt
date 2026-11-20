@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.Intent
 import com.haoze.diting.vpn.VpnPlanNative
 
-/// Last start configuration of the express tunnel, replayed by the quick settings tile. Rules are
-/// not part of it: the service rebuilds the engine snapshot from the rule database.
 internal object ExpressStartConfig {
     private const val KEY_LAST_OUTBOUND_PROXY = "last_outbound_proxy"
     private const val KEY_LAST_PROXY_APP = "last_outbound_proxy_app"
@@ -29,7 +27,6 @@ internal object ExpressStartConfig {
             .apply()
     }
 
-    /// Null until the service was started at least once.
     fun restoreIntent(context: Context): Intent? {
         val prefs = context.getSharedPreferences(ExpressVpnService.PREFS_NAME, Context.MODE_PRIVATE)
         val dnsConfig = prefs.getString(ExpressVpnService.KEY_LAST_DNS_CONFIG, null)

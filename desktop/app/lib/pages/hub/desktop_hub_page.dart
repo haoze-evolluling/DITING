@@ -1,11 +1,3 @@
-/// The hub branch: every desktop console page except the dashboard, grouped by the order a user
-/// walks them — resolve, block, privacy, sharing, diagnosis, then the app's own settings.
-///
-/// Network sharing owns the LAN console (how other devices reach this host); diagnosis owns the
-/// port probe, emergency restore and rule tester (all answer 「为什么解析不对」).
-///
-/// Only entries whose page exists are listed: a row that opens a placeholder would promise work
-/// the host cannot do.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -42,7 +34,6 @@ import 'package:material_ui/material_ui.dart';
 class DesktopFeatureHubPage extends ConsumerWidget {
   const DesktopFeatureHubPage({super.key});
 
-  /// One feature row. The trailing chevron is the same on every row, so the builder owns it.
   ListItem _entry(
     BuildContext context, {
     required Glyph glyph,
@@ -57,11 +48,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
     onTap: () => context.push(path),
   );
 
-  /// One titled category: the rows, then the cards that category owns.
-  ///
-  /// The cards stay inside the category rather than sitting loose on the board, so a category
-  /// heading also covers the actions under it; they are separate surfaces from the rows, which is
-  /// why they are appended after [generateGroup] instead of being fed through it.
   Widget _category({
     required String title,
     required List<Widget> entries,
@@ -89,7 +75,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
         children: [
           DesktopCardBoard(
             cards: [
-              // How a name becomes an address: upstream, cache, local overrides, v6 synthesis.
               _category(
                 title: l10n.desktopHubResolveSection,
                 entries: [
@@ -123,8 +108,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              // What gets blocked: the built-in app catalogue first, then the rule sources, then
-              // the engine's own behaviour and timetable.
               _category(
                 title: l10n.desktopHubProtectSection,
                 entries: [
@@ -165,8 +148,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              // How the host hides itself from the resolver's operators: what it sends upstream,
-              // and which encrypted protocols it publishes.
               _category(
                 title: l10n.desktopHubPrivacySection,
                 entries: [
@@ -186,8 +167,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              // How other devices use this host: its adapter, its 53 listener, and the browser
-              // console the LAN opens.
               _category(
                 title: l10n.desktopHubShareSection,
                 entries: [
@@ -221,8 +200,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              // Everything that answers 「为什么解析不对」: the rule tester (a sub-page, because it
-              // needs a form and a verdict) plus the two cards that run their own actions.
               _category(
                 title: l10n.desktopHubDiagnoseSection,
                 entries: [
@@ -246,7 +223,6 @@ class DesktopFeatureHubPage extends ConsumerWidget {
                   const EmergencyRestoreCard(),
                 ],
               ),
-              // The client's own side: how it looks, and which backend it talks to.
               _category(
                 title: l10n.desktopHubAppSection,
                 entries: [

@@ -1,19 +1,3 @@
-/// Reference implementation of the `ping` / `traceroute` output parsers and the latency arithmetic,
-/// lifted out of Kotlin so it can run on a desktop JVM.
-///
-/// <p>Each method is a line-for-line port of the Kotlin it replaces
-/// ({@code PingProbe.parseSummary}, {@code TraceProbe.trace}'s per-hop parse,
-/// {@code DnsLatencyTester.probeAverage}'s average). The regular expressions,
-/// {@code toIntOrNull} / {@code toDoubleOrNull}, {@code average()}, {@code Math.round} and
-/// {@code jitterOf} are therefore the <em>same Java library calls</em> the app made.
-///
-/// <p>Compile the four files together and run the corpus generator:
-///
-/// <pre>
-///   javac -d /tmp/probe-ref rust/tools/probe-reference/*.java
-///   java -cp /tmp/probe-ref ProbeReference --corpus rust/diting-probe-core/tests/fixtures
-/// </pre>
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -26,11 +10,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// The text parsers and the payload writer their results are packed with.
 final class ProbeText {
-    // ---------------------------------------------------------------------------------------
-    // PingProbe.parseSummary
-    // ---------------------------------------------------------------------------------------
 
     private static final Pattern REPLY = Pattern.compile(
             "from\\s+(\\S+):\\s+(?:icmp_seq|seq)=(\\d+)(?:.*?ttl=(\\d+))?.*?time=([0-9.]+)\\s*ms");
@@ -58,7 +38,6 @@ final class ProbeText {
         }
     }
 
-    /** Status 1 = no `N% packet loss` line (the Kotlin null), 0 = a full summary. */
     static byte[] pingPayload(String output) {
         ProbeWriter writer = new ProbeWriter();
         Matcher loss = LOSS.matcher(output);
@@ -148,11 +127,7 @@ final class ProbeText {
         return writer.bytes();
     }
 
-    // ---------------------------------------------------------------------------------------
-    // jitterOf / latency sample arithmetic
-    // ---------------------------------------------------------------------------------------
 
-    /** Flags + min/avg/max/jitter + `average().roundToLong().coerceAtLeast(1)`. */
     static byte[] latencyPayload(double[] samples) {
         Double min = null;
         Double max = null;
@@ -210,9 +185,6 @@ final class ProbeText {
         return max;
     }
 
-    // ---------------------------------------------------------------------------------------
-    // TraceProbe's per-hop parse
-    // ---------------------------------------------------------------------------------------
 
     private static final Pattern TRACE_REPLY = Pattern.compile(
             "from\\s+(\\S+):\\s+(?:icmp_seq|seq)=\\d+.*?time=([0-9.]+)\\s*ms");
@@ -252,5 +224,4 @@ final class ProbeText {
         return writer.bytes();
     }
 
-    // ---------------------------------------------------------------------------------------
 }

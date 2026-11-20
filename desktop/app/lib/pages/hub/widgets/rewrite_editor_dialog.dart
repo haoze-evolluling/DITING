@@ -1,9 +1,3 @@
-/// Add or edit one rewrite rule. The behaviour is `RewriteEditModal.vue`: shortcut targets for the
-/// three common cases, an explicit record list for everything else, an optional response-code
-/// override and an optional lifetime.
-///
-/// The dialog only builds a rule; the page sends it and re-reads what the service kept. A failure
-/// code wins over the target checks, because a rule that answers NXDOMAIN needs no target at all.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -15,7 +9,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Opens the editor. Returns the rule to save, or null when cancelled.
 Future<DesktopRewriteRule?> showRewriteEditor(
   BuildContext context, {
   DesktopRewriteRule? editing,
@@ -28,8 +21,6 @@ enum _TargetMode { shortcut, records }
 
 enum _ShortcutType { address, cname, txt }
 
-/// A record value example per type, taken from the service's own `$dnsrewrite` syntax. They are DNS
-/// values, not prose, so they stay out of the ARB.
 const Map<String, String> _recordHints = {
   'A': '10.0.0.5',
   'AAAA': 'fd00::5',
@@ -96,8 +87,6 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
         editing.cname.isNotEmpty ||
         editing.ips.isNotEmpty ||
         editing.txt.isNotEmpty;
-    // A rule that only carries explicit records opens in record mode; anything the shortcut fields
-    // can express stays in shortcut mode, as the console does.
     _mode = !hasShortcut && _records.isNotEmpty
         ? _TargetMode.records
         : _TargetMode.shortcut;
@@ -150,8 +139,6 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
     final ttl = int.tryParse(_ttl.text.trim()) ?? 0;
     final records = _validRecords;
 
-    // A failure code replaces every record, so the target checks would only force the user to fill
-    // in something that is never returned.
     if (_rcode.isNotEmpty && _rcode != 'NOERROR') {
       popFloatingDialog(
         context,

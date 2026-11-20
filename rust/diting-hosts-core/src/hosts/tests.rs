@@ -1,5 +1,3 @@
-//! Parser and table behaviour, one case per branch of the old `parseHostsReader`.
-
 use super::*;
 use crate::ip::{parse_ip, Addr};
 
@@ -25,7 +23,6 @@ fn parses_the_shape_of_a_hosts_file() {
         table.lookup("nas.home", TYPE_A),
         vec![Addr::V4([192, 168, 1, 100])]
     );
-    // The `# lan nas` comment ends the line, so those two words are not hosts.
     assert!(!table.has_domain("lan"));
     assert!(!table.has_domain("nas"));
     let mut loopback = [0u8; 16];
@@ -34,7 +31,6 @@ fn parses_the_shape_of_a_hosts_file() {
         table.lookup("ip6-localhost", TYPE_AAAA),
         vec![Addr::V6(loopback)]
     );
-    // The interface zone is cut, so this is fe80::1 and not a parse failure.
     assert_eq!(
         table.lookup("linklocal.local", TYPE_AAAA),
         vec![parse_ip("fe80::1").unwrap()]
@@ -50,23 +46,19 @@ fn normalizes_hosts_and_queries() {
         table.lookup("DOTTED.host", TYPE_A),
         vec![Addr::V4([192, 168, 1, 101])]
     );
-    // Both spellings fold to one host, and the duplicate address is stored once.
     assert_eq!(
         table.ptr("101.1.168.192.in-addr.arpa."),
         vec!["dotted.host".to_string()]
     );
-    // A host that is only dots normalizes to the empty string and is skipped.
     assert!(!table.has_domain("..."));
     assert!(!table.has_domain("."));
 }
 
 #[test]
 fn folds_hosts_like_go_not_like_rust() {
-    // `strings.ToLower` maps U+0130 to a plain `i`; Rust's full mapping would produce `i` + U+0307.
     let table = build_table("127.0.0.1 \u{0130}stanbul.test\n");
     assert!(table.has_domain("\u{0130}stanbul.test"));
     assert!(!table.has_domain("i\u{0307}stanbul.test"));
-    // Non-ASCII hosts that are already lowercase keep working.
     let table = build_table("127.0.0.1 \u{00e4}\u{00f6}\u{00fc}.test\n");
     assert!(table.has_domain("\u{00c4}\u{00d6}\u{00dc}.test"));
 }
@@ -86,7 +78,6 @@ fn skips_lines_without_a_usable_address_or_host() {
     assert!(!table.has_domain("host.without.ip"));
     assert!(!table.has_domain("leading.zero"));
     assert!(!table.has_domain("hex.ip"));
-    // `a#b` is `a` plus a comment, so `a` is the host.
     assert_eq!(table.lookup("a", TYPE_A), vec![Addr::V4([10, 1, 1, 4])]);
     assert!(!table.has_domain("b"));
 }
@@ -124,7 +115,6 @@ fn collapses_the_mapped_form_and_reads_it_back() {
         table.lookup("hex.mapped", TYPE_A),
         vec![Addr::V4([1, 2, 3, 4])]
     );
-    // The reverse name of the IPv4 form finds the alias, which is what the old string key did too.
     assert_eq!(
         table.ptr("100.1.168.192.in-addr.arpa."),
         vec!["mapped.home".to_string()]
@@ -142,7 +132,6 @@ fn answers_only_the_asked_family() {
         table.lookup("both.host", TYPE_AAAA),
         vec![parse_ip("::1").unwrap()]
     );
-    // Any other qtype has no hosts answer; the Go middleware only asks A / AAAA.
     assert_eq!(table.lookup("both.host", 16), Vec::new());
     assert!(table.has_domain("both.host"));
     assert!(!table.has_domain("other.host"));
@@ -162,8 +151,6 @@ fn garbage_reverse_names_are_misses() {
 
 #[test]
 fn a_line_past_the_scanner_limit_ends_the_file() {
-    // `bufio.Scanner` gives up for good on a token over 64 KiB, so nothing after it is parsed —
-    // including the lines that would have been fine on their own.
     let text = format!(
         "10.9.9.8 before.big\n{}\n10.9.9.9 after.big\n",
         "x".repeat(70000)
@@ -171,7 +158,6 @@ fn a_line_past_the_scanner_limit_ends_the_file() {
     let table = build_table(&text);
     assert!(table.has_domain("before.big"));
     assert!(!table.has_domain("after.big"));
-    // A line that fits exactly is still parseable.
     let padding = format!("#{}\n10.9.9.7 fits.host\n", "x".repeat(MAX_LINE_BYTES - 2));
     let table = build_table(&padding);
     assert!(table.has_domain("fits.host"));

@@ -1,13 +1,3 @@
-//! The packet side of the stack: an IP-medium device backed by two queues.
-//!
-//! This is the boundary the TUN adapter sits on. The real one copies from the `dup`ed TUN fd into
-//! the receive queue and writes the transmit queue back out with the bounded writer and the
-//! `ENETDOWN`/`EBUSY` retry policy from `tun_link_endpoint.go`; here both ends are plain
-//! `VecDeque`s so the session can drive the stack without a device — and so the host tests can.
-//!
-//! The capability set is deliberately software-everything (`ChecksumCapabilities::default()`):
-//! Android TUN devices do not offload checksums, so the stack must compute and verify them.
-
 use std::collections::VecDeque;
 
 use smoltcp::phy::{self, ChecksumCapabilities, Device, DeviceCapabilities, Medium};
@@ -28,12 +18,10 @@ impl IpDevice {
         }
     }
 
-    /// Queue one packet as if it had just been read from the TUN fd.
     pub fn push_rx(&mut self, packet: Vec<u8>) {
         self.rx.push_back(packet);
     }
 
-    /// Take everything the stack wants to write to the TUN fd.
     pub fn drain_tx(&mut self) -> Vec<Vec<u8>> {
         self.tx.drain(..).collect()
     }

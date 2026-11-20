@@ -1,8 +1,3 @@
-//! Embeds the built Flutter Web console (`desktop/service/frontend/dist`).
-//!
-//! The IPC crate must build on a machine that has never built the frontend, so a missing `dist`
-//! simply yields an empty asset table and the server serves a small placeholder page instead.
-
 use std::path::{Path, PathBuf};
 
 fn main() {

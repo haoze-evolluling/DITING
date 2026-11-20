@@ -1,6 +1,4 @@
 // ignore_for_file: sort_child_properties_last
-// The custom-provider editor dialog: protocol switcher, name, address (or host and port) and the
-// bolt button that probes the typed endpoint before saving.
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
@@ -10,7 +8,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// What the dialog hands back: `address` is the DoH url or `host:port` for DNS and DoT.
 class ProviderDraft {
   const ProviderDraft({
     required this.name,
@@ -23,7 +20,6 @@ class ProviderDraft {
   final String address;
 }
 
-/// One inline probe result, shown under the address field.
 class _ProbeOutcome {
   const _ProbeOutcome({required this.ok, required this.text});
 
@@ -31,7 +27,6 @@ class _ProbeOutcome {
   final String text;
 }
 
-/// Add/edit dialog for a custom provider.
 class ProviderEditor extends ConsumerStatefulWidget {
   const ProviderEditor({super.key, required this.protocol, this.initial});
 
@@ -47,7 +42,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     text: widget.initial?.name ?? '',
   );
 
-  /// DoH only; plain DNS and DoT fill [_host] and [_port] separately.
   late final TextEditingController _address = TextEditingController(
     text: widget.initial?.protocol == ProviderProtocol.doh
         ? widget.initial?.address ?? ''
@@ -68,7 +62,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
   late ProviderProtocol _protocol = widget.protocol;
   String? _error;
 
-  /// Set while the bolt button probes the typed endpoint; [_probe] holds the last answer.
   bool _testing = false;
   _ProbeOutcome? _probe;
 
@@ -106,7 +99,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
         .pop(ProviderDraft(name: name, protocol: _protocol, address: address));
   }
 
-  /// Drops a stale answer as soon as the endpoint being probed changes.
   void _clearProbe() {
     if (_probe == null && _error == null) return;
     setState(() {
@@ -122,8 +114,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     });
   }
 
-  /// Spec for the endpoint as typed; null (with the reason under the field) when it cannot be
-  /// probed yet.
   DnsLatencyProviderSpec? _probeSpec() {
     final name = _name.text.trim();
     if (_protocol == ProviderProtocol.doh) {
@@ -158,7 +148,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     );
   }
 
-  /// Trims the host field and parses the port, reporting which one is unusable.
   ({String host, int port, String? error}) _readHostPort() {
     final host = _stripBrackets(_host.text.trim());
     final port = int.tryParse(_port.text.trim()) ?? 0;
@@ -179,8 +168,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     return (host: host, port: port, error: null);
   }
 
-  /// Probes the typed endpoint once: this only answers "does it work", the latency test page keeps
-  /// the multi-attempt averages.
   Future<void> _test() async {
     if (_testing) return;
     final spec = _probeSpec();
@@ -223,7 +210,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     }
   }
 
-  /// Probe button in the address field's trailing slot.
   Widget _probeButton() {
     return IconButton(
       tooltip: context.l10n.providerMgmtProbeTooltip,
@@ -281,8 +267,6 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
             options: ProviderProtocol.values,
             textBuilder: (protocol) => protocol.label,
             onChanged: (value) => setState(() {
-              // Switching protocol also swaps in that protocol's default port, unless the user
-              // typed a custom one.
               final previousDefault = '${_defaultPortOf(_protocol)}';
               final port = _port.text.trim();
               if (port.isEmpty || port == previousDefault) {
@@ -358,7 +342,6 @@ class _HostPort {
   final int port;
 }
 
-/// Splits a stored `host:port` for the editor; a missing port falls back to the protocol default.
 _HostPort _splitHostPort(String? address, ProviderProtocol protocol) {
   final fallback = _defaultPortOf(protocol);
   final trimmed = address?.trim() ?? '';
@@ -374,7 +357,6 @@ _HostPort _splitHostPort(String? address, ProviderProtocol protocol) {
 int _defaultPortOf(ProviderProtocol protocol) => switch (protocol) {
   ProviderProtocol.dot => 853,
   ProviderProtocol.dns => 53,
-  // DoH carries its port inside the URL; 443 is only a placeholder.
   ProviderProtocol.doh => 443,
 };
 

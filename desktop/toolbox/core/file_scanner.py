@@ -18,14 +18,13 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
-try:  # 作为 toolbox.core 包导入
+try:
     from .paths import ROOT_DIR, resolve as resolve_path
-except ImportError:  # 直接以脚本运行
+except ImportError:
     from paths import ROOT_DIR, resolve as resolve_path
 
 DEFAULT_EXTENSIONS = ".dart,.go,.py,.kt,.java,.js,.ts,.vue,.sh"
 
-# 构建缓存、依赖目录与第三方参考代码不参与规模统计。
 DEFAULT_IGNORE_DIRS: Set[str] = {
     ".git",
     ".gradle",
@@ -60,7 +59,6 @@ DEFAULT_IGNORE_DIRS: Set[str] = {
     "cmake-build-release",
 }
 
-# 生成代码通常由工具维护，不应按 AGENTS 的 600 行规则要求人工拆分。
 DEFAULT_GENERATED_PATTERNS: Tuple[str, ...] = (
     "*.g.dart",
     "*.freezed.dart",

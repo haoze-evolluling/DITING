@@ -1,15 +1,10 @@
-//! Hosts, rebinding, access control, rate limiting, DNS64 and ECS configuration.
-
 use serde::{Deserialize, Serialize};
 
 use super::serde_util::nullable_vec;
 
-/// Default TTL for hosts entries.
 pub const DEFAULT_HOSTS_TTL: u32 = 60;
-/// RFC 6052 well-known DNS64 prefix.
 pub const WELL_KNOWN_DNS64_PREFIX: &str = "64:ff9b::/96";
 
-/// Hosts-file resolver configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct HostsConfig {
@@ -31,7 +26,6 @@ impl Default for HostsConfig {
     }
 }
 
-/// DNS rebinding protection.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct RebindConfig {
@@ -55,7 +49,6 @@ impl Default for RebindConfig {
     }
 }
 
-/// Client access-control configuration. Empty lists allow everyone.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AccessControlConfig {
@@ -65,7 +58,6 @@ pub struct AccessControlConfig {
     pub blocked_clients: Vec<String>,
 }
 
-/// Client request rate-limiting configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct RateLimitConfig {
@@ -91,7 +83,6 @@ impl Default for RateLimitConfig {
     }
 }
 
-/// DNS64 / NAT64 synthesis configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DNS64Config {
@@ -109,7 +100,6 @@ impl Default for DNS64Config {
     }
 }
 
-/// EDNS Client Subnet privacy and forwarding policy.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ECSConfig {

@@ -6,11 +6,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/// Crash records and file-system caches sqflite cannot reach (it only sees `databases/`).
 internal class AppStorageCleaner(private val context: Context) {
 
     companion object {
-        /// Both must be cleared: an upgraded install still has files in the old one
         private const val CRASH_DIR = "crash"
         private const val LEGACY_CRASH_DIR = "crash_logs"
 
@@ -27,7 +25,6 @@ internal class AppStorageCleaner(private val context: Context) {
         private const val BACKGROUND_CACHE_TMP = "custom_background_cached.tmp"
         private const val BACKGROUND_MARKER_FILE = "custom_background_uri.txt"
 
-        /// Must match the updater's download directory, or cleanup deletes nothing
         private const val UPDATE_DIR = "app-update"
     }
 
@@ -47,14 +44,12 @@ internal class AppStorageCleaner(private val context: Context) {
         val body = files.joinToString("\n\n") { file ->
             buildString {
                 append("---- ").append(file.name).append(" ----\n")
-                // A tombstone is hundreds of lines; a truncated read still keeps the useful head.
                 append(runCatching { file.readText() }.getOrDefault("(无法读取该文件)"))
             }
         }
         return header + body
     }
 
-    /// Reports from both directories, newest first
     private fun crashFiles(): List<File> = buildList {
         for (dir in arrayOf(crashDir(), File(context.filesDir, LEGACY_CRASH_DIR))) {
             if (!dir.exists()) continue
@@ -65,7 +60,6 @@ internal class AppStorageCleaner(private val context: Context) {
     private fun timestamp(): String =
         SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
 
-    /// Clears the crash records and resets the streak keys, or the crash-loop threshold trips again
     fun clearCrashLogs(): Int {
         var removed = 0
         removed += deleteContents(crashDir())
@@ -79,7 +73,6 @@ internal class AppStorageCleaner(private val context: Context) {
         return removed
     }
 
-    /// Deletes downloaded APKs, and with `includeTemp` both cache dirs; returns the count
     fun clearUpdateCache(includeTemp: Boolean): Int {
         var removed = deleteContents(File(context.filesDir, UPDATE_DIR))
         if (includeTemp) {
@@ -89,7 +82,6 @@ internal class AppStorageCleaner(private val context: Context) {
         return removed
     }
 
-    /// Deletes the cached wallpaper and its marker; otherwise a stale URI is re-read
     fun clearCustomBackgroundCache(): Int {
         val root = context.filesDir
         var removed = 0
@@ -102,7 +94,6 @@ internal class AppStorageCleaner(private val context: Context) {
             val file = File(root, name)
             if (file.exists() && file.delete()) removed++
         }
-        // Per-URI copies live in `background/bg_*.png`; they must go too, or the preview survives.
         removed += deleteContents(File(root, "background"))
         return removed
     }

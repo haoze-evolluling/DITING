@@ -1,12 +1,9 @@
-/// Models for the legacy subscription tables; the `storageValue` strings are persisted verbatim, so
-/// any case or spelling change makes legacy rows unreadable.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 
-/// Parses a page of rows through the native core (defaults and storage spellings live there).
 List<Map<String, Object?>> _parseRows(
   String op,
   List<Map<String, Object?>> rows,
@@ -41,7 +38,6 @@ enum SubscriptionSourceType {
       value == local.storageValue ? local : remote;
 }
 
-/// A subscription carries exactly one rule type; [normalize] falls back to [domain].
 enum SubscriptionKind {
   domain('domain'),
   hosts('hosts');
@@ -79,9 +75,6 @@ enum SubscriptionImportState {
   };
 }
 
-/// R3 health status, classified by `rust/diting-subscription-core::health` so the page never grows a
-/// second set of rules. `unchanged` only appears during a live update (a `304` is not persisted);
-/// otherwise the stored `importState` / `ruleCount` / `lastUpdated` decide.
 enum SubscriptionHealth {
   ok('ok'),
   unchanged('unchanged'),
@@ -117,7 +110,6 @@ enum SubscriptionAutoUpdateStatus {
       };
 }
 
-/// One `subscription` row; flags are stored as INTEGER 0/1 and exposed as bool.
 class SubscriptionRecord {
   const SubscriptionRecord({
     required this.id,
@@ -150,7 +142,6 @@ class SubscriptionRecord {
 
   final int ruleCount;
 
-  /// Epoch milliseconds of the last successful import; 0 means never.
   final int lastUpdated;
   final int addedAt;
   final SubscriptionImportState importState;
@@ -159,10 +150,8 @@ class SubscriptionRecord {
   final String? httpLastModified;
   final String? ruleSetHash;
 
-  /// Epoch milliseconds of the last attempt, whatever its outcome.
   final int lastAttemptAt;
 
-  /// Consecutive failures, reset on success or 304.
   final int consecutiveFailureCount;
   final String? mirrorTemplate;
   final bool mirrorFallback;
@@ -170,8 +159,6 @@ class SubscriptionRecord {
 
   bool get isRemote => sourceType == SubscriptionSourceType.remote;
 
-  /// Health from the native classifier. [lastResult] (`ok` / `unchanged` / `failed`) is passed only
-  /// during a live update so a `304` can be shown; the card omits it.
   SubscriptionHealth health({String? lastResult}) {
     final answer = RustSubscriptionCore.instance.call({
       'op': 'health.classify',
@@ -183,7 +170,6 @@ class SubscriptionRecord {
     return SubscriptionHealth.fromStorage(answer['status'] as String?);
   }
 
-  /// Builds a record from the native core's normalised fields (no defaults are applied here).
   factory SubscriptionRecord.fromParsed(Map<String, Object?> row) =>
       SubscriptionRecord(
         id: _int(row['id']),

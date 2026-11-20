@@ -1,10 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-// Third hand-drawn batch, for rows that still shared a glyph with an unrelated idea. Same 24x24
-// grid, 1.8 stroke and 3..21 safe area as the older marks.
 part of 'app_glyphs.dart';
 
-/// Signal mast, for the network-profile row. The bars it replaces read as signal strength, not as
-/// "the network this profile belongs to".
 const _g_network_ = Glyph([
   GlyphPolyline([
     GlyphVertex(12, 20.8),
@@ -21,14 +17,11 @@ const _g_network_ = Glyph([
   ], role: GlyphRole.line),
 ]);
 
-/// Pause bars, for "pause blocking" which shared `block` with the blocklist itself.
 const _g_pause_ = Glyph([
   GlyphBox(7.8, 4.2, 10.8, 19.8, 1.5),
   GlyphBox(13.2, 4.2, 16.2, 19.8, 1.5),
 ]);
 
-/// Plain shield, for blocklists. `verified` keeps the tick for allowlists, so the pair reads as
-/// the two sides of the same rule set.
 const _g_shield_ = Glyph([
   GlyphPolyline([
     GlyphVertex(12, 2.9, 1.5),
@@ -40,7 +33,6 @@ const _g_shield_ = Glyph([
   ], closed: true),
 ]);
 
-/// Mirror axis with one reflected half filled, for mirror templates.
 const _g_mirror_ = Glyph([
   GlyphPolyline([
     GlyphVertex(12, 2.6),
@@ -54,7 +46,6 @@ const _g_mirror_ = Glyph([
   ], closed: true),
 ]);
 
-/// Folder, for subscription and auto-update groups that borrowed `layers`.
 const _g_folder_ = Glyph([
   GlyphPath(
     'M3.2 6.6 A2.4 2.4 0 0 1 5.6 4.2 H9.3 Q10 4.2 10.5 4.7 L12.2 6.6 '
@@ -63,7 +54,6 @@ const _g_folder_ = Glyph([
   ),
 ]);
 
-/// Expand arrows, for the floating log panel's size menu.
 const _g_resize_ = Glyph([
   GlyphPolyline([
     GlyphVertex(13.8, 10.2),
@@ -85,7 +75,6 @@ const _g_resize_ = Glyph([
   ], role: GlyphRole.line),
 ]);
 
-/// Calendar, for the weekly timetable and log retention, which both used `clock`.
 const _g_calendar_ = Glyph([
   GlyphBox(3, 5.2, 21, 20.8, 2.6),
   GlyphPolyline([
@@ -108,7 +97,6 @@ const _g_calendar_ = Glyph([
   GlyphCircle(16.2, 17.2, 1.05, role: GlyphRole.detail, solid: true),
 ]);
 
-/// Stethoscope, for the troubleshooting entry that borrowed the generic `wrench`.
 const _g_stethoscope_ = Glyph([
   GlyphPath('M7.4 3.6 V9 A4.6 4.6 0 0 0 16.6 9 V3.6', role: GlyphRole.line),
   GlyphCircle(7.4, 3.2, 1.2, role: GlyphRole.line, solid: true),
@@ -121,7 +109,6 @@ const _g_stethoscope_ = Glyph([
   GlyphCircle(12, 18.6, 1, role: GlyphRole.detail, solid: true),
 ]);
 
-/// Cloud with an up arrow, for DNS providers/upstreams that shared `dns` with the DNS tools.
 const _g_upstream_ = Glyph([
   GlyphPath(
     'M7 19.4A4.2 4.2 0 0 1 5.06 11.47A6 6 0 1 1 16.95 9.83A4.8 4.8 0 0 1 16.4 19.4Z',
@@ -137,7 +124,6 @@ const _g_upstream_ = Glyph([
   ], role: GlyphRole.detail),
 ]);
 
-/// Record dot, for "record runtime logs" which repeated the generic `logs` glyph three times.
 const _g_record_ = Glyph([
   GlyphCircle(12, 12, 8.8),
   GlyphCircle(12, 12, 3.8, role: GlyphRole.detail, solid: true),

@@ -1,5 +1,3 @@
-//! `/api/v1/dns/rewrite/*` and `/api/v1/dns/zone/*`.
-
 use hyper::http::Method;
 
 use diting_desktop_api::config::RewriteRule;
@@ -87,6 +85,5 @@ pub fn handle_zone_test(_server: &Server, ctx: &Ctx<'_>) -> Resp {
         Err(response) => return response,
     };
     let result = _server.runtime().zone_test(request);
-    // Parse failures are expected user input; the envelope still reports success.
     crate::handlers::json_response(hyper::http::StatusCode::OK, &ApiResponse::ok(result))
 }

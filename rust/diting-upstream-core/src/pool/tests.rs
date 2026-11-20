@@ -19,7 +19,6 @@ fn an_entry_past_the_idle_window_is_expired() {
     assert!(pool.release("dns:853", 7, 1000));
     assert_eq!(pool.acquire("dns:853", 15_999), Some(Acquired::Idle(7)));
     assert!(pool.release("dns:853", 7, 1000));
-    // 15 s after the last write it is still usable; one millisecond later it is not.
     assert_eq!(pool.acquire("dns:853", 16_000), Some(Acquired::Idle(7)));
     assert!(pool.release("dns:853", 7, 1000));
     assert_eq!(pool.acquire("dns:853", 16_001), Some(Acquired::Expired(7)));
@@ -35,7 +34,6 @@ fn only_four_connections_per_target_are_kept() {
     assert_eq!(pool.len("dns:853"), 4);
     assert!(!pool.release("dns:853", 5, 0));
     assert_eq!(pool.len("dns:853"), 4);
-    // A different target has its own budget.
     assert!(pool.release("other:853", 6, 0));
 }
 

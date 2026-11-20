@@ -1,16 +1,9 @@
-//! Parses the shipped member list. A wrong root, mistyped field, duplicate entry or bad avatar file
-//! name rejects the whole document so the caller keeps the last good cache.
-
 use std::collections::HashSet;
 
 use serde_json::{json, Value};
 
-/// Upper bound for a sponsor's repeat count; a typo or a hostile document cannot turn one row into a
-/// four-digit badge.
 const MAX_SPONSOR_COUNT: i64 = 9999;
 
-/// Avatar decorations the UI knows how to draw; a closed list, so a typo shows up as a rejected
-/// document instead of a silently decorated row.
 const AVATAR_FRAMES: [&str; 1] = ["rainbow"];
 
 fn is_avatar_file_name(name: &str) -> bool {
@@ -79,7 +72,6 @@ fn parse_field(raw: Option<&Value>, field: &str) -> Result<Vec<Value>, String> {
             }
             Some(_) => return Err(format!("{field} 中 {name} 的头像框类型错误")),
         };
-        // Absent means "sponsored once"; the UI only draws a badge when the value is above one.
         let count = match object.get("count") {
             None | Some(Value::Null) => 1,
             Some(value) => match value.as_i64() {
@@ -97,7 +89,6 @@ fn parse_field(raw: Option<&Value>, field: &str) -> Result<Vec<Value>, String> {
     Ok(members)
 }
 
-/// Returns `{ok:true, version, sponsors}` or `{ok:false, error}`.
 pub fn parse_members(raw: &str) -> Value {
     let decoded: Value = match serde_json::from_str(raw) {
         Ok(value) => value,

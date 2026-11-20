@@ -52,7 +52,6 @@ class _PopupAnchorTrackerState extends State<_PopupAnchorTracker> {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final anchor = _anchor ??= widget.anchorOf() ?? Rect.zero;
-    // padding already gives up the keyboard's part of the bottom inset.
     return widget.builder(
       anchor,
       mediaQuery.padding + mediaQuery.viewInsets,
@@ -158,7 +157,6 @@ class _PopupLayoutDelegate extends SingleChildLayoutDelegate {
   }
 }
 
-/// Keeps the top right corner the menu levels stack from while a sub menu unfolds.
 class _PopupPin {
   _PopupLayoutDelegate? _placement;
   Size _size = Size.zero;

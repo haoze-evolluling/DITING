@@ -1,18 +1,13 @@
-//! Query history and statistics configuration.
-
 use serde::{Deserialize, Serialize};
 
 use super::paths::default_query_log_dir;
 
-/// Default in-memory ring buffer size.
 pub const DEFAULT_MAX_ENTRIES: i32 = 10_000;
-/// Default on-disk retention.
 pub const DEFAULT_RETENTION_DAYS: i32 = 7;
 
 const MAX_ENTRIES_LIMIT: i32 = 200_000;
 const MAX_RETENTION_DAYS: i32 = 365;
 
-/// Query log configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct QueryLogConfig {
@@ -38,7 +33,6 @@ impl Default for QueryLogConfig {
 }
 
 impl QueryLogConfig {
-    /// Mirror `NormalizeQueryLogConfig`.
     pub fn normalize(&mut self) {
         if self.max_entries <= 0 {
             self.max_entries = DEFAULT_MAX_ENTRIES;

@@ -1,10 +1,7 @@
-//! `/proc/net/{udp,tcp,udp6,tcp6}` parsing for sockets bound to port 53.
-
 use std::io;
 
 const TCP_LISTEN_STATE: i32 = 0x0A;
 
-/// One socket row from a `/proc/net` table.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ProcSocket {
     pub protocol: String,
@@ -21,7 +18,6 @@ const PROC_NET_FILES: [(&str, &str); 4] = [
     ("/proc/net/tcp6", "TCP"),
 ];
 
-/// Parses one `/proc/net` table; a missing table means the protocol is unavailable.
 pub(crate) fn parse_proc_net(path: &str, protocol: &str) -> io::Result<Vec<ProcSocket>> {
     match std::fs::read_to_string(path) {
         Ok(content) => Ok(parse_proc_net_content(&content, protocol)),
@@ -30,12 +26,10 @@ pub(crate) fn parse_proc_net(path: &str, protocol: &str) -> io::Result<Vec<ProcS
     }
 }
 
-/// Pure parser for a `/proc/net` table body.
 pub(crate) fn parse_proc_net_content(content: &str, protocol: &str) -> Vec<ProcSocket> {
     let mut sockets = Vec::new();
     for line in content.lines().skip(1) {
         let fields: Vec<&str> = line.split_whitespace().collect();
-        // local_address, state and inode are the fields we need.
         if fields.len() < 10 {
             continue;
         }
@@ -58,7 +52,6 @@ pub(crate) fn parse_proc_net_content(content: &str, protocol: &str) -> Vec<ProcS
     sockets
 }
 
-/// Parses `"0100007F:0035"` into `("127.0.0.1", 53)`.
 pub(crate) fn parse_hex_endpoint(value: &str) -> Result<(String, u16), ()> {
     let mut parts = value.split(':');
     let address = parts.next().ok_or(())?;
@@ -71,7 +64,6 @@ pub(crate) fn parse_hex_endpoint(value: &str) -> Result<(String, u16), ()> {
     Ok((address, port))
 }
 
-/// Converts a little-endian hex IPv4 or `/proc` IPv6 address into text.
 pub(crate) fn parse_proc_hex_ip(value: &str) -> Result<String, ()> {
     match value.len() {
         8 => {
@@ -89,7 +81,6 @@ pub(crate) fn parse_proc_hex_ip(value: &str) -> Result<String, ()> {
     }
 }
 
-/// Reassembles 32 hex characters as four little-endian 32-bit groups.
 fn parse_proc_hex_ipv6(value: &str) -> Result<String, ()> {
     let mut groups: Vec<String> = Vec::with_capacity(8);
     let mut offset = 0;
@@ -115,7 +106,6 @@ fn join_host_port(address: &str, port: u16) -> String {
     }
 }
 
-/// Collects every UDP/TCP socket listening on 53 in Go's file order.
 pub(crate) fn collect_port53_sockets() -> io::Result<Vec<ProcSocket>> {
     let mut listeners = Vec::new();
     for (path, protocol) in PROC_NET_FILES {
@@ -169,7 +159,6 @@ mod tests {
 
     #[test]
     fn tcp_non_listen_rows_are_filtered() {
-        // The sample's second row is TCP with state 0A (LISTEN); changing it to 01 excludes it.
         let non_listen = SAMPLE.replace(
             "00000000:0016 00000000:0000 0A",
             "00000000:0016 00000000:0000 01",

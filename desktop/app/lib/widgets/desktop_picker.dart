@@ -1,5 +1,3 @@
-/// A label, a glyph and a chevron that opens a menu of checked entries: the filter/picker shape the
-/// old desktop console and the log branch both use. Shared so a new page cannot invent a picker.
 library;
 
 import 'package:diting_shared/ui/ui.dart';
@@ -19,7 +17,6 @@ class DesktopPicker extends StatelessWidget {
   final String semanticLabel;
   final String label;
 
-  /// Whether the picker narrows something; an active one is drawn in the accent colour.
   final bool active;
 
   final List<CommonPopupMenuItem> items;

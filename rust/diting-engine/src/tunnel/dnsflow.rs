@@ -1,14 +1,3 @@
-//! DNS over the TUN: `handleDNSOverUDP` / `handleDNSOverTCP` from `engine_dns_transport.go`.
-//!
-//! The pipeline itself is unchanged — [`crate::dns::serve_for_app`] is the same `serveDNS` the
-//! standalone server runs, with the flow's package name in the log row. What is new is the transport:
-//! UDP answers one datagram at a time; TCP is the 2-byte length framing with a 15 s idle window, and
-//! its answers are queued back into the stack through the session's command queue.
-//!
-//! Both paths count bytes into [`diting_telemetry_core::TrafficTracker`] the way Go's
-//! `countingConn` did: the query is `tx`, the answer is `rx`, attributed to the flow's UID. The UID
-//! is resolved once when the flow opens, not per datagram.
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -20,23 +9,16 @@ use crate::netstack::{TcpKey, UdpDatagram};
 use crate::tunnel::gate::FlowContext;
 use crate::tunnel::queue::{Event, Events};
 
-/// `dnsTCPIdleTimeout` / `dnsUDPIdleTimeout`.
 pub const DNS_IDLE_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// `dns.MaxMsgSize`: a length prefix past this is not a DNS message, and the Go code never read
-/// more than 64 KiB either. The stack's own buffers are far smaller, so this only guards the parser.
 const MAX_FRAME: usize = 4096;
 
-/// What the session feeds a TCP flow's handler.
 #[derive(Debug)]
 pub enum Inbound {
-    /// Bytes the client sent (already counted as `tx`).
     Data(Vec<u8>),
-    /// The client sent FIN.
     Eof,
 }
 
-/// One UDP datagram: ask the pipeline, answer from the original destination.
 pub async fn serve_udp(
     engine: Arc<Engine>,
     events: Arc<Events>,
@@ -57,7 +39,6 @@ pub async fn serve_udp(
     });
 }
 
-/// One TCP connection carrying length-prefixed DNS messages until the client leaves or idles out.
 pub async fn serve_tcp(
     engine: Arc<Engine>,
     events: Arc<Events>,
@@ -68,7 +49,6 @@ pub async fn serve_tcp(
     let mut buffer: Vec<u8> = Vec::new();
     loop {
         let next = match tokio::time::timeout(DNS_IDLE_TIMEOUT, inbound.recv()).await {
-            // Idle: the Go handler returned and closed the connection.
             Err(_) => break,
             Ok(None) => break,
             Ok(Some(Inbound::Eof)) => break,
@@ -96,16 +76,9 @@ pub async fn serve_tcp(
             events.push_command(Event::Write(key, framed, None));
         }
     }
-    // The client is gone (or idle): close the write side so the peer sees EOF, then let the stack
-    // release the socket when the FIN exchange completes.
     events.push_command(Event::CloseWrite(key));
 }
 
-/// Pops one complete `[u16 length][message]` frame, or `None` while more bytes are needed.
-///
-/// A zero-length frame is skipped (Go's `if msgLen == 0 { continue }`), and an oversized length
-/// discards the connection's buffer: no DNS message is that large, and trusting it would let a
-/// peer make the handler wait for 64 KiB it will never send.
 pub fn take_frame(buffer: &mut Vec<u8>) -> Option<Vec<u8>> {
     loop {
         if buffer.len() < 2 {

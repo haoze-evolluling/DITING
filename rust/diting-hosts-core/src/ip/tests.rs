@@ -1,12 +1,9 @@
-//! `net.ParseIP` behaviour, pinned by the corpus the Go parser produced.
-
 use super::*;
 
 #[test]
 fn parses_dotted_quads() {
     assert_eq!(parse_ip("127.0.0.1"), Some(Addr::V4([127, 0, 0, 1])));
     assert_eq!(parse_ip("255.255.255.255"), Some(Addr::V4([255; 4])));
-    // Go rejects leading zeros in dotted quads since 1.17, so this is not an address.
     assert_eq!(parse_ip("01.2.3.4"), None);
     assert_eq!(parse_ip("1.2.3"), None);
     assert_eq!(parse_ip("1.2.3.4.5"), None);
@@ -19,7 +16,6 @@ fn collapses_the_mapped_form() {
     assert_eq!(parse_ip("::ffff:1.2.3.4"), expected);
     assert_eq!(parse_ip("::FFFF:1.2.3.4"), expected);
     assert_eq!(parse_ip("0:0:0:0:0:ffff:1.2.3.4"), expected);
-    // A quad that is *not* mapped keeps its 16 bytes, like Go's `To4` returning nil.
     assert_eq!(
         parse_ip("::1.2.3.4"),
         Some(Addr::V6([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4]))
@@ -55,7 +51,6 @@ fn rejects_padding_and_zone_suffixes() {
     assert_eq!(parse_ip(" 127.0.0.1"), None);
     assert_eq!(parse_ip("1.2.3.4 "), None);
     assert_eq!(parse_ip(""), None);
-    // The zone is cut before parsing, so the address itself is fine.
     assert_eq!(
         parse_hosts_address("1.2.3.4%eth0"),
         Some(Addr::V4([1, 2, 3, 4]))

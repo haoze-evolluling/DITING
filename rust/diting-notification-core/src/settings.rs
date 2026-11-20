@@ -1,7 +1,3 @@
-//! Reader-side rules for the notification preferences Flutter writes.
-
-/// Ordered detail ids. Older installs only had the `speed` switch, so a missing `stats_items`
-/// key still falls back to it; an explicitly empty value means "no detail line".
 pub fn stats_items(raw: &str, has_raw: bool, legacy_speed: bool) -> Vec<String> {
     if !has_raw {
         return if legacy_speed {
@@ -20,8 +16,6 @@ pub fn stats_items(raw: &str, has_raw: bool, legacy_speed: bool) -> Vec<String> 
     items
 }
 
-/// Custom text wins, then the mode-specific body Dart composed, then the caller's fallback. A
-/// blank body looks like a rendering bug, hence the chain.
 pub fn running_text(custom: &str, mode_default: &str, fallback: &str) -> String {
     if !custom.trim().is_empty() {
         return custom.to_string();

@@ -16,8 +16,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'mirror_templates_page.dart';
 
-/// Subscription auto-update (upstream `SubscriptionAutoUpdateIntervalScreen`). No local state: the
-/// switch and interval live in `subscription_auto_update_enabled` / `..._interval_hours`.
 class AutoUpdateSettingsPage extends ConsumerWidget {
   const AutoUpdateSettingsPage({super.key});
 
@@ -196,7 +194,6 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
     }
   }
 
-  /// Opens the system time picker; the chosen wall-clock time follows the phone's time zone.
   Future<void> _pickTime(
     BuildContext context,
     WidgetRef ref,
@@ -225,8 +222,6 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
     return '${two(minutes ~/ 60)}:${two(minutes % 60)}';
   }
 
-  /// The "next update" line, covering switch off, no candidates and the earliest due one;
-  /// [AutoUpdatePlan.nextDueAt] derives it from the real `lastAttemptAt`.
   String _nextUpdateText(
     AppL10n l10n,
     bool enabled,
@@ -270,8 +265,6 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
   }
 }
 
-/// Custom interval dialog. The controller is owned by the dialog: disposing it right after
-/// `await` trips a framework assertion while the exit animation still shows the `TextField`.
 class _IntervalDialog extends StatefulWidget {
   const _IntervalDialog({required this.initial});
 

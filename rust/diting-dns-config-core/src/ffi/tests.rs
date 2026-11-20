@@ -1,5 +1,3 @@
-//! The C ABI, called the way Dart calls it: one payload in, one payload out.
-
 use super::*;
 
 unsafe fn call(

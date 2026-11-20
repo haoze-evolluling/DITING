@@ -6,11 +6,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Native half of the quick settings tile: hands Dart the "start the service" request the tile
-/// attached when it had to open the app instead of starting the data plane itself.
-///
-/// The extra is consumed once: replaying it on every resume would restart a tunnel the user had
-/// just stopped from the notification.
 class TileBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {

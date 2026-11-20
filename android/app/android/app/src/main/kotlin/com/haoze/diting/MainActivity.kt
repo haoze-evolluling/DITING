@@ -24,7 +24,6 @@ import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
     companion object {
-        /// Set by the quick settings tile when it needs the app to start the data plane.
         const val EXTRA_AUTO_START_VPN = "auto_start_vpn"
     }
 
@@ -55,7 +54,6 @@ class MainActivity : FlutterActivity() {
         DiagnosticsBridge(applicationContext).register(messenger)
 
         DnsLatencyBridge(applicationContext).register(messenger)
-        // Needs an Activity: starts pickers and reaches ActivityManager.appTasks.
         platformBridge = PlatformBridge(this).also { it.register(messenger) }
         UpdateBridge(this).register(messenger)
         backgroundBridge = BackgroundBridge(this).also { it.register(messenger) }
@@ -64,19 +62,14 @@ class MainActivity : FlutterActivity() {
         deepLinkBridge = DeepLinkBridge(this).also { it.register(messenger) }
         LauncherIconBridge(this).register(messenger)
         RecognitionAvatarBridge(applicationContext).register(messenger)
-        // Manual runtime-log capture: its own channel, so PlatformBridge stays crash-only.
         RuntimeLogBridge(applicationContext).register(messenger)
-        // Bring back a capture that was on when the process died, without visiting 故障排查.
         RuntimeLogBridge.restore(applicationContext)
-        // Per-file log management behind 故障排查 → 日志管理.
         TroubleshootingLogBridge(applicationContext).register(messenger)
-        // Notification repaints after a Dart-side settings edit: same reasoning.
         NotificationBridge(applicationContext).register(messenger)
         DbHealthBridge(applicationContext).register(messenger)
         StorageMaintenanceBridge(applicationContext).register(messenger)
     }
 
-    /// The floating log window only shows while the app is in the background.
     override fun onStart() {
         super.onStart()
         FloatingLogOverlay.setAppForeground(this, true)
@@ -89,26 +82,20 @@ class MainActivity : FlutterActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Relaunching from the app icon recreates the task entry, resetting excludeFromRecents.
         platformBridge?.reapplyRecentsPrivacy()
     }
 
-    /// `singleTop`: a tile tap reuses this instance, and only `setIntent` makes the new extra
-    /// visible to `TileBridge`.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // A warm `diting://` link is pushed to Dart; a cold one is pulled by DeepLinkBridge.
         deepLinkBridge?.handleNewIntent(intent)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (vpnBridge?.onActivityResult(requestCode, resultCode) == true) return
-        // Codes never collide with the VPN ones: this reads data.data, those read only resultCode.
         if (platformBridge?.onActivityResult(requestCode, resultCode, data) == true) return
         if (backgroundBridge?.onActivityResult(requestCode, resultCode, data) == true) return
-        // Last, because it only claims its own codes and answers a pending request.
         if (permissionsBridge?.onActivityResult(requestCode, resultCode) == true) return
         expressVpnBridge?.onActivityResult(requestCode, resultCode)
     }

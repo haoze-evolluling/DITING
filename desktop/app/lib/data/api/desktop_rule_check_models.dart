@@ -1,8 +1,3 @@
-/// The rule simulator: `POST /api/v1/filter/check`.
-///
-/// The old desktop console's `RuleTestPanel.vue` is the blueprint. The service answers with the
-/// verdict, the rule that produced it, the list it came from and, for a `$dnsrewrite` hit, the
-/// records the answer would carry. The page repeats that verdict; it does not re-derive it.
 library;
 
 bool _bool(Object? value) => value == true;
@@ -18,7 +13,6 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// The answer a `$dnsrewrite` rule would return.
 class DesktopRewriteAnswer {
   const DesktopRewriteAnswer({required this.rcode, required this.summary});
 
@@ -30,11 +24,9 @@ class DesktopRewriteAnswer {
 
   final int rcode;
 
-  /// The records in their presentation form; empty on an explicit NODATA answer.
   final List<String> summary;
 }
 
-/// `GET`-less: the result of one simulated lookup.
 class DesktopRuleCheckResult {
   const DesktopRuleCheckResult({
     required this.blocked,
@@ -61,7 +53,6 @@ class DesktopRuleCheckResult {
 
   final bool blocked;
 
-  /// `block`, `allow`, `rewrite` or `pass`.
   final String action;
   final String matchedRule;
   final String listName;

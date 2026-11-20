@@ -1,8 +1,5 @@
-//! Parser vectors, ported one for one from the Go tests the migration replaced.
-
 use super::*;
 
-// Test vectors are assembled per the DNS Stamps spec, mirroring the Go test helpers.
 fn build_stamp(proto: u8, props: u64, parts: &[&[u8]]) -> String {
     let mut bin = vec![proto];
     bin.extend_from_slice(&props.to_le_bytes());
@@ -18,7 +15,6 @@ fn lp(value: &str) -> Vec<u8> {
     out
 }
 
-/// VLP list; an empty list is a single `0x00` terminator.
 fn vlp(items: &[&[u8]]) -> Vec<u8> {
     if items.is_empty() {
         return vec![0x00];
@@ -49,7 +45,7 @@ fn plain_stamp_gets_the_default_port() {
 
 #[test]
 fn plain_stamp_keeps_props_and_explicit_port() {
-    let props = 0b011u64; // DNSSEC | NoLog
+    let props = 0b011u64;
     let text = build_stamp(0x00, props, &[&lp("1.1.1.1:5353")]);
     let stamp = parse(&text).unwrap();
     assert_eq!(stamp.props, props);
@@ -61,7 +57,7 @@ fn doh_stamp_carries_hashes_path_and_bootstrap_ips() {
     let hash = hash_of(0x00);
     let text = build_stamp(
         0x02,
-        0b100, // NoFilter
+        0b100,
         &[
             &lp("1.1.1.1"),
             &vlp(&[&hash]),
@@ -191,7 +187,6 @@ fn malformed_stamps_are_rejected() {
     for (name, text) in cases {
         assert!(parse(&text).is_err(), "{name}: expected an error");
     }
-    // Strict base64: a one-character tail cannot decode, and padding is not part of the scheme.
     assert!(
         parse("sdns://A").is_err(),
         "length % 4 == 1 must be rejected"
@@ -209,7 +204,7 @@ fn truncated_vlp_is_rejected() {
     bin.extend_from_slice(&lp("1.1.1.1"));
     bin.push(0x80 | 32);
     bin.extend_from_slice(&[0u8; 32]);
-    bin.push(0x80 | 32); // announces one more element, but the stamp ends here
+    bin.push(0x80 | 32);
     let text = format!("sdns://{}", URL_SAFE_NO_PAD.encode(&bin));
     assert!(parse(&text).is_err());
 }
@@ -224,7 +219,6 @@ fn ipv6_addr_keeps_its_brackets() {
 
 #[test]
 fn provider_port_beats_address_port_and_defaults_are_dropped() {
-    // Port from the hostname wins, and the plain protocol default (53) is dropped.
     let text = build_stamp(
         0x03,
         0,
@@ -233,7 +227,6 @@ fn provider_port_beats_address_port_and_defaults_are_dropped() {
     let stamp = parse(&text).unwrap();
     assert_eq!(stamp.server(), "dns.example.com");
 
-    // A non-default port survives, and the address port fills a hostname without one.
     let text = build_stamp(
         0x02,
         0,
@@ -251,8 +244,6 @@ fn provider_port_beats_address_port_and_defaults_are_dropped() {
 
 #[test]
 fn port_text_is_preserved_verbatim() {
-    // `0443` is a valid port and must not be rewritten, mirroring the string comparison the
-    // Go implementation used to decide whether to drop the port.
     let text = build_stamp(
         0x02,
         0,
@@ -264,8 +255,6 @@ fn port_text_is_preserved_verbatim() {
 
 #[test]
 fn non_utf8_string_fields_are_rejected() {
-    // Known boundary: the Go reader kept raw bytes. A DNS stamp is ASCII by spec, so this only
-    // changes hand-crafted input, and it fails loudly instead of producing a corrupt hostname.
     let provider = vec![0x03u8, b'a', 0xff, b'b'];
     let text = build_stamp(0x03, 0, &[&lp("1.1.1.1"), &vlp(&[]), &provider]);
     assert!(parse(&text).is_err());
@@ -300,7 +289,5 @@ fn split_port_handles_ipv6_literals() {
     assert_eq!(split_port("9.9.9.9:53"), ("9.9.9.9", "53"));
     assert_eq!(split_port("[::1]"), ("[::1]", ""));
     assert_eq!(split_port("[::1]:853"), ("[::1]", "853"));
-    // Faithful to the Go helper: a bare (unbracketed) IPv6 literal is split at its last
-    // colon, which is why addresses inside stamps must be bracketed.
     assert_eq!(split_port("::1"), (":", "1"));
 }

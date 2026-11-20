@@ -1,9 +1,3 @@
-//! Port 53 availability checks and one-click ICS autofix.
-//!
-//! The real-socket check is authoritative: if binding the configured address succeeds, a
-//! background ICS listener must not veto startup (loopback-only mode is a supported deployment).
-//! Only a failed bind with ICS as the sole conflict is eligible for automatic repair.
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -28,8 +22,6 @@ impl WindowsPortChecker {
     }
 }
 
-/// Combines the real-socket bind result with the system listener list. Kept pure so the
-/// availability matrix can be tested without touching the host.
 pub(crate) fn evaluate_port_availability(
     sockets_free: bool,
     conflicts: Vec<PortConflict>,
@@ -131,7 +123,6 @@ impl PortChecker for WindowsPortChecker {
         tcp_addrs: &[String],
     ) -> PlatformResult<PortCheckResult> {
         stop_and_disable_shared_access().await?;
-        // Give Winsock a moment to release the ICS socket before re-probing.
         tokio::time::sleep(Duration::from_millis(300)).await;
         check_for_addresses(self.executor.as_ref(), udp_addrs, tcp_addrs).await
     }

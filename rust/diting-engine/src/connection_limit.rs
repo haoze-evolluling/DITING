@@ -1,13 +1,6 @@
-//! Per-UID connection rate limiting for the normal tunnel data plane.
-//!
-//! One limiter keeps two token buckets per app UID: DNS queries and newly opened connections.
-//! Both buckets share the configured rate and burst. The table is bounded and drops idle entries
-//! when it reaches capacity, so a long-running tunnel cannot grow it without limit.
-
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 
-/// Defaults and bounds, mirrored by the Flutter page.
 pub const DEFAULT_RATE: i64 = 50;
 pub const DEFAULT_BURST: i64 = 100;
 pub const MIN_RATE: i64 = 5;
@@ -17,7 +10,6 @@ pub const MAX_BURST: i64 = 2000;
 pub const MAX_UIDS: usize = 4096;
 pub const IDLE_AFTER_NS: i64 = 60_000_000_000;
 
-/// The limiter configuration as the DNS document carries it.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Config {
     pub enabled: bool,
@@ -36,7 +28,6 @@ impl Default for Config {
 }
 
 impl Config {
-    /// Keeps absent or out-of-range values inside the same bounds the page enforces.
     pub fn normalized(self) -> Self {
         Self {
             enabled: self.enabled,
@@ -54,7 +45,6 @@ impl Config {
     }
 }
 
-/// Which bucket a packet or flow consumes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BucketKind {
     Query,
@@ -98,8 +88,6 @@ struct State {
     buckets: HashMap<i32, UidBuckets>,
 }
 
-/// One published limiter. Replacing the config publishes a fresh limiter, so a hot apply also
-/// starts every UID with a full burst, which is the least surprising behaviour after a rate change.
 pub struct ConnectionLimiter {
     state: Mutex<State>,
 }
@@ -114,7 +102,6 @@ impl ConnectionLimiter {
         }
     }
 
-    /// Returns whether this UID may spend a token from `kind` at `now_ns`.
     pub fn allow(&self, kind: BucketKind, uid: i32, now_ns: i64) -> bool {
         let mut state = self.state();
         if !state.config.enabled {
@@ -144,12 +131,10 @@ impl ConnectionLimiter {
         }
     }
 
-    /// Drops UIDs that have been idle for a minute.
     pub fn cleanup_idle(&self, now_ns: i64) {
         self.state().cleanup_idle(now_ns);
     }
 
-    /// Number of live UID entries, for diagnostics and tests.
     pub fn uid_count(&self) -> usize {
         self.state().buckets.len()
     }

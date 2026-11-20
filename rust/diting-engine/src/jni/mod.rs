@@ -1,27 +1,3 @@
-//! The JNI facade: one registry of engine handles and one entry point per Kotlin method.
-//!
-//! # Handles, not pointers
-//!
-//! `nativeNew` returns a `u64` and stores the engine in [`registry`], so a stale handle is a lookup
-//! failure instead of a use-after-free. `nativeFree` removes it; an in-flight task keeps its own
-//! `Arc<Engine>`, so the memory it needs stays alive until the task is done. This is the design the
-//! migration plan asks for (section 5.1: "handle registry + `Arc`, not raw pointers").
-//!
-//! # Errors
-//!
-//! Every entry point runs under `catch_unwind`: a panic becomes a Java `IllegalStateException`
-//! instead of unwinding into the JVM. `ApplyDNSConfig` and `StartStandalone` return the Go error text
-//! as a `String` (null when they succeeded) and the Kotlin facade throws; the rest never fail.
-//! A missing handle returns zero/null, which the facade reports as "engine released" — a caller that
-//! kept a reference after `stop()` must not crash the process.
-//!
-//! # Threads
-//!
-//! The engine never calls back on the JNI thread: the batch log comes from the flusher thread, the
-//! race log from a tokio worker. Callbacks are sent to those threads, which attach to the JVM
-//! permanently on first use, and every callback clears a pending Java exception afterwards, so a
-//! throwing Kotlin callback cannot poison the environment for the next call.
-
 pub mod adapters;
 pub mod callbacks;
 pub mod mitm;
@@ -42,10 +18,8 @@ use crate::logs::EventSink;
 
 use callbacks::CallbackSink;
 
-/// Kotlin's `Engine` class, which is also the class the JVM smoke test declares.
 pub const ENGINE_CLASS: &str = "com/haoze/diting/engine/Engine";
 
-/// One live engine and the Kotlin callbacks installed on it.
 struct Instance {
     engine: Arc<Engine>,
     sink: Arc<CallbackSink>,
@@ -89,7 +63,6 @@ fn remove(handle: jlong) -> Option<Arc<Instance>> {
         .remove(&handle)
 }
 
-/// How many engines are alive; used by the smoke test to catch a leaked `nativeFree`.
 pub fn live_engines() -> usize {
     registry()
         .lock()
@@ -97,8 +70,6 @@ pub fn live_engines() -> usize {
         .len()
 }
 
-/// Runs `run` with the handle's engine, returning `default` when the handle is stale or the entry
-/// point panicked (the panic is raised in Java so it is not silent).
 pub(super) fn with_engine<R>(
     env: &mut JNIEnv<'_>,
     handle: jlong,
@@ -108,8 +79,6 @@ pub(super) fn with_engine<R>(
     with_instance(env, handle, default, |instance| run(&instance.engine))
 }
 
-/// Looks the handle up, turning a panic into a Java exception. Used by the entry points that need
-/// `env` themselves (the callback installers), where a closure could not borrow it.
 fn lookup_checked(env: &mut JNIEnv<'_>, handle: jlong) -> Option<Arc<Instance>> {
     match catch_unwind(AssertUnwindSafe(|| lookup(handle))) {
         Ok(instance) => instance,
@@ -123,7 +92,6 @@ fn lookup_checked(env: &mut JNIEnv<'_>, handle: jlong) -> Option<Arc<Instance>> 
     }
 }
 
-/// The same, for the entry points that need the callback sink as well.
 fn with_instance<R>(
     env: &mut JNIEnv<'_>,
     handle: jlong,
@@ -158,21 +126,15 @@ pub(super) fn answer(env: &JNIEnv<'_>, value: Option<String>) -> jstring {
     }
 }
 
-// ---- lifecycle ---------------------------------------------------------------------------------
 
-/// `Engine()`: allocates an engine and returns its handle.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeNew(
     mut env: JNIEnv<'_>,
     _class: JObject<'_>,
 ) -> jlong {
-    // One line on logcat before any unwind, so a caught engine panic is still visible in the
-    // captured runtime log instead of vanishing into an IllegalStateException.
     crate::panic_log::install();
     let result = catch_unwind(AssertUnwindSafe(|| {
         let engine = Arc::new(Engine::new());
-        // Without a JVM reference no callback can ever be delivered, but the engine still answers
-        // queries; that is the only way a host test can drive it.
         let sink = CallbackSink::new(&mut env)
             .map(Arc::new)
             .unwrap_or_else(|_| Arc::new(CallbackSink::headless()));
@@ -190,7 +152,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeNew(
     }
 }
 
-/// Releases the handle. In-flight tasks keep the engine alive until they finish.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFree(
     _env: JNIEnv<'_>,
@@ -199,15 +160,11 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFree(
 ) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         if let Some(instance) = remove(handle) {
-            // Kotlin is expected to call `stop()` first, but freeing without it must not strand the
-            // TUN threads: they hold an `Arc<Engine>`, so the engine would never be released and the
-            // tunnel would keep running after the handle is gone.
             instance.engine.stop();
         }
     }));
 }
 
-/// `stop()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStop(
     mut env: JNIEnv<'_>,
@@ -217,8 +174,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStop(
     with_engine(&mut env, handle, (), |engine| engine.stop());
 }
 
-/// `flushLogs()`: delivers the buffered DNS batch and the buffered race/bootstrap events on the
-/// calling thread. Kotlin calls it during teardown, before the writer queues close.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFlushLogs(
     mut env: JNIEnv<'_>,
@@ -231,7 +186,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFlushLogs(
     });
 }
 
-/// `stopStandalone()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopStandalone(
     mut env: JNIEnv<'_>,
@@ -241,7 +195,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopStandalone(
     with_engine(&mut env, handle, (), |engine| engine.stop_standalone());
 }
 
-/// `startStandalone(port)`: null on success, otherwise the bind error text.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStandalone(
     mut env: JNIEnv<'_>,
@@ -264,8 +217,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStandalone
     answer(&env, error)
 }
 
-/// `startStandaloneLoopback(port)`: same contract as `startStandalone`, bound to `127.0.0.1` and
-/// `::1` only (the root no-VPN takeover's redirect target).
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStandaloneLoopback(
     mut env: JNIEnv<'_>,
@@ -288,7 +239,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStandalone
     answer(&env, error)
 }
 
-/// `standalonePort()`: the port the server is listening on, 0 when it is not running.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStandalonePort(
     mut env: JNIEnv<'_>,
@@ -300,7 +250,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStandalonePort(
     })
 }
 
-/// `isRunning()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeIsRunning(
     mut env: JNIEnv<'_>,
@@ -310,9 +259,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeIsRunning(
     with_engine(&mut env, handle, 0, |engine| u8::from(engine.is_running()))
 }
 
-// ---- configuration -----------------------------------------------------------------------------
 
-/// `applyDNSConfig(json)`: null on success, otherwise the error text (the Go method returned `error`).
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeApplyDnsConfig(
     mut env: JNIEnv<'_>,
@@ -335,7 +282,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeApplyDnsConfig(
     answer(&env, error)
 }
 
-/// `applyRuleSnapshot(json)`: empty on success, otherwise the rejection text.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeApplyRuleSnapshot(
     mut env: JNIEnv<'_>,
@@ -353,7 +299,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeApplyRuleSnapsh
     answer(&env, answer_text)
 }
 
-/// `setRewriteRules(json)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRewriteRules(
     mut env: JNIEnv<'_>,
@@ -367,7 +312,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRewriteRules
     });
 }
 
-/// `setFilterDNS(enabled)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetFilterDns(
     mut env: JNIEnv<'_>,
@@ -380,7 +324,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetFilterDns(
     });
 }
 
-/// `setBlockPause(untilMs)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockPause(
     mut env: JNIEnv<'_>,
@@ -393,7 +336,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockPause(
     });
 }
 
-/// `setAllowlistOnly(enabled)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetAllowlistOnly(
     mut env: JNIEnv<'_>,
@@ -406,7 +348,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetAllowlistOnl
     });
 }
 
-/// `setBlockResponseType(name)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockResponseType(
     mut env: JNIEnv<'_>,
@@ -420,7 +361,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockRespons
     });
 }
 
-/// `clearDNSCache()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeClearDnsCache(
     mut env: JNIEnv<'_>,
@@ -430,9 +370,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeClearDnsCache(
     with_engine(&mut env, handle, (), |engine| engine.clear_dns_cache());
 }
 
-// ---- read-only documents -----------------------------------------------------------------------
 
-/// `getStats()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetStats(
     mut env: JNIEnv<'_>,
@@ -445,7 +383,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetStats(
     answer(&env, document)
 }
 
-/// `getDNSCacheStats()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheStats(
     mut env: JNIEnv<'_>,
@@ -458,7 +395,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheStat
     answer(&env, document)
 }
 
-/// `getDNSCacheEntries(limit)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheEntries(
     mut env: JNIEnv<'_>,
@@ -476,7 +412,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheEntr
     answer(&env, document)
 }
 
-/// `flowSnapshot(sinceSeq, limit)`: incremental live-connection document for the flow view.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFlowSnapshot(
     mut env: JNIEnv<'_>,
@@ -493,7 +428,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeFlowSnapshot(
     answer(&env, document)
 }
 
-/// `resolveDomain(domain, ipv4)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeResolveDomain(
     mut env: JNIEnv<'_>,
@@ -512,9 +446,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeResolveDomain(
     answer(&env, document)
 }
 
-// ---- callbacks ---------------------------------------------------------------------------------
 
-/// `setBatchLogCallback(cb)`; a null clears it.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBatchLogCallback(
     mut env: JNIEnv<'_>,
@@ -533,7 +465,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBatchLogCall
     };
 }
 
-/// `setRaceLogCallback(cb)`; a null clears it.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRaceLogCallback(
     mut env: JNIEnv<'_>,
@@ -552,7 +483,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRaceLogCallb
     };
 }
 
-/// `setBootstrapLogCallback(cb)`; a null clears it.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBootstrapLogCallback(
     mut env: JNIEnv<'_>,
@@ -571,9 +501,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBootstrapLog
     };
 }
 
-// ---- stage 3: the TUN data plane ----------------------------------------------------------------
 
-/// `startFull(fd)`: null on success, otherwise the error text (`StartFull` logged and returned).
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartFull(
     mut env: JNIEnv<'_>,
@@ -593,7 +521,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartFull(
     answer(&env, error)
 }
 
-/// `stopFull()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopFull(
     mut env: JNIEnv<'_>,
@@ -603,8 +530,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopFull(
     with_engine(&mut env, handle, (), |engine| engine.stop_full());
 }
 
-/// `releaseTun()`: the Go method closed the descriptor; here the fd belongs to the session, so this
-/// is the same idempotent stop.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeReleaseTun(
     mut env: JNIEnv<'_>,
@@ -614,7 +539,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeReleaseTun(
     with_engine(&mut env, handle, (), |engine| engine.stop_full());
 }
 
-/// `isFullRunning()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeIsFullRunning(
     mut env: JNIEnv<'_>,
@@ -626,7 +550,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeIsFullRunning(
     })
 }
 
-/// `setSocketProtector(cb)`; a null clears it (server mode runs without one).
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetSocketProtector(
     mut env: JNIEnv<'_>,
@@ -651,7 +574,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetSocketProtec
     }
 }
 
-/// `setUIDResolver(cb)`; a null clears it.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetUidResolver(
     mut env: JNIEnv<'_>,
@@ -680,7 +602,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetUidResolver(
     }
 }
 
-/// `setAppUidResolver(cb)`; a null clears it.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetAppUidResolver(
     mut env: JNIEnv<'_>,
@@ -709,7 +630,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetAppUidResolv
     }
 }
 
-/// `setTrafficCallback(cb)`; a null stops the ticks.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetTrafficCallback(
     mut env: JNIEnv<'_>,
@@ -735,7 +655,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetTrafficCallb
     }
 }
 
-/// `setBlockedUIDs(csv)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockedUids(
     mut env: JNIEnv<'_>,
@@ -747,7 +666,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockedUids(
     with_engine(&mut env, handle, (), |engine| engine.set_blocked_uids(&csv));
 }
 
-/// `setFilterHttp3(enabled)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetFilterHttp3(
     mut env: JNIEnv<'_>,
@@ -760,7 +678,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetFilterHttp3(
     });
 }
 
-/// `setBlockEncryptedDns(enabled)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockEncryptedDns(
     mut env: JNIEnv<'_>,
@@ -773,7 +690,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockEncrypt
     });
 }
 
-/// `setBlockIpv6(enabled)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockIpv6(
     mut env: JNIEnv<'_>,
@@ -786,7 +702,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockIpv6(
     });
 }
 
-/// `setTickIntervalMs(ms)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetTickIntervalMs(
     mut env: JNIEnv<'_>,
@@ -799,7 +714,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetTickInterval
     });
 }
 
-/// `configureOutboundProxy(json)`: null on success, otherwise the error text.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeConfigureOutboundProxy(
     mut env: JNIEnv<'_>,
@@ -820,7 +734,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeConfigureOutbou
     answer(&env, error)
 }
 
-/// `setOutboundProxyStatusCallback(cb)`; a null stops reporting.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetOutboundProxyStatusCallback(
     mut env: JNIEnv<'_>,

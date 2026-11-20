@@ -1,13 +1,3 @@
-/// The native AI-analysis core: the Rust crate in `rust/diting-agent-core`, loaded over `dart:ffi`.
-///
-/// The library is required. [`RustAgentCore.instance`] throws when the artifact is missing, the
-/// platform is unsupported or the ABI version differs, so a build that forgot
-/// `python rust/build_android.py` fails on the first call instead of quietly running a second copy
-/// of the paste recogniser, the key masks or the prompt text.
-///
-/// Payload layout lives in `rust/diting-agent-core/src/ffi.rs`; `_abiVersion` must match
-/// `ABI_VERSION` there, and the Rust tests fail on a payload change precisely so this number moves
-/// with it.
 library;
 
 import 'dart:convert';
@@ -18,10 +8,8 @@ import 'package:diting_android/data/db/kernel_core.dart';
 part 'rust_agent_core_models.dart';
 part 'rust_agent_core_payload.dart';
 
-/// Must match `ABI_VERSION` in `rust/diting-agent-core/src/ffi.rs`.
 const _abiVersion = 1;
 
-/// `"DAG1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31474144;
 
 class RustAgentCore {
@@ -29,12 +17,10 @@ class RustAgentCore {
 
   final KernelCore _core;
 
-  /// Resolved library path, surfaced in diagnostics.
   String get libraryPath => _core.libraryPath;
 
   static RustAgentCore? _instance;
 
-  /// The loaded core; throws [StateError] when no usable artifact was found.
   static RustAgentCore get instance => _instance ??= _load();
 
   static RustAgentCore _load() => RustAgentCore._(
@@ -47,9 +33,7 @@ class RustAgentCore {
     ),
   );
 
-  /// Clipboard recognition: JSON → URL + key → bare URL → bare key.
   AgentPaste parsePaste(String raw) {
-    // The paste entry takes the raw text, without a length prefix: it is not a payload.
     final reader = _call('paste', _PayloadWriter()..rawUtf8(raw));
     final kindIndex = reader.u8();
     final kind = kindIndex < AgentPasteKind.values.length
@@ -63,7 +47,6 @@ class RustAgentCore {
     );
   }
 
-  /// Seals a plaintext key with the legacy XOR masks; blank input stays blank.
   String sealKey(String plain) {
     final reader = _call(
       'secret',
@@ -74,7 +57,6 @@ class RustAgentCore {
     return reader.string();
   }
 
-  /// Restores a sealed key; undecodable input yields `''` rather than throwing.
   String openKey(String sealed) {
     final reader = _call(
       'secret',
@@ -85,7 +67,6 @@ class RustAgentCore {
     return reader.string();
   }
 
-  /// The domain-analysis prompt with its four sections.
   ({String systemPrompt, String userPrompt}) domainPrompt({
     required String domain,
     required String systemPrompt,
@@ -100,7 +81,6 @@ class RustAgentCore {
     return (systemPrompt: reader.string(), userPrompt: reader.string());
   }
 
-  /// The traffic-analysis prompt, wrapping the rendered summary.
   ({String systemPrompt, String userPrompt}) trafficPrompt({
     required RecentTrafficSummary summary,
     required String systemPrompt,
@@ -113,7 +93,6 @@ class RustAgentCore {
     return (systemPrompt: reader.string(), userPrompt: reader.string());
   }
 
-  /// Aggregates the two log tables into the numbers the prompt shows the model.
   RecentTrafficSummary summarize({
     required List<AgentDnsRow> dnsRows,
     required List<String> httpOutcomes,
@@ -155,14 +134,12 @@ class RustAgentCore {
     );
   }
 
-  /// The model-facing section for an already aggregated summary.
   String renderSummary(RecentTrafficSummary summary) {
     final writer = _PayloadWriter()..u8(1);
     _writeSummary(writer, summary);
     return _call('summary', writer).string();
   }
 
-  /// `/chat/completions` for a base URL. Throws [AgentKernelException] when it is blank.
   String chatEndpoint(String baseUrl) {
     final reader = _call(
       'api',
@@ -173,7 +150,6 @@ class RustAgentCore {
     return _endpointOf(reader);
   }
 
-  /// `/models` for a base URL. Throws [AgentKernelException] when it is blank.
   String modelsEndpoint(String baseUrl) {
     final reader = _call(
       'api',
@@ -184,7 +160,6 @@ class RustAgentCore {
     return _endpointOf(reader);
   }
 
-  /// The JSON body of a chat completion request.
   String chatBody({
     required String model,
     required List<({String role, String content})> messages,
@@ -203,7 +178,6 @@ class RustAgentCore {
     return _call('api', writer).string();
   }
 
-  /// Reads content, model and usage out of a completion response.
   ({
     String content,
     String model,
@@ -232,7 +206,6 @@ class RustAgentCore {
     );
   }
 
-  /// Model ids from `data` / `models` / `result`, trimmed, de-duplicated and sorted.
   List<String> parseModels(String body) {
     final reader = _call(
       'api',
@@ -246,7 +219,6 @@ class RustAgentCore {
     return List<String>.generate(count, (_) => reader.string());
   }
 
-  /// Status hint plus the server's own sentence (truncated to 200 UTF-16 units).
   ({AgentStatusKind kind, String? detail}) describeStatus(
     int status,
     String body,
@@ -274,8 +246,6 @@ class RustAgentCore {
   }
 
   AgentKernelFailure _failureOf(int kind) {
-    // Rust `ParseError` discriminants 1..6 are the declaration order shifted by one
-    // (`emptyEndpoint` occupies 0), so the kind indexes the enum directly.
     return kind > 0 && kind < AgentKernelFailure.values.length
         ? AgentKernelFailure.values[kind]
         : AgentKernelFailure.invalidJson;
@@ -302,7 +272,6 @@ class RustAgentCore {
     }
   }
 
-  /// Sends one payload to [entry] and checks the reply header.
   _PayloadReader _call(String entry, _PayloadWriter writer) {
     final reply = _core.invoke(writer.finish(), entry: entry);
     if (reply.isEmpty) {

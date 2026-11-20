@@ -1,8 +1,3 @@
-//! The fifteen backup groups and the order they are written in.
-//!
-//! Keys are a file format: never rename, never reorder (the `selection` array is written in
-//! declaration order so two equal backups are byte-identical).
-
 use serde_json::json;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -24,7 +19,6 @@ pub enum Group {
     System,
 }
 
-/// Declaration order; also the write order of `data` and `selection`.
 pub const ORDER: [Group; 15] = [
     Group::Providers,
     Group::Bootstrap,
@@ -68,7 +62,6 @@ impl Group {
         ORDER.into_iter().find(|group| group.key() == key)
     }
 
-    /// Groups that need the rule database; a missing database is an error, never a silent skip.
     pub fn needs_database(self) -> bool {
         matches!(
             self,
@@ -84,7 +77,6 @@ impl Group {
         matches!(self, Group::RewriteDomain | Group::RewriteCname)
     }
 
-    /// `targetType` values this group owns; the two rewrite groups split one table.
     pub fn target_types(self) -> &'static [&'static str] {
         match self {
             Group::RewriteDomain => &["IPv4", "IPv6"],
@@ -94,7 +86,6 @@ impl Group {
     }
 }
 
-/// Selection array in declaration order, unknown keys dropped.
 pub fn ordered_keys(requested: &[String]) -> Vec<Group> {
     let mut wanted = Vec::new();
     for key in requested {

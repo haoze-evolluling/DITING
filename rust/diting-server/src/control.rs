@@ -1,5 +1,3 @@
-//! App-private Unix-socket control surface.
-
 use std::sync::Arc;
 
 use serde_json::{json, Value};
@@ -10,8 +8,6 @@ use crate::config::ServerConfig;
 use crate::protocol::{Request, Response};
 use crate::runtime::{parse_qtype, ServerRuntime};
 
-/// Handles one protocol request. The boolean asks the caller to stop the process after it has
-/// written the response.
 pub async fn handle_request(runtime: &Arc<ServerRuntime>, request: Request) -> (Response, bool) {
     let id = request.id.clone();
     let result = match request.method.as_str() {

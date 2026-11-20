@@ -37,7 +37,6 @@ fn mark_reset_and_counters_go_through_the_abi() {
     assert_eq!(unsafe { diting_connlog_size(kernel) }, 1);
     assert_eq!(unsafe { diting_connlog_cleared(kernel) }, 0);
 
-    // The blocked variant is a different key.
     let blocked = encode_mark("blk|", "com.example.app", "1.2.3.4", 443, 6, "uid_blocked");
     assert_eq!(
         unsafe { diting_connlog_mark(kernel, blocked.as_ptr(), blocked.len()) },

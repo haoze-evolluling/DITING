@@ -1,8 +1,3 @@
-/// The privacy and protocol-hardening config, read from `/api/v1/status`.
-///
-/// The console reads the same fields from `status.dns`, `status.ecs`, `status.rebind` and
-/// `status.hosts`; each has its own write endpoint that the service merges, so a switch never
-/// rewrites an unrelated field.
 library;
 
 bool _bool(Object? value) => value == true;
@@ -21,10 +16,8 @@ List<String> _strings(Object? value) => switch (value) {
 Map<String, Object?> _map(Object? value) =>
     value is Map ? value.cast<String, Object?>() : const {};
 
-/// The EDNS padding sizes the console offers; a value outside the list is shown as-is.
 const List<int> desktopEdnsPaddingSizes = [0, 128, 256, 468];
 
-/// The two minimal-answer shapes for ANY queries.
 const List<String> desktopAnyModes = ['notimp', 'rfc8482'];
 
 class DesktopPrivacyConfig {
@@ -81,7 +74,6 @@ class DesktopPrivacyConfig {
   final bool blockIpv6;
   final bool blockAny;
 
-  /// `notimp` (the service's default) or `rfc8482`.
   final String blockAnyMode;
   final int ednsPadding;
 
@@ -139,7 +131,6 @@ class DesktopPrivacyConfig {
     hostsTtl: hostsTtl ?? this.hostsTtl,
   );
 
-  /// The protocol-privacy subset, which `/dns/privacy/configure` merges.
   Map<String, Object?> privacyJson() => {
     'enableEDE': enableEde,
     'blockPrivatePTR': blockPrivatePtr,
@@ -151,7 +142,6 @@ class DesktopPrivacyConfig {
   };
 }
 
-/// The providers safe search can force, in the service's own order.
 const List<String> desktopSafeSearchServices = [
   'bing',
   'duckduckgo',
@@ -162,7 +152,6 @@ const List<String> desktopSafeSearchServices = [
   'youtube',
 ];
 
-/// `GET /api/v1/safesearch/config`.
 class DesktopSafeSearchConfig {
   const DesktopSafeSearchConfig({
     required this.enabled,
@@ -185,7 +174,6 @@ class DesktopSafeSearchConfig {
 
   final bool enabled;
 
-  /// Providers the user turned off; everything else in [desktopSafeSearchServices] is forced.
   final List<String> disabled;
   final int ttl;
 
@@ -208,7 +196,6 @@ class DesktopSafeSearchConfig {
   );
 }
 
-/// `GET /api/v1/filter/safebrowsing` — the reputation lookups and their counters.
 class DesktopSafeBrowsing {
   const DesktopSafeBrowsing({
     required this.enabled,
@@ -271,10 +258,8 @@ class DesktopSafeBrowsing {
   final String blockingIpv4;
   final String blockingIpv6;
 
-  /// `null_ip` | `nxdomain` | `refused`, shared with rule blocking.
   final String blockMode;
 
-  /// 0..1, or null before the first lookup.
   double? get hitRate => lookups == 0 ? null : cacheHits / lookups;
 
   int get effectiveTimeoutMs => timeoutMs > 0 ? timeoutMs : 3000;

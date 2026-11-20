@@ -20,7 +20,6 @@ fn a_mapped_address_collapses_to_ipv4() {
     raw[12..].copy_from_slice(&[192, 0, 2, 7]);
     assert_eq!(Addr::from_bytes(&raw), Some(Addr::V4([192, 0, 2, 7])));
 
-    // `::a.b.c.d` (IPv4-compatible, not mapped) stays 16 bytes on both sides.
     let mut compatible = [0u8; 16];
     compatible[12..].copy_from_slice(&[192, 0, 2, 7]);
     assert_eq!(Addr::from_bytes(&compatible), Some(Addr::V6(compatible)));
@@ -88,7 +87,6 @@ fn masking_walks_bytes_and_bits() {
     assert_eq!(address.masked(32), Addr::V4([192, 0, 2, 7]));
     assert_eq!(address.masked(0), Addr::V4([0, 0, 0, 0]));
 
-    // Non-byte-aligned IPv6: /57 keeps the top bit of byte 7.
     let mut raw = [0u8; 16];
     raw[0] = 0x20;
     raw[1] = 0x01;

@@ -7,8 +7,6 @@ import android.util.Log
 import com.haoze.diting.MainActivity
 import com.haoze.diting.control.DataPlaneControl
 
-/// Unexported receiver behind the widget's toggle button. Kept apart from the provider, which must
-/// be exported for the system's update broadcasts, so no other app can flip the tunnel.
 class DitingWidgetToggleReceiver : BroadcastReceiver() {
 
     companion object {
@@ -29,7 +27,6 @@ class DitingWidgetToggleReceiver : BroadcastReceiver() {
             } catch (error: Throwable) {
                 Log.w(TAG, "Failed to toggle from widget", error)
             } finally {
-                // Repaint even after a failed attempt: the state may have changed anyway.
                 DitingWidgetProvider.requestRefresh(context)
                 pendingResult?.finish()
             }

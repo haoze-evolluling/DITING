@@ -1,9 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rank mark of a leaderboard row: a filled disc for the top step, a tint for the podium and a
-/// quiet tone below it. The plain `1`/`2`/`3` it replaces carried no weight at all next to the
-/// resolver name.
 class LogsRankBadge extends StatelessWidget {
   const LogsRankBadge({super.key, required this.rank});
 
@@ -40,12 +37,9 @@ class LogsRankBadge extends StatelessWidget {
   }
 }
 
-/// Share of the row against the best row, drawn as a slim bar so the ranking stays readable when
-/// two neighbouring counts are close. Same shape as the traffic page's per-app share bar.
 class LogsRowBar extends StatelessWidget {
   const LogsRowBar({super.key, required this.share, this.color});
 
-  /// 0..1; values outside the range are clamped rather than overflowing the track.
   final double share;
   final Color? color;
 

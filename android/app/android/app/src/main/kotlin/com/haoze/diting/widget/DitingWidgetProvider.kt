@@ -14,13 +14,6 @@ import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 import com.haoze.diting.control.DataPlaneControl
 
-/// Home screen widget: protection state, today's blocked count and a one-tap toggle.
-///
-/// Modelled on BlockAds' `AdBlockWidgetProvider`: an unexported receiver for the toggle (so no
-/// other app can flip the tunnel through a broadcast) and the database read moved off the main
-/// thread with `goAsync`. Three layouts share one provider — the size class is resolved from the
-/// widget options on every render, so a resize repaints into the right density instead of
-/// stretching one layout.
 class DitingWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(
@@ -40,8 +33,6 @@ class DitingWidgetProvider : AppWidgetProvider() {
         renderAll(context, appWidgetManager, intArrayOf(appWidgetId))
     }
 
-    /// Repaints every placed widget. Called from `QuickSettingsTileUpdater` on each service state
-    /// change, so the widget follows starts and stops it did not perform itself.
     private fun renderAll(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -97,7 +88,6 @@ class DitingWidgetProvider : AppWidgetProvider() {
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }
 
-    /// Status pill and power button: shared by all three layouts, which use the same view ids.
     private fun bindStatus(context: Context, views: RemoteViews, running: Boolean) {
         views.setTextViewText(
             R.id.widget_status,
@@ -174,9 +164,6 @@ class DitingWidgetProvider : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_root, openAppPending)
     }
 
-    /// Size classes. Thresholds are in dp and deliberately generous: launchers report the minimum
-    /// size the widget can take while it is being resized, and a widget that is too short for the
-    /// large layout would clip its footer. The large board is designed for a 4x3 shape.
     private enum class WidgetSize(val layoutRes: Int) {
         SMALL(R.layout.diting_widget_small),
         MEDIUM(R.layout.diting_widget_medium),
@@ -186,7 +173,6 @@ class DitingWidgetProvider : AppWidgetProvider() {
             fun fromOptions(options: Bundle): WidgetSize {
                 val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
                 val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-                // No options yet (first placement): the provider's target cell is 4x2.
                 if (width <= 0 || height <= 0) return MEDIUM
                 return when {
                     width >= LARGE_MIN_WIDTH && height >= LARGE_MIN_HEIGHT -> LARGE

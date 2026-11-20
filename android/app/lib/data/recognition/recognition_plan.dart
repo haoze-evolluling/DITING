@@ -1,7 +1,3 @@
-/// Cache keys, endpoints, size limits and retry policy from `rust/diting-recognition-core`.
-///
-/// Reading a missing field throws: an empty cache key or a zero limit would silently disable the
-/// cache or reject every avatar.
 library;
 
 import 'package:diting_android/data/db/rust_recognition_core.dart';

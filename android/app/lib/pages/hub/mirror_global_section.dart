@@ -5,8 +5,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Global mirror switch on the mirror-template page: once on, every subscription without its own
-/// template and the app update check and download go through the chosen template.
 class GlobalMirrorSection extends ConsumerWidget {
   const GlobalMirrorSection({super.key, required this.templates});
 
@@ -33,7 +31,6 @@ class GlobalMirrorSection extends ConsumerWidget {
               ? null
               : (value) => notifier.setEnabled(
                   value,
-                  // A stale or missing choice falls back to the newest template.
                   fallbackTemplate: selected == null
                       ? templates.first.template
                       : null,
@@ -43,7 +40,6 @@ class GlobalMirrorSection extends ConsumerWidget {
           ListItem<MirrorTemplateRecord>.options(
             leading: const GlyphIcon(AppGlyphs.mirror),
             title: Text(context.l10n.mirrorTemplate),
-            // The saved string is what downloads use, even if this mode's list lacks it.
             subtitle: Text(
               mirror.template ?? templates.first.template,
               maxLines: 1,

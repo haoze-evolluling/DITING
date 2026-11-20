@@ -53,7 +53,6 @@ class BottomInsetScope extends InheritedWidget {
   }
 }
 
-/// The room content still leaves at its top, where the scaffold placed something of its own.
 class TopInsetScope extends InheritedWidget {
   final double inset;
 
@@ -69,7 +68,6 @@ class TopInsetScope extends InheritedWidget {
   }
 }
 
-/// How far a page's app bar reaches over the body floating under it.
 class FloatingBarScope extends InheritedWidget {
   final double inset;
 
@@ -91,12 +89,7 @@ class FloatingBarScope extends InheritedWidget {
   }
 }
 
-/// The room a page must leave at its bottom for the shell's bar. Only the shells that draw a bar
-/// publish it, so pages pushed over the shell (which have no bar) fall back to a plain gap instead
-/// of reserving dock-sized space they would only show as dead white.
 class DockInsetScope extends InheritedWidget {
-  /// Clearance used where no bar floats over the page; matches `dockContentGap` so every page
-  /// ends its content the same distance from the bottom edge.
   static const double pageBottomGap = 16;
 
   final double inset;
@@ -116,9 +109,6 @@ class DockInsetScope extends InheritedWidget {
   }
 }
 
-/// The horizontal inset a page keeps between the window edge and its content. The shells that draw
-/// a navigation region publish it so the page's toolbar can put its title on the same vertical line
-/// as the cards below it; a page without the scope keeps the Material default.
 class PageGutterScope extends InheritedWidget {
   final double gutter;
 
@@ -231,7 +221,6 @@ class ProfileIdProvider extends InheritedWidget {
       profileId != oldWidget.profileId;
 }
 
-/// How far a sheet's content hangs below the screen at its current detent.
 class SheetOverhangScope extends InheritedWidget {
   final ValueListenable<double> overhang;
   final bool fitsContent;
@@ -260,10 +249,8 @@ class SheetOverhangScope extends InheritedWidget {
       overhang != oldWidget.overhang || fitsContent != oldWidget.fitsContent;
 }
 
-/// Resolves once the content has closed the sheet or decided to keep it.
 typedef SheetDismissHandler = Future<void> Function();
 
-/// Lets a sheet's content take over what a drag away or a tap outside does.
 class SheetDismissScope extends InheritedWidget {
   final ValueNotifier<SheetDismissHandler?> handler;
 
@@ -282,7 +269,6 @@ class SheetDismissScope extends InheritedWidget {
       handler != oldWidget.handler;
 }
 
-/// A scroll controller handing drags to the sheet, one per route: a shared one fails the scrollbar.
 class SheetScrollScope extends InheritedWidget {
   final SheetScrollControllerFactory createController;
 

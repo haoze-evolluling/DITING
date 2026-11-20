@@ -1,5 +1,3 @@
-//! Unit tests for the text payload.
-
 use super::*;
 
 #[test]
@@ -116,7 +114,6 @@ fn a_bad_rule_state_or_length_is_rejected() {
     let mut truncated = encode_rules(&RuleSet::Loaded(Rules::default()));
     truncated.pop();
     assert!(decode_rules(&truncated).is_err());
-    // A state byte claiming "loaded" without the counts must not be read as an empty rule set.
     assert!(decode_rules(&[LAYOUT_VERSION, STATE_LOADED]).is_err());
 }
 

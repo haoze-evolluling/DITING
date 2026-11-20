@@ -1,9 +1,3 @@
-//! RFC 8482 ANY minimization.
-//!
-//! ANY queries are an amplification vector and they defeat type-specific blocklists (asking ANY
-//! returns both A and AAAA). Two legal answers exist: NOTIMP, or NOERROR + HINFO "RFC8482". The
-//! mode is read per query so a configuration change applies without rebuilding the pipeline.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -70,7 +64,6 @@ impl Stage for AnyStage {
     }
 }
 
-/// Kept for the pipeline assembly and tests: builds the minimal answer directly.
 pub fn minimal_response(query: &[u8], mode: &str) -> Option<Vec<u8>> {
     let mut message =
         crate::context::DnsContext::new(query.to_vec(), None, crate::context::Transport::Udp)?;
@@ -95,7 +88,6 @@ pub fn minimal_response(query: &[u8], mode: &str) -> Option<Vec<u8>> {
     message.response
 }
 
-/// Shared with the pipeline builder so tests do not construct a stage for a one-shot check.
 pub fn shared_config(config: ConfigHandle) -> Arc<dyn Stage> {
     Arc::new(AnyStage::new(config))
 }

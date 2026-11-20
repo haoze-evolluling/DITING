@@ -1,15 +1,5 @@
-//! Serde model of the rule snapshot payload `ApplyRuleSnapshot` receives from Dart.
-//!
-//! Field names, optionality and `null` handling mirror the payload the Android side builds
-//! (`RuleSnapshotStore.buildSnapshotJson`); Go decodes only `filterEnabled` and hands the document
-//! over unchanged.
-//!
-//! Every collection is `Option`-aligned with Go's nil slices/maps: `null`, a missing key and an
-//! empty array all end up meaning "no rules", exactly like `encoding/json` leaves the zero value.
-
 use serde::Deserialize;
 
-/// `appRulesConfigJSON`.
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppRules {
@@ -18,7 +8,6 @@ pub struct AppRules {
     pub important: Option<Vec<String>>,
 }
 
-/// `invertedRuleConfigJSON`.
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct InvertedRule {
@@ -28,7 +17,6 @@ pub struct InvertedRule {
     pub excluded_apps: Option<Vec<String>>,
 }
 
-/// `specialRuleConfigJSON`.
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SpecialRule {
@@ -43,7 +31,6 @@ pub struct SpecialRule {
     pub dns_type: Option<String>,
 }
 
-/// `ruleSnapshotJSON`.
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RuleSnapshot {
@@ -64,7 +51,6 @@ pub struct RuleSnapshot {
 }
 
 impl RuleSnapshot {
-    /// Parses the payload; the error text is only used for logging on the Go side.
     pub fn parse(bytes: &[u8]) -> Result<RuleSnapshot, String> {
         serde_json::from_slice(bytes).map_err(|error| error.to_string())
     }

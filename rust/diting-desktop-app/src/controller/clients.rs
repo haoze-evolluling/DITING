@@ -1,5 +1,3 @@
-//! Clients, aliases and client groups (`/api/v1/clients*`).
-
 use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::{ClientAlias, ClientGroup};
@@ -8,7 +6,6 @@ use crate::controller::status::ClientSummary;
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureClientAliasRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureClientAliasRequest {
@@ -18,7 +15,6 @@ pub struct ConfigureClientAliasRequest {
     pub name: String,
 }
 
-/// `ipc.ConfigureClientGroupsRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureClientGroupsRequest {
@@ -28,7 +24,6 @@ pub struct ConfigureClientGroupsRequest {
     pub groups: Option<Vec<ClientGroup>>,
 }
 
-/// `ipc.ClientGroupRuleListOption`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientGroupRuleListOption {
@@ -37,7 +32,6 @@ pub struct ClientGroupRuleListOption {
     pub enabled: bool,
 }
 
-/// `ipc.ClientGroupUpstreamOption`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientGroupUpstreamOption {
@@ -46,7 +40,6 @@ pub struct ClientGroupUpstreamOption {
     pub server: String,
 }
 
-/// `ipc.ClientGroupConfigResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientGroupConfigResponse {
@@ -57,12 +50,10 @@ pub struct ClientGroupConfigResponse {
 }
 
 impl AppRuntime {
-    /// `GetClients`.
     pub fn clients(&self) -> Vec<ClientSummary> {
         crate::controller::status::client_summaries(self)
     }
 
-    /// `ConfigureClientAlias`.
     pub fn configure_client_alias(
         &self,
         request: ConfigureClientAliasRequest,
@@ -84,7 +75,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `GetClientGroups`.
     pub fn client_groups(&self) -> ClientGroupConfigResponse {
         let config = self.config();
         let rule_lists = config
@@ -119,7 +109,6 @@ impl AppRuntime {
         }
     }
 
-    /// `ConfigureClientGroups`.
     pub fn configure_client_groups(
         &self,
         request: ConfigureClientGroupsRequest,

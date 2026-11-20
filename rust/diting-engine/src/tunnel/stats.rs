@@ -1,18 +1,5 @@
-//! The data plane's counters and the two documents it produces.
-//!
-//! * [`traffic_payload`] — the `TrafficCallback.onTrafficStatsTick` payload, one packed `byte[]`
-//!   with `(uid, tx, rx, package)` rows in the log kernel's input layout.
-//! * [`TunnelCounters::document`] — the extra `"tun"` object `getStats` carries while the TUN runs.
-//!   The three fields `EngineStats.kt` reads (`total`, `blocked`, `dropped_logs`) are untouched; a
-//!   UI that ignores unknown keys keeps working, and a support log finally says whether the queue
-//!   dropped packets or the writer retried.
-//!
-//! The stack's own counters ([`crate::netstack::Stats`]) are snapshotted by the session on stop, so
-//! this module never borrows the stack.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// The session's counters, shared by the reader, the writer, the stack thread and the handlers.
 #[derive(Debug, Default)]
 pub struct TunnelCounters {
     pub ingress_dropped: AtomicU64,
@@ -22,12 +9,9 @@ pub struct TunnelCounters {
     pub tcp_flows: AtomicU64,
     pub udp_datagrams: AtomicU64,
     pub blocked_flows: AtomicU64,
-    /// A relay dial failed, or the proxy has no datagram mode for this flow.
     pub relay_unavailable: AtomicU64,
     pub malformed: AtomicU64,
-    /// A response larger than the client's send buffer / a handler that fell behind.
     pub short_writes: AtomicU64,
-    /// `udp_send` could not queue an answer (port unbound or buffer full).
     pub udp_replies_dropped: AtomicU64,
 }
 
@@ -42,7 +26,6 @@ impl TunnelCounters {
         counter.load(Ordering::Relaxed)
     }
 
-    /// The `"tun"` document, folded into `getStats`.
     pub fn document(&self, stack: crate::netstack::Stats) -> serde_json::Value {
         serde_json::json!({
             "packetsIn": stack.packets_in,
@@ -70,14 +53,8 @@ impl TunnelCounters {
     }
 }
 
-/// One per-UID delta in the tick payload, with the package name already resolved.
 pub type TrafficRow = (i32, i64, i64, String);
 
-/// `TrafficCallback.onTrafficStatsTick`: `u32 count | (i32 uid, i64 tx, i64 rx, string package)`.
-///
-/// This is exactly the row section `diting_log_core::api::traffic_on_tick` decodes. Kotlin only
-/// prepends the date string and forwards the same buffer, so the tick is encoded once here instead
-/// of being serialized to JSON, parsed back into `JSONArray` and packed again on the JVM side.
 pub fn traffic_payload(rows: &[TrafficRow]) -> Vec<u8> {
     let strings: usize = rows.iter().map(|row| row.3.len()).sum();
     let mut out = Vec::with_capacity(4 + rows.len() * 24 + strings + rows.len() * 4);

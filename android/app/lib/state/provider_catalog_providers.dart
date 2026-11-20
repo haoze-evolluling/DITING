@@ -1,5 +1,3 @@
-/// Provider catalog, selection and race lists; presets live in code, only custom providers and the
-/// id lists persist.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -10,7 +8,6 @@ import 'package:diting_android/data/vpn/provider_store.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Presets only, for hosts without a prefs snapshot (tests, gallery).
 List<MockProvider> defaultProviderCatalog() => [
   for (final provider in defaultDnsProviders(currentL10n))
     provider.toMock(latencyMs: -1, isPreset: true),
@@ -22,7 +19,6 @@ ProviderProtocol _protocolOf(DnsProtocol protocol) => switch (protocol) {
   DnsProtocol.dot => ProviderProtocol.dot,
 };
 
-/// The full catalog: 18 presets then custom providers in file order.
 List<MockProvider> buildProviderCatalog(LegacySettings settings) {
   final latencies = settings.providerLatenciesMs;
   return [
@@ -39,8 +35,6 @@ List<MockProvider> buildProviderCatalog(LegacySettings settings) {
   ];
 }
 
-/// Endpoint text for one provider; `latencyMs < 0` means no measurement yet, so the UI renders a
-/// dash.
 String endpointOfProvider(String id, List<MockProvider> catalog) {
   final provider = catalog.firstWhere(
     (candidate) => candidate.id == id,
@@ -49,17 +43,13 @@ String endpointOfProvider(String id, List<MockProvider> catalog) {
   return '${provider.protocol.label} · ${provider.address}';
 }
 
-/// Same as [endpointOfProvider] but for callers holding only a container.
 String providerEndpointFromCatalog(WidgetRef ref, String id) =>
     endpointOfProvider(id, ref.watch(dnsProviderCatalogProvider));
 
-/// Display text for a provider's last measured latency.
 String providerLatencyLabel(MockProvider provider) => provider.latencyMs < 0
     ? currentL10n.providerNotTested
     : currentL10n.providerLatencyValue(provider.latencyMs);
 
-/// Names in the given order (the order the engine tries them); ids missing from the catalog are
-/// skipped.
 String summaryOfProviders(Set<String> ids, List<MockProvider> catalog) {
   final byId = {for (final provider in catalog) provider.id: provider};
   final names = [for (final id in ids) ?byId[id]?.name];
@@ -83,18 +73,12 @@ class ProviderCatalogNotifier extends Notifier<List<MockProvider>> {
   void _refresh() =>
       state = buildProviderCatalog(ref.read(legacySettingsProvider));
 
-  /// Writes through [LegacySettings] and then refreshes every reader of it.
-  ///
-  /// This notifier is not what the speed-test catalog watches: that provider rebuilds on
-  /// [legacySettingsRevisionProvider], so without the bump a provider added here only shows up
-  /// after a restart.
   void _commit(void Function(LegacySettings settings) write) {
     write(ref.read(legacySettingsProvider));
     ref.read(legacySettingsRevisionProvider.notifier).bump();
     _refresh();
   }
 
-  /// Persists one custom provider; presets are read-only.
   void addCustom({
     required String name,
     required ProviderProtocol protocol,
@@ -147,8 +131,6 @@ final dnsProviderCatalogProvider =
       ProviderCatalogNotifier.new,
     );
 
-/// Providers in the arranged display order: ids without a slot keep catalog order behind the
-/// arranged ones. The order comes from the service display page and drives the provider picker.
 List<MockProvider> orderedProviders(
   List<MockProvider> catalog,
   List<String> order,
@@ -163,8 +145,6 @@ List<MockProvider> orderedProviders(
   ];
 }
 
-/// Moves one row inside its own group and returns the full order to persist; ids outside the group
-/// keep their slots, so the other protocols' arrangement is untouched.
 List<String> reorderProviderIds({
   required List<String> order,
   required List<String> groupIds,
@@ -172,7 +152,6 @@ List<String> reorderProviderIds({
   required int newIndex,
 }) {
   final moved = [...groupIds];
-  // `onReorderItem` already accounts for the row removed at `oldIndex`.
   moved.insert(newIndex, moved.removeAt(oldIndex));
   final slots = [
     for (var index = 0; index < order.length; index++)
@@ -185,8 +164,6 @@ List<String> reorderProviderIds({
   return next;
 }
 
-/// Providers the home picker may show: a protocol or per-provider switch hides entries, but never
-/// the selected one.
 final visibleProvidersProvider = Provider<List<MockProvider>>((ref) {
   final settings = ref.watch(legacySettingsProvider);
   final catalog = orderedProviders(
@@ -216,7 +193,6 @@ class SelectedProviderNotifier extends Notifier<String> {
     return catalog.isEmpty ? id : catalog.first.id;
   }
 
-  /// Ignores unknown ids so a stale UI cannot persist one the engine cannot resolve.
   void select(String id) {
     if (!ref.read(dnsProviderCatalogProvider).any((p) => p.id == id)) return;
     ref.read(legacySettingsProvider).setSelectedProviderId(id);
@@ -229,8 +205,6 @@ final selectedProviderProvider =
       SelectedProviderNotifier.new,
     );
 
-/// Provider set for the multi-provider resolution modes; the id lists are ordered, so writes keep
-/// the stored order.
 class RaceProvidersNotifier extends Notifier<Set<String>> {
   static const minCount = 2;
 
@@ -253,7 +227,6 @@ class RaceProvidersNotifier extends Notifier<Set<String>> {
     };
   }
 
-  /// Returns false when the removal would drop below [minCount].
   bool toggle(String id) {
     if (!ref.read(dnsProviderCatalogProvider).any((p) => p.id == id)) {
       return false;
@@ -276,12 +249,10 @@ class RaceProvidersNotifier extends Notifier<Set<String>> {
       for (final provider in ref.read(dnsProviderCatalogProvider).take(2))
         provider.id,
     };
-    // `_persist` already writes the active mode's key, including single mode's parallel list.
     _persist(defaults);
     state = defaults;
   }
 
-  /// Persists an explicit order; primary-backup keeps the sequence, the modes are sets.
   void reorder(List<String> ids) {
     final valid = {
       for (final provider in ref.read(dnsProviderCatalogProvider)) provider.id,
@@ -310,7 +281,6 @@ class RaceProvidersNotifier extends Notifier<Set<String>> {
     }
     final key = mode.storageValue;
     if (key == 'primary_backup') {
-      // Preserve the primary-to-backup order; newly added ids go last.
       final current = settings.providerIdsOf(key);
       final ordered = [
         for (final id in current)
@@ -330,14 +300,11 @@ final raceProvidersProvider =
       RaceProvidersNotifier.new,
     );
 
-/// Presets whose protocol follows the built-in protocol switch (legacy
-/// `SWITCHABLE_PRESET_PROVIDER_NAMES`); every other provider keeps its own protocol.
 Set<String> _switchablePresetNames(AppL10n l10n) => {
   l10n.upstreamPresetAliyun,
   l10n.upstreamPresetTencent,
 };
 
-/// The same preset in [protocol], or [id] unchanged for custom and non-switchable providers.
 String presetIdForProtocol(String id, DnsProtocol protocol) {
   final presets = defaultDnsProviders(currentL10n);
   final preset = presets.where((p) => p.id == id).firstOrNull;
@@ -352,7 +319,6 @@ String presetIdForProtocol(String id, DnsProtocol protocol) {
       id;
 }
 
-/// Built-in service protocol (`preset_dns_service`, stored as `DNS` / `DOT` / `DOH`).
 class PresetProtocolNotifier extends Notifier<ProviderProtocol> {
   @override
   ProviderProtocol build() => switch (ref
@@ -364,8 +330,6 @@ class PresetProtocolNotifier extends Notifier<ProviderProtocol> {
     _ => ProviderProtocol.dns,
   };
 
-  /// Remaps the switchable presets in all four modes' selections, as legacy
-  /// `setPresetDnsService` does, then stores the protocol. Returns false when nothing changed.
   bool select(ProviderProtocol protocol) {
     if (state == protocol) return false;
     final settings = ref.read(legacySettingsProvider);

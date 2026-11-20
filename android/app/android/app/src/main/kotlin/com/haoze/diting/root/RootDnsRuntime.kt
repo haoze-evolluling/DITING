@@ -7,11 +7,7 @@ import com.haoze.diting.engine.Engine
 import com.haoze.diting.log.EngineStats
 import com.haoze.diting.tile.QuickSettingsTileUpdater
 
-/// Runtime state of the root DNS takeover. The service, the MethodChannel bridge and the quick
-/// settings tile all live in this process, so a synchronized singleton is the one source of truth.
 internal object RootDnsRuntime {
-    /// Root-mode preferences: the persisted running flag, the rule ownership marker and the
-    /// Private DNS value that has to be restored on stop.
     const val PREFS_NAME = "dns_root_prefs"
     private const val KEY_RUNNING = "root_dns_running"
     private const val KEY_RULES_INSTALLED = "root_dns_rules_installed"
@@ -27,7 +23,6 @@ internal object RootDnsRuntime {
     @Volatile
     var error: String? = null
 
-    /// Epoch millis of the last successful start; 0 while stopped.
     @Volatile
     var startedAt: Long = 0L
 
@@ -40,7 +35,6 @@ internal object RootDnsRuntime {
     fun status(context: Context): Map<String, Any?> = mapOf(
         "running" to running,
         "starting" to starting,
-        // Kept for the shared VpnStatus shape: root mode has no VPN slot to reclaim.
         "reclaiming" to false,
         "persisted" to isPersistedRunning(context),
         "error" to error,
@@ -82,7 +76,6 @@ internal object RootDnsRuntime {
         engine = null
     }
 
-    // ---- persisted flags ------------------------------------------------------------------
 
     fun isPersistedRunning(context: Context): Boolean =
         prefs(context).getBoolean(KEY_RUNNING, false)
@@ -92,19 +85,14 @@ internal object RootDnsRuntime {
         QuickSettingsTileUpdater.requestTileUpdate(context)
     }
 
-    /// True from the moment the redirect rules are installed until they are removed. The
-    /// application checks it on a cold start: a leftover chain would point every DNS query at a
-    /// port nothing is listening on, so it must be cleaned before the UI is usable.
     fun rulesInstalled(context: Context): Boolean =
         prefs(context).getBoolean(KEY_RULES_INSTALLED, false)
 
     fun markRulesInstalled(context: Context, value: Boolean) {
-        // Commit, not apply: the marker has to survive a kill right after the iptables install.
         prefs(context).edit().putBoolean(KEY_RULES_INSTALLED, value).commit()
     }
 
     fun rememberPrivateDns(context: Context, previous: String) {
-        // The original mode is the only copy; losing it would leave the device on DoT-off.
         prefs(context).edit()
             .putBoolean(KEY_PRIVATE_DNS_CHANGED, true)
             .putString(KEY_PRIVATE_DNS_PREVIOUS, previous)
@@ -128,10 +116,6 @@ internal object RootDnsRuntime {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 }
 
-/// Device-wide rates for the home dashboard and the notification.
-///
-/// Root mode owns no TUN, so there is no engine traffic counter to read. `TrafficStats` totals are
-/// the honest substitute: they are what the device moved, not what the tunnel carried.
 internal object RootDnsTraffic {
     private var lastTx = 0L
     private var lastRx = 0L
@@ -152,12 +136,10 @@ internal object RootDnsTraffic {
         val tx = TrafficStats.getTotalTxBytes()
         val rx = TrafficStats.getTotalRxBytes()
         if (tx < 0 || rx < 0) {
-            // UNSUPPORTED (-1) on a platform without traffic counters.
             return mapOf("running" to true, "txBps" to 0L, "rxBps" to 0L)
         }
         val previousAt = lastAt
         val elapsedMs = now - previousAt
-        // First sample after a start (or a counter reset) only seeds the baseline.
         val animate = previousAt != 0L && elapsedMs in 1..MAX_INTERVAL_MS && tx >= lastTx && rx >= lastRx
         val txBps = if (animate) (tx - lastTx) * 1000L / elapsedMs else 0L
         val rxBps = if (animate) (rx - lastRx) * 1000L / elapsedMs else 0L
@@ -167,6 +149,5 @@ internal object RootDnsTraffic {
         return mapOf("running" to true, "txBps" to txBps, "rxBps" to rxBps)
     }
 
-    /// A long gap (screen off, process frozen) makes a burst look like one second of traffic.
     private const val MAX_INTERVAL_MS = 30_000L
 }

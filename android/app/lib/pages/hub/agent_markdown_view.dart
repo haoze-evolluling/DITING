@@ -1,7 +1,3 @@
-/// Renders a model report: the Markdown blocks from `markdown_block.dart` plus the inline styling
-/// from `markdown_inline.dart`. Visually mirrors the 1.4.x `MarkdownViewer` so a report looks the
-/// same as it did in the Kotlin app — a coloured bar on section headings, primary-coloured bullets,
-/// framed code blocks and a card-wrapped table.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -54,7 +50,6 @@ class AgentMarkdownView extends StatelessWidget {
             spacing: 8,
             children: [
               Padding(
-                // Optically centres the 5dp dot on the first text line.
                 padding: const EdgeInsets.only(top: 8),
                 child: Container(
                   width: 5,
@@ -154,14 +149,12 @@ class _Heading extends StatelessWidget {
     );
 
     return Padding(
-      // Headings need air above them; the first one is already spaced by the Column.
       padding: EdgeInsets.only(top: level <= 2 ? 10 : 4),
       child: level == 2
           ? Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 8,
               children: [
-                // 3.5 x 18 bar, as in the Kotlin viewer.
                 Container(
                   width: 3.5,
                   height: 18,

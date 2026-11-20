@@ -1,8 +1,3 @@
-/// The encrypted DNS server: its listeners, certificate and discovery config.
-///
-/// `GET /api/v1/encrypted/dns/status` carries the config, a certificate summary without private key
-/// material, the addresses that are actually listening and the URLs a client can be given. A
-/// configured port is not a bound port, so the page always shows both.
 library;
 
 bool _bool(Object? value) => value == true;
@@ -201,15 +196,12 @@ class DesktopEncryptedStatus {
   final int defaultDoqPort;
   final String defaultDohPath;
 
-  /// The address each listener actually bound, or empty when it is not listening.
   final String dotListen;
   final String dohListen;
   final String doqListen;
 
-  /// Ready-to-use DoH URLs, one per server name / interface.
   final List<String> dohUrls;
 
-  /// A trusted source of `0.0.0.0/0` or `::/0` lets anyone forge the forwarded address.
   final bool unrestrictedTrust;
   final bool certExpiresSoon;
   final bool certExpired;

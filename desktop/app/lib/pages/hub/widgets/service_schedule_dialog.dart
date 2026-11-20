@@ -1,7 +1,3 @@
-/// One service's weekly plan, edited in a dialog and returned to the page.
-///
-/// The old desktop console's `ServiceScheduleModal.vue` is the blueprint: the same editor the global
-/// time plan uses, with the meaning "block this service only inside these windows".
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -12,7 +8,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Opens the editor. Returns the plan to save (possibly empty), or null when cancelled.
 Future<List<DesktopSchedule>?> showServiceScheduleDialog(
   BuildContext context, {
   required DesktopBlockedService service,

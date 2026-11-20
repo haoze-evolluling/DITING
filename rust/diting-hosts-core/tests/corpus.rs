@@ -1,15 +1,3 @@
-//! The migration corpus: every row was produced by running the Go implementation that this crate
-//! replaced (`internal/core/zz_hosts_fixture_gen_test.go`, deleted with the Go parser).
-//!
-//! Rows are `kind`, `case`, `arg`, `expect`:
-//! * `addr` — one hosts address field: strip the zone, parse, collapse
-//! * `arpa` — one reverse name through `ParseIPFromArpa`
-//! * `has` — `HasDomain` on the parsed case
-//! * `lookup` — `Lookup` for one qtype (`arg` is `host|qtype`)
-//! * `ptr` — `LookupPTR` for one reverse name
-//!
-//! Addresses are written as `4:<hex>` / `16:<hex>` / `none`; lists are comma separated.
-
 use std::path::{Path, PathBuf};
 
 use diting_hosts_core::hosts::{HostsTable, TYPE_A, TYPE_AAAA};
@@ -61,7 +49,6 @@ fn parse_expect(expect: &str) -> Option<Addr> {
     Addr::from_bytes(&raw)
 }
 
-/// `strings.Fields` on the case name gives the file to parse.
 fn table_for(case: &str) -> HostsTable {
     let path = fixture_dir().join(format!("case_{case}.hosts"));
     HostsTable::build(&[diting_hosts_core::Source::File(path)])
@@ -101,7 +88,6 @@ fn corpus_matches_the_go_implementation() {
                     compare(expect, &got),
                     "arpa {arg}: got {got}, want {expect}"
                 );
-                // The payload carries the same answer for the Go side.
                 if let Some(expected) = parse_expect(expect) {
                     assert_eq!(parse_arpa(arg), Some(expected), "arpa {arg} address");
                 }
@@ -137,7 +123,6 @@ fn corpus_matches_the_go_implementation() {
                     compare(expect, &got),
                     "ptr {case} {arg}: got {got}, want {expect}"
                 );
-                // The same alias set is what `LookupReverse` sees first.
                 if let Some(first) = names.first() {
                     let addr = parse_arpa(arg).expect("address");
                     assert_eq!(table.reverse(&addr), Some(first.as_str()));

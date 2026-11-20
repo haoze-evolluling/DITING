@@ -4,13 +4,6 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.ByteBuffer
 
-/// Native rule-index helpers, the JNI face of `diting-rule-core`'s `index_layout`, `dtri` and
-/// `snapshot::plan` modules.
-///
-/// The payloads are documented in `rust/diting-rule-core/src/jni_payload.rs`; every call is one
-/// packed big-endian `ByteArray` in and one out. The library is required: a build that forgot
-/// `python rust/build_android.py` fails the snapshot build instead of running a second copy of
-/// these rules in Kotlin.
 internal class RuleIndexNative private constructor() {
     external fun paths(datasetTag: Int): ByteArray?
     external fun dtriValidate(packed: ByteArray): ByteArray?
@@ -34,7 +27,6 @@ internal class RuleIndexNative private constructor() {
             }
         }
 
-        /// The seven relative paths of one dataset, from `RuleIndexLayout`.
         fun paths(dataset: RuleDataset): RuleIndexPaths {
             val reader = RuleIndexPayload.Reader(
                 requireNotNull(instance.paths(dataset.ordinal)) {
@@ -52,7 +44,6 @@ internal class RuleIndexNative private constructor() {
             )
         }
 
-        /// `MappedSubscriptionRuleIndex.load`'s header checks over a read-only peek.
         fun validate(header: ByteArray, fileLength: Long): RuleIndexValidation {
             val packed = RuleIndexPayload.pack { out ->
                 out.writeInt(header.size)
@@ -76,7 +67,6 @@ internal class RuleIndexNative private constructor() {
             }
         }
 
-        /// Whether a build may refresh the stamp, and which rows still need inline entries.
         fun plan(block: RuleIndexHalf, allow: RuleIndexHalf): RuleIndexPlan {
             val packed = RuleIndexPayload.pack { out ->
                 out.writeByte(block.normal.tag)
@@ -103,7 +93,6 @@ internal class RuleIndexNative private constructor() {
             )
         }
 
-        /// The trie paths to hand the snapshot builder: only existing, non-empty files.
         fun triePaths(indexDirectoryOk: Boolean, files: List<Pair<String, Pair<Boolean, Long>>>): List<String?> {
             require(files.size == 4) { "the DTRI layout has four artifacts" }
             val packed = RuleIndexPayload.pack { out ->
@@ -123,7 +112,6 @@ internal class RuleIndexNative private constructor() {
             return List(4) { if (reader.u8() == 1) reader.string() else null }
         }
 
-        /// `readAppAllowlist`'s normalization: trimmed, blank-free, de-duplicated, in order.
         fun appAllowlist(packages: List<Pair<String, List<String>>>): List<Pair<String, List<String>>> {
             val packed = RuleIndexPayload.pack { out ->
                 out.writeInt(packages.size)
@@ -144,7 +132,6 @@ internal class RuleIndexNative private constructor() {
             }
         }
 
-        /// One line per rule table; equal fingerprints mean the tries are still current.
         fun ruleFingerprint(parts: List<Pair<String, Triple<Long, Long, Long>?>>): String {
             val packed = RuleIndexPayload.pack { out ->
                 out.writeInt(parts.size)
@@ -168,7 +155,6 @@ internal class RuleIndexNative private constructor() {
             return reader.string()
         }
 
-        /// `setRewriteRules`'s flat map input: trimmed, blank-free, oldest row per pattern.
         fun rewriteRules(rows: List<Pair<String, String>>): List<Pair<String, String>> {
             val packed = RuleIndexPayload.pack { out ->
                 out.writeInt(rows.size)
@@ -187,7 +173,6 @@ internal class RuleIndexNative private constructor() {
     }
 }
 
-/// The artifact paths of one dataset, relative to `filesDir`.
 internal data class RuleIndexPaths(
     val root: String,
     val domain: String,
@@ -198,20 +183,16 @@ internal data class RuleIndexPaths(
     val allowImportant: String,
 )
 
-/// The outcome of validating one DTRI header.
 internal sealed interface RuleIndexValidation {
     data object Ok : RuleIndexValidation
     data object Header : RuleIndexValidation
     data object Version : RuleIndexValidation
     data object Counts : RuleIndexValidation
-    /** The sections do not cover the file; [expectedLength] is what the header declares. */
     data class Sections(val expectedLength: Long) : RuleIndexValidation
 }
 
-/// One rule half's two outcomes, in `IndexOutcome`'s tag order.
 internal data class RuleIndexHalf(val normal: IndexOutcome, val important: IndexOutcome)
 
-/// What one snapshot build decided.
 internal data class RuleIndexPlan(
     val compiled: Boolean,
     val settled: Boolean,
@@ -219,14 +200,12 @@ internal data class RuleIndexPlan(
     val allow: RuleIndexHalfPlan,
 )
 
-/// One half's usability and whether only the special rows stay inline.
 internal data class RuleIndexHalfPlan(
     val normalUsable: Boolean,
     val importantUsable: Boolean,
     val specialRowsOnly: Boolean,
 )
 
-/// Big-endian payload primitives for [RuleIndexNative] (the crate's `payload.rs`).
 private object RuleIndexPayload {
     fun pack(write: (DataOutputStream) -> Unit): ByteArray {
         val buffer = ByteArrayOutputStream(64)

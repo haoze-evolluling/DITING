@@ -1,5 +1,3 @@
-/// Latency-test state (selection, protocol, domain, results) plus the other probes' settings; the
-/// last two persist.
 library;
 
 import 'dart:convert';
@@ -18,19 +16,14 @@ const defaultRaceTestDomain = 'mihoyo.com';
 
 const latencyTestAttempts = 3;
 
-/// Native latency runner; the default is unavailable so hosts without the channel show "not
-/// supported", not crash.
 final dnsLatencyRunnerProvider = Provider<DnsLatencyRunner>(
   (ref) => const UnavailableDnsLatencyRunner(),
 );
 
-/// Whether the channel is available; the page disables "start" accordingly.
 final latencyTestAvailableProvider = FutureProvider<bool>(
   (ref) => ref.watch(dnsLatencyRunnerProvider).checkAvailable(),
 );
 
-/// Testable providers with host, port and protocol; sharing the Go config builder's catalog keeps
-/// UI and test in sync.
 final latencyTestCatalogProvider = Provider<List<DnsLatencyProviderSpec>>((
   ref,
 ) {
@@ -42,7 +35,6 @@ final latencyTestCatalogProvider = Provider<List<DnsLatencyProviderSpec>>((
   return [for (final entry in entries) latencySpecOf(entry)];
 });
 
-/// DoH presets carry only a url, so the host is derived from it for bootstrap and SNI.
 DnsLatencyProviderSpec latencySpecOf(DnsProviderEntry entry) {
   final protocol = switch (entry.protocol) {
     DnsProtocol.dns => DnsLatencyProtocol.dns,
@@ -67,8 +59,6 @@ DnsLatencyProviderSpec latencySpecOf(DnsProviderEntry entry) {
   );
 }
 
-/// Endpoint label like `[DoH] https://...`; use `.label`, since interpolating the enum leaks the
-/// identifier.
 String latencyEndpointLabel(DnsLatencyProviderSpec spec) {
   if (spec.protocol == DnsLatencyProtocol.doh) {
     final url = spec.url.isNotEmpty
@@ -90,8 +80,6 @@ final latencyProvidersOfProtocolProvider =
       ];
     });
 
-/// Protocols in the catalog in 1.4.3's plain / DoH / DoT order; falls back to all three so the
-/// control is never empty.
 final latencyTestProtocolsProvider = Provider<List<DnsLatencyProtocol>>((ref) {
   final present = {
     for (final spec in ref.watch(latencyTestCatalogProvider)) spec.protocol,
@@ -116,7 +104,6 @@ class LatencySelectionNotifier extends Notifier<Set<String>> {
     };
   }
 
-  /// Plain add/remove with no cap, as in 1.4.3's `toggleLatencyTestProvider`.
   void toggle(String id) {
     final next = {...state};
     if (!next.remove(id)) {
@@ -159,7 +146,6 @@ final latencySelectionProvider =
       LatencySelectionNotifier.new,
     );
 
-/// Current test protocol. Defaults to the first available one (plain DNS in 1.4.3).
 class LatencyProtocolNotifier extends Notifier<DnsLatencyProtocol> {
   @override
   DnsLatencyProtocol build() {
@@ -179,7 +165,6 @@ final latencyProtocolProvider =
       LatencyProtocolNotifier.new,
     );
 
-/// Test domain, persisted to `race_test_domain`.
 class LatencyDomainNotifier extends Notifier<String> {
   @override
   String build() {
@@ -189,8 +174,6 @@ class LatencyDomainNotifier extends Notifier<String> {
     return value.isEmpty ? defaultRaceTestDomain : value;
   }
 
-  /// An empty value persists the default domain (1.4.3 `takeIf { isNotBlank }`); empty while typing
-  /// is allowed.
   void setDomain(String value) {
     final trimmed = value.replaceAll(RegExp(r'\s'), '');
     if (trimmed == state) return;
@@ -225,11 +208,8 @@ class LatencyTestState {
 
   final bool running;
 
-  /// Sorted success first, then by elapsed time; the page uses the index as rank.
   final List<DnsLatencySample> results;
 
-  /// Why the run failed (channel error, nothing selected), distinct from one provider failing in
-  /// [results].
   final String? error;
 
   final bool unavailable;
@@ -248,8 +228,6 @@ class LatencyTestNotifier extends Notifier<LatencyTestState> {
   Future<void> run() async {
     if (state.running) return;
     final selected = ref.read(latencySelectionProvider);
-    // Tests every selected provider, not just the current tab; the selection survives protocol
-    // changes.
     final providers = [
       for (final spec in ref.read(latencyTestCatalogProvider))
         if (selected.contains(spec.id)) spec,
@@ -278,8 +256,6 @@ class LatencyTestNotifier extends Notifier<LatencyTestState> {
     }
   }
 
-  /// Records an error while keeping the previous results and availability, so a rejected run does
-  /// not wipe what is on screen.
   void _fail(String message) {
     state = LatencyTestState(
       results: state.results,
@@ -302,8 +278,6 @@ final latencyTestProvider =
       LatencyTestNotifier.new,
     );
 
-/// Success first, then elapsed time; a failure's `elapsedMs` is its timeout, which would rank it
-/// last otherwise.
 List<DnsLatencySample> sortLatencySamples(List<DnsLatencySample> samples) {
   final sorted = [...samples];
   sorted.sort((a, b) {
@@ -319,8 +293,6 @@ List<DnsLatencySample> sortLatencySamples(List<DnsLatencySample> samples) {
   return sorted;
 }
 
-/// Bar denominator: the largest elapsed time among successes, 0 when all failed so the page draws
-/// no bar.
 int latencyBarMax(List<DnsLatencySample> samples) {
   var max = 0;
   for (final sample in samples) {

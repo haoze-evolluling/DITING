@@ -1,6 +1,3 @@
-//! The stateful handles: counters and rates, traffic buckets, write health and the two
-//! attribution caches.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JByteArray, JObject, JString};
@@ -14,9 +11,7 @@ use crate::health::Health;
 use crate::stats::Stats;
 use crate::traffic::Traffic;
 
-// --- counters ---------------------------------------------------------------------------------
 
-/// `LogNative.statsNew(): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsNew(
     _env: JNIEnv<'_>,
@@ -25,7 +20,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsNew(
     guarded(|| Some(Box::into_raw(Box::new(Stats::new())) as jlong)).unwrap_or(0)
 }
 
-/// `LogNative.statsFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsFree(
     _env: JNIEnv<'_>,
@@ -40,7 +34,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsFree(
     }));
 }
 
-/// `LogNative.statsRequestReset(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsRequestReset(
     _env: JNIEnv<'_>,
@@ -52,7 +45,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsRequestReset(
     }));
 }
 
-/// `LogNative.statsRateReset(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsRateReset(
     _env: JNIEnv<'_>,
@@ -64,7 +56,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsRateReset(
     }));
 }
 
-/// `LogNative.statsSnapshot(handle): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsSnapshot<'local>(
     env: JNIEnv<'local>,
@@ -76,7 +67,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsSnapshot<'local>
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.rateTick(handle, tx, rx, nowMs)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_rateTick(
     _env: JNIEnv<'_>,
@@ -91,7 +81,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_rateTick(
     }));
 }
 
-/// `LogNative.rateSnapshot(handle, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_rateSnapshot<'local>(
     env: JNIEnv<'local>,
@@ -105,9 +94,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_rateSnapshot<'local>(
     answer_bytes(&env, answer)
 }
 
-// --- traffic ----------------------------------------------------------------------------------
 
-/// `LogNative.trafficNew(): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficNew(
     _env: JNIEnv<'_>,
@@ -116,7 +103,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficNew(
     guarded(|| Some(Box::into_raw(Box::new(Traffic::new())) as jlong)).unwrap_or(0)
 }
 
-/// `LogNative.trafficFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficFree(
     _env: JNIEnv<'_>,
@@ -131,7 +117,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficFree(
     }));
 }
 
-/// `LogNative.trafficOnTick(handle, packed): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficOnTick<'local>(
     mut env: JNIEnv<'local>,
@@ -149,7 +134,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficOnTick<'local>
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.trafficTake(handle): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficTake<'local>(
     env: JNIEnv<'local>,
@@ -161,7 +145,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficTake<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.trafficRequeue(handle, packed): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficRequeue<'local>(
     mut env: JNIEnv<'local>,
@@ -182,7 +165,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficRequeue<'local
     }
 }
 
-/// `LogNative.trafficBackoff(handle, nowMs): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficBackoff(
     _env: JNIEnv<'_>,
@@ -194,7 +176,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficBackoff(
         .unwrap_or(0)
 }
 
-/// `LogNative.trafficResetBackoff(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficResetBackoff(
     _env: JNIEnv<'_>,
@@ -206,7 +187,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficResetBackoff(
     }));
 }
 
-/// `LogNative.trafficInBackoff(handle, nowMs): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficInBackoff(
     _env: JNIEnv<'_>,
@@ -221,7 +201,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficInBackoff(
     }
 }
 
-/// `LogNative.trafficClear(handle): Int`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficClear(
     _env: JNIEnv<'_>,
@@ -232,9 +211,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficClear(
         .unwrap_or(0)
 }
 
-// --- write health ------------------------------------------------------------------------------
 
-/// `LogNative.healthNew(): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthNew(
     _env: JNIEnv<'_>,
@@ -243,7 +220,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthNew(
     guarded(|| Some(Box::into_raw(Box::new(Health::new())) as jlong)).unwrap_or(0)
 }
 
-/// `LogNative.healthFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthFree(
     _env: JNIEnv<'_>,
@@ -258,7 +234,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthFree(
     }));
 }
 
-/// `LogNative.healthDropped(handle, packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthDropped<'local>(
     mut env: JNIEnv<'local>,
@@ -280,7 +255,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthDropped<'local>
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.healthOpenFailure(handle, databaseName, cause, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthOpenFailure<'local>(
     mut env: JNIEnv<'local>,
@@ -304,7 +278,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthOpenFailure<'lo
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.healthWarn(handle, message, cause, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthWarn<'local>(
     mut env: JNIEnv<'local>,
@@ -327,7 +300,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthWarn<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.healthSnapshot(handle): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthSnapshot<'local>(
     env: JNIEnv<'local>,
@@ -342,9 +314,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthSnapshot<'local
     answer_bytes(&env, answer)
 }
 
-// --- attribution caches ------------------------------------------------------------------------
 
-/// `LogNative.attrNew(): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrNew(
     _env: JNIEnv<'_>,
@@ -353,7 +323,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrNew(
     guarded(|| Some(Box::into_raw(Box::new(Attr::new())) as jlong)).unwrap_or(0)
 }
 
-/// `LogNative.attrFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrFree(
     _env: JNIEnv<'_>,
@@ -368,7 +337,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrFree(
     }));
 }
 
-/// `LogNative.attrUidLookup(handle, packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrUidLookup<'local>(
     mut env: JNIEnv<'local>,
@@ -387,7 +355,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrUidLookup<'local>
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.attrUidStore(handle, packed, uid, nowMs): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrUidStore<'local>(
     mut env: JNIEnv<'local>,
@@ -410,7 +377,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrUidStore<'local>(
     }
 }
 
-/// `LogNative.attrPackageLookup(handle, uid): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrPackageLookup<'local>(
     env: JNIEnv<'local>,
@@ -424,7 +390,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrPackageLookup<'lo
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.attrPackageStore(handle, uid, name)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrPackageStore<'local>(
     mut env: JNIEnv<'local>,
@@ -439,7 +404,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrPackageStore<'loc
     });
 }
 
-/// `LogNative.attrClear(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrClear(
     _env: JNIEnv<'_>,

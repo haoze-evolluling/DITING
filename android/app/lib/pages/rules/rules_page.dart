@@ -17,12 +17,8 @@ import 'package:material_ui/material_ui.dart';
 part 'rules_dialogs.dart';
 part 'rules_rows.dart';
 
-/// Search debounce, 250 ms like all three upstream rule tables: slower makes live
-/// filtering pointless, faster rebuilds the whole list on every keystroke.
 const _searchDebounce = Duration(milliseconds: 250);
 
-/// Rule page: block, allow and rewrite share one skeleton, differing only in title, stats
-/// and row content, matching the single upstream RuleListScreen with a dataset parameter.
 class RulesPage extends ConsumerStatefulWidget {
   const RulesPage({super.key, required this.kind});
 
@@ -36,7 +32,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   late final _search = TextEditingController();
   Timer? _debounce;
 
-  /// Debounced keyword. The text field itself is not debounced, or typing would lag.
   var _query = '';
   RuleSourceFilter _sourceFilter;
 
@@ -63,8 +58,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     });
   }
 
-  /// Prompt once for pattern plus optional target; rewrite needs two fields, which is what
-  /// _RuleDialog exists for.
   Future<({String pattern, String? target})?> _promptRule({
     required String title,
     required String initialPattern,
@@ -195,8 +188,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
     await ref.read(rulesProvider.notifier).resetPreset(kind);
   }
 
-  /// Hint when a read-only row is tapped. A dialog rather than a snackbar: the
-  /// message tells the user where to enable editing and must not scroll away.
   Future<void> _showProtectedHint() => showFloatingDialog<void>(
     context: context,
     child: CommonDialog(
@@ -239,7 +230,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       source: _sourceFilter,
       query: _query,
     );
-    // Both come from providers, so the counter and the rows always describe the same snapshot.
     final tally = ref.watch(ruleListTallyProvider(filter));
     final visible = ref.watch(filteredRulesProvider(filter));
     final searching = _query.isNotEmpty || _sourceFilter != null;
@@ -330,8 +320,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
                   child: Text(
-                    // The counter always reports a number, even zero: the empty state already
-                    // says there are no matching rules, and repeating it reads as double render.
                     l10n.ruleTally(tally.matched, tally.matchedEnabled),
                     style: AppTextRole.supportingText.of(context),
                   ),
@@ -361,8 +349,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
               ),
             )
           else
-            // One sliver per source section, each a lazy SliverList: a subscription with a
-            // hundred thousand rows used to be inflated in one frame and froze the UI.
             for (final section in ruleSections(visible))
               ...ruleSectionSlivers(
                 source: section.source,
@@ -383,8 +369,6 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   }
 }
 
-/// Source filter chips: all, user, subscription, built-in preset. This row is the reference
-/// chip-row shape for the whole app, now extracted into ChipRow plus FilterPill.
 class _SourceChips extends StatelessWidget {
   const _SourceChips({required this.value, required this.onChanged});
 
@@ -411,8 +395,6 @@ class _SourceChips extends StatelessWidget {
   }
 }
 
-/// Rule rows grouped by source, in enum order. Presets may be read-only and subscriptions get
-/// overwritten, so grouping carries meaning and each group is its own sliver.
 class RuleSection {
   const RuleSection(this.source, this.rules);
 
@@ -431,9 +413,6 @@ List<RuleSection> ruleSections(List<MockRule> rules) {
   ];
 }
 
-/// Header plus a lazy row sliver for one source group. Rows are built on demand: a subscription
-/// can carry six figures of rules, and inflating them all in the first frame is what froze the
-/// page (see the 2026-10-27 ANR with 191,090 rules).
 List<Widget> ruleSectionSlivers({
   required RuleSource source,
   required List<MockRule> rules,
@@ -461,8 +440,6 @@ List<Widget> ruleSectionSlivers({
           );
           return ItemPositionProvider(
             position: ItemPosition.get(index, rules.length),
-            // Memoised on the row's own values: toggling one rule, or filtering, no longer rebuilds
-            // every visible row's chips and switch.
             child: MemoBuilder(
               key: ValueKey(rule.id),
               inputs: [rule, kind, protected],

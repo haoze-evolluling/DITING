@@ -1,10 +1,3 @@
-//! Record payloads and their RFC 1035 encoders.
-//!
-//! Names inside rdata are written through the message's [`NameWriter`] only where RFC 1035 (and
-//! the record's own RFC) permits compression: CNAME, PTR, NS, MX exchange, SRV target and the SOA
-//! MNAME/RNAME. SVCB/HTTPS targets (RFC 9460) and NAPTR replacements (RFC 3403) are written
-//! uncompressed, because a parser is never allowed to assume they were compressed.
-
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::build::name::NameWriter;
@@ -14,7 +7,6 @@ use crate::build::types::{
     TYPE_HTTPS, TYPE_MX, TYPE_NAPTR, TYPE_NS, TYPE_PTR, TYPE_SOA, TYPE_SRV, TYPE_SVCB, TYPE_TXT,
 };
 
-/// The payload of one resource record.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum RData {
     A(Ipv4Addr),
@@ -35,7 +27,6 @@ pub enum RData {
         preference: u16,
         exchange: String,
     },
-    /// One or more `<character-string>` values, each at most 255 bytes.
     Txt(Vec<Vec<u8>>),
     Srv {
         priority: u16,
@@ -62,12 +53,10 @@ pub enum RData {
         regexp: String,
         replacement: String,
     },
-    /// Opaque rdata for types without a dedicated variant.
     Raw(Vec<u8>),
 }
 
 impl RData {
-    /// Builds a multi-string TXT payload from any byte-like iterator.
     pub fn txt<T: AsRef<[u8]>>(values: impl IntoIterator<Item = T>) -> Self {
         RData::Txt(
             values
@@ -77,7 +66,6 @@ impl RData {
         )
     }
 
-    /// The DNS type this variant normally belongs to (`None` for [`RData::Raw`]).
     pub fn rtype(&self) -> Option<u16> {
         Some(match self {
             RData::A(_) => TYPE_A,
@@ -98,9 +86,6 @@ impl RData {
         })
     }
 
-    /// Appends this payload after the record header.
-    ///
-    /// `out` is the whole message buffer so compression offsets stay message-relative.
     pub fn encode(&self, names: &mut NameWriter, out: &mut Vec<u8>) -> bool {
         match self {
             RData::A(address) => out.extend_from_slice(&address.octets()),
@@ -189,7 +174,6 @@ impl RData {
                         return false;
                     }
                 }
-                // RFC 3403: the replacement name is not compressed.
                 if !crate::pack_name(replacement, out) {
                     return false;
                 }
@@ -200,7 +184,6 @@ impl RData {
     }
 }
 
-/// The target and parameters of an SVCB/HTTPS record (RFC 9460).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct SvcbRData {
     pub priority: u16,
@@ -209,7 +192,6 @@ pub struct SvcbRData {
 }
 
 impl SvcbRData {
-    /// A record with no parameters; `target` may be `"."` for a service alias.
     pub fn new(priority: u16, target: impl Into<String>) -> Self {
         Self {
             priority,
@@ -218,14 +200,12 @@ impl SvcbRData {
         }
     }
 
-    /// Adds one parameter (call [`SvcParam`] helpers to build common ones).
     pub fn push(mut self, param: SvcParam) -> Self {
         self.params.push(param);
         self
     }
 }
 
-/// One SVCB/HTTPS key/value parameter.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SvcParam {
     pub key: u16,
@@ -233,12 +213,10 @@ pub struct SvcParam {
 }
 
 impl SvcParam {
-    /// A parameter with an already-encoded value.
     pub fn new(key: u16, value: Vec<u8>) -> Self {
         Self { key, value }
     }
 
-    /// `alpn` (key 1): a length-prefixed list of protocol identifiers such as `h2` and `h3`.
     pub fn alpn(protocols: &[&str]) -> Self {
         let mut value = Vec::new();
         for protocol in protocols {
@@ -252,17 +230,14 @@ impl SvcParam {
         Self::new(SVCB_KEY_ALPN, value)
     }
 
-    /// `no-default-alpn` (key 2): an empty value.
     pub fn no_default_alpn() -> Self {
         Self::new(SVCB_KEY_NO_DEFAULT_ALPN, Vec::new())
     }
 
-    /// `port` (key 3).
     pub fn port(port: u16) -> Self {
         Self::new(SVCB_KEY_PORT, port.to_be_bytes().to_vec())
     }
 
-    /// `ipv4hint` (key 4): the addresses in network byte order.
     pub fn ipv4hint(addresses: &[Ipv4Addr]) -> Self {
         let mut value = Vec::with_capacity(addresses.len() * 4);
         for address in addresses {
@@ -271,7 +246,6 @@ impl SvcParam {
         Self::new(SVCB_KEY_IPV4HINT, value)
     }
 
-    /// `ipv6hint` (key 6): the addresses in network byte order.
     pub fn ipv6hint(addresses: &[Ipv6Addr]) -> Self {
         let mut value = Vec::with_capacity(addresses.len() * 16);
         for address in addresses {
@@ -280,7 +254,6 @@ impl SvcParam {
         Self::new(SVCB_KEY_IPV6HINT, value)
     }
 
-    /// `dohpath` (key 7): the path template as UTF-8.
     pub fn dohpath(path: &str) -> Self {
         Self::new(SVCB_KEY_DOHPATH, path.as_bytes().to_vec())
     }
@@ -288,12 +261,10 @@ impl SvcParam {
 
 fn write_svcb(data: &SvcbRData, out: &mut Vec<u8>) -> bool {
     out.extend_from_slice(&data.priority.to_be_bytes());
-    // RFC 9460 forbids compressing the target.
     if !crate::pack_name(&data.target, out) {
         return false;
     }
 
-    // RFC 9460 requires parameters in strictly increasing key order.
     let mut params: Vec<&SvcParam> = data.params.iter().collect();
     params.sort_by_key(|param| param.key);
     for pair in params.windows(2) {

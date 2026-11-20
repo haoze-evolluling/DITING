@@ -24,8 +24,6 @@ class ProviderFormResult {
   final String key;
 }
 
-/// Provider edit dialog: name, base URL, model, key plus two real actions - "fetch models"
-/// calls `GET {base}/models`, "test connection" sends a minimal `chat/completions` request.
 class AgentProviderEditor extends ConsumerStatefulWidget {
   const AgentProviderEditor({super.key, this.existing, this.preset});
 

@@ -1,25 +1,3 @@
-//! The engine: state, lifecycle, the configuration setters and the JSON documents the UI reads.
-//!
-//! One [`Engine`] is one Android engine instance — one `tunnel.Engine` as Kotlin saw it. It owns the
-//! cache, the published policy snapshot, the rewrite table, the resolver, the log buffer and the
-//! tokio runtime that serves the standalone DNS ports. It is always used behind an `Arc` (see
-//! [`crate::jni`]'s handle registry), so the data path can clone it into a background refresh task
-//! without the JNI layer having to reason about lifetimes.
-//!
-//! # What the setters do
-//!
-//! | Kotlin call | Here |
-//! |---|---|
-//! | `applyDNSConfig` | [`Engine::apply_dns_config`] |
-//! | `applyRuleSnapshot` | [`Engine::apply_rule_snapshot`] |
-//! | `setRewriteRules` | [`Engine::set_rewrite_rules`] |
-//! | `setFilterDNS` | [`Engine::set_filter_dns`] |
-//! | `setBlockResponseType` | [`Engine::set_block_response_type`] |
-//! | `clearDNSCache` | [`Engine::clear_dns_cache`] |
-//! | `getStats` / `getDNSCacheStats` / `getDNSCacheEntries` | [`crate::stats`] |
-//! | `resolveDomain` | [`Engine::resolve_domain`] |
-//! | `startStandalone` / `stopStandalone` / `stop` | [`Engine::start_standalone`] |
-
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -50,21 +28,12 @@ use crate::resolver::{Bootstrap, Resolver, ResolverDeps, StatsStore, UpstreamTru
 use crate::standalone::Standalone;
 use crate::tunnel::{PacketLink, Session, TunFd};
 
-/// The Android MTU the Go engine used (`defaultTunMTU`): 1500 minus the VPN's own headers.
 pub const DEFAULT_TUN_MTU: usize = 1400;
 
-/// `TrafficCallback.onTrafficStatsTick(byte[])`, installed by Kotlin.
 pub trait TrafficSink: Send + Sync + 'static {
-    /// One packed tick, see [`crate::tunnel::stats::traffic_payload`].
     fn tick(&self, payload: &[u8]);
 }
 
-/// The tokio runtime, shut down without blocking.
-///
-/// `Runtime`'s own `Drop` waits for its blocking pool, which panics when it happens on a worker
-/// thread — and the last `Arc<Engine>` can well be dropped by a task (a cancelled server loop, a
-/// background refresh). `shutdown_background` is the only safe way out: tasks that are still queued
-/// are dropped instead of being waited for, which is what a stopped engine wants anyway.
 struct EngineRuntime(Option<Runtime>);
 
 impl EngineRuntime {
@@ -91,7 +60,6 @@ impl Drop for EngineRuntime {
     }
 }
 
-/// One engine instance.
 pub struct Engine {
     started_at_ms: i64,
     runtime: EngineRuntime,
@@ -100,44 +68,23 @@ pub struct Engine {
     rewrites: Rewrites,
     dynamic_blocks: DynamicBlocks,
     filter_dns: AtomicBool,
-    /// `setBlockIpv6`: answer every AAAA query with an empty NOERROR (NODATA) so a client on a
-    /// link whose IPv6 is unusable falls back to IPv4 instead of stalling on a dual-stack retry.
-    /// Only set when the tunnel carries no IPv6.
     block_ipv6: AtomicBool,
-    /// U10: query types answered with an empty NOERROR (currently `HTTPS` / `SVCB`).
     blocked_qtypes: RwLock<Vec<u16>>,
-    /// U10: reject an upstream answer that points a public name at a private/loopback address.
     rebinding_protection: AtomicBool,
-    /// N8: the DNS64 synthesizer, `None` when the suite is disabled.
     dns64: RwLock<Option<Arc<diting_dns64_core::Engine>>>,
-    /// N9: the LAN client rate limiter, `None` when limiting is off.
     rate_limit: RwLock<Option<diting_ratelimit_core::RateLimiter>>,
-    /// Per-UID DNS/new-connection limiting for the normal tunnel.
     connection_limit: RwLock<Option<Arc<ConnectionLimiter>>>,
     block_response: AtomicU32,
-    /// R4: temporary pause. While `now_ms() < pause_until_ms` every policy block is skipped, so DNS
-    /// still resolves but nothing is filtered. `0` means not paused.
     pause_until_ms: AtomicI64,
-    /// R4: allowlist-only. When set, a name that is not explicitly allow-listed is blocked even if no
-    /// block rule matches — a strict "only these pass" mode.
     allowlist_only: AtomicBool,
     dynamic_config: RwLock<BlockConfig>,
     config: RwLock<Option<DnsConfig>>,
     resolver: RwLock<Arc<Resolver>>,
-    /// The statistics of every provider ever configured, keyed like `ConfigureProviders` did, so a
-    /// config change keeps the health the circuit breaker and the ranking depend on.
     stats: Arc<StatsStore>,
-    /// The bootstrap resolver, shared by every provider of every published resolver.
     bootstrap: Arc<Bootstrap>,
-    /// The trust store the encrypted upstreams verify against (`upstreamRootPool`).
     trust: RwLock<Arc<UpstreamTrust>>,
-    /// `VpnService.protect`, installed by Kotlin before the TUN starts. Shared by the resolver
-    /// dialers and the bootstrap queries, so one setter covers every outbound socket.
     protector: ProtectorHandle,
-    /// The outbound transports (direct / SOCKS5 / HTTP CONNECT) and their per-UID scope. Shared
-    /// with the resolver's dialer so the engine's own upstream queries follow the same route.
     outbound: Arc<RwLock<Outbound>>,
-    /// `OutboundProxyStatusCallback` and its `(state, message)` dedupe.
     outbound_status: Arc<StatusDispatcher>,
     logs: Arc<Logs>,
     flights: Mutex<std::collections::HashMap<Vec<u8>, crate::dns::flight::Flight>>,
@@ -145,36 +92,21 @@ pub struct Engine {
     blocked_queries: AtomicU64,
     server: Mutex<Option<Standalone>>,
     running: AtomicBool,
-    // ---- stage 3: the TUN data plane -----------------------------------------------------
-    /// The UID/package callbacks and their caches.
     attribution: Attribution,
-    /// `connLogSeen`: one row per `app|dest|port|proto` per session.
     connlog: ConnLogDedup,
-    /// The live connection table behind the UI's 实时连接视图 (incremental snapshot).
     flows: Mutex<FlowTable>,
-    /// `SetBlockedUIDs`; empty until the UI pushes the list.
     blocked_uids: RwLock<Arc<BlockedUids>>,
-    /// `SetFilterHttp3`: drop `UDP :443` so HTTP/3 falls back to TCP (needs the MITM UID set).
     quic_drop: AtomicBool,
-    /// `SetBlockEncryptedDns`: refuse `TCP/UDP :853`.
     block_encrypted_dns: AtomicBool,
-    /// The per-UID byte counters behind `TrafficCallback`.
     traffic: Arc<TrafficTracker>,
     traffic_sink: RwLock<Option<Arc<dyn TrafficSink>>>,
     tick_interval_ms: AtomicU64,
-    /// The running TUN session (the fd path or the in-memory test link).
     full: Mutex<Option<Session>>,
-    /// The ticker task's stop flag.
     ticker: Mutex<Option<Arc<AtomicBool>>>,
-    // ---- stage 4b: MITM -----------------------------------------------------------------
-    /// The root CA, the smart filter and the pushed cosmetic/request rules. One `Arc` so the
-    /// relay tasks clone it instead of borrowing the engine's internals.
     mitm: Arc<crate::mitm::MitmState>,
 }
 
 impl Engine {
-    /// A fresh engine. Nothing is configured yet: the cache is disabled, no snapshot is published,
-    /// but the log buffer is already flushing and the runtime is ready to serve.
     pub fn new() -> Self {
         let logs = Arc::new(Logs::new());
         let sink: Arc<dyn BootstrapSink> = logs.clone();
@@ -248,7 +180,6 @@ impl Engine {
         }
     }
 
-    // ---- accessors used by the query path -------------------------------------------------
 
     pub fn cache(&self) -> &DnsCache {
         &self.cache
@@ -266,8 +197,6 @@ impl Engine {
         &self.logs
     }
 
-    /// The trust store the DoH/DoT/DoQ clients verify against. Stage 4's CA inspection replaces it;
-    /// the transport tests install a loopback PKI.
     pub fn upstream_trust(&self) -> Arc<UpstreamTrust> {
         self.trust
             .read()
@@ -275,12 +204,10 @@ impl Engine {
             .clone()
     }
 
-    /// The protector every outbound socket of the engine goes through.
     pub fn protector(&self) -> ProtectorHandle {
         self.protector.clone()
     }
 
-    /// The current outbound transport (direct or proxied) and its per-UID scope.
     pub fn outbound(&self) -> Outbound {
         self.outbound
             .read()
@@ -288,7 +215,6 @@ impl Engine {
             .clone()
     }
 
-    /// `ConfigureOutboundProxy`: empty on success, otherwise the error text Kotlin shows.
     pub fn configure_outbound_proxy(&self, payload: &str) -> String {
         match crate::outbound::Config::parse(payload) {
             Ok(config) => {
@@ -307,13 +233,10 @@ impl Engine {
         }
     }
 
-    /// `SetOutboundProxyStatusCallback`; a null stops reporting.
     pub fn set_outbound_status_sink(&self, sink: Option<Arc<dyn StatusSink>>) {
         self.outbound_status.set(sink);
     }
 
-    /// Replaces the trust store. The next `ApplyDNSConfig` (or a direct
-    /// [`Engine::rebuild_resolver`]) publishes it to the transports.
     pub fn set_upstream_trust(&self, trust: Arc<UpstreamTrust>) {
         *self
             .trust
@@ -338,7 +261,6 @@ impl Engine {
         self.runtime.handle()
     }
 
-    /// Fire-and-forget: a background refresh nobody joins.
     pub fn spawn<F>(&self, future: F)
     where
         F: std::future::Future<Output = ()> + Send + 'static,
@@ -346,7 +268,6 @@ impl Engine {
         self.runtime.handle().spawn(future);
     }
 
-    /// A task whose handle the caller keeps, so it can be aborted when the server stops.
     pub fn spawn_task<F>(&self, future: F) -> tokio::task::JoinHandle<()>
     where
         F: std::future::Future<Output = ()> + Send + 'static,
@@ -358,11 +279,7 @@ impl Engine {
         self.runtime.handle().block_on(future)
     }
 
-    // ---- configuration -------------------------------------------------------------------
 
-    /// `ApplyDNSConfig`. The order is the old one: validate and normalize first, push the new policy
-    /// into the cache, publish the providers, and only then swap the block-response mode, the dynamic
-    /// config and the stored document. A rejected snapshot therefore changes nothing at all.
     pub fn apply_dns_config(&self, payload: &str) -> EngineResult<()> {
         let config = DnsConfig::from_json(payload)?;
 
@@ -393,12 +310,6 @@ impl Engine {
         Ok(())
     }
 
-    /// Builds and publishes the resolver for `config`, closing the one it replaces.
-    ///
-    /// The statistics and the bootstrap parser are shared across publications (their state is the
-    /// point), and the trust store is read at publish time so `set_upstream_trust` applies to the
-    /// next configuration. A provider that cannot be dialed is dropped and reported as a log row
-    /// instead of silently disappearing.
     fn publish_resolver(&self, config: &DnsConfig) {
         let deps = ResolverDeps {
             trust: self.upstream_trust(),
@@ -425,7 +336,6 @@ impl Engine {
         self.policy.apply(payload)
     }
 
-    /// `SetRewriteRules`: a malformed payload is logged and the previous table keeps serving.
     pub fn set_rewrite_rules(&self, payload: &str) {
         if payload.is_empty() {
             return;
@@ -446,9 +356,6 @@ impl Engine {
         self.filter_dns.load(Ordering::Acquire)
     }
 
-    /// `setBlockIpv6`: suppress AAAA at the DNS stage while the tunnel has no usable IPv6. Kotlin
-    /// derives it from the tunnel plan's `enableIpv6`, so `auto` with no reachable IPv6, and an
-    /// explicit `disable`, both filter; `auto`/`prefer` with a working link do not.
     pub fn set_block_ipv6(&self, enabled: bool) {
         self.block_ipv6.store(enabled, Ordering::Release);
     }
@@ -457,7 +364,6 @@ impl Engine {
         self.block_ipv6.load(Ordering::Acquire)
     }
 
-    /// U10: whether [qtype] is suppressed by the privacy suite (HTTPS/SVCB).
     pub fn records_blocked(&self, qtype: u16) -> bool {
         self.blocked_qtypes
             .read()
@@ -465,13 +371,10 @@ impl Engine {
             .contains(&qtype)
     }
 
-    /// U10: whether private-address answers are rejected (DNS rebinding protection).
     pub fn rebinding_protection(&self) -> bool {
         self.rebinding_protection.load(Ordering::Acquire)
     }
 
-    /// N8: reconfigures the DNS64 synthesizer. `None` when `enabled` is false; empty `prefixes` uses
-    /// the RFC 6052 well-known prefix `64:ff9b::/96`.
     pub fn set_dns64(&self, enabled: bool, prefixes: &[String]) -> Result<(), String> {
         let engine = if enabled {
             Some(Arc::new(
@@ -488,7 +391,6 @@ impl Engine {
         Ok(())
     }
 
-    /// N8: the active DNS64 synthesizer, or `None` when disabled.
     pub fn dns64(&self) -> Option<Arc<diting_dns64_core::Engine>> {
         self.dns64
             .read()
@@ -496,8 +398,6 @@ impl Engine {
             .clone()
     }
 
-    /// N9: installs the LAN client rate limiter. A disabled config clears it so the server path
-    /// keeps a single cheap branch. Replaces any previous limiter (the Go side swaps the handle).
     pub fn set_rate_limit(&self, config: &diting_ratelimit_core::Config) {
         let limiter = if config.enabled {
             Some(diting_ratelimit_core::RateLimiter::new(config))
@@ -510,7 +410,6 @@ impl Engine {
             .unwrap_or_else(|error| error.into_inner()) = limiter;
     }
 
-    /// N9: whether a LAN client packet from `address` may proceed. Always true when limiting is off.
     pub fn allow_client(&self, address: Option<&diting_ratelimit_core::Addr>, now_ns: i64) -> bool {
         match self
             .rate_limit
@@ -525,7 +424,6 @@ impl Engine {
         }
     }
 
-    /// Installs the per-UID limiter. Disabling clears it, leaving the data plane on a cheap branch.
     pub fn set_connection_rate_limit(&self, config: ConnectionLimitConfig) {
         let limiter = config
             .enabled
@@ -536,7 +434,6 @@ impl Engine {
             .unwrap_or_else(|error| error.into_inner()) = limiter;
     }
 
-    /// Whether `uid` may spend a token from the DNS or new-connection bucket.
     pub fn allow_connection_rate(&self, kind: BucketKind, uid: i32, now_ns: i64) -> bool {
         match self
             .connection_limit
@@ -549,24 +446,19 @@ impl Engine {
         }
     }
 
-    /// `setBlockPause(untilMs)`: skip every policy block until `until_ms` (epoch ms). `0` clears it.
-    /// The pause naturally expires against the wall clock, so no timer clears it.
     pub fn set_block_pause_until(&self, until_ms: i64) {
         self.pause_until_ms.store(until_ms, Ordering::Release);
     }
 
-    /// Whether blocking is currently paused.
     pub fn block_paused(&self) -> bool {
         let until = self.pause_until_ms.load(Ordering::Acquire);
         until > 0 && now_ms() < until
     }
 
-    /// The raw pause deadline (0 when not paused); surfaced for diagnostics.
     pub fn block_pause_until(&self) -> i64 {
         self.pause_until_ms.load(Ordering::Acquire)
     }
 
-    /// `setAllowlistOnly(enabled)`: block anything that is not an explicit allow.
     pub fn set_allowlist_only(&self, enabled: bool) {
         self.allowlist_only.store(enabled, Ordering::Release);
     }
@@ -584,8 +476,6 @@ impl Engine {
         self.cache.clear();
     }
 
-    /// `effectiveBlockResponseType`: the configured mode, escalated by the dynamic-block tracker for a
-    /// domain that keeps being asked.
     pub fn effective_block_response(&self, domain: &str) -> u32 {
         let fallback = self.block_response.load(Ordering::Acquire);
         let config = *self
@@ -603,7 +493,6 @@ impl Engine {
             .response_for(&clean, &config, fallback, crate::resolver::now_ns())
     }
 
-    // ---- counters and logging ------------------------------------------------------------
 
     pub fn note_query(&self, blocked: bool) {
         self.total_queries.fetch_add(1, Ordering::Relaxed);
@@ -620,14 +509,10 @@ impl Engine {
         self.blocked_queries.load(Ordering::Relaxed)
     }
 
-    /// Pushes one row through the batch buffer (`notifyLog`).
     pub fn log_row(&self, row: LogRow) {
         self.logs.push(row.build(now_ms()));
     }
 
-    /// The engine's own log line. There is no logcat bridge in stage 1: `libditing_engine.so` is
-    /// loaded by a normal Android process, so the line goes to the batch log's error channel as a
-    /// row - which is where the UI's log viewer can already show it.
     pub fn log_error(&self, message: &str) {
         if message.is_empty() {
             return;
@@ -636,18 +521,11 @@ impl Engine {
         self.logs.push(row);
     }
 
-    // ---- lifecycle -----------------------------------------------------------------------
 
-    /// Starts the standalone DNS server on `port` (UDP + TCP, IPv4 + IPv6 when available).
     pub fn start_standalone(self: &Arc<Self>, port: u16) -> EngineResult<()> {
         self.start_standalone_on(port, false)
     }
 
-    /// Starts the standalone DNS server bound to loopback only.
-    ///
-    /// Used by the root no-VPN takeover: iptables REDIRECT rewrites the destination to the
-    /// loopback listener, and only a loopback-bound socket answers with the address conntrack
-    /// expects, so the client's connected DNS socket accepts the reply.
     pub fn start_standalone_loopback(self: &Arc<Self>, port: u16) -> EngineResult<()> {
         self.start_standalone_on(port, true)
     }
@@ -681,8 +559,6 @@ impl Engine {
         self.running.store(false, Ordering::Release);
     }
 
-    /// `Stop`: stop serving and release the resolver and cache handles. The engine object stays
-    /// usable, exactly like the Go one (Kotlin calls `stop()` before dropping the reference).
     pub fn stop(&self) {
         self.stop_standalone();
         self.stop_full();
@@ -701,7 +577,6 @@ impl Engine {
         self.logs.set_sink(sink);
     }
 
-    /// The port the standalone server actually listens on (`None` when it is not running).
     pub fn standalone_port(&self) -> Option<u16> {
         self.server
             .lock()
@@ -710,24 +585,19 @@ impl Engine {
             .map(|server| server.port())
     }
 
-    // ---- stage 3: attribution, settings and the TUN session -------------------------------
 
-    /// The UID/package callbacks and the 2 s / 60 s caches in front of them.
     pub fn attribution(&self) -> &Attribution {
         &self.attribution
     }
 
-    /// The MITM session and the settings Kotlin pushes (`startStackMitm`, `setCosmeticRules`, …).
     pub fn mitm_state(&self) -> &Arc<crate::mitm::MitmState> {
         &self.mitm
     }
 
-    /// `connLogSeen`, reset when a new TUN session starts.
     pub fn connlog(&self) -> &ConnLogDedup {
         &self.connlog
     }
 
-    /// Records one admitted/blocked flow into the live table (best-effort: a poisoned lock drops it).
     pub fn record_flow(&self, key: FlowKey, app: &str, domain: &str, status: FlowStatus) {
         if let Ok(mut table) = self.flows.lock() {
             table.record(FlowEvent {
@@ -742,7 +612,6 @@ impl Engine {
         }
     }
 
-    /// Incremental connection snapshot as JSON; an empty document when the lock is poisoned.
     pub fn flow_snapshot_json(&self, since_seq: u64, limit: usize) -> String {
         match self.flows.lock() {
             Ok(table) => table.snapshot(since_seq, limit).to_json(),
@@ -754,24 +623,20 @@ impl Engine {
         }
     }
 
-    /// `resolveFlowUID`: app endpoint first, destination second (Android's direction).
     pub fn flow_uid(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint) -> i32 {
         self.attribution
             .uid_for(protocol, app, server, crate::resolver::now_ns())
     }
 
-    /// The package behind a UID, or an empty string.
     pub fn app_name(&self, uid: i32) -> String {
         self.attribution.package_for(uid, crate::resolver::now_ns())
     }
 
-    /// `logConnection`'s `app` column: the package, `uid:N`, or `unknown`.
     pub fn display_name(&self, uid: i32) -> String {
         self.attribution
             .display_name(uid, crate::resolver::now_ns())
     }
 
-    /// `SetBlockedUIDs`: the kernel parses the CSV and keeps the positive ids.
     pub fn set_blocked_uids(&self, csv: &str) {
         let parsed = Arc::new(BlockedUids::parse_csv(csv));
         *self
@@ -780,7 +645,6 @@ impl Engine {
             .unwrap_or_else(|error| error.into_inner()) = parsed;
     }
 
-    /// `isUIDBlocked`.
     pub fn is_uid_blocked(&self, uid: i32) -> bool {
         if uid < 0 {
             return false;
@@ -791,7 +655,6 @@ impl Engine {
             .is_blocked(i64::from(uid))
     }
 
-    /// `SetFilterHttp3`.
     pub fn set_filter_http3(&self, enabled: bool) {
         self.quic_drop.store(enabled, Ordering::Release);
     }
@@ -800,7 +663,6 @@ impl Engine {
         self.quic_drop.load(Ordering::Acquire)
     }
 
-    /// `SetBlockEncryptedDns`.
     pub fn set_block_encrypted_dns(&self, enabled: bool) {
         self.block_encrypted_dns.store(enabled, Ordering::Release);
     }
@@ -809,12 +671,10 @@ impl Engine {
         self.block_encrypted_dns.load(Ordering::Acquire)
     }
 
-    /// The per-UID byte counters; the flow handlers record `tx`/`rx` through this.
     pub fn traffic(&self) -> &Arc<TrafficTracker> {
         &self.traffic
     }
 
-    /// Installs `TrafficCallback`; the ticker only runs while a TUN session is up.
     pub fn set_traffic_sink(&self, sink: Option<Arc<dyn TrafficSink>>) {
         *self
             .traffic_sink
@@ -822,7 +682,6 @@ impl Engine {
             .unwrap_or_else(|error| error.into_inner()) = sink;
     }
 
-    /// `SetTickIntervalMs`: the UI stretches the cadence when the screen is off.
     pub fn set_tick_interval_ms(&self, millis: i64) {
         if millis <= 0 {
             return;
@@ -838,7 +697,6 @@ impl Engine {
             .clone()
     }
 
-    /// Starts the TUN data plane on the duplicated descriptor (`StartFull`).
     pub fn start_full(self: &Arc<Self>, fd: i32) -> EngineResult<()> {
         let link = TunFd::open(fd, DEFAULT_TUN_MTU).map_err(|error| {
             EngineError::state(format!("StartFull: dup TUN fd {fd} failed: {error}"))
@@ -846,7 +704,6 @@ impl Engine {
         self.start_full_with_link(Arc::new(link))
     }
 
-    /// The same session over any [`PacketLink`]: the host tests' in-memory device.
     pub fn start_full_with_link(self: &Arc<Self>, link: Arc<dyn PacketLink>) -> EngineResult<()> {
         let mut slot = self.full.lock().unwrap_or_else(|error| error.into_inner());
         if let Some(session) = slot.as_ref() {
@@ -854,19 +711,15 @@ impl Engine {
                 return Ok(());
             }
         }
-        // A new session logs every flow once, like `connLogSeen.reset()` in `StartFull`.
         self.connlog.reset();
         if let Ok(mut flows) = self.flows.lock() {
             flows.reset();
         }
-        // `StartFull` also restarted the query counters for the new session.
         self.total_queries.store(0, Ordering::Relaxed);
         self.blocked_queries.store(0, Ordering::Relaxed);
         let session = Session::start(Arc::clone(self), link).map_err(EngineError::state)?;
         *slot = Some(session);
         drop(slot);
-        // `StartFull` reported the proxy state before the stack came up; the dials then report
-        // `ready`/`error` through the same dispatcher.
         let outbound = self.outbound();
         if outbound.config().enabled() {
             outbound.report("connecting", "");
@@ -877,7 +730,6 @@ impl Engine {
         Ok(())
     }
 
-    /// `StopFull` / `ReleaseTun`: stops the data plane; idempotent.
     pub fn stop_full(&self) {
         let session = {
             let mut slot = self.full.lock().unwrap_or_else(|error| error.into_inner());
@@ -898,7 +750,6 @@ impl Engine {
             .unwrap_or(false)
     }
 
-    /// The `"tun"` object for `getStats`; `None` while no TUN session is running.
     pub fn tun_document(&self) -> Option<serde_json::Value> {
         self.full
             .lock()
@@ -928,14 +779,7 @@ impl Engine {
                     return;
                 }
                 let deltas = engine.traffic.tick();
-                // Always tick, even with no data: the empty row count still ages the rate to zero,
-                // so a dashboard curve falls back to 0 when traffic stops instead of freezing its
-                // last value. The cost is one small callback per interval while the tunnel is up.
                 if let Some(sink) = engine.traffic_sink() {
-                    // The package names are resolved here, on the ticker thread through the same
-                    // 60 s attribution cache the rest of the engine uses. Kotlin then only has to
-                    // prepend the date and hand the buffer to the log kernel, instead of looking
-                    // up every UID and rebuilding the payload.
                     let now = crate::resolver::now_ns();
                     let rows: Vec<(i32, i64, i64, String)> = deltas
                         .iter()
@@ -967,7 +811,6 @@ impl Engine {
         }
     }
 
-    // ---- documents the JNI layer returns verbatim ----------------------------------------
 
     pub fn stats_json(&self) -> String {
         crate::stats::engine_stats_json(self)
@@ -985,11 +828,6 @@ impl Engine {
         crate::cache::entries_json(&entries)
     }
 
-    /// The blocking form of [`Engine::resolve_domain`] for host callers and the JNI entry point.
-    ///
-    /// A JNI caller is a plain thread; a host test may already be inside a runtime, so the call is
-    /// wrapped in `block_in_place` in that case (`resolve_domain` itself is async and cannot be
-    /// awaited from a synchronous entry point).
     pub fn resolve_domain_blocking(&self, domain: &str, ipv4: bool) -> String {
         let domain = domain.to_string();
         if tokio::runtime::Handle::try_current().is_ok() {
@@ -1015,10 +853,7 @@ impl Engine {
             .clone()
     }
 
-    // ---- diagnostics ---------------------------------------------------------------------
 
-    /// `ResolveDomain`: rewrite first, then the policy, then the configured upstream. Returns the
-    /// JSON document `DnsLookupProbe` parses, including its exact error texts.
     pub async fn resolve_domain(&self, domain: &str, ipv4: bool) -> String {
         let domain = diting_config_core::rewrite::normalize_domain(domain);
         if domain.is_empty() {
@@ -1086,14 +921,11 @@ impl Default for Engine {
 
 impl Drop for Engine {
     fn drop(&mut self) {
-        // Stop the data plane as well: a `Session` whose threads already exited must not keep its
-        // sockets (or the per-flow tasks) around just because the caller never called `stop()`.
         self.stop_full();
         self.stop_standalone();
     }
 }
 
-/// `resolveDomainResult` with `omitempty` on everything but `source`.
 fn resolve_domain_json(
     ips: &[String],
     ttls: &[i64],
@@ -1119,14 +951,12 @@ fn resolve_domain_json(
 }
 
 pub fn resolve_domain_error_json(message: &str) -> String {
-    // `json.Marshal(resolveDomainResult{Error: message})`: only `source` and `error` are present.
     let mut document = serde_json::Map::new();
     document.insert("source".to_string(), serde_json::json!(""));
     document.insert("error".to_string(), serde_json::json!(message));
     serde_json::Value::Object(document).to_string()
 }
 
-/// `dns.RcodeToString`, then the fallback the old code used.
 fn rcode_text(rcode: u16) -> String {
     match rcode {
         0 => "NOERROR".to_string(),

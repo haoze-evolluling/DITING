@@ -1,5 +1,3 @@
-//! Payload round-trips and the rejection paths a stale Go/Rust pair runs into.
-
 use super::*;
 use crate::hosts::Source;
 use crate::ip::parse_ip;

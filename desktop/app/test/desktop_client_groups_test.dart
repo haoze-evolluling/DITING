@@ -1,6 +1,3 @@
-// Desktop traffic branch, client groups (desktop parity):
-// `/clients/groups` is one document, edited as drafts and written once.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_client_groups_models.dart';
 import 'package:diting_desktop/pages/traffic/desktop_client_groups_page.dart';
@@ -56,7 +53,6 @@ void main() {
     expect(data.ruleLists, isEmpty);
     expect(data.upstreams, isEmpty);
 
-    // Empty bindings are omitted so the service keeps its inherit semantics.
     final json = group.toJson();
     expect(json.containsKey('ruleListIds'), isFalse);
     expect(json.containsKey('upstreamIds'), isFalse);

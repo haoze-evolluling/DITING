@@ -7,8 +7,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'dashboard_connected_buttons.dart';
 
-/// Dashboard card, after upstream views/dashboard/widgets/card.dart. Adds elevation tiers;
-/// corners follow [AppCorner.standard] like every other surface in the app.
 class DashboardCard extends StatelessWidget {
   const DashboardCard({
     super.key,
@@ -23,8 +21,6 @@ class DashboardCard extends StatelessWidget {
   final VoidCallback? onTap;
   final String? semanticLabel;
 
-  /// Not clipped by default so a pressed control can spill over the edge; only
-  /// charts, whose content can overflow, opt in.
   final Clip clipBehavior;
   final Widget child;
 
@@ -33,10 +29,6 @@ class DashboardCard extends StatelessWidget {
     final density = DashboardDensityScope.of(context);
     final shape = AppShape.standard;
     final editBar = DashboardEditBar.of(context);
-    // Each card owns its own layer: the 1 s speed/traffic and 2 s memory figures rebuild a single
-    // card, and without a boundary here that dirty child promotes the whole scroll body (every card
-    // and its shadow) into one full-width repaint, which is what dropped a frame mid-fling. The
-    // decoration above this boundary stays cached, so the shadow is not re-rastered either.
     final content = RepaintBoundary(
       child: Padding(
         padding: padding ?? dashboardCardPadding(density),
@@ -48,8 +40,6 @@ class DashboardCard extends StatelessWidget {
                 children: [
                   SizedBox(height: DashboardEditBar.height, child: editBar),
                   const SizedBox(height: DashboardEditBar.gap),
-                  // Dim the body only, so the edit bar keeps its colors. Editing wins over the
-                  // card's own buttons: a tap mid-arrangement would read as a lost drag.
                   IgnorePointer(
                     child: DisabledMask(status: true, child: child),
                   ),
@@ -57,8 +47,6 @@ class DashboardCard extends StatelessWidget {
               ),
       ),
     );
-    // The card is its own surface level: anything nested (a `CommonCard` tile, a chip) must be
-    // painted one level up, otherwise it takes the card's own color and its background vanishes.
     final scoped = SurfaceScope(level: SurfaceLevel.card, child: content);
     return Semantics(
       container: true,
@@ -88,7 +76,6 @@ class DashboardCard extends StatelessWidget {
   }
 }
 
-/// `DashboardCard` reserves a row for the bar above its content.
 class DashboardEditBar extends InheritedWidget {
   const DashboardEditBar({super.key, required this.bar, required super.child});
 
@@ -104,7 +91,6 @@ class DashboardEditBar extends InheritedWidget {
   bool updateShouldNotify(DashboardEditBar oldWidget) => bar != oldWidget.bar;
 }
 
-/// Card title row: icon, title, trailing action. Height 24 is the design value.
 class DashboardCardHeader extends StatelessWidget {
   const DashboardCardHeader({
     super.key,
@@ -140,9 +126,6 @@ class DashboardCardHeader extends StatelessWidget {
               size: glyphSize,
               color: colorScheme.onSurfaceVariant,
             ),
-          // The title and its badges flow: a title is never cut to make room for a status
-          // chip, the chip moves under it instead. A badge carries a secondary fact, so it
-          // must not decide how much of the name the reader gets.
           Expanded(
             child: Wrap(
               spacing: 8,
@@ -159,9 +142,6 @@ class DashboardCardHeader extends StatelessWidget {
               ],
             ),
           ),
-          // A trailing control keeps the title row's own height instead of growing with a
-          // badge that wrapped: the switch stays a switch, and its overflow box still has a
-          // bounded box to center in.
           for (final child in trailing)
             SizedBox(
               height: height,
@@ -206,7 +186,6 @@ class DashboardBlock extends StatelessWidget {
 
 enum DashboardChipTone { idle, ok, warn }
 
-/// Status badge. [dot] adds a leading dot, [large] is used next to titles.
 class DashboardChip extends StatelessWidget {
   const DashboardChip({
     super.key,
@@ -266,8 +245,6 @@ class DashboardChip extends StatelessWidget {
   }
 }
 
-/// One `label : value` row. Both texts ellipsize and the row is unfixed, so `1.2 GB`
-/// truncates on a 320dp row.
 class DashboardMetric extends StatelessWidget {
   const DashboardMetric({
     super.key,
@@ -281,8 +258,6 @@ class DashboardMetric extends StatelessWidget {
   final String value;
   final Color? color;
 
-  /// The figure's role: [AppTextRole.metricMedium] for a card's headline number,
-  /// [AppTextRole.metricCompact] for the figures of a grid.
   final AppTextRole style;
 
   @override
@@ -309,10 +284,6 @@ class DashboardMetric extends StatelessWidget {
   }
 }
 
-/// A grid of [DashboardMetric]s in equal-width cells.
-///
-/// Up to [maxColumns] per row, and never fewer than two when the text is scaled up: four figures
-/// side by side at 1.4x are ellipsized to `12,...`, which is worse than taking two rows.
 class DashboardMetricGrid extends StatelessWidget {
   const DashboardMetricGrid({
     super.key,
@@ -324,7 +295,6 @@ class DashboardMetricGrid extends StatelessWidget {
 
   final List<DashboardMetric> metrics;
 
-  /// Columns at the normal text size; a narrow card simply uses as many as there are metrics.
   final int maxColumns;
 
   final double gap;
@@ -351,8 +321,6 @@ class DashboardMetricGrid extends StatelessWidget {
   }
 }
 
-/// A switch laid out at its track size, not its tap target: a 48-high target would set the height
-/// of every row that holds one. The surrounding card owns the tap.
 class DashboardSwitch extends StatelessWidget {
   const DashboardSwitch({
     super.key,
@@ -383,8 +351,6 @@ class DashboardSwitch extends StatelessWidget {
   }
 }
 
-/// Round icon button for the card's top-right corner. The 24-high title row would squeeze a
-/// default button, so it overflows explicitly.
 class DashboardIconButton extends StatelessWidget {
   const DashboardIconButton({
     super.key,
@@ -426,8 +392,6 @@ class DashboardIconButton extends StatelessWidget {
   }
 }
 
-/// Card entrance: fade plus a small rise, played once per list refresh. Shared so the desktop
-/// board animates in exactly like the Android one instead of picking its own curve.
 class DashboardCardEntrance extends StatelessWidget {
   const DashboardCardEntrance({super.key, required this.child});
 
@@ -439,10 +403,6 @@ class DashboardCardEntrance extends StatelessWidget {
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
-      // The card is cached behind the fade: Opacity over an un-cached subtree re-rasterises the
-      // card's soft shadow on every frame of the rise, which is what made a swipe during the
-      // first-run entrance stutter. A RepaintBoundary here turns each frame into a composite of
-      // the already-painted card instead of another full-card paint.
       builder: (context, amount, child) => Opacity(
         opacity: amount,
         child: Transform.translate(

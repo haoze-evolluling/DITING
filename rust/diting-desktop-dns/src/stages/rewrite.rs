@@ -1,9 +1,3 @@
-//! User-defined DNS rewrites (A/AAAA/CNAME/TXT/MX/SRV/HTTPS/... and PTR).
-//!
-//! A matched rule is authoritative: an empty record list with NOERROR is an intentional NODATA for
-//! the queried type, and a non-zero rcode carries no records. Both behaviours stop internal names
-//! from leaking upstream.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

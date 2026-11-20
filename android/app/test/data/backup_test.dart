@@ -1,6 +1,3 @@
-// Pins the backup round trip: export parses, import merges into a different
-// store and reports what it did.
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,7 +26,6 @@ void _backupTransfer() {
 
   late Database db;
 
-  /// The minimum rule/subscription schema the exporter and importer touch.
   Future<void> createSchema(Database database) async {
     Future<void> ruleTables(String name, {String? extra}) async {
       await database.execute(
@@ -80,7 +76,6 @@ void _backupTransfer() {
 
   tearDown(() => db.close());
 
-  /// A store pre-populated the way an upgrading user's would look.
   MemoryLegacyPrefsStore seededStore() => MemoryLegacyPrefsStore({
     LegacySettings.uiContainer: {
       'app_theme_mode': 'dark',
@@ -169,8 +164,6 @@ void _backupTransfer() {
       );
       final root = jsonDecode(export.content) as Map<String, Object?>;
 
-      // The 1.4.3 flat root (`formatVersion`, `customBlockRules`, `excludedApps`, ...) is gone:
-      // everything lives under `data`.
       expect(
         root.keys,
         unorderedEquals([
@@ -183,7 +176,6 @@ void _backupTransfer() {
       );
       expect(root['format'], BackupFormat.magic);
       expect(root['version'], BackupFormat.version);
-      // Groups are written in [BackupGroup] declaration order, whatever order the caller passed.
       expect(root['selection'], ['domainRules', 'blocked']);
       expect(
         (root['data'] as Map).keys,
@@ -271,7 +263,6 @@ void _backupTransfer() {
         exportSource(seededStore()),
         groups: {BackupGroup.rewriteDomain},
       );
-      // Local value changed; import must write the backup's value back.
       await db.update('rewrite_rule', {
         'targetValue': '9.9.9.9',
       }, where: 'id = 1');
@@ -309,7 +300,6 @@ void _backupTransfer() {
       expect(result.subscriptionCount, 1);
       final rows = await db.query('subscription');
       expect(rows, hasLength(1));
-      // Only the address is imported, so count, timestamp and ETag start empty.
       expect(rows.single['ruleCount'], 0);
       expect(rows.single['lastUpdated'], 0);
       expect(rows.single['httpEtag'], isNull);
@@ -426,8 +416,6 @@ void _backupTransfer() {
 
   group('全新安装', () {
     test('没有旧库时自建 schema，整份备份都能落库', () async {
-      // A fresh install has no data set yet; the importer must work against the schema this app
-      // creates, not just the minimal tables the round-trip tests use.
       final directory = Directory.systemTemp.createTempSync('diting_backup');
       const kind = DatabaseKind.normalRules;
       final path = p.join(directory.path, kind.fileName);

@@ -1,16 +1,8 @@
-//! Statement plans: what an import queues per rule, how a source is swept, and how a table is paged.
-//!
-//! The app runs every statement inside its own transaction/batch; what is queued, in which order and
-//! what it dedupes against is decided here. Dedupe is an explicit `WHERE NOT EXISTS` rather than
-//! `INSERT OR IGNORE`: legacy databases have no unique index, and a second copy of the predicate in
-//! Dart is exactly how the two sides would drift.
-
 use serde_json::{json, Map, Value};
 
 use crate::identity::{identity, Flavor};
 use crate::probe::{flag, integer, list, text};
 
-/// Every rule table and its provenance table, in the order a sweep walks them.
 pub const SOURCE_TABLES: [(&str, &str); 4] = [
     ("block_rule", "block_rule_source"),
     ("allow_rule", "allow_rule_source"),
@@ -18,17 +10,14 @@ pub const SOURCE_TABLES: [(&str, &str); 4] = [
     ("go_url_rule", "go_url_rule_source"),
 ];
 
-/// Sources a user sweep may delete; `preset` and `sub_*` are kept.
 pub const USER_SOURCES: [&str; 3] = ["useradd", "local_import", "local_hosts"];
 
-/// Rows per orphan-delete transaction: small enough that the write lock is released often.
 pub const ORPHAN_PAGE_SIZE: i64 = 2000;
 
 fn step(sql: String, args: Vec<Value>) -> Value {
     json!({"sql": sql, "args": args, "changes": false})
 }
 
-/// The source insert is the statement whose `changes()` the app sums into "N imported".
 fn counted_step(sql: String, args: Vec<Value>) -> Value {
     json!({"sql": sql, "args": args, "changes": true})
 }
@@ -37,7 +26,6 @@ fn batch(family: &str, steps: Vec<Value>) -> Value {
     json!({"family": family, "steps": steps})
 }
 
-/// One import's plan: the batches to run and the counters that are not statement results.
 pub struct ImportPlan {
     pub batches: Vec<Value>,
     pub type_skipped: i64,
@@ -84,7 +72,6 @@ fn domain_steps(
         ),
         args,
     );
-    // The same predicate finds the row whether it was just written or already existed.
     let mut source_args = vec![json!(source), json!(i32::from(enabled))];
     source_args.extend(identity.args.iter().cloned());
     let link = counted_step(
@@ -133,8 +120,6 @@ fn rewrite_steps(rule: &Value, source: &str, enabled: bool, now: i64) -> Vec<Val
     vec![insert, link]
 }
 
-/// URL rules go to `go_url_rule`, which has no `appScope` column, so a `$app=` rule is skipped rather
-/// than stored as a global block.
 fn keep_url_rule(rule: &Value) -> bool {
     match text(rule, "appScope") {
         Some(scope) => scope.trim().is_empty(),
@@ -177,7 +162,6 @@ fn url_steps(rule: &Value, source: &str, enabled: bool, now: i64) -> Vec<Value> 
     vec![insert, link]
 }
 
-/// Chunks a family into batches of `chunk_size` rules; an empty family produces no batch at all.
 fn push_batches(
     batches: &mut Vec<Value>,
     family: &str,
@@ -198,7 +182,6 @@ fn push_batches(
     }
 }
 
-/// `kind` is the subscription's storage value: a `hosts` dataset has no allow/url families.
 pub fn import_plan(
     parsed: &Value,
     source: &str,
@@ -279,7 +262,6 @@ pub fn import_plan(
     ImportPlan {
         batches,
         type_skipped,
-        // Cosmetic rules are parsed but never stored: the engine has no injection path for them.
         cosmetic: if domain_only {
             list(parsed, "cosmeticRules").len() as i64
         } else {
@@ -288,9 +270,6 @@ pub fn import_plan(
     }
 }
 
-/// Deletes one source's rules. Only source rows go first: a rule row may be shared, so orphans are
-/// swept afterwards in bounded id-range pages (one long transaction held the write lock for minutes
-/// on a subscription-sized table).
 pub fn remove_source_plan(source: &str) -> Value {
     let mut steps = Vec::new();
     for (_, source_table) in SOURCE_TABLES {
@@ -315,7 +294,6 @@ pub fn remove_source_plan(source: &str) -> Value {
     json!({"steps": steps, "orphans": orphans})
 }
 
-/// Enables or disables every source row of one source; the shared rule row keeps its own flag.
 pub fn set_source_enabled_plan(source: &str, enabled: bool) -> Value {
     let steps: Vec<Value> = SOURCE_TABLES
         .iter()
@@ -329,11 +307,6 @@ pub fn set_source_enabled_plan(source: &str, enabled: bool) -> Value {
     json!({"steps": steps})
 }
 
-/// One page of a rule table with its sources joined in.
-///
-/// The join is part of the plan: reading the table and then its sources used to halve nothing and
-/// double the peak. `beforeId` is exclusive and pages walk `id DESC`, which keeps a rule's sources
-/// inside one page.
 pub fn page_query(kind: &str, before_id: Option<i64>, limit: Option<i64>) -> Value {
     let (table, source_table) = crate::identity::tables(kind);
     let mut sql = format!(
@@ -356,7 +329,6 @@ pub fn page_query(kind: &str, before_id: Option<i64>, limit: Option<i64>) -> Val
     json!({"sql": sql, "args": args})
 }
 
-/// Table names per family, so the app never spells them itself.
 pub fn tables_plan() -> Value {
     let mut families = Map::new();
     for (key, kind) in [
@@ -379,7 +351,6 @@ pub fn tables_plan() -> Value {
     Value::Object(families)
 }
 
-/// The counters an import reports besides the statement results.
 pub fn summary(plan: &ImportPlan, parsed: &Value) -> Map<String, Value> {
     let mut summary = Map::new();
     summary.insert(String::from("typeSkipped"), json!(plan.type_skipped));

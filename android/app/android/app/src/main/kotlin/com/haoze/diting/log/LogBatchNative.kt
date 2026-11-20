@@ -1,23 +1,6 @@
 package com.haoze.diting.log
 
-/// The batched entry points of the log kernel, kept apart from [LogNative] so that file stays a
-/// flat list of JNI declarations.
-///
-/// These calls replace a loop of per-row JNI crossings with one payload:
-///
-/// * [dnsBatchSubmit] takes the engine's DNS batch and runs the counters, the classification and
-///   the writer queue in one call — the rows never come back to Kotlin for a re-pack;
-/// * [queueSubmitMany] enqueues an already-classified race/bootstrap batch under one queue lock;
-/// * [httpEvents] takes one packed batch of MITM relay decisions, feeds the request counters,
-///   classifies the rows and enqueues them — the three steps that used to be three JNI calls per
-///   request (`httpEvent` plus `queueSubmit`, with Kotlin unpacking and repacking the row between
-///   them);
-/// * [raceRows] / [bootstrapRows] classify one engine batch of race or bootstrap inputs and answer
-///   the rows the writer queue takes, so a burst costs one call instead of one pair per event.
-///
-/// Payload layouts are the ones documented in `rust/diting-log-core/src/api/`.
 
-/// `u32 count | rows(u32 length | bytes)`; the answer is the same as a single submit.
 internal fun LogNative.Companion.queueSubmitMany(
     handle: Long,
     rows: List<ByteArray>,
@@ -31,7 +14,6 @@ internal fun LogNative.Companion.queueSubmitMany(
     return readSubmit(reader)
 }
 
-/// `u32 count | (package, authority, protocol, outcome, matched rule)` per event.
 internal fun LogNative.Companion.httpEvents(
     stats: Long,
     queue: Long,
@@ -42,10 +24,6 @@ internal fun LogNative.Companion.httpEvents(
     "HTTP event batch",
 )
 
-/// One DNS batch: counters, classification and the writer queue in a single crossing.
-///
-/// `packed` is the engine's own batch. The kernel classifies and enqueues it itself, so neither
-/// the rows nor a re-packed `queueSubmitMany` payload cross the boundary.
 internal fun LogNative.Companion.dnsBatchSubmit(
     stats: Long,
     queue: Long,
@@ -72,7 +50,6 @@ private fun readBatchOutcome(payload: ByteArray?, what: String): LogBatchOutcome
     }
 }
 
-/// One engine race batch: classification and the writer queue in a single crossing.
 internal fun LogNative.Companion.raceRowsSubmit(
     queue: Long,
     packed: ByteArray,
@@ -81,7 +58,6 @@ internal fun LogNative.Companion.raceRowsSubmit(
     "race batch",
 )
 
-/// One engine bootstrap batch, classified and enqueued like [raceRowsSubmit].
 internal fun LogNative.Companion.bootstrapRowsSubmit(
     queue: Long,
     packed: ByteArray,
@@ -90,7 +66,6 @@ internal fun LogNative.Companion.bootstrapRowsSubmit(
     "bootstrap batch",
 )
 
-/// `u32 count | rows(race input)`; the answer is the writer rows in the same framing.
 internal fun LogNative.Companion.raceRows(packed: ByteArray): List<ByteArray> =
     readRowBatch(
         requireNotNull(instance.raceRows(packed, System.currentTimeMillis())) {
@@ -98,7 +73,6 @@ internal fun LogNative.Companion.raceRows(packed: ByteArray): List<ByteArray> =
         },
     )
 
-/// `u32 count | rows(bootstrap input)`; the answer is the writer rows in the same framing.
 internal fun LogNative.Companion.bootstrapRows(packed: ByteArray): List<ByteArray> =
     readRowBatch(
         requireNotNull(instance.bootstrapRows(packed, System.currentTimeMillis())) {

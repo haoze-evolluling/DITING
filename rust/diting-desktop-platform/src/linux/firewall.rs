@@ -1,7 +1,3 @@
-//! Firewall detection and port opening for firewalld, ufw, nftables and iptables.
-//!
-//! Detection order and commands match the former Go service's `internal/platform/linux/firewall.go`.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -12,10 +8,8 @@ use crate::traits::FirewallManager;
 
 use super::dnsstate::command_exists;
 
-/// Default web console port.
 const DEFAULT_WEB_PORT: i32 = 15353;
 
-/// Detected firewall management backend.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FirewallBackend {
     None,
@@ -37,7 +31,6 @@ impl FirewallBackend {
     }
 }
 
-/// Detects the available firewall manager: firewalld → ufw → nftables → iptables.
 pub fn detect_firewall_manager() -> FirewallBackend {
     if command_exists("firewall-cmd") {
         FirewallBackend::Firewalld
@@ -52,7 +45,6 @@ pub fn detect_firewall_manager() -> FirewallBackend {
     }
 }
 
-/// Whether 53/udp and 53/tcp inbound rules exist. No firewall means the ports are already open.
 pub async fn check_firewall_port53(executor: &dyn CommandExecutor) -> PlatformResult<bool> {
     let manager = detect_firewall_manager();
     if manager == FirewallBackend::None {
@@ -64,7 +56,6 @@ pub async fn check_firewall_port53(executor: &dyn CommandExecutor) -> PlatformRe
     Ok(check_firewall_rule_for_port(executor, manager, 53, "tcp").await)
 }
 
-/// Adds or removes 53/udp and 53/tcp inbound rules.
 pub async fn configure_firewall_port53(
     executor: &dyn CommandExecutor,
     enable: bool,
@@ -79,7 +70,6 @@ pub async fn configure_firewall_port53(
     configure_firewall_rule_for_port(executor, manager, 53, "tcp", enable).await
 }
 
-/// Whether the web console port has an inbound rule.
 pub async fn check_firewall_port_web(executor: &dyn CommandExecutor) -> PlatformResult<bool> {
     let manager = detect_firewall_manager();
     if manager == FirewallBackend::None {
@@ -88,7 +78,6 @@ pub async fn check_firewall_port_web(executor: &dyn CommandExecutor) -> Platform
     Ok(check_firewall_rule_for_port(executor, manager, DEFAULT_WEB_PORT, "tcp").await)
 }
 
-/// Adds or removes the web console inbound rule.
 pub async fn configure_firewall_port_web(
     executor: &dyn CommandExecutor,
     port: i32,
@@ -131,7 +120,6 @@ async fn check_firewall_rule_for_port(
                 Err(_) => false,
             }
         }
-        // nftables' rule language cannot be matched reliably; the configure path is idempotent.
         FirewallBackend::Nftables | FirewallBackend::None => false,
     }
 }
@@ -198,7 +186,6 @@ async fn configure_iptables_rule(
         operation, "INPUT", "-p", protocol, "--dport", &port_arg, "-j", "ACCEPT",
     ];
     match executor.run(iptables_binary(protocol), &args).await {
-        // Deleting a missing rule errors; treat it as idempotent success.
         Err(_) if !enable => Ok(()),
         Err(error) => Err(PlatformError::message(format!(
             "iptables 配置 {port}/{protocol} 失败: {error}"
@@ -214,7 +201,6 @@ async fn configure_nft_rule(
     enable: bool,
 ) -> PlatformResult<()> {
     if !enable {
-        // Deleting a missing table errors; ignore to stay idempotent.
         let _ = executor
             .run("nft", &["delete", "table", "inet", "diting"])
             .await;
@@ -255,7 +241,6 @@ fn unsupported(operation: &str) -> PlatformError {
     PlatformError::message(format!("当前平台 (linux) 不支持该操作: {operation}"))
 }
 
-/// Linux firewall manager adapter.
 pub struct LinuxFirewall {
     executor: Arc<dyn CommandExecutor>,
 }

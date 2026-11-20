@@ -1,16 +1,3 @@
-//! Replays the fixtures `rust/tools/probe-reference/ProbeReference.java` generated.
-//!
-//! The reference is a line-for-line JVM port of the Kotlin the probes used (same
-//! `java.util.regex` patterns, same `toIntOrNull` / `toDoubleOrNull` / `average()` /
-//! `roundToLong()`, same `DataInputStream` walk), so these files pin the Rust kernel against the
-//! implementation it replaced instead of against a hand-written expectation.
-//!
-//! Regenerate after changing a parse rule or a payload layout:
-//!
-//! ```text
-//! java rust/tools/probe-reference/ProbeReference.java --corpus rust/diting-probe-core/tests/fixtures
-//! ```
-
 use std::path::PathBuf;
 
 use diting_probe_core::api;

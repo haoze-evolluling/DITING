@@ -23,7 +23,6 @@ def add_import(source):
         return source
     lines = source.split('\n')
     if lines and lines[0].startswith('///') or (lines and lines[0].startswith('//')):
-        # Keep the library doc comment first, then `library;`, then imports.
         for index, line in enumerate(lines):
             if line.startswith('import '):
                 lines.insert(index, IMPORT)

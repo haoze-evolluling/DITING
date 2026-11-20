@@ -1,8 +1,3 @@
-/// The rule simulator sub-page: enter a domain, pick a record type, and read the service's verdict.
-///
-/// The old desktop console's `RuleTestPanel.vue` is the blueprint. The verdict, the matched rule, the
-/// list it came from and any `$dnsrewrite` answer all come from `/filter/check`; the page only names
-/// them.
 library;
 
 import 'dart:async';
@@ -27,7 +22,6 @@ const List<String> _examples = [
   'baidu.com',
 ];
 
-/// The console's `RCODE_NAMES`; the service returns the numeric code only.
 String desktopRcodeName(int rcode) => switch (rcode) {
   0 => 'NOERROR',
   1 => 'FORMERR',

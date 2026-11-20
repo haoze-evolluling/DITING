@@ -3,7 +3,6 @@ import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
-/// Per-app DNS and new-connection rate limiting for normal mode.
 abstract final class ConnectionRateLimitPaths {
   static const root = '/network/connection-rate-limit';
 }

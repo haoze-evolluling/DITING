@@ -1,5 +1,3 @@
-//! The writer queues: one handle per writer, with the batch and backoff decisions in the kernel.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JByteArray, JObject};
@@ -10,9 +8,7 @@ use super::{answer_bytes, guarded, with_bytes, with_handle};
 use crate::api;
 use crate::queue::Queue;
 
-// --- writer queues ------------------------------------------------------------------------------
 
-/// `LogNative.queueNew(settingsTag): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueNew(
     _env: JNIEnv<'_>,
@@ -29,7 +25,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueNew(
     .unwrap_or(0)
 }
 
-/// `LogNative.queueFree(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueFree(
     _env: JNIEnv<'_>,
@@ -44,7 +39,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueFree(
     }));
 }
 
-/// `LogNative.queueSubmit(handle, packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmit<'local>(
     mut env: JNIEnv<'local>,
@@ -63,7 +57,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmit<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.queueSubmitMany(handle, packed, nowMs): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmitMany<'local>(
     mut env: JNIEnv<'local>,
@@ -82,7 +75,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmitMany<'loca
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.queueTake(handle): ByteArray?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueTake<'local>(
     env: JNIEnv<'local>,
@@ -93,7 +85,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueTake<'local>(
     answer_bytes(&env, answer)
 }
 
-/// `LogNative.queueRequeue(handle, packed): Int` — the overflow count, or -1 on drift.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRequeue<'local>(
     mut env: JNIEnv<'local>,
@@ -109,7 +100,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRequeue<'local>(
     answer.map(|overflow| overflow as jint).unwrap_or(-1)
 }
 
-/// `LogNative.queueBackoff(handle, nowMs): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueBackoff(
     _env: JNIEnv<'_>,
@@ -120,7 +110,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueBackoff(
     guarded(|| unsafe { with_handle(handle, |queue: &Queue| queue.backoff(now_ms)) }).unwrap_or(0)
 }
 
-/// `LogNative.queueResetBackoff(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueResetBackoff(
     _env: JNIEnv<'_>,
@@ -132,7 +121,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueResetBackoff(
     }));
 }
 
-/// `LogNative.queueRetryWait(handle, nowMs): Long`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRetryWait(
     _env: JNIEnv<'_>,
@@ -144,7 +132,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRetryWait(
         .unwrap_or(0)
 }
 
-/// `LogNative.queueInBackoff(handle, nowMs): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueInBackoff(
     _env: JNIEnv<'_>,
@@ -158,7 +145,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueInBackoff(
     }
 }
 
-/// `LogNative.queueMissingLatched(handle, nowMs): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMissingLatched(
     _env: JNIEnv<'_>,
@@ -173,7 +159,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMissingLatched(
     }
 }
 
-/// `LogNative.queueLatchMissing(handle, nowMs)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueLatchMissing(
     _env: JNIEnv<'_>,
@@ -186,7 +171,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueLatchMissing(
     }));
 }
 
-/// `LogNative.queueMarkClosed(handle)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMarkClosed(
     _env: JNIEnv<'_>,
@@ -198,7 +182,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMarkClosed(
     }));
 }
 
-/// `LogNative.queueIsClosed(handle): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueIsClosed(
     _env: JNIEnv<'_>,
@@ -211,7 +194,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueIsClosed(
     }
 }
 
-/// `LogNative.queueClose(handle): Int`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueClose(
     _env: JNIEnv<'_>,
@@ -221,7 +203,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueClose(
     guarded(|| unsafe { with_handle(handle, |queue: &Queue| queue.close() as jint) }).unwrap_or(0)
 }
 
-/// `LogNative.queuePendingLen(handle): Int`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queuePendingLen(
     _env: JNIEnv<'_>,

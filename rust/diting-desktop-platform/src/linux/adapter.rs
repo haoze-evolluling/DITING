@@ -1,6 +1,3 @@
-//! Linux adapter enumeration: interfaces from `getifaddrs`, gateways from `/proc/net/route`,
-//! descriptions from sysfs and per-interface DNS servers from the active backend.
-
 use std::collections::HashMap;
 use std::ffi::CStr;
 use std::net::{IpAddr, Ipv4Addr};
@@ -17,7 +14,6 @@ use crate::traits::AdapterScanner;
 
 use super::dnsstate;
 
-/// One Linux network interface as reported by `getifaddrs`.
 #[derive(Debug, Clone)]
 pub(crate) struct NetInterface {
     pub name: String,
@@ -40,10 +36,7 @@ impl NetInterface {
     }
 }
 
-/// All interfaces, sorted by interface index like Go's `net.Interfaces`.
 pub(crate) fn list_managed_interfaces() -> PlatformResult<Vec<NetInterface>> {
-    // SAFETY: `getifaddrs` fills a linked list owned by libc; we only read it before the matching
-    // `freeifaddrs`, and every pointer is checked for null.
     unsafe {
         let mut head: *mut libc::ifaddrs = std::ptr::null_mut();
         if libc::getifaddrs(&mut head) != 0 {
@@ -84,13 +77,11 @@ pub(crate) fn list_managed_interfaces() -> PlatformResult<Vec<NetInterface>> {
 
 fn interface_index(name: &str) -> i32 {
     match std::ffi::CString::new(name) {
-        // SAFETY: `if_nametoindex` only reads the NUL-terminated name.
         Ok(value) => unsafe { libc::if_nametoindex(value.as_ptr()) as i32 },
         Err(_) => 0,
     }
 }
 
-/// Converts an `AF_INET`/`AF_INET6` `sockaddr` to a Rust address. Other families are ignored.
 unsafe fn sockaddr_to_ip(address: *const libc::sockaddr) -> Option<IpAddr> {
     if address.is_null() {
         return None;
@@ -98,7 +89,6 @@ unsafe fn sockaddr_to_ip(address: *const libc::sockaddr) -> Option<IpAddr> {
     match (*address).sa_family as i32 {
         libc::AF_INET => {
             let socket = &*(address as *const libc::sockaddr_in);
-            // `s_addr` holds network-order bytes; `to_ne_bytes` yields them in wire order.
             Some(IpAddr::V4(Ipv4Addr::from(
                 socket.sin_addr.s_addr.to_ne_bytes(),
             )))
@@ -113,7 +103,6 @@ unsafe fn sockaddr_to_ip(address: *const libc::sockaddr) -> Option<IpAddr> {
     }
 }
 
-/// Default IPv4 gateway for `iface`, parsed from the little-endian hex in `/proc/net/route`.
 pub(crate) fn read_default_gateway(iface_name: &str) -> String {
     let content = match std::fs::read_to_string("/proc/net/route") {
         Ok(content) => content,
@@ -135,7 +124,6 @@ pub(crate) fn read_default_gateway(iface_name: &str) -> String {
     String::new()
 }
 
-/// Converts `/proc`'s little-endian hex IPv4 into dotted decimal.
 pub(crate) fn parse_hex_ipv4(value: &str) -> String {
     match u32::from_str_radix(value, 16) {
         Ok(value) => format!(
@@ -149,7 +137,6 @@ pub(crate) fn parse_hex_ipv4(value: &str) -> String {
     }
 }
 
-/// Friendly description from sysfs (`DRIVER=` in the uevent), falling back to the name.
 pub(crate) fn iface_description(name: &str) -> String {
     let uevent = Path::new("/sys/class/net").join(name).join("device/uevent");
     if let Ok(content) = std::fs::read_to_string(&uevent) {
@@ -165,7 +152,6 @@ pub(crate) fn iface_description(name: &str) -> String {
     name.to_string()
 }
 
-/// Native Linux adapter scanner.
 pub struct LinuxAdapterScanner {
     executor: Arc<dyn CommandExecutor>,
 }
@@ -240,7 +226,6 @@ impl AdapterScanner for LinuxAdapterScanner {
     }
 }
 
-/// Splits a server list by address family.
 pub(crate) fn split_servers(servers: &[String]) -> (Vec<String>, Vec<String>) {
     let mut ipv4 = Vec::new();
     let mut ipv6 = Vec::new();
@@ -258,12 +243,10 @@ pub(crate) fn split_servers(servers: &[String]) -> (Vec<String>, Vec<String>) {
     (ipv4, ipv6)
 }
 
-/// True when any server points at loopback/local.
 pub(crate) fn has_loopback_server(servers: &[String]) -> bool {
     servers.iter().any(|server| is_loopback_or_local_ip(server))
 }
 
-/// Lists interface names for which `/etc/resolv.conf` should be attributed.
 pub(crate) fn iface_usable_for_resolv_conf(interface: &NetInterface) -> bool {
     !interface.is_loopback()
         && interface.is_up()

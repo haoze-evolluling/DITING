@@ -58,7 +58,6 @@ fn a_bad_version_length_or_trailing_byte_is_rejected() {
 
     assert_eq!(decode_target(&[]), None);
     assert_eq!(decode_ids(&[]), None);
-    // A declared id count that cannot fit is rejected before allocating.
     let mut huge = vec![LAYOUT_VERSION, 0xFF, 0xFF, 0xFF, 0xFF];
     huge.push(0);
     assert_eq!(decode_ids(&huge), None);

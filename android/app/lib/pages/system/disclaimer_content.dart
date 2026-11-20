@@ -47,7 +47,6 @@ class DisclaimerIntroCard extends StatelessWidget {
   }
 }
 
-/// Read verbatim from `InitialAgreementDialog.message`, with no rewriting.
 class InitialAgreementCard extends StatelessWidget {
   const InitialAgreementCard({super.key});
 
@@ -57,8 +56,6 @@ class InitialAgreementCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: CommonCard(
-        // The default 14 inset suits a one-line description, not a block of prose the card already
-        // narrows by 16 per side. 18 is used instead, with line height 1.6.
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

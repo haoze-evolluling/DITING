@@ -1,13 +1,8 @@
-/// Inline Markdown → [TextSpan] conversion, plus the badge colouring that makes a security report
-/// readable at a glance (【高危】 red, 【安全】 green…). Ported from the 1.4.x Kotlin
-/// `MarkdownInlineAnnotator`, including the token order, which is significant: `***bold italic***`
-/// must win over `**bold**`, and `**…**` must win over `*italic*`.
 library;
 
 import 'package:diting_shared/ui/font.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Colours the caller resolves from the theme, so this file stays testable without a [BuildContext].
 class MarkdownColors {
   const MarkdownColors({
     required this.base,
@@ -24,8 +19,6 @@ class MarkdownColors {
   final Color tertiary;
 }
 
-// Lookbehinds keep `*italic*` from matching inside `**bold**` and keep `_` from matching inside a
-// snake_case identifier. `unicode: true` is required for \p{L} / \p{N}.
 final _inlineTokenRegex = RegExp(
   r'(\*\*\*[\s\S]+?\*\*\*|___[\s\S]+?___|\*\*[\s\S]+?\*\*|__[\s\S]+?__|~~[\s\S]+?~~|'
   r'`[^`\n]+`|\[([^\]]+)\]\(([^)]+)\)|'
@@ -36,28 +29,26 @@ final _inlineTokenRegex = RegExp(
   unicode: true,
 );
 
-/// Highlight colour for a risk / recommendation word, or null when the text carries no verdict.
 Color? badgeColorOf(String text, MarkdownColors colors) {
   if (text.contains('高危') || text.contains('高风险') || text.contains('屏蔽规则')) {
     return colors.error;
   }
   if (text.contains('中风险') || text.contains('存在一般隐患')) {
-    return const Color(0xFFE65100); // Deep orange.
+    return const Color(0xFFE65100);
   }
   if (text.contains('低风险')) {
-    return const Color(0xFFF57F17); // Amber.
+    return const Color(0xFFF57F17);
   }
   if (text.contains('安全') || text.contains('健康良好') || text.contains('白名单')) {
-    return const Color(0xFF2E7D32); // Forest green.
+    return const Color(0xFF2E7D32);
   }
   if (text.contains('正常放行')) {
-    return const Color(0xFF1976D2); // Blue.
+    return const Color(0xFF1976D2);
   }
   if (text.contains('旁路直连')) return colors.tertiary;
   return null;
 }
 
-/// One paragraph of model output as styled spans. Unmatched text keeps [MarkdownColors.base].
 List<InlineSpan> buildMarkdownInlineSpans(
   String source,
   MarkdownColors colors,
@@ -101,7 +92,6 @@ InlineSpan _spanForToken(
       token.endsWith(mark) &&
       token.length >= minLength;
 
-  // Bold & italic.
   if (wrapped('***', 6) || wrapped('___', 6)) {
     return TextSpan(
       text: token.substring(3, token.length - 3),
@@ -112,7 +102,6 @@ InlineSpan _spanForToken(
     );
   }
 
-  // Bold: the inner text may itself be a verdict, which then drives the colour.
   if (wrapped('**', 4) || wrapped('__', 4)) {
     final inner = token.substring(2, token.length - 2);
     return TextSpan(
@@ -131,7 +120,6 @@ InlineSpan _spanForToken(
     );
   }
 
-  // Inline code: padded so the background does not touch the neighbouring glyphs.
   if (wrapped('`', 2)) {
     return TextSpan(
       text: ' ${token.substring(1, token.length - 1)} ',
@@ -144,8 +132,6 @@ InlineSpan _spanForToken(
     );
   }
 
-  // Link: show the label only; the URL is noise in a report. Only the link alternative
-  // captures group 2, so a non-null label identifies the token.
   final linkLabel = match.group(2);
   if (linkLabel != null) {
     return TextSpan(
@@ -165,7 +151,6 @@ InlineSpan _spanForToken(
     );
   }
 
-  // Predefined badge, e.g. 【高危】.
   if (token.startsWith('【') && token.endsWith('】')) {
     return TextSpan(
       text: token,

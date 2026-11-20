@@ -1,5 +1,3 @@
-//! `/api/v1/querylog/*`.
-
 use std::sync::Arc;
 
 use hyper::http::Method;
@@ -45,7 +43,6 @@ pub async fn handle_search(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
     let query = search_query(ctx);
     let runtime = Arc::clone(server.runtime());
-    // History search scans the persisted files; keep that I/O off the runtime workers.
     match tokio::task::spawn_blocking(move || runtime.query_log(query)).await {
         Ok(result) => ok(result),
         Err(error) => internal_error(format!("查询日志检索失败: {error}")),
@@ -64,7 +61,6 @@ pub async fn handle_clear(server: &Server, ctx: &Ctx<'_>) -> Resp {
         return response;
     }
     let runtime = Arc::clone(server.runtime());
-    // Deleting persisted files waits on the writer thread; run it on the blocking pool.
     match tokio::task::spawn_blocking(move || runtime.clear_query_log()).await {
         Ok(Ok(())) => ok_message("查询历史与统计已成功清空"),
         Ok(Err(error)) => internal_error(error.message),
@@ -84,7 +80,6 @@ pub async fn handle_config(server: &Server, ctx: &Ctx<'_>) -> Resp {
                     }
                 };
             let runtime = Arc::clone(server.runtime());
-            // Reconfiguration may stop and join the writer thread (up to 10 s).
             match tokio::task::spawn_blocking(move || runtime.update_query_log_config(config)).await
             {
                 Ok(Ok(())) => ok_message("查询日志配置已更新并生效"),

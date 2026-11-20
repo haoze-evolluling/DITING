@@ -1,14 +1,10 @@
-//! The LRU itself: `ip_domain_cache.go`'s map + list, with a stamp-ordered eviction.
-
 use std::collections::{BTreeMap, HashMap};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-/// `newIPDomainCache`'s default when the caller passes a non-positive size.
 pub const DEFAULT_MAX_SIZE: usize = 2048;
 
 struct Entry {
     domain: String,
-    /// Monotonic stamp of the last `put`; the smallest stamp is evicted first.
     stamp: u128,
 }
 
@@ -19,13 +15,11 @@ struct State {
     max_size: usize,
 }
 
-/// One engine's IP → domain cache.
 pub struct IpDomainCache {
     state: RwLock<State>,
 }
 
 impl IpDomainCache {
-    /// `newIPDomainCache`: a non-positive `max_size` falls back to 2048.
     pub fn new(max_size: i32) -> Self {
         let max_size = if max_size <= 0 {
             DEFAULT_MAX_SIZE
@@ -42,8 +36,6 @@ impl IpDomainCache {
         }
     }
 
-    /// `put`: ignore empty keys, update in place + touch an existing key, otherwise insert and
-    /// evict the least-recently-written key when at capacity.
     pub fn put(&self, ip: &str, domain: &str) {
         if ip.is_empty() || domain.is_empty() {
             return;
@@ -79,7 +71,6 @@ impl IpDomainCache {
         state.order.insert(stamp, ip.to_string());
     }
 
-    /// `get`: a read never touches the order.
     pub fn get(&self, ip: &str) -> Option<String> {
         if ip.is_empty() {
             return None;
@@ -90,12 +81,10 @@ impl IpDomainCache {
             .map(|entry| entry.domain.clone())
     }
 
-    /// Current entry count (test/telemetry helper).
     pub fn len(&self) -> u32 {
         self.read().entries.len() as u32
     }
 
-    /// Whether the cache is empty.
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }

@@ -1,15 +1,10 @@
 part of 'subscriptions_page.dart';
 
-/// Add/edit-subscription sheet. Grouped cards rather than a label column: the two fields need the full
-/// width, and the mirror templates the legacy app offered were missing here. Saving inserts with
-/// `importState = importing`, then a real download settles it. With [initial] the sheet edits that
-/// row instead; the source type and a local row's file stay fixed.
 class _AddSubscriptionSheet extends ConsumerStatefulWidget {
   const _AddSubscriptionSheet({this.initial, this.prefillUrl});
 
   final SubscriptionEntry? initial;
 
-  /// Address carried by a `diting://` deep link; prefills a fresh remote subscription.
   final String? prefillUrl;
 
   @override
@@ -22,19 +17,15 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
   final _url = TextEditingController();
   var _kind = SubscriptionKind.domain;
 
-  /// Remote subscriptions download a URL; local ones import a picked `.txt` through a
-  /// persisted SAF grant, so the address field is replaced by a file row.
   var _sourceType = SubscriptionSourceType.remote;
   var _picking = false;
   String? _localUri;
   String? _localName;
 
-  /// Blocks submission; `_localWarning` only warns about a grant that will not survive.
   String? _formError;
   String? _localWarning;
   int? _groupId;
 
-  /// Mirror acceleration, as the legacy form: a switch, one saved template and fallback.
   var _useMirror = false;
   String? _mirrorTemplate;
   var _mirrorFallback = true;
@@ -59,12 +50,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         _localName = _SubscriptionCard._fileNameOf(record.url);
       }
     } else if (widget.prefillUrl case final url?) {
-      // A deep link always opens a fresh remote subscription with the address and name prefilled.
       _url.text = url;
       _sourceType = SubscriptionSourceType.remote;
       if (_name.text.trim().isEmpty) _name.text = extractNameFromUrl(url);
     }
-    // The mirror preview follows the address while it is typed.
     _url.addListener(_rebuild);
   }
 
@@ -113,7 +102,6 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       }
       _localUri = picked.uri;
       _localName = name;
-      // Prefill the name so the row is identifiable without typing.
       if (_name.text.trim().isEmpty) {
         _name.text = name.substring(0, name.length - 4);
       }
@@ -175,16 +163,12 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
     switch (result) {
       case AddSubscriptionFailure(:final message):
         setState(() => _submitting = false);
-        // A duplicate address keeps the sheet open so the pasted text stays editable.
         showAppSnack(
           context,
           message,
           duration: const Duration(milliseconds: 2600),
         );
       case AddSubscriptionOk(:final id):
-        // Start the download before closing so the list spins as the sheet disappears. The
-        // confirmation for an oversized body uses the root navigator overlay, since this sheet's
-        // context is gone by the time the download finishes.
         final updated = ref.read(subscriptionUpdateProvider.notifier);
         Navigator.of(context).pop();
         await updated.updateOne(
@@ -221,7 +205,6 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       case EditSubscriptionOk(:final needsReimport):
         final updater = ref.read(subscriptionUpdateProvider.notifier);
         Navigator.of(context).pop();
-        // The stored rules came from the old address or kind, so replace them now.
         if (needsReimport) {
           await updater.updateOne(
             entry.id,
@@ -232,12 +215,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
     }
   }
 
-  /// The saved template [record] points at, if it is still in the list.
   MirrorTemplateRecord? _selectedTemplate(
     List<MirrorTemplateRecord> templates,
   ) => templates.where((row) => row.template == _mirrorTemplate).firstOrNull;
 
-  /// What the mirror would request, or null while the address is empty or malformed.
   String? _mirrorPreview(MirrorTemplateRecord? template) {
     final address = _url.text.trim();
     if (template == null || address.isEmpty) {
@@ -290,8 +271,6 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
             title: context.l10n.subsInfoSection,
             footer: infoHint,
             children: [
-              // A new subscription picks how it gets its rules; an existing row keeps the
-              // way it was created, so only its address or file can change.
               if (!isEdit)
                 ListItem<SubscriptionSourceType>.options(
                   padding: const EdgeInsets.symmetric(
@@ -309,7 +288,6 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                   textBuilder: (type) => type.label(context.l10n),
                   onChanged: (type) => setState(() {
                     _sourceType = type;
-                    // Both notices belong to the fields being swapped out.
                     _formError = null;
                     _localWarning = null;
                   }),
@@ -479,8 +457,6 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
     required MirrorTemplateRecord? selected,
     required String? preview,
   }) {
-    // Without a saved template there is nothing to switch on, so the card points at the
-    // management page instead of offering a dead toggle.
     if (templates.isEmpty) {
       return _SheetCard(
         title: context.l10n.subsMirrorTitle,
@@ -509,8 +485,6 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
           value: _useMirror,
           onChanged: (value) => setState(() {
             _useMirror = value;
-            // Enabling with nothing chosen picks the newest template, so saving does not
-            // silently drop the mirror the user just turned on.
             if (value && _mirrorTemplate == null) {
               _mirrorTemplate = templates.firstOrNull?.template;
             }

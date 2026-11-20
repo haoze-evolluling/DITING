@@ -1,5 +1,3 @@
-//! Layout round trips for both sides of the ABI.
-
 use super::*;
 
 fn request(op: u8) -> Vec<u8> {
@@ -85,7 +83,6 @@ fn rewrite_returns_three_texts() {
     assert_eq!(reader.text().unwrap(), "");
     assert!(reader.at_end());
 
-    // Nothing survives: all three fields are empty, which is how Go learns to drop the value.
     let mut payload = request(OP_REWRITE);
     push_i64(&mut payload, 1);
     push_text(&mut payload, "  ");
@@ -129,7 +126,6 @@ fn dns_config_round_trips_and_reports_errors() {
     assert_eq!(reader.i64().unwrap(), 3);
     assert!(reader.at_end());
 
-    // A rejected config comes back as an error body, not a decode failure.
     let mut payload = request(OP_DNS_CONFIG);
     push_text(&mut payload, "nope");
     push_text(&mut payload, "");
@@ -145,27 +141,21 @@ fn dns_config_round_trips_and_reports_errors() {
 
 #[test]
 fn malformed_payloads_are_rejected() {
-    // No opcode at all.
     assert!(decode_request(&[]).is_none());
-    // Unknown opcode.
     assert!(decode_request(&[9]).is_none());
-    // Trailing bytes.
     let mut payload = request(OP_DOMAIN);
     push_text(&mut payload, "a.example");
     payload.push(0);
     assert!(decode_request(&payload).is_none());
-    // Text longer than the payload.
     let mut payload = request(OP_DOMAIN);
     payload.extend_from_slice(&1000u32.to_le_bytes());
     assert!(decode_request(&payload).is_none());
-    // A count that cannot be satisfied is rejected before allocating.
     let mut payload = request(OP_REWRITE);
     push_i64(&mut payload, i64::MAX);
     assert!(decode_request(&payload).is_none());
     let mut payload = request(OP_REWRITE);
     push_i64(&mut payload, -1);
     assert!(decode_request(&payload).is_none());
-    // An `enabled` flag outside 0/1.
     let mut payload = request(OP_DNS_CONFIG);
     push_text(&mut payload, "single");
     push_text(&mut payload, "");

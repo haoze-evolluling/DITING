@@ -1,12 +1,8 @@
-//! Smart DNS cache configuration.
-
 use serde::{Deserialize, Serialize};
 
 use super::serde_util::{is_zero_i64, nullable_vec};
 
-/// Default maximum cache entry count.
 pub const DEFAULT_MAX_CACHE_ENTRIES: i32 = 4096;
-/// Default cache mode.
 pub const CACHE_MODE_LIMIT_MAX_TTL: &str = "limit_max_ttl";
 
 const DEFAULT_MAX_TTL_SECONDS: i64 = 3600;
@@ -23,7 +19,6 @@ const DEFAULT_PERSIST_INTERVAL_SECONDS: i64 = 300;
 const MIN_PERSIST_INTERVAL_SECONDS: i64 = 30;
 const MAX_PERSIST_INTERVAL_SECONDS: i64 = 86_400;
 
-/// Smart cache runtime and policy configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct CacheConfig {
@@ -81,7 +76,6 @@ impl Default for CacheConfig {
 }
 
 impl CacheConfig {
-    /// Mirror `NormalizeCacheConfig`.
     pub fn normalize(&mut self) {
         if self.max_entries <= 0 {
             self.max_entries = DEFAULT_MAX_CACHE_ENTRIES;
@@ -117,8 +111,6 @@ impl CacheConfig {
             .prefetch_before_expiry_ms
             .clamp(MIN_PREFETCH_BEFORE_EXPIRY_MS, MAX_PREFETCH_BEFORE_EXPIRY_MS);
 
-        // Persist parameters are only filled when persistence is explicitly enabled; otherwise a
-        // positive interval would look configured while nothing is written.
         if self.persist_enabled {
             if self.persist_interval_seconds <= 0 {
                 self.persist_interval_seconds = DEFAULT_PERSIST_INTERVAL_SECONDS;

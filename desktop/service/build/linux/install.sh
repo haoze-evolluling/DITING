@@ -20,7 +20,6 @@ AUTO_START=1
 SERVICE_NAME="diting-dnsservice"
 UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_BIN="/usr/local/bin/diting-service"
-# 旧版安装的七个动态库目录；纯 Rust 版本不再需要，安装时顺带清理。
 LEGACY_LIB_DIR="/usr/lib/diting"
 CONFIG_DIR="/etc/diting"
 DATA_DIR="/var/lib/diting"
@@ -49,7 +48,6 @@ if ! command -v systemctl >/dev/null 2>&1; then
     exit 1
 fi
 
-# 定位二进制：显式参数 → 同目录 → 上级 build/bin → PATH
 if [ -z "$BIN_SRC" ]; then
     for candidate in \
         "$SCRIPT_DIR/diting-service" \
@@ -75,7 +73,6 @@ echo "============================================================"
 echo "[1/6] 安装可执行文件"
 install -d -m 0755 "$(dirname "$INSTALL_BIN")"
 install -m 0755 "$BIN_SRC" "$INSTALL_BIN"
-# 升级自旧版时清理运行期动态内核库，纯 Rust 版本已把它们静态链接进二进制。
 if [ -d "$LEGACY_LIB_DIR" ]; then
     rm -rf "$LEGACY_LIB_DIR"
     echo "  已清理旧版动态内核库: $LEGACY_LIB_DIR"

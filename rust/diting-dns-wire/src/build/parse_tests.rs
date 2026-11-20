@@ -1,5 +1,3 @@
-//! Parsed-message tests: full round trips, compression, malformed input, helpers and truncation.
-
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use super::*;
@@ -252,24 +250,20 @@ fn compressed_owner_names_round_trip() {
 
 #[test]
 fn malformed_messages_are_rejected() {
-    // Header shorter than the fixed 12 bytes.
     assert!(ParsedMessage::parse(&[]).is_none());
     assert!(ParsedMessage::parse(&[0u8; 11]).is_none());
 
-    // Question cut before its qclass.
     let query = query_wire();
     assert!(ParsedMessage::parse(&query[..query.len() - 1]).is_none());
 
-    // A question name that points at itself.
     let mut pointer_loop = vec![0u8; 12];
     pointer_loop[4..6].copy_from_slice(&1u16.to_be_bytes());
     pointer_loop.extend_from_slice(&[0xc0, 0x0c, 0x00, 0x01, 0x00, 0x01]);
     assert!(ParsedMessage::parse(&pointer_loop).is_none());
 
-    // CNAME rdata claims a 3-byte label but the rdata is only one byte long.
     let mut truncated_rdata = vec![0u8; 12];
     truncated_rdata[6..8].copy_from_slice(&1u16.to_be_bytes());
-    truncated_rdata.push(0); // root owner
+    truncated_rdata.push(0);
     truncated_rdata.extend_from_slice(&TYPE_CNAME.to_be_bytes());
     truncated_rdata.extend_from_slice(&CLASS_IN.to_be_bytes());
     truncated_rdata.extend_from_slice(&0u32.to_be_bytes());
@@ -277,7 +271,6 @@ fn malformed_messages_are_rejected() {
     truncated_rdata.push(0x03);
     assert!(ParsedMessage::parse(&truncated_rdata).is_none());
 
-    // RDLENGTH runs past the end of the message.
     let mut past_end = vec![0u8; 12];
     past_end[6..8].copy_from_slice(&1u16.to_be_bytes());
     past_end.push(0);
@@ -287,7 +280,6 @@ fn malformed_messages_are_rejected() {
     past_end.extend_from_slice(&4u16.to_be_bytes());
     assert!(ParsedMessage::parse(&past_end).is_none());
 
-    // Header counts that the message cannot satisfy.
     let mut two_questions = query_wire();
     two_questions[4..6].copy_from_slice(&2u16.to_be_bytes());
     assert!(ParsedMessage::parse(&two_questions).is_none());
@@ -364,7 +356,6 @@ fn record_helpers_and_edns_mutation() {
     assert!(parsed.opt.is_none());
     assert!(parsed.opt_options().is_empty());
 
-    // A message without OPT gets one on demand with the default payload size.
     let plain = reply()
         .push_answer(rr(
             "www.example.com.",
@@ -416,13 +407,11 @@ fn truncate_drops_sections_in_order_and_sets_tc() {
     assert_eq!(parsed.additionals.len(), 2);
     assert!(parsed.opt.is_some());
 
-    // Already fits: no TC, no change.
     let full = wire_len(&parsed, true, true, true);
     let mut untouched = parsed.clone();
     assert!(!untouched.truncate_to(full));
     assert_eq!(untouched.flags & 0x0200, 0);
 
-    // Drop both additionals, keep authority and answer.
     let max_no_add = wire_len(&parsed, false, true, true);
     let mut no_add = parsed.clone();
     assert!(no_add.truncate_to(max_no_add));
@@ -433,7 +422,6 @@ fn truncate_drops_sections_in_order_and_sets_tc() {
     assert!(no_add.opt.is_some(), "OPT is not an ordinary additional");
     assert!(no_add.to_wire().expect("encode").len() <= max_no_add);
 
-    // Drop additionals and authority, keep the answer.
     let max_no_auth = wire_len(&parsed, false, false, true);
     let mut no_auth = parsed.clone();
     assert!(no_auth.truncate_to(max_no_auth));
@@ -441,7 +429,6 @@ fn truncate_drops_sections_in_order_and_sets_tc() {
     assert!(no_auth.authorities.is_empty());
     assert_eq!(no_auth.answers.len(), 1);
 
-    // Drop everything but the question and OPT.
     let max_no_answers = wire_len(&parsed, false, false, false);
     let mut bare = parsed.clone();
     assert!(bare.truncate_to(max_no_answers));

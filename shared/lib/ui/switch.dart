@@ -9,9 +9,6 @@ import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// An iOS-style switch: the thumb lifts past the track while pressed, squeezes
-/// mid-toggle, and drags directly. On Liquid Glass the lifted thumb turns into
-/// a clear lens over the track, as iOS's does.
 class CommonSwitch extends StatefulWidget {
   const CommonSwitch({
     super.key,
@@ -33,7 +30,6 @@ class CommonSwitch extends StatefulWidget {
 
 class _CommonSwitchState extends State<CommonSwitch>
     with TickerProviderStateMixin {
-  // M3's layout: 4 dp either side of the track, as tall as a tap target.
   static const _inset = 4.0;
   static const _thumb = 24.0;
   static const _midThumb = Size(34, 22);
@@ -83,7 +79,6 @@ class _CommonSwitchState extends State<CommonSwitch>
           ..curve = Curves.easeOutBack
           ..reverseCurve = Curves.easeOutBack.flipped;
       }
-      // A drag hands over its flip with the thumb already past halfway.
       final across = (_toggle.value - (widget.value ? 1 : 0)).abs() > 0.5;
       if (across && widget.onChanged != null) {
         _liftAcross();
@@ -152,7 +147,6 @@ class _CommonSwitchState extends State<CommonSwitch>
       return;
     }
     _flip();
-    // The flipped value arrives with the next build, if the owner takes it.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _settle();
@@ -320,8 +314,6 @@ class _CommonSwitchState extends State<CommonSwitch>
     );
   }
 
-  /// Taps go through an invisible [InkResponse] because an InkWell around the
-  /// switch skips its own press ink while one inside it is pressed.
   Widget _buildTapTarget({required bool enabled, required Widget child}) {
     if (!enabled) {
       return child;

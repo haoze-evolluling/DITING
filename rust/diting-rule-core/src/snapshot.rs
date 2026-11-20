@@ -1,31 +1,3 @@
-//! The `applyRuleSnapshot` document builder behind `RuleSnapshotStore.kt`.
-//!
-//! This is the whole classification/export/JSON half of `android/app/.../core/rule/`:
-//! `BlockRuleLoader` + `AllowRuleLoader` + `RuleSnapshotStore.buildJson`. Kotlin keeps the SQLite
-//! reads (`RuleSnapshotDao`), the DTRI compile call and the stamp file's I/O; [`plan`] here holds
-//! the decisions around them (which trie paths are usable, whether the stamp may be refreshed and
-//! which rows must stay inline), and the JSON document is built by [`build`].
-//!
-//! Semantics are field-for-field with the Kotlin it replaces:
-//!
-//! * a row is "special" when `isRegex`, `denyallow` or `dnsType` is non-empty, and is then passed
-//!   through verbatim (`isWildcard` becomes `isWildcard || pattern.contains('*')`);
-//! * an app-inverted row with a non-empty `appScope` becomes an inverted rule with the trimmed,
-//!   lowercased, de-duplicated package list;
-//! * an app-scoped row lands in that package's bucket (exact or wildcard, normal or important);
-//! * a plain subscription row is omitted when its trie holds it (the Go engine reads the DTRI
-//!   file), and repeated inline as a fallback otherwise;
-//! * the exported lists keep first-occurrence order (the Kotlin `LinkedHashSet`/`LinkedHashMap`
-//!   shapes), and the JSON carries exactly the fields `RuleSnapshotStore` used to put.
-//!
-//! Map iteration order is the one place where this is not bit-identical to the Kotlin: the Kotlin
-//! loaders kept exact rules in `HashMap`, whose iteration order is hash-based, so the *order* of
-//! exact rules inside `globalBlock`/`appRules` was arbitrary. The Go policy kernel loads those into
-//! maps (order cannot change a verdict), and this side emits DB/insertion order instead.
-//!
-//! Nothing here touches a database, a file or the clock, so the whole pipeline is replayable from
-//! a row payload (see `tests/`).
-
 use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
@@ -33,7 +5,6 @@ use serde::Serialize;
 pub(crate) mod payload;
 pub mod plan;
 
-/// One `EnabledRule` row as the DAO projects it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Row {
     pub pattern: String,
@@ -47,7 +18,6 @@ pub struct Row {
     pub dns_type: Option<String>,
 }
 
-/// The rows and index state of one dataset's block or allow half.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LoadInput {
     pub index_usable: bool,
@@ -56,18 +26,15 @@ pub struct LoadInput {
     pub subscription: Vec<Row>,
 }
 
-/// Everything one `buildSnapshotJson` call needs.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct SnapshotInput {
     pub filter_enabled: bool,
-    /// `blockTriePath`, `importantBlockTriePath`, `allowTriePath`, `importantAllowTriePath`.
     pub trie_paths: [Option<String>; 4],
     pub app_allowlist: Vec<(String, Vec<String>)>,
     pub block: LoadInput,
     pub allow: LoadInput,
 }
 
-/// Builds the `applyRuleSnapshot` document.
 pub fn build(input: &SnapshotInput) -> String {
     let block = load(&input.block, true).block_export();
     let allow = load(&input.allow, false).allow_export();
@@ -107,9 +74,7 @@ pub fn build(input: &SnapshotInput) -> String {
     serde_json::to_string(&document).expect("a snapshot document is always serializable")
 }
 
-// --- classification ---------------------------------------------------------------------------
 
-/// First-occurrence-ordered set; the Kotlin `LinkedHashSet`.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct OrderedSet {
     items: Vec<String>,
@@ -134,7 +99,6 @@ impl OrderedSet {
     }
 }
 
-/// One package's exact/wildcard buckets.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct Bucket {
     exact: OrderedSet,
@@ -143,7 +107,6 @@ struct Bucket {
     important_wildcards: Vec<String>,
 }
 
-/// `HashMap` + key order, the Kotlin `HashMap<String, Bucket>` whose key order the export walks.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct Buckets {
     order: Vec<String>,
@@ -205,13 +168,10 @@ struct Part {
     special: Vec<Special>,
 }
 
-/// `nonEmpty` for the optional rule attributes (`null` and `""` both mean absent).
 fn present(value: &Option<String>) -> bool {
     value.as_deref().is_some_and(|text| !text.is_empty())
 }
 
-/// The trimmed, lowercased package list of one `appScope`; duplicates are kept, exactly like
-/// `appScopePackages()`.
 fn app_scope_packages(scope: &str) -> Vec<String> {
     scope
         .split('|')
@@ -220,15 +180,12 @@ fn app_scope_packages(scope: &str) -> Vec<String> {
         .collect()
 }
 
-/// `excludedApps()`: the same list as an ordered set.
 fn excluded_apps(packages: &[String]) -> Vec<String> {
     let mut set = OrderedSet::default();
     set.extend(packages);
     set.items
 }
 
-/// Classifies one list of rows. `plain_gate` is `Some((index_usable, important_usable))` for
-/// subscription rows, whose plain entries are already in the DTRI trie; custom rows pass `None`.
 fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>, is_block: bool) -> Part {
     let mut part = Part::default();
     for row in rows {
@@ -247,9 +204,6 @@ fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>, is_block: bool) -> P
             continue;
         }
         let wildcard = row.is_wildcard || row.pattern.contains('*');
-        // `appScope.isNullOrEmpty()`: the empty string counts as "no scope", but "|" or " " do not,
-        // even though their package list is empty (the rule is then dropped or inverted with an
-        // empty exclusion set, exactly like the Kotlin branches).
         let has_scope = row
             .app_scope
             .as_deref()
@@ -277,10 +231,6 @@ fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>, is_block: bool) -> P
             continue;
         }
         if wildcard {
-            // A subscription wildcard keeps its source tag by travelling as a special rule: the
-            // wildcard tables store bare patterns, so a block there could never be attributed to
-            // the subscription that produced it. Special rules carry the source and match with the
-            // same glob matcher, so subscription wildcard blocks stay attributable.
             if is_block && plain_gate.is_some() {
                 part.special.push(Special {
                     pattern: row.pattern.clone(),
@@ -300,7 +250,6 @@ fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>, is_block: bool) -> P
             }
             continue;
         }
-        // A plain rule that the DTRI trie already holds is not repeated inline.
         let gate = plain_gate.unwrap_or((false, false));
         if row.important {
             if !gate.1 {
@@ -313,7 +262,6 @@ fn classify(rows: &[Row], plain_gate: Option<(bool, bool)>, is_block: bool) -> P
     part
 }
 
-/// Everything one half learned, in the order the JSON needs it.
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct Loaded {
     custom: Part,
@@ -448,7 +396,6 @@ struct ExportedAppBlock {
     important: Vec<String>,
 }
 
-// --- the JSON document ------------------------------------------------------------------------
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -536,8 +483,6 @@ fn special_json(special: &[Special], with_source: bool) -> Vec<SpecialJson<'_>> 
         .collect()
 }
 
-/// `appRules`: the union of the allow buckets, the block buckets and the user per-app allowlist,
-/// in that key order, with `allow` folding the user allowlist in.
 fn app_rules_json(
     block: &BlockExport,
     allow: &AllowExport,

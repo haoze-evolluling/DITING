@@ -2,13 +2,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Scroll body built from slivers: same app-bar inset, dock clearance and floating-bar scope as
-/// [PageBody], but sections added through [lazySectionSlivers] stay lazy.
-///
-/// `PageBody` takes a `List<Widget>`, so anything built inside it is constructed before the first
-/// frame no matter how far below the viewport it sits. A table with six figures of rows inflated
-/// all of them in one frame and froze the UI (2026-10-27 ANR, 191,090 rules), so bulk lists use
-/// this instead.
 class SliverPageBody extends StatelessWidget {
   const SliverPageBody({
     super.key,
@@ -18,8 +11,6 @@ class SliverPageBody extends StatelessWidget {
 
   final List<Widget> slivers;
 
-  /// Outer padding. Prefer padding on the individual slivers: an outer padding would also inset
-  /// the scrollbar and the app-bar background.
   final EdgeInsets padding;
 
   @override
@@ -44,12 +35,6 @@ class SliverPageBody extends StatelessWidget {
   }
 }
 
-/// Header, lazily built rows and an optional footer: the sliver twin of [generateSection].
-///
-/// Rows are produced on demand, so a section with a hundred thousand entries costs the same first
-/// frame as one with ten. Rows go through [SliverPrismList], so a scrollbar drag skips the rows it
-/// passes at [estimatedItemExtent] instead of laying out each one, and `itemExtent` makes a
-/// fixed-height section O(1) per row.
 List<Widget> lazySectionSlivers({
   String? title,
   List<IconButtonData> actions = const [],
@@ -82,8 +67,6 @@ List<Widget> lazySectionSlivers({
   ];
 }
 
-/// [lazySectionSlivers] for the common single-section page, with an empty state in place of the
-/// header/footer when there is nothing to show.
 List<Widget> lazySectionOrEmpty({
   String? title,
   List<IconButtonData> actions = const [],

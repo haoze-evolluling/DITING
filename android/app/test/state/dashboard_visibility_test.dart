@@ -1,6 +1,3 @@
-// Express mode returns no traffic rates, so the home board must not show the speed card; the
-// stored layout keeps it and reordering must leave its slot alone.
-
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
@@ -59,7 +56,6 @@ void main() {
   });
 }
 
-/// Pins the work mode a test starts in, without touching native channels.
 class _Mode extends WorkModeNotifier {
   _Mode(this.mode);
 

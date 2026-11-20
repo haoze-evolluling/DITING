@@ -3,10 +3,6 @@ import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
 
-/// The app's custom wallpaper, published above the navigator so a route can
-/// paint it as part of its own card. The root background layer still paints the
-/// image for dialogs and overlays; a moving card paints this copy so the
-/// wallpaper travels with the page instead of staying static underneath it.
 class PageBackgroundScope extends InheritedWidget {
   const PageBackgroundScope({super.key, this.path, required super.child});
 
@@ -27,8 +23,6 @@ class PageBackgroundScope extends InheritedWidget {
       path != oldWidget.path;
 }
 
-/// A page card's own copy of the wallpaper, clipped and moved with the card by
-/// the route transition.
 class PageCardSurface extends StatelessWidget {
   const PageCardSurface({super.key, required this.path, required this.child});
 

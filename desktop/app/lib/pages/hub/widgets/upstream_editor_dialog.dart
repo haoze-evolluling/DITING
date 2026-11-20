@@ -1,6 +1,3 @@
-/// Add/edit one upstream provider. The behaviour is `UpstreamEditModal.vue`: provider and protocol
-/// presets fill the form, a pasted `sdns://` stamp fills protocol/address/URL/fingerprint, and a DoH
-/// or DoH3 URL is required and must be a valid https URL.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -19,7 +16,6 @@ class _PresetProvider {
 
   final String name;
 
-  /// Protocol to `(id, server, url)`.
   final Map<String, ({String id, String server, String url})> presets;
 }
 
@@ -86,7 +82,6 @@ const _presetProviders = [
   }),
 ];
 
-/// Opens the editor. Returns the provider to save, or null when cancelled.
 Future<DesktopUpstreamProvider?> showUpstreamEditor(
   BuildContext context, {
   DesktopUpstreamProvider? editing,

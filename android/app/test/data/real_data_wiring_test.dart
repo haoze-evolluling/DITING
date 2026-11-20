@@ -1,6 +1,3 @@
-// Providers wired to real tables: the overview aggregation and the log
-// refresh timer that keeps the dashboard live.
-
 import 'package:diting_android/data/db/mirror_template_repository.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/log_dashboard_overview_providers.dart';
@@ -297,7 +294,6 @@ void _realDataWiring() {
       final blocks = snapshot.subscriptionBlocks;
       expect(blocks, hasLength(2));
       expect(blocks.first.hits, 1);
-      // The overview card must report the subscription's real switch, not always "disabled".
       expect(blocks.firstWhere((block) => !block.deleted).enabled, isTrue);
       final names = {for (final block in blocks) block.name};
       expect(names, containsAll(['广告拦截', '已删除订阅 #7']));
@@ -415,8 +411,6 @@ class _OffLogMode extends LogModeNotifier {
   LegacyLogMode build() => LegacyLogMode.off;
 }
 
-/// The log cards read tables the native writers keep filling; the timer is what makes
-/// `CacheHotspotsCard` / `BootstrapDnsCard` update without a manual refresh.
 
 void _logRefresh() {
   test('tick 递增共享 revision，日志 provider 随之重查', () {
@@ -457,13 +451,9 @@ void _logRefresh() {
     await tester.pump(logLiveRefreshInterval + const Duration(seconds: 1));
     expect(container.read(dnsLogRevisionProvider), before + 1);
 
-    // Last detach stops the timer: no further bumps.
     notifier.detachPolling();
     final after = container.read(dnsLogRevisionProvider);
     await tester.pump(logLiveRefreshInterval * 3);
     expect(container.read(dnsLogRevisionProvider), after);
   });
 }
-
-/// The catalog feeds both the card and the detail page, so a duplicate id or an empty category
-/// would show up as a missing row rather than an error.

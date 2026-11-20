@@ -19,7 +19,6 @@ abstract final class TextInputLimits {
   static const number = 10;
   static const interval = number;
 
-  /// mihomo multiplies these hours into a Duration, which overflows past about 2.5 million.
   static const geoUpdateInterval = 6;
   static const search = 256;
   static const rule = 1024;
@@ -35,7 +34,6 @@ abstract final class TextInputLimits {
     return [LengthLimitingTextInputFormatter(maxLength)];
   }
 
-  /// A rule line joins its fields with commas, so no rule could name such a policy.
   static List<TextInputFormatter> policyName(int maxLength) {
     return [
       FilteringTextInputFormatter.deny(','),

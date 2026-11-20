@@ -1,4 +1,3 @@
-/// Appearance sub pages: day/night, opacity, dock, sentences. Rest in `settings_parity_pages`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -43,7 +42,6 @@ class ThemeDayNightPage extends ConsumerWidget {
   }
 }
 
-/// Home element opacity. Keys come from [HomeLayer.storageKey] (`home_*_opacity`).
 class ThemeHomeOpacityPage extends ConsumerWidget {
   const ThemeHomeOpacityPage({super.key});
 
@@ -88,7 +86,6 @@ class ThemeHomeOpacityPage extends ConsumerWidget {
   }
 }
 
-/// One-line description per dock destination; the enum has no such field.
 String _destinationSubtitle(AppL10n l10n, BottomBarDestination destination) =>
     switch (destination) {
       BottomBarDestination.home => l10n.bottomBarHomeSubtitle,
@@ -99,8 +96,6 @@ String _destinationSubtitle(AppL10n l10n, BottomBarDestination destination) =>
       BottomBarDestination.settings => l10n.bottomBarSettingsSubtitle,
     };
 
-/// Dock customization: at least 2 and at most 4 enabled ([maxDockDestinations]), and enabled
-/// rows drag into dock order. Rejections must explain themselves.
 class ThemeBottomBarPage extends ConsumerWidget {
   const ThemeBottomBarPage({super.key});
 
@@ -140,7 +135,6 @@ class ThemeBottomBarPage extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ReorderableListView.builder(
-              // The page already scrolls; a nested scrollable would steal drag gestures.
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               buildDefaultDragHandles: false,
@@ -202,7 +196,6 @@ class ThemeBottomBarPage extends ConsumerWidget {
   }
 }
 
-/// An enabled dock row: tap or switch disables it, the trailing handle drags it.
 class _DockDestinationRow extends StatelessWidget {
   const _DockDestinationRow({
     required this.destination,
@@ -242,7 +235,6 @@ class _DockDestinationRow extends StatelessWidget {
   }
 }
 
-/// Home sentences: one each for running and stopped; empty hides them.
 class ThemeHomeSentencePage extends ConsumerStatefulWidget {
   const ThemeHomeSentencePage({super.key});
 

@@ -1,10 +1,3 @@
-/// One ranked list from the service's statistics answer: the busiest domains, the most blocked
-/// names, or the busiest clients.
-///
-/// The ranking is the service's (`/api/v1/querylog/stats` returns `topDomains` / `topBlocked` /
-/// `topClients` already ordered and capped). The page shows it as the old desktop console's
-/// statistics panel does (`frontend/src/components/overview/QueryStatsPanel.vue`): a numbered row
-/// per name, and a proportion bar where the list is about volume rather than about being blocked.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -14,7 +7,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// How a row's count is coloured: the blocked list reads as an alarm, the others as plain volume.
 enum LogRankingTone { volume, blocked }
 
 class LogRankingCard extends StatelessWidget {
@@ -33,10 +25,8 @@ class LogRankingCard extends StatelessWidget {
   final List<QueryNameCount> items;
   final LogRankingTone tone;
 
-  /// Shown instead of the rows; the blocked list says it has nothing blocked rather than no data.
   final String? emptyLabel;
 
-  /// Draws a proportion bar under each name, scaled to the largest count in the list.
   final bool bar;
 
   @override
@@ -59,8 +49,6 @@ class LogRankingCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (items.isEmpty)
-            // Centred with room around it: a lone left-aligned "no data" line under a header
-            // reads as content that failed to load rather than as an empty list.
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
@@ -87,8 +75,6 @@ class LogRankingCard extends StatelessWidget {
     );
   }
 
-  /// Bars compare within the list, which is all the service ranked; a zero maximum would divide by
-  /// zero, so an empty list or an all-zero one draws nothing.
   double _ratio(QueryNameCount item) {
     var max = 0;
     for (final other in items) {
@@ -110,7 +96,6 @@ class _RankingRow extends StatelessWidget {
   final QueryNameCount item;
   final LogRankingTone tone;
 
-  /// 0..1 when the row carries a bar; null for the lists that do not.
   final double? ratio;
 
   @override
@@ -156,7 +141,6 @@ class _RankingRow extends StatelessWidget {
   }
 }
 
-/// `1`, `2`, `3` in the accent for the leading three, plain for the rest.
 class _RankBadge extends StatelessWidget {
   const _RankBadge({required this.rank, required this.tone});
 

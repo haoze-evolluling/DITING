@@ -1,37 +1,22 @@
-//! SafeSearch, Safe Browsing and encrypted-DNS server configuration.
-
 use serde::{Deserialize, Serialize};
 
 use super::serde_util::nullable_vec;
 
-/// Default TTL for enforced SafeSearch answers.
 pub const DEFAULT_SAFESEARCH_TTL: u32 = 300;
-/// Default Safe Browsing lookup timeout.
 pub const DEFAULT_SAFEBROWSING_TIMEOUT_MS: i32 = 3000;
-/// Default Safe Browsing hash-prefix cache size.
 pub const DEFAULT_SAFEBROWSING_CACHE_SIZE: i32 = 10_000;
-/// Default Safe Browsing cache TTL in seconds.
 pub const DEFAULT_SAFEBROWSING_CACHE_TTL: i32 = 600;
 
-/// Default DoT listener port.
 pub const DEFAULT_DOT_PORT: i32 = 853;
-/// Default DoH listener port.
 pub const DEFAULT_DOH_PORT: i32 = 443;
-/// Default DoQ listener port.
 pub const DEFAULT_DOQ_PORT: i32 = 853;
-/// Default DoH query path.
 pub const DEFAULT_DOH_PATH: &str = "/dns-query";
-/// Default encrypted-DNS server name.
 pub const DEFAULT_SERVER_NAME: &str = "dns.lan";
 
-/// Certificate generated and managed by the service.
 pub const CERT_SOURCE_SELF_SIGNED: &str = "self_signed";
-/// Certificate loaded from a PEM file.
 pub const CERT_SOURCE_FILE: &str = "file";
-/// Certificate loaded from a PKCS#12 archive.
 pub const CERT_SOURCE_PKCS12: &str = "pkcs12";
 
-/// Built-in SafeSearch provider identifiers.
 pub const SAFESEARCH_SERVICES: [&str; 7] = [
     "bing",
     "duckduckgo",
@@ -42,7 +27,6 @@ pub const SAFESEARCH_SERVICES: [&str; 7] = [
     "youtube",
 ];
 
-/// Forced SafeSearch configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct SafeSearchConfig {
@@ -66,7 +50,6 @@ impl Default for SafeSearchConfig {
 }
 
 impl SafeSearchConfig {
-    /// Mirror `NormalizeSafeSearchConfig` (drop unknown and duplicate providers).
     pub fn normalize(&mut self) {
         if self.ttl == 0 {
             self.ttl = DEFAULT_SAFESEARCH_TTL;
@@ -78,7 +61,6 @@ impl SafeSearchConfig {
     }
 }
 
-/// Safe Browsing and parental-control configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct SafeBrowsingConfig {
@@ -103,7 +85,6 @@ impl Default for SafeBrowsingConfig {
 }
 
 impl SafeBrowsingConfig {
-    /// Mirror `NormalizeSafeBrowsingConfig`.
     pub fn normalize(&mut self) {
         if !(100..=30_000).contains(&self.timeout_ms) {
             self.timeout_ms = DEFAULT_SAFEBROWSING_TIMEOUT_MS;
@@ -117,7 +98,6 @@ impl SafeBrowsingConfig {
     }
 }
 
-/// Server certificate configuration (no private key material).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct CertConfig {
@@ -150,7 +130,6 @@ impl Default for CertConfig {
     }
 }
 
-/// Trusted reverse-proxy configuration for DoH.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ReverseProxyConfig {
@@ -160,7 +139,6 @@ pub struct ReverseProxyConfig {
     pub client_ip_header: String,
 }
 
-/// Encrypted DNS server configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct EncryptedDNSConfig {
@@ -202,7 +180,6 @@ impl Default for EncryptedDNSConfig {
 }
 
 impl EncryptedDNSConfig {
-    /// Mirror `NormalizeEncryptedDNSConfig`.
     pub fn normalize(&mut self) {
         normalize_cert_config(&mut self.cert);
 
@@ -211,8 +188,6 @@ impl EncryptedDNSConfig {
         if self.server_name.is_empty() {
             self.server_name = DEFAULT_SERVER_NAME.to_string();
         }
-        // The UUID ends up verbatim in XML and payload identifiers, so trim it, but never
-        // regenerate: a new UUID would look like a different configuration profile.
         self.uuid = self.uuid.trim().to_string();
 
         self.reverse_proxy.trusted_sources = trim_non_empty(&self.reverse_proxy.trusted_sources);
@@ -238,7 +213,6 @@ impl EncryptedDNSConfig {
     }
 }
 
-/// Normalize only the certificate portion, for certificate-import flows.
 pub fn normalize_cert_config(cert: &mut CertConfig) {
     if !is_valid_cert_source(&cert.source) {
         cert.source = CERT_SOURCE_SELF_SIGNED.to_string();
@@ -256,7 +230,6 @@ pub fn normalize_cert_config(cert: &mut CertConfig) {
     cert.ip_addresses = trim_non_empty(&cert.ip_addresses);
 }
 
-/// Check whether a certificate source is supported.
 pub fn is_valid_cert_source(source: &str) -> bool {
     matches!(
         source,

@@ -1,15 +1,4 @@
-/// Shared `dart:ffi` plumbing for the UI-side kernels under `rust/`.
-///
-/// Every kernel library exports the same C ABI — an `abi_version` probe, `alloc`/`free`, and one
-/// or more JSON entry points — and every reply carries the fixed header `magic | abi`. Loading,
-/// candidate probing and the payload round trip live here; each core file keeps only its crate
-/// name, payload magic and request shapes.
-///
-/// The libraries are required: [KernelCore.load] throws when no candidate has the expected ABI, so
-/// a build that forgot `python rust/build_android.py` fails instead of quietly running a second
-/// Dart copy of the kernel's rules.
 // ignore_for_file: prefer_initializing_formals
-// False positive: fields are private `_xxx`, and Dart forbids named parameters starting with `_`.
 library;
 
 import 'dart:convert';
@@ -17,10 +6,8 @@ import 'dart:ffi';
 import 'dart:io';
 import 'dart:typed_data';
 
-/// Must match `ABI_VERSION` in every kernel's `src/ffi.rs`.
 const kernelAbiVersion = 1;
 
-/// Fixed header width: magic plus ABI version.
 const _headerBytes = 8;
 
 typedef _AbiVersionNative = Uint32 Function();
@@ -56,7 +43,6 @@ class KernelCore {
        _alloc = alloc,
        _free = free;
 
-  /// Resolved library path, surfaced in diagnostics.
   final String libraryPath;
 
   final Map<String, _EntryDart> _entries;
@@ -66,12 +52,6 @@ class KernelCore {
   final _AllocDart _alloc;
   final _FreeDart _free;
 
-  /// Loads the library exporting [crate]'s symbols (`diting-leak-core`).
-  ///
-  /// [entries] are the symbol suffixes after the crate's name, e.g. `call` for
-  /// `diting_leak_core_call`. [payloadMagic] is the reply header's first field, e.g. `"DLK1"` read
-  /// as a little-endian u32. [abiVersion] overrides the shared header ABI for the few kernels that
-  /// version their payloads independently.
   static KernelCore load({
     required String crate,
     required int payloadMagic,
@@ -123,9 +103,6 @@ class KernelCore {
     );
   }
 
-  /// Raw round trip: [payload] in, the core's reply bytes out (header included).
-  ///
-  /// An empty list means the core returned no payload; callers decide whether that is an error.
   Uint8List invoke(Uint8List payload, {String entry = 'call'}) {
     final entryPoint = _entries[entry];
     if (entryPoint == null) {
@@ -156,7 +133,6 @@ class KernelCore {
     }
   }
 
-  /// One JSON request in, one decoded JSON object out; [entry] names the symbol suffix.
   Map<String, Object?> call(
     Map<String, Object?> request, {
     String entry = 'call',
@@ -189,10 +165,7 @@ class KernelCore {
   }
 
   static String? _libraryName(String symbolBase) {
-    // Cargo turns `diting-leak-core` into `libditing_leak_core.so` / `.dylib` and
-    // `diting_leak_core.dll`.
     if (Platform.isAndroid) {
-      // All UI kernels and the tunnel engine share one Android library.
       return 'libditing_native.so';
     }
     if (Platform.isLinux) return 'lib$symbolBase.so';
@@ -201,8 +174,6 @@ class KernelCore {
     return null;
   }
 
-  /// Probe order: explicit path, the packaged library name, then repo build output — the last one
-  /// lets `flutter test` on the desktop host exercise the real native path without an APK.
   static Iterable<String> _libraryCandidates(String symbolBase) sync* {
     final explicit =
         Platform.environment['DITING_${symbolBase.toUpperCase()}_LIB'];

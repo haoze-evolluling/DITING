@@ -12,9 +12,6 @@ import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.platform.NotificationStatsLine
 
-/// Builds the express-mode foreground notification. The channel id and stop action stay owned by
-/// the service; the notification is rebuilt every second while a detail item is on, hence
-/// setOnlyAlertOnce.
 object ExpressNotification {
     fun build(context: Context, channelId: String, stopAction: String): Notification {
         val openIntent = PendingIntent.getActivity(
@@ -35,7 +32,6 @@ object ExpressNotification {
             NotificationMode.EXPRESS,
             "运行中",
         )
-        // No traffic monitor runs in express mode, so the speed item is left out here.
         val detail = NotificationStatsLine.compose(context, withSpeed = false)
         val body = if (detail == null) status else "$status\n$detail"
         return NotificationCompat.Builder(context, channelId)
@@ -53,7 +49,6 @@ object ExpressNotification {
             .build()
     }
 
-    /// Rebuilds the posted notification after a settings change; false when nothing is posted.
     fun rerender(
         context: Context,
         channelId: String,

@@ -8,12 +8,9 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Today's traffic: each column reports its own missing-data state instead of showing a
-/// fake `0 B` or `0 B/s`.
 class TrafficMonitorCard extends ConsumerWidget {
   const TrafficMonitorCard({super.key, this.onDetail});
 
-  /// Detail target; null hides the button when the home page has no stats page.
   final VoidCallback? onDetail;
 
   @override
@@ -50,7 +47,6 @@ class TrafficMonitorCard extends ConsumerWidget {
                       context.l10n.trafficMonitorToday,
                       style: DashboardText.label(context),
                     ),
-                    // The figures refresh every second; only they rebuild, not the card.
                     Consumer(
                       builder: (context, ref, _) {
                         final totals = ref.watch(trafficTotalsProvider).value;
@@ -156,7 +152,6 @@ class DashboardMetricCell extends StatelessWidget {
   }
 }
 
-/// Merged into one card so the dashboard card border is not doubled per cell.
 class DashboardMetricQuadCard extends StatelessWidget {
   const DashboardMetricQuadCard({
     super.key,
@@ -170,7 +165,6 @@ class DashboardMetricQuadCard extends StatelessWidget {
   final Glyph glyph;
   final String title;
 
-  /// Exactly four cells as (label, value, color); fewer leave the slots unfilled.
   final List<({String label, String value, Color color})> cells;
   final VoidCallback? onDetail;
   final Widget? trailing;

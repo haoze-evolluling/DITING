@@ -1,9 +1,3 @@
-//! Asynchronous daily JSON-Lines writer.
-//!
-//! Port of the former Go service's `internal/querylog/writer.go`. The DNS hot path only performs a
-//! non-blocking enqueue; one background thread owns the file handle, rotates by local date,
-//! flushes every second (or every 256 lines) and performs retention cleanup on start.
-
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -16,17 +10,11 @@ use tokio::sync::mpsc;
 
 use super::types::Record;
 
-/// Bounded record queue; full means "drop", never block the resolver.
 pub(crate) const QUEUE_SIZE: usize = 4096;
-/// Flush once this many lines are buffered.
 pub(crate) const FLUSH_LINES: usize = 256;
-/// Periodic flush / rotation interval.
 pub(crate) const FLUSH_INTERVAL: Duration = Duration::from_secs(1);
-/// Log file prefix.
 pub(crate) const FILE_PREFIX: &str = "querylog-";
-/// Log file suffix.
 pub(crate) const FILE_SUFFIX: &str = ".jsonl";
-/// Daily rollover date layout.
 pub(crate) const DAY_LAYOUT: &str = "%Y%m%d";
 
 const DAY_MS: i64 = 24 * 60 * 60 * 1000;
@@ -40,12 +28,10 @@ enum Control {
     Shutdown(std::sync::mpsc::Sender<()>),
 }
 
-/// Whether `name` is a query-log file.
 pub(crate) fn is_log_file_name(name: &str) -> bool {
     name.starts_with(FILE_PREFIX) && name.ends_with(FILE_SUFFIX)
 }
 
-/// Log files sorted ascending by date (file name).
 pub(crate) fn list_log_files(dir: &Path) -> Vec<PathBuf> {
     let Ok(entries) = fs::read_dir(dir) else {
         return Vec::new();
@@ -62,7 +48,6 @@ pub(crate) fn list_log_files(dir: &Path) -> Vec<PathBuf> {
         .collect::<Vec<_>>()
 }
 
-/// Local-midnight timestamp encoded in a log file's name, or `None` when it does not parse.
 pub(crate) fn file_date_ms(path: &Path) -> Option<i64> {
     let name = path.file_name()?.to_str()?;
     parse_day_ms(name)
@@ -265,7 +250,6 @@ fn run_writer(
     }
 }
 
-/// Handle to the asynchronous writer thread.
 pub(crate) struct Writer {
     records: mpsc::Sender<Record>,
     controls: mpsc::UnboundedSender<Control>,
@@ -275,8 +259,6 @@ pub(crate) struct Writer {
 }
 
 impl Writer {
-    /// Create the writer and verify `dir` is writable (probe file), or return an error so the
-    /// facade can degrade to memory-only mode.
     pub(crate) fn new(dir: impl Into<PathBuf>, retention_days: i32) -> io::Result<Self> {
         Self::new_with_clock(dir, retention_days, Arc::new(Local::now))
     }
@@ -314,22 +296,18 @@ impl Writer {
         })
     }
 
-    /// Non-blocking enqueue; returns `false` when the queue is full or the writer is closed.
     pub(crate) fn enqueue(&self, record: Record) -> bool {
         self.records.try_send(record).is_ok()
     }
 
-    /// Pending persistence directory.
     pub(crate) fn dir(&self) -> &Path {
         &self.dir
     }
 
-    /// Pending persistence retention.
     pub(crate) fn retention_days(&self) -> i32 {
         self.retention_days
     }
 
-    /// Wait until buffered records have been flushed (used by tests / graceful paths).
     #[allow(dead_code)]
     pub(crate) fn flush_blocking(&self) -> io::Result<()> {
         let (ack, wait) = std::sync::mpsc::channel();
@@ -340,7 +318,6 @@ impl Writer {
             .map_err(|_| io::Error::new(io::ErrorKind::TimedOut, "等待查询日志刷新超时"))
     }
 
-    /// Close the current handle and delete every log file.
     pub(crate) fn clear(&self) -> io::Result<()> {
         let (ack, wait) = std::sync::mpsc::channel();
         if self.controls.send(Control::Clear(ack)).is_err() {
@@ -356,7 +333,6 @@ impl Writer {
         }
     }
 
-    /// Drain queued records, flush and stop the background thread.
     pub(crate) fn close(&self) -> io::Result<()> {
         let handle = self.handle.lock().unwrap_or_else(|e| e.into_inner()).take();
         let Some(handle) = handle else {

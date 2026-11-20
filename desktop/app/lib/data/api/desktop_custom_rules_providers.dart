@@ -1,7 +1,3 @@
-/// The custom rule list: what the service holds, and the one write path that replaces it.
-///
-/// The service is the only source of truth. A save posts the whole list and then re-reads it, so a
-/// rule the service refused never stays on screen as if it had been indexed.
 library;
 
 import 'dart:async';
@@ -24,7 +20,6 @@ class DesktopCustomRulesState {
   final bool isLoading;
   final bool saving;
 
-  /// Whether one answer has arrived; the editor only adopts a draft after it has.
   final bool loaded;
 
   bool get isStale => loaded && error != null;
@@ -56,8 +51,6 @@ class DesktopCustomRulesNotifier extends Notifier<DesktopCustomRulesState> {
     }
   }
 
-  /// Replaces the whole list. Returns the failure for the page's snackbar; on success the list is
-  /// re-read, so the editor shows exactly what the service indexed.
   Future<DesktopApiException?> save(List<String> rules) async {
     if (state.saving) return null;
     state = DesktopCustomRulesState(

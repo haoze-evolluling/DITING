@@ -1,8 +1,3 @@
-//! Prefs-backed groups: providers, bootstrap, cache, outbound.
-//!
-//! Merging is content-based: ids and timestamps are generated locally, so comparing them would
-//! report an update on every re-import of the same file.
-
 use std::collections::BTreeMap;
 
 use serde_json::{json, Map, Value};
@@ -12,7 +7,6 @@ use crate::groups::Group;
 use crate::value::{array, config_signature, get, integer, slug_of, text, trimmed};
 
 pub fn providers(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
-    // Both the legacy array and the newer `{items, selection}` form are accepted.
     let incoming: Vec<Value> = match value {
         Value::Array(items) => items.clone(),
         Value::Object(record) => match record.get("items") {
@@ -52,7 +46,6 @@ pub fn providers(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
                 {
                     outcome.skipped += 1;
                 } else {
-                    // Keep the local id: UI selections and candidate lists reference it.
                     existing[index] = Value::Object(keep_id(normalized, &existing[index]));
                     outcome.updated += 1;
                 }
@@ -79,7 +72,6 @@ fn name_of(provider: &Value) -> String {
         .to_string()
 }
 
-/// Fill in a missing id from the name so re-imports stay idempotent.
 fn with_id(provider: &Map<String, Value>, name: &str) -> Map<String, Value> {
     let mut record = provider.clone();
     let present = matches!(record.get("id"), Some(Value::String(id)) if !id.trim().is_empty());
@@ -111,7 +103,6 @@ fn decode_providers(raw: Option<&Value>) -> Vec<Value> {
     }
     match serde_json::from_str::<Value>(text) {
         Ok(Value::Array(items)) => items,
-        // Corrupt or non-array local JSON means "no providers yet"; the import then adds them.
         _ => Vec::new(),
     }
 }
@@ -120,7 +111,6 @@ fn encode(value: &Value) -> String {
     serde_json::to_string(value).unwrap_or_else(|_| String::from("[]"))
 }
 
-/// `(name, PROTOCOL)` and id lookups over presets plus the merged custom providers.
 fn provider_index(current: &Value, merged: &[Value]) -> BTreeMap<String, String> {
     let mut index = BTreeMap::new();
     for preset in array(current, "presets") {
@@ -145,8 +135,6 @@ fn add_to_index(index: &mut BTreeMap<String, String>, provider: &Value) {
     }
 }
 
-/// Local id for a reference, else the `(name, protocol)` fallback of backups written on a device
-/// whose ids no longer exist.
 fn resolve(reference: &Value, index: &BTreeMap<String, String>) -> Option<String> {
     let id = text(reference, "id");
     if let Some(id) = &id {
@@ -160,7 +148,6 @@ fn resolve(reference: &Value, index: &BTreeMap<String, String>) -> Option<String
                 Some(Value::String(text)) => text.to_uppercase(),
                 _ => String::new(),
             };
-            // A name that no longer exists resolves to nothing rather than to a broken id.
             return index.get(&format!("{name}\u{0}{protocol}")).cloned();
         }
     }
@@ -207,7 +194,6 @@ fn apply_selection(value: &Value, current: &Value, merged: &[Value], plan: &mut 
         plan.write("providers.raceTestDomain", Value::String(domain));
     }
 
-    // An empty list is meaningful: the user may have cleared the candidates.
     for (key, field) in [
         ("raceProviderRefs", "providers.race"),
         ("smartPredictionProviderRefs", "providers.smartPrediction"),
@@ -230,7 +216,6 @@ fn apply_selection(value: &Value, current: &Value, merged: &[Value], plan: &mut 
                     .unwrap_or(Value::Null),
             );
             if protocols.is_empty() {
-                // An empty list means "no protocol filter", not "hide everything".
                 protocols = string_set(
                     &get(current, "homeVisibleProtocols")
                         .cloned()
@@ -285,7 +270,6 @@ pub fn bootstrap(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
 
     match get(value, "custom") {
         Some(custom) if !custom.is_null() => {
-            // The field is the raw custom node text, so the encoded JSON is what gets stored.
             let encoded = encode(custom);
             if get(current, "customJson").and_then(Value::as_str) == Some(encoded.as_str()) {
                 outcome.skipped += 1;
@@ -300,12 +284,10 @@ pub fn bootstrap(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     outcome
 }
 
-/// Written as one policy so the engine never sees a new mode with an old TTL.
 pub fn cache(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     if !value.is_object() {
         return Outcome::failed(Group::Cache, "cacheNotObject");
     }
-    // Missing keys fall back to local values so all nine stay consistent.
     let pick_text =
         |key: &str, fallback: &str| text(value, key).unwrap_or_else(|| fallback.to_string());
     let local_text = |key: &str| text(current, key).unwrap_or_default();
@@ -356,14 +338,11 @@ pub fn cache(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     }
     plan.write("cache.config", next);
     Outcome {
-        // The nine keys are one policy; reporting 9 would look like nine rules.
         added: 1,
         ..Outcome::new(Group::Cache)
     }
 }
 
-/// Non-secret fields only, and never auto-enabled: an on-switch without local credentials would
-/// fail to connect.
 pub fn outbound(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     if !value.is_object() {
         return Outcome::failed(Group::Outbound, "outboundNotObject");
@@ -372,7 +351,6 @@ pub fn outbound(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     for (key, field) in [
         ("protocol", "outbound.protocol"),
         ("host", "outbound.host"),
-        // An early 2.0 build wrote `outbound_proxy_app_package`, which always read empty.
         ("proxyAppPackage", "outbound.app"),
     ] {
         let Some(raw) = text(value, key) else {

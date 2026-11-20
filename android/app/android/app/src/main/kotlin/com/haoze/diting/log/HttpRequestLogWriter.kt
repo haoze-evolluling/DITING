@@ -10,11 +10,6 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-/// `http_request_log` writer, batched 10 rows / 500ms: the callback runs on the TLS relay path.
-///
-/// The row, the mode filter and the counters live in the log kernel
-/// (`rust/diting-log-core/src/row.rs`), as does the batch policy (10 rows, 5k queued, 2 s → 30 s
-/// backoff, `queue::HTTP`). The timer, the SQL and the `AppDatabase` handling stay here.
 class HttpRequestLogWriter(
     private val context: Context,
     private val databaseName: String,
@@ -31,10 +26,6 @@ class HttpRequestLogWriter(
     @Volatile
     private var closed = false
 
-    /// The DNS log mode governs HTTP rows too, so off and blocked_and_errors keep their meaning.
-    ///
-    /// `rows` is the engine's packed batch: counters, classification and the writer queue are
-    /// all handled by one native call instead of one crossing per relay decision.
     fun onEvents(rows: ByteArray) {
         if (closed) return
         when (val outcome = LogNative.httpEvents(RequestStats.kernel, queue, modeProvider(), rows)) {
@@ -46,13 +37,11 @@ class HttpRequestLogWriter(
         }
     }
 
-    /// Final flush, then stop. `closed` gates the entry points only; the flush runs after it is set
     fun close() {
         if (closed) return
         closed = true
         LogNative.queueMarkClosed(queue)
         runCatching {
-            // Explicit Runnable: `submit { }` is ambiguous with the Callable overload.
             executor.submit(Runnable { writeBatch() }).get(CLOSE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         }.onFailure { Log.w(TAG, "Final HTTP log flush did not complete", it) }
         executor.shutdown()
@@ -67,11 +56,9 @@ class HttpRequestLogWriter(
         try {
             executor.execute { writeBatch() }
         } catch (_: RejectedExecutionException) {
-            // Already shut down; close() commits the tail.
         }
     }
 
-    /// Arms one 500ms timer for a burst's first row and reuses it, so ten events are one write
     private fun scheduleDelayedFlush(delayMs: Long = FLUSH_INTERVAL_MS) {
         if (closed || !flushScheduled.compareAndSet(false, true)) return
         try {
@@ -91,7 +78,6 @@ class HttpRequestLogWriter(
     private fun writeBatch() {
         val batch = LogNative.queueTake(queue) ?: return
         if (LogNative.queueInBackoff(queue)) {
-            // Still backing off: keep the rows queued instead of dropping them.
             requeue(batch)
             return
         }
@@ -109,7 +95,6 @@ class HttpRequestLogWriter(
             }
         }
 
-        // Guard anyway: an INSERT into a missing table would throw per batch.
         when (AppDatabase.tableState(db, TABLE)) {
             AppDatabase.TableState.PRESENT -> Unit
             AppDatabase.TableState.MISSING -> {
@@ -118,7 +103,6 @@ class HttpRequestLogWriter(
                 return
             }
             AppDatabase.TableState.ERROR -> {
-                // A failed lookup is a busy database, not a missing table: keep the rows.
                 LogNative.queueBackoff(queue)
                 requeue(batch)
                 return
@@ -127,7 +111,6 @@ class HttpRequestLogWriter(
         try {
             db.beginTransaction()
             try {
-                // One compiled statement per batch instead of one SQL build per row.
                 db.compileStatement(INSERT_SQL).use { statement ->
                     for (row in batch) {
                         decode(row).bindTo(statement)
@@ -148,17 +131,14 @@ class HttpRequestLogWriter(
 
     private fun requeue(batch: List<ByteArray>) {
         if (closed) {
-            // Nothing will flush again: count the tail instead of losing it silently.
             DbWriteHealth.onDropped(batch.size, DropReason.CLOSED, TABLE)
             return
         }
         val overflow = LogNative.queueRequeue(queue, batch)
         DbWriteHealth.onDropped(overflow, DropReason.OVERFLOW, TABLE)
-        // No later event may arrive to hit the batch size, so re-arm the timer.
         scheduleDelayedFlush()
     }
 
-    /// The kernel's row layout, unpacked for [INSERT_SQL].
     private fun decode(row: ByteArray): Row {
         val reader = LogPayload.Reader(row)
         return Row(
@@ -181,8 +161,6 @@ class HttpRequestLogWriter(
         val matchedRule: String?,
         val blockSubscriptionId: Long?,
     ) {
-        /// Binds in [INSERT_SQL] order. A domain rule hit carries its subscription source tag, which
-        /// the kernel turns into `blockSubscriptionId`; a request-rule hit leaves it NULL.
         fun bindTo(statement: SQLiteStatement) {
             statement.clearBindings()
             statement.bindLong(1, timestamp)

@@ -1,4 +1,3 @@
-/// Expanded floating log window: header (drag strip), search, status chips and the live list.
 library;
 
 import 'dart:async';
@@ -25,7 +24,6 @@ class FloatingLogPanel extends StatefulWidget {
     required this.onCollapse,
   });
 
-  /// Height of the header; the native side treats it as the drag strip.
   static const double headerHeight = 48;
 
   final FloatingLogSource source;
@@ -54,12 +52,10 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
   bool _searching = false;
   bool _loading = false;
 
-  /// "Clear" hides rows up to this time; the database is never touched.
   int _clearedAt = 0;
   String? _expandedKey;
   String? _toast;
 
-  /// Rows that arrived while the list was scrolled away from the top.
   int _unseen = 0;
   Timer? _refreshTimer;
   Timer? _searchTimer;
@@ -105,8 +101,6 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
   }
 
   void _onFocusChange() {
-    // The window takes focus only while typing, so the keyboard can open without the overlay
-    // swallowing the back key and input of the app underneath the rest of the time.
     unawaited(widget.window.setFocusable(_searchFocus.hasFocus));
   }
 
@@ -270,7 +264,6 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
         padding: const EdgeInsets.only(left: 14, right: 4),
         child: Row(
           children: [
-            // Live state at a glance: a filled dot while polling, hollow while paused.
             Container(
               width: 8,
               height: 8,
@@ -444,7 +437,6 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
     final l10n = context.l10n;
     final snapshot = _snapshot;
     if (snapshot == null) {
-      // The first read takes a few milliseconds; a spinner would only flash.
       return const SizedBox.shrink();
     }
     if (rows.isEmpty) {

@@ -8,12 +8,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/// Writes an uncaught exception into `filesDir/crash`, the folder the troubleshooting page and
-/// `AppStorageCleaner` already read and clear.
-///
-/// That writer did not exist before: the crash list was only ever fed by the system crash buffer,
-/// which some devices restrict. This makes the Kotlin crash a file the user can open even when the
-/// buffer read fails, and gives `diting_crash_state`'s "consecutive crash" bookkeeping a source.
 internal object CrashLogWriter {
     private const val TAG = "CrashLogWriter"
     private const val DIR = "crash"

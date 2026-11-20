@@ -1,5 +1,3 @@
-//! DNS query observer for the server's JSONL history.
-
 use std::sync::Arc;
 
 use diting_desktop_core::querylog::{

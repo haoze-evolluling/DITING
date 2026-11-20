@@ -1,11 +1,3 @@
-//! DNS over HTTPS (RFC 8484).
-//!
-//! HTTP/2 and HTTP/1.1 are negotiated by hyper's auto connection builder over a rustls stream.
-//! Only `POST` with `application/dns-message` and `GET` with a base64url `?dns=` parameter are
-//! accepted, on the configured path and on `<path>/<ClientID>`. The HTTP status carries the
-//! outcome: 400 for a malformed request, 404 for a foreign path, 405 for another method, 413 for
-//! an oversized body.
-
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -37,7 +29,6 @@ use crate::server::DnsServer;
 
 const DOH_CONTENT_TYPE: &str = "application/dns-message";
 const DOH_GET_PARAM: &str = "dns";
-/// DNS itself is capped at 64 KiB; the HTTP body must not be able to exceed that.
 const MAX_BODY: usize = 65535;
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -148,7 +139,6 @@ fn classify_path(path: &str, base: &str) -> PathMatch {
     }
 }
 
-/// Handles one DoH request. Generic over the body so unit tests can drive it without a socket.
 pub(crate) async fn handle_request<B>(
     server: &DnsServer,
     config: &EncryptedConfig,
@@ -284,8 +274,6 @@ fn is_standard_query(wire: &[u8]) -> bool {
         && diting_dns_wire::parse_question(wire, 12, false).is_some()
 }
 
-/// The request host, without port or trailing root dot. HTTP/2 puts it in the authority, HTTP/1.1
-/// in the `Host` header.
 fn request_host(uri: &Uri, headers: &hyper::HeaderMap) -> String {
     let host = uri
         .host()

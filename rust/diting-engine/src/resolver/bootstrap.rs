@@ -1,27 +1,3 @@
-//! The encrypted-DNS bootstrap dialer.
-//!
-//! `bootstrap_resolver.go` in Rust, with the scoring half left where it belongs: the endpoint health,
-//! the weighted pick, the fallback order and the one-minute host cache are
-//! [`diting_bootstrap_core::BootstrapKernel`]; this module owns the UDP queries, the racing loop, the
-//! three-second budget per endpoint and the log line.
-//!
-//! Matching the Go resolver field by field:
-//!
-//! * the kernel keeps health keyed by endpoint id across a config change, and `update` only clears
-//!   the host cache (`UpdateConfig`'s `clearCache`);
-//! * a disabled or empty bootstrap returns the host unchanged, so the caller dials the provider
-//!   hostname through the system resolver — that is what an engine configured without bootstrap
-//!   does, and it is why server mode works without one;
-//! * an IP literal never reaches the network (`net.ParseIP` fast path);
-//! * each attempt is logged, `fallbackUsed` is true from the second endpoint on, and a successful
-//!   exploration pick carries `exploration` as the message — the three fields
-//!   `BootstrapLogWriter` renders;
-//! * the A query is followed by an AAAA query only when the A answer carries no record.
-//!
-//! The kernel takes its two random rolls from the caller and never reads a clock, so both are
-//! produced here from the clock and a counter (there is no `rand` dependency in this crate, and the
-//! kernel only needs a uniform draw).
-
 use std::net::IpAddr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
@@ -37,14 +13,10 @@ use crate::config::BootstrapJson;
 use crate::logs::{BootstrapEvent, BootstrapSink};
 use crate::protect::ProtectorHandle;
 
-/// `queryBootstrapDNS`'s budget: `context.WithTimeout(ctx, 3*time.Second)`.
 pub const QUERY_TIMEOUT: Duration = Duration::from_secs(3);
-/// The bootstrap port used when the configured IP carries none (`net.JoinHostPort(ip, "53")`).
 pub const BOOTSTRAP_PORT: &str = "53";
-/// The read buffer `queryBootstrapDNS` used.
 const READ_BUFFER: usize = 2048;
 
-/// One configured bootstrap endpoint.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BootstrapIp {
     pub id: String,
@@ -53,20 +25,16 @@ pub struct BootstrapIp {
     pub weight: f64,
 }
 
-/// The published bootstrap configuration.
 #[derive(Debug, Clone, Default)]
 struct State {
     enabled: bool,
     ips: Vec<BootstrapIp>,
 }
 
-/// The engine's bootstrap resolver: one per engine, shared by every configured provider.
 pub struct Bootstrap {
     state: RwLock<State>,
     kernel: BootstrapKernel,
     sink: Arc<dyn BootstrapSink>,
-    /// The bootstrap queries are ordinary UDP sockets, so inside the VPN they need `protect` too:
-    /// the configured resolver addresses are exactly the ones the TUN routes.
     protector: ProtectorHandle,
 }
 
@@ -84,14 +52,10 @@ impl Bootstrap {
         }
     }
 
-    /// The engine installs the same handle the resolver dialers use, so one `setSocketProtector`
-    /// covers the bootstrap queries and the four transports.
     pub fn protector(&self) -> ProtectorHandle {
         self.protector.clone()
     }
 
-    /// `UpdateConfig`: publish the endpoints and drop the resolved-host cache. The health history is
-    /// keyed by endpoint id and deliberately survives, exactly like the Go `healthMap`.
     pub fn update(&self, config: &BootstrapJson) {
         let ips: Vec<BootstrapIp> = config
             .ips
@@ -111,19 +75,15 @@ impl Bootstrap {
         self.kernel.clear_cache();
     }
 
-    /// `ResetStats`.
     pub fn reset(&self) {
         self.kernel.reset();
     }
 
-    /// `IsEnabled`: enabled, configured and non-empty.
     pub fn is_enabled(&self) -> bool {
         let state = self.read();
         state.enabled && !state.ips.is_empty()
     }
 
-    /// `ResolveHost`. `Ok(host)` whenever the caller should dial the configured hostname: a literal,
-    /// or a disabled bootstrap. `Err` only when bootstrap is enabled and every endpoint failed.
     pub async fn resolve_host(&self, host: &str) -> Result<String, String> {
         if host.is_empty() {
             return Err("empty host".to_string());
@@ -213,7 +173,6 @@ impl Bootstrap {
         })
     }
 
-    /// `choosePlan`: the kernel's primary plus its fallback order.
     fn choose_plan(&self, ips: &[BootstrapIp]) -> diting_bootstrap_core::Plan {
         if ips.is_empty() {
             return diting_bootstrap_core::Plan::default();
@@ -244,7 +203,6 @@ impl Bootstrap {
     }
 }
 
-/// `queryBootstrapDNS`: one A query, then one AAAA query when the A answer had no record.
 async fn query_endpoint(
     bootstrap_ip: &str,
     host: &str,
@@ -258,8 +216,6 @@ async fn query_endpoint(
     let target: std::net::SocketAddr = match text.parse() {
         Ok(address) => address,
         Err(_) => {
-            // `net.SplitHostPort` succeeded in Go because it treats the whole text as the host;
-            // join the default port the same way.
             let joined =
                 diting_upstream_core::endpoint::dial_address(bootstrap_ip, BOOTSTRAP_PORT, "");
             joined
@@ -285,12 +241,9 @@ async fn query_endpoint(
     }
 }
 
-/// One query on the connected bootstrap socket. `None` means "no record of that type", which the
-/// caller turns into the AAAA follow-up or the final error.
 async fn exchange(socket: &UdpSocket, host: &str, qtype: u16) -> Result<Option<String>, String> {
     let query = crate::resolver::build_query(host, qtype);
     let mut buffer = vec![0u8; READ_BUFFER];
-    // One deadline for the write and the read, like `conn.SetDeadline(deadline)`.
     let exchange_io = async {
         socket
             .send(&query)
@@ -332,14 +285,10 @@ fn peer_text(socket: &UdpSocket) -> String {
         .unwrap_or_else(|_| "bootstrap".to_string())
 }
 
-/// A uniform `[0, 1)` draw for the kernel's exploration and weighted rolls.
 fn roll_f64() -> f64 {
-    // 53 bits is the mantissa of an f64, so the division is exact and the range is half-open.
     (roll_u64() >> 11) as f64 / (1u64 << 53) as f64
 }
 
-/// A 64-bit pseudo-random value: an xorshift over the clock and a counter, which is all the kernel
-/// needs (it reduces the value modulo a small candidate count).
 fn roll_u64() -> u64 {
     static COUNTER: AtomicU64 = AtomicU64::new(0x9e37_79b9_7f4a_7c15);
     let mut state = COUNTER.fetch_add(0x9e37_79b9_7f4a_7c15, Ordering::Relaxed)

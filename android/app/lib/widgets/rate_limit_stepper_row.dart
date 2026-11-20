@@ -1,4 +1,3 @@
-/// Shared numeric row for the LAN and connection rate-limit pages.
 library;
 
 import 'package:diting_shared/ui/ui.dart';

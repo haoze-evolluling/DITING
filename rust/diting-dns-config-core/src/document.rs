@@ -1,10 +1,3 @@
-//! The two JSON documents the engines read: the tunnel's `ApplyDNSConfig` and server mode's
-//! `DnsServerEngine.applyDnsConfig`.
-//!
-//! Both are assembled here in one pass, because the cache / block / dynamic keys are the same shape
-//! in both and the providers list is what the mode selection picked. Field order follows 1.4.3 so a
-//! diff of the pushed document stays readable.
-
 use diting_config_core::mode;
 use serde::Serialize;
 
@@ -16,7 +9,6 @@ use crate::upstreams::{self, ServerUpstream};
 const DEFAULT_SELECTED_PROVIDER_ID: &str = "preset_alidns_dns";
 const DEFAULT_RACE_IDS: [&str; 2] = ["preset_alidns_dns", "preset_dnspod_dns"];
 
-/// One bootstrap entry: preset rows and the custom `bootstrap_custom_json` rows end up here.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BootstrapEntry {
     pub id: String,
@@ -34,7 +26,6 @@ impl BootstrapEntry {
     }
 }
 
-/// The fixed block-response mode plus the dynamic policy, both from prefs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DynamicInput {
     pub enabled: bool,
@@ -43,24 +34,17 @@ pub struct DynamicInput {
     pub nxdomain_seconds: i32,
 }
 
-/// U10 privacy suite (K10): carried in the same DNS document so the engine reads it with the rest of
-/// the config instead of a second, drifting channel.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct PrivacyInput {
-    /// Record types answered with NODATA (currently `HTTPS` / `SVCB`).
     pub block_record_types: Vec<String>,
-    /// Reject upstream answers that point a public name at a private/loopback address.
     pub rebinding_protection: bool,
 }
 
-/// N8 IPv6-only AAAA synthesis switch, carried in the same DNS document as the rest of the config.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Dns64Input {
     pub enabled: bool,
 }
 
-/// N9 LAN client rate limiting (server mode): tokens per second per client, burst, prefix masking and
-/// exempt IPs/CIDRs. `rate` is requests per second.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct RateLimitInput {
     pub enabled: bool,
@@ -71,7 +55,6 @@ pub struct RateLimitInput {
     pub exempt: Vec<String>,
 }
 
-/// Per-app connection rate limiting for the normal tunnel data plane.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ConnectionRateLimitInput {
     pub enabled: bool,
@@ -130,8 +113,6 @@ pub struct TunnelConfig {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServerSettings {
-    /// `single` / `smart_prediction` / `parallel_race` / `primary_backup`, the same scheduling
-    /// modes the tunnel uses.
     pub resolution_mode_raw: String,
     pub selected_upstream_id: String,
     pub smart_prediction_provider_ids: Vec<String>,
@@ -152,10 +133,7 @@ pub struct ServerSettings {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ServerConfig {
     pub port: i32,
-    /// The scheduling mode actually written to the document (`single` when the raw value is
-    /// unknown).
     pub mode: String,
-    /// The upstreams in engine attempt order: one for `single`, the picked race list otherwise.
     pub providers: Vec<ServerUpstream>,
     pub document: String,
 }
@@ -257,7 +235,6 @@ fn clamp(value: i32, low: i32, high: i32) -> i32 {
     value.clamp(low, high)
 }
 
-/// Last row wins, mirroring the Dart map built in catalog order (presets first, custom after).
 fn find<'a>(catalog: &'a [Provider], id: &str) -> Option<&'a Provider> {
     catalog.iter().rev().find(|provider| provider.id == id)
 }
@@ -291,8 +268,6 @@ fn provider_document(provider: &Provider) -> ProviderDocument<'_> {
     }
 }
 
-/// Server mode's upstream row as a document provider. The address is a bare host for PLAIN / DOT
-/// and the endpoint URL for DoH, so `server` and `url` split the same way as the tunnel's.
 fn upstream_document(upstream: &ServerUpstream) -> ProviderDocument<'_> {
     ProviderDocument {
         id: &upstream.id,
@@ -320,7 +295,6 @@ fn cache_document(input: &CacheInput) -> CacheDocument {
         min_ttl_seconds: clamp(input.min_ttl_seconds, 30, 86400),
         stale_fallback_enabled: input.stale_fallback_enabled,
         stale_fallback_seconds: clamp(input.stale_fallback_seconds, 30, 86400),
-        // 1.4.3 has no negative-TTL UI; the Go defaults are kept explicitly.
         negative_ttl_enabled: true,
         negative_ttl_seconds: 30,
     }
@@ -361,7 +335,6 @@ fn dynamic_document(input: &DynamicInput) -> DynamicDocument {
     }
 }
 
-/// Bootstrap entries: the selected presets in catalog order, then the enabled custom rows.
 fn bootstrap_entries(
     enabled: bool,
     preset_bootstrap: &[BootstrapEntry],
@@ -493,9 +466,6 @@ pub fn build_server(
         .or_else(|| pick_upstream(DEFAULT_SELECTED_PROVIDER_ID))
         .or_else(|| preset_upstreams.first().cloned())?;
 
-    // The four scheduling modes are the tunnel's, so the server mode races on the same engine
-    // scheduler. Below two candidates a race would be pointless, so it falls back to the selected
-    // upstream exactly like the tunnel does.
     let mode = valid_mode(&settings.resolution_mode_raw).to_string();
     let pick_many = |ids: &[String]| -> Vec<ServerUpstream> {
         ids.iter().filter_map(|id| pick_upstream(id)).collect()
@@ -546,7 +516,6 @@ pub fn build_server(
         dynamic_response: dynamic_document(&settings.dynamic),
         cache,
         providers: providers.iter().map(upstream_document).collect(),
-        // Server mode never used bootstrap: LAN clients resolve through this device.
         bootstrap: BootstrapDocument {
             enabled: false,
             ips: Vec::new(),

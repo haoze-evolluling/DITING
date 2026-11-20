@@ -1,5 +1,3 @@
-// The 1.4.3 persistence contract: containers, key names, defaults, legacy semantics.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter/widgets.dart' show Locale;
 import 'package:diting_shared/app/theme/colors.dart';
@@ -18,7 +16,6 @@ void main() {
   group('设置键与设置态 provider', _settingsCatalog);
 }
 
-/// The 1.4.3 persistence contract: containers, key names, defaults, legacy semantics.
 void _legacySettings() {
   MemoryLegacyPrefsStore legacyStore() => MemoryLegacyPrefsStore({
     'dns_vpn_prefs': {
@@ -46,7 +43,6 @@ void _legacySettings() {
       expect(settings.themeModeRaw, 'dark');
       expect(settings.paletteRaw, 'indigo');
       expect(settings.componentOpacity, 0.8);
-      // Falls back to home_component_opacity when the item is unset.
       expect(settings.homeOpacity('home_power_button_opacity'), 0.8);
       expect(settings.homeOpacity('home_poem_opacity'), 0.4);
       expect(settings.homeSentences.running, '运行句子');
@@ -229,7 +225,6 @@ void _legacySettings() {
       expect(store.read('dns_vpn_prefs', 'home_power_button_opacity'), 0.6);
       expect(store.read('dns_vpn_prefs', 'home_sentence_running'), '新句子');
       expect(store.read('diting_settings', 'app_work_mode'), 'express');
-      // The mode selected in express mode lands in the express data set, not the global container.
       expect(
         store.read('diting_express_prefs', 'dns_resolution_mode'),
         'primary_backup',
@@ -254,8 +249,6 @@ void _legacySettings() {
   });
 }
 
-/// Static guard for the settings domain and route table: a misspelled key still saves and
-/// displays fine, only losing settings on upgrade
 void _settingsCatalog() {
   group('旧版设置键（第三轮新增）', () {
     late LegacyPrefsStore store;
@@ -314,7 +307,6 @@ void _settingsCatalog() {
       );
       expect(store.read('notification_settings_prefs', 'speed'), isFalse);
 
-      // A backup that only knows the speed switch still adds the readout, at the end.
       settings.setNotificationSpeed(true);
       expect(settings.notificationStatsItems, ['filtered', 'total', 'speed']);
       settings.setNotificationSpeed(false);
@@ -373,7 +365,6 @@ void _settingsCatalog() {
         [for (final mode in LegacyIpv6Mode.values) mode.storageValue],
         ['auto', 'disable', 'prefer'],
       );
-      // 旧版 Kotlin / 1.4.3 备份的 enabled/disabled 已不再兼容，按未知值安全回退 auto。
       expect(LegacyIpv6Mode.fromStorageValue('enabled'), LegacyIpv6Mode.auto);
       expect(LegacyIpv6Mode.fromStorageValue('disabled'), LegacyIpv6Mode.auto);
       expect(

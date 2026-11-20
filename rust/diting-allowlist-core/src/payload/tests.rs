@@ -57,7 +57,6 @@ fn an_oversized_uid_count_is_rejected() {
 #[test]
 fn invalid_utf8_in_a_domain_is_rejected() {
     let mut encoded = encode_configure(&[(1, vec!["ab".to_string()])]);
-    // layout(1) + count(4) + uid(4) + domain_count(4) + len(4) = 17
     encoded[17] = 0xff;
     assert_eq!(decode_configure(&encoded), None);
 }
@@ -93,7 +92,6 @@ fn a_truncated_remember_payload_is_rejected() {
 #[test]
 fn an_address_that_is_not_4_or_16_bytes_is_rejected() {
     let mut encoded = encode_remember(1, "q", &[]);
-    // Flip the record count to 1 and append a 5-byte address with its TTL.
     let position = encoded.len() - 4;
     encoded[position..].copy_from_slice(&1u32.to_le_bytes());
     encoded.push(5);
@@ -105,7 +103,6 @@ fn an_address_that_is_not_4_or_16_bytes_is_rejected() {
 #[test]
 fn invalid_utf8_in_the_question_is_rejected() {
     let mut encoded = encode_remember(1, "ab", &[]);
-    // layout(1) + uid(4) + qname_len(4) = 9 is the first question byte.
     encoded[9] = 0xff;
     assert_eq!(decode_remember(&encoded), None);
 }

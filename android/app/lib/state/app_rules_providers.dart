@@ -1,5 +1,3 @@
-/// Per-app DNS allow/block lists and block-all-outbound; writes and invalidations stay together
-/// here.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -28,10 +26,8 @@ class AppScopedRules {
   final List<MockRule> block;
   final List<MockRule> allow;
 
-  /// Whether "block all outbound" is on (a `*$app=<pkg>` row exists).
   final bool fullBlock;
 
-  /// Whether the rule DB is readable; false means "show an error", not "no rules".
   final bool available;
 
   final String? error;
@@ -64,7 +60,6 @@ final appScopedRulesProvider = FutureProvider.family<AppScopedRules, String>((
   }
 });
 
-/// Write entry point; refreshes the matching provider on success.
 class AppScopedRulesController {
   AppScopedRulesController(this._ref);
 
@@ -72,14 +67,11 @@ class AppScopedRulesController {
 
   RuleRepository? get _repository => _ref.read(ruleRepositoryProvider);
 
-  /// Keeps the native rule tries in step with app-scoped writes (the active data set's database),
-  /// then reloads the affected page.
   void _afterWrite(String packageName) {
     refreshRuleIndexesForCurrentMode(_ref);
     _ref.invalidate(appScopedRulesProvider(packageName));
   }
 
-  /// Adds a block / allow rule. Returns false if the DB is unavailable or the rule already exists.
   Future<bool> addRule(
     String packageName,
     RuleKind kind,
@@ -116,7 +108,6 @@ class AppScopedRulesController {
     _afterWrite(packageName);
   }
 
-  /// Toggles "block all outbound" and returns the new state.
   Future<bool> setFullBlock(String packageName, bool enabled) async {
     final repository = _repository;
     if (repository == null) return false;

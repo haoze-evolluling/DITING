@@ -205,7 +205,6 @@ class ListItem<T> extends StatelessWidget {
         return _buildListTile(
           context,
           position: position,
-          // As an iOS pop-up row does, a tap anywhere on the row opens its menu.
           onTap: () => openMenu?.call(),
           trailing: CommonPopupBox(
             targetBuilder: (open) {
@@ -318,7 +317,6 @@ class _OptionsValueButton extends StatelessWidget {
   }
 }
 
-/// A section's title, as tall as its action buttons with or without them.
 class ListHeader extends StatelessWidget {
   static const _actionSize = TonalButtonSize.section;
   static const _actionsGap = 6.0;

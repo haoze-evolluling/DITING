@@ -182,7 +182,6 @@ class _RankingRow extends StatelessWidget {
   }
 }
 
-/// The three newest queries, with enough metadata to spot cache hits and blocks.
 class ServerRecentQueries extends ConsumerWidget {
   const ServerRecentQueries({super.key, required this.running});
 

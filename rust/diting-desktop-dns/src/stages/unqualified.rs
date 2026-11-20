@@ -1,9 +1,3 @@
-//! Blocks single-label names from leaking to public upstreams.
-//!
-//! Local hosts/rewrite/zone stages run first, so reaching this stage means no local authority
-//! knows `nas`, `printer` or `wpad`. Forwarding those to a public resolver leaks internal naming
-//! and usually returns an ISP search page, so the answer is an authoritative NXDOMAIN.
-
 use async_trait::async_trait;
 
 use crate::context::{DnsContext, RCODE_NXDOMAIN};

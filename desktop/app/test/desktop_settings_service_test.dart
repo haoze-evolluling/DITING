@@ -1,6 +1,3 @@
-// Desktop settings branch, service and connection (desktop parity):
-// the app's own IPC settings are editable, the host core service is read-only.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';

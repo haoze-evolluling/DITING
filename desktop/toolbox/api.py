@@ -74,7 +74,6 @@ class ApiBridge:
         except Exception as e:
             return {"success": False, "message": str(e)}
 
-    # === 1. DNS 模块 ===
     def dns_query(self, domain: str, server: str, port: int, qtype: str, use_tcp: bool, timeout: float = 3.0) -> dict:
         return execute_dns_query(domain, server, int(port), qtype, bool(use_tcp), float(timeout))
 
@@ -103,7 +102,6 @@ class ApiBridge:
 
         return self._start_task(_task, "dns_benchmark_done")
 
-    # === 2. 代码扫描模块 ===
     def scan_files(
         self,
         root_dir: str,
@@ -138,7 +136,6 @@ class ApiBridge:
 
         return self._start_task(_task, "scan_done")
 
-    # === 3. Logo 渲染模块 ===
     def logo_preview(self) -> dict:
         try:
             return {"success": True, "palettes": brand_svgs()}
@@ -154,7 +151,6 @@ class ApiBridge:
 
         return self._start_task(_task, "logo_export_done")
 
-    # === 4. 构建打包模块 ===
     def build_get_toolchain(self, force: bool = False) -> dict:
         return {
             "tools": check_toolchain(force=bool(force)),
@@ -179,7 +175,6 @@ class ApiBridge:
 
         return self._start_task(_task, "build_done")
 
-    # === 5. 版本管理模块 ===
     def version_inspect(self, groups: Optional[List[str]] = None) -> dict:
         try:
             return {"success": True, "items": inspect_versions(groups)}

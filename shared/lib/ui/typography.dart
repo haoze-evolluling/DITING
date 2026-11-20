@@ -2,10 +2,6 @@
 import 'package:diting_shared/ui/font.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The app's complete typographic role table.
-///
-/// Pages and components select a role instead of setting font sizes or line
-/// heights. Mobile and desktop deltas live only in this enum.
 enum AppTextRole {
   pageTitle(24, 30, weight: FontWeight.w600),
   sectionTitle(20, 26, weight: FontWeight.w600),
@@ -95,7 +91,6 @@ enum AppTextRole {
     required bool desktop,
   }) => base == null ? null : _style(base, colors, desktop: desktop);
 
-  // Typography.blackCupertino draws these slots with SF Pro Display, the rest with SF Pro Text.
   TextStyle? _slotOf(TextTheme theme) => switch (this) {
     pageTitle => theme.headlineLarge,
     sectionTitle => theme.headlineMedium,

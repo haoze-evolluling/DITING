@@ -1,12 +1,6 @@
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Host implementation of the legacy preference containers.
-///
-/// Android mirrors its real XML files through [MethodChannelLegacyPrefsStore]. The desktop/web host
-/// has no Android shared-preference API, so it keeps the same container/key contract in the
-/// browser local storage backing `shared_preferences`. Container and key remain separate arguments
-/// everywhere else; only this adapter namespaces them for storage.
 class SharedPreferencesLegacyPrefsStore implements LegacyPrefsStore {
   SharedPreferencesLegacyPrefsStore(this._preferences);
 
@@ -24,8 +18,6 @@ class SharedPreferencesLegacyPrefsStore implements LegacyPrefsStore {
   }
 
   Object? _readKey(String key) {
-    // Typed getters cast missing keys to their own type, so probing the wrong getter throws.
-    // The async cache preserves the original runtime type and is already loaded at startup.
     return _preferences.get(key);
   }
 
@@ -55,7 +47,6 @@ class SharedPreferencesLegacyPrefsStore implements LegacyPrefsStore {
 
   @override
   void putLong(String container, String key, int value) {
-    // Web local storage and the legacy Android channel both carry this as an integer.
     _preferences.setInt(storageKey(container, key), value);
   }
 

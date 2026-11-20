@@ -1,9 +1,3 @@
-//! Database-backed groups: subscriptions and the three rule tables.
-//!
-//! The plan carries the statements; the app still runs them (`sqflite` owns the connection), but
-//! every dedupe key and counter is decided here. Rows inserted earlier in the same file are added
-//! to the seen set, exactly like the app's "insert then query" loop.
-
 use serde_json::{json, Value};
 
 use super::{as_record, text_field, Outcome, Plan};
@@ -66,7 +60,6 @@ pub fn subscriptions(
             if name.trim().is_empty() {
                 continue;
             }
-            // An existing group keeps its local switch; only a new one is created.
             if group_names.contains(&name) {
                 outcome.skipped += 1;
                 continue;
@@ -82,7 +75,6 @@ pub fn subscriptions(
         }
     }
 
-    // Mirror templates have no incremental write path; the insert ignores duplicates.
     if let Some(Value::Array(templates)) = get(value, "mirrorTemplates") {
         for item in templates {
             let (Some(name), Some(template)) =
@@ -129,8 +121,6 @@ pub fn subscriptions(
                 "mirrorTemplate": text(item, "mirrorTemplate"),
                 "mirrorFallback": truthy(item, "mirrorFallback") != Some(false),
                 "groupName": text(item, "groupName"),
-                // Importing the address, not its contents: zero count and untouched timestamps so
-                // the first refresh downloads.
                 "ruleCount": 0,
                 "lastUpdated": 0,
                 "addedAt": now,
@@ -143,7 +133,6 @@ pub fn subscriptions(
     Ok(outcome)
 }
 
-/// Dedupe key matching the unique indexes on the block/allow rule tables.
 fn rule_key(pattern: &str, important: bool, app_scope: Option<&str>) -> String {
     format!(
         "{}\u{0}{}\u{0}{}",
@@ -190,7 +179,6 @@ pub fn domain_rules(
         let important = truthy(item, "important").unwrap_or(false);
         let app_scope = text_field(item, "appScope");
         let key = rule_key(&pattern, important, app_scope.as_deref());
-        // Dedupe without overwriting: a per-app rule must not degrade into a global block.
         if seen.contains(&(allow, key.clone())) {
             outcome.skipped += 1;
             continue;
@@ -209,7 +197,6 @@ pub fn domain_rules(
                 "important": i32::from(important),
                 "appScope": app_scope,
                 "appInverted": i32::from(truthy(item, "appInverted").unwrap_or(false)),
-                // Keep the stored flags in step with the pattern, as the repository does.
                 "isWildcard": i32::from(pattern.contains('*')),
                 "denyallow": Value::Null,
                 "isRegex": 0,
@@ -284,7 +271,6 @@ pub fn rewrite(
                 outcome.added += 1;
             }
             Some(index) => {
-                // Same pattern and type with a new value is an edit, not a second rule.
                 if text(&rows[index], "targetValue").as_deref() == Some(target_value.as_str()) {
                     outcome.skipped += 1;
                     continue;

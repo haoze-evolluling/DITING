@@ -1,6 +1,3 @@
-//! JSON request decoding for the C ABI. Requests are JSON objects; a missing or mistyped required
-//! field is rejected rather than defaulted, so a drifted caller fails loudly.
-
 use serde_json::Value;
 
 use crate::session::{FlowEvent, FlowKey, FlowStatus};
@@ -35,7 +32,6 @@ fn i32_of(value: &Value, field: &str) -> i32 {
         .unwrap_or(0) as i32
 }
 
-/// Decodes one flow event; requires the `key.protocol` field so a garbage payload is rejected.
 pub fn decode_event(request: &Value) -> Option<FlowEvent> {
     let key = request.get("key")?;
     let protocol = key.get("protocol")?.as_str()?.to_string();

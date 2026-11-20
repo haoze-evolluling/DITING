@@ -1,14 +1,5 @@
-//! Rule dedupe keys, a port of `adblock_rule_keys.dart`.
-//!
-//! A key must include every distinguishing dimension (`important`, `appScope`, `appInverted`, plus
-//! the optional `denyallow` / `isRegex` / `dnsType`), or distinct rules would merge.
-
 use crate::models::{ParsedRewriteRule, ParsedRule};
 
-/// Rule dedupe keys. A key must include every distinguishing dimension (`important`, `appScope`,
-/// `appInverted`), or distinct rules would merge.
-// Mirrors the Dart `blockRuleKey`/`allowRuleKey` signatures field for field, so the two stay
-// obviously comparable; folding the dimensions into a struct would hide that.
 #[allow(clippy::too_many_arguments)]
 pub fn rule_key(
     prefix: &str,
@@ -20,7 +11,6 @@ pub fn rule_key(
     is_regex: bool,
     dns_type: Option<&str>,
 ) -> String {
-    // `$appScope` on a null String interpolates as "null" in Dart; keep that text.
     let base = format!(
         "{prefix}:{pattern}:{important}:{}:{app_inverted}",
         app_scope.unwrap_or("null")

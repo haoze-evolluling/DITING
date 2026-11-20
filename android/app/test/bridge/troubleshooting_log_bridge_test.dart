@@ -1,6 +1,3 @@
-// Guards the Dart side of the troubleshooting-log channel: list parsing, the read payload and
-// that delete/share/clearAll forward the kind + name the native side resolves.
-
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

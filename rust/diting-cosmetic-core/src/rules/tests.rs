@@ -1,5 +1,3 @@
-//! Unit tests for the rule set: the suffix walk, the hide/exception merge and the sentinels.
-
 use std::collections::HashMap;
 
 use super::*;
@@ -37,12 +35,10 @@ fn the_suffix_walk_stops_at_the_last_label() {
     );
     assert_eq!(host_suffixes("com"), vec!["com"]);
     assert_eq!(host_suffixes(""), Vec::<String>::new());
-    // Normalization happens first, so a port and a trailing dot never reach the walk.
     assert_eq!(
         host_suffixes("Ads.Example.com.:443"),
         vec!["ads.example.com", "example.com", "com"]
     );
-    // A trailing dot inside the normalized name cannot happen, but a doubled dot can.
     assert_eq!(host_suffixes("a..b"), vec!["a..b", ".b", "b"]);
 }
 
@@ -73,8 +69,6 @@ fn an_unrelated_host_only_gets_the_global_rules() {
 
 #[test]
 fn an_exception_wins_over_every_hide() {
-    // A host-scoped hide of a globally excepted selector must lose: exceptions are applied after
-    // the walk.
     let set = rules(
         &[".generic-ad", ".promo"],
         &[".generic-ad"],
@@ -116,7 +110,6 @@ fn an_empty_rule_set_renders_nothing() {
 #[test]
 fn selectors_are_sorted_by_bytes() {
     let set = rules(&[".b", "A", ".a", "é"], &[], &[]);
-    // `sort.Strings` is byte order, so `.a` < `.b` < `A` < `é`.
     assert_eq!(
         set.render("example.com"),
         ".a { display: none !important; }\n\
@@ -128,7 +121,6 @@ fn selectors_are_sorted_by_bytes() {
 
 #[test]
 fn the_empty_selector_is_kept() {
-    // The old Go code put selectors into a map without filtering, so `""` rendered a bare line.
     let set = rules(&[""], &[], &[]);
     assert_eq!(
         set.render("example.com"),

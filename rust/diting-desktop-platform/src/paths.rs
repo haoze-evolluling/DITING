@@ -1,10 +1,3 @@
-//! Data/config/cert/querylog paths, identical to the Go service's layout.
-//!
-//! Windows keeps everything under `%ProgramData%\DITING`. Linux separates configuration
-//! (`/etc/diting`) from mutable state (`/var/lib/diting`) and falls back to `~/.diting` when the
-//! process is not root. `DITING_DATA_DIR` overrides both roots with `<value>/DITING`, exactly like
-//! `platform.DefaultDataDir`.
-
 use std::path::{Path, PathBuf};
 
 pub const ENV_DATA_DIR: &str = "DITING_DATA_DIR";
@@ -34,7 +27,6 @@ fn program_data() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"))
 }
 
-/// The mutable data root.
 pub fn default_data_dir() -> PathBuf {
     if let Some(path) = env_override() {
         return path;
@@ -56,7 +48,6 @@ pub fn default_data_dir() -> PathBuf {
     }
 }
 
-/// The configuration root.
 pub fn default_config_dir() -> PathBuf {
     if let Some(path) = env_override() {
         return path;
@@ -98,8 +89,6 @@ pub fn default_cert_dir() -> PathBuf {
     default_data_dir().join(CERT_DIR)
 }
 
-/// `ResolveStateFilePath`: explicit config wins, otherwise the platform state file. The Go
-/// service also let a platform hook redirect it; the desktop rule is the same default path.
 pub fn resolve_state_path(explicit: &str) -> PathBuf {
     if explicit.is_empty() {
         default_state_path()
@@ -118,7 +107,6 @@ mod tests {
 
     #[test]
     fn override_wins() {
-        // The environment is process-global; this test only exercises path composition.
         let path = Path::new("C:/tmp/DITING").join(CONFIG_FILE);
         assert!(path.ends_with(CONFIG_FILE));
     }

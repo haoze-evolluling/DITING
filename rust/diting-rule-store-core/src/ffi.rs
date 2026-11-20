@@ -1,9 +1,3 @@
-//! C ABI for the `dart:ffi` caller.
-//!
-//! Two entries: `rows` (a page of joined rows to rules) and `plan` (statements and predicates).
-//! Payloads are JSON; the header stays fixed — `magic "DRS1" | abi` — so the Dart loader refuses a
-//! library whose version does not match what it was compiled against.
-
 use serde_json::{json, Value};
 
 use crate::identity::{identity, parse_flavor, predicate, rewrite_target_type};
@@ -13,7 +7,6 @@ use crate::import::{
 use crate::probe::{flag, integer, list, text};
 use crate::rows::{rule_from_joined, rule_from_sources, subscriptions};
 
-/// Bumped whenever a payload layout or a semantic changes.
 pub const ABI_VERSION: u32 = 1;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DRS1");
@@ -33,9 +26,6 @@ fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     (pointer, length)
 }
 
-/// # Safety
-/// `out_len` must be writable; `bytes` is either `None` (rejected payload, reported as null) or a
-/// finished buffer whose ownership moves to the caller.
 unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     if out_len.is_null() {
         return std::ptr::null_mut();
@@ -53,8 +43,6 @@ unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     }
 }
 
-/// # Safety
-/// `text` must point to `len` readable bytes.
 unsafe fn input_at<'a>(text: *const u8, len: usize) -> &'a [u8] {
     if text.is_null() || len == 0 {
         &[]
@@ -69,8 +57,6 @@ fn payload(answer: Value) -> Vec<u8> {
     bytes
 }
 
-/// # Safety
-/// `text`/`len` must describe one readable UTF-8 JSON payload.
 unsafe fn call(
     text: *const u8,
     len: usize,
@@ -80,14 +66,11 @@ unsafe fn call(
     Some(payload(handler(&request)?))
 }
 
-/// Payload layout version; the Dart loader compares it against its own constant.
 #[no_mangle]
 pub extern "C" fn diting_rule_store_core_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Allocates `size` zeroed bytes for the caller to fill; release it with
-/// [`diting_rule_store_core_free`].
 #[no_mangle]
 pub extern "C" fn diting_rule_store_core_alloc(size: usize) -> *mut u8 {
     if size == 0 {
@@ -99,8 +82,6 @@ pub extern "C" fn diting_rule_store_core_alloc(size: usize) -> *mut u8 {
     pointer
 }
 
-/// # Safety
-/// `pointer`/`size` must come from [`diting_rule_store_core_alloc`] or a `_core_*` entry.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_store_core_free(pointer: *mut u8, size: usize) {
     if pointer.is_null() || size == 0 {
@@ -111,11 +92,6 @@ pub unsafe extern "C" fn diting_rule_store_core_free(pointer: *mut u8, size: usi
     )));
 }
 
-/// Maps one page of rows to rules. In: `{kind, subscriptions, joined}` (a joined query) or
-/// `{kind, subscriptions, rules, sources}` (rules loaded for one app).
-///
-/// # Safety
-/// `text`/`len` must describe one readable UTF-8 JSON payload; `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_store_core_rows(
     text: *const u8,
@@ -125,10 +101,6 @@ pub unsafe extern "C" fn diting_rule_store_core_rows(
     respond(call(text, len, rows), out_len)
 }
 
-/// Statement and predicate plans. In: `{op: ...}` (see [`plan`]).
-///
-/// # Safety
-/// `text`/`len` must describe one readable UTF-8 JSON payload; `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_store_core_plan(
     text: *const u8,

@@ -1,7 +1,3 @@
-// Desktop hub time plan (desktop parity): the switch, the named
-// windows and the service's "active now" state. Windows are a local draft; only the save button
-// posts them, and the page then shows what the service re-reads.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_schedule_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_schedule_page.dart';

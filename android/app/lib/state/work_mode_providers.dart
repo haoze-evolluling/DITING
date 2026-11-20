@@ -1,4 +1,3 @@
-/// Work mode, power state and provider selection.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -24,7 +23,6 @@ export 'package:diting_android/state/provider_catalog_providers.dart';
 
 part 'work_mode_power.dart';
 
-/// Work modes: `normal` (full tunnel), `express` (narrow DNS route) and `server` (LAN DNS).
 enum AppWorkMode {
   normal('normal'),
   express('express'),
@@ -50,7 +48,6 @@ enum AppWorkMode {
     AppWorkMode.server => l10n.workModeServerSummary,
   };
 
-  /// Persisted legacy `app_work_mode` value.
   final String storageValue;
 
   static AppWorkMode fromStorageValue(String? value) => values.firstWhere(
@@ -59,10 +56,6 @@ enum AppWorkMode {
   );
 }
 
-/// Power state machine.
-/// The enum lives in `data/vpn/power_state.dart` so UI-only consumers (desktop) can import it
-/// without the VPN channel; this library re-exports it.
-/// Work mode and power state share a notifier: switching mode stops the other service.
 class WorkModeNotifier extends Notifier<AppWorkMode> {
   @override
   AppWorkMode build() => AppWorkMode.fromStorageValue(
@@ -71,7 +64,6 @@ class WorkModeNotifier extends Notifier<AppWorkMode> {
 
   void select(AppWorkMode mode) {
     final previous = state;
-    // Stop before publishing: the channel is picked from the current mode.
     if (previous != mode) {
       final power = ref.read(powerProvider);
       if (power.isRunning || power == PowerState.starting) {
@@ -81,8 +73,6 @@ class WorkModeNotifier extends Notifier<AppWorkMode> {
         unawaited(ref.read(serverClientProvider).stop());
       }
     }
-    // Persist, then bump, then publish: the dataset-aware settings view has to point at the new
-    // mode's container by the time dependents rebuild.
     ref.read(legacySettingsProvider).setWorkModeRaw(mode.storageValue);
     ref.read(legacySettingsRevisionProvider.notifier).bump();
     state = mode;
@@ -93,30 +83,23 @@ final workModeProvider = NotifierProvider<WorkModeNotifier, AppWorkMode>(
   WorkModeNotifier.new,
 );
 
-/// Real normal-mode tunnel control; tests override it with a fake.
 final vpnControllerProvider = Provider<VpnController>(
   (ref) => MethodChannelVpnController(),
 );
 
-/// Express mode uses the same contract on its own channel.
 final expressVpnControllerProvider = Provider<VpnController>(
   (ref) =>
       MethodChannelVpnController(channel: MethodChannel(expressVpnChannelName)),
 );
 
-/// Normal mode's no-VPN path; selected only while [rootDnsTakeoverProvider] is on.
 final rootDnsControllerProvider = Provider<VpnController>(
   (ref) => MethodChannelRootDnsController(),
 );
 
-/// Whether normal mode should take DNS over through root instead of `VpnService`.
 class RootDnsTakeoverNotifier extends Notifier<bool> {
   @override
   bool build() => ref.read(legacySettingsProvider).rootDnsTakeoverEnabled;
 
-  /// Switching the transport while something runs would leave the old service up, so the running
-  /// data plane is stopped first. `PowerNotifier.stop` still sees the previous value and therefore
-  /// stops the backend that is actually running.
   Future<void> set(bool value) async {
     if (value == state) return;
     if (ref.read(workModeProvider) == AppWorkMode.normal) {
@@ -137,7 +120,6 @@ final rootDnsTakeoverProvider = NotifierProvider<RootDnsTakeoverNotifier, bool>(
   RootDnsTakeoverNotifier.new,
 );
 
-/// Service statistics shared by the tunnel and the log page.
 class ServiceStatsNotifier extends Notifier<ServiceStats> {
   static const zero = ServiceStats(
     queries: 0,
@@ -147,8 +129,6 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
     uptime: Duration.zero,
   );
 
-  /// Origin of the uptime figure. Preference order: the native start timestamp (survives a
-  /// recreated UI process), then the local clock from [markStarted].
   DateTime? _startedAt;
 
   @override
@@ -159,17 +139,11 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
     state = zero;
   }
 
-  /// Called when a tunnel reports `running` for the first time.
   void markStarted() {
     _startedAt = DateTime.now();
     state = zero;
   }
 
-  /// Replaces the mock counters with the engine's real ones.
-  ///
-  /// [startedAt] is the service's own start time. It wins over the locally observed one so a
-  /// recreated UI process shows the real uptime instead of starting again from zero.
-  ///
   void applyNative(
     Map<String, Object?> stats, {
     required bool running,
@@ -187,7 +161,6 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
       cacheHits: read('cacheHits'),
       blocked: read('blocked'),
       averageLatencyMs: 0,
-      // A device clock that moved backwards must not show a negative duration.
       uptime: elapsed.isNegative ? Duration.zero : elapsed,
     );
   }
@@ -202,8 +175,6 @@ class ServiceStatsNotifier extends Notifier<ServiceStats> {
     );
   }
 
-  /// Advances the uptime off the start clock without a platform round trip, so the status card
-  /// ticks every second while the native counters are polled less often.
   void refreshUptime() {
     final startedAt = _startedAt;
     if (startedAt == null) return;
@@ -225,7 +196,6 @@ final serviceStatsProvider =
       ServiceStatsNotifier.new,
     );
 
-/// Whether the home page has picked a work mode (onboarding marker).
 class WorkModeSelectedNotifier extends Notifier<bool> {
   @override
   bool build() => ref.read(legacySettingsProvider).workModeSelected;
@@ -265,13 +235,10 @@ final onboardingProvider = NotifierProvider<OnboardingNotifier, bool>(
   OnboardingNotifier.new,
 );
 
-/// Provider summary text for the home `resolutionMode` (upstream `raceProviderSummary`).
 String raceProviderSummary(Set<String> ids) =>
     summaryOfProviders(ids, defaultProviderCatalog());
 
-/// Endpoint text; must use `.label`, since `toString()` leaks `ProviderProtocol.doh`.
 String providerEndpointOf(String id) =>
     endpointOfProvider(id, defaultProviderCatalog());
 
-/// Convenience read of the resolution mode from `appearance_providers.dart`.
 ResolutionMode resolutionModeOf(Ref ref) => ref.read(resolutionModeProvider);

@@ -11,18 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Feature hub migrated from upstream `FeatureHubScreen.kt`: the card grid groups the same
-/// modules into focused categories, so no single page (notably 规则控制) hosts every entry point.
-/// Express mode filters the same data through the upstream 18-item gate. The grid widgets live in
-/// `feature_hub_grid.dart` so every category shares the same layout.
 class FeatureHubPage extends ConsumerWidget {
   const FeatureHubPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Card visibility follows the persisted hidden set (`dns_vpn_prefs` /
-    // `hidden_features_set`); filtering lives in the provider so toggling updates immediately.
-    // The localized resources come from this context, so a language switch relabels the cards.
     final categories = ref.watch(
       visibleFeatureCategoriesProvider(context.l10n),
     );
@@ -40,8 +33,6 @@ class FeatureHubPage extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(child: SizedBox(height: context.appBarInset)),
           for (final category in categories)
-            // A box adapter gets no repaint boundary of its own, unlike a list item, so without
-            // one every scroll frame re-records every visible card.
             SliverToBoxAdapter(
               child: RepaintBoundary(
                 child: FeatureHubCategorySection(
@@ -76,8 +67,6 @@ class FeatureHubPage extends ConsumerWidget {
     );
   }
 
-  /// Tab pages (logs, traffic, tools, settings) open full screen so the bottom bar stays out of the
-  /// way and the title bar offers a back arrow; everything else is a normal push.
   void _open(BuildContext context, MockFeatureCard card) {
     if (!pushStandalone(context, card.route)) {
       openLocation(context, card.route);

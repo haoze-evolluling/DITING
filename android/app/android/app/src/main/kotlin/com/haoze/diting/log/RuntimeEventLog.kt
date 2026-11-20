@@ -10,18 +10,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/// The always-on "runtime events" black box: a bounded, structured record of the app's own
-/// behaviour (startup milestones, service/engine lifecycle, failures, uncaught errors) that the
-/// user can read *after* a problem without having had capture on.
-///
-/// It is deliberately tiny: the level gate and the "same event within 5 s" de-duplication live in
-/// `rust/diting-log-core/src/runtime_event.rs`, so one retry storm costs a single line, and the two
-/// files cap at 512 KiB each. A line is `time LEVEL module event k=v ...`, greppable and one record
-/// per line. The crash/logcat capture (`RuntimeLogService`) is the on-demand detailed tier; this
-/// file is the tier that is always there.
-///
-/// `install` is called from [com.haoze.diting.DitingApplication]; every call is wrapped so a
-/// missing native library or an unwritable folder only disables the black box, never the app.
 object RuntimeEventLog {
     const val LEVEL_DEBUG = 0
     const val LEVEL_INFO = 1
@@ -37,7 +25,6 @@ object RuntimeEventLog {
     private const val DEFAULT_DEDUP_MS = 5_000L
     private const val MAX_FIELDS = 24
 
-    /// Oldest first: both the export and [readRecent] read the archive before the active file.
     private val FILE_NAMES = listOf(ARCHIVE, ACTIVE)
 
     private val lock = Any()
@@ -52,7 +39,6 @@ object RuntimeEventLog {
         override fun initialValue() = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     }
 
-    /// Wires the black box to the app; safe to call more than once.
     fun install(context: Context) {
         synchronized(lock) {
             if (installed) return
@@ -65,7 +51,6 @@ object RuntimeEventLog {
         }
     }
 
-    /// The current minimum level (the number is the kernel's level tag).
     fun minLevelTag(): Int = synchronized(lock) { minLevelTag }
 
     fun setMinLevelTag(tag: Int) {
@@ -90,7 +75,6 @@ object RuntimeEventLog {
     fun fatal(module: String, event: String, vararg fields: Pair<String, String>) =
         log(LEVEL_FATAL, module, event, fields)
 
-    /// Records one event through the kernel gate and appends the surviving line.
     fun log(
         levelTag: Int,
         module: String,
@@ -120,7 +104,6 @@ object RuntimeEventLog {
         }.onFailure { Log.w(TAG, "runtime event dropped", it) }
     }
 
-    /// The most recent [limit] event lines, oldest first; used by the troubleshooting page.
     fun readRecent(limit: Int): String = synchronized(lock) {
         val lines = ArrayList<String>()
         runCatching {
@@ -132,7 +115,6 @@ object RuntimeEventLog {
         lines.takeLast(limit.coerceAtLeast(1)).joinToString("\n")
     }
 
-    /// The event files, oldest first, for the troubleshooting list and the export.
     fun files(context: Context): List<File> = synchronized(lock) {
         val directory = dir(context)
         FILE_NAMES
@@ -142,7 +124,6 @@ object RuntimeEventLog {
 
     fun dir(context: Context): File = File(RuntimeLogStore.dir(context), DIR).apply { mkdirs() }
 
-    /// Deletes both event files; the writer is reopened on the next event.
     fun clear(context: Context): Int = synchronized(lock) {
         runCatching { writer?.close() }
         writer = null
@@ -155,7 +136,6 @@ object RuntimeEventLog {
         removed
     }
 
-    /// One readable header for the export: version, system, device, process and the active tier.
     fun environmentSnapshot(context: Context): String {
         val packageName = context.packageName
         val version = runCatching {
@@ -209,7 +189,6 @@ object RuntimeEventLog {
         }.onFailure { Log.w(TAG, "runtime event rotate failed", it) }
     }
 
-    /// A minimal line used only when the native kernel is unavailable, so an event is never lost.
     private fun formatFallback(
         levelTag: Int,
         module: String,

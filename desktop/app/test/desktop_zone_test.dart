@@ -1,7 +1,3 @@
-// Desktop hub rewrite page's local authoritative zones (desktop parity): one row per zone with the
-// service's build result, the RFC 1035 text edited locally, and a preview through the service's own
-// parser. Only "save all" writes; a rejected save rolls back.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_zone_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_rewrite_page.dart';

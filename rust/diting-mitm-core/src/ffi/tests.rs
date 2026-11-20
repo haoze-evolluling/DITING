@@ -1,8 +1,3 @@
-//! The C ABI surface: handle lifecycle, the report payload and the rejection codes.
-//!
-//! These tests call the exported symbols exactly like `mitm_filter_native.go` does, so a changed
-//! signature or a payload field order shows up here before the Go side sees it.
-
 use std::path::PathBuf;
 use std::slice;
 
@@ -24,12 +19,10 @@ impl Drop for Handle {
     }
 }
 
-/// The byte pair the Go caller passes for a string.
 fn bytes(text: &str) -> (*const u8, usize) {
     (text.as_ptr(), text.len())
 }
 
-/// Copies a payload out of the library and frees it, like `copyMitmPayload` does.
 unsafe fn take_payload(pointer: *mut u8, length: usize) -> Vec<u8> {
     if pointer.is_null() || length == 0 {
         return Vec::new();
@@ -131,7 +124,6 @@ fn a_null_handle_is_a_no_op() {
         diting_mitm_free(std::ptr::null_mut());
         diting_mitm_free_bytes(std::ptr::null_mut(), 0);
 
-        // The failure report is still written, and says "nothing happened".
         let report = record_failure(null, "example.com", "boom", 0);
         assert!(!report.recorded);
         assert!(report.blacklist.is_none());
@@ -178,7 +170,6 @@ fn a_failure_streak_reports_what_happened() {
         assert!(!allows(filter.0, "example.com", now + 2));
         assert_eq!(diting_mitm_blacklist_count(filter.0, now + 2), 1);
 
-        // Past the threshold without a new entry: the flag still says "blacklisted".
         let fourth = record_failure(filter.0, "example.com", "connection reset", now + 3);
         assert!(fourth.blacklisted);
         assert!(fourth.blacklist.is_none());
@@ -197,11 +188,9 @@ fn blacklisting_reports_a_reason_once() {
         assert_eq!(report.reason, "EV certificate");
         assert_eq!(report.ttl_ms, DEFAULT_BLACKLIST_TTL_MS);
 
-        // A live entry is not reported twice.
         assert!(blacklist(filter.0, "pinned.example", "pinning", now).is_none());
         assert_eq!(diting_mitm_blacklist_count(filter.0, now), 1);
 
-        // An empty host is refused.
         assert!(blacklist(filter.0, "   ", "pinning", now).is_none());
     }
 }
@@ -254,8 +243,6 @@ fn the_persistent_list_crosses_the_boundary() {
         diting_mitm_remove(filter.0, host, host_len);
         assert_eq!(diting_mitm_blacklist_count(filter.0, now), 0);
 
-        // The file still holds the line: removing only forgets the in-memory entry, like the Go
-        // original. A reload brings it back.
         assert_eq!(
             diting_mitm_load_persistent(filter.0, path_ptr, path_len, now + 1),
             1

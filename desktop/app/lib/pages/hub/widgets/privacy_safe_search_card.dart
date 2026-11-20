@@ -1,8 +1,3 @@
-/// Forced safe search: the master switch and the seven providers.
-///
-/// The old desktop console's `SafeSearchCard.vue` is the blueprint. The switch and each provider save
-/// on the spot with only the field they change; the rewrite TTL is a draft and lives beside this card
-/// as [PrivacySafeSearchTtlCard], because the provider grid alone already fills a card.
 library;
 
 import 'dart:async';

@@ -1,4 +1,3 @@
-/// U10 state: the privacy suite's two DNS switches, backed by the legacy settings store.
 library;
 
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';

@@ -1,7 +1,5 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-/// The exact 1.4.3 table layout, read off the device with `sqlite3 .schema`. `authority`,
-/// `matchedRule` and `blockSubscriptionId` are nullable; `dns_log.cached` is INTEGER read `== 1`
 Future<void> createLegacySchema(Database db) async {
   await db.execute(
     'CREATE TABLE http_request_log ('
@@ -50,7 +48,6 @@ Future<void> createLegacySchema(Database db) async {
   );
 }
 
-/// Inserts one `http_request_log` row; `authority` is null when TLS failed before the request line.
 Future<int> insertHttpRow(
   Database db, {
   required int timestamp,
@@ -70,7 +67,6 @@ Future<int> insertHttpRow(
   'blockSubscriptionId': blockSubscriptionId,
 });
 
-/// Inserts one `dns_log` row; `queryType` defaults to 1 (A) because 0 marks connection log lines.
 Future<int> insertDnsRow(
   Database db, {
   required int timestamp,
@@ -90,7 +86,6 @@ Future<int> insertDnsRow(
   'packageName': packageName,
 });
 
-/// Inserts one `app_traffic_daily` row.
 Future<int> insertTrafficRow(
   Database db,
   String date,

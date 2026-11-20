@@ -1,5 +1,3 @@
-//! Access control facade.
-
 mod control;
 
 pub use control::{AccessControl, AccessStats};

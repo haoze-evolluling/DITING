@@ -1,8 +1,3 @@
-/// State for the N6 network-diagnostics page: a DNS-leak check and a Captive Portal check.
-///
-/// The probes are I/O and live behind [NetworkDiagnosticsProbes] so a widget test can inject fakes;
-/// the *verdicts* come from the Rust kernels (`diting-leak-core` / `diting-captive-core`) through
-/// [LeakEvaluator] / [CaptiveEvaluator], which one implementation the page shares.
 library;
 
 import 'dart:io';
@@ -12,7 +7,6 @@ import 'package:diting_android/data/db/rust_leak_core.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// One `generate_204` result, normalized for the captive kernel.
 class CaptiveHttpProbe {
   const CaptiveHttpProbe({
     this.statusCode,
@@ -25,15 +19,12 @@ class CaptiveHttpProbe {
   final bool? bodyMatchesExpected;
 }
 
-/// The platform probes. A fake in tests; the real one uses the method channel + `HttpClient`.
 abstract class NetworkDiagnosticsProbes {
   Future<NetworkInfoSnapshot> networkInfo();
 
   Future<CaptiveHttpProbe> generate204();
 }
 
-/// Default implementation: `networkInfo` over the diagnostics channel, `generate_204` over
-/// `HttpClient` (redirects disabled so the portal's 3xx is visible).
 class MethodChannelDiagnosticsProbes implements NetworkDiagnosticsProbes {
   MethodChannelDiagnosticsProbes({DiagnosticsRunner? runner})
     : _runner = runner ?? MethodChannelDiagnosticsRunner();
@@ -66,7 +57,6 @@ class MethodChannelDiagnosticsProbes implements NetworkDiagnosticsProbes {
       return CaptiveHttpProbe(
         statusCode: response.statusCode,
         redirectUrl: redirectUrl,
-        // A 204 means the body is the expected empty body; other codes are judged by status.
         bodyMatchesExpected: response.statusCode == 204 ? true : null,
       );
     } finally {
@@ -120,14 +110,11 @@ final captiveEvaluatorProvider = Provider<CaptiveEvaluator>(
   ),
 );
 
-/// The three-state leak result plus its reason code.
 class DiagnosticsResult {
   const DiagnosticsResult({required this.status, required this.reason});
 
-  /// `pass` / `leak` / `unknown`.
   final String status;
 
-  /// Stable reason code, localized by the page.
   final String reason;
 
   factory DiagnosticsResult.fromMap(Map<String, Object?> map) =>
@@ -137,7 +124,6 @@ class DiagnosticsResult {
       );
 }
 
-/// The captive verdict.
 class CaptiveResult {
   const CaptiveResult({
     required this.state,
@@ -145,7 +131,6 @@ class CaptiveResult {
     required this.suspendBlocking,
   });
 
-  /// `open` / `portal` / `unknown`.
   final String state;
   final String? portalUrl;
   final bool suspendBlocking;
@@ -196,9 +181,6 @@ class NetworkDiagnosticsNotifier extends Notifier<NetworkDiagnosticsState> {
   @override
   NetworkDiagnosticsState build() => const NetworkDiagnosticsState();
 
-  /// DNS leak: the probe is whether the tunnel is carrying queries at all. When it is not, the
-  /// verdict is a definite leak ("bypass_upstream"); when it is, there is no expected identity to
-  /// compare against, so the kernel reports a proxied pass.
   Future<void> runLeakCheck() async {
     if (state.leakBusy) return;
     state = state.copyWith(leakBusy: true, clearError: true);
@@ -218,7 +200,6 @@ class NetworkDiagnosticsNotifier extends Notifier<NetworkDiagnosticsState> {
     }
   }
 
-  /// Captive portal: run the `generate_204` probe and let the kernel judge it.
   Future<void> runCaptiveCheck() async {
     if (state.captiveBusy) return;
     state = state.copyWith(captiveBusy: true, clearError: true);

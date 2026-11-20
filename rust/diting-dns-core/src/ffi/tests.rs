@@ -1,6 +1,3 @@
-//! Boundary tests: the ABI number, the null-handle behaviour and a full round trip through the
-//! exported symbols (the Go loader calls exactly these).
-
 use std::slice;
 
 use super::*;
@@ -186,7 +183,6 @@ fn dynamic_blocks_handle_round_trip() {
             "reset forgot the counter"
         );
 
-        // Disabled echoes the fallback and records nothing.
         assert_eq!(
             diting_dns_blocks_response(
                 handle,
@@ -226,7 +222,6 @@ fn a_null_tracker_echoes_the_fallback() {
 
     let handle = diting_dns_blocks_new();
     unsafe {
-        // A non-UTF-8 domain is "not a hostname": the fallback mode, no state recorded.
         let invalid = b"\xff\xfe.example";
         assert_eq!(
             diting_dns_blocks_response(
@@ -288,7 +283,6 @@ fn reply_plans_round_trip_through_the_exported_symbols() {
     assert!(plan.recursion_available);
     assert_eq!(plan.answers[0].rdata, vec![140, 82, 112, 3]);
 
-    // A query that does not parse is a payload error, never a half-built plan.
     let (status, _) = call_payload(diting_dns_reply_local_asset, &[0u8; 3]);
     assert_eq!(status, STATUS_BAD_PAYLOAD);
 }

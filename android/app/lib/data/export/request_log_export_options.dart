@@ -1,19 +1,14 @@
-/// Options for exporting the request log as CSV: which records (filters) and which fields
-/// (columns). Pure values; the exporter turns them into a bounded query and a file.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/http_request_repository.dart'
     show RequestSource, RequestStatus;
 
-/// Preset time window. `custom` reads [RequestLogExportOptions.customStart]/[customEnd].
 enum RequestLogExportRange { all, hour, day, week, custom }
 
-/// Default cap, and the hard ceiling. Both bound the query so a busy log cannot exhaust memory.
 const int requestLogExportDefaultRows = 1000;
 const int requestLogExportMaxRows = 50000;
 
-/// One CSV column, in the order they are written.
 enum RequestLogColumn {
   time,
   source,
@@ -59,7 +54,6 @@ class RequestLogExportOptions {
   final RequestSource source;
   final RequestStatus status;
 
-  /// Empty means every app, including rows without a package.
   final Set<String> packages;
   final RequestLogExportRange range;
   final DateTime? customStart;
@@ -67,7 +61,6 @@ class RequestLogExportOptions {
   final int maxRows;
   final Set<RequestLogColumn> columns;
 
-  /// Inclusive lower bound in milliseconds, or null for "no lower bound".
   int? sinceMs(DateTime now) => switch (range) {
     RequestLogExportRange.all => null,
     RequestLogExportRange.hour =>
@@ -79,7 +72,6 @@ class RequestLogExportOptions {
     RequestLogExportRange.custom => customStart?.millisecondsSinceEpoch,
   };
 
-  /// Inclusive upper bound in milliseconds, or null for "no upper bound".
   int? untilMs(DateTime now) => switch (range) {
     RequestLogExportRange.all => null,
     RequestLogExportRange.hour ||

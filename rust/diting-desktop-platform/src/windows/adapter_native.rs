@@ -1,11 +1,3 @@
-//! Native Windows adapter enumeration.
-//!
-//! `GetAdaptersAddresses` is declared directly instead of using `windows-sys`: that crate gates
-//! `IP_ADAPTER_ADDRESSES_LH` behind the `Win32_NetworkManagement_Ndis` feature, which this crate
-//! intentionally does not enable. The C layout below mirrors `IP_ADAPTER_ADDRESSES_LH` exactly so
-//! field offsets stay correct; the registry is consulted because Windows lets virtual filter
-//! drivers shadow the DNS list returned by the API.
-
 use std::ffi::{c_void, CStr};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::ptr;
@@ -27,9 +19,7 @@ use super::adapter_registry::{
     normalize_guid,
 };
 
-/// `IF_OPER_STATUS` value for an operational adapter.
 const IF_OPER_STATUS_UP: i32 = 1;
-/// Loopback and tunnel `IfType` values, treated as virtual exactly like the Go service.
 const IF_TYPE_SOFTWARE_LOOPBACK: u32 = 24;
 const IF_TYPE_TUNNEL: u32 = 131;
 
@@ -46,7 +36,6 @@ struct AdapterAddressesHeadAnonymous {
     if_index: u32,
 }
 
-/// `IP_ADAPTER_DNS_SERVER_ADDRESS_XP` / `IP_ADAPTER_GATEWAY_ADDRESS_LH` prefix.
 #[repr(C)]
 struct IpAdapterAddressEntry {
     anonymous: AdapterAddressesHead,
@@ -54,7 +43,6 @@ struct IpAdapterAddressEntry {
     address: SOCKET_ADDRESS,
 }
 
-/// `IP_ADAPTER_UNICAST_ADDRESS_LH` prefix; only the fields LAN enumeration needs.
 #[repr(C)]
 struct IpAdapterUnicastAddress {
     anonymous: u64,
@@ -113,16 +101,12 @@ extern "system" {
     ) -> u32;
 }
 
-/// Enumerates every adapter (both families) in driver order. `AF_UNSPEC` keeps the ordering the
-/// Go service relied on: the first adapter is the one Windows considers primary.
 pub(crate) fn scan_adapters_native() -> PlatformResult<Vec<AdapterInfo>> {
     let buffer = collect_adapter_buffer()?;
     let mut current = buffer.as_ptr() as *const IpAdapterAddresses;
     let mut results = Vec::new();
 
     while !current.is_null() {
-        // SAFETY: `current` points into `buffer`, which outlives this loop and is populated by
-        // GetAdaptersAddresses with an array of linked records.
         let adapter = unsafe { &*current };
         let id = normalize_guid(&unsafe { ansi_ptr_to_string(adapter.adapter_name) });
         let name = unsafe { utf16_ptr_to_string(adapter.friendly_name) };
@@ -142,7 +126,6 @@ pub(crate) fn scan_adapters_native() -> PlatformResult<Vec<AdapterInfo>> {
         let has_residual_loopback = dns_residual || check_registry_contains_loopback(&id);
         let (v4_dhcp, v6_dhcp) = get_dhcp_config_from_registry(&id);
 
-        // Loopback/tunnel interfaces are virtual regardless of their display name.
         let virtual_flag = matches!(adapter.if_type, IF_TYPE_SOFTWARE_LOOPBACK | IF_TYPE_TUNNEL);
         let is_physical = !is_virtual_adapter(&name, &description, virtual_flag);
 
@@ -167,22 +150,18 @@ pub(crate) fn scan_adapters_native() -> PlatformResult<Vec<AdapterInfo>> {
     Ok(results)
 }
 
-/// Unicast addresses of operational, non-loopback adapters. `extract_lan_addresses` performs the
-/// remaining virtual/private filtering so both OS backends share one selection rule.
 pub(crate) fn native_interface_addresses() -> PlatformResult<Vec<InterfaceAddress>> {
     let buffer = collect_adapter_buffer()?;
     let mut current = buffer.as_ptr() as *const IpAdapterAddresses;
     let mut results = Vec::new();
 
     while !current.is_null() {
-        // SAFETY: see `scan_adapters_native`.
         let adapter = unsafe { &*current };
         if adapter.oper_status == IF_OPER_STATUS_UP && adapter.if_type != IF_TYPE_SOFTWARE_LOOPBACK
         {
             let name = unsafe { utf16_ptr_to_string(adapter.friendly_name) };
             let mut unicast = adapter.first_unicast_address;
             while !unicast.is_null() {
-                // SAFETY: each entry is part of the same GetAdaptersAddresses allocation.
                 let entry = unsafe { &*unicast };
                 if let Some(address) = unsafe { socket_address_ip(&entry.address) } {
                     results.push(InterfaceAddress {
@@ -205,11 +184,9 @@ fn collect_adapter_buffer() -> PlatformResult<Vec<u8>> {
     let mut buffer = vec![0u8; size as usize];
 
     for _ in 0..5 {
-        // SAFETY: `buffer` is `size` bytes and `size` describes its length; the API only writes
-        // within that bound and updates `size` when it overflows.
         let status = unsafe {
             GetAdaptersAddresses(
-                0, // AF_UNSPEC
+                0,
                 flags,
                 ptr::null(),
                 buffer.as_mut_ptr() as *mut IpAdapterAddresses,
@@ -230,7 +207,6 @@ fn collect_adapter_buffer() -> PlatformResult<Vec<u8>> {
     Err(PlatformError::message("枚举网卡失败: 缓冲区大小反复不足"))
 }
 
-/// Decodes one `SOCKET_ADDRESS` without copying the sockaddr into a Rust-owned struct.
 unsafe fn socket_address_ip(address: &SOCKET_ADDRESS) -> Option<IpAddr> {
     if address.lpSockaddr.is_null() || address.iSockaddrLength < 2 {
         return None;
@@ -264,7 +240,6 @@ unsafe fn first_ipv4_gateway(mut entry: *mut IpAdapterAddressEntry) -> Option<St
     None
 }
 
-/// Returns `(ipv4, ipv6, saw_loopback)` from the adapter's DNS list.
 unsafe fn collect_dns_servers(
     mut entry: *mut IpAdapterAddressEntry,
 ) -> (Vec<String>, Vec<String>, bool) {
@@ -286,8 +261,6 @@ unsafe fn collect_dns_servers(
                 }
                 IpAddr::V6(address) => {
                     let text = address.to_string();
-                    // `fec0::/10` is deprecated site-local space; Windows reports it as a
-                    // resolver but it is not routable.
                     if is_loopback_literal(&text) {
                         saw_loopback = true;
                     } else if !text.to_ascii_lowercase().starts_with("fec0:") {
@@ -330,8 +303,6 @@ fn filter_loopback_literals(ips: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-/// `CleanAdapterState` plus the bare-IPv6 correction above. Keeping the shared clean first means
-/// the empty-list-to-DHCP invariant is inherited unchanged.
 pub(crate) fn clean_state_for_windows(adapter: &AdapterState) -> AdapterState {
     let mut cleaned = clean_adapter_state(adapter);
     cleaned.ipv4_dns.retain(|ip| !is_loopback_literal(ip));

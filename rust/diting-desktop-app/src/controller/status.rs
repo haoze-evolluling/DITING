@@ -1,5 +1,3 @@
-//! Status, takeover, port diagnosis and background-service reporting.
-
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +16,6 @@ use crate::controller::{effective_listen_addresses, ControllerError};
 use crate::runtime::PlatformHandles;
 use crate::AppRuntime;
 
-/// `ipc.UpstreamInfo`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpstreamInfo {
@@ -40,7 +37,6 @@ fn is_false(value: &bool) -> bool {
     !*value
 }
 
-/// `ipc.DNSStatus`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DnsStatus {
@@ -71,7 +67,6 @@ pub struct DnsStatus {
     pub block_any_mode: String,
 }
 
-/// `ipc.TakeoverStatus`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TakeoverStatus {
@@ -79,7 +74,6 @@ pub struct TakeoverStatus {
     pub adapters: Vec<AdapterState>,
 }
 
-/// `ipc.MetricsStatus`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MetricsStatus {
@@ -90,7 +84,6 @@ pub struct MetricsStatus {
     pub qps: f64,
 }
 
-/// `ipc.StatusResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StatusResponse {
@@ -117,7 +110,6 @@ pub struct StatusResponse {
     pub clients: Vec<ClientSummary>,
 }
 
-/// Client projection used by `status` (Go's `core.ClientInfo`).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientSummary {
@@ -127,7 +119,6 @@ pub struct ClientSummary {
     pub last_seen: i64,
 }
 
-/// `ipc.EmergencyRestoreResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EmergencyRestoreResponse {
@@ -135,7 +126,6 @@ pub struct EmergencyRestoreResponse {
     pub message: String,
 }
 
-/// `ipc.AdapterTakeoverRequest`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdapterTakeoverRequest {
@@ -181,7 +171,6 @@ pub(crate) fn client_summaries(runtime: &AppRuntime) -> Vec<ClientSummary> {
 }
 
 impl AppRuntime {
-    /// `GetStatus`.
     pub fn status(&self) -> StatusResponse {
         let config = self.config();
         let lan_addresses = self.lan_addresses();
@@ -209,12 +198,9 @@ impl AppRuntime {
                     } else {
                         1
                     },
-                    // A provider whose circuit breaker is open is not selectable right now.
                     active: snapshot
                         .map(|stats| stats.circuit_open_until_ns <= now_ns)
                         .unwrap_or(true),
-                    // `sample_count` counts successful RTT samples; without one the panel shows a
-                    // cold provider rather than a fabricated success.
                     success_count: snapshot
                         .map(|stats| stats.sample_count.max(0) as u64)
                         .unwrap_or(0),
@@ -297,7 +283,6 @@ impl AppRuntime {
         }
     }
 
-    /// `GetAdapters`.
     pub async fn adapters(&self) -> Result<Vec<AdapterInfo>, ControllerError> {
         let platform = require_platform(self)?;
         let scanner = platform
@@ -310,7 +295,6 @@ impl AppRuntime {
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `EnableTakeover`.
     pub async fn enable_takeover(&self) -> Result<(), ControllerError> {
         let platform = require_platform(self)?;
         if !self.is_dns_running() {
@@ -339,7 +323,6 @@ impl AppRuntime {
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `DisableTakeover`.
     pub async fn disable_takeover(&self) -> Result<(), ControllerError> {
         let platform = require_platform(self)?;
         let manager = platform
@@ -352,7 +335,6 @@ impl AppRuntime {
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `SetAdapterTakeover`.
     pub async fn set_adapter_takeover(
         &self,
         request: AdapterTakeoverRequest,
@@ -386,7 +368,6 @@ impl AppRuntime {
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `EmergencyRestore`.
     pub async fn emergency_restore(&self) -> Result<EmergencyRestoreResponse, ControllerError> {
         let platform = require_platform(self)?;
         let store = platform
@@ -423,7 +404,6 @@ impl AppRuntime {
         })
     }
 
-    /// `CheckPortConflicts`.
     pub async fn port_check(&self) -> Result<PortCheckResult, ControllerError> {
         let platform = require_platform(self)?;
         let checker = platform
@@ -438,7 +418,6 @@ impl AppRuntime {
             .map_err(|error| ControllerError::new(error.to_string()))
     }
 
-    /// `AutofixPortConflicts`.
     pub async fn port_autofix(&self, start_dns: bool) -> Result<PortCheckResult, ControllerError> {
         let platform = require_platform(self)?;
         let checker = platform
@@ -457,7 +436,6 @@ impl AppRuntime {
         Ok(result)
     }
 
-    /// `GetCoreServiceStatus`, including the foreground-mode description.
     pub async fn core_service_status(&self) -> Result<CoreServiceStatus, ControllerError> {
         let platform = require_platform(self)?;
         let manager = platform

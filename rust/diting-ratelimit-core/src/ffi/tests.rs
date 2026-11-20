@@ -118,7 +118,6 @@ fn a_bad_config_payload_is_rejected() {
         unsafe { diting_ratelimit_configure(handle, std::ptr::null(), 0) },
         STATUS_BAD_ARGUMENT
     );
-    // The live config survived both rejects.
     let live = info(handle);
     assert_eq!(live.config.rate, 2.0);
     unsafe { diting_ratelimit_free(handle) };

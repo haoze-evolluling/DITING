@@ -1,9 +1,3 @@
-//! Response-side alias-chain recheck.
-//!
-//! A CNAME can point a harmless name at a blocked one; checking only the question name misses it.
-//! The stage runs after the cache (so a cached answer is rechecked too), skips locally authoritative
-//! answers, and evicts the poisoned entry from the cache.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

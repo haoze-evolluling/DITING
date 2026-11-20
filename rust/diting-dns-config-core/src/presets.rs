@@ -1,9 +1,3 @@
-//! The three DNS cache presets, in one place.
-//!
-//! Each preset overwrites nine `dns_cache_*_v2` keys, so the numbers are a stored contract: the UI
-//! offers three labels, but the values behind them must stay byte-identical to 1.4.3. Server mode
-//! reuses the same three shapes with its own negative-TTL values.
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CachePreset {
     Conservative = 0,
@@ -32,7 +26,6 @@ impl CachePreset {
         }
     }
 
-    /// The prefs spelling (`conservative` / `balanced` / `high_hit_rate`).
     pub fn storage_value(self) -> &'static str {
         match self {
             CachePreset::Conservative => "conservative",
@@ -83,7 +76,6 @@ impl CachePreset {
     }
 }
 
-/// The engine-side cache policy, read out of the raw keys.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CachePolicy {
     pub mode: String,
@@ -94,8 +86,6 @@ pub struct CachePolicy {
     pub stale_fallback_seconds: i32,
 }
 
-/// `fromPolicy`: derive a preset from the raw keys so installs predating `dns_cache_preset_v3`
-/// still show a sensible option.
 pub fn from_policy(policy: &CachePolicy) -> CachePreset {
     if policy.mode == "follow_dns_ttl" && !policy.min_ttl_enabled && !policy.stale_fallback_enabled
     {
@@ -113,15 +103,12 @@ pub fn from_policy(policy: &CachePolicy) -> CachePreset {
     CachePreset::HighHitRate
 }
 
-/// `current`: the stored preset wins; a missing one is derived from the policy.
 pub fn current(preset_raw: Option<&str>, policy: &CachePolicy) -> CachePreset {
     preset_raw
         .and_then(CachePreset::from_storage)
         .unwrap_or_else(|| from_policy(policy))
 }
 
-/// Server mode's cache document, by preset. The negative-TTL values differ from the tunnel's (they
-/// belong to the standalone resolver), and an unknown spelling falls back to the balanced row.
 pub fn server_cache_document(preset_raw: &str) -> (CacheValues, i32) {
     match CachePreset::from_storage(preset_raw) {
         Some(CachePreset::Conservative) => (CachePreset::Conservative.values(), 15),

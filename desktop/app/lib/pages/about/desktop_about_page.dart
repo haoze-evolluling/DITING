@@ -1,9 +1,3 @@
-/// The about branch: what this build is, who made it possible, what it promises, and the one
-/// session action the LAN console has.
-///
-/// It is a branch of its own because it is the only page a reader opens *about* the app rather than
-/// to change it; the merged hub keeps every setting. The version is the service's `/status` value,
-/// so an unreachable service shows a dash instead of a version the window cannot know.
 library;
 
 import 'dart:async';
@@ -25,7 +19,6 @@ import 'package:material_ui/material_ui.dart';
 class DesktopAboutPage extends ConsumerWidget {
   const DesktopAboutPage({super.key});
 
-  /// The browser session is the only thing this page can end; the desktop window has none.
   Future<void> _signOut(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final confirmed = await confirmDesktopAction(
@@ -43,8 +36,6 @@ class DesktopAboutPage extends ConsumerWidget {
     );
   }
 
-  /// One external link row. The open-external chevron is the same on every row, so the builder owns
-  /// it; the join-group row differs only in what it opens.
   Widget _linkRow(
     BuildContext context, {
     required Glyph glyph,
@@ -59,7 +50,6 @@ class DesktopAboutPage extends ConsumerWidget {
     onTap: () => unawaited(onTap()),
   );
 
-  /// One titled group: every about section is a list of rows under its own header.
   Widget _group(
     BuildContext context, {
     required String title,
@@ -106,9 +96,6 @@ class DesktopAboutPage extends ConsumerWidget {
                   ),
                 ],
               ),
-              // Same order as the Android about page: support sits between the contact links and
-              // the licence text. The desktop build has no sponsor page, so the README section
-              // itself is the one sponsor target.
               _group(
                 context,
                 title: l10n.aboutSupport,
@@ -130,8 +117,6 @@ class DesktopAboutPage extends ConsumerWidget {
                   _linkRow(
                     context,
                     glyph: AppGlyphs.palette,
-                    // 该开源项目对外敏感，按要求不在界面中展示其名称：标题留空，
-                    // 仅保留下方通用的复用说明（aboutCreditsUi）。
                     title: '',
                     label: l10n.aboutCreditsUi,
                     onTap: () => openDesktopLink(context, flClashRepositoryUrl),
@@ -172,15 +157,12 @@ class DesktopAboutPage extends ConsumerWidget {
   }
 }
 
-/// Identity card: brand mark, name, version and licence, then the tagline. No update check: the
-/// desktop window has no installer to hand a package to, and the service owns its own version.
 class _AboutHero extends StatelessWidget {
   const _AboutHero({required this.version});
 
   static const _logoSize = 72.0;
   static const _logoInset = 10.0;
 
-  /// The service's `/status` version; empty while the service cannot be read.
   final String version;
 
   @override
@@ -242,8 +224,6 @@ class _AboutHero extends StatelessWidget {
   }
 }
 
-/// The app description and disclaimer, in full. It is the same text the first-run agreement shows,
-/// so the promise does not change depending on where it is read.
 class _AboutDisclaimerCard extends StatelessWidget {
   const _AboutDisclaimerCard();
 

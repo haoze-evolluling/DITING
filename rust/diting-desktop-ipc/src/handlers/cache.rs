@@ -1,5 +1,3 @@
-//! `/api/v1/cache/*`.
-
 use hyper::http::Method;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -17,7 +15,6 @@ fn parse_limit(ctx: &Ctx<'_>, default: i32) -> i32 {
         .unwrap_or(default)
 }
 
-/// Merges a JSON patch into the serialized current value (Go unmarshals into a copy).
 pub fn merge_patch<T: Serialize + DeserializeOwned>(current: &T, body: &[u8]) -> Result<T, String> {
     let mut base = serde_json::to_value(current).map_err(|error| error.to_string())?;
     let patch: Value = serde_json::from_slice(body).map_err(|error| error.to_string())?;

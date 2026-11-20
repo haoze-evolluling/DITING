@@ -1,6 +1,3 @@
-// App picker data and its unsaved-changes guard: inventory, filters, mutual exclusion
-// between the four lists, and the dialog that asks before leaving.
-
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/permissions_bridge.dart';
@@ -26,7 +23,6 @@ void main() {
   group('读不到应用列表', _appListErrorState);
 }
 
-/// Data behavior of the app-picker pages - inventory, filter, sort, persist, cleanup
 void _appPickerData() {
   const systemApp = InstalledApp(
     packageName: 'com.android.systemui',
@@ -94,14 +90,11 @@ void _appPickerData() {
       final snapshot = await container.read(installedAppsProvider.future);
       expect(snapshot.apps, isEmpty);
       expect(snapshot.error, isNotNull);
-      // A broken channel looks like a device without apps, so report value plus error
       expect(container.read(installedAppsProvider).hasError, isFalse);
     });
   });
 
   group('互斥写入', () {
-    /// Excluding an app clears it from blocked, HTTPS-check and app rules. Packages are
-    /// seeded as `List<String>` because that is what `putStringSet` stores
     test('排除应用清掉另外三处', () {
       final container = containerWith({
         'dns_vpn_prefs': {

@@ -1,9 +1,3 @@
-//! The client side of the spike: a hand-written TCP/UDP peer and the harness around the stack.
-//!
-//! Nothing here needs a device, a port or a privilege. `Harness` advances a fake clock and shuttles
-//! packets between the test's crafted bytes and `Netstack`, which is exactly the boundary the
-//! engine's TUN adapter will sit on.
-
 #![allow(dead_code)]
 
 use diting_netstack_spike::wire;
@@ -36,13 +30,11 @@ impl Harness {
         self.now += Duration::from_millis(millis);
     }
 
-    /// Deliver one client packet and return everything the stack wrote back.
     pub fn feed(&mut self, packet: Vec<u8>) -> Vec<Vec<u8>> {
         self.net.ingress(&packet, self.now);
         self.net.egress()
     }
 
-    /// A timer tick: no new client packet, just another `poll`.
     pub fn tick(&mut self) -> Vec<Vec<u8>> {
         self.net.poll(self.now);
         self.net.egress()
@@ -63,7 +55,6 @@ impl Harness {
     }
 }
 
-/// A TCP client with just enough sequencing to hold a conversation: SYN, ACK, data, FIN.
 pub struct TcpClient {
     pub local: IpEndpoint,
     pub remote: IpEndpoint,
@@ -98,7 +89,6 @@ impl TcpClient {
         packet
     }
 
-    /// Adopt the server's initial sequence number and keep our own next sequence.
     pub fn accept_syn_ack(&mut self, syn_ack: &wire::TcpSegment) {
         assert!(syn_ack.is_syn_ack(), "expected a SYN-ACK, got {syn_ack:?}");
         assert_eq!(syn_ack.dst, self.local, "SYN-ACK addressed to the client");
@@ -146,7 +136,6 @@ impl TcpClient {
         packet
     }
 
-    /// SYN, then the handshake completes. Returns the SYN-ACK for the caller's assertions.
     pub fn connect(&mut self, harness: &mut Harness) -> wire::TcpSegment {
         let out = harness.feed(self.syn());
         let segments = harness.tcp_segments(&out);

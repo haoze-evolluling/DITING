@@ -6,13 +6,9 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// AI parameters and prompt (upstream `AgentApiParamsScreen`), persisted to
-/// `agent_api_system_prompt` and `agent_api_temperature`.
 class AgentParamsPage extends ConsumerWidget {
   const AgentParamsPage({super.key});
 
-  /// Built-in prompt bodies stay Chinese on purpose: the model is asked in the same language
-  /// as the analysis prompts in `lib/data/agent`, so the reports read consistently.
   static const _templatePrompts = <String>[
     '你是一名网络安全与 DNS 威胁情报专家。擅长对域名安全性、防盗链、'
         'DGA 随机特征、恶意软件外联及追踪探针进行分析，并给出明确的处置建议。',
@@ -128,9 +124,6 @@ class AgentParamsPage extends ConsumerWidget {
   }
 }
 
-/// The controller must be owned by the dialog: disposing it right after `await` fires on
-/// `pop` while the exit animation runs, and the `TextField` then trips
-/// `'_dependents.isEmpty': is not true`.
 class _PromptFieldDialog extends StatefulWidget {
   const _PromptFieldDialog({required this.initial});
 

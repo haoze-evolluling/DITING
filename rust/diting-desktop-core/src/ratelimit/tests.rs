@@ -69,7 +69,6 @@ fn tokens_refill_over_time() {
     assert!(limiter.allow(Some(client)));
     assert!(!limiter.allow(Some(client)));
 
-    // 20 ms at 1000 tokens/s is 20 tokens, comfortably above the single-token need.
     std::thread::sleep(Duration::from_millis(20));
     assert!(limiter.allow(Some(client)));
 }
@@ -83,9 +82,7 @@ fn prefix_aggregation_shares_one_bucket() {
     let limiter = RateLimiter::new(&settings);
 
     assert!(limiter.allow(Some(ip("10.0.0.1"))));
-    // Same /24 -> same bucket, already drained.
     assert!(!limiter.allow(Some(ip("10.0.0.2"))));
-    // A different /24 has its own bucket.
     assert!(limiter.allow(Some(ip("10.0.1.1"))));
 }
 

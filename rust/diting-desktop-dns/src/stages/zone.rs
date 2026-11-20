@@ -1,8 +1,3 @@
-//! Locally authoritative zones.
-//!
-//! Unlike hosts/rewrite, a zone owns every name below its origin: a name inside the zone that has
-//! no matching record is an authoritative NODATA with the zone SOA, not a reason to ask upstream.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

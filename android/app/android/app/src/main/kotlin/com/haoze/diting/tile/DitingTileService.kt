@@ -11,13 +11,6 @@ import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 import com.haoze.diting.control.DataPlaneControl
 
-/// Quick settings tile mirroring the legacy one: it toggles whichever data plane the current work
-/// mode uses, and falls back to opening the app when it cannot start the service on its own.
-///
-/// The start/stop decision lives in [DataPlaneControl] so the tile, the home screen widget and the
-/// automation activity share one implementation. The work mode and the first-run agreement are read
-/// from the same preferences the Flutter side writes, so the tile never starts a tunnel before the
-/// user accepted the agreement.
 class DitingTileService : TileService() {
 
     override fun onTileAdded() {
@@ -32,21 +25,17 @@ class DitingTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        // The panel is reachable while locked, but starting a foreground service, opening an
-        // activity or showing the VPN consent dialog is refused there; ask for the unlock first.
         if (isLocked) unlockAndRun { performTileAction() } else performTileAction()
     }
 
     private fun performTileAction() {
         if (!DataPlaneControl.isAgreementAccepted(this)) {
-            // The app owns the consent flow; opening it is the only correct action here.
             openMainActivity()
             return
         }
         when (DataPlaneControl.toggle(this)) {
             DataPlaneControl.Result.Started -> updateTileState(running = true)
             DataPlaneControl.Result.Stopped -> updateTileState(running = false)
-            // No VPN consent, or no persisted start config yet: Dart builds it.
             DataPlaneControl.Result.NeedsApp -> openMainActivity()
         }
     }

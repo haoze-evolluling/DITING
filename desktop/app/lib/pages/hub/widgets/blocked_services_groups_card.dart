@@ -1,8 +1,3 @@
-/// The built-in service groups: one tap blocks or unblocks every service in the group.
-///
-/// The old desktop console's `ServicesPanel.vue` group row is the blueprint. It sits above the service
-/// list as its own card, because the chips, the active-rule count and the clear-all button are a
-/// different question from the searchable list of services.
 library;
 
 import 'dart:async';

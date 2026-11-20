@@ -1,7 +1,3 @@
-/// 日志管理: one merged, newest-first timeline of runtime captures and crash reports. Per-file
-/// rows open a viewer that can share, download or delete that file; the app bar also shares,
-/// downloads or clears everything. The heavy lifting (listing, reading, deleting, sharing,
-/// downloading) stays in [TroubleshootingLogBridge] on the native side.
 library;
 
 import 'package:diting_android/data/native/troubleshooting_log_bridge.dart';
@@ -27,14 +23,12 @@ class TroubleshootingLogsPage extends ConsumerStatefulWidget {
 class _TroubleshootingLogsPageState
     extends ConsumerState<TroubleshootingLogsPage>
     with WidgetsBindingObserver {
-  /// Blocks a second tap while a delete, share or download round trip runs.
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // A capture may have started or a crash landed while this page was away.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _refresh();
     });
@@ -68,7 +62,6 @@ class _TroubleshootingLogsPageState
     );
   }
 
-  /// One file per log into Download, so the names match the timeline instead of a merged dump.
   Future<void> _downloadAll() async {
     if (_busy) return;
     setState(() => _busy = true);
@@ -122,8 +115,6 @@ class _TroubleshootingLogsPageState
     );
   }
 
-  /// Opens the viewer, then refreshes the timeline and confirms whatever the sheet did with a
-  /// toast once it is gone.
   Future<void> _open(TroubleshootLogEntry entry) async {
     final result = await showSheet<TroubleshootLogSheetResult>(
       context: context,

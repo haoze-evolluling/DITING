@@ -1,5 +1,3 @@
-//! Layout round trips and rejections: the Go decoder and this encoder have to agree byte for byte.
-
 use super::*;
 use crate::engine::PARENTAL_CONTROL_SUFFIX;
 use crate::hash::HASH_SIZE;
@@ -121,7 +119,6 @@ fn truncated_payloads_are_rejected() {
 #[test]
 fn non_utf8_text_is_rejected() {
     let mut request = encode_apply(0, &[], &[]);
-    // Empty the received list, then append one chunk of invalid UTF-8.
     request.truncate(3);
     request.extend_from_slice(&1u16.to_le_bytes());
     request.extend_from_slice(&1u16.to_le_bytes());

@@ -7,16 +7,10 @@ import com.haoze.diting.log.AppDatabase
 import java.util.Calendar
 import java.util.Locale
 
-/// Today's figures for the home screen widget.
-///
-/// Each work mode keeps its own `dns_log` store, so the database is picked from the work mode the
-/// same way the services do. A missing file, a locked database or a missing table all mean "no
-/// number to show" (null) instead of a crash inside a broadcast receiver.
 internal object WidgetStats {
     private const val TABLE = "dns_log"
     private const val BLOCKED_RESULT = "BLOCKED"
 
-    /// Blocked and total requests since local midnight. Both are null when the store is absent.
     data class Snapshot(val blockedToday: Int?, val totalToday: Int?)
 
     fun snapshot(context: Context): Snapshot {
@@ -36,13 +30,11 @@ internal object WidgetStats {
         }.getOrNull() ?: Snapshot(null, null)
     }
 
-    /// Thousands-separated count; above 100k switches to compact form, like `dashboardCount`.
     fun formatCount(value: Int): String {
         if (value >= 100_000) return "${value / 1000}k"
         return String.format(Locale.US, "%,d", value)
     }
 
-    /// One-decimal percentage, or null when there is nothing to divide by.
     fun formatRate(blocked: Int?, total: Int?): String? {
         if (blocked == null || total == null || total <= 0) return null
         val percent = blocked * 100.0 / total

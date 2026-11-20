@@ -1,5 +1,3 @@
-/// The single mutable copy of the three rule tables, so a page rebuild cannot drop edits made
-/// elsewhere.
 library;
 
 import 'dart:async';
@@ -14,7 +12,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Read-only check for preset whitelist rules, shared by the switch, row menu and delete action.
 bool isRuleProtected(
   MockRule rule, {
   required RuleKind kind,
@@ -24,20 +21,14 @@ bool isRuleProtected(
     rule.source == RuleSource.preset &&
     !allowPresetEditable;
 
-/// The three rule tables keyed by kind; separate notifiers would duplicate the CRUD logic.
 class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
   var _sequence = 0;
 
   RuleRepository? get _repo => ref.read(ruleRepositoryProvider);
 
-  /// Mutations rebuild `state` from the current list, so they must not run while the paged first
-  /// load is still arriving — they would write a truncated list back and the pages that land
-  /// afterwards would append after the change. The load is a no-op once it has finished.
   Future<void> _awaitSnapshot() =>
       ref.read(initialRulesProvider.notifier).ensureLoaded();
 
-  /// Recompiles the native rule tries of the active data set after a database write, mirroring the
-  /// legacy app's cache refresh inside RuleOperationWorker. Cheap when nothing changed.
   void _refreshIndexes() {
     refreshRuleIndexesForCurrentMode(ref);
   }
@@ -45,7 +36,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
   @override
   Map<RuleKind, List<MockRule>> build() {
     final initial = ref.watch(initialRulesProvider);
-    // Only rules with an empty appScope belong here; app-scoped rules live on the app-rules page.
     return {
       for (final kind in RuleKind.values)
         kind: [
@@ -57,7 +47,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
 
   List<MockRule> rulesOf(RuleKind kind) => state[kind] ?? const [];
 
-  /// Toggles a rule; read-only rows are filtered by the caller.
   void toggle(RuleKind kind, String id, bool enabled) {
     _replace(kind, id, (rule) => _copy(rule, enabled: enabled));
     final repo = _repo;
@@ -68,8 +57,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     }
   }
 
-  /// Adds a user rule; false when the pattern exists. Deduplication lives here because bulk import
-  /// shares it.
   Future<bool> add(RuleKind kind, String pattern, {String? target}) async {
     await _awaitSnapshot();
     final trimmed = pattern.trim();
@@ -105,8 +92,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     return true;
   }
 
-  /// Editing a whitelist preset rewrites its source to user-defined, so clearing presets cannot
-  /// discard the edit.
   Future<void> edit(
     RuleKind kind,
     String id,
@@ -166,7 +151,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     };
   }
 
-  /// Clears user rules and returns how many were removed.
   Future<int> clearCustom(RuleKind kind) async {
     await _awaitSnapshot();
     final repo = _repo;
@@ -186,7 +170,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     return removed;
   }
 
-  /// Resets default whitelist presets; user and subscription rows are kept.
   Future<int> resetPreset(RuleKind kind) async {
     await _awaitSnapshot();
     final repo = _repo;
@@ -218,7 +201,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     return initial.length;
   }
 
-  /// Bulk import: appends deduplicated rows and returns how many were written.
   Future<int> importRules(
     RuleKind kind,
     List<String> patterns, {
@@ -251,7 +233,6 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
       return 0;
     }
     if (repo != null) {
-      // One trie rebuild per batch, not one per row.
       _refreshIndexes();
     }
     state = {
@@ -289,23 +270,18 @@ final rulesProvider =
       RulesNotifier.new,
     );
 
-/// Read-only view of one rule kind; edits to other kinds do not rebuild it.
 final rulesOfKindProvider = Provider.family<List<MockRule>, RuleKind>(
   (ref, kind) => ref.watch(rulesProvider)[kind] ?? const [],
 );
 
-/// One rule table narrowed by the source chip and the search box. A filter value rather than UI
-/// state, so the tally and the list read the same snapshot and no page state feeds the stats.
 @immutable
 class RuleListFilter {
   const RuleListFilter({required this.kind, this.source, this.query = ''});
 
   final RuleKind kind;
 
-  /// `null` shows every source.
   final RuleSourceFilter source;
 
-  /// Already trimmed and lower-cased by the caller.
   final String query;
 
   @override
@@ -319,10 +295,6 @@ class RuleListFilter {
   int get hashCode => Object.hash(kind, source, query);
 }
 
-/// Native search index over one rule kind's table.
-///
-/// Rebuilt only when that table changes, and folded lazily on the first query: typing is the only
-/// thing that pays for it.
 final ruleSearchIndexProvider = Provider.family<RuleSearchIndex, RuleKind>((
   ref,
   kind,
@@ -337,8 +309,6 @@ final ruleSearchIndexProvider = Provider.family<RuleSearchIndex, RuleKind>((
   return index;
 });
 
-/// Rows the rule page shows for [filter]. Every row here is also matched by the tallies in
-/// [ruleListTallyProvider], so the counter can never disagree with the list.
 final filteredRulesProvider = Provider.family<List<MockRule>, RuleListFilter>(
   (ref, filter) {
     final rules = ref.watch(rulesOfKindProvider(filter.kind));
@@ -351,19 +321,14 @@ final filteredRulesProvider = Provider.family<List<MockRule>, RuleListFilter>(
       ];
     }
     final hits = ref.watch(ruleSearchIndexProvider(filter.kind)).match(query);
-    // Row indices come back ascending from the same snapshot, so the list keeps the table order
-    // and the source chip stays a filter over it.
     return [
       for (final index in hits)
         if (source == null || rules[index].source == source) rules[index],
     ];
   },
-  // One entry per keystroke otherwise: the query string is part of the family key.
   isAutoDispose: true,
 );
 
-/// The three numbers above the rule list: table size, enabled rows and user-defined rows. Always
-/// the whole table, not the filtered rows, matching the legacy screen.
 @immutable
 class RuleListTally {
   const RuleListTally({
@@ -378,7 +343,6 @@ class RuleListTally {
   final int enabled;
   final int custom;
 
-  /// Rows left after the source chip and the query; what the "共 N 条" caption reports.
   final int matched;
   final int matchedEnabled;
 
@@ -428,8 +392,6 @@ final ruleListTallyProvider = Provider.family<RuleListTally, RuleListFilter>((
   );
 }, isAutoDispose: true);
 
-/// "Allow editing default whitelist" switch, off by default: relaxing the whitelist lets traffic
-/// through.
 class AllowPresetEditableNotifier extends Notifier<bool> {
   @override
   bool build() => false;
@@ -442,11 +404,8 @@ final allowPresetEditableProvider =
       AllowPresetEditableNotifier.new,
     );
 
-/// Rule-source filter; `null` means all sources.
 typedef RuleSourceFilter = RuleSource?;
 
-/// Parses one line into importable, duplicate or invalid; `#@#` lines are allow rules for the
-/// whitelist page.
 class RuleLineParseResult {
   const RuleLineParseResult({
     required this.accepted,
@@ -459,7 +418,6 @@ class RuleLineParseResult {
   final List<String> rejected;
 }
 
-/// Parses pasted text; [existing] holds patterns already in the target table.
 RuleLineParseResult parseRuleLines(
   String text, {
   Set<String> existing = const {},
@@ -490,12 +448,6 @@ RuleLineParseResult parseRuleLines(
   );
 }
 
-/// Keeps the rule list in step with the active data set.
-///
-/// `initialRulesProvider` now watches `ruleRepositoryProvider`, so a mode switch re-runs its
-/// `build()`, which both clears the previous mode's rows and starts the new fill — there is nothing
-/// left for a separate listener to do. Kept as a named provider because the app shell watches it to
-/// keep the dependency explicit.
 final ruleSnapshotSyncProvider = Provider<void>((ref) {
   ref.watch(initialRulesProvider);
 });

@@ -1,11 +1,3 @@
-//! Rules-page search timings without the Dart/FFI round trip, so the native share of the
-//! end-to-end number is separable.
-//!
-//! ```bash
-//! cd rust && cargo run --release --example search_bench            # 100k rows
-//! cargo run --release --example search_bench -- 200000
-//! ```
-
 use std::time::Instant;
 
 use diting_rule_core::RuleSearchIndex;

@@ -5,12 +5,8 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Shared log-dashboard block primitives, defined once so ring width and padding cannot
-/// drift between cards.
-/// One donut segment. Callers filter out zero-value segments first.
 typedef DonutSegment = ({int value, Color color});
 
-/// Percent text: `12.3%`, trailing `.0` dropped.
 String dashboardPercent(double ratio) {
   final rounded = (ratio.clamp(0.0, 1.0) * 1000).round() / 10;
   return rounded % 1 == 0 ? '${rounded.toInt()}%' : '$rounded%';
@@ -18,15 +14,12 @@ String dashboardPercent(double ratio) {
 
 String dashboardLatency(double milliseconds) => '${milliseconds.round()} ms';
 
-/// Duration text that truncates instead of rounding up, so 3420s reads as 57 min.
 String dashboardDuration(int seconds, AppL10n l10n) {
   if (seconds >= 3600) return l10n.durationHours(seconds ~/ 3600);
   if (seconds >= 60) return l10n.durationMinutes(seconds ~/ 60);
   return l10n.durationSeconds(seconds);
 }
 
-/// Bytes in base 1024, two decimals. Deliberately not [dashboardTraffic] (base 1000):
-/// one feeds the traffic card, the other the speed card.
 String dashboardBinaryBytes(num bytes) {
   const k = 1024.0;
   final value = bytes.toDouble();
@@ -45,7 +38,6 @@ String dashboardBinaryBytes(num bytes) {
   return '${value.round()} B';
 }
 
-/// Speed text, e.g. `1.8 MB/s`.
 String dashboardBinarySpeed(num bytesPerSecond) {
   const k = 1024.0;
   final value = bytesPerSecond.toDouble();
@@ -54,7 +46,6 @@ String dashboardBinarySpeed(num bytesPerSecond) {
   return '${value.round()} B/s';
 }
 
-/// Hand-drawn like `lib/ui/line_chart.dart`; ring stroke and hole ratio mirror upstream.
 class DashboardResultDonut extends StatelessWidget {
   const DashboardResultDonut({
     super.key,
@@ -65,7 +56,6 @@ class DashboardResultDonut extends StatelessWidget {
 
   final List<DonutSegment> segments;
 
-  /// Center total. Zero draws a full ring in the outline color.
   final int total;
   final double diameter;
 
@@ -143,7 +133,6 @@ class _DonutPainter extends CustomPainter {
       canvas.drawArc(rect, start, sweep, false, paint..color = segment.color);
       start += sweep;
     }
-    // Paint the hole with the card color so it reads as a ring, not a stroked circle.
     canvas.drawCircle(
       size.center(Offset.zero),
       diameter * 0.72 / 2,
@@ -212,8 +201,6 @@ class DashboardRateRow extends StatelessWidget {
   final String label;
   final String value;
 
-  /// 0..1; clamped, never asserts. `null` renders the value alone, with no bar,
-  /// for figures that are not a ratio (e.g. average latency).
   final double? progress;
 
   @override
@@ -341,7 +328,6 @@ class DashboardLogRow extends StatelessWidget {
   }
 }
 
-/// List card: title, detail link, then rows or [emptyText].
 class DashboardLogListCard extends StatelessWidget {
   const DashboardLogListCard({
     super.key,

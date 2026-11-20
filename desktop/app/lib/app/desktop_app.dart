@@ -15,19 +15,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Desktop app root: the Android theme, localization and scope assembly, over the shared
-/// six-branch shell ([createDesktopRouter]), without any Android startup work.
-///
-/// Keep in step with `DitingApp`: cached light/dark themes, localized delegates, `ThemeCrossFade`,
-/// system overlay, glass scopes, and [AppScopes] above the Navigator. Host-specific pieces belong
-/// in `desktop/app/lib/data`.
-///
-/// The same bundle is served to browsers, so [DesktopAuthGate] sits above the router: the desktop
-/// window passes through, a browser must authenticate first.
 class DesktopApp extends ConsumerStatefulWidget {
   const DesktopApp({super.key, this.initialLocation});
 
-  /// Test-only: start at a route directly instead of navigating there.
   final String? initialLocation;
 
   @override
@@ -56,8 +46,6 @@ class _DesktopAppState extends ConsumerState<DesktopApp> {
       seedColor: palette.effectiveSeed,
       pureBlack: pureBlack,
       transparentPage: showBackground,
-      // The desktop window always draws with the system's own fonts; the imported / selected
-      // families belong to the Android app's `/font-family` page.
       useSystemFonts: true,
     );
 
@@ -91,7 +79,6 @@ class _DesktopAppState extends ConsumerState<DesktopApp> {
                 quality: glass.quality,
                 child: LiquidGlassHost(
                   enabled: glass.enabled,
-                  // The web console gates on a session; the desktop window passes straight through.
                   child: DesktopTraySync(
                     child: DesktopAuthGate(
                       child: child ?? const SizedBox.shrink(),

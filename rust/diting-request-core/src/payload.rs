@@ -1,34 +1,8 @@
-//! The binary layout shared with `android/engine/request_native_payload.go`.
-//!
-//! Rule set (Go -> kernel, `diting_request_new`):
-//!
-//! ```text
-//! | i64 rule count | (str kind, str pattern) * count |
-//! ```
-//!
-//! Match request (Go -> kernel, `diting_request_match`):
-//!
-//! ```text
-//! | str scheme | str host | str path |
-//! ```
-//!
-//! Match response (kernel -> Go):
-//!
-//! ```text
-//! | i64 matched | i64 blocked | str pattern | str domain host |
-//! ```
-//!
-//! `str` is `u32 length | bytes` (UTF-8 required), every integer is `i64`. A length that disagrees
-//! with the payload or trailing bytes is a hard error, never a misread. Nothing here can fail for a
-//! well-formed payload: a rule the old code would have dropped is simply not in the set.
-
 use crate::match_rule::{decide, Decision};
 use crate::rules::{normalize_all, Rule};
 
-/// Must match `requestPayloadLayoutVersion` in `android/engine/request_native_payload.go`.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// A decoded match request.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchRequest {
     pub scheme: String,
@@ -69,7 +43,6 @@ impl<'a> Reader<'a> {
         String::from_utf8(self.take(length)?.to_vec()).ok()
     }
 
-    /// Reads an element count, refusing one the remaining payload cannot hold.
     fn count(&mut self, minimum_bytes: usize) -> Option<usize> {
         let count = self.i64()?;
         if count < 0 {
@@ -92,7 +65,6 @@ fn put_i64(out: &mut Vec<u8>, value: i64) {
     out.extend_from_slice(&value.to_le_bytes());
 }
 
-/// Decodes the rule set payload; `None` means it is malformed.
 pub fn decode_rules(payload: &[u8]) -> Option<Vec<(String, String)>> {
     let mut reader = Reader::new(payload);
     let count = reader.count(8)?;
@@ -108,12 +80,10 @@ pub fn decode_rules(payload: &[u8]) -> Option<Vec<(String, String)>> {
     Some(rules)
 }
 
-/// Normalizes a decoded rule list. This is the whole `new` operation.
 pub fn build_rules(rules: &[(String, String)]) -> Vec<Rule> {
     normalize_all(rules)
 }
 
-/// Decodes one match request; `None` means it is malformed.
 pub fn decode_match(payload: &[u8]) -> Option<MatchRequest> {
     let mut reader = Reader::new(payload);
     let request = MatchRequest {
@@ -127,7 +97,6 @@ pub fn decode_match(payload: &[u8]) -> Option<MatchRequest> {
     Some(request)
 }
 
-/// Runs the match and encodes the decision.
 pub fn encode_match(rules: &[Rule], request: &MatchRequest) -> Vec<u8> {
     let decision = decide(rules, &request.scheme, &request.host, &request.path);
     encode_decision(&decision)

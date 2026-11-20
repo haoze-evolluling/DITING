@@ -1,5 +1,3 @@
-/// DDL for the V2 work-mode stores. Table and column names are shared with the Rust SQL planners
-/// and the Kotlin log writers, so they must stay identical to the historical definitions.
 library;
 
 import 'package:diting_shared/data/db/storage_contract.dart';
@@ -26,7 +24,6 @@ abstract final class DatabaseSchema {
     DatabaseKind.global => [..._automationTables, ..._automationIndexes],
   };
 
-  /// Every table a store must contain. Used by the migrator's schema verification.
   static Set<String> tableNamesFor(DatabaseKind kind) => switch (kind) {
     DatabaseKind.normalRules || DatabaseKind.expressRules => {
       ...ruleTableNames,
@@ -68,7 +65,6 @@ CREATE TABLE `go_url_rule_source` (`ruleId` INTEGER NOT NULL, `source` TEXT NOT 
   static const _cosmeticRule = '''
 CREATE TABLE `cosmetic_rule` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `domain` TEXT NOT NULL, `selector` TEXT NOT NULL, `rawLine` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `isException` INTEGER NOT NULL)''';
 
-  /// The only source table without a foreign key: the historical entity had none.
   static const _cosmeticRuleSource = '''
 CREATE TABLE `cosmetic_rule_source` (`ruleId` INTEGER NOT NULL, `source` TEXT NOT NULL, `enabled` INTEGER NOT NULL, PRIMARY KEY(`ruleId`, `source`))''';
 
@@ -116,7 +112,6 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     'bootstrap_log',
   ];
 
-  /// Log tables worth copying. `dns_cache` is a rebuildable blob cache and is created empty.
   static const migrationLogTableNames = <String>[
     'dns_log',
     'dns_race_log',
@@ -151,8 +146,6 @@ CREATE TABLE `subscription_auto_update_item` (`batchId` TEXT NOT NULL, `subscrip
     _subscriptionAutoUpdateItem,
   ];
 
-  /// Subscription rollback history. It used to be created lazily; the V2 schema owns it so a new
-  /// mode database is complete on creation.
   static const _ruleVersion = '''
 CREATE TABLE `rule_version` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `group_id` TEXT NOT NULL, `hash` TEXT NOT NULL, `rule_count` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `rules_json` TEXT NOT NULL)''';
 
@@ -181,7 +174,6 @@ CREATE TABLE `http_request_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL
   static const _appTrafficDaily = '''
 CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT NULL, `app_name` TEXT NOT NULL, `tx_bytes` INTEGER NOT NULL, `rx_bytes` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`date`, `package_name`))''';
 
-  // The UNIQUE indexes are the only guard against duplicate rules; imports can still race.
 
   static const _ruleIndexes = <String>[
     'CREATE INDEX `index_block_rule_appScope` ON `block_rule` (`appScope`)',
@@ -242,8 +234,6 @@ CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT 
     'CREATE INDEX `index_app_traffic_daily_package_name` ON `app_traffic_daily` (`package_name`)',
   ];
 
-  // 自动化（A1/A3/A14）：规则、档案与审计事件。`spec_json` / `payload_json` 承载条件-动作与
-  // 档案快照，结构归自动化引擎校验，这里只保证落库与迁移。
   static const _automationRule = '''
 CREATE TABLE `automation_rule` (`id` TEXT PRIMARY KEY NOT NULL, `name` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT 1, `priority` INTEGER NOT NULL DEFAULT 100, `match` TEXT NOT NULL DEFAULT 'all', `spec_json` TEXT NOT NULL, `last_run_at` INTEGER NOT NULL DEFAULT 0, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL)''';
 

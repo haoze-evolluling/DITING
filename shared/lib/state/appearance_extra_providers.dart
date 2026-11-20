@@ -1,4 +1,3 @@
-/// Bottom bar style, tab transition and liquid glass: in memory only, so they reset on restart.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -9,7 +8,6 @@ import 'package:material_ui/material_ui.dart';
 
 LegacySettings _settings(Ref ref) => ref.read(legacySettingsProvider);
 
-/// Bottom bar look; [BottomBarDestination] decides which tabs exist, not how they are drawn.
 enum BottomBarStyle {
   floating,
   docked;
@@ -41,8 +39,6 @@ final bottomBarStyleProvider =
       BottomBarStyleNotifier.new,
     );
 
-/// Tab switch animation; `none` and `scale` extend the upstream slide/fade so all four can be
-/// previewed.
 enum TabTransition {
   none,
   fade,
@@ -76,7 +72,6 @@ final tabTransitionProvider =
       TabTransitionNotifier.new,
     );
 
-/// Liquid glass: off / standard / ultra (quality tiers live in `lib/ui/liquid_glass.dart`).
 enum LiquidGlassMode {
   none,
   standard,
@@ -113,8 +108,6 @@ final liquidGlassModeProvider =
       LiquidGlassModeNotifier.new,
     );
 
-/// Selected font family; null means the system default. Persisted, and applied app-wide in
-/// `lib/app/theme/manager.dart`.
 class FontFamilyNotifier extends Notifier<String?> {
   @override
   String? build() => _settings(ref).fontFamily;
@@ -128,7 +121,6 @@ class FontFamilyNotifier extends Notifier<String?> {
 final selectedFontFamilyProvider =
     NotifierProvider<FontFamilyNotifier, String?>(FontFamilyNotifier.new);
 
-/// Brightness the theme preview page compares: light / dark.
 enum PreviewBrightness {
   light(Brightness.light),
   dark(Brightness.dark);

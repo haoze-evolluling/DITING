@@ -1,9 +1,3 @@
-/// The home branch's client-group page: one card that edits the whole `/clients/groups`
-/// document and saves it in one request.
-///
-/// The old desktop console's `ClientGroupsCard.vue` is the functional blueprint. It is a sub-page
-/// (`/home/client-groups`) rather than a second card on the home board, because the editor is long
-/// and the device cards stay about who is connected.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

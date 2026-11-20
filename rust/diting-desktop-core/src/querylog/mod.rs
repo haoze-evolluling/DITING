@@ -1,13 +1,3 @@
-//! Query history and runtime statistics.
-//!
-//! Port of the former Go service's `internal/querylog`:
-//!   - a fixed-capacity in-memory ring for fast recent lookups;
-//!   - 24-hour rolling per-hour statistics (totals, blocked, cache hits, Top-N);
-//!   - daily JSON-Lines persistence with retention cleanup.
-//!
-//! `QueryLog::record` sits on the DNS hot path: it takes one short read lock, then works on
-//! cloned `Arc`s and only ever performs a non-blocking enqueue to the writer.
-
 mod collector;
 mod reader;
 mod ring;
@@ -36,20 +26,15 @@ struct Inner {
     ring: Arc<Ring>,
     collector: Arc<Collector>,
     writer: Option<Arc<Writer>>,
-    /// Persistence is usable (directory writable); otherwise the facade is memory-only.
     file_ok: bool,
 }
 
-/// Query-history and statistics facade. All methods are thread-safe.
 pub struct QueryLog {
     inner: RwLock<Inner>,
-    /// Serializes writer lifecycle changes (`configure` / `close`) so a reconfiguration cannot
-    /// resurrect a writer that a concurrent close already stopped. Never held on the query path.
     lifecycle: Mutex<()>,
 }
 
 impl QueryLog {
-    /// Create a facade. An unwritable data directory degrades to memory-only mode.
     pub fn new(config: Config) -> Self {
         let mut cfg = config;
         cfg.normalize(default_querylog_dir());
@@ -68,7 +53,6 @@ impl QueryLog {
         }
     }
 
-    /// Record one query (DNS hot path). No-op while disabled.
     pub fn record(&self, mut record: Record) {
         let (enabled, log_clients, ring, collector, writer, file_ok) = {
             let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
@@ -87,7 +71,6 @@ impl QueryLog {
 
         record.status = normalize_status(&record.status).to_string();
         if record.timestamp <= 0 {
-            // Fill once so the ring, stats and persistence agree on the timestamp.
             record.timestamp = Local::now().timestamp_millis();
         }
         if !log_clients {
@@ -107,7 +90,6 @@ impl QueryLog {
         ring.append(record);
     }
 
-    /// Search recent (ring) and, when requested, older (file) history. Newest first.
     pub fn search(&self, mut query: SearchQuery) -> SearchResult {
         if query.limit <= 0 || query.limit > i64::from(MAX_SEARCH_LIMIT) {
             query.limit = i64::from(MAX_SEARCH_LIMIT);
@@ -149,27 +131,22 @@ impl QueryLog {
         }
     }
 
-    /// Summary for the rolling 24-hour window.
     pub fn stats(&self) -> Summary {
         Arc::clone(&self.collector_ref()).summary()
     }
 
-    /// Per-hour trend for the last 24 hours, zero-filled.
     pub fn per_hour(&self) -> Vec<HourPoint> {
         self.collector_ref().per_hour()
     }
 
-    /// Most queried domains.
     pub fn top_domains(&self, n: i64) -> Vec<NameCount> {
         self.collector_ref().top_domains(n)
     }
 
-    /// Most blocked domains.
     pub fn top_blocked_domains(&self, n: i64) -> Vec<NameCount> {
         self.collector_ref().top_blocked_domains(n)
     }
 
-    /// Busiest clients.
     pub fn top_clients(&self, n: i64) -> Vec<NameCount> {
         self.collector_ref().top_clients(n)
     }
@@ -184,7 +161,6 @@ impl QueryLog {
         )
     }
 
-    /// Current configuration copy.
     pub fn config(&self) -> Config {
         self.inner
             .read()
@@ -193,11 +169,6 @@ impl QueryLog {
             .clone()
     }
 
-    /// Apply a configuration update: resize the ring and restart the writer when needed.
-    ///
-    /// The old writer is taken and **released before** closing it: `Writer::close` drains and joins
-    /// the writer thread (up to 10 s), and doing that while holding `inner` would stall every
-    /// `record` on the DNS hot path for the same duration.
     pub fn configure(&self, config: Config) {
         let _lifecycle = self.lifecycle.lock().unwrap_or_else(|e| e.into_inner());
         let mut cfg = config;
@@ -217,8 +188,6 @@ impl QueryLog {
                 return;
             }
 
-            // While the old writer closes, records take the memory-only path instead of queueing
-            // into a handle that is about to be joined.
             inner.file_ok = false;
             inner.writer.take()
         };
@@ -232,7 +201,6 @@ impl QueryLog {
         inner.file_ok = file_ok;
     }
 
-    /// Clear memory and statistics; optionally close the handle and delete persisted files.
     pub fn clear(&self, remove_files: bool) -> io::Result<()> {
         let (ring, collector, writer, file_ok) = {
             let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
@@ -253,7 +221,6 @@ impl QueryLog {
         Ok(())
     }
 
-    /// Stop the writer after draining and flushing the queue.
     pub fn close(&self) -> io::Result<()> {
         let _lifecycle = self.lifecycle.lock().unwrap_or_else(|e| e.into_inner());
         let writer = {
@@ -267,7 +234,6 @@ impl QueryLog {
         }
     }
 
-    /// Whether persisted history is currently available.
     pub fn is_file_enabled(&self) -> bool {
         self.inner.read().unwrap_or_else(|e| e.into_inner()).file_ok
     }
@@ -574,7 +540,6 @@ mod tests {
             ..SearchQuery::default()
         });
         assert!(result.entries.is_empty());
-        // The cap is enforced before paging; nothing to observe but no overflow.
         assert_eq!(result.total, 0);
     }
 }

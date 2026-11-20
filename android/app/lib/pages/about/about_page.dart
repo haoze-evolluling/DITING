@@ -1,9 +1,3 @@
-/// About page, merged with the former update & support page. The layout follows FlClash's
-/// `lib/views/about.dart`: centred hero, version/licence pills, one check-update bar, then grouped
-/// rows. Update state renders inline under the bar instead of a separate card.
-///
-/// The groups read contact → support → settings → credits → legal, so the outward-facing links and
-/// the sponsor entry come before the licence and disclaimer text a reader only needs once.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -61,9 +55,6 @@ class AboutPage extends ConsumerWidget {
               ),
             ],
           ),
-          // Support lives on its own page, which already carries the README sponsorship link, so
-          // the sponsor target appears exactly once here. The sponsor list is a sibling row rather
-          // than a second copy inside the sponsor page.
           generateSection(
             title: context.l10n.aboutSupport,
             items: [
@@ -103,8 +94,6 @@ class AboutPage extends ConsumerWidget {
             items: [
               _LinkRow(
                 glyph: AppGlyphs.palette,
-                // 该开源项目对外敏感，按要求不在界面中展示其名称：标题留空，
-                // 仅保留下方通用的复用说明（aboutCreditsUi）。
                 title: '',
                 label: context.l10n.aboutCreditsUi,
                 url: flClashRepositoryUrl,
@@ -125,7 +114,6 @@ class AboutPage extends ConsumerWidget {
                 leading: const GlyphIcon(AppGlyphs.gavel),
                 title: Text(context.l10n.aboutDisclaimerEntry),
                 subtitle: Text(context.l10n.aboutDisclaimerEntryBody),
-                // Acceptance happens in the first-run dialog; this only re-reads it.
                 widget: const DisclaimerPage(),
               ),
             ],
@@ -136,8 +124,6 @@ class AboutPage extends ConsumerWidget {
     );
   }
 
-  /// Install through the system installer; failures are reported, usually a missing install
-  /// permission.
   Future<void> _install(BuildContext context, WidgetRef ref) async {
     final ok = await ref.read(updateProvider.notifier).install();
     if (!context.mounted) return;
@@ -153,7 +139,6 @@ class AboutPage extends ConsumerWidget {
   }
 }
 
-/// Centred hero: app icon, name, version and licence pills, description and the update bar.
 class _AboutHero extends StatelessWidget {
   const _AboutHero({
     required this.version,
@@ -176,7 +161,6 @@ class _AboutHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final stage = update.stage;
-    // The brand mark ships in both modes: #FAF8F9/#007AFE for light, #1F1F22/#2E83FF for dark.
     final logoAsset = colorScheme.brightness == Brightness.dark
         ? 'packages/diting_shared/assets/images/icon_dark.webp'
         : 'packages/diting_shared/assets/images/icon.webp';
@@ -283,7 +267,6 @@ class _AboutHero extends StatelessWidget {
     );
   }
 
-  /// One status line under the bar; null while idle and clean, where the bar speaks for itself.
   ({String text, Color color})? _caption(BuildContext context) {
     final colorScheme = context.colorScheme;
     final latest = update.info?.version;
@@ -343,11 +326,6 @@ class _Pill extends StatelessWidget {
   }
 }
 
-/// External link row: bare glyph, title, one-line target, open-external arrow.
-///
-/// The leading mark is a plain `GlyphIcon`, not an `IconBadge`: `ListTile` starts the title at
-/// `max(minLeadingWidth, leading.width) + horizontalTitleGap`, so a 40-wide badge would push this
-/// row's text 16dp right of the neighbouring `NavEntryRow`s and make the row taller.
 class _LinkRow extends StatelessWidget {
   const _LinkRow({
     required this.glyph,

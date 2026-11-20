@@ -144,15 +144,10 @@ def main() -> int:
         ("test", ["cargo", "test"], RUST_DIR),
     ]
     if args.engine:
-        # The engine is where the DNS transports live, so its integration cases (real loopback
-        # UDP/TCP/TLS/HTTP2/QUIC servers) are worth running on their own and not only inside the
-        # workspace suite.
         steps.append(
             ("engine", ["cargo", "test", "-p", "diting-engine", "--all-targets"], RUST_DIR)
         )
     if args.desktop:
-        # Everything below the binary is pure Rust now: the integration tests bind real loopback
-        # sockets (UDP/TCP/DoT, HTTP/WebSocket) and the service tests cover the CLI surface.
         steps.append(
             (
                 "desktop",

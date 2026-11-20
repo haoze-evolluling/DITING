@@ -3,7 +3,6 @@ use serde_json::{json, Value};
 use crate::export;
 use crate::import;
 
-/// One exported document, as the app would hand it back for import.
 fn document(groups: &[&str], fields: Value) -> String {
     let output = export::run(&json!({
         "nowMs": 1_700_000_000_000i64,
@@ -93,7 +92,6 @@ fn rules_are_deduped_by_pattern_important_and_scope() {
             },
         }),
     );
-    // The local device already has the global rule but not the per-app one.
     let current = json!({
         "domainRules": {"block": [{"pattern": "a.test", "important": 0, "appScope": null}]},
     });
@@ -109,7 +107,6 @@ fn rules_are_deduped_by_pattern_important_and_scope() {
     assert_eq!(ops[0]["row"]["isWildcard"], json!(0));
     assert_eq!(ops[0]["row"]["addedAt"], json!(2000));
 
-    // Re-running the same file against the freshly merged state adds nothing.
     let current = json!({
         "domainRules": {"block": [
             {"pattern": "a.test", "important": 0, "appScope": null},
@@ -145,7 +142,6 @@ fn rewrite_same_pattern_with_a_new_value_is_an_update() {
 
 #[test]
 fn a_rewrite_group_only_takes_its_own_target_types() {
-    // `rewriteCname` is absent from the file, so its rows must not sneak in through the IPv4 group.
     let content = document(
         &["rewriteDomain"],
         json!({"rewriteDomain": {"rows": [
@@ -153,7 +149,6 @@ fn a_rewrite_group_only_takes_its_own_target_types() {
         ]}}),
     );
     let plan = run_import(&content, json!({}), true);
-    // The exported group is empty, so the import has nothing to skip.
     assert_eq!(outcome_of(&plan, "rewriteDomain")["skipped"], json!(0));
     assert_eq!(plan["ops"], json!([]));
 }
@@ -174,7 +169,6 @@ fn subscriptions_import_the_address_only_and_dedupe_by_url_and_kind() {
     let current = json!({"subscriptions": {"groupNames": ["订阅A"], "urls": []}});
     let plan = run_import(&content, current, true);
     let outcome = outcome_of(&plan, "subscriptions");
-    // The group already exists; only the first item is new, the second one is a duplicate.
     assert_eq!(outcome["added"], json!(1));
     assert_eq!(outcome["skipped"], json!(2));
     assert_eq!(plan["subscriptionCount"], json!(1));
@@ -184,7 +178,6 @@ fn subscriptions_import_the_address_only_and_dedupe_by_url_and_kind() {
         .find(|op| op["op"] == json!("subsItem"))
         .expect("subscription insert");
     assert_eq!(item["groupName"], json!("订阅A"));
-    // Count, timestamp and ETag start empty so the first refresh downloads.
     assert_eq!(item["ruleCount"], json!(0));
     assert_eq!(item["lastUpdated"], json!(0));
     assert_eq!(item["addedAt"], json!(2000));
@@ -231,10 +224,8 @@ fn app_lists_are_unioned_and_counted() {
         write_of(&plan, "blocked.packages"),
         Some(&json!(["com.blocked.one", "com.local.only"]))
     );
-    // An imported enable is kept, a local one is never turned off.
     assert_eq!(write_of(&plan, "blocked.enabled"), Some(&json!(true)));
     assert_eq!(outcome_of(&plan, "blocked")["added"], json!(1));
-    // `com.a` is already excluded, so only the union grows.
     assert_eq!(
         write_of(&plan, "excluded.packages"),
         Some(&json!(["com.a", "com.b"]))
@@ -292,12 +283,9 @@ fn providers_merge_by_name_and_keep_the_local_id() {
             .unwrap(),
     )
     .unwrap();
-    // The local id survives, so selections and candidate lists keep pointing at it.
     assert_eq!(items[0]["id"], json!("user_local"));
     assert_eq!(items[0]["url"], json!("https://a.test/q"));
-    // A provider without an id gets one derived from its name.
     assert_eq!(items[1]["id"], json!("user___"));
-    // Selection refs still travel: the empty list is written, not dropped.
     assert_eq!(write_of(&plan, "providers.race"), Some(&json!([])));
 }
 
@@ -353,7 +341,6 @@ fn selection_resolves_by_name_when_the_id_is_gone() {
         write_of(&plan, "providers.raceTestDomain"),
         Some(&json!("example.test"))
     );
-    // Empty protocols keep the local filter instead of hiding everything.
     let visibility = write_of(&plan, "providers.homeVisibility").unwrap();
     assert_eq!(visibility["visibleProtocols"], json!(["PLAIN"]));
 }
@@ -384,7 +371,6 @@ fn bootstrap_round_trips_and_skips_what_it_cannot_compare() {
     );
     assert_eq!(outcome_of(&plan, "bootstrap")["added"], json!(3));
 
-    // Same file, same device: every key is already in place.
     let current = json!({"bootstrap": {
         "enabled": true,
         "presetIds": ["ali", "dnspod"],
@@ -415,7 +401,6 @@ fn cache_is_written_as_one_policy() {
     let config = write_of(&plan, "cache.config").expect("cache policy");
     assert_eq!(config["fixedTtlSeconds"], json!(600));
     assert_eq!(config["preset"], json!("custom"));
-    // Nine keys, one policy: counting them separately would look like nine rules.
     assert_eq!(outcome_of(&plan, "cache")["added"], json!(1));
 
     let again = run_import(
@@ -452,7 +437,6 @@ fn outbound_never_touches_credentials_or_the_switch() {
     assert_eq!(write_of(&plan, "outbound.app"), Some(&json!("com.target")));
     assert_eq!(write_of(&plan, "outbound.enabled"), None);
     assert_eq!(outcome_of(&plan, "outbound")["added"], json!(4));
-    // The proxy switch and the credentials are never restored, so nothing else is counted.
     assert_eq!(outcome_of(&plan, "outbound")["skipped"], json!(0));
 }
 
@@ -476,10 +460,8 @@ fn appearance_keeps_local_theme_and_rounds_opacity() {
         "bottomBarIds": ["home", "settings"],
     }});
     let plan = run_import(&content, current, false);
-    // A device that already picked a theme keeps it; an empty palette accepts the file's.
     assert_eq!(write_of(&plan, "appearance.themeMode"), None);
     assert_eq!(write_of(&plan, "appearance.palette"), Some(&json!("blue")));
-    // Java `float` opacity compares with a tolerance, so 0.8 is not a change.
     let home = plan["writes"]
         .as_array()
         .unwrap()
@@ -494,7 +476,6 @@ fn appearance_keeps_local_theme_and_rounds_opacity() {
     );
     let outcome = outcome_of(&plan, "appearance");
     assert_eq!(outcome["added"], json!(2));
-    // Theme, bottom bar, five sliders and the shared one already match.
     assert_eq!(outcome["skipped"], json!(8));
 }
 
@@ -510,7 +491,6 @@ fn appearance_rejects_an_unusable_bottom_bar() {
         false,
     );
     assert_eq!(write_of(&plan, "appearance.bottomBarIds"), None);
-    // An unusable bar is skipped, and so is every default the file carries.
     assert_eq!(outcome_of(&plan, "appearance")["skipped"], json!(8));
 }
 
@@ -535,7 +515,6 @@ fn system_clamps_the_dynamic_block_policy_and_keeps_raw_defaults() {
     assert_eq!(policy["requestThreshold"], json!(100));
     assert_eq!(policy["windowSeconds"], json!(10));
     assert_eq!(policy["nxDomainDurationSeconds"], json!(3600));
-    // Raw prefs are compared as stored, so an unset local value accepts the file's.
     assert_eq!(
         write_of(&plan, "system.trafficStats"),
         Some(&json!({"key": "app_traffic_stats_enabled", "value": false}))
@@ -544,7 +523,6 @@ fn system_clamps_the_dynamic_block_policy_and_keeps_raw_defaults() {
 
 #[test]
 fn a_system_group_with_nothing_to_say_still_reports_one_skip() {
-    // A hand-written group with no keys at all: nothing to compare, nothing to write.
     let content = "{\"format\":\"diting-backup\",\"version\":2,\"data\":{\"system\":{}}}";
     let content: String = content.to_string();
     let plan = run_import(&content, json!({"system": {}}), false);
@@ -568,7 +546,6 @@ fn corrupt_group_snapshots_are_reported_at_export_time() {
         json!([{"group": "providers", "reason": "providersInvalidJson"}])
     );
     assert_eq!(output["included"], json!(["excluded"]));
-    // The group is simply absent from the file, so an import does not report it either.
     let content = output["content"].as_str().unwrap();
     let plan = run_import(content, json!({}), false);
     assert_eq!(plan["outcomes"].as_array().unwrap().len(), 1);

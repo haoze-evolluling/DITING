@@ -56,7 +56,6 @@ class _SkeletonPillState extends State<SkeletonPill>
   @override
   void initState() {
     super.initState();
-    // Starting from the wall clock keeps bars pulsing in step.
     _controller = AnimationController(
       vsync: this,
       duration: _period,

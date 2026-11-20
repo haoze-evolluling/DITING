@@ -1,35 +1,17 @@
-//! The writer queues behind `LogTableWriter` and `HttpRequestLogWriter`: a bounded `VecDeque` of
-//! packed rows plus the policy around it (when a batch is worth writing, what to drop when the
-//! database stays busy, how long to back off).
-//!
-//! The SQL, the compiled statements, the row binding and the timers stay in Kotlin; what moves
-//! here is every number and every ordering decision, so the four tables and the HTTP writer cannot
-//! end up with four different ideas of "full".
-
 use std::collections::VecDeque;
 use std::sync::Mutex;
 
-/// One writer's queue parameters (`LogTableWriter.MAX_PENDING_ROWS` and friends, or
-/// `HttpRequestLogWriter`'s batch of ten).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Settings {
-    /// Queue length that flushes immediately instead of waiting for the timer.
     pub batch_size: usize,
-    /// Timer for a queue that has not reached `batch_size`.
     pub flush_interval_ms: i64,
-    /// Hard cap: past it the oldest rows are dropped, so a stuck database cannot grow the heap.
     pub max_pending: usize,
-    /// Rows one transaction may take; a flush that returns them all loops again.
     pub max_per_transaction: usize,
-    /// First backoff after a failed write, doubled up to `max_backoff_ms`.
     pub min_backoff_ms: i64,
     pub max_backoff_ms: i64,
-    /// How long a confirmed-missing table drops rows without asking again; 0 disables the latch.
     pub missing_recheck_ms: i64,
 }
 
-/// `LogTableWriter`'s numbers: 200 rows or 1 s, 10k queued, 500 per transaction, 1 s → 30 s backoff,
-/// and a 30 s re-check after a table was found missing.
 pub const LOG_TABLE: Settings = Settings {
     batch_size: 200,
     flush_interval_ms: 1_000,
@@ -40,8 +22,6 @@ pub const LOG_TABLE: Settings = Settings {
     missing_recheck_ms: 30_000,
 };
 
-/// `HttpRequestLogWriter`'s numbers: 10 rows or 500 ms, 5k queued, one transaction per flush,
-/// 2 s → 30 s backoff, and no missing-table latch (the mode filter already bounds the volume).
 pub const HTTP: Settings = Settings {
     batch_size: 10,
     flush_interval_ms: 500,
@@ -52,17 +32,13 @@ pub const HTTP: Settings = Settings {
     missing_recheck_ms: 0,
 };
 
-/// What one `submit` decided.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Submit {
-    /// Rows dropped off the front to stay under `max_pending`.
     pub overflow: u32,
-    /// The queue reached `batch_size`, so the timer should fire now.
     pub batch_full: bool,
 }
 
 impl Submit {
-    /// The delay the caller should schedule its drain with.
     pub fn flush_delay_ms(self, settings: Settings) -> i64 {
         if self.batch_full {
             0
@@ -81,7 +57,6 @@ struct Inner {
     missing_until_ms: i64,
 }
 
-/// One writer's queue.
 #[derive(Debug)]
 pub struct Queue {
     settings: Settings,
@@ -110,15 +85,10 @@ impl Queue {
         self.inner.lock().unwrap_or_else(|error| error.into_inner())
     }
 
-    /// `submit`: None once the writer is closed, otherwise the overflow and the flush decision.
     pub fn submit(&self, row: Vec<u8>, _now_ms: i64) -> Option<Submit> {
         self.submit_many(vec![row], _now_ms)
     }
 
-    /// `submitMany`: one lock and one capacity pass for a whole batch of rows.
-    ///
-    /// The overflow is the total dropped across the batch, and `batch_full` describes the queue
-    /// after the last row, which is exactly what the caller needs to arm (or skip) its timer.
     pub fn submit_many(&self, rows: Vec<Vec<u8>>, _now_ms: i64) -> Option<Submit> {
         let mut inner = self.lock();
         if inner.closed {
@@ -138,7 +108,6 @@ impl Queue {
         })
     }
 
-    /// `takeBatch`: at most `max_per_transaction` rows, oldest first; None when nothing is queued.
     pub fn take(&self) -> Option<Vec<Vec<u8>>> {
         let mut inner = self.lock();
         if inner.pending.is_empty() {
@@ -148,7 +117,6 @@ impl Queue {
         Some(inner.pending.drain(..count).collect())
     }
 
-    /// `requeue`: put an unwritten batch back in front so the queue stays chronological.
     pub fn requeue(&self, batch: Vec<Vec<u8>>) -> u32 {
         let mut inner = self.lock();
         for row in batch.into_iter().rev() {
@@ -162,7 +130,6 @@ impl Queue {
         overflow
     }
 
-    /// `backoff`: grow the window (first 1 s, then doubling, capped) and report the new length.
     pub fn backoff(&self, now_ms: i64) -> i64 {
         let mut inner = self.lock();
         inner.backoff_ms = if inner.backoff_ms <= 0 {
@@ -183,18 +150,15 @@ impl Queue {
         inner.retry_at_ms = 0;
     }
 
-    /// How long the drain should wait before retrying; 0 means "now".
     pub fn retry_wait_ms(&self, now_ms: i64) -> i64 {
         let inner = self.lock();
         inner.retry_at_ms.saturating_sub(now_ms).max(0)
     }
 
-    /// True when this call is still inside the backoff window.
     pub fn in_backoff(&self, now_ms: i64) -> bool {
         now_ms < self.lock().retry_at_ms
     }
 
-    /// True while a confirmed-missing table drops rows without asking again.
     pub fn missing_latched(&self, now_ms: i64) -> bool {
         if self.settings.missing_recheck_ms == 0 {
             return false;
@@ -214,12 +178,10 @@ impl Queue {
         self.lock().closed
     }
 
-    /// Stop accepting rows but keep the queue, so `close` can still flush it.
     pub fn mark_closed(&self) {
         self.lock().closed = true;
     }
 
-    /// `close`: stop accepting rows and report how many were still queued (the lost tail).
     pub fn close(&self) -> u32 {
         let mut inner = self.lock();
         inner.closed = true;
@@ -263,7 +225,6 @@ mod tests {
         assert_eq!(submit.overflow, 0);
         assert_eq!(queue.pending_len(), LOG_TABLE.batch_size as u32 - 1);
 
-        // One row past the batch size flushes immediately and the order is preserved.
         let submit = queue.submit_many(vec![row("last")], 0).unwrap();
         assert!(submit.batch_full);
         let taken = names(&queue.take().unwrap());
@@ -280,7 +241,6 @@ mod tests {
         let submit = queue
             .submit_many(vec![row("a"), row("b"), row("c")], 0)
             .unwrap();
-        // Two rows had to go for the three new ones to fit.
         assert_eq!(submit.overflow, 2);
         assert_eq!(queue.pending_len(), HTTP.max_pending as u32);
         let taken = names(&queue.take().unwrap());
@@ -335,7 +295,6 @@ mod tests {
         assert_eq!(submit.overflow, 1);
         assert_eq!(queue.pending_len(), HTTP.max_pending as u32);
         let taken = queue.take().unwrap();
-        // The oldest row is gone, the newest is in.
         assert_eq!(names(&taken)[0], "1");
         assert_eq!(names(&taken)[HTTP.max_pending - 1], "newest");
     }
@@ -393,7 +352,6 @@ mod tests {
         queue.reset_backoff();
         assert_eq!(queue.retry_wait_ms(160_000), 0);
         assert!(!queue.in_backoff(160_000));
-        // The first failure after a reset starts over at the minimum.
         assert_eq!(queue.backoff(200_000), 1_000);
     }
 

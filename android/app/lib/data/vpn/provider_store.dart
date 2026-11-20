@@ -1,19 +1,12 @@
-/// Legacy provider catalog: presets live in code, only custom providers persist
-/// (`user_providers_json`), which is what the engine reads.
-///
-/// The row shape, the filter that drops unusable stored rows and the address split all live in
-/// `rust/diting-dns-config-core/src/providers.rs`; this file owns the settings writes.
 library;
 
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/data/vpn/rust_dns_config_core.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 
-/// Parses `user_providers_json`, dropping the same rows 1.4.3 drops.
 List<DnsProviderEntry> readUserProviders(LegacySettings settings) =>
     parseUserProviders(settings.userProvidersJson);
 
-/// Writes the list back in the five-field shape the engine reads.
 void writeUserProviders(
   LegacySettings settings,
   List<DnsProviderEntry> providers,
@@ -61,7 +54,6 @@ void updateUserProvider(
   writeUserProviders(settings, next);
 }
 
-/// Removes a custom provider and scrubs it from every reference.
 void deleteUserProvider(LegacySettings settings, String id) {
   writeUserProviders(settings, [
     for (final provider in readUserProviders(settings))
@@ -85,7 +77,6 @@ void deleteUserProvider(LegacySettings settings, String id) {
   }
 }
 
-/// Add-or-replace by id: the list order survives an edit, and a new id appends.
 List<DnsProviderEntry> _upsert(
   List<DnsProviderEntry> providers, {
   required String id,

@@ -1,7 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'focus.dart';
 
-/// Whether focus last moved by key, the focus `.agents/surfaces.md` rings.
 class FocusMovedByKey extends ChangeNotifier implements ValueListenable<bool> {
   FocusMovedByKey._();
 

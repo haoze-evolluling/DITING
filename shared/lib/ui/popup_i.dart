@@ -2,7 +2,6 @@
 
 part of 'popup.dart';
 
-/// The parts of the morph that draw the droplet, its shadows and its content.
 extension on _RenderPopupMorph {
   _Opening _openingOf(double time, Rect card) {
     final anchor = _localAnchor;
@@ -58,7 +57,6 @@ extension on _RenderPopupMorph {
     );
   }
 
-  /// The return into the control [time] seconds on, from [start] or the card.
   void _paintReturn(
     PaintingContext context,
     Offset offset,
@@ -86,8 +84,6 @@ extension on _RenderPopupMorph {
           width: anchor.width * _dropletShare,
           height: anchor.height * _dropletShare,
         );
-    // The springs still ring a little when the route ends; ease that out so
-    // the control takes over exactly where the droplet lands.
     final ringing =
         1 - Curves.easeIn.transform(((time - 0.4) / 0.1).clamp(0.0, 1.0));
     final progress = 1 + (_droplet.x(time) - 1) * ringing;
@@ -169,9 +165,6 @@ extension on _RenderPopupMorph {
         holdFrost: absorbed > 0 ? glass.from.blur : null,
       );
     }
-    // Returning cards keep their own shadow as they fade into the platter's,
-    // which fills under them from the start so the page does not show
-    // through; on glass they stand bare and the platter holds throughout.
     _paintShadows(
       context.canvas,
       path,
@@ -223,7 +216,6 @@ extension on _RenderPopupMorph {
       (reach, shadow) =>
           math.max(reach, shadow.blurSigma * 3 + shadow.offset.distance),
     );
-    // The blur shades under the platter too; keep that out of fading content.
     canvas
       ..save()
       ..clipPath(

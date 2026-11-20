@@ -1,24 +1,13 @@
-/// Windows notification-area integration for the desktop window.
-///
-/// The icon itself lives in native code (`windows/runner/tray`): the menu, the
-/// SCM and registry calls behind it, and the balloons. That is deliberate - a
-/// `--minimized` sign-in start has no Flutter frame yet, and the old Wails
-/// desktop's tray behaved the same way. The only thing that has to come from
-/// Dart is localization, so the menu follows the app locale instead of being
-/// hard-coded to Chinese.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// The tray strings of one locale, under the keys the runner reads in
-/// `tray_channel.cpp`.
 @immutable
 class DesktopTrayLabels {
   const DesktopTrayLabels._(this.values);
 
-  /// Maps the shared ARB resources onto the runner's label keys.
   factory DesktopTrayLabels.of(AppL10n l10n) => DesktopTrayLabels._({
     'tooltip': l10n.desktopTrayTooltip,
     'open_window': l10n.desktopTrayOpenWindow,
@@ -54,16 +43,12 @@ class DesktopTrayLabels {
   );
 }
 
-/// The `diting/tray` channel. Everything it does is best effort: the tray is a
-/// convenience, so a missing plugin (web console, older runner) must never
-/// surface as an app error.
 class DesktopTray {
   const DesktopTray({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel('diting/tray');
 
   final MethodChannel _channel;
 
-  /// False on the web console, where the same bundle runs but there is no tray.
   static bool get isSupported =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
 
@@ -72,9 +57,7 @@ class DesktopTray {
     try {
       await _channel.invokeMethod<void>('configure', labels.values);
     } on MissingPluginException {
-      // Runner without the tray build: keep starting the app.
     } on PlatformException {
-      // A rejected label update only leaves the previous locale in place.
     }
   }
 }

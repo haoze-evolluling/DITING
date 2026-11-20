@@ -8,7 +8,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// FlClash-style request summary: a card of equal stat blocks rather than a table.
 class ServerRequestOverview extends StatelessWidget {
   const ServerRequestOverview({super.key, required this.stats});
 

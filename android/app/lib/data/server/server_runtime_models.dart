@@ -1,4 +1,3 @@
-/// Native status and control-response models for server mode.
 library;
 
 class ServerStatus {

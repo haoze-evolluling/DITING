@@ -1,10 +1,5 @@
-/// Payloads for the resolver cache endpoints (`/api/v1/cache/*`).
-///
-/// Split from `desktop_api_fakes.dart` to keep each support file under the project's line limit;
-/// `FakeDesktopBackend` imports these builders and serves them from its own mutable state.
 library;
 
-/// A `GET /api/v1/cache/stats` payload.
 Map<String, Object?> cacheStatsPayload({
   bool enabled = true,
   int hits = 8000,
@@ -29,7 +24,6 @@ Map<String, Object?> cacheStatsPayload({
   'prefetchCount': prefetchCount,
 };
 
-/// A `GET /api/v1/cache/config` payload, with the service's own defaults.
 Map<String, Object?> cacheConfigPayload({
   bool enabled = true,
   int maxEntries = 4096,
@@ -72,8 +66,6 @@ Map<String, Object?> cacheConfigPayload({
   'persistIntervalSeconds': persistIntervalSeconds,
 };
 
-/// A `GET /api/v1/cache/entries` payload: one fresh name, one stale name and one negative one, so
-/// the state chips have something to narrow.
 Map<String, Object?> cacheEntriesPayload({
   int? total,
   List<Map<String, Object?>>? entries,
@@ -117,7 +109,6 @@ Map<String, Object?> cacheEntriesPayload({
   return {'total': total ?? rows.length, 'entries': rows};
 }
 
-/// A `GET /api/v1/cache/top` payload.
 List<Map<String, Object?>> cacheTopPayload() => const [
   {
     'domain': 'example.com.',
@@ -133,7 +124,6 @@ List<Map<String, Object?>> cacheTopPayload() => const [
   },
 ];
 
-/// A `GET /api/v1/cache/persist` (and dump/load) payload.
 Map<String, Object?> cachePersistPayload({
   String path = r'C:\ProgramData\DITING\cache.json',
   int restored = 0,

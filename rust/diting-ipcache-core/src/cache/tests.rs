@@ -34,7 +34,6 @@ fn a_read_never_promotes() {
     let cache = IpDomainCache::new(2);
     cache.put("a", "1");
     cache.put("b", "2");
-    // Reading `a` must not make it the most recent write: `c` still evicts `a`.
     assert_eq!(cache.get("a").as_deref(), Some("1"));
     cache.put("c", "3");
     assert_eq!(cache.get("a"), None);
@@ -48,7 +47,7 @@ fn a_repeated_put_moves_the_entry_to_the_front() {
     let cache = IpDomainCache::new(2);
     cache.put("a", "1");
     cache.put("b", "2");
-    cache.put("a", "1"); // touch, even with the same value
+    cache.put("a", "1");
     cache.put("c", "3");
     assert_eq!(cache.get("b"), None);
     assert_eq!(cache.get("a").as_deref(), Some("1"));
@@ -76,7 +75,6 @@ fn non_positive_capacities_use_the_default_2048() {
             );
         }
         assert_eq!(cache.len(), DEFAULT_MAX_SIZE as u32);
-        // The 2049th insert evicts the least-recently-written key and leaves the size unchanged.
         cache.put("10.255.255.255", "newest.example");
         assert_eq!(cache.len(), DEFAULT_MAX_SIZE as u32);
         assert_eq!(cache.get("10.0.0.0"), None);

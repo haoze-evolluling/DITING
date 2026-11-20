@@ -1,12 +1,7 @@
-// Guard: every ActivityResult request code must be unique. The custom-background picker once
-// reused PlatformBridge's text-file code (0x5703); because MainActivity dispatches PlatformBridge
-// before BackgroundBridge, it claimed the image result and BackgroundBridge's request hung forever.
-// This scans the Android bridges that launch activity results and fails if any two share a code.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Locates the Kotlin main source directory relative to the Flutter package working directory.
 Directory _kotlinDir() {
   for (final candidate in <String>[
     'android/app/src/main/kotlin',
@@ -32,7 +27,6 @@ void main() {
         continue;
       }
       final source = entity.readAsStringSync();
-      // Only bridges that actually launch an activity-result round trip own such codes.
       if (!source.contains('startActivityForResult(')) {
         continue;
       }

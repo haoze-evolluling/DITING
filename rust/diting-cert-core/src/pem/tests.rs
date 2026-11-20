@@ -1,5 +1,3 @@
-//! PEM: the round trip, the tolerant scan, and the column layout `pem.EncodeToMemory` had.
-
 use super::*;
 
 #[test]

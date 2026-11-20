@@ -1,47 +1,16 @@
-//! The limiter: configuration normalisation, exemptions, token buckets and the allow decision.
-//!
-//! Everything the Go implementation decided is decided here:
-//!
-//! * `NewRateLimiter`/`UpdateConfig` normalisation — `Rate <= 0` becomes 50, `Burst <= 0` becomes
-//!   100, an out-of-range prefix becomes 32 or 128;
-//! * exemption parsing — `strings.TrimSpace`, then a `/` means `ParseCIDR`, otherwise `ParseIP`
-//!   with the `To4` collapse; unparseable entries are ignored;
-//! * `UpdateConfig` keeps the existing buckets and raises their capacity by the burst delta
-//!   (`tokens += newBurst - oldBurst`, then clamp), exactly like the Go loop over `r.buckets`;
-//! * `Allow` — the enabled check, the exemption check, prefix aggregation into a bucket key, the
-//!   capacity eviction, then the token bucket;
-//! * the idle sweep and `is_idle`'s exact condition.
-//!
-//! One deliberate simplification: Go took the global write lock for the map lookup and released it
-//! before the per-bucket mutex, ours holds one lock for the whole decision. The extra serialisation
-//! is a handful of float operations; the observable decisions are identical.
-//!
-//! `is_idle` is unreachable in practice on both sides: a bucket is always left with `burst - 1`
-//! tokens (or fewer) after an `allow`, so `tokens >= burst` never holds. The condition is kept
-//! anyway — "空闲桶回收" is part of the module's documented behaviour, and the corpus records that
-//! it removes nothing.
-
 use std::collections::{HashMap, HashSet};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::cidr::Cidr;
 use crate::ip::Addr;
 
-/// `RateLimitConfig` default rate when the configured one is not positive.
 pub const DEFAULT_RATE: f64 = 50.0;
-/// Default burst when the configured one is not positive.
 pub const DEFAULT_BURST: i64 = 100;
-/// Default IPv4 aggregation prefix.
 pub const DEFAULT_IPV4_PREFIX: i64 = 32;
-/// Default IPv6 aggregation prefix.
 pub const DEFAULT_IPV6_PREFIX: i64 = 128;
-/// The Go limiter field's default. The kernel takes it per call, so this is only a convenience for
-/// tests that need the production value.
 pub const DEFAULT_MAX_BUCKETS: u32 = 16384;
-/// `isIdle`'s threshold: more than one minute since the last refill.
 pub const IDLE_AFTER_NS: i128 = 60_000_000_000;
 
-/// The configuration as the IPC layer hands it over, before normalisation.
 #[derive(Clone, Debug, Default)]
 pub struct Config {
     pub enabled: bool,
@@ -53,7 +22,6 @@ pub struct Config {
 }
 
 impl Config {
-    /// `NewRateLimiter`/`UpdateConfig` normalisation.
     pub fn normalized(&self) -> Normalized {
         Normalized {
             enabled: self.enabled,
@@ -73,7 +41,6 @@ impl Config {
     }
 }
 
-/// The values the limiter actually runs with.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Normalized {
     pub enabled: bool,
@@ -83,7 +50,6 @@ pub struct Normalized {
     pub ipv6_prefix: u8,
 }
 
-/// A snapshot for diagnostics and tests: the normalised config plus the table sizes.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Info {
     pub config: Normalized,
@@ -92,7 +58,6 @@ pub struct Info {
     pub exempt_nets: u32,
 }
 
-/// `isIdle`'s shape: full and untouched for over a minute.
 struct Bucket {
     rate: f64,
     burst: f64,
@@ -110,7 +75,6 @@ impl Bucket {
         }
     }
 
-    /// `clientBucket.allow`: refill since the last call, clamp to burst, consume one token.
     fn allow(&mut self, now_ns: i128) -> bool {
         let elapsed = (now_ns - self.last_refill_ns) as f64 / 1e9;
         self.last_refill_ns = now_ns;
@@ -146,7 +110,6 @@ impl State {
                 .any(|network| network.contains(address))
     }
 
-    /// `bucketKey`: mask by family, so a whole prefix shares one bucket.
     fn bucket_key(&self, address: &Addr) -> Addr {
         match address {
             Addr::V4(_) => address.masked(self.config.ipv4_prefix),
@@ -154,7 +117,6 @@ impl State {
         }
     }
 
-    /// `parseExemptions`: trim, then CIDR when there is a `/`, else a literal address.
     fn parse_exemptions(&mut self, entries: &[String]) {
         for entry in entries {
             let entry = entry.trim();
@@ -172,13 +134,11 @@ impl State {
     }
 }
 
-/// One service generation's limiter. `UpdateConfig` mutates it in place, like the Go struct.
 pub struct RateLimiter {
     state: RwLock<State>,
 }
 
 impl RateLimiter {
-    /// `NewRateLimiter`: normalise, parse the exemptions, start with no buckets.
     pub fn new(config: &Config) -> Self {
         let normalized = config.normalized();
         let mut state = State {
@@ -193,7 +153,6 @@ impl RateLimiter {
         }
     }
 
-    /// `UpdateConfig`: replace the config and exemptions, adjust every live bucket.
     pub fn configure(&self, config: &Config) {
         let normalized = config.normalized();
         let mut state = self.write();
@@ -215,12 +174,10 @@ impl RateLimiter {
         }
     }
 
-    /// `IsEnabled`.
     pub fn enabled(&self) -> bool {
         self.read().config.enabled
     }
 
-    /// `IsExempt`; a missing address (`nil` in Go) counts as exempt.
     pub fn is_exempt(&self, address: Option<&Addr>) -> bool {
         let Some(address) = address else {
             return true;
@@ -228,11 +185,6 @@ impl RateLimiter {
         self.read().is_exempt(address)
     }
 
-    /// `Allow`.
-    ///
-    /// `max_buckets` is the Go field of the same name: it exists as a knob in Go's tests, so it is
-    /// passed per call instead of being duplicated in the kernel. `0` means "keep at most one
-    /// bucket", which is what the Go loop does (it evicts the oldest, then inserts).
     pub fn allow(&self, address: Option<&Addr>, now_ns: i64, max_buckets: u32) -> bool {
         let mut state = self.write();
         if !state.config.enabled {
@@ -249,8 +201,6 @@ impl RateLimiter {
         let now_ns = i128::from(now_ns);
         if !state.buckets.contains_key(&key) {
             if state.buckets.len() >= max_buckets as usize {
-                // The idle pass is dead code on both sides (see the module docs), but it is part of
-                // the decision order: idle buckets first, then the least recently written one.
                 state.buckets.retain(|_, bucket| !bucket.is_idle(now_ns));
                 if state.buckets.len() >= max_buckets as usize {
                     let oldest = state
@@ -274,7 +224,6 @@ impl RateLimiter {
             .allow(now_ns)
     }
 
-    /// `cleanupIdleBuckets` — the Go janitor's once-a-minute call.
     pub fn cleanup_idle(&self, now_ns: i64) {
         let now_ns = i128::from(now_ns);
         self.write()
@@ -282,7 +231,6 @@ impl RateLimiter {
             .retain(|_, bucket| !bucket.is_idle(now_ns));
     }
 
-    /// Sizes and normalised values, for diagnostics and tests.
     pub fn info(&self) -> Info {
         let state = self.read();
         Info {
@@ -293,7 +241,6 @@ impl RateLimiter {
         }
     }
 
-    /// Current bucket count.
     pub fn bucket_count(&self) -> u32 {
         self.read().buckets.len() as u32
     }
@@ -309,7 +256,6 @@ impl RateLimiter {
     }
 }
 
-/// Prefix normalisation shared by both families.
 fn prefix_or_default(value: i64, maximum: i64) -> u8 {
     if value <= 0 || value > maximum {
         maximum as u8

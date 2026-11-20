@@ -1,6 +1,5 @@
 // Portions derived from FlClash (https://github.com/chen08209/FlClash), Copyright (c) the FlClash
 // authors, GPL-3.0-or-later. Ported as-is apart from the package imports and the localization
-// lookup, so the desktop sidebar keeps the upstream geometry, motion and colors.
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
@@ -37,11 +36,6 @@ class SidebarDestination {
   final String label;
 }
 
-/// Where the sidebar cannot widen in place, [onToggle] is null and the toggle
-/// opens the expanded pane over the content instead.
-///
-/// [windowControls] is the area native window buttons cover at the top start
-/// corner; the pane keeps it clear and never gets narrower than it.
 class NavigationSidebar extends StatefulWidget {
   const NavigationSidebar({
     super.key,
@@ -146,9 +140,6 @@ class _NavigationSidebarState extends State<NavigationSidebar>
         );
       },
       child: SafeArea(
-        // The pane paints its own chrome surface and a hairline against the page: the page and
-        // the navigation share the same background color otherwise, so the sidebar reads as loose
-        // text floating on the content instead of as a separate region.
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: context.colorScheme.chromeSurface,
@@ -289,8 +280,6 @@ class _SidebarPane extends StatelessWidget {
     final fontSize = AppTextRole.body.sizeOf(context);
     final labelOpacity = ((progress - 0.4) / 0.6).clamp(0.0, 1.0);
     final compactWidth = math.max(_compactWidth, windowControls.width);
-    // The collapsed rail keeps the tight FlClash inset, but an open pane can afford a wider one:
-    // a pill that stops four pixels short of the divider reads as if it were pushed against it.
     final railInset = math.min(_maxSideInset, (compactWidth - _itemSize) / 2);
     final sideInset = lerpDouble(railInset, _rowInset, progress)!;
     final itemWidth = compactWidth - railInset * 2;
@@ -462,8 +451,6 @@ bool _fitsOneLine(
   return fits;
 }
 
-/// The row lays out at the expanded width whatever the pane's current width,
-/// so the label is clipped rather than reflowed while the pane animates.
 class _DestinationRow extends StatelessWidget {
   const _DestinationRow({
     required this.destination,
@@ -514,8 +501,6 @@ class _DestinationRow extends StatelessWidget {
   }
 }
 
-/// The indicator moves by stretching toward the new row before its trailing
-/// edge catches up, rather than sliding at a fixed size.
 class _SelectionIndicator extends StatefulWidget {
   const _SelectionIndicator({
     required this.color,

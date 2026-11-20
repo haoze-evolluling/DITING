@@ -1,6 +1,3 @@
-/// App-wide background layer: a wallpaper under the whole UI plus the same scrim upstream used
-/// (0.34 dark, 0.16 light). The path comes from the native cache (`BackgroundBridge.resolve`) and
-/// is resolved once per URI; re-resolving on rebuild makes the wallpaper flicker.
 library;
 
 import 'dart:io';
@@ -13,7 +10,6 @@ import 'package:material_ui/material_ui.dart';
 class AppBackgroundLayer extends ConsumerStatefulWidget {
   const AppBackgroundLayer({super.key, required this.uri, required this.child});
 
-  /// Original wallpaper URI, exchanged for a local cache path natively.
   final String uri;
   final Widget child;
 
@@ -52,8 +48,6 @@ class _AppBackgroundLayerState extends ConsumerState<AppBackgroundLayer> {
             fit: StackFit.expand,
             children: [
               if (path != null)
-                // A full-screen wallpaper must not be re-rastered whenever the transparent page
-                // above it repaints; keep it on its own cached layer.
                 RepaintBoundary(
                   child: Image.file(
                     File(path),
@@ -61,7 +55,6 @@ class _AppBackgroundLayerState extends ConsumerState<AppBackgroundLayer> {
                     errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
                 ),
-              // Scrim keeps text legible on bright wallpapers.
               ColoredBox(
                 color: Colors.black.withValues(alpha: dark ? 0.34 : 0.16),
               ),

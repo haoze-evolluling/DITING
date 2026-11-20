@@ -1,8 +1,5 @@
 part of 'tools_page.dart';
 
-/// Ping page: target, count and real ICMP results from `DiagnosticsRunner.ping`.
-/// `success=false` renders a failure, `measuredWithFallback=true` means the latency is TCP
-/// handshake time, not ICMP RTT.
 class PingTestPage extends ConsumerStatefulWidget {
   const PingTestPage({super.key});
 
@@ -69,7 +66,6 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
               onSubmitted: (_) => _run(),
             ),
           ),
-          // Same count options as the legacy `PingSection`: 4 and 10 only.
           const SizedBox(height: 12),
           generateSection(
             title: l10n.toolPing,

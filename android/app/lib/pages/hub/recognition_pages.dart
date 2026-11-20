@@ -1,4 +1,3 @@
-/// Sponsor list (upstream `SponsorListScreen`), from remote JSON.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

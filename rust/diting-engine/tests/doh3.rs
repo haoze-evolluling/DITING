@@ -1,6 +1,3 @@
-//! N7: a real DoH-over-HTTP/3 exchange against a loopback QUIC origin. Proves the request framing,
-//! the SETTINGS/QPACK stream setup and the DATA extraction work end to end, not just in unit tests.
-
 mod support;
 
 use std::sync::Arc;
@@ -20,7 +17,6 @@ use support::{
 async fn an_advertised_origin_upgrades_to_doh3_and_keeps_the_answer() {
     let pki = TestPki::new("localhost");
     let (upstream, _, _) = spawn_doh(&pki).await;
-    // A real DoH3 origin listening on the same port the Alt-Svc advertisement names.
     let (_, h3_connections) = spawn_doh3_on(&pki, upstream).await;
 
     let url = format!("https://localhost:{}/dns-query", upstream.port());
@@ -68,10 +64,8 @@ async fn doh3_answers_and_reuses_the_quic_connection() {
             .query(&dialer, "localhost", upstream.port(), "/dns-query", &query)
             .await
             .expect("a DoH3 answer");
-        // The same answer the DoH/DoQ origins give: DoH3 must not change the resolution result.
         assert_eq!(answer, answer_wire(&query, [4, 3, 2, 1], 60));
     }
-    // N7 connection reuse: both queries ride one QUIC connection.
     assert_eq!(
         connections.load(std::sync::atomic::Ordering::Relaxed),
         1,
@@ -83,7 +77,6 @@ async fn doh3_answers_and_reuses_the_quic_connection() {
 async fn a_stalled_http3_exchange_falls_back_and_is_abandoned() {
     let pki = TestPki::new("localhost");
     let (upstream, _, _) = spawn_doh(&pki).await;
-    // Same port the Alt-Svc advertisement names, but this origin never answers a stream.
     spawn_doh3_silent_on(&pki, upstream).await;
 
     let url = format!("https://localhost:{}/dns-query", upstream.port());
@@ -97,7 +90,6 @@ async fn a_stalled_http3_exchange_falls_back_and_is_abandoned() {
     );
     assert!(resolver.doh3_ready(), "the DoH answer advertised h3");
 
-    // Each stalled HTTP/3 exchange must end at its own timeout and hand the query to HTTP/2.
     for id in [2u16, 3, 4] {
         let query = query_wire("fallback.test", id);
         let started = std::time::Instant::now();

@@ -1,6 +1,3 @@
-//! Parses hosts and dnsmasq lines; the target address picks the kind: sinkhole = block, IP =
-//! rewrite, domain = CNAME. Port of `hosts_parser.dart`.
-
 use crate::domain::{
     looks_like_literal_ip, normalize_domain, normalize_wildcard_domain, parse_numeric_address_safe,
     SINKHOLE_ADDRESSES,
@@ -21,7 +18,6 @@ fn sinkhole_contains(value: &str) -> bool {
     SINKHOLE_ADDRESSES.contains(&value.to_ascii_lowercase().as_str())
 }
 
-/// `address=/domain/ip`, `server=/domain/ip`, `address=/domain/`.
 pub fn parse_dnsmasq_line(line: &str, original: &str) -> CategorizedLine {
     let mut content = line;
     if let Some(index) = line.find(" #") {
@@ -135,14 +131,11 @@ pub fn parse_dnsmasq_line(line: &str, original: &str) -> CategorizedLine {
     CategorizedLine::invalid()
 }
 
-/// `IP domain1 [domain2 ...]`; `None` when not a hosts line.
 pub fn parse_hosts_line_detailed(line: &str, original: &str) -> Option<CategorizedLine> {
     let content = match line.find('#') {
         Some(index) => line[..index].trim(),
         None => line.trim(),
     };
-    // Cheap rejection first: this runs for every line before the adblock branch, so it must not
-    // allocate until the line is known to be a hosts line.
     let mut fields = content.split_whitespace();
     let first = fields.next()?;
     let second = fields.next()?;
@@ -239,8 +232,6 @@ mod tests {
         let cname = parse_dnsmasq_line("address=/a.example.com/b.example.com", "x");
         assert_eq!(cname.rewrite_rules[0].target_type, REWRITE_CNAME);
 
-        // `1.2.3.4.5` is not a literal IP but is still a shape-valid domain, so it becomes the
-        // CNAME target — same rule the original parser applied.
         let odd = parse_dnsmasq_line("address=/a.example.com/1.2.3.4.5", "x");
         assert_eq!(odd.rewrite_rules[0].target_type, REWRITE_CNAME);
         assert_eq!(odd.rewrite_rules[0].target_value, "1.2.3.4.5");

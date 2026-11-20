@@ -1,21 +1,9 @@
-//! The fixed middleware chain.
-//!
-//! The Go service registered an onion: each middleware ran its prelude, called `next`, then its
-//! postlude. The order is part of the product behaviour (a cache key must see the client group, an
-//! EDE stage must decorate whatever the cache or upstream produced), so this Rust port keeps the
-//! same names and order and runs every stage's `after` in reverse after the forward walk stops.
-//!
-//! A stage can stop the walk (block page, local answer, rate limit). Stages already entered still
-//! get their postlude, which is how metrics observes a blocked query and ECH strips a cached
-//! response.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
 
 use crate::context::DnsContext;
 
-/// Every stage, in registration order. Tests assert the pipeline is assembled in this order.
 pub const PIPELINE_ORDER: &[&str] = &[
     "metrics",
     "ede",
@@ -48,9 +36,7 @@ pub const PIPELINE_ORDER: &[&str] = &[
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StageResult {
     Continue,
-    /// The stage produced the final response (or decided to drop the query).
     Stop,
-    /// The stage failed; the pipeline records the error and stops, then synthesizes SERVFAIL.
     Fail(String),
 }
 
@@ -58,7 +44,6 @@ pub enum StageResult {
 pub trait Stage: Send + Sync {
     fn name(&self) -> &'static str;
     async fn before(&self, ctx: &mut DnsContext) -> StageResult;
-    /// Runs in reverse order after the forward walk. Must tolerate a missing response.
     async fn after(&self, _ctx: &mut DnsContext) {}
 }
 
@@ -167,7 +152,6 @@ mod tests {
             *log.lock().unwrap(),
             vec!["a:before", "b:before", "b:after", "a:after"]
         );
-        // No stage answered, so the pipeline must not leave the client hanging.
         assert!(ctx.response.is_some());
     }
 }

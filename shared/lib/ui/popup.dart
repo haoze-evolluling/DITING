@@ -49,8 +49,6 @@ const _cardInset = 8.0;
 
 const _itemRadius = AppCorner.standard;
 
-// The popup card shares the one product-standard corner; [_cardInset] now only
-// pads the item rows, it no longer enlarges the card's own radius.
 const _cardRadius = AppCorner.standard;
 
 const _itemIconSize = 20.0;
@@ -65,7 +63,6 @@ const _itemArrowPadding = EdgeInsets.only(
   right: 8,
 );
 
-/// Row metrics of [CommonPopupMenu.dense], for menus in tight spaces such as an overlay window.
 const _denseItemIconSize = 18.0;
 const _denseItemPadding = EdgeInsets.symmetric(horizontal: 10, vertical: 8);
 const _denseItemArrowPadding = EdgeInsets.only(

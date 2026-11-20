@@ -1,6 +1,3 @@
-// Desktop settings branch, appearance (desktop parity): palette and
-// day/night mode are the app's shared appearance providers, not a desktop-only copy.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/pages/settings/desktop_appearance_page.dart';
 import 'package:diting_desktop/pages/hub/desktop_hub_page.dart';
@@ -32,7 +29,6 @@ void main() {
     expect(find.byType(DesktopFeatureHubPage), findsOneWidget);
     expect(find.text(l10n.desktopSettingsAppearance), findsOneWidget);
 
-    // 分类顺序固定，外观在最末一组，滚动到它再点。
     final entry = find.text(l10n.desktopSettingsAppearance);
     await Scrollable.ensureVisible(
       tester.element(entry),
@@ -54,7 +50,6 @@ void main() {
     expect(find.text(l10n.desktopSettingsPalette), findsOneWidget);
     expect(find.text(l10n.desktopSettingsMode), findsOneWidget);
 
-    // The palette tiles are labelled from the shared palette enum.
     expect(find.text(l10n.paletteBlue), findsOneWidget);
     await tester.tap(find.text(l10n.paletteBlue));
     await tester.pumpAndSettle();
@@ -82,7 +77,6 @@ void main() {
         tester.renderObject<RenderBox>(find.byType(type)).size;
 
     await pumpSettings(tester);
-    // 左右两栏共用同一条顶线，预览在左。
     expect(topOf(AppearancePreviewCard).dy, topOf(AppearanceOptionsCard).dy);
     expect(
       topOf(AppearancePreviewCard).dx,
@@ -90,7 +84,6 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
-    // 窄窗放不下两栏，选项落到预览下方。
     await pumpSettings(tester, size: const Size(800, 900));
     expect(
       topOf(AppearanceOptionsCard).dy,

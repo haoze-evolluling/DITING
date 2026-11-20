@@ -1,5 +1,3 @@
-/// Bypass domain dialog for HTTPS inspection. The controller is owned by the dialog: disposing it
-/// right after `await` fires on `pop` mid animation and trips `'_dependents.isEmpty': is not true`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

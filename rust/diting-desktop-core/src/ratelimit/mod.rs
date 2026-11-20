@@ -1,12 +1,3 @@
-//! Client rate limiting.
-//!
-//! Thin facade over `diting-ratelimit-core`, mirroring `rate_limiter.go`. The
-//! kernel owns the token buckets, prefix aggregation, exemption parsing, the
-//! capacity eviction and the idle sweep; this module supplies a monotonic clock
-//! in nanoseconds, the bucket cap and the configuration mapping. The clock is
-//! anchored at construction so wall-clock changes can never refill or drain a
-//! bucket retroactively.
-
 use std::net::IpAddr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -15,12 +6,8 @@ use std::time::Instant;
 use diting_desktop_api::config::RateLimitConfig;
 use diting_ratelimit_core::{Addr, Config, Info};
 
-/// Bucket capacity. The Go limiter carried the same value per call; the kernel
-/// exposes it as `DEFAULT_MAX_BUCKETS`.
 pub const MAX_BUCKETS: u32 = diting_ratelimit_core::DEFAULT_MAX_BUCKETS;
 
-/// Idle buckets are swept every this many `allow` calls instead of running a
-/// dedicated janitor task.
 const CLEANUP_EVERY: u64 = 1024;
 
 struct State {
@@ -28,7 +15,6 @@ struct State {
     config: RateLimitConfig,
 }
 
-/// Thread-safe client rate limiter.
 pub struct RateLimiter {
     state: RwLock<State>,
     started: Instant,
@@ -47,8 +33,6 @@ impl RateLimiter {
         }
     }
 
-    /// Replaces the configuration. The kernel keeps live buckets and adjusts
-    /// their capacity to the new burst, exactly like `UpdateConfig`.
     pub fn configure(&self, config: &RateLimitConfig) {
         let mut state = self.write();
         state.kernel.configure(&kernel_config(config));
@@ -59,8 +43,6 @@ impl RateLimiter {
         self.read().kernel.enabled()
     }
 
-    /// Admits or rejects one request. A missing address and a disabled limiter
-    /// both pass, matching the Go middleware's fast path.
     pub fn allow(&self, ip: Option<IpAddr>) -> bool {
         let now = self.now_ns();
         let address = ip.map(addr_for);
@@ -77,14 +59,11 @@ impl RateLimiter {
         allowed
     }
 
-    /// Whether an address bypasses the limiter. A missing address counts as
-    /// exempt, like Go's `IsExempt(nil)`.
     pub fn is_exempt(&self, ip: Option<IpAddr>) -> bool {
         let address = ip.map(addr_for);
         self.read().kernel.is_exempt(address.as_ref())
     }
 
-    /// The configuration this limiter was last given.
     pub fn config(&self) -> RateLimitConfig {
         self.read().config.clone()
     }

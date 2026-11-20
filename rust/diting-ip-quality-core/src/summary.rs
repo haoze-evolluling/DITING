@@ -1,6 +1,3 @@
-//! Report aggregation: majority type, the severity tie-break, the level and the first non-empty
-//! organization/ASN.
-
 use std::collections::HashMap;
 
 use serde_json::{json, Value};
@@ -18,7 +15,6 @@ fn severity(ip_type: &str) -> i32 {
     }
 }
 
-/// Summarizes the source rows in the order the caller queried them.
 pub fn summarize(ip: &str, sources: &[Value]) -> Value {
     let mut counts: HashMap<&str, i32> = HashMap::new();
     for source in sources {
@@ -32,7 +28,6 @@ pub fn summarize(ip: &str, sources: &[Value]) -> Value {
         *counts.entry(ip_type).or_insert(0) += 1;
     }
 
-    // Highest count wins; a tie goes to the more severe type (datacenter > business > mobile).
     let mut ip_type = "商业";
     let mut best = (-1, -1);
     for (candidate, count) in &counts {

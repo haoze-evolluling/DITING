@@ -1,6 +1,3 @@
-/// U5 / U6 应用洞察视图：应用报告卡与连接地图，数据来自实时连接快照。
-///
-/// 连接监控页的一段内容；不带自己的 Scaffold，滚动由外层 `PageBody` 负责。
 library;
 
 import 'package:diting_android/data/network/app_insights.dart';
@@ -26,8 +23,6 @@ class _AppInsightsViewState extends State<AppInsightsView> {
     final reports = widget.reports;
     if (reports.isEmpty) return const SizedBox.shrink();
 
-    // U9: on a tablet the report cards become the left pane and the selected app's connection map
-    // the right, instead of one long scroll where the map is far from the card that explains it.
     final wide = MediaQuery.sizeOf(context).width >= 720;
     final labels = [for (final report in reports) report.appLabel];
     final selected = _selected;

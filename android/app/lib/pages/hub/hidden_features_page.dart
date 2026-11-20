@@ -8,8 +8,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Hidden features (upstream `HiddenFeaturesScreen`). Hiding only affects the feature hub
-/// and never disables anything; keys persist to `dns_vpn_prefs` / `hidden_features_set`.
 class HiddenFeaturesPage extends ConsumerWidget {
   const HiddenFeaturesPage({super.key});
 

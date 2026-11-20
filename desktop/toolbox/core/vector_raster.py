@@ -21,7 +21,7 @@ from PIL import Image, ImageDraw
 
 Point = Tuple[float, float]
 Contour = List[Point]
-Matrix = Tuple[float, float, float, float, float, float]  # a b c d e f
+Matrix = Tuple[float, float, float, float, float, float]
 
 IDENTITY: Matrix = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
 
@@ -29,7 +29,6 @@ _TOKEN_RE = re.compile(
     r"([MmLlHhVvCcSsQqTtAaZz])|([-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)"
 )
 
-# 单个三次曲线的最大采样步数；步长由弦长与容差共同决定。
 _MIN_CURVE_STEPS = 2
 _MAX_CURVE_STEPS = 256
 
@@ -288,7 +287,7 @@ def parse_path(path_data: str, tolerance: float = 0.35) -> List[Contour]:
             start_x, start_y = cx, cy
             current = [(cx, cy)]
             prev_cubic = prev_quad = None
-            prev_cmd = "l" if relative else "L"  # 隐式后续坐标按 lineto 处理
+            prev_cmd = "l" if relative else "L"
             continue
         if op == "L":
             x, y = read(2)
@@ -416,7 +415,6 @@ def fill_mask(
                 span_start = x
             winding += direction
             if winding == 0:
-                # 向外取整，避免相邻跨段之间出现 1px 缝隙（超采样后再缩小几乎无影响）
                 left = max(0, int(math.floor(span_start)))
                 right = min(width - 1, int(math.ceil(x)) - 1)
                 if right >= left:
@@ -464,7 +462,6 @@ def render(
     """按顺序叠加渲染所有形状，返回 RGBA 图像。"""
     canvas = Image.new("RGBA", (width * supersample, height * supersample), (0, 0, 0, 0))
     base = fit_matrix(view_box, width, height, supersample)
-    # tolerance 以设备像素表示，换算回用户坐标系后再决定曲线细分密度
     user_tolerance = tolerance / max(base[0], 1e-9)
 
     for shape in shapes:

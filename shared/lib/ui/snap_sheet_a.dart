@@ -2,7 +2,6 @@
 
 part of 'snap_sheet.dart';
 
-/// Detents resolve every frame; a drag below the shortest moves the route.
 class _SheetModel extends ChangeNotifier {
   _SheetModel({required this.route, required TickerProvider vsync})
     : detents = route.detents,
@@ -43,10 +42,8 @@ class _SheetModel extends ChangeNotifier {
 
   bool get _closing => _presentation.status == AnimationStatus.reverse;
 
-  /// The tallest a sheet may reach, a peek below the top of the space it gets.
   double get _peak => math.max(_available - stackedSheetPeek, 0.0);
 
-  /// The tallest detent, lifted by the keyboard up to a peek below the top.
   double get _top {
     final peak = _peak;
     final tallest = detents.last * _available;
@@ -54,7 +51,6 @@ class _SheetModel extends ChangeNotifier {
     return peak - _rounded(peak - tallest - _keyboard, room);
   }
 
-  /// A fit sheet follows its content up to each detent, never below the shortest.
   List<double> get _stops {
     final shortest = detents.first * _available;
     final top = _top;
@@ -85,7 +81,6 @@ class _SheetModel extends ChangeNotifier {
     _Settling(:final stop, :final offset) => stops[stop] + offset,
   };
 
-  /// What the sheet may stretch past its tallest detent, up to the peek.
   double _stretchExtent(double tallest) =>
       clampDouble(_peak - _keyboard - tallest, 0, _rubberBandExtent);
 
@@ -100,7 +95,6 @@ class _SheetModel extends ChangeNotifier {
     return height >= stops.last - precisionErrorTolerance;
   }
 
-  /// At rest the content is measured up to the detent; moving, at what it shows.
   double beginLayout(double available, double keyboard) {
     _available = available;
     _keyboard = keyboard;
@@ -150,7 +144,6 @@ class _SheetModel extends ChangeNotifier {
   double get _tallestRoom =>
       math.min(detents.last * _available, _top - _keyboard);
 
-  /// Measure up to the tallest detent before moving, so a release lands where it ends.
   void _measureBeforeMoving() {
     final room = _tallestRoom;
     if (!fitsContent ||
@@ -246,10 +239,7 @@ class _SheetModel extends ChangeNotifier {
     }
   }
 
-  /// Returns how much of [delta], positive to grow, the sheet took: what is
-  /// left past the tallest detent goes to the content, or [stretches] it.
   double dragBy(double delta, {bool stretches = false}) {
-    // A drag the pop caught mid-gesture would hold the route from leaving.
     if (_closing) {
       return delta;
     }
@@ -385,7 +375,6 @@ class _SheetModel extends ChangeNotifier {
       _stopTicker();
       return;
     }
-    // Timed from the frame the settle began in, so its first frame moves.
     final now = SchedulerBinding.instance.currentSystemFrameTimeStamp;
     final time =
         (now - (_lastTick ?? now)).inMicroseconds /

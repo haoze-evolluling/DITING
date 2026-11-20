@@ -4,7 +4,6 @@ import 'package:diting_android/state/observability_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// One row per millisecond, newest first, so a timestamp cursor is unambiguous.
 List<ObservedRequest> _rows(int count) => [
   for (var index = 0; index < count; index++)
     ObservedRequest.fromDns(
@@ -20,8 +19,6 @@ List<ObservedRequest> _rows(int count) => [
     ),
 ];
 
-/// Inclusive cursor paging over an in-memory list, shaped like the SQL the kernel now emits:
-/// `WHERE timestamp <= ? ORDER BY timestamp DESC LIMIT 50`.
 RequestFeedPageLoader _loader(
   List<ObservedRequest> all,
   List<int?> cursors,
@@ -73,7 +70,6 @@ void main() {
     expect(cursors, [null]);
 
     await container.read(requestFeedProvider.notifier).loadMore();
-    // Second read is bounded by the first page's oldest row, not by an ever-wider window.
     expect(cursors, hasLength(2));
     expect(cursors.last, all[requestFeedPageSize - 1].timestamp);
 
@@ -84,7 +80,6 @@ void main() {
 
   test('游标边界行重复出现时按 key 去重，不会重复渲染', () async {
     final all = _rows(20);
-    // A loader that always repeats the boundary row, which is what an inclusive `<=` does.
     var calls = 0;
     final container = await _container((
       ref,
@@ -100,7 +95,6 @@ void main() {
               for (final item in all)
                 if (item.timestamp <= before) item,
             ];
-      // 6 rows a page so the boundary repeat is visible within a small fixture.
       final window = eligible.take(6).toList(growable: false);
       return (
         items: window,
@@ -137,7 +131,6 @@ void main() {
     final notifier = container.read(requestFeedProvider.notifier);
     await notifier.loadMore();
     final afterFirst = calls;
-    // `hasMore` was reported false by the loader once nothing fresh arrived.
     expect(
       container.read(requestFeedProvider).requireValue.hasMore,
       isFalse,

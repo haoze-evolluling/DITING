@@ -13,18 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-/// Host-JVM smoke test for the engine's JNI boundary.
-///
-/// It proves three things the Rust tests cannot:
-///
-/// 1. the exported symbols match the names and argument orders the Kotlin facade declares;
-/// 2. the callbacks are called from engine threads into a real JVM object, with one packed
-///    `byte[]` per DNS, race, bootstrap and traffic batch;
-/// 3. the standalone server answers a real UDP and a real TCP client, end to end, with a fake
-///    upstream written here in Java.
-///
-/// The semantics (policy walk, cache TTLs, JSON documents) belong to the Rust tests; this only
-/// checks the boundary.
 public final class EngineSmoke {
     static int checks;
 
@@ -40,7 +28,6 @@ public final class EngineSmoke {
         System.out.println("engine smoke ok: " + checks + " checks");
     }
 
-    /// One engine's whole life: config, rules, server, queries, documents, stop, free.
     private static void lifecycle(FakeUpstream upstream) throws Exception {
         Engine engine = new Engine();
         check(engine.handle() != 0, "engine handle");
@@ -70,13 +57,13 @@ public final class EngineSmoke {
         });
         engine.setRaceLogCallback(rows -> {
             Payload payload = new Payload(rows);
-            payload.u32(); // count
+            payload.u32();
             String queryName = payload.text();
             int queryType = payload.i32();
             String strategy = payload.text();
-            payload.i32(); // provider count
+            payload.i32();
             boolean success = payload.u8() != 0;
-            payload.i64(); // elapsed
+            payload.i64();
             String selectedProviderID = payload.text();
             race.set(queryName + "|" + queryType + "|" + strategy + "|" + success + "|"
                     + selectedProviderID);
@@ -90,7 +77,6 @@ public final class EngineSmoke {
         check(startError == null, "startStandalone accepted: " + startError);
         check(engine.isRunning(), "running after start");
 
-        // A UDP query: forwarded upstream, answered, logged, and raced.
         byte[] query = query("forward.test", 11);
         byte[] answer = udp(port(engine), query);
         check(answer.length > 12, "udp answer received");
@@ -102,25 +88,23 @@ public final class EngineSmoke {
         check(batches.get() >= 1, "one batch delivered");
         Payload batchPayload = new Payload(batch.get());
         check(batchPayload.u32() >= 1, "one row in the batch");
-        batchPayload.i64(); // timestamp
+        batchPayload.i64();
         String domain = batchPayload.text();
-        batchPayload.i32(); // query type
-        batchPayload.u8(); // blocked
-        batchPayload.text(); // blocked by
-        batchPayload.text(); // error
-        batchPayload.u8(); // cached
-        batchPayload.text(); // app
+        batchPayload.i32();
+        batchPayload.u8();
+        batchPayload.text();
+        batchPayload.text();
+        batchPayload.u8();
+        batchPayload.text();
         String resolvedIps = batchPayload.text();
         check(domain.equals("forward.test"), "batch row carries the domain: " + domain);
         check(resolvedIps.contains("1.2.3.4"), "batch row carries the addresses: " + resolvedIps);
         check(raced.await(3, TimeUnit.SECONDS), "race log delivered");
         check(race.get().startsWith("forward.test|1|single|true|p1"), "race row: " + race.get());
 
-        // The cache answers the second query without a second upstream round trip.
         udp(port(engine), query("forward.test", 12));
         check(upstream.count() == 1, "the cache served the repeat: " + upstream.count());
 
-        // A policy block and a rewrite, both without touching the upstream.
         byte[] blocked = udp(port(engine), query("blocked.test", 13));
         check((blocked[3] & 0x0f) == 3, "blocked answer is NXDOMAIN");
         byte[] rewritten = udp(port(engine), query("rewrite.test", 14));
@@ -128,11 +112,9 @@ public final class EngineSmoke {
         check(rewritten[rewritten.length - 4] == 9, "rewrite answer is the configured address");
         check(upstream.count() == 1, "blocked and rewritten queries stayed local");
 
-        // TCP carries the same answer with the 2-byte frame.
         byte[] overTcp = tcp(port(engine), query("tcp.test", 15));
         check(overTcp[0] == 0 && overTcp[1] == 15, "tcp answer carries the client id");
 
-        // The documents the UI reads.
         String stats = engine.getStats();
         check(stats.contains("\"total\":"), "stats document: " + stats);
         check(stats.contains("\"dropped_logs\":"), "stats document carries the drop counter");
@@ -154,7 +136,6 @@ public final class EngineSmoke {
         engine.clearDNSCache();
         check(engine.getDNSCacheEntries(10).equals("[]"), "the cache is empty after clear");
 
-        // ---- stage 3: the TUN facade and the protect-before-dial rule -----------------------
 
         AtomicInteger protects = new AtomicInteger();
         AtomicInteger lastFd = new AtomicInteger(-1);
@@ -177,15 +158,11 @@ public final class EngineSmoke {
         engine.setBlockEncryptedDns(true);
         engine.setTickIntervalMs(500);
 
-        // The protector is consulted for the upstream dial of the next query; the descriptor is the
-        // long gomobile generated, not a truncated int.
         udp(port(engine), query("protected.test", 21));
         check(protects.get() >= 1, "protect called before the upstream dial: " + protects.get());
         check(lastFd.get() >= 0 || System.getProperty("os.name").startsWith("Windows"),
                 "protect received a descriptor: " + lastFd.get());
 
-        // Starting a TUN on a descriptor that cannot be duplicated fails through the facade with the
-        // engine's text, and leaves nothing running.
         try {
             engine.startFull(-1, null);
             check(false, "startFull on an invalid descriptor must fail");
@@ -199,13 +176,11 @@ public final class EngineSmoke {
         engine.releaseTun();
         check(trafficTicks.get() == 0, "no traffic tick without a running session");
 
-        // Clearing every stage 3 callback is a no-op, not a crash.
         engine.setSocketProtector(null);
         engine.setUIDResolver(null);
         engine.setAppUidResolver(null);
         engine.setTrafficCallback(null);
 
-        // ---- stage 4a: the outbound proxy facade ------------------------------------------
 
         String badProxy = engine.configureOutboundProxy(
                 "{\"enabled\":true,\"protocol\":\"ftp\",\"host\":\"127.0.0.1\",\"port\":1080}");
@@ -221,7 +196,6 @@ public final class EngineSmoke {
         engine.setOutboundProxyStatusCallback(null);
         check(proxyEvents.get() == 0, "no status before a tunnel starts");
 
-        // ---- stage 4b: the MITM facade ---------------------------------------------------
 
         String certDir = Files.createTempDirectory("diting-mitm").toString();
         String caPem = engine.startStackMitm(certDir);
@@ -244,7 +218,6 @@ public final class EngineSmoke {
                 "the root survives stopStackMitm");
         check(httpEvents.get() == 0, "no HTTP events without a relayed flow");
 
-        // Teardown flushes the buffered DNS / race / bootstrap batches on the calling thread.
         engine.flushLogs();
         engine.stopStandalone();
         check(!engine.isRunning(), "stopped");
@@ -252,7 +225,6 @@ public final class EngineSmoke {
         engine.free();
         check(engine.handle() == 0, "handle released");
 
-        // A released engine must not crash the process; the facade reports it instead.
         try {
             engine.getStats();
             check(false, "a released engine refuses calls");
@@ -260,7 +232,6 @@ public final class EngineSmoke {
             check(true, "released engine reported");
         }
 
-        // A malformed config is reported, not fatal.
         Engine second = new Engine();
         try {
             String error = second.applyDNSConfig("{\"mode\":\"nope\"}");
@@ -273,7 +244,6 @@ public final class EngineSmoke {
         }
     }
 
-    // ---- helpers ---------------------------------------------------------------------------
 
     private static void check(boolean condition, String message) {
         checks++;
@@ -282,7 +252,6 @@ public final class EngineSmoke {
         }
     }
 
-    /// Reads one packed payload, big-endian, like `rust/diting-log-core/src/payload.rs`.
     static final class Payload {
         private final byte[] bytes;
         private int offset;
@@ -333,7 +302,6 @@ public final class EngineSmoke {
         return out.toByteArray();
     }
 
-    /// The fake upstream's answer: the query echoed, plus one A record.
     static byte[] answer(byte[] query, int[] address) {
         byte[] response = query.clone();
         response[2] = (byte) 0x81;
@@ -348,7 +316,6 @@ public final class EngineSmoke {
         return out.toByteArray();
     }
 
-    /// The port the engine's standalone server picked (`startStandalone(0)` means "any").
     private static int port(Engine engine) {
         long port = engine.standalonePort();
         check(port > 0, "server reports its port");
@@ -381,7 +348,6 @@ public final class EngineSmoke {
         }
     }
 
-    /// A tiny DNS upstream: answers every query with 1.2.3.4 and counts the queries.
     static final class FakeUpstream {
         private final DatagramSocket socket;
         private final AtomicInteger queries = new AtomicInteger();
@@ -427,7 +393,6 @@ public final class EngineSmoke {
                     socket.send(new DatagramPacket(response, response.length, packet.getAddress(),
                             packet.getPort()));
                 } catch (Exception ignored) {
-                    // A read timeout or a closed socket is how this thread ends.
                 }
             }
         }

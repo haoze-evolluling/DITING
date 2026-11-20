@@ -7,9 +7,6 @@ import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Floats [bar] over the foot of [body] as a sheet's docked search floats,
-/// in the dock's fill and shadow or its glass, and lets [body] scroll clear
-/// of it.
 class FloatingFootBar extends StatelessWidget {
   const FloatingFootBar({super.key, required this.bar, required this.body});
 

@@ -1,9 +1,3 @@
-/// The `hub` branch's upstream page: scheduling mode, the configured servers, bootstrap DNS,
-/// split-DNS routes and the independent fallback chain.
-///
-/// The old desktop console (`ResolveView.vue` and its `UpstreamPanel`) is the functional blueprint.
-/// The page owns no DNS logic: every switch and form posts the whole config to
-/// `/api/v1/upstream/configure` and then shows what the service re-reads.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

@@ -1,11 +1,3 @@
-//! C ABI for the `dart:ffi` caller, plus the fixed payload layouts.
-//!
-//! One entry per area, one call per user action: these are dialog-sized payloads, so the boundary
-//! costs nothing measurable and the kernel never holds state between calls.
-//!
-//! Every output starts with `magic "DAG1" | abi`; the Dart loader refuses a library whose version
-//! does not match what it was compiled against, and a payload that runs past its buffer.
-
 use crate::api;
 use crate::paste;
 use crate::payload::{read_summary, write_summary};
@@ -14,7 +6,6 @@ use crate::secret;
 use crate::traffic::{self, DnsRow};
 use crate::wire::{Reader, Writer};
 
-/// Bumped whenever a payload layout or a semantic changes.
 pub const ABI_VERSION: u32 = 1;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DAG1");
@@ -24,8 +15,6 @@ fn header(writer: &mut Writer) {
     writer.u32(ABI_VERSION);
 }
 
-/// Hands `bytes` to the caller as a pointer/length pair; shrinking keeps the length enough to
-/// rebuild the allocation in [`diting_agent_core_free`].
 fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     let mut boxed = bytes.into_boxed_slice();
     let length = boxed.len();
@@ -34,9 +23,6 @@ fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
     (pointer, length)
 }
 
-/// # Safety
-/// `out_len` must be writable; `bytes` is either `None` (rejected payload, reported as null) or a
-/// finished buffer whose ownership moves to the caller.
 unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     if out_len.is_null() {
         return std::ptr::null_mut();
@@ -54,8 +40,6 @@ unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
     }
 }
 
-/// # Safety
-/// `text` must point to `len` readable bytes.
 unsafe fn input_at<'a>(text: *const u8, len: usize) -> &'a [u8] {
     if text.is_null() || len == 0 {
         &[]
@@ -64,14 +48,11 @@ unsafe fn input_at<'a>(text: *const u8, len: usize) -> &'a [u8] {
     }
 }
 
-/// Payload layout version; the Dart loader compares it against its own constant.
 #[no_mangle]
 pub extern "C" fn diting_agent_core_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Allocates `size` zeroed bytes for the caller to fill. `dart:ffi` has no allocator of its own;
-/// release it with [`diting_agent_core_free`].
 #[no_mangle]
 pub extern "C" fn diting_agent_core_alloc(size: usize) -> *mut u8 {
     if size == 0 {
@@ -83,10 +64,6 @@ pub extern "C" fn diting_agent_core_alloc(size: usize) -> *mut u8 {
     pointer
 }
 
-/// Releases a buffer returned by any entry point below, or by [`diting_agent_core_alloc`].
-///
-/// # Safety
-/// `pointer`/`len` must be exactly what the matching call returned, released once.
 #[no_mangle]
 pub unsafe extern "C" fn diting_agent_core_free(pointer: *mut u8, len: usize) {
     if pointer.is_null() {
@@ -99,10 +76,6 @@ unsafe fn utf8_input<'a>(input: *const u8, len: usize) -> Option<&'a str> {
     std::str::from_utf8(input_at(input, len)).ok()
 }
 
-/// Clipboard recognition. Input is the raw paste (UTF-8, not a payload).
-///
-/// # Safety
-/// `input` must point to `len` readable bytes and `out_len` must be writable.
 #[no_mangle]
 pub unsafe extern "C" fn diting_agent_core_paste(
     input: *const u8,
@@ -122,10 +95,6 @@ pub unsafe extern "C" fn diting_agent_core_paste(
     respond(Some(writer.finish()), out_len)
 }
 
-/// Key sealing and opening: payload is `op u8 (0 seal, 1 open) | string`.
-///
-/// # Safety
-/// Same contract as [`diting_agent_core_paste`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_agent_core_secret(
     input: *const u8,
@@ -150,13 +119,6 @@ pub unsafe extern "C" fn diting_agent_core_secret(
     respond(Some(writer.finish()), out_len)
 }
 
-/// Prompt builders: `op u8 (0 domain, 1 traffic) | <fields>`.
-///
-/// Domain fields: `string domain | string systemPrompt | opt string context`. Traffic fields:
-/// `string systemPrompt | <summary block>`. Output: `string systemPrompt | string userPrompt`.
-///
-/// # Safety
-/// Same contract as [`diting_agent_core_paste`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_agent_core_prompt(
     input: *const u8,
@@ -194,13 +156,6 @@ pub unsafe extern "C" fn diting_agent_core_prompt(
     respond(Some(writer.finish()), out_len)
 }
 
-/// Traffic summary: `op u8 (0 summarize, 1 render) | <fields>`.
-///
-/// Summarise: `opt string unavailableReason | u32 dnsCount | (string domain, string result,
-/// u8 cached)* | u32 httpCount | string outcome*`. Render: `<summary block>`.
-///
-/// # Safety
-/// Same contract as [`diting_agent_core_paste`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_agent_core_summary(
     input: *const u8,
@@ -258,7 +213,6 @@ pub unsafe extern "C" fn diting_agent_core_summary(
     respond(Some(writer.finish()), out_len)
 }
 
-/// One error kind precedes the fields of a failed result.
 fn write_endpoint(writer: &mut Writer, endpoint: Result<String, api::EndpointError>) {
     match endpoint {
         Ok(value) => {
@@ -269,18 +223,6 @@ fn write_endpoint(writer: &mut Writer, endpoint: Result<String, api::EndpointErr
     }
 }
 
-/// Protocol layer: `op u8 | <fields>`.
-///
-/// * `0`/`1` chat and models endpoint: `string baseUrl` -> `u8 ok | string`.
-/// * `2` request body: `string model | f64 temperature | u32 count | (string role, string
-///   content)*` -> `string json`.
-/// * `3` chat reply: `string body | string fallbackModel` -> `u8 kind | (string content, string
-///   model, u32 prompt, u32 completion, u32 total)` when the kind is `0`.
-/// * `4` model list: `string body` -> `u8 kind | (u32 count | string*)` when the kind is `0`.
-/// * `5` status hint: `u32 status | string body` -> `u8 kind | opt string detail`.
-///
-/// # Safety
-/// Same contract as [`diting_agent_core_paste`].
 #[no_mangle]
 pub unsafe extern "C" fn diting_agent_core_api(
     input: *const u8,
@@ -383,7 +325,6 @@ mod tests {
     use crate::api::StatusKind;
     use crate::paste::PasteKind;
 
-    /// Calls one entry the way Dart does and returns the bytes (or `None` for a rejected payload).
     unsafe fn call(
         entry: unsafe extern "C" fn(*const u8, usize, *mut usize) -> *mut u8,
         payload: &[u8],
@@ -467,7 +408,6 @@ mod tests {
         assert_eq!(reader.string().as_deref(), Some("a.test"));
         assert_eq!(reader.u32(), Some(2));
 
-        // Round trip into the render op.
         let mut render = Writer::new();
         render.u8(1);
         write_summary(

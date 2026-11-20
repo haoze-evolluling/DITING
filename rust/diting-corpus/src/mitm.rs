@@ -1,20 +1,3 @@
-//! The MITM corpus: the HTTP response bodies that get the cosmetic `<link>` spliced in.
-//!
-//! `android/engine/mitm_common.go` decided two things per exchange — whether the request loses
-//! `Accept-Encoding` (`requestAcceptsHTML`) and whether the response body is rewritten
-//! (`ShouldInjectHTML`) — and then streamed the body through the kernel's scanner. All three now live
-//! in Rust (`diting-mitm-spike::inject` + `diting-cosmetic-core`), so the corpus freezes:
-//!
-//! * the decision for a set of request/response header combinations;
-//! * the exact bytes that reach the client for the same page encoded four ways (identity, gzip, zlib,
-//!   raw deflate) and for a page whose `<head>` is spelled in upper case.
-//!
-//! The bodies are deliberately smaller than the adapter's 16 KiB read buffer: a larger page's
-//! output depends on how the upstream happened to be chunked, and that behaviour is covered by
-//! `diting-mitm-spike`'s own unit tests rather than by a byte fixture.
-//!
-//! A full TLS transcript is *not* here (it needs a peer and a clock).
-
 use async_compression::tokio::bufread::{DeflateEncoder, GzipEncoder, ZlibEncoder};
 use diting_cosmetic_core::local::ASSET_HOST;
 use diting_cosmetic_core::{link_tag, Injector};
@@ -23,16 +6,12 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
 use crate::{hex, unhex};
 
-/// One corpus case.
 pub struct Case {
     pub id: &'static str,
     pub host: &'static str,
     pub content_type: &'static str,
-    /// `Content-Encoding` as the upstream sent it.
     pub encoding: &'static str,
-    /// The client's `Accept` header.
     pub accept: &'static str,
-    /// The decompressed page.
     pub page: &'static [u8],
 }
 
@@ -92,13 +71,10 @@ pub fn cases() -> Vec<Case> {
     ]
 }
 
-/// Builds the fixture document.
 pub fn build() -> String {
     let cases: Vec<serde_json::Value> = cases()
         .into_iter()
         .map(|case| {
-            // The raw-deflate case is the same `Content-Encoding: deflate` header with a body that
-            // has no zlib header, which is what the relay's sniff has to tell apart.
             let encoded = if case.id == "raw-deflate-html" {
                 encode_raw_deflate(case.page)
             } else {
@@ -141,7 +117,6 @@ fn link_for(host: &str) -> String {
     link_tag(host, ASSET_HOST)
 }
 
-/// Compresses `page` the way an upstream would for the given `Content-Encoding`.
 fn encode(encoding: &str, page: &[u8]) -> Result<Vec<u8>, String> {
     let runtime = runtime();
     runtime.block_on(async move {
@@ -154,7 +129,6 @@ fn encode(encoding: &str, page: &[u8]) -> Result<Vec<u8>, String> {
     })
 }
 
-/// Raw deflate, for the `deflate`-without-zlib-header case.
 fn encode_raw_deflate(page: &[u8]) -> Result<Vec<u8>, String> {
     runtime().block_on(async move { read_all(DeflateEncoder::new(page)).await })
 }
@@ -168,7 +142,6 @@ async fn read_all<R: tokio::io::AsyncRead + Unpin>(mut reader: R) -> Result<Vec<
     Ok(out)
 }
 
-/// Runs the production injection path over `body`; `None` when the response is not an HTML page.
 fn inject(case: &Case, body: &[u8]) -> Result<Option<Vec<u8>>, String> {
     if !is_html(case.content_type) {
         return Ok(None);
@@ -182,7 +155,6 @@ fn inject(case: &Case, body: &[u8]) -> Result<Option<Vec<u8>>, String> {
             )),
             "deflate" => {
                 let mut buffered = tokio::io::BufReader::new(body);
-                // Same sniff the relay uses, so a raw-deflate body is decoded as raw deflate.
                 let head = match buffered.fill_buf().await {
                     Ok(head) => head.to_vec(),
                     Err(_) => Vec::new(),
@@ -209,7 +181,6 @@ fn inject(case: &Case, body: &[u8]) -> Result<Option<Vec<u8>>, String> {
     })
 }
 
-/// Replays the fixture, comparing bytes and decisions.
 pub fn replay(document: &str) -> Result<usize, String> {
     let fixture: serde_json::Value =
         serde_json::from_str(document).map_err(|err| format!("parse the fixture: {err}"))?;

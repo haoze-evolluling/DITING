@@ -1,8 +1,3 @@
-//! One query's sequential attempt walk.
-//!
-//! `single` and `primary_backup` run one attempt at a time; the ordering, the budget clipping and the
-//! closing race-log line are decided here, while [`super::Schedule`] keeps the state.
-
 use super::*;
 
 impl Schedule {
@@ -27,8 +22,6 @@ impl Schedule {
             .iter()
             .position(|&index| index == provider)
             .unwrap_or(sequential.next.saturating_sub(1));
-        // `item.idx == 0`: the first *configured* provider, even when the circuit breaker pushed
-        // it to the end of the attempt order.
         if provider == 0 {
             sequential.primary_elapsed_ms = elapsed_ms;
         }

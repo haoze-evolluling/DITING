@@ -1,7 +1,3 @@
-// The notification body must stay one grammar across both modes (`运行中 · <上游>`); the mode
-// name lives in the title. The services cannot see the provider catalog, so these strings are the
-// only source of the default text.
-
 import 'package:diting_android/data/notifications/notification_status_text.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';

@@ -1,9 +1,3 @@
-/// The login page's background editor: a stored image or an external URL, plus the dark overlay and
-/// blur the login page applies.
-///
-/// The old desktop console's `auth/LoginBgModal.vue` is the blueprint. It only collects the draft;
-/// the page performs the write and reports the service's answer, so a rejected save never looks like
-/// a saved one. No client-side resizing: the service caps the payload and validates the header.
 library;
 
 import 'dart:convert';
@@ -18,7 +12,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// What the dialog collected. [reset] means "restore the default wallpaper" and ignores the rest.
 class LoginBackgroundDraft {
   const LoginBackgroundDraft({
     this.url = '',
@@ -73,8 +66,6 @@ class _LoginBackgroundDialogState
     super.dispose();
   }
 
-  /// The service only asks a remote, unauthenticated browser for the admin password; loopback and
-  /// an existing session are already trusted.
   bool get _needsPassword {
     final auth = ref.read(desktopAuthProvider);
     if (auth.signedIn || !auth.initialized) return false;
@@ -99,7 +90,6 @@ class _LoginBackgroundDialogState
       _preparing = true;
       _local = true;
     });
-    // Shrunk before it is stored: the service caps the payload, but a phone photo is wasteful.
     final prepared = await compressDesktopImageDataUrl(picked);
     if (!mounted) return;
     setState(() {
@@ -371,7 +361,6 @@ class _Preview extends StatelessWidget {
   }
 }
 
-/// Decodes a `data:image/...;base64,` payload for the preview; null for anything else.
 Uint8List? _decodeDataUrl(String value) {
   if (!value.startsWith('data:image/')) return null;
   final comma = value.indexOf(',');

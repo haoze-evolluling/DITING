@@ -1,13 +1,3 @@
-//! The MITM entry points: `startStackMitm … setHttpLogCallback`, the stage 4b surface.
-//!
-//! Every one of them is a thin wrapper: the handle lookup, the `catch_unwind`, and the same "empty
-//! string means the method failed" contract the Go AAR had (`StartStackMitm` returned `""` when the
-//! certificate manager could not start, and Kotlin treated that as "MITM unavailable").
-//!
-//! The log lines Go printed (`MITM CA loaded from disk`, `MITM Filter: updated allowed UIDs`, …) go
-//! to the batch-log error channel through [`Engine::log_error`], because the engine has no logcat
-//! bridge; the UI's log viewer already shows that channel.
-
 use jni::objects::{JObject, JString};
 use jni::sys::{jboolean, jstring};
 use jni::JNIEnv;
@@ -15,7 +5,6 @@ use jni::JNIEnv;
 use super::{answer, text, with_engine};
 use crate::jni::adapters::JniHttpLog;
 
-/// `startStackMitm(certDir)`: the CA PEM, or an empty string when the session could not start.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStackMitm(
     mut env: JNIEnv<'_>,
@@ -36,7 +25,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStackMitm(
     answer(&env, Some(pem))
 }
 
-/// `stopStackMitm()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopStackMitm(
     mut env: JNIEnv<'_>,
@@ -46,7 +34,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopStackMitm(
     with_engine(&mut env, handle, (), |engine| engine.mitm_state().stop());
 }
 
-/// `isMitmActive()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeIsMitmActive(
     mut env: JNIEnv<'_>,
@@ -58,7 +45,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeIsMitmActive(
     })
 }
 
-/// `getMitmCACert(certDir)`: the live root, or the one on disk when MITM is not running.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetMitmCaCert(
     mut env: JNIEnv<'_>,
@@ -76,7 +62,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetMitmCaCert(
     answer(&env, Some(pem))
 }
 
-/// `setMitmAllowedUIDs(csv)`: the per-app interception list.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetMitmAllowedUids(
     mut env: JNIEnv<'_>,
@@ -95,7 +80,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetMitmAllowedU
     });
 }
 
-/// `setHttpsBypassRules(content)`: the multi-line exclusion patterns.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetHttpsBypassRules(
     mut env: JNIEnv<'_>,
@@ -114,7 +98,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetHttpsBypassR
     });
 }
 
-/// `setExtraPassthroughSuffixes(content)`: the same list, from the platform channel.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetExtraPassthroughSuffixes(
     env: JNIEnv<'_>,
@@ -125,7 +108,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetExtraPassthr
     Java_com_haoze_diting_engine_Engine_nativeSetHttpsBypassRules(env, _class, handle, content);
 }
 
-/// `clearMitmBlacklist()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeClearMitmBlacklist(
     mut env: JNIEnv<'_>,
@@ -140,7 +122,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeClearMitmBlackl
     });
 }
 
-/// `setCosmeticRules(json)`: the scoped cosmetic rule set.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetCosmeticRules(
     mut env: JNIEnv<'_>,
@@ -156,7 +137,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetCosmeticRule
     });
 }
 
-/// `setRequestRules(json)`: the URL prefix rules the relay applies per request.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRequestRules(
     mut env: JNIEnv<'_>,
@@ -172,7 +152,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRequestRules
     });
 }
 
-/// `setHttpLogCallback(cb)`; a null stops reporting.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetHttpLogCallback(
     mut env: JNIEnv<'_>,
@@ -202,7 +181,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetHttpLogCallb
     }
 }
 
-/// `mitmBlacklistCount()`: for the settings screen (live entries only).
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeMitmBlacklistCount(
     mut env: JNIEnv<'_>,

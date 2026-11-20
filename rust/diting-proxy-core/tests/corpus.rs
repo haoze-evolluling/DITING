@@ -1,15 +1,3 @@
-//! Replays the fixtures generated from the pre-migration Go implementation
-//! (`android/engine/zz_fixture_gen_test.go` before it was deleted), so the kernel is compared
-//! against the code it replaced rather than against a second Rust implementation.
-//!
-//! * `address.tsv` - `encodeSocksAddress` over the target corpus.
-//! * `reply.tsv` - `readSocksReply` over reply streams (including truncated ones).
-//! * `datagram.tsv` - `decodeSocksDatagramAddress` over datagram bodies.
-//! * `handshake.tsv` - the `socksNegotiate` + `socksConnect` byte stream and error text.
-//! * `http.tsv` - the bytes `httpConnect` wrote (`http.Request.Write` output). The reply handling
-//!   stays Go's `http.ReadResponse`, so only the request column is replayed here.
-//! * `config.tsv` - `parseOutboundProxyConfig` over the decoded field corpus.
-
 use std::fs;
 
 use diting_proxy_core::addr::join_host_port;
@@ -72,7 +60,6 @@ fn reply_corpus_matches_read_socks_reply() {
     }
 }
 
-/// The Go reader: read exactly what the parser asks for, wrap the first read only.
 fn read_reply(stream: &[u8]) -> Result<String, String> {
     let mut read = 0;
     loop {
@@ -177,8 +164,6 @@ fn http_corpus_matches_connect_request_bytes() {
         let expected_written = &row[4];
         let written = connect_request(&target, &username, &password);
         assert_eq!(&hex(&written), expected_written, "CONNECT {target}");
-        // The reply column (`row[3]`) is input for Go's `http.ReadResponse`; the result column is
-        // produced there too, so only the request bytes are replayed.
         assert_eq!(row.len(), 6);
     }
 }
@@ -223,15 +208,12 @@ fn config_corpus_matches_parse_outbound_proxy_config() {
             }
             Err(err) => format!("err:{err}"),
         };
-        // A successful row spreads its result over the remaining columns (`ok`, protocol, host,
-        // port, scope, uids); an error row keeps it in one.
         assert_eq!(actual, row[9..].join("	"), "config row {:?}", row[2]);
     }
 }
 
 #[test]
 fn udp_associate_request_is_the_constant_the_fixture_wrote() {
-    // The `socksConnect(0x03, "0.0.0.0:0")` row of handshake.tsv ends with these bytes.
     assert_eq!(
         hex(&request(0x03, "0.0.0.0:0").unwrap()),
         "05030001000000000000"

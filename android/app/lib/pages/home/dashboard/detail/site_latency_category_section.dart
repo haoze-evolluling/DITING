@@ -1,5 +1,3 @@
-/// One category block on the site-latency detail page: a header with its own probe button, then a
-/// compact row per site. Tapping a row opens every measured field in a sheet.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -56,8 +54,6 @@ class SiteLatencyCategorySection extends StatelessWidget {
       title: category.label(context.l10n),
       trailing: [
         Text(verdict, style: DashboardText.label(context, color: verdictColor)),
-        // `DashboardIconButton` overflows on purpose and needs a bounded height, which the
-        // unbounded column of a detail page does not give it.
         IconButton(
           tooltip: context.l10n.siteLatencyTestCategory(
             category.label(context.l10n),
@@ -102,8 +98,6 @@ class SiteLatencyCategorySection extends StatelessWidget {
   }
 }
 
-/// Name and host on the left, the round trip on the right; the sheet holds min, max, jitter, loss
-/// and the resolved address.
 class SiteLatencyRow extends StatelessWidget {
   const SiteLatencyRow({
     super.key,

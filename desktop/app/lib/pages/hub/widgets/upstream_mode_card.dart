@@ -1,5 +1,3 @@
-/// The four scheduling modes, as the console's `UpstreamPanel.vue` lays them out: a 2×2 grid of
-/// selectable cards. Picking one saves the whole upstream config immediately, as the console does.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -91,8 +89,6 @@ class UpstreamModeCard extends StatelessWidget {
   }
 }
 
-/// Two tiles on one line, both stretched to the taller one: an option grid whose cells change
-/// height with their description reads as misaligned.
 class _ModeRow extends StatelessWidget {
   const _ModeRow({required this.children});
 

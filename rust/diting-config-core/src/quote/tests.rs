@@ -1,5 +1,3 @@
-//! `%q` shapes: the error texts reach the settings screen verbatim.
-
 use super::*;
 
 #[test]
@@ -19,6 +17,5 @@ fn quotes_like_fmt_q() {
 fn printable_non_ascii_is_not_escaped() {
     assert_eq!(go_quote("例子.example"), "\"例子.example\"");
     assert_eq!(go_quote("İstanbul"), "\"İstanbul\"");
-    // A combining accent is printable too, so it stays as text.
     assert_eq!(go_quote("e\u{301}"), "\"e\u{301}\"");
 }

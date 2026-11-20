@@ -1,11 +1,3 @@
-//! Windows service lifecycle for the privileged DNS core.
-//!
-//! Status queries and mutations go straight to the SCM when the process is already elevated.
-//! Otherwise mutations re-launch the service executable with `-service <verb>`, which triggers
-//! UAC; the elevated child then performs the native call and never re-execs again. Installation
-//! registers the executable itself for auto-start with `-run` as its command line, so the SCM
-//! hosts the same binary that the user can also start in the foreground.
-
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
@@ -51,7 +43,6 @@ impl WindowsServiceManager {
     }
 
     fn auto_start_status(&self, installed: bool) -> AutoStartStatus {
-        // SCM auto-start runs before any user signs in, so it outranks login items.
         if installed {
             if let Ok(start_type) = query_start_type(&self.service_name) {
                 if start_type == SERVICE_AUTO_START {
@@ -64,7 +55,6 @@ impl WindowsServiceManager {
                     };
                 }
                 if start_type == SERVICE_DISABLED {
-                    // An explicitly disabled service will not run even if a login item exists.
                     return AutoStartStatus {
                         enabled: false,
                         mechanism: AUTO_START_MECHANISM_NONE.to_string(),
@@ -130,8 +120,6 @@ impl ServiceManager for WindowsServiceManager {
     }
 
     async fn start(&self) -> PlatformResult<()> {
-        // An elevated process performs the native call only. Re-execing here would make the
-        // elevated child call itself forever, because `run_elevated` executes directly.
         if self.privileged.is_elevated() {
             return start_service_native(&self.service_name);
         }
@@ -184,8 +172,6 @@ impl ServiceManager for WindowsServiceManager {
         if self.privileged.is_elevated() {
             return install_service_native(&self.service_name, &exe, args);
         }
-        // Forward the flags so the elevated child registers the same command line; the child is
-        // elevated and therefore installs natively instead of elevating again.
         let mut command = vec!["-service".to_string(), "install".to_string()];
         command.extend(args.iter().cloned());
         self.privileged.run_elevated(&exe, &command).await
@@ -196,7 +182,6 @@ impl ServiceManager for WindowsServiceManager {
         exe_path: &str,
         args: &[String],
     ) -> PlatformResult<()> {
-        // If already installed the install verb fails; starting is still the desired outcome.
         let _ = self.install_with_args(exe_path, args).await;
         self.start().await
     }
@@ -213,7 +198,6 @@ impl ServiceManager for WindowsServiceManager {
     }
 
     async fn locate_executable(&self) -> PlatformResult<String> {
-        // 1. An already-registered service knows its exact ImagePath.
         let registry_path = format!(r"SYSTEM\CurrentControlSet\Services\{}", self.service_name);
         if let Some(image_path) = read_machine_string(&registry_path, "ImagePath") {
             let candidate = clean_image_path(&image_path);
@@ -222,7 +206,6 @@ impl ServiceManager for WindowsServiceManager {
             }
         }
 
-        // 2. Next to the GUI, then the usual build output directories.
         if let Ok(current) = std::env::current_exe() {
             let directory = current.parent().map(Path::to_path_buf).unwrap_or_default();
             let direct = directory.join("diting-service.exe");
@@ -252,7 +235,6 @@ impl ServiceManager for WindowsServiceManager {
             }
         }
 
-        // 3. PATH.
         if let Some(path) = std::env::var_os("PATH") {
             for directory in std::env::split_paths(&path) {
                 let candidate = directory.join("diting-service.exe");
@@ -278,8 +260,6 @@ impl WindowsServiceManager {
     }
 }
 
-/// Extracts the executable from a registry `ImagePath`, which may include quotes, environment
-/// variables, and trailing service arguments.
 fn clean_image_path(raw: &str) -> String {
     let expanded = expand_env(raw.trim()).trim_matches('"').to_string();
     if let Some(index) = expanded.to_ascii_lowercase().find(".exe") {

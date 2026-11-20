@@ -1,15 +1,3 @@
-//! A large downstream transfer through the full tunnel must arrive byte-for-byte.
-//!
-//! Regression guard for the Rust netstack: the Go engine's blocking `Write` gave the downstream
-//! copy natural backpressure, so a multi-megabyte response (a QQ/HTTP file download) simply waited
-//! when the client was momentarily slow. The channel-based Rust rewrite reads the upstream as fast
-//! as it can and only bounds the unwritten bytes at the socket, so without backpressure a download
-//! larger than the bound is reset mid-stream and the client sees a truncated file.
-//!
-//! This drives the production `Session` through [`MemoryLink`] with a loopback upstream that pushes
-//! `TOTAL` bytes and a hand-written client that ACKs (and reads) every segment, which is exactly the
-//! shape a browser/QQ download has.
-
 mod support;
 
 use std::net::TcpListener;
@@ -25,8 +13,6 @@ use support::wire;
 
 const APP: [u8; 4] = [10, 0, 0, 2];
 const APP_PORT: u16 = 40123;
-/// Two mebibytes: comfortably past any per-flow write bound, so a missing-backpressure truncation
-/// shows up as a short read rather than a slow-but-complete transfer.
 const TOTAL: usize = 2 * 1024 * 1024;
 
 fn engine_for(upstream: std::net::SocketAddr) -> Arc<Engine> {
@@ -48,7 +34,6 @@ fn engine_for(upstream: std::net::SocketAddr) -> Arc<Engine> {
     engine
 }
 
-/// A loopback server that pushes `TOTAL` patterned bytes on accept and then half-closes.
 fn spawn_download_server(total: usize) -> std::net::SocketAddr {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind the download server");
     let address = listener.local_addr().expect("addr");
@@ -67,7 +52,6 @@ fn spawn_download_server(total: usize) -> std::net::SocketAddr {
                 }
                 let _ = std::io::Write::flush(&mut stream);
                 let _ = stream.shutdown(std::net::Shutdown::Write);
-                // Keep the read half open until the client's FIN, mirroring a real HTTP server.
                 let mut sink = [0u8; 1024];
                 let _ = std::io::Read::read(&mut stream, &mut sink);
             });
@@ -76,7 +60,6 @@ fn spawn_download_server(total: usize) -> std::net::SocketAddr {
     address
 }
 
-/// The next TCP segment the stack emits towards `client`, skipping anything else.
 fn next_segment(
     link: &MemoryLink,
     server: IpEndpoint,
@@ -129,7 +112,6 @@ fn download(engine: &Arc<Engine>, link: &Arc<MemoryLink>, server: IpEndpoint) ->
             break;
         };
         if !segment.payload.is_empty() {
-            // The link is lossless, so segments arrive in order; still guard against a retransmit.
             if segment.seq_number == ack {
                 ack = ack.wrapping_add(segment.payload.len() as u32);
                 received += segment.payload.len();

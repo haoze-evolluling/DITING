@@ -9,12 +9,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.Executors
 
-/// Flutter control plane for the no-VPN root DNS takeover.
-///
-/// It deliberately mirrors the VPN channel (`start` / `stop` / `status` / `trafficRates` /
-/// `applyDnsConfig` / `reloadRules`) so the Dart power state machine can reuse `VpnController`.
-/// `prepare` has no counterpart: there is no system consent dialog, only the root grant the
-/// service checks before starting.
 class RootDnsBridge(
     private val context: Context,
     private val messenger: BinaryMessenger,
@@ -46,9 +40,6 @@ class RootDnsBridge(
         }
     }
 
-    /// Probes root before starting so the UI gets a real error instead of a service that dies
-    /// milliseconds later. The grant is cached by the su manager, so the service's own probe is
-    /// cheap.
     private fun start(call: MethodCall, result: MethodChannel.Result) {
         val config = call.argument<String>("dnsConfig").orEmpty()
         if (config.isBlank()) {

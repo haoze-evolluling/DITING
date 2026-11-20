@@ -1,7 +1,3 @@
-/// The custom rule editor and the AdGuard syntax guide beside it.
-///
-/// The old desktop console's `RulesPanel.vue` "custom" tab is the blueprint. The text is edited
-/// locally; only the save button posts it, and the page then adopts the list the service re-reads.
 library;
 
 import 'dart:async';
@@ -16,7 +12,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The non-empty lines of the editor, the shape the service's list takes.
 List<String> desktopCustomRuleLines(String text) => [
   for (final line in text.split('\n'))
     if (line.trim().isNotEmpty) line.trim(),
@@ -34,8 +29,6 @@ class _CustomRulesEditorCardState extends ConsumerState<CustomRulesEditorCard> {
   final _text = TextEditingController();
   String? _adopted;
 
-  /// Set as soon as the text is typed: a rejected save must leave the draft alone, because the
-  /// service still holds the old list and adopting it would discard the edit.
   bool _dirty = false;
 
   @override
@@ -44,8 +37,6 @@ class _CustomRulesEditorCardState extends ConsumerState<CustomRulesEditorCard> {
     super.dispose();
   }
 
-  /// Adopts the service's list only when its text changes, never on an ordinary rebuild, so a
-  /// rejected save or a poll cannot overwrite what is being typed.
   void _adopt(List<String> rules) {
     if (_dirty) return;
     final text = rules.join('\n');
@@ -166,8 +157,6 @@ class _CustomRulesEditorCardState extends ConsumerState<CustomRulesEditorCard> {
   }
 }
 
-/// The five rule shapes the console documents. The code strings are DNS syntax, so they stay out of
-/// the ARB; the surrounding words do not.
 class RuleSyntaxGuideCard extends StatelessWidget {
   const RuleSyntaxGuideCard({super.key});
 

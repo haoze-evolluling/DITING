@@ -40,8 +40,6 @@ fn parse_addr_rejects_what_netip_rejects() {
 
 #[test]
 fn parse_addr_accepts_zones_are_not_reachable_because_we_reject_them() {
-    // `net.ParseCIDR` rejects a zone after `ParseAddr` accepts it; rejecting here is the same
-    // outcome, and it keeps the kernel from carrying a zone it would never use.
     assert!(parse_addr("fe80::1%eth0").is_none());
     assert!(parse_addr("fe80::1").is_some());
 }
@@ -50,9 +48,7 @@ fn parse_addr_accepts_zones_are_not_reachable_because_we_reject_them() {
 fn to4_folds_only_the_mapped_form() {
     assert_eq!(to4(&[1, 2, 3, 4]), Some([1, 2, 3, 4]));
     assert_eq!(to4(&map_v4([1, 2, 3, 4])), Some([1, 2, 3, 4]));
-    // `::` is *not* an IPv4 address for Go's To4, even though it is all zeros.
     assert_eq!(to4(&[0u8; 16]), None);
-    // IPv4-compatible, not mapped.
     let mut compatible = [0u8; 16];
     compatible[12..].copy_from_slice(&[1, 2, 3, 4]);
     assert_eq!(to4(&compatible), None);

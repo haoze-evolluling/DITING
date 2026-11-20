@@ -15,7 +15,6 @@ class _CardTransition extends SingleChildRenderObjectWidget {
   final Animation<double> animation;
   final Animation<double> secondaryAnimation;
 
-  /// How far a drag has pulled the page, and the page over it, past rest.
   final ValueListenable<double> overdrag;
   final ValueListenable<double> coveringOverdrag;
   final BorderRadius radius;
@@ -246,7 +245,6 @@ class _RenderCardTransition extends RenderProxyBox {
     final width = size.width;
     final slide = _recedes ? 0.0 : cardCoveredSlide * width * _covered;
     final dx = (1 - _animation.value - _overdrag.value) * width - slide;
-    // On whole physical pixels a snapshot is drawn as sharp as the page.
     final snapped =
         (dx * _devicePixelRatio).roundToDouble() / _devicePixelRatio;
     return _textDirection == TextDirection.rtl ? -snapped : snapped;
@@ -327,8 +325,6 @@ class _RenderCardTransition extends RenderProxyBox {
     final covered = _covered;
     final recedes = _recedes;
     final card = _card;
-    // A card leaving while still covered, as in a second pop before the first
-    // has ended, has the page below it beside it, not the empty backdrop.
     if (covered > 0 && _animation.isCompleted) {
       final screen = offset & size;
       if (recedes) {
@@ -356,8 +352,6 @@ class _RenderCardTransition extends RenderProxyBox {
       );
     }
 
-    // iOS shrinks the content of a page under a zoom but keeps its
-    // background, so a receding page has no corners of its own.
     if (_radius == BorderRadius.zero || (recedes && _animation.isCompleted)) {
       _clipLayer.layer = null;
       paintCard(context, offset);
@@ -402,8 +396,6 @@ class _RenderCardTransition extends RenderProxyBox {
     );
   }
 
-  /// Only the uncovered strip and corners take the backdrop; each piece reaches
-  /// a pixel under the card so its antialiased edge stays off the root.
   void _paintBesideCard(Canvas canvas, Rect screen, Rect card) {
     final paint = Paint()..color = _backdrop;
     final radius = _radius;

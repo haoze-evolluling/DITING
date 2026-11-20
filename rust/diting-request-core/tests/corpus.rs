@@ -1,11 +1,3 @@
-//! Replays the fixtures generated from the pre-migration Go implementation
-//! (`android/engine/zz_request_fixture_gen_test.go` before it was deleted):
-//!
-//! | fixture | rows | what it pins |
-//! | --- | --- | --- |
-//! | `rules.tsv` | 14 | `SetRequestRules` normalization: the kind whitelist and the scheme prefix |
-//! | `match.tsv` | 64 | `requestFilterDecision`: 4 rule sets × 16 requests (URL build, port strip, longest prefix, allow ties, fallback host) |
-
 use std::fs;
 
 use diting_request_core::match_rule::decide;

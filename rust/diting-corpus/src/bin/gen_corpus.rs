@@ -1,14 +1,3 @@
-//! Regenerates the stage 0 baseline corpus.
-//!
-//! ```bash
-//! cargo run -p diting-corpus --bin gen-corpus
-//! cargo test -p diting-corpus
-//! ```
-//!
-//! Every file is written from the current implementation, so this command is run **after** a
-//! deliberate semantic change, never to make a failing test pass. `tests/corpus.rs` fails when a
-//! fixture and a rebuild disagree, which is what keeps the freeze honest.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 

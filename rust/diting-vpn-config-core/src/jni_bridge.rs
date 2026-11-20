@@ -1,9 +1,3 @@
-//! JNI entry points for `com.haoze.diting.vpn.VpnPlanNative`.
-//!
-//! The route plan and the start defaults cross as one JSON string; Kotlin still owns
-//! `VpnService.Builder`, the interface label and the ConnectivityManager probe. A null answer
-//! means the kernel rejected the call, which Kotlin turns into an `IllegalStateException`.
-
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JObject, JString};
@@ -24,7 +18,6 @@ fn to_jstring(env: &JNIEnv<'_>, value: String) -> jstring {
     }
 }
 
-/// `VpnPlanNative.routePlan(mode, ipv6Mode, ipv6Supported, bypassLan, excluded, self, proxy)`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>(
     mut env: JNIEnv<'local>,
@@ -61,7 +54,6 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>
     }
 }
 
-/// `VpnPlanNative.ipv6ProbeNeeded(ipv6Mode): Boolean`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_ipv6ProbeNeeded<'local>(
     mut env: JNIEnv<'local>,
@@ -78,7 +70,6 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_ipv6ProbeNeeded<'
     }
 }
 
-/// `VpnPlanNative.startDefaults(): String?`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_startDefaults<'local>(
     env: JNIEnv<'local>,
@@ -109,7 +100,6 @@ mod tests {
     }
 }
 
-// --- watchdog ---------------------------------------------------------------------------------
 
 mod watchdog_jni {
     use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -124,9 +114,6 @@ mod watchdog_jni {
         Some(env.get_string(value).ok()?.into())
     }
 
-    /// # Safety
-    ///
-    /// `handle` must come from `newHandle` and must not have been freed.
     unsafe fn with_handle<R>(handle: jlong, run: impl FnOnce(&mut Watchdog) -> R) -> Option<R> {
         if handle == 0 {
             return None;
@@ -134,7 +121,6 @@ mod watchdog_jni {
         Some(run(&mut *(handle as *mut Watchdog)))
     }
 
-    /// `VpnWatchdogNative.newHandle(): Long`
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_newHandle(
         _env: JNIEnv<'_>,
@@ -146,7 +132,6 @@ mod watchdog_jni {
         .unwrap_or(0)
     }
 
-    /// `VpnWatchdogNative.free(handle)`
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_free(
         _env: JNIEnv<'_>,
@@ -161,7 +146,6 @@ mod watchdog_jni {
         }));
     }
 
-    /// `VpnWatchdogNative.start(handle, nowMs): Long`; -1 means a null handle.
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_start(
         _env: JNIEnv<'_>,
@@ -175,9 +159,6 @@ mod watchdog_jni {
         .unwrap_or(-1)
     }
 
-    /// `VpnWatchdogNative.evaluate(handle, nowMs, occupied): ByteArray?`
-    ///
-    /// The answer is `u8 event | i64 nextDelayMs`, big-endian.
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_evaluate<'local>(
         env: JNIEnv<'local>,
@@ -203,7 +184,6 @@ mod watchdog_jni {
         }
     }
 
-    /// `VpnWatchdogNative.stop(handle)`
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_stop(
         _env: JNIEnv<'_>,
@@ -215,7 +195,6 @@ mod watchdog_jni {
         }));
     }
 
-    /// `VpnWatchdogNative.shouldFollow(enabled, currentMode, expectedMode, hasIntent): Boolean`
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_shouldFollow<'local>(
         mut env: JNIEnv<'local>,
@@ -241,7 +220,6 @@ mod watchdog_jni {
         }
     }
 
-    /// `VpnWatchdogNative.reclaimAllowed(enabled, currentMode, expectedMode): Boolean`
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reclaimAllowed<
         'local,
@@ -267,8 +245,6 @@ mod watchdog_jni {
         }
     }
 
-    /// `VpnWatchdogNative.reconnectDecision(enabled, currentMode, expectedMode, consentMissing,
-    /// hasIntent): Int`; 0 reconnect, 1 user disconnect, 2 needs consent, 3 give up.
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reconnectDecision<
         'local,

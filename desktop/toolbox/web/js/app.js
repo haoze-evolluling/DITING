@@ -1,5 +1,3 @@
-// 谛听 (DITING) 开发者工具箱核心前端主控制器
-
 window.App = {
   activeTab: 'dns',
   isBusy: false,
@@ -10,7 +8,6 @@ window.App = {
     this.bindTerminal();
     this.bindModuleEvents();
 
-    // 等待 pywebview 就绪后进行初始数据拉取
     window.addEventListener('pywebviewready', () => {
       this.log('system', 'PyWebView API 桥接层已成功挂载。');
       LogoModule.refreshPreview();
@@ -18,7 +15,6 @@ window.App = {
       VersionModule.refreshVersions();
     });
 
-    // 监听 Python 后端推送的全局事件
     window.onBackendEvent = (payload) => {
       this.handleBackendEvent(payload);
     };
@@ -56,7 +52,7 @@ window.App = {
       const current = document.documentElement.getAttribute('data-theme');
       const next = current === 'dark' ? 'light' : 'dark';
       window.__applyTheme(next);
-      try { localStorage.setItem('diting_theme_mode', next); } catch (e) { /* 忽略 */ }
+      try { localStorage.setItem('diting_theme_mode', next); } catch (e) {   }
     });
   },
 
@@ -141,7 +137,6 @@ window.App = {
     div.textContent = `[${timeStr}] [${level.toUpperCase()}] ${msg}`;
     output.appendChild(div);
 
-    // 长时间构建会持续输出日志，保留最近 1200 行避免 DOM 无限膨胀。
     while (output.childElementCount > 1200) {
       output.removeChild(output.firstElementChild);
     }
@@ -175,7 +170,6 @@ window.App = {
   },
 
   bindModuleEvents() {
-    // DNS
     document.getElementById('btn-dns-query').addEventListener('click', () => DNSModule.query());
     document.getElementById('btn-dns-bench').addEventListener('click', () => DNSModule.benchmark());
     document.querySelectorAll('.dns-preset-row button').forEach(btn => {
@@ -184,14 +178,12 @@ window.App = {
     const copyAnsBtn = document.getElementById('btn-dns-copy-answers');
     if (copyAnsBtn) copyAnsBtn.addEventListener('click', () => DNSModule.copyAnswers());
 
-    // Scanner
     document.getElementById('btn-scan-start').addEventListener('click', () => ScannerModule.startScan());
     const filterAllBtn = document.getElementById('btn-filter-all');
     if (filterAllBtn) filterAllBtn.addEventListener('click', () => ScannerModule.setFilter('all'));
     const filterExcBtn = document.getElementById('btn-filter-exceeded');
     if (filterExcBtn) filterExcBtn.addEventListener('click', () => ScannerModule.setFilter('exceeded'));
 
-    // Logo
     document.getElementById('btn-logo-export').addEventListener('click', () => LogoModule.exportAssets());
     document.getElementById('btn-logo-open-res').addEventListener('click', () => {
       App.openPath('shared/assets/images');
@@ -201,7 +193,6 @@ window.App = {
       openBrandBtn.addEventListener('click', () => App.openPath('desktop/toolbox/assets/brand'));
     }
 
-    // Build
     document.getElementById('btn-refresh-toolchain').addEventListener('click', () => BuildModule.refreshToolchain(true));
     document.getElementById('btn-build-start').addEventListener('click', () => BuildModule.startBuild());
     document.getElementById('btn-build-cancel').addEventListener('click', () => BuildModule.cancelBuild());
@@ -209,7 +200,6 @@ window.App = {
       App.openPath('desktop/service/build/bin');
     });
 
-    // Version - 桌面端唯一真源
     document.getElementById('btn-ver-refresh').addEventListener('click', () => VersionModule.refreshVersions());
     document.getElementById('btn-ver-sync').addEventListener('click', () => VersionModule.syncVersion());
     const bumpPatchBtn = document.getElementById('btn-ver-bump-patch');
@@ -217,7 +207,6 @@ window.App = {
     const bumpMinorBtn = document.getElementById('btn-ver-bump-minor');
     if (bumpMinorBtn) bumpMinorBtn.addEventListener('click', () => VersionModule.bumpVersion('minor'));
 
-    // Version - Android（折叠区）
     document.getElementById('btn-android-refresh').addEventListener('click', () => VersionModule.refreshAndroidVersions());
     document.getElementById('btn-android-sync').addEventListener('click', () => VersionModule.syncAndroidVersion());
     const androidBumpPatch = document.getElementById('btn-android-bump-patch');

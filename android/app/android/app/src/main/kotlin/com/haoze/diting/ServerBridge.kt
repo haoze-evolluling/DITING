@@ -15,7 +15,6 @@ import java.io.File
 import java.util.concurrent.Executors
 import org.json.JSONObject
 
-/// Flutter-facing server controls and direct config access.
 class ServerBridge(
     private val context: Context,
     private val messenger: BinaryMessenger,

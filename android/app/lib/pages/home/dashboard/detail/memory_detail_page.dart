@@ -10,9 +10,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Memory detail: the card can only show PSS and a three-part bar, so this page adds the device
-/// view (how much of the phone is in use), the heap split as numbers instead of widths, and a
-/// short PSS history to show whether memory is climbing while the tunnel runs.
 class MemoryDetailPage extends ConsumerStatefulWidget {
   const MemoryDetailPage({super.key});
 
@@ -22,7 +19,6 @@ class MemoryDetailPage extends ConsumerStatefulWidget {
 
 class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
     with PageVisibilityMixin<MemoryDetailPage> {
-  /// PSS history collected while the page is open; the provider only keeps the latest sample.
   static const _capacity = speedSampleCapacity;
   final List<double> _pss = [];
 
@@ -206,7 +202,6 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
           values: _pss,
           revision: _revision,
           capacity: _capacity,
-          // 16 MB floor: a flat idle line must not be blown up into noise.
           minScale: 16 * 1024 * 1024,
           height: 128,
           emptyLabel: context.l10n.memorySampling,

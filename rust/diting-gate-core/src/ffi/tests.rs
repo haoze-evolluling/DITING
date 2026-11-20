@@ -1,6 +1,3 @@
-//! Boundary tests: the ABI number and a round trip through the exported symbols (the Go loader
-//! calls exactly these).
-
 use super::*;
 use crate::admit::{ACTION_BLOCK_QUIC, ACTION_INTERCEPT, ACTION_RELAY, FLAG_LOG_CONNECTION};
 
@@ -86,8 +83,8 @@ fn admit_symbol_packs_the_plan() {
             0,
             1,
             0,
-            1, // quic_drop
-            1, // quic_uid_selected
+            1,
+            1,
             0,
         )
     };

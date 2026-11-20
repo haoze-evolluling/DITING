@@ -1,7 +1,3 @@
-// Desktop devices (desktop parity): the recognised clients on the dashboard, and the ACL and rate
-// limit on the feature hub's client-access page. Every value comes from the service; each write
-// re-reads the state it touched.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_traffic_models.dart';
 import 'package:diting_desktop/pages/home/desktop_home_page.dart';
@@ -235,7 +231,6 @@ void main() {
   testWidgets('窄窗单列且不横向溢出', (tester) async {
     await pumpTraffic(tester, size: const Size(390, 844));
     expect(find.byType(DesktopClientListCard), findsOneWidget);
-    // The dashboard offers no ACL; that page is its own single column.
     expect(find.byType(ClientAccessCard), findsNothing);
     expect(find.byType(ClientRateLimitCard), findsNothing);
     expect(tester.takeException(), isNull);

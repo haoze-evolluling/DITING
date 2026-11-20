@@ -2,8 +2,6 @@
 
 part of 'scaffold.dart';
 
-/// The search button of a bar's button group, which gives its place up while
-/// the search is open.
 class _SearchLead extends StatelessWidget {
   const _SearchLead({super.key, required this.motion, required this.child});
 
@@ -30,7 +28,6 @@ class _SearchLead extends StatelessWidget {
   }
 }
 
-/// A button a bar's search grows from or into, swelling as a press does.
 class _SearchSwell extends StatelessWidget {
   const _SearchSwell({
     required this.motion,
@@ -45,7 +42,6 @@ class _SearchSwell extends StatelessWidget {
   final double width;
   final double slotWidth;
 
-  /// Where a lone button re-forms out of a droplet from.
   final ValueListenable<_SearchOrigin?>? droplet;
   final double Function(_SearchFrame frame) liftOf;
   final Widget child;
@@ -77,7 +73,6 @@ class _SearchSwell extends StatelessWidget {
   }
 }
 
-/// The glyph of a lone search button, which fades back in as it re-forms.
 class _SearchGlyph extends StatelessWidget {
   const _SearchGlyph({required this.motion, required this.child});
 
@@ -94,8 +89,6 @@ class _SearchGlyph extends StatelessWidget {
   }
 }
 
-/// What a bar's search covers: faded out as the field opens over it, and out
-/// of reach while it is open.
 class _UnderBarSearch extends StatelessWidget {
   const _UnderBarSearch({
     required this.opacity,
@@ -122,12 +115,6 @@ class _UnderBarSearch extends StatelessWidget {
   }
 }
 
-/// The field a bar's search button opens into, grown out of that button on
-/// [motion]: across the bar to a [cancel] button where there is one, as iOS
-/// 27 opens one over a page above a tab bar, else at the bar's end, as iPadOS
-/// does. The [actions] that still apply while searching lead the field. The
-/// buttons beside it grow out of its ends and flow into it under a press, as
-/// iOS's do.
 class _BarSearch extends StatelessWidget {
   const _BarSearch({
     required this.motion,

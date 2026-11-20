@@ -1,6 +1,3 @@
-/// 故障排查: one page for everything a user would send a developer — the crash reports written
-/// automatically, plus the manual runtime-logcat capture. Both are troubleshooting material, so
-/// they share a surface instead of two nearly identical cards in 数据与维护.
 library;
 
 import 'dart:async';
@@ -30,18 +27,14 @@ class TroubleshootingPage extends ConsumerStatefulWidget {
 
 class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     with WidgetsBindingObserver {
-  /// Blocks a second tap while the start/stop round trip runs, so two services cannot race.
   bool _busy = false;
 
-  /// Ticks while capture is on so the file count and size stay live; the state provider is not
-  /// auto-disposed, so nothing else would re-read the disk.
   Timer? _poll;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // The provider outlives the page, so a reopen would otherwise show the size from last time.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _refreshRuntimeStatus();
@@ -58,20 +51,16 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Both sources change outside the page — crashes are collected by the app, and the capture
-    // keeps running behind the notification — so re-read on resume.
     if (state == AppLifecycleState.resumed) {
       _refreshRuntimeStatus(force: true);
       _refreshDbHealth();
     }
   }
 
-  /// Log-write counters change while the tunnel runs, so every open and resume re-reads them.
   Future<void> _refreshDbHealth() async {
     await ref.read(dbWriteHealthProvider.notifier).refresh();
   }
 
-  /// Re-reads the native capture status and keeps the live size ticking only while it is on.
   Future<void> _refreshRuntimeStatus({bool force = false}) async {
     if (_busy && !force) return;
     final status = await ref.read(runtimeLogStatusProvider.notifier).refresh();
@@ -87,7 +76,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     }
     _poll ??= Timer.periodic(
       const Duration(seconds: 2),
-      // Through [_refreshRuntimeStatus] so a capture stopped from the notification also stops it.
       (_) => _refreshRuntimeStatus(),
     );
   }
@@ -193,11 +181,9 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
         : context.l10n.troubleshootStoppedNoLogs;
   }
 
-  /// The subtitle reflects the real count; an unreadable count says so instead of inventing one.
   String _dbHealthSubtitle(DbWriteHealthSnapshot? health) {
     if (health == null) return context.l10n.troubleshootReadingHealth;
     if (health.healthy) {
-      // The probe is what makes this trustworthy: "0 dropped" also happens when nothing writes.
       if (!health.probeOk) return context.l10n.troubleshootHealthy;
       return context.l10n.troubleshootHealthyDetail(
         health.probeJournalMode,
@@ -214,7 +200,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     return context.l10n.troubleshootDropped(dropped, split, failed, reason);
   }
 
-  /// "（队列溢出 120 · 表缺失 3）": tells a busy database from a missing table at a glance.
   static String _dropBreakdown(Map<String, int> byReason, AppL10n l10n) {
     final labels = {
       'overflow': l10n.troubleshootOverflow,
@@ -230,7 +215,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     return parts.isEmpty ? '' : '（${parts.join(' · ')}）';
   }
 
-  /// Turning on is the risky direction, so it asks first; turning off just stops.
   Future<void> _onToggle(bool value) async {
     if (!value) {
       setState(() => _busy = true);
@@ -272,7 +256,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     );
   }
 
-  /// The recent-events row: empty, an anomaly count, or the plain total.
   String _eventsSubtitle(RuntimeEventSummary summary) {
     if (summary.count == 0) return context.l10n.troubleshootEventsEmpty;
     if (summary.hasAnomaly) {
@@ -281,7 +264,6 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
     return context.l10n.troubleshootEventsCount(summary.count);
   }
 
-  /// Switches the capture tier; the native side persists it and re-arms a running capture.
   Future<void> _onModeToggle(bool detailed) async {
     setState(() => _busy = true);
     await ref.read(runtimeLogStatusProvider.notifier).setMode(detailed);

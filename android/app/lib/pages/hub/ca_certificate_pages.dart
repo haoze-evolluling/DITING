@@ -10,9 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// CA certificate settings (upstream `CaCertificateSettingsScreen`). State comes from
-/// `CaCertificateService.inspect()`: `available`, `installed` and `fingerprintSha256`,
-/// never hard-coded.
 class CaCertificatePage extends ConsumerWidget {
   const CaCertificatePage({super.key});
 
@@ -20,8 +17,6 @@ class CaCertificatePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncState = ref.watch(caCertificateStateProvider);
     final state = asyncState.value;
-    // The first inspect loads the Rust engine and may take hundreds of milliseconds, so a
-    // "checking" row shows meanwhile rather than a fake "not installed".
     if (state == null) {
       return CommonScaffold(
         title: context.l10n.caCertTitle,
@@ -145,9 +140,6 @@ class CaCertificatePage extends ConsumerWidget {
     );
   }
 
-  /// Hands the staged PEM to the system certificate installer through the bridge. Android has no
-  /// silent install, and since Android 11 the installer only points back at the settings screen, so
-  /// the .crt is also dropped into Download first: that file is what the manual path needs.
   Future<void> _install(
     BuildContext context,
     WidgetRef ref,
@@ -204,7 +196,6 @@ class CaCertificatePage extends ConsumerWidget {
     await notifier.refresh();
   }
 
-  /// Fallback for ROMs without a certificate installer: writes the PEM where the user can pick it.
   Future<void> _saveToDownloads(BuildContext context, WidgetRef ref) async {
     final result = await ref
         .read(caCertificateStateProvider.notifier)
@@ -277,7 +268,6 @@ class CaCertificatePage extends ConsumerWidget {
     );
   }
 
-  /// Selectable text dialog with copy-and-dismiss; [scrollable] caps long PEM bodies.
   Future<void> _showCopyable(
     BuildContext context, {
     required String title,

@@ -38,7 +38,7 @@ fn stale_layouts_and_truncation_are_rejected() {
     assert!(decode_prefixes(&encoded[..encoded.len() - 1]).is_err());
 
     let mut encoded = encode_addresses(&[&[1u8, 2, 3, 4]]);
-    encoded[3] = 17; // width above 16
+    encoded[3] = 17;
     assert!(decode_addresses(&encoded).unwrap_err().contains("width"));
 
     let mut trailing = encode_addresses(&[]);

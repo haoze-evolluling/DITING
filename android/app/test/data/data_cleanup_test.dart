@@ -1,6 +1,3 @@
-// Pins the data-cleanup contract: every action must delete rows, so assertions go
-// against the DB.
-
 import 'package:diting_android/data/cleanup/cleanup_plan.dart';
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
@@ -14,9 +11,7 @@ void main() {
   group('数据清理', _dataCleanup);
 }
 
-/// Pins the data-cleanup contract: every action must delete rows, so assertions go against the DB
 void _dataCleanup() {
-  // The native channel is unregistered, so the bridge degrades to 0 as on a non-Android host
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
@@ -120,7 +115,6 @@ void _dataCleanup() {
     outboundProxy: MemoryOutboundProxyStore(),
     appVersionCode: seedVersionCode,
     openDatabase: (fileName) async => main,
-    // The preset whitelist asset is absent: an empty table means skip seeding, not clear all
     loadPresetAsset: () async => '',
   );
 

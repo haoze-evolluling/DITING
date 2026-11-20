@@ -29,14 +29,11 @@ fn parse_cidr_keeps_ipv4_networks_in_four_byte_width() {
             mask: crate::addr::mask4(24),
         }
     );
-    // `IPNet.IP` is 4 bytes here, and `To16` maps it again.
     assert_eq!(cidr.addr16, map_v4([10, 11, 12, 0]));
 }
 
 #[test]
 fn an_ipv4_mapped_network_collapses_and_then_matches_every_ipv4() {
-    // This is the `::ffff:0:0/96` default exclusion: `networkNumberAndMask` folds the network to
-    // `0.0.0.0` with the *last four* mask bytes, which are zero — so any IPv4 address "is in" it.
     let cidr = parse_cidr("::ffff:0:0/96").unwrap();
     assert_eq!(
         cidr.net,
@@ -48,7 +45,6 @@ fn an_ipv4_mapped_network_collapses_and_then_matches_every_ipv4() {
     assert_eq!(cidr.addr16, map_v4([0, 0, 0, 0]));
     assert!(cidr.net.contains(&[1, 2, 3, 4]));
     assert!(cidr.net.contains(&map_v4([1, 2, 3, 4])));
-    // 16-byte addresses that are not mapped do not match an IPv4 network.
     assert!(!cidr.net.contains(&[0u8; 16]));
 }
 
@@ -104,7 +100,7 @@ fn dns64_prefixes_accept_only_the_rfc6052_lengths() {
         "2001:db8::/120",
         "2001:db8::/0",
         "2001:db8::/128",
-        "::/96", // parses, but the /96-collapsed network is IPv4-shaped only in `Net`, not here
+        "::/96",
         "10.0.0.0/8",
         "1.2.3.4/32",
         "0.0.0.0/0",
@@ -131,7 +127,6 @@ fn unspecified_covers_the_three_shapes_go_reports() {
     assert!(is_unspecified(&map_v4([0, 0, 0, 0])));
     assert!(!is_unspecified(&map_v4([0, 0, 0, 1])));
     assert!(!is_unspecified(&[0u8; 15]));
-    // `::1` is not unspecified.
     let mut loopback = [0u8; 16];
     loopback[15] = 1;
     assert!(!is_unspecified(&loopback));

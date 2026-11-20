@@ -1,6 +1,3 @@
-// AI analysis: the obfuscated key round trip, endpoint derivation, the HTTP client and
-// the prompts built from real log tables.
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -29,12 +26,10 @@ void _agentAnalysis() {
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
-  // `flutter_test` answers every request with a fake 400, so the override goes here
   setUpAll(() => HttpOverrides.global = null);
 
   group('KeyObfuscator', () {
     test('往返还原，且与 1.4.3 的掩码一致', () {
-      // Hand-computed with Kotlin's algorithm: changing it strands keys saved by upgraders
       expect(openApiKey(sealApiKey('sk-abc')), 'sk-abc');
       expect(sealApiKey(''), '');
       expect(openApiKey(''), '');
@@ -42,8 +37,6 @@ void _agentAnalysis() {
 
     test('坏密文返回空串而不是抛异常', () {
       expect(openApiKey('!!!not-base64!!!'), '');
-      // Valid Base64 from another encoder decodes to invalid UTF-8; a throw would blank the
-      // provider list
       expect(openApiKey('YWJj'), '');
     });
   });

@@ -11,8 +11,6 @@
 
 namespace {
 
-// Both live in the WM_APP range, which Flutter does not use for its own
-// top-level messages (it registers named messages instead).
 constexpr UINT kTrayCallbackMessage = WM_APP + 200;
 constexpr UINT kTrayBalloonMessage = WM_APP + 201;
 constexpr UINT kTrayIconId = 1;
@@ -26,9 +24,6 @@ constexpr UINT kMenuServiceStop = 1006;
 constexpr UINT kMenuServiceRestart = 1007;
 constexpr UINT kMenuQuit = 1008;
 
-// Pending balloon text, reachable from worker threads without touching the
-// TrayIcon instance: a service operation may finish after the window is gone,
-// and a raw `this` would then be dangling.
 struct BalloonSlot {
   std::mutex mutex;
   std::wstring title;
@@ -36,8 +31,6 @@ struct BalloonSlot {
   bool pending = false;
 };
 
-// Intentionally leaked: a detached service operation may outlive static
-// destruction, and a freed std::mutex is worse than a leaked one.
 BalloonSlot& Balloon() {
   static BalloonSlot* slot = new BalloonSlot();
   return *slot;
@@ -72,11 +65,7 @@ std::wstring ExecutablePath() {
   }
 }
 
-// The icon comes from the executable's own first icon group, which is the
-// brand icon compiled in from resources/app_icon.ico. The fallback is the
-// system-shared IDI_APPLICATION, which must never be destroyed.
 HICON LoadTrayIcon(bool* owned) {
-  // rpcndr.h defines `small` as a macro (char), hence the _icon suffixes.
   HICON large_icon = nullptr;
   HICON small_icon = nullptr;
   const std::wstring path = ExecutablePath();
@@ -99,7 +88,7 @@ void AppendItem(HMENU menu, UINT flags, UINT id, const std::wstring& text) {
   AppendMenuW(menu, flags, id, text.empty() ? nullptr : text.c_str());
 }
 
-}  // namespace
+}
 
 TrayIcon::TrayIcon() = default;
 
@@ -114,8 +103,6 @@ bool TrayIcon::Create(HWND owner) {
   owner_ = owner;
   taskbar_created_message_ = RegisterWindowMessageW(L"TaskbarCreated");
 
-  // Running elevated would otherwise let UIPI drop the messages Explorer sends
-  // to this window, leaving a dead tray icon.
   ChangeWindowMessageFilter(kTrayCallbackMessage, MSGFLT_ADD);
   if (taskbar_created_message_ != 0) {
     ChangeWindowMessageFilter(taskbar_created_message_, MSGFLT_ADD);
@@ -184,8 +171,6 @@ bool TrayIcon::AddIcon() {
   return true;
 }
 
-// NOTIFYICON_VERSION_4 makes the icon disappear with the process instead of
-// lingering, and delivers the semantic NIN_SELECT / WM_CONTEXTMENU events.
 void TrayIcon::SetVersion() {
   NOTIFYICONDATAW data{};
   data.cbSize = sizeof(data);
@@ -205,7 +190,6 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
     return true;
   }
   if (taskbar_created_message_ != 0 && message == taskbar_created_message_) {
-    // Explorer restarted: the registration is gone, put the icon back.
     AddIcon();
     return true;
   }
@@ -215,9 +199,6 @@ bool TrayIcon::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
 void TrayIcon::OnCallback(WPARAM wparam, LPARAM lparam) {
   const UINT event = static_cast<UINT>(LOWORD(lparam));
 
-  // Version 4 delivers both WM_RBUTTONUP and the semantic WM_CONTEXTMENU for a
-  // single right click; acting on both would pop a second menu right after the
-  // first was dismissed.
   if (event == WM_CONTEXTMENU || (!version4_ && event == WM_RBUTTONUP)) {
     ShowContextMenu(wparam);
     return;
@@ -276,8 +257,6 @@ void TrayIcon::ShowContextMenu(WPARAM wparam) {
   AppendItem(menu, MF_STRING, kMenuQuit, labels_.quit);
   SetMenuDefaultItem(menu, kMenuShowWindow, FALSE);
 
-  // Version 4 packs the anchor point in wParam (signed, so secondary monitors
-  // with negative coordinates work); fall back to the cursor position.
   POINT cursor{};
   int x = 0;
   int y = 0;
@@ -291,8 +270,6 @@ void TrayIcon::ShowContextMenu(WPARAM wparam) {
     y = cursor.y;
   }
 
-  // Win32 requires the owner to be foreground before a popup menu, and a
-  // WM_NULL afterwards so the menu does not stay in the taskbar's state.
   SetForegroundWindow(owner_);
   const UINT command = static_cast<UINT>(TrackPopupMenu(
       menu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, x, y, 0, owner_,
@@ -353,8 +330,6 @@ void TrayIcon::ToggleAutoStart() {
   ShowBalloon(labels_.balloon_autostart_title, labels_.balloon_failed + error);
 }
 
-// The SCM call and especially the UAC prompt must not block the message loop,
-// which is also what keeps Flutter rendering while the user answers the prompt.
 void TrayIcon::RunServiceAction(UINT command) {
   const HWND owner = owner_;
   const TrayLabels labels = labels_;

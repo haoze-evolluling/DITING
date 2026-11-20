@@ -1,11 +1,5 @@
 package com.haoze.diting.log
 
-/// Secret masking for runtime-event values, mirroring `runtime_event::redact` on the Rust side.
-///
-/// The native kernel already redacts, so this is defense-in-depth: it runs at the Kotlin boundary
-/// too, which keeps the fallback writer (native library unavailable) from ever writing a
-/// subscription URL or proxy password. Three shapes are masked: an `Authorization: Bearer` token,
-/// URL userinfo (`scheme://user:pass@host`), and a sensitive `key=value` (token, password, sub, …).
 internal object Redaction {
     private val bearer = Regex("(?i)\\b(Bearer)\\s+\\S+")
     private val userinfo = Regex("://[^/@\\s]+@")

@@ -1,7 +1,5 @@
 part of 'subscriptions_page.dart';
 
-/// Group management sheet: rename and delete the groups created on this page. Deleting only
-/// ungroups the subscriptions, because a group is a filter, not an owner of the rows.
 class _GroupManageSheet extends ConsumerWidget {
   const _GroupManageSheet();
 
@@ -33,7 +31,6 @@ class _GroupManageSheet extends ConsumerWidget {
         .read(subscriptionActionsProvider)
         .renameGroup(group.id, name);
     if (!ok && context.mounted) {
-      // The unique index on the name rejects the update; say so instead of doing nothing.
       showAppSnack(context, context.l10n.subsGroupDuplicate);
     }
   }
@@ -53,7 +50,6 @@ class _GroupManageSheet extends ConsumerWidget {
       return;
     }
     await ref.read(subscriptionActionsProvider).deleteGroup(group.id);
-    // The filter would point at a row that no longer exists, so fall back to "all".
     if (ref.read(subscriptionGroupFilterProvider) == group.id) {
       ref.read(subscriptionGroupFilterProvider.notifier).select(null);
     }

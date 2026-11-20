@@ -1,14 +1,9 @@
-/// Names and table lists of the pre-V2 stores.
-///
-/// This is the only production file allowed to mention the old database names. Runtime code never
-/// reads them; the V2 migrator uses them once and the cleanup pass deletes the files.
 library;
 
 abstract final class LegacyStorageSource {
   static const normalDatabase = 'diting_database';
   static const expressDatabase = 'diting_express';
 
-  /// Unreleased split layout. It was never shipped, so its data is discarded, not migrated.
   static const unreleasedSplitDatabases = <String>[
     'diting_normal_rules',
     'diting_normal_logs',

@@ -1,23 +1,3 @@
-//! The C ABI `android/engine/bootstrap_native.go` loads with `dlopen`.
-//!
-//! | symbol | meaning |
-//! | --- | --- |
-//! | `diting_bootstrap_abi_version` | ABI number the loader validates |
-//! | `diting_bootstrap_new` | one resolver's kernel state |
-//! | `diting_bootstrap_free` | drop a handle |
-//! | `diting_bootstrap_reset` | clear health history and host cache (`ResetStats`) |
-//! | `diting_bootstrap_clear_cache` | clear only the host cache (`UpdateConfig`) |
-//! | `diting_bootstrap_record_result` | fold one bootstrap attempt into an endpoint's health |
-//! | `diting_bootstrap_score` | the endpoint's current weight, cooldown flag and sample count |
-//! | `diting_bootstrap_plan` | primary + fallback order for one resolution |
-//! | `diting_bootstrap_cache_get` | the cached address of a host, if still fresh |
-//! | `diting_bootstrap_cache_put` | cache one address for a minute |
-//! | `diting_bootstrap_health_count` | number of endpoints with a health entry (tests) |
-//!
-//! Every timestamp is unix nanoseconds and comes from Go; the kernel never reads a clock. The
-//! random rolls are also injected. A null handle turns the mutators into no-ops and the queries
-//! into misses / `-1`, so the loader can treat "kernel absent" as "bootstrap disabled".
-
 use std::ptr;
 use std::slice;
 use std::str;
@@ -25,7 +5,6 @@ use std::str;
 use crate::engine::BootstrapKernel;
 use crate::payload::{decode_plan_entries, encode_plan, encode_score};
 
-/// Must match `bootstrapABIVersion` in `android/engine/bootstrap_native.go`.
 pub const ABI_VERSION: u32 = 1;
 
 const STATUS_OK: u32 = 0;
@@ -36,23 +15,16 @@ const RESULT_BAD_ARGUMENT: isize = -1;
 const RESULT_BAD_PAYLOAD: isize = -2;
 const RESULT_TOO_SMALL: isize = -3;
 
-/// ABI version of the library.
 #[no_mangle]
 pub extern "C" fn diting_bootstrap_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Creates the kernel state of one bootstrap resolver.
 #[no_mangle]
 pub extern "C" fn diting_bootstrap_new() -> *mut BootstrapKernel {
     Box::into_raw(Box::new(BootstrapKernel::new()))
 }
 
-/// Drops a handle created by [`diting_bootstrap_new`].
-///
-/// # Safety
-///
-/// `handle` must come from `diting_bootstrap_new` and must not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_free(handle: *mut BootstrapKernel) {
     if !handle.is_null() {
@@ -60,11 +32,6 @@ pub unsafe extern "C" fn diting_bootstrap_free(handle: *mut BootstrapKernel) {
     }
 }
 
-/// `ResetStats`: forget every health entry and cached address.
-///
-/// # Safety
-///
-/// The handle must be valid for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_reset(handle: *const BootstrapKernel) -> u32 {
     match handle.as_ref() {
@@ -76,11 +43,6 @@ pub unsafe extern "C" fn diting_bootstrap_reset(handle: *const BootstrapKernel) 
     }
 }
 
-/// `UpdateConfig`'s cache invalidation; health history is kept.
-///
-/// # Safety
-///
-/// The handle must be valid for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_clear_cache(handle: *const BootstrapKernel) -> u32 {
     match handle.as_ref() {
@@ -92,11 +54,6 @@ pub unsafe extern "C" fn diting_bootstrap_clear_cache(handle: *const BootstrapKe
     }
 }
 
-/// `RecordResult` for the endpoint `id`.
-///
-/// # Safety
-///
-/// `id` must be readable for `id_len` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_record_result(
     handle: *const BootstrapKernel,
@@ -117,9 +74,6 @@ pub unsafe extern "C" fn diting_bootstrap_record_result(
     STATUS_OK
 }
 
-/// Reads a text argument. A zero length is the empty string (a JSON config may omit the endpoint
-/// id, and the old Go health map keyed those under `""`); a null pointer with a non-zero length is
-/// a caller bug.
 unsafe fn text_argument<'a>(text: *const u8, len: usize) -> Option<&'a str> {
     if len == 0 {
         return Some("");
@@ -130,11 +84,6 @@ unsafe fn text_argument<'a>(text: *const u8, len: usize) -> Option<&'a str> {
     str::from_utf8(slice::from_raw_parts(text, len)).ok()
 }
 
-/// `GetScore` for the endpoint `id`; writes `f64 weight | u8 cooling | f64 sample_count`.
-///
-/// # Safety
-///
-/// `id` must be readable for `id_len` bytes and `out` writable for `out_cap` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_score(
     handle: *const BootstrapKernel,
@@ -159,11 +108,6 @@ pub unsafe extern "C" fn diting_bootstrap_score(
     copy_out(&encoded, out, out_cap)
 }
 
-/// `choosePlan`: entries payload in, plan payload out.
-///
-/// # Safety
-///
-/// `entries` must be readable for `entries_len` bytes and `out` writable for `out_cap` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_plan(
     handle: *const BootstrapKernel,
@@ -189,11 +133,6 @@ pub unsafe extern "C" fn diting_bootstrap_plan(
     copy_out(&encode_plan(&plan), out, out_cap)
 }
 
-/// `getCached`: writes the address bytes and returns their length, or `-1` on a miss.
-///
-/// # Safety
-///
-/// `host` must be readable for `host_len` bytes and `out` writable for `out_cap` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_cache_get(
     handle: *const BootstrapKernel,
@@ -218,11 +157,6 @@ pub unsafe extern "C" fn diting_bootstrap_cache_get(
     }
 }
 
-/// `putCached`: one address for one minute.
-///
-/// # Safety
-///
-/// Both slices must be readable for their stated lengths.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_cache_put(
     handle: *const BootstrapKernel,
@@ -248,11 +182,6 @@ pub unsafe extern "C" fn diting_bootstrap_cache_put(
     STATUS_OK
 }
 
-/// Number of endpoints with a health entry (the old test's `len(healthMap)`).
-///
-/// # Safety
-///
-/// The handle must be valid for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn diting_bootstrap_health_count(handle: *const BootstrapKernel) -> u32 {
     match handle.as_ref() {
@@ -261,8 +190,6 @@ pub unsafe extern "C" fn diting_bootstrap_health_count(handle: *const BootstrapK
     }
 }
 
-/// Copies `bytes` into the caller's buffer. `SCORE_BYTES` is the only fixed-size case; the plan
-/// and address responses are copied the same way.
 unsafe fn copy_out(bytes: &[u8], out: *mut u8, out_cap: usize) -> isize {
     if out_cap < bytes.len() {
         return RESULT_TOO_SMALL;

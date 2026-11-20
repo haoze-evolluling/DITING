@@ -1,13 +1,8 @@
-/* 谛听 (DITING) 开发者工具箱 · 黑白水墨极简样式表 */
-
-/* ============ 设计令牌 ============ */
 :root {
-  /* 宋体说事实、黑体讲操作、等宽仅用于机器串 */
   --font-serif: "SimSun", "Songti SC", "Noto Serif SC", serif;
   --font-sans: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
   --font-mono: "Cascadia Mono", "Consolas", "Courier New", monospace;
 
-  /* 浅色「宣纸」（默认） */
   --bg: #f5f4f0;
   --surface: #ffffff;
   --surface-2: #efeee9;
@@ -19,7 +14,6 @@
   --seal: #9e2b25;
   --seal-text: #9e2b25;
 
-  /* 终端始终为墨块，不随主题变化 */
   --ink: #101013;
   --ink-line: #2a2a2e;
   --on-ink: #c9c8c4;
@@ -44,10 +38,8 @@
   color-scheme: dark;
 }
 
-/* ============ 基础 ============ */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* 兜底底色：即使内联引导未生效，也绝不回落到白色 */
 html { background: var(--bg); }
 
 body {
@@ -76,7 +68,6 @@ body {
 
 :focus-visible { outline: 1px solid var(--line-strong); outline-offset: 2px; }
 
-/* ============ 侧边栏 ============ */
 .sidebar {
   width: 232px;
   background: var(--bg);
@@ -201,7 +192,6 @@ body {
 
 .btn-icon:hover { color: var(--fg); border-color: var(--fg-muted); }
 
-/* ============ 主内容区 ============ */
 .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 
 .tab-pane {
@@ -227,7 +217,6 @@ body {
 
 .pane-header .desc { font-size: 13px; line-height: 1.7; color: var(--fg-muted); }
 
-/* ============ 面板（细线代盒） ============ */
 .card { background: var(--surface); border: 1px solid var(--line); padding: 20px 24px; }
 
 .card-title {
@@ -238,7 +227,6 @@ body {
   margin-bottom: 16px;
 }
 
-/* ============ 表单 ============ */
 .form-row { display: flex; flex-wrap: wrap; gap: 16px 20px; align-items: flex-end; }
 .form-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 
@@ -297,7 +285,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
   cursor: pointer;
 }
 
-/* ============ 按钮 ============ */
 .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
 
 .btn {
@@ -330,7 +317,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 .filter-pills { display: flex; gap: 4px; }
 .filter-pills .btn.active { background: var(--surface-2); border-color: var(--line-strong); color: var(--fg); font-weight: 600; }
 
-/* ============ 台账式统计 ============ */
 .stats-grid {
   display: flex;
   flex-wrap: wrap;
@@ -358,7 +344,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
   word-break: break-all;
 }
 
-/* ============ 数据表格 ============ */
 .table-scroll { max-height: 300px; overflow-y: auto; }
 
 .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: left; }
@@ -379,7 +364,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 .data-table tbody tr:hover { background: var(--surface-2); }
 .data-table tbody tr:last-child td { border-bottom: none; }
 
-/* ============ 语义文字 / 徽标 ============ */
 .text-ink { color: var(--fg); }
 .text-muted { color: var(--fg-muted); }
 .text-seal { color: var(--seal-text); }
@@ -398,7 +382,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 .badge-warn { border-color: var(--line); color: var(--fg-muted); }
 .badge-fail { border-color: var(--seal); color: var(--seal-text); }
 
-/* ============ Logo 预览 ============ */
 .split-view { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
 .svg-preview-box {
@@ -429,7 +412,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 
 .tag-exceeded { font-size: 11px; }
 
-/* ============ 工具链芯片 ============ */
 .toolchain-grid { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .tool-chip {
@@ -445,7 +427,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 .tool-chip .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fg); flex-shrink: 0; }
 .tool-chip.missing .chip-dot { background: var(--seal); }
 
-/* ============ 截图画廊 ============ */
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -481,7 +462,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 
 .gallery-item .item-meta { font-size: 11px; color: var(--fg-faint); margin-top: 3px; }
 
-/* ============ 底部终端（唯一实心墨块） ============ */
 .terminal-container {
   height: 190px;
   background: var(--ink);
@@ -550,7 +530,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ============ 提示条 ============ */
 .toast-host {
   position: fixed;
   right: 20px;
@@ -576,7 +555,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 .toast.warn { border-left-color: var(--fg-muted); }
 .toast.error { border-left-color: var(--seal); }
 
-/* ============ 滚动条 / 响应式 / 减弱动效 ============ */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: var(--line); }
 ::-webkit-scrollbar-track { background: transparent; }

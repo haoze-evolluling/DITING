@@ -1,7 +1,3 @@
-// The desktop client is the only path between the window and the local service, so its parsing and
-// its failure modes are worth pinning: an error that silently turns into zeros would paint a
-// healthy-looking dashboard over a broken backend.
-
 import 'dart:convert';
 
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
@@ -346,7 +342,6 @@ void main() {
     expect(update['enabled'], isTrue);
     expect(update.containsKey('dataDir'), isFalse);
 
-    // 写后回读的是服务端状态，而不是页面自己拼的预期。
     final reread = await backend.client().queryLogConfig();
     expect(reread.retentionDays, 3);
     expect(reread.dataDir, config.dataDir);

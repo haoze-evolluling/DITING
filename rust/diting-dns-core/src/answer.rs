@@ -1,38 +1,22 @@
-//! Answer inspection: the two questions the engine asks about one upstream reply.
-//!
-//! Port of `isUpstreamBlockedMsg` + `resolvedAddressesMsg` in
-//! `android/engine/dns_response_helpers.go`. Only `A` and `AAAA` records take part; a zero-length
-//! address (a hand-built record without an address) still counts as an IP record and prints as
-//! `<nil>`, exactly like Go's `net.IP(nil).String()`.
-//!
-//! The address text is Go's `net.IP.String()`; see `diting_go_compat::ip`.
-
 use std::collections::HashSet;
 
 use diting_go_compat::ip;
 
-/// `dns.TypeA`.
 pub const TYPE_A: u8 = 1;
-/// `dns.TypeAAAA`.
 pub const TYPE_AAAA: u8 = 28;
 
-/// One answer record as the payload carried it: the numeric type and the address bytes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AnswerEntry<'a> {
     pub rrtype: u8,
     pub address: &'a [u8],
 }
 
-/// What the engine needs from one answer.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Inspection {
-    /// Every A/AAAA answer is null (`0.0.0.0`, `::`) or loopback.
     pub blocked: bool,
-    /// Unique address texts in answer order, comma separated (empty when there are none).
     pub addresses: String,
 }
 
-/// `isUpstreamBlockedMsg` + `resolvedAddressesMsg` in one pass.
 pub fn inspect(entries: &[AnswerEntry<'_>]) -> Inspection {
     let mut ip_records = 0u32;
     let mut null_records = 0u32;

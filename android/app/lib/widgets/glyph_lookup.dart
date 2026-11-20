@@ -1,8 +1,5 @@
 import 'package:diting_shared/ui/ui.dart';
 
-/// The only name-to-[Glyph] mapping; data layers store icon names as strings so they need not
-/// depend on the widget layer. Names match the `AppGlyphs` constants. An unknown name yields
-/// [AppGlyphs.info] rather than throwing, but tests assert common names resolve.
 Glyph glyphByName(String name) => switch (name) {
   'account' => AppGlyphs.account,
   'add' => AppGlyphs.add,

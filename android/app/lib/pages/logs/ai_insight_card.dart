@@ -9,8 +9,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Dashboard entry for the AI traffic report. It reuses the last successful run instead of
-/// spending another request every time the card is tapped.
 class AiInsightCard extends ConsumerWidget {
   const AiInsightCard({super.key});
 
@@ -87,8 +85,6 @@ class AiInsightCard extends ConsumerWidget {
     );
   }
 
-  /// Opens the report sheet; [adopt] makes it show the run that produced [sessionId] instead of
-  /// starting a new one.
   void _open(BuildContext context, int sessionId, bool adopt) {
     showSheet<void>(
       context: context,
@@ -100,8 +96,6 @@ class AiInsightCard extends ConsumerWidget {
   }
 }
 
-/// First meaningful line of a Markdown report: skips headings, rules and empty lines so the card
-/// shows a conclusion rather than `### 1. 总体网络安全状况`.
 String? _headlineOf(String markdown) {
   for (final line in markdown.split('\n')) {
     final text = line
@@ -112,7 +106,6 @@ String? _headlineOf(String markdown) {
         .replaceAll(RegExp(r'[*_~`]'), '')
         .trim();
     if (text.length < 8) continue;
-    // Headings and short labels carry no conclusion; the first real sentence does.
     if (RegExp(r'^【?(?:近期|总体|摘要|结论|分析)').hasMatch(text)) continue;
     return text;
   }

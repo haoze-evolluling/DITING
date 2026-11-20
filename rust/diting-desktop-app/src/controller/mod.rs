@@ -1,9 +1,3 @@
-//! Controller operations behind the management API.
-//!
-//! The HTTP layer is a thin translator: every route maps onto one method here, and these methods
-//! own the engine mutations, persistence and platform calls. Splitting by domain keeps each file
-//! small and makes the Go controller files the obvious reference.
-
 pub mod background;
 pub mod cache;
 pub mod clients;
@@ -26,7 +20,6 @@ use diting_desktop_api::config::{Config, DNSConfig};
 use diting_desktop_api::platform_types::PortCheckResult;
 use diting_desktop_dns::context::Transport;
 
-/// A controller failure carrying the optional structured port-conflict diagnosis.
 #[derive(Debug, Clone)]
 pub struct ControllerError {
     pub message: String,
@@ -74,7 +67,6 @@ impl From<&str> for ControllerError {
     }
 }
 
-/// `DNSConfig.EffectiveListenAddresses`: LAN mode binds the wildcard on the configured port.
 pub fn effective_listen_addresses(config: &DNSConfig) -> (Vec<String>, Vec<String>) {
     let port = config
         .udp_addresses
@@ -109,22 +101,18 @@ pub fn effective_listen_addresses(config: &DNSConfig) -> (Vec<String>, Vec<Strin
     (local(&config.udp_addresses), local(&config.tcp_addresses))
 }
 
-/// Formats a controller error for the envelope.
 pub fn error_message(result: Result<(), ControllerError>) -> Option<ControllerError> {
     result.err()
 }
 
-/// Extracts the client address without the port.
 pub fn client_host(remote: SocketAddr) -> String {
     remote.ip().to_string()
 }
 
-/// The transport label used by the query log.
 pub fn transport_name(transport: Transport) -> &'static str {
     transport.as_str()
 }
 
-/// A config snapshot helper used by controllers that need a value plus a clone to mutate.
 pub fn config_snapshot(runtime: &crate::AppRuntime) -> Config {
     runtime.config()
 }

@@ -1,5 +1,3 @@
-/// Privacy, safe search and safe browsing endpoints, split out of [DesktopApiClient] to keep every
-/// file inside the project's size budget. The transport helpers it calls are documented there.
 library;
 
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
@@ -47,14 +45,12 @@ extension DesktopApiPrivacy on DesktopApiClient {
   Future<DesktopSafeSearchConfig> safeSearch() async =>
       DesktopSafeSearchConfig.fromJson(await getJson('/api/v1/safesearch/config'));
 
-  /// The service merges the patch and answers with a success flag, so the page re-reads.
   Future<void> configureSafeSearch(Map<String, Object?> patch) =>
       postAction('/api/v1/safesearch/config', body: patch);
 
   Future<DesktopSafeBrowsing> safeBrowsing() async =>
       DesktopSafeBrowsing.fromJson(await getJson('/api/v1/filter/safebrowsing'));
 
-  /// Answers with the normalised state (config + counters), which the page adopts directly.
   Future<DesktopSafeBrowsing> configureSafeBrowsing(
     Map<String, Object?> patch,
   ) async => DesktopSafeBrowsing.fromJson(

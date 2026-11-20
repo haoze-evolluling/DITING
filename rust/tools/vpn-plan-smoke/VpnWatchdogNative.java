@@ -4,11 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-/// Host-JVM smoke test for the VPN watchdog kernel's JNI boundary.
-///
-/// It proves the eight exported symbols match the signatures `VpnWatchdogNative.kt` declares and
-/// that the phase/debounce/reconnect payloads round trip. The transition rules themselves belong
-/// to the Rust tests.
 public final class VpnWatchdogNative {
     private static int checks;
 

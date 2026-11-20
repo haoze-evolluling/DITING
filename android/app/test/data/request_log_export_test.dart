@@ -25,7 +25,6 @@ void main() {
       'timestamp INTEGER, packageName TEXT, authority TEXT, protocol TEXT, '
       'outcome TEXT, matchedRule TEXT, blockSubscriptionId INTEGER)',
     );
-    // 1000: passed DNS; its host and message carry quote/comma characters on purpose.
     await db.insert('dns_log', {
       'id': 1,
       'timestamp': 1000,
@@ -107,7 +106,7 @@ void main() {
         .split('\r\n')
         .where((line) => line.isNotEmpty)
         .toList();
-    expect(lines.length, 6); // header + five rows
+    expect(lines.length, 6);
     expect(lines[1], contains('"a2.example"'));
     expect(lines[1], contains('"App A"'));
     expect(lines[2], contains('"h2.example"'));
@@ -116,7 +115,6 @@ void main() {
   test('CSV 字段按 RFC 4180 转义引号与逗号', () async {
     final (csv, _) = await run(const RequestLogExportOptions());
 
-    // The DNS host q,"x" becomes "q,""x"""; the message keeps its comma and doubled quotes.
     expect(csv, contains('"q,""x"""'));
     expect(csv, contains('"app=x, note=""hi"""'));
   });

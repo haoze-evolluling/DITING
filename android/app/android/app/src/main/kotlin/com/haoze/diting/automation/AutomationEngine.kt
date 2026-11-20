@@ -13,12 +13,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
 
-/// 条件-动作自动化引擎（A1 / A13）：读取 `automation_rule`，按触发/条件求值，执行动作并记录
-/// `automation_event`。
-///
-/// 判定与执行都在这一个对象里，UI 只写规则文档。触发时序来自平台（定时器 / 网络 / 手工），
-/// 引擎不自己起线程：调用方在后台广播里同步调用 [evaluate]。同一规则有 60 秒冷却，避免一个事件
-/// 重复触发。规则存储结构见 `automation_models.dart` 的 `AutomationSpec`。
 object AutomationEngine {
     private const val TAG = "AutomationEngine"
     private const val COOLDOWN_MS = 60_000L
@@ -31,7 +25,6 @@ object AutomationEngine {
         val spec: JSONObject,
     )
 
-    /// 求值一个触发事件，返回本次真正执行的规则 id 列表。
     fun evaluate(context: Context, eventType: String): List<String> {
         val rules = loadRules(context)
         if (rules.isEmpty()) return emptyList()
@@ -143,7 +136,6 @@ object AutomationEngine {
                 val current = network["type"]
                 (0 until types.length()).any { types.optString(it) == current }
             }
-            // Unknown condition kinds never block a rule (forward compatible).
             else -> true
         }
     }
@@ -228,7 +220,6 @@ object AutomationEngine {
     }
 }
 
-/// `AutomationSpec` 的字符串常量在 Dart 与 Kotlin 两侧必须一致。
 private object AutomationSpecKeys {
     const val TRIGGER_SCHEDULE = "schedule"
     const val ACTION_PAUSE = "pause"

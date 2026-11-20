@@ -1,8 +1,3 @@
-// Desktop hub blocking mode (desktop parity): the master switch, the
-// three answer modes, their addresses and interval, the temporary pause and the advanced switches.
-// Every value must come from `/filter/config`, `/filter/stats` and `/filter/pause`; each write
-// re-reads them, and a rejected write is reported instead of assumed.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_filter_config_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_filter_config_page.dart';

@@ -1,5 +1,3 @@
-//! The exported entry points and the handle lifecycle.
-
 use super::*;
 use std::slice;
 
@@ -143,7 +141,6 @@ fn bad_arguments_and_bad_payloads_are_status_codes() {
         STATUS_BAD_ARGUMENT
     );
     unsafe { diting_request_close(handle) };
-    // Closing a null handle is a no-op.
     unsafe { diting_request_close(std::ptr::null_mut()) };
     unsafe { diting_request_free_bytes(std::ptr::null_mut(), 0) };
 }

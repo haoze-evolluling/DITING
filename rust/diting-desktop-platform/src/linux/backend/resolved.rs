@@ -1,5 +1,3 @@
-//! systemd-resolved backend (`resolvectl dns/domain/revert`).
-
 use diting_desktop_api::platform_types::{AdapterInfo, AdapterState};
 
 use crate::error::{PlatformError, PlatformResult};
@@ -8,7 +6,6 @@ use crate::netutil::clean_adapter_state;
 
 use super::{interface_name_from_adapter, interface_name_from_state, merge_dual_stack_servers};
 
-/// Points every adapter at `127.0.0.1`/`::1` and routes all domains through it.
 pub(crate) async fn apply(
     executor: &dyn CommandExecutor,
     adapters: &[AdapterInfo],
@@ -32,8 +29,6 @@ pub(crate) async fn apply(
                 "设置网卡 [{iface}] 解析地址失败: {error}"
             )));
         }
-        // Register the interface as soon as DNS changed: a failing domain step leaves it in a
-        // half-applied state and it must be rolled back too.
         applied.push(iface.to_string());
         if let Err(error) = executor
             .run_checked("resolvectl", &["domain", iface, "~."])
@@ -54,7 +49,6 @@ async fn rollback_applied(executor: &dyn CommandExecutor, interfaces: &[String])
     }
 }
 
-/// Restores snapshot servers, or reverts to DHCP when the snapshot had none.
 pub(crate) async fn restore(
     executor: &dyn CommandExecutor,
     adapters: &[AdapterState],
@@ -95,7 +89,6 @@ pub(crate) async fn restore(
     }
 }
 
-/// Flushes systemd-resolved caches.
 pub(crate) async fn flush(executor: &dyn CommandExecutor) -> PlatformResult<()> {
     executor
         .run_checked("resolvectl", &["flush-caches"])

@@ -1,6 +1,3 @@
-//! Boundary tests: the ABI number, the null-handle behaviour and a full round trip through the
-//! exported symbols (the Go loader calls exactly these).
-
 use super::*;
 use crate::stats::{
     ATTEMPT_TIMEOUT_COLD_NS, DEFAULT_EWMA_NS, HEDGE_DELAY_COLD_NS, UDP_RETRY_DELAY_COLD_NS,
@@ -50,7 +47,6 @@ fn handle_round_trip_through_the_exported_symbols() {
         assert_eq!(diting_resolver_record_success(handle, 20 * MS, 1_000), 1);
         assert_eq!(diting_resolver_sample_count(handle), 1);
         assert_eq!(diting_resolver_score(handle, 1_000), 20 * MS);
-        // SRTT 20 ms + 2*RTTVAR 10 ms: above the 20 ms floor.
         assert_eq!(diting_resolver_hedge_delay(handle), 40 * MS);
 
         assert_eq!(diting_resolver_record_failure(handle, 1, 2_000), 1);
@@ -69,7 +65,6 @@ fn handle_round_trip_through_the_exported_symbols() {
     }
 }
 
-/// The session payload of one `smart_prediction` query with two providers.
 fn session_payload() -> Vec<u8> {
     let mut out = vec![crate::payload::LAYOUT_VERSION, 3];
     out.extend_from_slice(&2u32.to_le_bytes());
@@ -118,7 +113,6 @@ fn a_session_answers_start_and_result_with_steps() {
         );
         let step = take(out, length);
         assert_eq!(step[0], crate::payload::LAYOUT_VERSION);
-        // One launch request: the ranked plain provider (index 0).
         assert_eq!(u32::from_le_bytes(step[19..23].try_into().unwrap()), 1);
         assert_eq!(u32::from_le_bytes(step[23..27].try_into().unwrap()), 0);
 
@@ -129,11 +123,10 @@ fn a_session_answers_start_and_result_with_steps() {
             STATUS_OK
         );
         let step = take(out, length);
-        // The hedge is armed with the launched provider's delay and nothing is terminal.
         assert_eq!(step[1], 1);
         assert_eq!(i64::from_le_bytes(step[2..10].try_into().unwrap()), 50 * MS);
-        assert_eq!(step[19], 0); // no launch request
-        assert_eq!(step[23], 0); // not terminal
+        assert_eq!(step[19], 0);
+        assert_eq!(step[23], 0);
 
         let message = b"servfail";
         let mut out: *mut u8 = std::ptr::null_mut();
@@ -154,7 +147,6 @@ fn a_session_answers_start_and_result_with_steps() {
             STATUS_OK
         );
         let step = take(out, length);
-        // The failure advances immediately to the next candidate.
         assert_eq!(u32::from_le_bytes(step[19..23].try_into().unwrap()), 1);
         assert_eq!(u32::from_le_bytes(step[23..27].try_into().unwrap()), 1);
 

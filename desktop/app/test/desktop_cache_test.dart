@@ -1,8 +1,3 @@
-// Desktop hub cache page (desktop parity): the console's
-// acceleration engine, telemetry, top names, policy form, persistence, exclude rules and the
-// cached-entry table. Every figure must come from the service; a save posts the whole config and
-// re-reads it, and a rejected write is reported instead of assumed.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_cache_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_cache_page.dart';
@@ -51,9 +46,7 @@ void main() {
   Finder inEntries(Finder matching) =>
       find.descendant(of: find.byType(CacheEntriesCard), matching: matching);
 
-  /// The page is taller than a window, so a control below the fold has to be scrolled to first.
 
-  /// Lets the current snackbar expire, so the next action's message is the one on screen.
 
   test('缺字段按零值解析，落盘间隔回落到服务默认值', () {
     final stats = DesktopCacheStats.fromJson(const {});
@@ -113,7 +106,6 @@ void main() {
     final backend = await pumpCache(tester);
     final l10n = l10nOf(tester);
 
-    // 策略卡片只提交 TTL 上下限：回退与预取的秒数各有自己的卡片和按钮。
     final numbers = inConfig(find.byType(TextFormField));
     await tester.ensureVisible(numbers.first);
     await tester.enterText(numbers.first, '');
@@ -184,7 +176,6 @@ void main() {
     final backend = await pumpCache(tester);
     final l10n = l10nOf(tester);
 
-    // 未开启时两个手动操作不可用，路径也不显示。
     expect(inPersist(find.text(l10n.desktopCachePersistPath)), findsNothing);
 
     await tapAt(tester, inPersist(find.byType(DashboardSwitch)));

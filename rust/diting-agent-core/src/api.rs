@@ -1,20 +1,11 @@
-//! OpenAI-compatible protocol layer: endpoint derivation, the request body, and the two response
-//! shapes (`chat/completions`, `models`).
-//!
-//! The transport stays in Dart (`HttpClient`, timeouts, cancellation) because closing a socket is
-//! the only way to abort a pending read. Everything that decides *what* is sent and *what the answer
-//! means* is here. Failures travel back as kinds, so the sentences stay in the Dart localisation.
-
 use serde::Serialize;
 use serde_json::Value;
 
-/// Why an endpoint could not be derived. The Dart side localises it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EndpointError {
     Empty = 0,
 }
 
-/// Which response field was missing. The Dart side localises it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParseError {
     InvalidJson = 1,
@@ -34,7 +25,6 @@ pub struct ChatReply {
     pub total_tokens: u32,
 }
 
-/// HTTP status becomes an actionable hint kind; the server's own sentence rides along as detail.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StatusKind {
     BadKey = 0,
@@ -60,7 +50,6 @@ struct ChatBody<'a> {
     temperature: f64,
 }
 
-/// Base URL to `/chat/completions`; OpenAI and DeepSeek need the `/v1` segment.
 pub fn chat_endpoint(raw_base_url: &str) -> Result<String, EndpointError> {
     let trimmed = raw_base_url.trim().trim_end_matches('/');
     if trimmed.is_empty() {
@@ -104,8 +93,6 @@ pub fn models_endpoint(raw_base_url: &str) -> Result<String, EndpointError> {
     Ok(format!("{trimmed}/models"))
 }
 
-/// The request body. A blank model falls back to `deepseek-flash`, the name the 1.4.3 build shipped
-/// so a fresh dialog has something valid to send.
 pub fn chat_body(model: &str, messages: &[(String, String)], temperature: f64) -> String {
     let trimmed = model.trim();
     let effective = if trimmed.is_empty() {
@@ -139,8 +126,6 @@ pub fn parse_chat(body: &str, fallback_model: &str) -> Result<ChatReply, ParseEr
     let mut content = String::new();
     if let Some(Value::Array(choices)) = object.get("choices") {
         if let Some(Value::Object(first)) = choices.first() {
-            // The 1.4.3 build prefers `message.content` and only falls back to `choices[].text`
-            // when `message` is missing or its `content` is not a string.
             let message_content = first
                 .get("message")
                 .and_then(Value::as_object)
@@ -149,7 +134,6 @@ pub fn parse_chat(body: &str, fallback_model: &str) -> Result<ChatReply, ParseEr
             match message_content {
                 Some(text) => content = text.trim().to_string(),
                 None => {
-                    // Completion-style endpoints put the text in `choices[].text`.
                     if let Some(text) = first.get("text").and_then(Value::as_str) {
                         content = text.trim().to_string();
                     }
@@ -180,8 +164,6 @@ fn compare_utf16(left: &str, right: &str) -> std::cmp::Ordering {
     left.encode_utf16().cmp(right.encode_utf16())
 }
 
-/// `data`, `models` and `result` are all accepted; ids are trimmed, de-duplicated and sorted, so the
-/// picker's order does not depend on the server's.
 pub fn parse_models(body: &str) -> Result<Vec<String>, ParseError> {
     let decoded: Value = serde_json::from_str(body).map_err(|_| ParseError::InvalidJson)?;
     let object = decoded.as_object().ok_or(ParseError::NoModelListJson)?;
@@ -224,9 +206,6 @@ pub fn parse_models(body: &str) -> Result<Vec<String>, ParseError> {
     Ok(ids)
 }
 
-/// Truncates to `limit` UTF-16 code units plus `…`, the unit `String.length` uses in Dart. A cut
-/// through a surrogate pair leaves a replacement character; the detail only ever appears in a
-/// diagnostic sentence, so that is preferable to splitting in the middle of a code point silently.
 fn truncate_detail(message: &str) -> String {
     let units: Vec<u16> = message.encode_utf16().collect();
     if units.len() <= SERVER_DETAIL_LIMIT {
@@ -237,11 +216,9 @@ fn truncate_detail(message: &str) -> String {
     truncated
 }
 
-/// HTTP status plus the server's `error.message` becomes a kind and its detail.
 pub fn describe_status(status: u16, body: &str) -> (StatusKind, Option<String>) {
     let mut server_message = String::new();
     if let Ok(Value::Object(object)) = serde_json::from_str::<Value>(body) {
-        // `error.message` first, then a top-level `message`; a non-object `error` falls through.
         let from_error = object
             .get("error")
             .and_then(Value::as_object)
@@ -342,7 +319,6 @@ mod tests {
         assert_eq!(reply.completion_tokens, 5);
         assert_eq!(reply.total_tokens, 15);
 
-        // Completion-style `choices[].text`, and a missing model falls back.
         let text = parse_chat(r#"{"choices":[{"text":" hi "}]}"#, "fallback").unwrap();
         assert_eq!(text.content, "hi");
         assert_eq!(text.model, "fallback");

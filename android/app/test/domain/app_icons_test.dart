@@ -33,7 +33,6 @@ class _IconSource implements InstalledAppsSource {
   }
 }
 
-/// Lets the queued batches finish.
 Future<void> _settle() async {
   for (var i = 0; i < 40; i++) {
     await Future<void>.delayed(Duration.zero);
@@ -59,7 +58,6 @@ void main() {
     final container = _container(source);
     await _settle();
 
-    // 清单可用，但没人要求任何图标：一次都不该调用原生。
     expect(source.calls, isEmpty);
     expect(container.read(appIconsProvider), isEmpty);
 
@@ -116,7 +114,6 @@ void main() {
 
     final icons = container.read(appIconsProvider);
     expect(icons, hasLength(maxCachedAppIcons));
-    // 最早请求的已被淘汰，最近请求的一定还在。
     expect(icons.containsKey('q.0'), isFalse);
     expect(icons.containsKey('q.${maxCachedAppIcons + 39}'), isTrue);
   });

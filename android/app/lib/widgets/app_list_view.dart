@@ -4,10 +4,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Scroll body for the app pickers: same app-bar inset and dock clearance as [PageBody], but built
-/// from slivers so the app section can stay lazy.
-///
-/// Thin alias of [SliverPageBody], kept because the app-picker call sites predate it.
 class AppListScrollView extends StatelessWidget {
   const AppListScrollView({super.key, required this.slivers});
 
@@ -17,9 +13,6 @@ class AppListScrollView extends StatelessWidget {
   Widget build(BuildContext context) => SliverPageBody(slivers: slivers);
 }
 
-/// Lazily built app rows for a [CustomScrollView].
-///
-/// Alias of [lazySectionSlivers] with the app-picker defaults, kept for the existing call sites.
 List<Widget> appListSlivers({
   String? title,
   List<IconButtonData> actions = const [],
@@ -38,9 +31,6 @@ List<Widget> appListSlivers({
   );
 }
 
-/// The 1.4.3 `AppListOverflowMenu` in Flutter form: select-all / clear / invert, then the filter and
-/// sort submenus. Callers pass the actions they support; a null callback drops that entry, which is
-/// how the legacy `showSelectionActions` flag behaves.
 List<CommonPopupMenuItem> appListMenuItems({
   required AppL10n l10n,
   required AppListFilter filter,

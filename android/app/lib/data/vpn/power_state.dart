@@ -1,5 +1,3 @@
-/// Tunnel power state. Lives outside `state/work_mode_providers.dart` so the header widgets that
-/// render it can be shared with the desktop build, which has no VPN channel.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

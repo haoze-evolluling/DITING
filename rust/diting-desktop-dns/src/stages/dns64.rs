@@ -1,10 +1,3 @@
-//! RFC 6147 DNS64 synthesis.
-//!
-//! On an IPv6-only network an AAAA name that has only IPv4 addresses gets synthetic AAAA records
-//! built from the configured NAT64 prefix. Synthesis only happens for a successful answer without
-//! a usable AAAA (RFC 6147 §5.1.1/§5.1.2); CNAME chains from the A lookup are preserved and the
-//! TTL is the minimum across the chain (§5.1.7).
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -184,7 +177,6 @@ mod tests {
             std::net::Ipv6Addr::from(addresses[0]).to_string(),
             "64:ff9b::c000:201"
         );
-        // Injected A records are only used when the AAAA answer is absent.
         let message = ParsedMessage::parse(&response()).unwrap();
         assert!(message.answers.iter().all(|record| record.rtype == TYPE_A));
     }

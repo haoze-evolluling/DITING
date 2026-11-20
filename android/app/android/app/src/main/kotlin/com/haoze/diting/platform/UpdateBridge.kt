@@ -12,13 +12,11 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-/// Native download and install: Dart cannot share its private files or start the installer.
 class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "com.haoze.diting/update"
 
-        /// Must match the directory the cleanup logic deletes
         private const val UPDATE_DIR = "app-update"
 
         private const val CONNECT_TIMEOUT_MS = 20_000
@@ -28,7 +26,6 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
     private val context: Activity get() = activity
     private var channel: MethodChannel? = null
 
-    /// Only one download at a time, so two threads never write the same `.part`
     @Volatile
     private var downloading = false
 
@@ -46,7 +43,6 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
         }
     }
 
-    /// Downloads via a `.part` file, so an interruption leaves no truncated APK in place.
     private fun download(call: MethodCall, result: MethodChannel.Result) {
         val url = call.argument<String>("url")?.trim().orEmpty()
         val version = call.argument<String>("version")?.trim().orEmpty()
@@ -91,7 +87,6 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
                             if (read < 0) break
                             output.write(buffer, 0, read)
                             downloaded += read
-                            // Throttle to ~256KB: a message per read would flood the main thread.
                             if (downloaded - lastReported >= 256 * 1024) {
                                 lastReported = downloaded
                                 emitProgress(downloaded, total)
@@ -100,7 +95,6 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
                     }
                 }
                 if (!tempFile.renameTo(finalFile)) {
-                    // Some devices fail a cross-directory rename; fall back to a copy.
                     tempFile.copyTo(finalFile, overwrite = true)
                     tempFile.delete()
                 }
@@ -130,7 +124,6 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
         }
     }
 
-    /// Takes a path, not a URI: the FileProvider authority embeds the package name
     private fun install(call: MethodCall, result: MethodChannel.Result) {
         val path = call.argument<String>("path")?.trim().orEmpty()
         if (path.isEmpty()) {
@@ -162,7 +155,6 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
         }
     }
 
-    /// Unknown-sources entrypoint; the manifest declares the activity
     @Suppress("unused")
     private fun needsInstallPermission(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 }

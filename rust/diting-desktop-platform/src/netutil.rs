@@ -1,9 +1,3 @@
-//! Network predicates shared by both OS backends.
-//!
-//! The virtual-adapter regex is copied verbatim from the Go service because it drives which
-//! adapters may be taken over: a false positive means a user's VPN stops resolving, a false
-//! negative means the service rewrites DNS on a tunnel it cannot see.
-
 use std::net::{IpAddr, Ipv4Addr};
 use std::sync::OnceLock;
 
@@ -17,7 +11,6 @@ fn virtual_regex() -> &'static Regex {
     REGEX.get_or_init(|| Regex::new(VIRTUAL_PATTERN).expect("virtual pattern compiles"))
 }
 
-/// `IsVirtualAdapter`: an explicit virtual flag, or a name/description speaking for itself.
 pub fn is_virtual_adapter(name: &str, description: &str, virtual_flag: bool) -> bool {
     if virtual_flag {
         return true;
@@ -25,7 +18,6 @@ pub fn is_virtual_adapter(name: &str, description: &str, virtual_flag: bool) -> 
     virtual_regex().is_match(name) || virtual_regex().is_match(description)
 }
 
-/// `HasValidIPv4Gateway`: routable IPv4, not empty/zero/loopback.
 pub fn has_valid_ipv4_gateway(gateway: &str) -> bool {
     let gateway = gateway.trim();
     if gateway.is_empty() || gateway == "0.0.0.0" {
@@ -37,13 +29,11 @@ pub fn has_valid_ipv4_gateway(gateway: &str) -> bool {
     }
 }
 
-/// Returns true for loopback, unspecified, `localhost`, and the matching textual prefixes.
 pub fn is_loopback_or_local_ip(text: &str) -> bool {
     let trimmed = text.trim();
     if trimmed.is_empty() {
         return false;
     }
-    // Try the literal first: `host_part` would read `::1` as host `:` plus port `1`.
     if let Ok(ip) = trimmed.parse::<IpAddr>() {
         return ip.is_loopback() || ip.is_unspecified();
     }
@@ -59,7 +49,6 @@ pub fn is_loopback_or_local_ip(text: &str) -> bool {
         || lower == "localhost"
 }
 
-/// Drops loopback/unspecified entries, trimming whitespace.
 pub fn filter_loopback_ips(ips: &[String]) -> Vec<String> {
     ips.iter()
         .filter(|ip| !is_loopback_or_local_ip(ip))
@@ -68,8 +57,6 @@ pub fn filter_loopback_ips(ips: &[String]) -> Vec<String> {
         .collect()
 }
 
-/// `CleanAdapterState`: removes our own takeover address from the snapshot; an empty list becomes
-/// DHCP rather than static, so a restore can never pin the adapter to `127.0.0.1`.
 pub fn clean_adapter_state(adapter: &AdapterState) -> AdapterState {
     let mut cleaned = adapter.clone();
     cleaned.ipv4_dns = filter_loopback_ips(&adapter.ipv4_dns);
@@ -83,7 +70,6 @@ pub fn clean_adapter_state(adapter: &AdapterState) -> AdapterState {
     cleaned
 }
 
-/// `IsPrivateIPv4` (RFC 1918).
 pub fn is_private_ipv4(ip: Ipv4Addr) -> bool {
     let octets = ip.octets();
     octets[0] == 10
@@ -91,14 +77,12 @@ pub fn is_private_ipv4(ip: Ipv4Addr) -> bool {
         || (octets[0] == 192 && octets[1] == 168)
 }
 
-/// One interface/IP pair as reported by the OS.
 #[derive(Debug, Clone)]
 pub struct InterfaceAddress {
     pub interface: String,
     pub address: IpAddr,
 }
 
-/// `extractLANAddresses`: active, non-virtual, non-loopback addresses, private IPv4 first.
 pub fn extract_lan_addresses(interfaces: &[InterfaceAddress]) -> Vec<String> {
     let mut private4 = Vec::new();
     let mut other4 = Vec::new();
@@ -149,7 +133,6 @@ pub fn extract_lan_addresses(interfaces: &[InterfaceAddress]) -> Vec<String> {
     result
 }
 
-/// Same selection as [`extract_lan_addresses`] but keeps the owning interface, for `/dns/lan`.
 pub fn extract_lan_address_info(interfaces: &[InterfaceAddress]) -> Vec<LANAddressInfo> {
     let allowed: Vec<String> = extract_lan_addresses(interfaces);
     interfaces

@@ -1,5 +1,3 @@
-/// Second-level pages behind the home dashboard cards. One page per card, because a card only
-/// has room for a headline; the detail page carries the rest of the data.
 library;
 
 import 'package:diting_android/data/dashboard_models.dart';
@@ -22,9 +20,7 @@ abstract final class HomeDetailPaths {
   static const intranetIp = '/home/intranet-ip';
 }
 
-/// The page a card opens, or null for a card without one (no detail button then).
 String? homeDetailPathOf(DashboardWidget widget) => switch (widget) {
-  // Both open a sheet or act in place, so they have no drill-down page.
   DashboardWidget.provider || DashboardWidget.resolution => null,
   DashboardWidget.status => HomeDetailPaths.status,
   DashboardWidget.networkSpeed => HomeDetailPaths.speed,
@@ -33,8 +29,6 @@ String? homeDetailPathOf(DashboardWidget widget) => switch (widget) {
   DashboardWidget.intranetIp => HomeDetailPaths.intranetIp,
 };
 
-/// Home card drill-downs. All hang off `rootNavigatorKey` so the shell's nested navigator does not
-/// keep the bottom dock visible over a detail page.
 List<RouteBase> homeDetailRoutes() => [
   GoRoute(
     path: HomeDetailPaths.status,

@@ -10,8 +10,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Status card, after FlClash widgets/current_outbound.dart. Uptime shows a placeholder rule
-/// when stopped, not `0s`: not started is not the same as just started.
 class StatusCard extends ConsumerWidget {
   const StatusCard({super.key, this.onDetail});
 
@@ -52,7 +50,6 @@ class StatusCard extends ConsumerWidget {
           Text(context.l10n.statusUptime, style: DashboardText.label(context)),
           SizedBox(height: 2 * scale),
           if (core.isRunning)
-            // Stats poll every second; only the figures showing them rebuild.
             Consumer(
               builder: (context, ref, _) => Text(
                 ref.watch(serviceStatsProvider.select((s) => s.uptimeLabel)),
@@ -100,9 +97,6 @@ class StatusCard extends ConsumerWidget {
   }
 }
 
-/// Stand-in for the uptime figure while stopped. An em dash fell to the font's baseline and
-/// left a stray speck in the middle of a 28pt line; a rounded rule sized to the same line box
-/// reads as "no value yet" and keeps the card's rhythm when the tunnel starts.
 class _UptimePlaceholder extends StatelessWidget {
   const _UptimePlaceholder({required this.scale});
 
@@ -119,7 +113,6 @@ class _UptimePlaceholder extends StatelessWidget {
           width: 44 * scale,
           height: 5 * scale,
           decoration: BoxDecoration(
-            // Same tone as the chart tracks, so the card stays one family.
             color: colorScheme.onSurfaceVariant.withValues(alpha: 0.22),
             borderRadius: AppRadius.standard,
           ),
@@ -135,7 +128,6 @@ class _StatusCell extends StatelessWidget {
   final String label;
   final String value;
 
-  /// Sub-line under the main value; omitted entirely when null.
   final String? hint;
 
   @override

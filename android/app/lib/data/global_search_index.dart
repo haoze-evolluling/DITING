@@ -1,6 +1,3 @@
-/// U2 全局搜索/命令面板的索引：把功能中心的本地化卡片摊平成可搜索条目，再补几条常用直达命令。
-///
-/// 索引在运行时用当前 [AppL10n] 构建，因此切换语言后标题立即跟随；过滤是纯函数，便于单测。
 library;
 
 import 'package:diting_android/data/mock_data.dart';
@@ -20,10 +17,8 @@ class GlobalSearchEntry {
   final String subtitle;
   final String route;
 
-  /// 分组名（功能中心分类名，或「常用命令」），面板里用作小标题。
   final String group;
 
-  /// 目标页图标名（与功能中心卡片同一套 `AppGlyphs` 名称），列表行用它替代旧的统一搜索图标。
   final String glyphName;
 
   final List<String> keywords;
@@ -35,7 +30,6 @@ class GlobalSearchEntry {
       keywords.any((keyword) => keyword.toLowerCase().contains(lowercaseQuery));
 }
 
-/// 不属于功能中心卡片、但用户想直达的常用命令。
 List<GlobalSearchEntry> _extraCommands(AppL10n l10n) => [
   GlobalSearchEntry(
     title: l10n.healthTitle,
@@ -67,7 +61,6 @@ List<GlobalSearchEntry> _extraCommands(AppL10n l10n) => [
   ),
 ];
 
-/// 全量索引：功能中心当前模式可见的卡片（按分类分组）+ 常用命令。
 List<GlobalSearchEntry> buildGlobalSearchIndex(
   AppL10n l10n, {
   bool express = false,
@@ -86,7 +79,6 @@ List<GlobalSearchEntry> buildGlobalSearchIndex(
   ..._extraCommands(l10n),
 ];
 
-/// 按关键词过滤；空查询返回空列表（面板初始状态不显示全部）。
 List<GlobalSearchEntry> filterGlobalSearch(
   List<GlobalSearchEntry> entries,
   String query,

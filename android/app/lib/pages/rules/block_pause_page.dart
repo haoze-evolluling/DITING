@@ -1,8 +1,3 @@
-/// Temporary pause + allowlist-only (R4): the "light control" page.
-///
-/// Pausing skips every policy block (DNS still resolves) until the wall-clock deadline; resuming
-/// clears it. Allowlist-only blocks anything that is not an explicit allow. All enforcement is in
-/// the Rust engine; this page only drives the Kotlin bridge and shows a countdown.
 library;
 
 import 'dart:async';
@@ -17,11 +12,8 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Quick presets shown above the custom entry in the duration menu. Any other length is typed into
-/// the custom dialog, so the pause is no longer limited to these three values.
 const _presetMinutes = <int>[15, 30, 60];
 
-/// Bounds of a custom pause: one minute up to a full day.
 const _minPauseMinutes = 1;
 const _maxPauseMinutes = 1440;
 
@@ -38,8 +30,6 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
   bool _busy = false;
   Timer? _ticker;
 
-  /// The length the picker shows as its current value, so the row states a concrete time instead of
-  /// just an arrow. It follows the last chosen preset or custom value.
   int _selectedMinutes = _presetMinutes.first;
 
   @override
@@ -54,8 +44,6 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
     super.dispose();
   }
 
-  /// Keep a 1 s tick only while paused, so a non-paused page (and a test that never reaches a real
-  /// pause) schedules nothing.
   void _syncTicker() {
     if (_state?.paused ?? false) {
       _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
@@ -114,8 +102,6 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
     return _run((bridge) => bridge.pause(minutes));
   }
 
-  /// The custom entry in the menu: collect a minute count first, then pause. The popup has already
-  /// dismissed by the time its item runs, so the dialog opens over the page.
   Future<void> _pickCustomMinutes() async {
     final minutes = await showFloatingDialog<int>(
       context: context,
@@ -134,8 +120,6 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
       title: l10n.blockPauseTitle,
       body: PageBody(
         children: [
-          // The explainer reads as page-level help, not its own surface, so the status card below
-          // is the first real thing the eye lands on.
           PageIntroText(text: l10n.blockPauseIntro),
           _StatusHero(
             paused: paused,
@@ -143,8 +127,6 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
             busy: _busy,
             onResume: () => _run((bridge) => bridge.clear()),
           ),
-          // One grouped surface for everything the user can change, instead of a card per control:
-          // the duration picker and the allowlist switch belong to the same "pause controls".
           generateSection(
             title: l10n.blockPauseControlSectionTitle,
             items: [
@@ -182,8 +164,6 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
   }
 }
 
-/// The focal status surface: a tinted badge, a headline state and a one-line hint, with the resume
-/// action kept inside the same card while a pause is running.
 class _StatusHero extends StatelessWidget {
   const _StatusHero({
     required this.paused,
@@ -249,8 +229,6 @@ class _StatusHero extends StatelessWidget {
   }
 }
 
-/// The duration control as a grouped row: one tap anywhere opens the duration menu, and the picker
-/// glyph on the right marks it as an opener rather than a preset button.
 class _PauseDurationRow extends StatelessWidget {
   const _PauseDurationRow({
     required this.busy,
@@ -287,7 +265,6 @@ class _PauseDurationRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
-                // The chosen length, so the row states a concrete time and not just an arrow.
                 Text(l10n.blockPauseMinutesValue(selectedMinutes)),
                 const GlyphIcon(AppGlyphs.picker),
               ],
@@ -305,7 +282,6 @@ class _PauseDurationRow extends StatelessWidget {
             CommonPopupMenuItem(
               label: l10n.blockPauseCustomOption,
               glyph: AppGlyphs.edit,
-              // Set the custom entry apart below a divider, as an iOS menu does.
               section: const CommonPopupMenuSection(),
               onPressed: busy ? null : onCustom,
             ),
@@ -316,8 +292,6 @@ class _PauseDurationRow extends StatelessWidget {
   }
 }
 
-/// Asks for a pause length in whole minutes, bounded to a day. Kept alive across the dialog's exit
-/// animation; disposing the controller right after `await` trips a framework assertion.
 class _CustomPauseDialog extends StatefulWidget {
   const _CustomPauseDialog();
 
@@ -372,7 +346,6 @@ class _CustomPauseDialogState extends State<_CustomPauseDialog> {
   }
 }
 
-/// `M:SS` under an hour, `H:MM:SS` otherwise; the countdown only needs to feel live.
 String _formatRemaining(Duration remaining) {
   String two(int value) => value.toString().padLeft(2, '0');
   final hours = remaining.inHours;

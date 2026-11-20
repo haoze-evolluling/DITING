@@ -1,17 +1,3 @@
-//! Flow admission and the connection log: the Go `gate.go` + `engine_connection_log.go` pair.
-//!
-//! The decision half is [`diting_gate_core`]: blocked UIDs, the encrypted-DNS port, the QUIC drop
-//! and the per-mode order. This module supplies the predicates that belong to the engine's settings,
-//! performs the action, and emits the same two log shapes the UI reads:
-//!
-//! * `connection` — every admitted flow, deduplicated on `app|dest|port|proto`;
-//! * `firewall:<reason>` — every blocked one, `uid_blocked` / `blocked_encrypted_dns` /
-//!   `quic_forced_tcp` / `app_allowlist_blocked`.
-//!
-//! Both rows carry the destination as `ips` and the package (or `uid:N`, or `unknown`) as `app`, in
-//! the column order `DnsLogWriter` expects. The dedupe set is session scoped: a new TUN starts with
-//! an empty set, exactly like `connLogSeen.reset()` in `StartFull`.
-
 use std::sync::Arc;
 
 use diting_gate_core::admit::{
@@ -25,27 +11,20 @@ use crate::attribution::{PROTOCOL_TCP, PROTOCOL_UDP};
 use crate::engine::{now_ms, Engine};
 use crate::netstack::TcpKey;
 
-/// What the session does with one admitted flow.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FlowAction {
-    /// Answer it from the DNS pipeline (`handleDNSOverUdp` / `handleDNSOverTCP`).
     HandleDns,
-    /// Relay it out through the engine's outbound transport.
     Relay,
-    /// MITM is active and the flow is `:80`/`:443` for a selected app: peek, then decrypt or passthrough.
     Intercept,
-    /// Blocked by the gate; the reason is already logged.
     Blocked,
 }
 
-/// One flow's attribution, resolved once when the flow opens.
 #[derive(Clone, Debug, Default)]
 pub struct FlowContext {
     pub uid: i32,
     pub app: String,
 }
 
-/// Resolves the UID and package of one flow through the Kotlin callbacks.
 pub fn context_for(
     engine: &Engine,
     protocol: i32,
@@ -59,11 +38,6 @@ pub fn context_for(
     }
 }
 
-/// Applies the gate and logs the connection, exactly like the Go flow handlers did.
-///
-/// `tcp` selects `gateModeFullTCP` / `gateModeFullUDP`. The app allowlist has no Kotlin caller yet
-/// (migration plan §4.3), so it is passed as "allowed" — the same value Go produced with an empty
-/// allowlist. [`admit_mitm_flow`] is the third mode, used when MITM is running.
 pub fn admit_flow(
     engine: &Arc<Engine>,
     tcp: bool,
@@ -71,23 +45,15 @@ pub fn admit_flow(
     context: &FlowContext,
 ) -> FlowAction {
     let mode = if tcp { MODE_FULL_TCP } else { MODE_FULL_UDP };
-    // Go's full-tunnel UDP handler passed `quicUIDSelected` from the live MITM filter, which is
-    // what makes `setFilterHttp3` drop QUIC only for the inspected apps. Without it every app's
-    // UDP :443 is relayed, so HTTP/3 sites never fall back to TCP and MITM cannot see them.
     let selected = !tcp && mitm_uid_selected(engine, context.uid);
     decide(engine, mode, key, context, selected)
 }
 
-/// The MITM gate (`mitm_handler.go`'s `gateAdmitFlow(gateModeMitmTCP, …)`).
-///
-/// `mitm_uid_allowed` is `filter.HasAllowedUIDs() && uid != UIDUnknown && filter.IsUIDAllowed(uid)`;
-/// an empty allow list therefore relays everything, which is what Go did before the UI pushed one.
 pub fn admit_mitm_flow(engine: &Arc<Engine>, key: &TcpKey, context: &FlowContext) -> FlowAction {
     let selected = mitm_uid_selected(engine, context.uid);
     decide(engine, MODE_MITM_TCP, key, context, selected)
 }
 
-/// The per-UID MITM allow list, read from the live session's filter.
 fn mitm_uid_selected(engine: &Engine, uid: i32) -> bool {
     let Some(mitm) = engine.mitm_state().session() else {
         return false;
@@ -146,13 +112,9 @@ fn decide(
     }
 }
 
-/// `encryptedDNSPort`.
 pub const PORT_DOT: u16 = 853;
-/// `PORT_DNS`.
 pub const PORT_DNS: u16 = 53;
 
-/// Records the flow into the engine's live connection table (U 实时连接视图). Bytes accrue later
-/// through the traffic path; here we pin the identity, owner, destination and initial status.
 fn record_flow(
     engine: &Arc<Engine>,
     protocol: i32,
@@ -201,7 +163,6 @@ fn log_blocked(engine: &Engine, protocol: i32, key: &TcpKey, context: &FlowConte
     );
 }
 
-/// `logConnection` / `logBlockedConnection`: one deduplicated row per `app|dest|port|proto`.
 fn connection_row(
     engine: &Engine,
     protocol: i32,

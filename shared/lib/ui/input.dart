@@ -26,8 +26,6 @@ class CommonCheckBox extends StatelessWidget {
     return Checkbox(
       materialTapTargetSize: MaterialTapTargetSize.padded,
       visualDensity: VisualDensity.standard,
-      // A checkbox is far smaller than AppCorner.standard (24 would clamp to a circle); only the
-      // explicit circular variant opts into the token, the box keeps Material's compact default.
       shape: isCircle ? AppShape.standard : null,
       value: value,
       onChanged: onChanged,
@@ -35,7 +33,6 @@ class CommonCheckBox extends StatelessWidget {
   }
 }
 
-/// Single-line while hidden: Flutter cannot obscure more than one line.
 class SecretTextFormField extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode? focusNode;
@@ -102,7 +99,6 @@ class _SecretTextFormFieldState extends State<SecretTextFormField> {
   }
 }
 
-// A limit holds as iOS and macOS hold one, without a counter under the field.
 List<TextInputFormatter>? _limited(
   List<TextInputFormatter>? formatters,
   int? maxLength,
@@ -314,7 +310,6 @@ class NoInputBorder extends InputBorder {
   }) {}
 }
 
-/// For a field with no grouped row to sit in; `.agents/surfaces.md` has why.
 class FilledInputTheme extends StatelessWidget {
   const FilledInputTheme({
     super.key,
@@ -358,12 +353,6 @@ class FilledInputTheme extends StatelessWidget {
   }
 }
 
-/// A standalone labelled field for a page or form: the label sits above a filled input.
-///
-/// [FilledInputTheme] turns floating labels off, so the label cannot live in
-/// `InputDecoration.labelText`; a bare `TextField` would otherwise fall back to the outlined
-/// Material default and clash with the card it sits in. Optional [helperText] renders below the
-/// field as a caption, and [hintText] stays inside the field as its placeholder.
 class LabeledInputField extends StatelessWidget {
   const LabeledInputField({
     super.key,

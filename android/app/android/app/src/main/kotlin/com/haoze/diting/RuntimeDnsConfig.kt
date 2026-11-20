@@ -5,10 +5,7 @@ import com.haoze.diting.engine.TunnelEngine
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
 
-/// Hot-applies a rebuilt DNS config to a running tunnel (legacy `RuntimeDnsSettingsRefresher`),
-/// so provider and protocol changes take effect without a restart.
 object RuntimeDnsConfig {
-    /// Null on success, otherwise the reason shown to the user.
     fun applyNormal(context: Context, dnsConfig: String): String? = apply(
         context = context,
         engine = DitingVpnService.engineForDiagnostics(),
@@ -39,7 +36,6 @@ object RuntimeDnsConfig {
         val current = engine ?: return "服务未运行"
         return runCatching {
             current.applyDNSConfig(dnsConfig)
-            // The tile replays this config, so it has to follow the live one.
             context.getSharedPreferences(prefsName, Context.MODE_PRIVATE).edit()
                 .putString(configKey, dnsConfig)
                 .apply()

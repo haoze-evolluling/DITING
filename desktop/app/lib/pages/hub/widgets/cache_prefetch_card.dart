@@ -1,9 +1,3 @@
-/// Hot-name prefetching and negative-answer caching: the two switches and the thresholds behind the
-/// prefetch.
-///
-/// The old desktop console's `CacheConfigCard.vue` holds these in the same card as the TTL form; here
-/// they are their own card. The switches save on the spot, the two numbers are a draft that saves with
-/// the button, and an unparseable number is reported instead of being posted.
 library;
 
 import 'dart:async';

@@ -5,10 +5,6 @@ import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
 import com.haoze.diting.root.RootDnsService
 
-/// Finds the engine backing a mode; R8 renames private fields in release, hence the accessors.
-///
-/// Every mode runs on the Rust engine since stage 4b-2 and implements the shared interface, so this
-/// is only a priority order: a tunnel that is up, then the other one, then root DNS.
 internal object EngineAccess {
 
     fun current(): TunnelEngine? =

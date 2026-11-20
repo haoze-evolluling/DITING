@@ -1,10 +1,5 @@
 package com.haoze.diting.automation
 
-/// Native state-event envelope builder for `rust/diting-event-core` (K9).
-///
-/// The frozen `STATE_CHANGED` JSON schema lives in Rust: this wrapper only forwards the live
-/// values and returns the encoded envelope. The library is required, so a build that forgot
-/// `python rust/build_android.py` throws instead of letting Kotlin emit a second, drifting shape.
 internal class EventNative private constructor() {
     external fun buildStateChanged(
         workMode: String,
@@ -30,7 +25,6 @@ internal class EventNative private constructor() {
             }
         }
 
-        /// Builds the frozen `state_changed` envelope; see `diting-event-core`.
         fun buildStateChanged(
             workMode: String,
             running: Boolean,

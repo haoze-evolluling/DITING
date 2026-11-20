@@ -1,10 +1,5 @@
-//! The network context, the per-profile match predicate and [`resolve`], the whole decision.
-
 use serde_json::Value;
 
-/// The normalized network facts Kotlin reads from `ConnectivityManager` (plus the SSID/BSSID that
-/// only Wi-Fi exposes). `kind` is a free token — `wifi` / `cellular` / `ethernet` / `vpn` / `none` /
-/// `other` — compared case-insensitively against a profile's `types` list.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct NetworkContext {
     pub kind: String,
@@ -15,8 +10,6 @@ pub struct NetworkContext {
     pub bssid: String,
 }
 
-/// One profile's network predicate. Every field is optional: an empty `types` list is "any net" and
-/// an absent boolean (or absent ssid/bssid) is "don't care".
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct NetworkMatch {
     pub types: Vec<String>,
@@ -27,7 +20,6 @@ pub struct NetworkMatch {
     pub bssid: Option<String>,
 }
 
-/// The parts of a profile the resolver returns (the config reference, not the whole document).
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Profile {
     pub id: String,
@@ -40,17 +32,14 @@ pub struct Profile {
     pub feature_toggles: Value,
 }
 
-/// The effective configuration reference for one network context.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Resolution {
-    /// True when a profile's predicate matched; false when `fallback_id` supplied the answer.
     pub matched: bool,
     pub profile_id: String,
     pub name: String,
     pub upstream_set: String,
     pub rule_group_states: Vec<String>,
     pub feature_toggles: Value,
-    /// Human-readable why (editor timeline / diagnostics), never parsed by the caller.
     pub reason: String,
 }
 
@@ -68,8 +57,6 @@ impl Default for Resolution {
     }
 }
 
-/// Matches one wildcard pattern. Supports a single `*` (`*` alone = any; `pre*` = prefix;
-/// `*suf` = suffix; `*mid*` = contains; otherwise exact), so an SSID rule can be `Office*`.
 fn wildcard_match(pattern: &str, value: &str) -> bool {
     let pattern = pattern.trim();
     if pattern.is_empty() {
@@ -87,7 +74,6 @@ fn wildcard_match(pattern: &str, value: &str) -> bool {
 }
 
 impl NetworkMatch {
-    /// True when this predicate accepts `context`. A field left unset never rejects.
     pub fn matches(&self, context: &NetworkContext) -> bool {
         let type_ok = self.types.is_empty()
             || self
@@ -138,12 +124,6 @@ fn resolution_of(profile: &Profile, matched: bool, reason: String) -> Resolution
     }
 }
 
-/// Resolves the effective profile for `context`.
-///
-/// Candidates are the enabled profiles whose predicate matches. The highest `priority` wins; on a
-/// tie the first one in input order wins (a stable, explainable rule the editor can show). When no
-/// profile matches, the profile named by `fallback_id` (if enabled) is returned with
-/// `matched == false`; otherwise an empty resolution says "no profile matched".
 pub fn resolve(context: &NetworkContext, profiles: &[Profile], fallback_id: &str) -> Resolution {
     let mut best: Option<&Profile> = None;
     for profile in profiles.iter().filter(|profile| profile.enabled) {
@@ -172,7 +152,6 @@ pub fn resolve(context: &NetworkContext, profiles: &[Profile], fallback_id: &str
 }
 
 impl Resolution {
-    /// The JSON answer the JNI/FFI caller parses.
     pub fn to_json(&self) -> Value {
         serde_json::json!({
             "matched": self.matched,

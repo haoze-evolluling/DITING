@@ -1,18 +1,3 @@
-//! Single-flight query coalescing.
-//!
-//! `dns_cache_flight.go` kept this in Go because Go owned the resolver callback. Here the resolver
-//! is a local async function, so the coalescer is a plain `Notify`-based flight table:
-//!
-//! * the first caller for a question key becomes the leader and runs the resolver;
-//! * every other caller for the same key waits for the leader and then re-reads the cache (the
-//!   leader stored its answer), so a burst of identical queries costs one upstream round trip;
-//! * a shared answer carries the leader's transaction id, so it is patched to the waiter's before
-//!   it is returned — a client rejects an answer with the wrong id;
-//! * a query without a usable question key is not coalesced at all (it cannot be keyed).
-//!
-//! The cache itself is asked *without* counting (`get(query, false)` equivalent): the caller's own
-//! lookup already recorded the miss, and counting again would double the miss rate.
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -21,10 +6,8 @@ use tokio::sync::Notify;
 
 use crate::engine::Engine;
 
-/// The answer a flight publishes: `None` while the resolver is still running.
 type FlightResult = Option<Result<Vec<u8>, String>>;
 
-/// One in-flight resolution.
 #[derive(Clone)]
 pub struct Flight {
     result: Arc<Mutex<FlightResult>>,
@@ -43,15 +26,11 @@ impl Flight {
         if let Ok(mut slot) = self.result.lock() {
             *slot = Some(result);
         }
-        // `notify_waiters` rather than `notify_one`: every waiter must wake, and the loop below
-        // re-checks the slot, so a spurious wake is harmless.
         self.notify.notify_waiters();
     }
 
     async fn wait(&self) -> Result<Vec<u8>, String> {
         loop {
-            // Register before checking the slot: `finish` publishes the result and *then* notifies,
-            // so a waiter that registered first can never miss the wake-up.
             let notified = self.notify.notified();
             if let Ok(slot) = self.result.lock() {
                 if let Some(result) = slot.as_ref() {
@@ -63,8 +42,6 @@ impl Flight {
     }
 }
 
-/// Resolves one query through the coalescer. The flag reports whether the answer was shared (which is
-/// what the log row's `cached` bit means for this branch).
 pub async fn resolve(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, bool), String> {
     let Some(key) = question_key(query).map(|key| key.key) else {
         return run_resolver(engine, query)
@@ -79,9 +56,6 @@ pub async fn resolve(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, boo
         return result.map(|response| (response, true));
     }
 
-    // If this future is dropped before publishing (task abort, runtime shutdown), wake the
-    // waiters with an error and remove the entry. Otherwise the key would stay "in flight" with no
-    // result and every later query for it would wait forever.
     let mut leader = LeaderGuard {
         flight: flight.clone(),
         engine: Arc::clone(engine),
@@ -98,7 +72,6 @@ pub async fn resolve(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, boo
     result.map(|response| (response, false))
 }
 
-/// Resolves the shared flight on drop when the leader never reached `finish`.
 struct LeaderGuard {
     flight: Flight,
     engine: Arc<Engine>,
@@ -117,14 +90,10 @@ impl Drop for LeaderGuard {
     }
 }
 
-/// One upstream round trip. A response that the cache refuses to store (a malformed answer) is still
-/// returned to the caller: refusing to answer a client because the cache did not like the bytes would
-/// be worse than the cache miss.
 async fn run_resolver(engine: &Arc<Engine>, query: &[u8]) -> Result<Vec<u8>, String> {
     let resolver = engine.resolver();
     let (result, race) = resolver.resolve(query).await;
     if let Some(mut event) = race {
-        // One parse for both fields: `query_name`/`query_type` each walked the wire message again.
         let info = diting_dns_core::message::query_info(query);
         event.query_name = info.name;
         event.query_type = info.qtype;
@@ -133,7 +102,6 @@ async fn run_resolver(engine: &Arc<Engine>, query: &[u8]) -> Result<Vec<u8>, Str
     result
 }
 
-/// The flight table's bookkeeping, kept on the engine so the leader can be found from any task.
 impl Engine {
     pub(crate) fn flight(&self, key: &[u8]) -> (Flight, bool) {
         let mut flights: std::sync::MutexGuard<'_, HashMap<Vec<u8>, Flight>> = self

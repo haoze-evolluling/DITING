@@ -1,5 +1,3 @@
-//! The C ABI surface: status codes for a broken call, and a real payload through `call`.
-
 use super::*;
 use crate::payload::{encode_request, Request};
 

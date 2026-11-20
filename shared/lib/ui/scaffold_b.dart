@@ -2,7 +2,6 @@
 
 part of 'scaffold.dart';
 
-/// Holds a body whose top stays put clear of the bar floating over it.
 class AppBarClearance extends StatelessWidget {
   const AppBarClearance({super.key, required this.child});
 
@@ -58,7 +57,6 @@ class _KeywordStrip extends StatelessWidget {
   }
 }
 
-/// Keeps rebuilds in the body to its own layer (.agents/architecture.md).
 class _BodyScope extends StatelessWidget {
   const _BodyScope({required this.child});
 
@@ -94,8 +92,6 @@ class _RenderBodyBoundary extends RenderProxyBox {
   }
 }
 
-/// Flutter reveals a focused control against the viewport alone, which runs
-/// under a floating bar, so keyboard and remote traversal would park it there.
 class _FocusClearOfBar extends StatefulWidget {
   const _FocusClearOfBar({required this.inset, required this.child});
 

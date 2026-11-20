@@ -1,6 +1,3 @@
-// Guards real data reaching the two observability pages. Providers are
-// overridden because `sqflite_common_ffi` I/O never advances under fake async.
-
 import 'package:diting_android/data/db/app_traffic_repository.dart';
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
@@ -113,7 +110,6 @@ void _observabilityPages() {
     return RequestFeed(items: items, hasMore: false);
   }
 
-  /// Whole-list loader for the pages whose feed content is not what they assert on.
   RequestFeedPageLoader wholeFeed() => (
     ref,
     query, {
@@ -186,8 +182,6 @@ void _observabilityPages() {
     });
 
     testWidgets('首屏只取一页，滑到底部再按页取下一批', (tester) async {
-      // 120 rows against a 50-row page: the first screen must read 50 and stop, otherwise the
-      // page is back to loading everything up front.
       final all = [
         for (var index = 0; index < 120; index++)
           ObservedRequest.fromDns(
@@ -208,8 +202,6 @@ void _observabilityPages() {
         tester,
         const RequestsPage(),
         providerOverrides: [
-          // Cursor paging: every read takes 50 rows at or below the cursor, so page N costs the
-          // same as page 1 instead of re-reading everything above it.
           requestFeedPageLoaderProvider.overrideWithValue((
             ref,
             query, {
@@ -246,8 +238,6 @@ void _observabilityPages() {
 
       await tester.drag(find.byType(Scrollable).first, const Offset(0, -20000));
       await tester.pumpAndSettle();
-      // One drag can reveal several pages: after a page lands the viewport is still near the end,
-      // so the listener asks again. Every follow-up read carries a cursor.
       expect(reads.length, greaterThan(1));
       expect(reads.skip(1).every((cursor) => cursor != null), isTrue);
       expect(
@@ -346,7 +336,6 @@ void _observabilityPages() {
       expect(tester.takeException(), isNull);
 
       expect(find.text('浏览器'), findsOneWidget);
-      // The ranking is a lazily built sliver, so the second row only exists after a scroll.
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
       await tester.pumpAndSettle();
       expect(find.textContaining('com.example.ads'), findsWidgets);
@@ -389,8 +378,6 @@ void _observabilityPages() {
       expect(find.text('隐藏系统应用'), findsOneWidget);
       expect(find.byType(TextField), findsWidgets);
 
-      // The row carries the card's inset, so the tile fills the card: a card padding would
-      // leave the pressed state as a square patch inside the rounded card.
       final title = find.text('隐藏系统应用');
       expect(
         tester.getRect(
@@ -404,10 +391,7 @@ void _observabilityPages() {
   });
 }
 
-// `Override` is only exported from `misc.dart`, and override lists need `List<Override>`
 
-/// Guards real data reaching the two observability pages. Providers are overridden because
-/// `sqflite_common_ffi` I/O never advances under fake async, so `pumpAndSettle` times out
 class _FakeSpeedSeries extends SpeedSeriesNotifier {
   _FakeSpeedSeries(this._value);
 
@@ -416,6 +400,3 @@ class _FakeSpeedSeries extends SpeedSeriesNotifier {
   @override
   SpeedSeries build() => _value;
 }
-
-/// The card probes on its own first frame, and its header must then report the tally for the
-/// sites it actually drew — a mismatch between the chip and the cells is what the emulator showed.

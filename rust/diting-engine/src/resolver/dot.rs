@@ -1,21 +1,3 @@
-//! DNS over TLS (RFC 7858): the 2-byte framed exchange over a pooled `tokio-rustls` stream.
-//!
-//! `resolver_dot.go`'s policy half — LIFO reuse, the 15 s idle window, four connections per host,
-//! the "keep it or close it" verdict — is [`diting_upstream_core::DotPool`]; this module owns the
-//! TLS objects and the queries, keyed by the numeric id the kernel hands back.
-//!
-//! Two deliberate differences from the Go code, both forced by the stream type:
-//!
-//! * `isAlive()` probed the socket with a zero read deadline. A TLS stream cannot be peeked without
-//!   consuming bytes, so the probe *is* the query: a pooled connection gets the query with the
-//!   shorter `dotProbeTimeout` budget, and a failure discards it and dials a fresh one. That is the
-//!   same decision the old probe drove, with one round trip instead of one syscall.
-//! * Go's `tls.ClientSessionCache` was shared per process; `rustls` puts the session cache inside
-//!   the `ClientConfig`, so the resolver's one config carries it.
-//!
-//! The response-length rule (`0` or `> 4096` is invalid) stays in the kernel, because plain TCP
-//! deliberately does not apply it.
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
@@ -33,14 +15,12 @@ use tokio_rustls::TlsConnector;
 
 use crate::resolver::dial::Dialer;
 
-/// The idle TLS connections of one resolver, keyed by the kernel's ids.
 #[derive(Default)]
 struct Pooled {
     streams: HashMap<u64, TlsStream<TcpStream>>,
     next_id: u64,
 }
 
-/// The DoT transport: one TLS config plus the idle pool.
 pub struct DotClient {
     config: Arc<ClientConfig>,
     pool: DotPool,
@@ -56,7 +36,6 @@ impl DotClient {
         }
     }
 
-    /// `queryDoTContext`: reuse a pooled connection when the probe query succeeds, otherwise dial.
     pub async fn query(
         &self,
         dialer: &Dialer,
@@ -74,7 +53,6 @@ impl DotClient {
                     self.put(&key, id, stream);
                     return Ok(response);
                 }
-                // Expired by the kernel window, or the socket died while parked.
                 _ => drop(stream),
             }
         }
@@ -83,7 +61,6 @@ impl DotClient {
         self.exchange_within(&key, stream, query).await
     }
 
-    /// One fresh connection, handshaken with the DoT query budget like `dialFreshDoTConn`.
     async fn dial(
         &self,
         dialer: &Dialer,
@@ -109,7 +86,6 @@ impl DotClient {
         }
     }
 
-    /// Executes the query with the DoT budget, then parks the connection for reuse.
     async fn exchange_within(
         &self,
         key: &str,
@@ -129,8 +105,6 @@ impl DotClient {
         }
     }
 
-    /// `popIdleDoTConn`'s socket half: pop the newest entry the kernel allows and loop past the
-    /// entries whose stream is already gone.
     fn take(&self, key: &str) -> Option<(u64, TlsStream<TcpStream>)> {
         let mut pooled = self.lock();
         loop {
@@ -139,7 +113,6 @@ impl DotClient {
                     if let Some(stream) = pooled.streams.remove(&id) {
                         return Some((id, stream));
                     }
-                    // Expired by the kernel window, or the socket died while parked.
                 }
                 Acquired::Expired(id) => {
                     pooled.streams.remove(&id);
@@ -148,8 +121,6 @@ impl DotClient {
         }
     }
 
-    /// `putIdleDoTConn`: park the connection when the host has room, otherwise let it drop (which
-    /// closes it).
     fn put(&self, key: &str, id: u64, stream: TlsStream<TcpStream>) {
         let mut pooled = self.lock();
         if self.pool.release(key, id, crate::resolver::now_ms()) {
@@ -163,7 +134,6 @@ impl DotClient {
         pooled.next_id
     }
 
-    /// Closes every parked connection (`closeDoTConns`).
     pub fn close_all(&self) {
         {
             let mut pooled = self.lock();
@@ -172,7 +142,6 @@ impl DotClient {
         self.pool.close_all();
     }
 
-    /// How many connections are parked for `key` (tests and the diagnostics panel).
     pub fn idle(&self, key: &str) -> u32 {
         self.pool.len(key)
     }
@@ -184,7 +153,6 @@ impl DotClient {
     }
 }
 
-/// One framed request/response on a live TLS stream.
 async fn exchange(stream: &mut TlsStream<TcpStream>, query: &[u8]) -> Result<Vec<u8>, String> {
     let framed = encode_length_prefixed(query);
     stream

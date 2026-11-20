@@ -1,9 +1,3 @@
-//! `excludePatterns`: domains that bypass the cache entirely.
-//!
-//! The Go service compiles at most 256 patterns of at most 512 bytes and refuses to fail the whole
-//! cache because one pattern is malformed. The same bounds apply here; Rust's `regex` crate is a
-//! finite-automaton engine, so a hostile pattern cannot backtrack catastrophically.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use regex::{Regex, RegexSet};
@@ -18,8 +12,6 @@ pub struct CacheExcluder {
 }
 
 impl CacheExcluder {
-    /// Compiles the patterns, dropping invalid/oversized ones and returning their diagnostics. The
-    /// excluder is always usable, even when every pattern was rejected.
     pub fn new(patterns: &[String]) -> (Self, Vec<String>) {
         let mut problems = Vec::new();
         let mut accepted = Vec::new();
@@ -43,9 +35,6 @@ impl CacheExcluder {
             }
             accepted.push(pattern.to_string());
         }
-        // Validate one pattern at a time: `RegexSet::new` rejects the whole set when a single
-        // member is malformed, while the Go service skipped only the bad pattern. An invalid
-        // pattern is reported and removed; the remaining exclusions keep working.
         let valid: Vec<String> = accepted
             .iter()
             .filter(|pattern| match Regex::new(pattern) {

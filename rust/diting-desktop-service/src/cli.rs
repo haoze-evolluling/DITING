@@ -1,8 +1,3 @@
-//! Command-line surface, matching the former Go service's `cmd/service/cli.go`.
-//!
-//! The service manager launches the binary with `-run`; interactive invocations without arguments
-//! print the version, which is also what a user double-clicking the executable expects.
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Version,
@@ -65,14 +60,12 @@ impl Default for Command {
     }
 }
 
-/// Parses the legacy single-dash flags (`-run`, `-port 53`) and their double-dash spellings.
 pub fn parse<I, S>(args: I) -> Result<Cli, String>
 where
     I: IntoIterator<Item = S>,
     S: Into<String>,
 {
     let mut args = args.into_iter().map(Into::into).peekable();
-    // Drop the program name when present.
     if args.peek().is_some() {
         args.next();
     }

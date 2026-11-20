@@ -1,9 +1,3 @@
-//! Encrypted DNS listener lifecycle (DoT/DoH/DoQ) and the DDR answer it feeds.
-//!
-//! The listeners are an implementation detail of [`AppRuntime`], so this module lives beside the
-//! runtime and keeps the state private to the `runtime` module tree. DDR is derived from what is
-//! actually bound: advertising a port that failed to bind would point clients at a dead service.
-
 use std::sync::{Arc, RwLock};
 
 use diting_desktop_api::config::security::{
@@ -19,10 +13,6 @@ use diting_desktop_dns::stages::ddr::{cert_has_ips, DdrAnswer, DdrProvider};
 
 use super::AppRuntime;
 
-/// Answers RFC 9462 probes from the endpoints that are bound right now.
-///
-/// The answer is recomputed per query (it is cheap) so that stopping or restarting a listener is
-/// reflected immediately.
 pub(super) struct EncryptedDdrProvider {
     config: Arc<RwLock<Config>>,
     listeners: Arc<RwLock<Option<Arc<EncryptedListeners>>>>,
@@ -85,7 +75,6 @@ impl DdrProvider for EncryptedDdrProvider {
     }
 }
 
-/// The port a listener actually bound to, falling back to the configured (validated) port.
 fn bound_port(address: Option<&str>, configured: i32, default: i32) -> u16 {
     address
         .and_then(|address| address.rsplit_once(':'))
@@ -94,8 +83,6 @@ fn bound_port(address: Option<&str>, configured: i32, default: i32) -> u16 {
         .unwrap_or(u16::try_from(default).unwrap_or(0))
 }
 
-/// Ports are validated by `EncryptedDNSConfig::normalize`; the fallback covers configs written by
-/// hand or by an older version.
 fn encrypted_port(configured: i32, default: i32) -> u16 {
     u16::try_from(configured).unwrap_or_else(|_| u16::try_from(default).unwrap_or(0))
 }
@@ -112,13 +99,7 @@ impl AppRuntime {
         }))
     }
 
-    /// Restarts only the DoT/DoH/DoQ listeners, leaving the 53 socket untouched.
-    ///
-    /// Go's `reloadDNSWithCurrentConfig`: a certificate or port change must not blip plaintext
-    /// resolution (clients would fall back to another resolver mid-flight).
     pub async fn reload_encrypted(&self) {
-        // One reload at a time. Two concurrent reloads each stop the listeners, then the loser's
-        // bind fails and its `None` result replaces the winner's working listener set.
         let _lifecycle = self.dns_lifecycle.lock().await;
         self.stop_encrypted().await;
         let server = self.dns.lock().await.clone();
@@ -129,7 +110,6 @@ impl AppRuntime {
         self.set_encrypted(self.start_encrypted(&config, server).await);
     }
 
-    /// The bound encrypted endpoints, as `(dot, doh, doq)`.
     pub fn encrypted_addresses(&self) -> (Option<String>, Option<String>, Option<String>) {
         let listeners = self
             .encrypted
@@ -154,8 +134,6 @@ impl AppRuntime {
                 .unwrap_or_else(|error| error.into_inner());
             std::mem::replace(&mut *guard, listeners.map(Arc::new))
         };
-        // The caller stops the previous instance before calling in, so this is only a safety net
-        // against two concurrent restarts leaking accept loops.
         if let Some(previous) = previous {
             if previous.enabled() {
                 eprintln!("[加密DNS] 旧的监听器未停止，已丢弃引用（重启竞态）");
@@ -176,11 +154,6 @@ impl AppRuntime {
         }
     }
 
-    /// Generates or renews the self-signed certificate before a listener is started.
-    ///
-    /// Imported certificates are left alone: replacing an operator's certificate with a
-    /// self-signed one would hide the real configuration problem behind a certificate no client
-    /// trusts.
     fn prepare_certificate(&self, config: &Config) {
         let cert_config = &config.encrypted.cert;
         if !cert_config.source.is_empty() && cert_config.source != CERT_SOURCE_SELF_SIGNED {

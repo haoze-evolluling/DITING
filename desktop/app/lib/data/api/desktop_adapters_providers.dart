@@ -1,8 +1,3 @@
-/// The adapter takeover page's state and its three writes.
-///
-/// `/adapters` carries the adapter list, `/status` carries which of them are taken over; the page
-/// needs both, so one notifier reads both and re-reads both after every write. A rejected write keeps
-/// the last state and returns the reason instead of guessing what happened.
 library;
 
 import 'dart:async';
@@ -24,10 +19,8 @@ class DesktopAdaptersState {
 
   final List<DesktopAdapter> adapters;
 
-  /// Whether the service reports any takeover at all; the summary card's action depends on it.
   final bool takeoverActive;
 
-  /// Adapter ids and names the service says it is taking over, as `/status` reports both.
   final Set<String> takenOver;
   final bool isLoading;
   final bool saving;
@@ -69,7 +62,6 @@ class DesktopAdaptersNotifier extends Notifier<DesktopAdaptersState> {
     }
   }
 
-  /// Takes one adapter over (or restores it). The switch on the card calls this.
   Future<DesktopApiException?> setAdapter(String adapterId, bool enable) =>
       _write(() async {
         await ref
@@ -77,7 +69,6 @@ class DesktopAdaptersNotifier extends Notifier<DesktopAdaptersState> {
             .setAdapterTakeover(adapterId, enable);
       });
 
-  /// `POST /takeover/enable|disable`: every physical adapter at once.
   Future<DesktopApiException?> setAll(bool enable) => _write(() async {
     await ref.read(desktopApiClientProvider).setTakeover(enable);
   });

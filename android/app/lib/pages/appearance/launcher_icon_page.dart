@@ -1,9 +1,3 @@
-/// Launcher icon picker: switches the home-screen icon between the built-in DITING mark and the
-/// bundled AdGuard shield.
-///
-/// Android cannot repaint an installed activity's icon at runtime, so the switch flips
-/// `activity-alias` components natively (`LauncherIconBridge.kt`). The choice is persisted and
-/// re-applied on launch.
 library;
 
 import 'package:diting_android/data/native/launcher_icon_bridge.dart';

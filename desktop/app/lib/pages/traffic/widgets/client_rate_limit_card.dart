@@ -1,8 +1,3 @@
-/// The token-bucket rate limit: one switch and the four numbers behind it.
-///
-/// The old desktop console's `ClientsPanel.vue` rate-limit card is the blueprint. The switch saves
-/// the whole form (as the console did), and the numbers are a draft until the save button is used,
-/// so a half-typed rate never reaches the service.
 library;
 
 import 'dart:async';

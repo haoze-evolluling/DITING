@@ -18,7 +18,6 @@ void main() {
     store.putLong('diting_settings', 'large', 9007199254740991);
     store.putStringSet('dns_vpn_prefs', 'tags', {'a', 'b'});
 
-    // A new adapter over the same SharedPreferences models the next app launch.
     final restored = SharedPreferencesLegacyPrefsStore(preferences);
     final restoredSettings = LegacySettings(restored);
     expect(restoredSettings.paletteRaw, 'gold');

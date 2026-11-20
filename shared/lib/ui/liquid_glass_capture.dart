@@ -1,20 +1,14 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'liquid_glass.dart';
 
-// A capture shrinks while a sigma of its frost spans two pixels; smaller shows blocks under glass.
 const double _captureFrost = 2;
 const int _maxDivisor = 8;
 const double _maxCaptureSide = 2048;
-// The blur of a downscaled capture read linearly, in its own pixels.
 const double _captureSoftness = 0.5;
-// How far content may paint past the bounds its layer was recorded for.
 const double _overflow = 64;
-// Impeller caches layer and blur targets by size for a few frames, so resizing misses them.
 const double _atlasStep = 32;
-// Past this many sigmas a pane takes under 1% of what it reads, so one painted there adds a level.
 const double _levelReach = 2.5;
 const double _heldFrostShare = 0.9;
-// Offsets into a pane's mapping, in the order of the shader's uniforms.
 const _hazeSample = 10;
 const _hazeShare = 18;
 const _veilColor = 19;
@@ -36,7 +30,6 @@ typedef LiquidGlassCapture = ({
   panes,
 });
 
-/// Draws the panes below from one capture of what lies behind them (.agents/architecture.md).
 class LiquidGlassHost extends StatelessWidget {
   const LiquidGlassHost({
     super.key,
@@ -53,7 +46,6 @@ class LiquidGlassHost extends StatelessWidget {
   @visibleForTesting
   static bool? debugCarryBandsOverride;
 
-  /// How many panes hold a capture, under a host or not.
   @visibleForTesting
   static int get debugHeldCaptures => _LiquidGlassLayer._capturesHeld;
 
@@ -68,7 +60,6 @@ class LiquidGlassHost extends StatelessWidget {
   }
 }
 
-/// Fades [child] as Core Animation fades a layer: the panes within still bend and fade with it.
 class LiquidGlassFade extends SingleChildRenderObjectWidget {
   const LiquidGlassFade({super.key, required this.opacity, super.child});
 
@@ -166,9 +157,6 @@ class _RenderLiquidGlassFade extends RenderProxyBox {
 
 class _LiquidGlassFadeLayer extends OpacityLayer {}
 
-/// Dims what it covers by [color], under [child], as a modal barrier does. An
-/// even scrim blurs to itself, so a pane above takes it from the shader rather
-/// than its capture, and a scrim fading renews none.
 class LiquidGlassVeil extends SingleChildRenderObjectWidget {
   const LiquidGlassVeil({super.key, required this.color, super.child});
 
@@ -340,7 +328,6 @@ class _RenderLiquidGlassHost extends RenderProxyBox {
     context.pushLayer(layer, super.paint, offset);
   }
 
-  // A pane captured on a pass still current would keep drawing from it.
   void _release() {
     if (_layer.layer != null) {
       _layer.layer = null;

@@ -1,9 +1,3 @@
-//! The desktop upstream settings the resolver wrapper consumes.
-//!
-//! These mirror `core.ResolverConfig`, but without the JSON tags: `diting-desktop-api` owns the
-//! wire shape, and the service converts it here so the resolver crate stays independent of the
-//! config file.
-
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Default)]
@@ -49,17 +43,13 @@ pub struct ResolverSettings {
     pub edns_padding: i64,
     pub fallback_providers: Vec<ProviderSettings>,
     pub fallback_timeout_ms: i64,
-    /// `None` means "not expressed" and selects the default FAIL/REFUSED set; `Some([])` means the
-    /// user explicitly removed every response code trigger.
     pub fallback_on_rcode: Option<Vec<i32>>,
     pub fallback_on_error: Option<bool>,
     pub race_max_parallel: i64,
 }
 
-/// `DefaultFallbackTimeoutMs`.
 pub const DEFAULT_FALLBACK_TIMEOUT_MS: i64 = 2000;
 
-/// `DefaultFallbackRcodes`: SERVFAIL and REFUSED, deliberately not NXDOMAIN.
 pub const DEFAULT_FALLBACK_RCODES: [i32; 2] = [2, 5];
 
 impl ResolverSettings {

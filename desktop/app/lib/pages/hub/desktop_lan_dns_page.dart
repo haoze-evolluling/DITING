@@ -1,9 +1,3 @@
-/// The `hub` branch's LAN DNS page: whether the resolver answers on `0.0.0.0:53`, which addresses a
-/// router or a phone should point at, and whether the host firewall lets those packets in.
-///
-/// The old desktop console's `DevicesView` → `LanDnsCard.vue` is the functional blueprint. Turning the
-/// service on also asks for the 53/tcp+udp rule, exactly as the console did; whether the host has a
-/// firewall manager is `/dns/lan`'s answer, not a guess here.
 library;
 
 import 'dart:async';
@@ -175,10 +169,6 @@ class _ServiceCard extends StatelessWidget {
 }
 
 
-/// Where the LAN listener is bound and which address other devices should use.
-///
-/// This was the second half of the service card; it is its own card now, because a switch with three
-/// address lists beside it made one card taller than the window.
 class _LanAddressesCard extends StatelessWidget {
   const _LanAddressesCard({required this.status});
 

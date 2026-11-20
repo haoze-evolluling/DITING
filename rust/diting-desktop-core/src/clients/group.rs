@@ -1,21 +1,9 @@
-//! Client IP to group resolution: longest-prefix matching.
-//!
-//! Ported from `client_groups.go`. Go sorted the compiled entries with
-//! `sort.SliceStable` by descending prefix length, so the first match is the
-//! longest prefix and equal-length entries keep declaration order. Rust's
-//! `slice::sort_by` is stable, which reproduces the same tie-break.
-//!
-//! Entries are accepted as either a plain IP (`/32` or `/128`) or a CIDR. A
-//! v4-mapped CIDR such as `::ffff:10.0.0.0/120` is folded to its four-byte
-//! network (`10.0.0.0/24`), matching Go's `net.IPNet` collapse.
-
 use std::net::IpAddr;
 
 use diting_desktop_api::config::ClientGroup;
 
 use super::DEFAULT_GROUP;
 
-/// Fold `::ffff:a.b.c.d` into `a.b.c.d`, the equivalent of Go's `net.IP.To4`.
 pub(crate) fn normalize_ip(ip: IpAddr) -> IpAddr {
     match ip {
         IpAddr::V6(v6) => match v6.to_ipv4_mapped() {
@@ -26,14 +14,12 @@ pub(crate) fn normalize_ip(ip: IpAddr) -> IpAddr {
     }
 }
 
-/// One compiled membership entry.
 #[derive(Clone, Debug)]
 struct Entry {
     group: String,
     net: Net,
 }
 
-/// A network in the address family it compares as.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Net {
     V4 { network: u32, prefix: u8 },
@@ -41,7 +27,6 @@ enum Net {
 }
 
 impl Net {
-    /// Parses a CIDR, or a bare IP as a host route.
     fn parse_entry(text: &str) -> Option<Self> {
         let text = text.trim();
         if let Some((address, prefix)) = text.split_once('/') {
@@ -74,7 +59,6 @@ impl Net {
                 })
             }
             IpAddr::V6(v6) => match v6.to_ipv4_mapped() {
-                // A mapped prefix keeps only the low four bytes, as `IPNet` does.
                 Some(v4) if prefix >= 96 => {
                     let prefix = prefix - 96;
                     Some(Net::V4 {
@@ -130,7 +114,6 @@ fn mask128(prefix: u8) -> u128 {
     }
 }
 
-/// Longest-prefix matcher compiled from the configured client groups.
 pub struct GroupResolver {
     enabled: bool,
     entries: Vec<Entry>,
@@ -138,8 +121,6 @@ pub struct GroupResolver {
 }
 
 impl GroupResolver {
-    /// Compiles the enabled groups. Invalid members and unusable group ids are
-    /// skipped and returned as diagnostics; the resolver stays usable.
     pub fn new(groups: &[ClientGroup], enabled: bool) -> (Self, Vec<String>) {
         let configured = groups.to_vec();
         if !enabled {
@@ -178,7 +159,6 @@ impl GroupResolver {
             }
         }
 
-        // Longest prefix first; `sort_by_key` is stable so equal lengths keep declaration order.
         entries.sort_by_key(|entry| std::cmp::Reverse(entry.net.prefix_len()));
 
         (
@@ -191,7 +171,6 @@ impl GroupResolver {
         )
     }
 
-    /// Returns the matching group id, or `"default"`.
     pub fn resolve(&self, ip: IpAddr) -> String {
         if !self.enabled {
             return DEFAULT_GROUP.to_string();
@@ -203,7 +182,6 @@ impl GroupResolver {
             .unwrap_or_else(|| DEFAULT_GROUP.to_string())
     }
 
-    /// The groups this resolver was configured with (including disabled ones).
     pub fn groups(&self) -> Vec<ClientGroup> {
         self.groups.clone()
     }

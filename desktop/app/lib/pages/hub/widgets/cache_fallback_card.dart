@@ -1,9 +1,3 @@
-/// Weak-network fallback: serve a stale record while the upstreams falter, and the optimistic mode
-/// that answers with the old value before refreshing it.
-///
-/// The old desktop console's `CacheConfigCard.vue` holds these under the TTL form; here they are their
-/// own card because three switches and a number do not belong in the same card as the mode picker.
-/// The switches save on the spot; the stale window is a draft that saves with its button.
 library;
 
 import 'dart:async';

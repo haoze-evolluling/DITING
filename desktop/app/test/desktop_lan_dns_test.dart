@@ -1,6 +1,3 @@
-// Desktop LAN DNS service (desktop parity): the listen addresses, the
-// host's LAN addresses and the 53-port firewall rule, all from `/dns/lan`. Each write re-reads it.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_lan_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_lan_dns_page.dart';
@@ -43,18 +40,14 @@ void main() {
     await pumpLan(tester);
     final l10n = l10nOf(tester);
 
-    // Page title and card title carry the same name.
     expect(find.text(l10n.desktopLanDnsServiceTitle), findsNWidgets(2));
     expect(find.text(l10n.desktopLanDnsOffChip), findsOneWidget);
-    // Listen addresses come from the service, both stacks.
     expect(find.text('127.0.0.1:53'), findsOneWidget);
-    // The LAN addresses are listed as copyable rows, tagged by family.
     expect(find.text('192.168.1.10'), findsWidgets);
     expect(find.text('fe80::1'), findsOneWidget);
     expect(find.text(l10n.desktopLanDnsIpv4), findsWidgets);
     expect(find.text(l10n.desktopLanDnsIpv6), findsOneWidget);
     expect(find.byType(DesktopCopyRow), findsWidgets);
-    // Both guides show the first LAN address.
     expect(find.text(l10n.desktopLanDnsRouterTitle), findsOneWidget);
     expect(find.text(l10n.desktopLanDnsDeviceTitle), findsOneWidget);
     expect(
@@ -147,7 +140,6 @@ void main() {
 
   testWidgets('写被拒时说明原因且开关保持服务端值', (tester) async {
     final backend = await pumpLan(tester);
-    // Reject every write from here on; the page must keep what the service still reports.
     backend.rejectWrites = true;
     final l10n = l10nOf(tester);
 
@@ -158,7 +150,6 @@ void main() {
       find.text(l10n.desktopLanDnsFailed('write rejected')),
       findsOneWidget,
     );
-    // The request went out and was rejected: the switch stays where the service is.
     expect(backend.lanUpdates, hasLength(1));
     final toggle = tester.widget<DashboardSwitch>(
       find.byType(DashboardSwitch),

@@ -64,7 +64,6 @@ fn schedule(start: &str, end: &str) -> BlockingSchedule {
     }
 }
 
-/// A one-minute window that contains the current local minute.
 fn active_now_window() -> (String, String) {
     let now = Local::now();
     let minute = now.hour() * 60 + now.minute();
@@ -104,12 +103,10 @@ fn custom_rules_block_allow_important_denyallow_and_dnstype() {
     assert_eq!(allowed.action, VerdictAction::Allow);
     assert_eq!(allowed.reason, REASON_WHITELIST);
 
-    // $important allow wins over $important block.
     let important = engine.check("important.test", A, DEFAULT_CLIENT_GROUP_ID);
     assert_eq!(important.action, VerdictAction::Allow);
     assert_eq!(important.reason, REASON_IMPORTANT_ALLOW);
 
-    // $denyallow excludes the query target from the block rule.
     assert!(
         engine
             .check("trusted.excluded.test", A, DEFAULT_CLIENT_GROUP_ID)
@@ -122,7 +119,6 @@ fn custom_rules_block_allow_important_denyallow_and_dnstype() {
             .blocked
     );
 
-    // $dnstype restricts the rule to one query type.
     assert!(
         !engine
             .check("typed.test", A, DEFAULT_CLIENT_GROUP_ID)
@@ -187,7 +183,7 @@ fn global_schedule_gates_the_engine() {
     config.custom_rules = vec!["||ads.test^".into()];
 
     config.schedule_enabled = true;
-    config.schedules = vec![schedule("00:00", "00:00")]; // zero-length: never active
+    config.schedules = vec![schedule("00:00", "00:00")];
     let inactive = RuleEngine::new(config.clone());
     assert!(!inactive.is_enabled());
     let result = inactive.check("ads.test", A, DEFAULT_CLIENT_GROUP_ID);
@@ -207,7 +203,7 @@ fn per_group_schedule_overrides_global() {
     let mut config = base_config(&dir);
     config.custom_rules = vec!["||ads.test^".into()];
     config.schedule_enabled = true;
-    config.schedules = vec![schedule("00:00", "00:00")]; // globally closed
+    config.schedules = vec![schedule("00:00", "00:00")];
 
     let (start, end) = active_now_window();
     let engine = RuleEngine::new(config);
@@ -270,7 +266,6 @@ fn rewrite_rules_produce_answers_and_nodata() {
     assert_eq!(rewritten.records[0].ttl, REWRITE_TTL);
     assert_eq!(rewritten.summary.len(), 1);
 
-    // Type mismatch yields authoritative NODATA, not a pass to the upstream.
     let nodata = engine.check("r.test", AAAA, DEFAULT_CLIENT_GROUP_ID);
     assert_eq!(nodata.action, VerdictAction::Rewrite);
     assert!(nodata.rewritten.expect("nodata result").records.is_empty());
@@ -424,9 +419,7 @@ fn group_matchers_only_include_selected_lists() {
         }],
     });
 
-    // The global matcher still sees every list.
     assert!(engine.check("two.test", A, DEFAULT_CLIENT_GROUP_ID).blocked);
-    // The group matcher sees only its selected list, plus custom/service rules.
     assert!(engine.check("one.test", A, "kids").blocked);
     assert!(!engine.check("two.test", A, "kids").blocked);
     assert!(engine.check("custom.test", A, "kids").blocked);
@@ -471,6 +464,5 @@ fn check_host_is_read_only() {
     assert!(engine.check_host("ADS.test.", A).blocked);
     assert_eq!(engine.stats().total_queries, 0);
     engine.set_paused(true, 60);
-    // `CheckHost` ignores the pause, just like Go.
     assert!(engine.check_host("ads.test", A).blocked);
 }

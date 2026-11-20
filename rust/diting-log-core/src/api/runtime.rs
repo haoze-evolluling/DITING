@@ -1,16 +1,9 @@
-//! The runtime-log capture group: the file listing and export document, the `logcat` plan and byte
-//! budget, and the `dns_cache` projection.
-//!
-//! These three Kotlin classes are the last of the `log` package and they are mostly I/O, so the
-//! payloads here are deliberately thin: a listing in, a listing out; a line in, a budget out.
-
 use crate::capture::{self, Session};
 use crate::mirror::{self, Entry as MirrorEntry};
 use crate::payload::{Reader, Writer};
 use crate::runtime_event::{Event, Gate, Level};
 use crate::store::{self, Entry, Section};
 
-/// `u32 count | rows(string name, i64 last_modified, i64 length)`.
 fn read_entries(reader: &mut Reader<'_>) -> Option<Vec<Entry>> {
     let count = reader.u32()? as usize;
     let mut entries = Vec::with_capacity(count.min(4096));
@@ -33,7 +26,6 @@ fn write_entries(writer: &mut Writer, entries: &[Entry]) {
     }
 }
 
-/// One directory listing; answers the `.log` files newest-first plus how many a trim keeps.
 pub fn store_index(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let entries = read_entries(&mut reader)?;
@@ -47,7 +39,6 @@ pub fn store_index(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `u32 count | rows(string name, u8 hasContent, string content) | string crash | string exportedAt`.
 pub fn store_document(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
@@ -77,9 +68,6 @@ pub fn store_document(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// The watchdog cadence and the `logcat` attempts a capture needs before it starts.
-///
-/// Answers `i64 watch | u32 count | rows(u32 argc, strings...)`.
 pub fn capture_plan(pid: i32, uid: i32, detailed: bool) -> Vec<u8> {
     let mut writer = Writer::new();
     writer.i64(capture::WATCH_INTERVAL_MS);
@@ -94,7 +82,6 @@ pub fn capture_plan(pid: i32, uid: i32, detailed: bool) -> Vec<u8> {
     writer.into_vec()
 }
 
-/// `string line`; answers `i64 written | u8 rotate`.
 pub fn capture_line(session: &Session, payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let line = reader.string()?;
@@ -108,10 +95,6 @@ pub fn capture_line(session: &Session, payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-/// `string timeText | u8 levelTag | string module | string code | u32 fieldCount | rows(string key, string value)`.
-///
-/// Answers `u8 wrote | string line`: `line` is empty when the level filtered the event or the
-/// de-duplication window swallowed it, so the Kotlin writer only appends on `wrote == 1`.
 pub fn runtime_event_line(gate: &mut Gate, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let time_text = reader.string()?;
@@ -147,7 +130,6 @@ pub fn runtime_event_line(gate: &mut Gate, payload: &[u8], now_ms: i64) -> Optio
     Some(writer.into_vec())
 }
 
-/// The projection's three numbers.
 pub fn mirror_layout() -> Vec<u8> {
     let layout = mirror::layout();
     let mut writer = Writer::new();
@@ -157,7 +139,6 @@ pub fn mirror_layout() -> Vec<u8> {
     writer.into_vec()
 }
 
-/// `u32 count | rows(...)` in and out; the answer adds the two constant columns.
 pub fn mirror_rows(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
@@ -184,7 +165,6 @@ pub fn mirror_rows(payload: &[u8]) -> Option<Vec<u8>> {
     writer.u32(entries.len() as u32);
     for entry in entries {
         let row = mirror::project(entry);
-        // `u32 count | rows(u32 length | bytes)`: `DnsCacheMirror` binds one blob per row.
         writer.blob(&pack_mirror_row(&row));
     }
     Some(writer.into_vec())
@@ -231,8 +211,8 @@ mod tests {
         ]))
         .unwrap();
         let mut reader = Reader::new(&answer);
-        assert_eq!(reader.u32(), Some(2)); // keep, both fit
-        assert_eq!(reader.u32(), Some(2)); // listing count
+        assert_eq!(reader.u32(), Some(2));
+        assert_eq!(reader.u32(), Some(2));
         assert_eq!(reader.string().as_deref(), Some("b.log"));
         assert_eq!(reader.i64(), Some(3));
         assert_eq!(reader.i64(), Some(20));
@@ -257,7 +237,7 @@ mod tests {
         writer.u8(1);
         writer.string("body");
         writer.string("runtime-2.log");
-        writer.u8(0); // unreadable: no content follows
+        writer.u8(0);
         writer.string("crash block");
         writer.string("stamp");
         let answer = store_document(&writer.into_vec()).unwrap();
@@ -360,7 +340,6 @@ mod tests {
         assert!(reader.finish());
         assert_eq!(session.written(), 6);
 
-        // A line that pushes the counter over the cap asks for a new file.
         let filler = "x".repeat((store::MAX_FILE_BYTES - 8) as usize);
         let mut writer = Writer::new();
         writer.string(&filler);
@@ -422,7 +401,6 @@ mod tests {
         assert_eq!(store_index(&[0, 0, 0, 1]), None);
         assert_eq!(store_document(&[0, 0, 0, 1]), None);
         assert_eq!(mirror_rows(&[0, 0, 0, 1]), None);
-        // An unknown presence byte on a section is drift too.
         let mut writer = Writer::new();
         writer.u32(1);
         writer.string("runtime.log");

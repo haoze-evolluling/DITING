@@ -1,9 +1,3 @@
-//! `bootstrap_custom_json`: the user's own bootstrap addresses.
-//!
-//! The row keeps `enabled` because the settings page toggles it, while the document only carries
-//! the enabled ones. Ids and names are filled in from the address when blank — that fallback is the
-//! reason a row pasted twice does not produce two different rows.
-
 use serde::Serialize;
 use serde_json::Value;
 
@@ -23,7 +17,6 @@ struct BootstrapRowRecord<'a> {
     enabled: bool,
 }
 
-/// Reads the custom rows; a row without an address, or of the wrong shape, is dropped.
 pub fn parse_custom(raw: Option<&str>) -> Vec<BootstrapRow> {
     let Some(raw) = raw else {
         return Vec::new();
@@ -75,7 +68,6 @@ pub fn parse_custom(raw: Option<&str>) -> Vec<BootstrapRow> {
     rows
 }
 
-/// Writes the rows back in the four-field shape the settings page edits.
 pub fn encode_custom(rows: &[BootstrapRow]) -> String {
     let records: Vec<BootstrapRowRecord<'_>> = rows
         .iter()

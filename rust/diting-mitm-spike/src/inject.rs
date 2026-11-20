@@ -1,25 +1,3 @@
-//! The response side of the relay: `Accept-Encoding` stripping and the streaming injected body.
-//!
-//! `mitm_relay.go` + `mitm_common.go` did four things here, and each one has a counterpart:
-//!
-//! 1. `requestAcceptsHTML(req)` → `req.Header.Del("Accept-Encoding")` so the upstream sends the page
-//!    uncompressed and the scanner can splice into it while it streams ([`strip_accept_encoding`]).
-//! 2. `ShouldInjectHTML(contentType)` → [`is_html`].
-//! 3. `wrapResponseForInjection` → [`inject_html`]: pick a decoder from `Content-Encoding`
-//!    (`gzip`, `deflate`, identity), splice the `<link>` with the kernel's scanner, and drop the
-//!    headers that no longer describe the body.
-//! 4. `injectingReader` → [`InjectingReader`], the `AsyncRead` adapter around
-//!    [`diting_cosmetic_core::Injector`].
-//!
-//! Two deliberate differences from Go:
-//!
-//! * `deflate` is disambiguated from the two-byte zlib header instead of "read the whole body, try
-//!   zlib, retry as raw deflate". Go buffered the entire page in memory for that fallback; sniffing
-//!   is exact for every valid zlib stream and keeps the body streaming.
-//! * an injected response is chunked, so the connection stays usable. Go had to force
-//!   `Connection: close` because `net/http` refuses to chunk a response whose `Uncompressed` flag is
-//!   set; hyper frames an unknown-length body itself, and `keep-alive` survives.
-
 use std::io;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -38,23 +16,16 @@ use tokio_util::io::{ReaderStream, StreamReader};
 
 use crate::{BoxError, ResponseBody};
 
-/// How much the adapter asks the upstream (or the decoder) for per poll.
-///
-/// Larger than the kernel's 16 KiB scan limit on purpose: the link tag is spliced into the caller's
-/// buffer, and the buffer has to have room for `n + tag.len()` so a splice never has to park bytes.
 pub const READ_CHUNK: usize = 16 * 1024;
 
-/// `requestAcceptsHTML`.
 pub fn request_accepts_html(accept: &str) -> bool {
     accept.to_ascii_lowercase().contains("text/html")
 }
 
-/// `ShouldInjectHTML`.
 pub fn is_html(content_type: &str) -> bool {
     content_type.to_ascii_lowercase().contains("text/html")
 }
 
-/// `if requestAcceptsHTML(req) { req.Header.Del("Accept-Encoding") }`.
 pub fn strip_accept_encoding(headers: &mut HeaderMap) {
     let accepts_html = headers
         .get(http::header::ACCEPT)
@@ -65,7 +36,6 @@ pub fn strip_accept_encoding(headers: &mut HeaderMap) {
     }
 }
 
-/// Returns the body untouched, re-boxed so every branch of the relay has one body type.
 pub fn passthrough(upstream: Response<Incoming>) -> Response<ResponseBody> {
     let (parts, body) = upstream.into_parts();
     Response::from_parts(parts, passthrough_body(body))
@@ -76,10 +46,6 @@ fn passthrough_body(body: Incoming) -> ResponseBody {
         .boxed_unsync()
 }
 
-/// Decodes (when needed), splices the cosmetic `<link>` in, and re-frames the body as chunked.
-///
-/// The caller has already checked [`is_html`] and that a `<link>` tag exists; an encoding the relay
-/// does not know is left alone (`default: return` in Go's `wrapResponseForInjection`).
 pub async fn inject_html(upstream: Response<Incoming>, link: &str) -> Response<ResponseBody> {
     let (mut parts, body) = upstream.into_parts();
     let encoding = parts
@@ -97,7 +63,6 @@ pub async fn inject_html(upstream: Response<Incoming>, link: &str) -> Response<R
         "gzip" => Box::new(GzipDecoder::new(BufReader::new(body_reader(body)))),
         "deflate" => {
             let mut buffered = BufReader::new(body_reader(body));
-            // `fill_buf` does not consume: the decoder still sees the two bytes it was sniffed on.
             let head = match buffered.fill_buf().await {
                 Ok(head) => head.to_vec(),
                 Err(_) => Vec::new(),
@@ -111,8 +76,6 @@ pub async fn inject_html(upstream: Response<Incoming>, link: &str) -> Response<R
         _ => Box::new(body_reader(body)),
     };
 
-    // The headers Go dropped: the body length, the encoding and the framing are all decided here
-    // now, and the injected page is no longer covered by the upstream's CSP.
     parts.headers.remove(http::header::CONTENT_LENGTH);
     parts.headers.remove(CONTENT_ENCODING);
     parts.headers.remove(http::header::TRANSFER_ENCODING);
@@ -134,7 +97,6 @@ fn body_reader(
     StreamReader::new(stream)
 }
 
-/// Whether `head` starts a zlib stream (`RFC 1950`: `CM == 8`, `CINFO <= 7`, `(CMF<<8|FLG) % 31 == 0`).
 pub fn is_zlib_stream(head: &[u8]) -> bool {
     if head.len() < 2 {
         return false;
@@ -144,14 +106,11 @@ pub fn is_zlib_stream(head: &[u8]) -> bool {
     (cmf & 0x0f) == 8 && (cmf >> 4) <= 7 && (u16::from(cmf) * 256 + u16::from(flg)) % 31 == 0
 }
 
-/// `injectingReader`: an `AsyncRead` that runs everything it reads through the cosmetic scanner.
 pub struct InjectingReader<R> {
     inner: R,
     injector: Injector,
-    /// Bytes the scanner produced that the caller's buffer had no room for.
     pending: Vec<u8>,
     pending_at: usize,
-    /// Scratch buffer handed to the upstream/decoder, then to the scanner.
     scratch: Vec<u8>,
     done: bool,
 }
@@ -168,14 +127,10 @@ impl<R> InjectingReader<R> {
         }
     }
 
-    /// Whether the scanner already spliced the tag in (or gave up scanning).
     pub fn injected(&self) -> bool {
         self.injector.injected()
     }
 
-    /// Moves what the scanner had to park (a splice that did not fit the scratch buffer) into the
-    /// adapter's own queue. Without this, a `<head>` close to a chunk boundary would lose the tail of
-    /// the tag: `Injector::process` only ever reports `out_len`, the rest waits in its `pending`.
     fn take_injector_pending(&mut self) {
         let want = self.injector.pending_len();
         self.pending.resize(want, 0);
@@ -239,8 +194,6 @@ impl<R: AsyncRead + Unpin> AsyncRead for InjectingReader<R> {
             this.pending_at = 0;
             this.pending.extend_from_slice(&this.scratch[..produced]);
             if n == 0 && this.pending.is_empty() && this.injector.pending_len() == 0 {
-                // Clean end of the upstream body. A partial `<head` still parked in the scanner's
-                // carry is dropped here, exactly like the Go reader did.
                 this.done = true;
             }
         }
@@ -309,7 +262,6 @@ mod tests {
         let mut out = Vec::new();
         reader.read_to_end(&mut out).await.expect("read");
         assert_eq!(out, payload, "no byte is touched without a <head>");
-        // The scanner gives up past its 16 KiB limit, which is what marks the body as "not a page".
         assert!(reader.injector.scanned() > diting_cosmetic_core::SCAN_LIMIT);
     }
 
@@ -333,8 +285,6 @@ mod tests {
         );
     }
 
-    /// `<head>` landing inside the last bytes of a full chunk makes the splice overflow the scratch
-    /// buffer, so the scanner parks the tail and the adapter has to serve it before reading more.
     #[tokio::test]
     async fn an_injection_at_a_full_chunk_boundary_keeps_every_byte() {
         let filler = vec![b'a'; READ_CHUNK - 10];
@@ -353,8 +303,6 @@ mod tests {
         assert_eq!(reader.injector.pending_len(), 0);
     }
 
-    /// A reader that hands out at most `fragment` bytes per poll, so the scanner sees the splits a
-    /// real network delivers.
     struct Fragmented {
         chunks: std::collections::VecDeque<Vec<u8>>,
         current: Vec<u8>,

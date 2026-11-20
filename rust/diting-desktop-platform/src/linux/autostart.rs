@@ -1,5 +1,3 @@
-//! XDG desktop-entry autostart (`~/.config/autostart/diting.desktop`).
-
 use std::path::{Path, PathBuf};
 
 use diting_desktop_api::platform_types::{
@@ -11,7 +9,6 @@ use crate::traits::AutoStartManager;
 
 use super::files;
 
-/// XDG autostart manager for the Linux desktop.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct LinuxAutoStart;
 
@@ -70,7 +67,6 @@ impl AutoStartManager for LinuxAutoStart {
     }
 }
 
-/// Absolute XDG autostart entry path, or `None` when no home directory is known.
 pub(crate) fn desktop_file_path() -> Option<PathBuf> {
     let config_dir = match std::env::var_os("XDG_CONFIG_HOME") {
         Some(value) if !value.is_empty() => PathBuf::from(value),
@@ -82,7 +78,6 @@ pub(crate) fn desktop_file_path() -> Option<PathBuf> {
     Some(config_dir.join("autostart").join("diting.desktop"))
 }
 
-/// Whether the XDG entry exists and (when parseable) points at an existing executable.
 pub(crate) fn xdg_auto_start_present() -> bool {
     let Some(path) = desktop_file_path() else {
         return false;
@@ -90,7 +85,6 @@ pub(crate) fn xdg_auto_start_present() -> bool {
     let Ok(content) = std::fs::read_to_string(path) else {
         return false;
     };
-    // File existence alone would report an entry whose Exec no longer exists as enabled.
     let executable = parse_desktop_exec(&content);
     if executable.is_empty() {
         return true;
@@ -100,7 +94,6 @@ pub(crate) fn xdg_auto_start_present() -> bool {
         .unwrap_or(false)
 }
 
-/// Extracts the executable from an `Exec=` line (honoring quotes and backslash escapes).
 pub(crate) fn parse_desktop_exec(content: &str) -> String {
     for line in content.split('\n') {
         let Some(value) = line.strip_prefix("Exec=") else {
@@ -132,7 +125,6 @@ pub(crate) fn parse_desktop_exec(content: &str) -> String {
     String::new()
 }
 
-/// Quotes an executable path following the Desktop Entry escaping rules.
 fn exec_value(path: &str) -> String {
     let mut quoted = String::from("\"");
     for character in path.chars() {

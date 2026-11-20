@@ -1,8 +1,3 @@
-/// The built-in service catalogue and what is blocked: `/api/v1/filter/services`.
-///
-/// A service is blocked either by its own id or because its whole group is blocked. The service
-/// returns the full state after every write, including each service's weekly plan and whether that
-/// plan is inside its window right now.
 library;
 
 import 'package:diting_desktop/data/api/desktop_schedule_models.dart';
@@ -18,7 +13,6 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// One catalogue entry.
 class DesktopBlockedService {
   const DesktopBlockedService({
     required this.id,
@@ -43,13 +37,11 @@ class DesktopBlockedService {
   final String name;
   final String group;
 
-  /// The expanded rule text, for the "show rules" disclosure.
   final List<String> rules;
   final int ruleCount;
   final String source;
 }
 
-/// A catalogue group and how many services it holds.
 class DesktopServiceGroup {
   const DesktopServiceGroup({
     required this.id,
@@ -69,7 +61,6 @@ class DesktopServiceGroup {
   final int count;
 }
 
-/// The whole answer: the catalogue, the current choice and the per-service plans.
 class DesktopBlockedServices {
   const DesktopBlockedServices({
     required this.services,
@@ -122,7 +113,6 @@ class DesktopBlockedServices {
   final Set<String> blockedGroups;
   final int activeRules;
 
-  /// Keyed by service id; a service with no plan is absent.
   final Map<String, List<DesktopSchedule>> schedules;
   final Map<String, DesktopServiceScheduleState> scheduleStates;
 

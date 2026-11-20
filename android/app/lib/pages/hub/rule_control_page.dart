@@ -10,10 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rule control (upstream `RuleControlScreen`): the master switch, URL rules, and the blocking
-/// policy group split into rule diagnostics, blocking controls and domain lists. Subscriptions,
-/// network-privacy and interface entries each live in their own feature-hub category; the scenario
-/// automation entry sits here because it decides how blocking rules are driven.
 class RuleControlPage extends ConsumerWidget {
   const RuleControlPage({super.key});
 
@@ -25,8 +21,6 @@ class RuleControlPage extends ConsumerWidget {
     final blockMode = BlockResponseMode.fromStorage(
       settings.blockResponseModeRaw,
     );
-    // CA readiness comes from the real channel: `caReadyProvider` reads
-    // `CaCertificateService.inspect()`, so an installed certificate is not reported as missing.
     final caReady = ref.watch(caReadyProvider);
     final inspectionApps = settings.httpInspectionPackages;
     final footnote = AppTextRole.supportingText
@@ -69,9 +63,6 @@ class RuleControlPage extends ConsumerWidget {
                   ref.read(legacySettingsRevisionProvider.notifier).bump();
                 },
               ),
-              // HTTPS traffic inspection only exists on the normal full tunnel; express is a
-              // DNS-only route, so the URL-rules entry would open a page whose switches can never
-              // take effect.
               if (isNormal)
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.target),
@@ -170,9 +161,6 @@ class RuleControlPage extends ConsumerWidget {
   }
 }
 
-/// Block response settings (upstream `BlockResponseSettingsScreen`), persisted in
-/// `dns_vpn_prefs` (`block_response_mode` plus four `dynamic_block_*` keys) and published
-/// by `buildDnsConfig` on next start.
 class BlockResponsePage extends ConsumerWidget {
   const BlockResponsePage({super.key});
 
@@ -291,7 +279,6 @@ class _DynamicParameterDialogState extends State<_DynamicParameterDialog> {
     final window = int.tryParse(_window.text);
     final duration = int.tryParse(_duration.text);
     String? error;
-    // Upstream clamps: 2-100 requests, 10-300 s window, 60-3600 s hold.
     if (threshold == null || threshold < 2 || threshold > 100) {
       error = context.l10n.blockResponseThresholdError;
     } else if (window == null || window < 10 || window > 300) {

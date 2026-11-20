@@ -1,28 +1,11 @@
-//! Log-row normalization: what one engine callback becomes in the log tables.
-//!
-//! The JSON decode stays in Kotlin (`org.json`, and the engine's field letters are its own
-//! contract). Everything after that — the result classification, the log-mode filter, the
-//! `message` assembly, the id extraction and the blank defaults — is here, so the DNS, HTTP, race
-//! and bootstrap tables cannot end up with four different ideas of "blank".
-//!
-//! `is_blank` is Kotlin's `Char.isBlank()` over the text: `Char.isWhitespace() ||
-//! Char.isSpaceChar()`, which differs from Rust's `char::is_whitespace` only for `U+0085` (and
-//! `U+001C..U+001F`, which are not reachable through a domain or a package name).
-
-/// Kotlin's `String.isBlank()`.
 pub fn is_blank(text: &str) -> bool {
     text.trim().is_empty()
 }
 
-/// Kotlin's `String.lowercase()` (locale-independent, Unicode default case conversion).
-///
-/// The DNS query name and the bootstrap host were folded with it; Rust's `to_lowercase` follows the
-/// same Unicode tables, so only a table-version difference is possible for exotic scripts.
 pub fn lowercase(text: &str) -> String {
     text.to_lowercase()
 }
 
-/// The three log modes the engine pushes (`DnsLogWriter.MODE_*`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogMode {
     All,
@@ -31,7 +14,6 @@ pub enum LogMode {
 }
 
 impl LogMode {
-    /// Tag from the Kotlin payload; an unknown tag is drift, not a silent default.
     pub fn from_tag(tag: u8) -> Option<Self> {
         match tag {
             0 => Some(Self::All),
@@ -42,7 +24,6 @@ impl LogMode {
     }
 }
 
-/// One decoded engine DNS log entry, before classification.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct DnsInput {
     pub timestamp: i64,
@@ -57,7 +38,6 @@ pub struct DnsInput {
     pub elapsed_ms: i64,
 }
 
-/// `dns_log`'s `result` column.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DnsResult {
     Error,
@@ -86,7 +66,6 @@ impl DnsResult {
     }
 }
 
-/// One `dns_log` row.
 #[derive(Debug, Clone, PartialEq)]
 pub struct DnsRow {
     pub timestamp: i64,
@@ -99,7 +78,6 @@ pub struct DnsRow {
     pub package_name: Option<String>,
 }
 
-/// The classification `DnsLogWriter.toEntity` performed.
 pub fn dns_result(input: &DnsInput) -> DnsResult {
     if !is_blank(&input.error) {
         DnsResult::Error
@@ -112,9 +90,6 @@ pub fn dns_result(input: &DnsInput) -> DnsResult {
     }
 }
 
-/// `DnsLogWriter.toEntity`: None when the row is skipped (no domain, or filtered by the log mode).
-///
-/// `now_ms` is injected: the Kotlin default for a missing `ts` was `System.currentTimeMillis()`.
 pub fn dns_row(input: &DnsInput, mode: LogMode, now_ms: i64) -> Option<DnsRow> {
     if is_blank(&input.domain) {
         return None;
@@ -124,7 +99,6 @@ pub fn dns_row(input: &DnsInput, mode: LogMode, now_ms: i64) -> Option<DnsRow> {
         return None;
     }
 
-    // `listOfNotNull(...).joinToString(", ")`, empty becomes NULL.
     let mut parts: Vec<String> = Vec::new();
     if !is_blank(&input.app) {
         parts.push(format!("app={}", input.app));
@@ -167,13 +141,6 @@ pub fn dns_row(input: &DnsInput, mode: LogMode, now_ms: i64) -> Option<DnsRow> {
     })
 }
 
-/// `subscriptionIdOf`: walk the comma-separated `blocked_by` tokens and take the first `sub_<id>`.
-///
-/// The source tag is not always the whole token. DNS rule hits carry it bare (`sub_5`), but the
-/// connection-layer SNI/Host gate prefixes its reason with a marker (`conn:host:sub_5`), and a
-/// firewall reason can be followed by it (`firewall:1, sub_9`). The tag therefore also counts when
-/// it is the tail after the last `:`, so a subscription block is attributed no matter which log
-/// path recorded it.
 pub fn subscription_id(blocked_by: &str) -> Option<i64> {
     blocked_by.split(',').map(str::trim).find_map(|token| {
         parse_sub_id(token).or_else(|| {
@@ -184,14 +151,12 @@ pub fn subscription_id(blocked_by: &str) -> Option<i64> {
     })
 }
 
-/// `sub_<id>` → the id when the whole token is exactly one source tag.
 fn parse_sub_id(token: &str) -> Option<i64> {
     token
         .strip_prefix("sub_")
         .and_then(|rest| rest.parse::<i64>().ok())
 }
 
-/// One decoded MITM HTTP event.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct HttpInput {
     pub package_name: String,
@@ -201,7 +166,6 @@ pub struct HttpInput {
     pub matched_rule: String,
 }
 
-/// One `http_request_log` row.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HttpRow {
     pub timestamp: i64,
@@ -213,11 +177,6 @@ pub struct HttpRow {
     pub block_subscription_id: Option<i64>,
 }
 
-/// `HttpRequestLogWriter.onEvent`'s row; None when the mode hides the event.
-///
-/// The outcome used for the counters is the blank-defaulted one, while the pass-through filter
-/// compares the *raw* outcome — that is what the Kotlin did, and `""` is therefore not a
-/// pass-through.
 pub fn http_row(input: &HttpInput, mode: LogMode, now_ms: i64) -> Option<HttpRow> {
     let outcome = normalized_outcome(&input.outcome);
     if mode == LogMode::Off {
@@ -237,13 +196,10 @@ pub fn http_row(input: &HttpInput, mode: LogMode, now_ms: i64) -> Option<HttpRow
         protocol: input.protocol.clone(),
         outcome,
         matched_rule: optional_text(&input.matched_rule),
-        // A domain rule hit stores its source tag (`sub_<id>`) in the matched rule; a request-rule
-        // pattern has no tag, so this stays NULL and the row is not attributed to a subscription.
         block_subscription_id: subscription_id(&input.matched_rule),
     })
 }
 
-/// `outcome.ifBlank { "error" }`, shared by the counters and the row.
 pub fn normalized_outcome(outcome: &str) -> String {
     if is_blank(outcome) {
         "error".to_string()
@@ -252,12 +208,10 @@ pub fn normalized_outcome(outcome: &str) -> String {
     }
 }
 
-/// `PASS_THROUGH_OUTCOMES` — events the `blocked_and_errors` mode hides.
 pub fn is_pass_through(outcome: &str) -> bool {
     matches!(outcome, "allowed" | "passthrough")
 }
 
-/// `blank -> None` for a nullable column.
 pub fn optional_text(value: &str) -> Option<String> {
     if is_blank(value) {
         None
@@ -266,7 +220,6 @@ pub fn optional_text(value: &str) -> Option<String> {
     }
 }
 
-/// One engine race result (`RaceLogCallback`).
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct RaceInput {
     pub query_name: String,
@@ -284,7 +237,6 @@ pub struct RaceInput {
     pub error_message: String,
 }
 
-/// One `dns_race_log` row (the two provider-name columns stay NULL: Dart resolves the ids).
 #[derive(Debug, Clone, PartialEq)]
 pub struct RaceRow {
     pub timestamp: i64,
@@ -303,7 +255,6 @@ pub struct RaceRow {
     pub message: Option<String>,
 }
 
-/// `RaceLogWriter.write`: None when there is no query name to key the row on.
 pub fn race_row(input: &RaceInput, now_ms: i64) -> Option<RaceRow> {
     if is_blank(&input.query_name) {
         return None;
@@ -317,7 +268,6 @@ pub fn race_row(input: &RaceInput, now_ms: i64) -> Option<RaceRow> {
         success: input.success,
         elapsed_ms: input.elapsed_ms,
         selected_provider_id: optional_text(&input.selected_provider_id),
-        // `takeIf { it > 0 }`.
         selected_elapsed_ms: (input.selected_elapsed_ms > 0).then_some(input.selected_elapsed_ms),
         winner_provider_id: optional_text(&input.winner_provider_id),
         winner_elapsed_ms: (input.winner_elapsed_ms > 0).then_some(input.winner_elapsed_ms),
@@ -327,7 +277,6 @@ pub fn race_row(input: &RaceInput, now_ms: i64) -> Option<RaceRow> {
     })
 }
 
-/// One bootstrap probe result (`BootstrapLogCallback`).
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct BootstrapInput {
     pub ip_id: String,
@@ -340,7 +289,6 @@ pub struct BootstrapInput {
     pub error_message: String,
 }
 
-/// One `bootstrap_log` row.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BootstrapRow {
     pub timestamp: i64,
@@ -354,7 +302,6 @@ pub struct BootstrapRow {
     pub message: Option<String>,
 }
 
-/// `BootstrapLogWriter.write`: None when the host is blank.
 pub fn bootstrap_row(input: &BootstrapInput, now_ms: i64) -> Option<BootstrapRow> {
     if is_blank(&input.host) {
         return None;
@@ -366,7 +313,6 @@ pub fn bootstrap_row(input: &BootstrapInput, now_ms: i64) -> Option<BootstrapRow
         } else {
             input.ip_id.clone()
         },
-        // `ipName.ifBlank { ipId }` falls back to the *raw* id, not the "unknown" default.
         ip_name: if is_blank(&input.ip_name) {
             input.ip_id.clone()
         } else {
@@ -402,7 +348,6 @@ mod tests {
         assert_eq!(dns_result(&input), DnsResult::Rewritten);
         input.error = "timeout".into();
         assert_eq!(dns_result(&input), DnsResult::Error);
-        // A blank error is not an error: `isNotBlank()` decided.
         input.error = "  ".into();
         assert_eq!(dns_result(&input), DnsResult::Rewritten);
     }
@@ -434,7 +379,6 @@ mod tests {
         assert_eq!(row.block_subscription_id, Some(42));
         assert_eq!(row.package_name.as_deref(), Some("com.example.app"));
 
-        // A missing timestamp falls back to now; empty optionals become NULL.
         let bare = DnsInput {
             domain: "example.com".into(),
             ..DnsInput::default()
@@ -452,9 +396,7 @@ mod tests {
         let mut blocked = passed.clone();
         blocked.blocked = true;
         assert!(dns_row(&blocked, LogMode::BlockedAndErrors, 0).is_some());
-        // The caller checks MODE_OFF before packing, and the row builder agrees.
         assert!(dns_row(&blocked, LogMode::Off, 0).is_some());
-        // A blank domain is never a row.
         assert!(dns_row(&dns("   "), LogMode::All, 0).is_none());
     }
 
@@ -466,17 +408,14 @@ mod tests {
         assert_eq!(subscription_id("sub_abc,sub_3"), Some(3));
         assert_eq!(subscription_id(""), None);
         assert_eq!(subscription_id("sub_99999999999999999999"), None);
-        // The connection-layer SNI/Host gate prefixes its reason; the tag is the tail.
         assert_eq!(subscription_id("conn:host:sub_5"), Some(5));
         assert_eq!(subscription_id("conn:host:sub_5, sub_9"), Some(5));
-        // A bare destination or a firewall reason carries no subscription.
         assert_eq!(subscription_id("conn:host:ads.example.com"), None);
         assert_eq!(subscription_id("firewall:uid_blocked"), None);
     }
 
     #[test]
     fn a_connection_layer_rule_block_keeps_its_subscription() {
-        // The SNI/Host gate records `conn:host:<source>`; the DNS row must still attribute it.
         let input = DnsInput {
             domain: "ads.example.com".into(),
             query_type: 0,
@@ -505,7 +444,6 @@ mod tests {
         assert_eq!(row.matched_rule, None);
         assert_eq!(row.block_subscription_id, None);
 
-        // The filter compares the raw outcome, so a blank one is not "allowed".
         let blank_outcome = HttpInput::default();
         assert!(http_row(&blank_outcome, LogMode::BlockedAndErrors, 0).is_some());
         let allowed = HttpInput {
@@ -515,7 +453,6 @@ mod tests {
         assert!(http_row(&allowed, LogMode::BlockedAndErrors, 0).is_none());
         assert!(http_row(&allowed, LogMode::All, 0).is_some());
         assert!(http_row(&allowed, LogMode::Off, 0).is_none());
-        // "Allowed" with another case is not in the pass-through set.
         let cased = HttpInput {
             outcome: "Allowed".into(),
             ..HttpInput::default()
@@ -536,7 +473,6 @@ mod tests {
         assert_eq!(row.outcome, "blocked");
         assert_eq!(row.block_subscription_id, Some(12));
 
-        // A request-rule pattern is not a subscription source tag.
         let by_request_rule = HttpInput {
             matched_rule: "||ads^".into(),
             ..blocked
@@ -598,7 +534,6 @@ mod tests {
             ..input
         };
         let row = bootstrap_row(&blank_id, 0).unwrap();
-        // The name falls back to the raw (blank) id, exactly like `ifBlank { ipId }`.
         assert_eq!(row.ip_name, "");
         assert!(bootstrap_row(&BootstrapInput::default(), 0).is_none());
     }

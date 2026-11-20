@@ -7,7 +7,6 @@ typedef WidthWidgetBuilder = Widget Function(
   double width,
 );
 
-/// Lays content out at each drag height, where a [LayoutBuilder] rebuilds every row each frame.
 class WidthBuilder extends StatefulWidget {
   final WidthWidgetBuilder builder;
 
@@ -47,11 +46,6 @@ class _WidthBuilt extends StatelessWidget {
   Widget build(BuildContext context) => builder(context, width);
 }
 
-/// Keeps the subtree [builder] made while [inputs] stay equal, so whatever the
-/// builder reads from outside its own context belongs in [inputs].
-///
-/// A rebuild that changes one row's state then rebuilds only that row instead
-/// of every visible row, as a raw `itemBuilder` would.
 class MemoBuilder extends StatefulWidget {
   final List<Object?> inputs;
   final WidgetBuilder builder;

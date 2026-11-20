@@ -13,7 +13,6 @@ const double _width = 440;
 const double _maxHeight = 720;
 const double _margin = 40;
 
-/// A form in a card centered over the navigator, moving as a dialog does.
 class FormSheetRoute<T> extends PopupRoute<T>
     with SheetCoverRouteMixin<T>, AlertMotionRouteMixin<T>, AlertHostRoute<T> {
   FormSheetRoute({

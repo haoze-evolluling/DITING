@@ -1,9 +1,3 @@
-//! Listener configuration and address normalization.
-//!
-//! The Go defaults were `127.0.0.1:53` + `[::1]:53` with five-second read/write deadlines. The
-//! deduplication rule matters on Windows: binding a wildcard address and a specific address on the
-//! same port fails, so a wildcard swallows every same-family specific address on that port.
-
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
 
@@ -27,7 +21,6 @@ impl Default for ServerConfig {
 }
 
 impl ServerConfig {
-    /// Normalizes the way `NewServer` did: defaults when empty, dedupe, positive timeouts.
     pub fn normalized(mut self) -> Self {
         if self.udp_addresses.is_empty() && self.tcp_addresses.is_empty() {
             return Self::default();
@@ -43,7 +36,6 @@ impl ServerConfig {
         self
     }
 
-    /// Total budget for one query (`ReadTimeout + WriteTimeout`).
     pub fn query_timeout(&self) -> Duration {
         let total = self.read_timeout + self.write_timeout;
         if total.is_zero() {
@@ -54,8 +46,6 @@ impl ServerConfig {
     }
 }
 
-/// `DeduplicateAddresses`: remove exact duplicates and any address covered by a wildcard on the
-/// same port and family.
 pub fn deduplicate_addresses(addresses: &[String]) -> Vec<String> {
     let mut wildcard_v4 = Vec::new();
     let mut wildcard_v6 = Vec::new();

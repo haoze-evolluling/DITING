@@ -1,6 +1,3 @@
-// U7: the privacy suite's switches carry an explicit semantics label matching their row title, so a
-// screen reader announces which toggle is focused instead of a bare "switch".
-
 import 'package:diting_android/pages/network/privacy_suite_page.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';

@@ -1,19 +1,3 @@
-//! Replays the fixtures generated from the pre-migration Go implementation
-//! (`android/engine/zz_config_fixture_gen_test.go` before it was deleted):
-//!
-//! | fixture | rows | what it pins |
-//! | --- | --- | --- |
-//! | `dns_mode.tsv` | 16 | `canonicalDNSMode` over every alias, padding, case fold and rejection |
-//! | `dynamic_block.tsv` | 7 | the `< 1` defaults, including `MinInt32`/`MaxInt32` |
-//! | `provider.tsv` | 26 | `validateDNSProvider`: PLAIN/DOT shapes, DoH URLs, DoQ URLs, unknown names |
-//! | `doq_url.tsv` | 12 | `parseDoQURL` |
-//! | `protocol.tsv` / `response_type.tsv` | 10 / 7 | the two name tables |
-//! | `domain.tsv` | 11 | the lookup-key fold |
-//! | `rewrite.tsv` | 18 | `parseRewriteEntry`, including the JSON shapes Go drops |
-//! | `apply.tsv` | 7 | the order `ApplyDNSConfig` reports errors in |
-//!
-//! Quoted fields are Go `%q` output; [`unquote`] decodes the subset Go emits for these fixtures.
-
 use std::fs;
 
 use diting_config_core::dns_config::{normalize, Provider};
@@ -32,7 +16,6 @@ fn read(name: &str) -> String {
     fs::read_to_string(&path).unwrap_or_else(|err| panic!("{path}: {err}"))
 }
 
-/// The fields of one TSV row, empty lines dropped.
 fn rows(name: &str) -> Vec<Vec<String>> {
     read(name)
         .lines()
@@ -41,7 +24,6 @@ fn rows(name: &str) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// Go `%q` output as emitted by the fixture generator: surrounding quotes and `\t`-free text.
 fn unquote(field: &str) -> String {
     if !(field.starts_with('"') && field.ends_with('"') && field.len() >= 2) {
         return field.to_string();
@@ -246,8 +228,6 @@ fn apply_errors_surface_in_the_old_order() {
     assert_eq!(checked, 7);
 }
 
-/// A tiny JSON reader for the `apply.tsv` configs: enough to pull the seven fields the kernel needs
-/// out of the fixture text without pulling a JSON crate into the kernel.
 mod serde_free_config {
     #[derive(Debug, Default)]
     pub struct Config {
@@ -257,7 +237,6 @@ mod serde_free_config {
         pub threshold: i64,
         pub window: i64,
         pub nxdomain: i64,
-        /// `(protocol, server, url)` per provider entry.
         pub providers: Vec<(String, String, String)>,
     }
 

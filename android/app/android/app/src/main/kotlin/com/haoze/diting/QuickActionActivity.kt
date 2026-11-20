@@ -6,11 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import com.haoze.diting.control.DataPlaneControl
 
-/// Headless entry point for Tasker / MacroDroid / adb: starting it with one of the exported actions
-/// starts, stops or toggles whichever data plane the current work mode uses, then finishes.
-///
-/// Mirrors FlClash's `QuickActionActivity`. Anything it cannot do alone (agreement not accepted,
-/// VPN consent missing, no saved start config) opens the app instead of failing silently.
 class QuickActionActivity : Activity() {
 
     companion object {

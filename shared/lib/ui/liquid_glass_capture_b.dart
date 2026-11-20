@@ -32,9 +32,6 @@ class _LiquidGlassHostLayer extends ContainerLayer {
     super.dispose();
   }
 
-  /// A pane over one painted before it in the same root, but for one of its
-  /// own group, sits a level above it, and reads a capture with that one drawn
-  /// as glass.
   void _capture() {
     _pass++;
     final found = <_Behind>[];
@@ -159,7 +156,6 @@ class _LiquidGlassHostLayer extends ContainerLayer {
     chain.removeLast();
   }
 
-  /// Snaps the slot to the capture's pixels so still content stays put while the pane moves.
   bool _place(_Behind entry) {
     final pane = entry.pane;
     final style = entry.style;
@@ -246,7 +242,6 @@ class _LiquidGlassHostLayer extends ContainerLayer {
     int level,
     List<_Behind> members,
   ) {
-    // Slots that blur alike share one blurring layer; the rest go alone.
     final classes = <Object, List<_Behind>>{};
     for (final entry in members) {
       (classes[entry.blurSigma == 0 ? entry : entry.blurSigma] ??= []).add(
@@ -310,8 +305,6 @@ class _LiquidGlassHostLayer extends ContainerLayer {
       }
       return (atlas: previous.image, taken: false, kept: 0);
     }
-    // Skia retains an image's source while it lives, so copying the last capture retains all
-    // before.
     final carry =
         LiquidGlassHost.debugCarryBandsOverride ??
         ui.ImageFilter.isShaderFilterSupported;
@@ -349,7 +342,6 @@ class _LiquidGlassHostLayer extends ContainerLayer {
               ),
           );
         }
-        // Impeller filters a layer under the transform current at its restore.
         canvas
           ..save()
           ..translate(band.rect.left, band.rect.top)

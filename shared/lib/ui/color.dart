@@ -28,7 +28,6 @@ enum ColorStyle {
   };
 }
 
-/// `.agents/surfaces.md` explains why these roles replace Material's values.
 ColorScheme seededColorScheme({
   required Color seedColor,
   required Brightness brightness,
@@ -193,7 +192,6 @@ const _maxDarkAccentTone = 75.0;
 
 DynamicScheme? _lastScheme;
 
-// Schemes are built light then dark, so the second reuses the first's temperature analysis.
 DynamicScheme _dynamicScheme(Hct source, bool dark, ColorStyle style) {
   final last = _lastScheme;
   final scheme =
@@ -322,11 +320,9 @@ extension ColorSchemeExtension on ColorScheme {
 
   Color get modalScrim => scrim.withValues(alpha: 0.32);
 
-  /// How far iOS 27 dims behind an alert.
   Color get alertScrim =>
       scrim.withValues(alpha: brightness == Brightness.dark ? 0.48 : 0.2);
 
-  /// iOS 27's systemRed, which an alert's destructive action takes.
   Color get destructive =>
       Color(brightness == Brightness.dark ? 0xFFFF4245 : 0xFFFF383C);
 

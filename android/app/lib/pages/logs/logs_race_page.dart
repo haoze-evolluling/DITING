@@ -12,8 +12,6 @@ import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Race stats from the real `dns_race_log` table, aggregated per time window. An empty
-/// table leaves every section empty and the overview at a dash, never demo numbers.
 class LogsRacePage extends ConsumerWidget {
   const LogsRacePage({super.key});
 
@@ -55,9 +53,6 @@ class LogsRacePage extends ConsumerWidget {
     );
   }
 
-  /// Stats sections as slivers. The ranking and the strategy lists are built on demand: they grow
-  /// with the number of configured resolvers, and eager construction is the same first-frame trap
-  /// the rule lists hit with a large subscription.
   List<Widget> _statsSlivers(
     BuildContext context,
     AsyncValue<RaceStatsSnapshot> asyncStats,
@@ -131,8 +126,6 @@ class LogsRacePage extends ConsumerWidget {
                   glyph: AppGlyphs.speed,
                 ),
               ],
-              // The success share only says something once a race ran; before that the bar
-              // would draw an empty track under a meaningless `—`.
               ratio: hasData
                   ? LogsRatioBar(
                       label: l10n.logsSuccessRate,
@@ -155,8 +148,6 @@ class LogsRacePage extends ConsumerWidget {
           itemBuilder: (context, index) {
             final item = snapshot.strategyStats[index];
             return ListItem(
-              // The winner card below is led by a 26dp rank badge; pinning one column for
-              // both keeps the two cards' text edges on the same line.
               leading: LeadingSlot(
                 child: IconBadge(
                   glyph: _strategyGlyph(item.strategy),
@@ -198,7 +189,6 @@ class LogsRacePage extends ConsumerWidget {
           footer: l10n.logsWinnerFooter,
           itemBuilder: (context, index) {
             final entry = snapshot.entries[index];
-            // The list is sorted by wins, so the first row is the yardstick for every bar.
             final topWins = snapshot.entries.first.wins;
             return ListItem(
               leading: LeadingSlot(child: LogsRankBadge(rank: index + 1)),
@@ -268,7 +258,6 @@ class LogsRacePage extends ConsumerWidget {
     ];
   }
 
-  /// Row subtitle; only smart selection appends primary hit rate and fallbacks.
   static String _strategySubtitle(RaceStrategyDisplay item, AppL10n l10n) {
     final parts = <String>[
       l10n.logsSuccessWith(percentOf(item.successRate)),

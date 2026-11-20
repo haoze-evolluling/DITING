@@ -22,7 +22,6 @@ def load(path):
 
 
 def dump(path, data):
-    # `@@locale` stays first; the rest keeps insertion order so the file reads like a glossary.
     ordered = {}
     if '@@locale' in data:
         ordered['@@locale'] = data.pop('@@locale')
@@ -41,7 +40,6 @@ def main(batch_path):
         else:
             zh, en, meta = value['zh'], value['en'], value.get('placeholders')
         if key in files['zh']:
-            # Reused key: the batch is shared with apply.py, which needs the literal too.
             if files['zh'][key] != zh or files['en'][key] != en:
                 sys.exit(f'{key} already exists with different text')
             continue

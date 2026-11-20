@@ -7,9 +7,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Provider visibility (upstream `HomeProviderVisibilityScreen`). With racing off the home provider
-/// dropdown only lists the providers selected here; the one in use always stays visible. The rows
-/// also carry the shared display order, which the provider picker uses for both modes.
 class ProviderVisibilityPage extends ConsumerStatefulWidget {
   const ProviderVisibilityPage({super.key});
 
@@ -32,12 +29,9 @@ class _ProviderVisibilityPageState
     ),
   );
 
-  /// Storage keys are the upper-cased [ProviderProtocol] names.
   static String _protocolKey(ProviderProtocol protocol) =>
       protocol.name.toUpperCase();
 
-  /// Reads the sets back from the store on every build instead of mirroring them locally, so a
-  /// backup import or another page's write shows up without leaving the page.
   bool _visible(
     LegacySettings settings,
     ProviderProtocol protocol,
@@ -56,8 +50,6 @@ class _ProviderVisibilityPageState
     );
   }
 
-  /// Toggles one provider. Under a visible protocol it is a "hide" flag; under a hidden
-  /// protocol it is the explicit allow-list upstream keeps.
   void _toggleProvider(ProviderProtocol protocol, MockProvider provider) {
     final sets = _visibilitySets();
     if (sets.protocols.contains(_protocolKey(protocol))) {
@@ -84,7 +76,6 @@ class _ProviderVisibilityPageState
     ];
     if (visible) {
       sets.protocols.add(_protocolKey(protocol));
-      // Re-enabling a group clears the per-provider overrides inside it.
       sets.hidden.removeAll(ids);
     } else {
       sets.protocols.remove(_protocolKey(protocol));
@@ -97,8 +88,6 @@ class _ProviderVisibilityPageState
     );
   }
 
-  /// Moves one row inside its protocol group and writes the group back into the shared order, so
-  /// the other protocols keep their slots.
   void _reorder(List<MockProvider> group, int oldIndex, int newIndex) {
     final ordered = orderedProviders(
       ref.read(dnsProviderCatalogProvider),
@@ -169,12 +158,10 @@ class _ProviderVisibilityPageState
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: ReorderableListView.builder(
-            // The page already scrolls; a nested scrollable would steal drag gestures.
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             buildDefaultDragHandles: false,
             proxyDecorator: commonProxyDecorator,
-            // The group switch shares the card but never takes part in the ordering.
             header: ItemPositionProvider(
               position: ItemPosition.start,
               child: allRow,
@@ -188,8 +175,6 @@ class _ProviderVisibilityPageState
                 key: ValueKey(provider.id),
                 index: index,
                 child: ItemPositionProvider(
-                  // The group switch above is this card's first row, so every provider row
-                  // starts one slot later; only the last one is rounded at the bottom.
                   position: ItemPosition.get(index + 1, providers.length + 1),
                   child: _ProviderRow(
                     provider: provider,
@@ -207,7 +192,6 @@ class _ProviderVisibilityPageState
   }
 }
 
-/// One provider row: tap or checkbox toggles it, the trailing handle drags it into order.
 class _ProviderRow extends StatelessWidget {
   const _ProviderRow({
     required this.provider,

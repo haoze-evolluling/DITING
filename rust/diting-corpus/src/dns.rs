@@ -1,19 +1,3 @@
-//! The DNS corpus: synthesized answers and the decoded view of a query/answer pair.
-//!
-//! `android/engine/dns_packet.go` + `dns_blocks.go` built every synthesized answer with `dns.Msg` and
-//! `dns.NewRR`; those builders now live in [`diting_dns_core::reply`], and the engine's callers only
-//! pick a plan and write the bytes. The corpus therefore freezes two things at once:
-//!
-//! * the **plan** the engine selects for a query (`block:<mode>`, `rewrite-ip`, `rewrite-cname`,
-//!   `local-asset`, `ddr`, `servfail`), which is the behaviour a future refactor could silently
-//!   change;
-//! * the **bytes** `reply::render` produces, including the transaction id, the `RA` bit and the answer
-//!   TTLs, because a Kotlin-visible resolver answer is compared by clients, not by us.
-//!
-//! The decoded view (`query_info`, `validate`, `extract`) is frozen next to the bytes: those are the
-//! functions the engine uses for logging, cache admission and the null-block verdict, and their
-//! numeric status codes are a wire contract with the Go code that is being deleted.
-
 use serde_json::json;
 
 use diting_dns_core::message;
@@ -22,7 +6,6 @@ use diting_dns_wire::{parse_answer_records, parse_header, parse_response};
 
 use crate::hex;
 
-/// One corpus case: a query plus the plan the engine picks for it.
 pub struct Case {
     pub id: &'static str,
     pub name: &'static str,
@@ -30,10 +13,8 @@ pub struct Case {
     pub plan: Plan,
 }
 
-/// The plans the engine can produce for a single query, named the way the fixture spells them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Plan {
-    /// `standaloneBlock` with one of `RESPONSE_*`.
     Block(u8),
     RewriteIp(&'static str),
     RewriteCname(&'static str),
@@ -55,7 +36,6 @@ impl Plan {
     }
 }
 
-/// The cases, in the order the fixture lists them.
 pub fn cases() -> Vec<Case> {
     vec![
         Case {
@@ -127,18 +107,16 @@ pub fn cases() -> Vec<Case> {
     ]
 }
 
-/// The transaction id every query in the corpus uses, so the answers are comparable byte for byte.
 pub const QUERY_ID: u16 = 0x1234;
 
-/// A query wire: header (RD set, one question) + `name` + `qtype` + class IN.
 pub fn query(name: &str, qtype: u16) -> Vec<u8> {
     let mut wire = Vec::with_capacity(64);
     wire.extend_from_slice(&QUERY_ID.to_be_bytes());
-    wire.extend_from_slice(&0x0100u16.to_be_bytes()); // RD
-    wire.extend_from_slice(&1u16.to_be_bytes()); // QDCOUNT
-    wire.extend_from_slice(&0u16.to_be_bytes()); // ANCOUNT
-    wire.extend_from_slice(&0u16.to_be_bytes()); // NSCOUNT
-    wire.extend_from_slice(&0u16.to_be_bytes()); // ARCOUNT
+    wire.extend_from_slice(&0x0100u16.to_be_bytes());
+    wire.extend_from_slice(&1u16.to_be_bytes());
+    wire.extend_from_slice(&0u16.to_be_bytes());
+    wire.extend_from_slice(&0u16.to_be_bytes());
+    wire.extend_from_slice(&0u16.to_be_bytes());
     assert!(
         diting_dns_wire::pack_name(name, &mut wire),
         "the corpus names are valid"
@@ -148,32 +126,27 @@ pub fn query(name: &str, qtype: u16) -> Vec<u8> {
     wire
 }
 
-/// A synthetic upstream answer for `query_wire`: `QR|RD|RA`, one A record per address.
-///
-/// Used for the rewrite-CNAME case and for the `validate`/`extract` views; the point is a *well
-/// formed* answer, not a real one.
 pub fn upstream_answer(query_wire: &[u8], addresses: &[[u8; 4]]) -> Vec<u8> {
     let question = question_section(query_wire).expect("the corpus queries carry a question");
     let mut wire = Vec::with_capacity(question.len() + 16 * addresses.len() + 12);
-    wire.extend_from_slice(&query_wire[..2]); // the same transaction id
-    wire.extend_from_slice(&0x8180u16.to_be_bytes()); // QR | RD | RA, NOERROR
-    wire.extend_from_slice(&1u16.to_be_bytes()); // QDCOUNT
+    wire.extend_from_slice(&query_wire[..2]);
+    wire.extend_from_slice(&0x8180u16.to_be_bytes());
+    wire.extend_from_slice(&1u16.to_be_bytes());
     wire.extend_from_slice(&(addresses.len() as u16).to_be_bytes());
     wire.extend_from_slice(&0u16.to_be_bytes());
     wire.extend_from_slice(&0u16.to_be_bytes());
     wire.extend_from_slice(&question);
     for address in addresses {
-        wire.extend_from_slice(&0xc00cu16.to_be_bytes()); // a pointer to the question name
-        wire.extend_from_slice(&1u16.to_be_bytes()); // TYPE A
-        wire.extend_from_slice(&1u16.to_be_bytes()); // CLASS IN
-        wire.extend_from_slice(&300u32.to_be_bytes()); // TTL
-        wire.extend_from_slice(&4u16.to_be_bytes()); // RDLENGTH
+        wire.extend_from_slice(&0xc00cu16.to_be_bytes());
+        wire.extend_from_slice(&1u16.to_be_bytes());
+        wire.extend_from_slice(&1u16.to_be_bytes());
+        wire.extend_from_slice(&300u32.to_be_bytes());
+        wire.extend_from_slice(&4u16.to_be_bytes());
         wire.extend_from_slice(address);
     }
     wire
 }
 
-/// The question section of a query (`name` + type + class), without the 12-byte header.
 fn question_section(query_wire: &[u8]) -> Option<Vec<u8>> {
     let name_len = name_wire_len(&query_wire[12..])?;
     let end = 12 + name_len + 4;
@@ -192,7 +165,6 @@ fn name_wire_len(bytes: &[u8]) -> Option<usize> {
     }
 }
 
-/// Runs `plan` over `query_wire`; `resolved` is the synthetic answer the CNAME rewrite consumes.
 pub fn build_plan(plan: Plan, query_wire: &[u8], resolved: &[u8]) -> Option<ReplyPlan> {
     match plan {
         Plan::Block(mode) => reply::block(query_wire, mode),
@@ -204,13 +176,11 @@ pub fn build_plan(plan: Plan, query_wire: &[u8], resolved: &[u8]) -> Option<Repl
     }
 }
 
-/// Builds the whole fixture document.
 pub fn build() -> String {
     let cases: Vec<serde_json::Value> = cases()
         .into_iter()
         .map(|case| {
             let query_wire = query(case.name, case.qtype);
-            // Every case gets the same synthetic upstream answer; only the CNAME rewrite reads it.
             let resolved = upstream_answer(&query_wire, &[[1, 2, 3, 4]]);
             let plan = build_plan(case.plan, &query_wire, &resolved)
                 .expect("every corpus case produces a plan");
@@ -219,7 +189,6 @@ pub fn build() -> String {
             } else {
                 reply::render(&query_wire, &plan)
             };
-            // `render` output is itself re-parsed, so the fixture records the decoded view too.
             let decoded = rendered.as_deref().and_then(parse_response);
             let answers = rendered
                 .as_deref()
@@ -255,7 +224,6 @@ pub fn build() -> String {
     .to_string()
 }
 
-/// Replays the fixture; `Ok(cases)` or the first mismatch.
 pub fn replay(document: &str) -> Result<usize, String> {
     let fixture: serde_json::Value =
         serde_json::from_str(document).map_err(|err| format!("parse the fixture: {err}"))?;
@@ -377,13 +345,10 @@ fn extract_json(response: &[u8]) -> serde_json::Value {
     }
 }
 
-/// The header's rcode for a rendered answer, for callers that do not want the whole meta.
 pub fn rcode_of(response: &[u8]) -> Option<u16> {
     parse_header(response).map(|header| header.flags & 0x000f)
 }
 
-/// The `RA` bit of a rendered answer. `ResponseMeta` does not carry it (the cache never needed it),
-/// and it is part of the synthesized answers the clients see: only the rewrite path sets it.
 pub fn recursion_available(response: &[u8]) -> Option<bool> {
     parse_header(response).map(|header| header.flags & 0x0080 != 0)
 }
@@ -411,7 +376,6 @@ mod tests {
         assert_eq!(extracted.ips, vec!["9.8.7.6".to_string()]);
         assert!(!extracted.blocked);
         assert_eq!(rcode_of(&answer), Some(0));
-        // The validator accepts it: same question, not a null block.
         assert_eq!(message::validate(&query_wire, &answer).status, 0);
     }
 

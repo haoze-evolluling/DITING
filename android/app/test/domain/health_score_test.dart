@@ -39,7 +39,6 @@ void main() {
     final ids = report.advices.map((a) => a.id).toList();
     expect(ids, contains('grantPermissions'));
     expect(ids, contains('startProtection'));
-    // Those two are critical-severity actions even though other dimensions stay healthy.
     final start = report.advices.firstWhere((a) => a.id == 'startProtection');
     expect(start.severity, HealthSeverity.critical);
     expect(report.dimensions.firstWhere((d) => d.kind == HealthDimensionKind.dns).score, 25);

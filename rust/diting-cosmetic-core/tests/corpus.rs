@@ -1,24 +1,15 @@
-//! Replays the golden corpus generated from the pre-migration Go implementation.
-//!
-//! `tests/fixtures/` was produced by `android/engine/mitm_cosmetic_inject.go` before the move, with a
-//! scripted upstream that hands the reader one plan step at a time. Two cases the old code got wrong
-//! are deliberately absent (see `rust/README.md`): a document with non-UTF-8 bytes before `<head`
-//! panicked, and one with `İ` before it spliced the tag into the wrong place.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use diting_cosmetic_core::host::{link_tag, normalize_host, query_escape};
 use diting_cosmetic_core::inject::{Injector, Upstream, SCAN_LIMIT};
 
-/// The host the engine serves the stylesheet from; `LocalAssetHost` in Go.
 const ASSET_HOST: &str = "local.pwhs.app";
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
 }
 
-/// Reads one TSV file, skipping the header row.
 fn rows(name: &str) -> Vec<Vec<String>> {
     let text = fs::read_to_string(fixtures().join(name)).expect("fixture is readable");
     text.lines()
@@ -28,7 +19,6 @@ fn rows(name: &str) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// `-` stands for "no bytes"; anything else is lower-case hex.
 fn blob(text: &str) -> Vec<u8> {
     if text == "-" {
         return Vec::new();
@@ -39,7 +29,6 @@ fn blob(text: &str) -> Vec<u8> {
         .collect()
 }
 
-/// One planned upstream step, mirroring the generator's scripted reader.
 #[derive(Debug)]
 struct Step {
     size: usize,
@@ -93,7 +82,6 @@ fn parse_plan(plan: &str) -> Vec<Step> {
         .collect()
 }
 
-/// The scripted upstream: `(bytes delivered, what the read reported)`.
 struct Script {
     document: Vec<u8>,
     steps: Vec<Step>,
@@ -249,14 +237,11 @@ fn query_escape_is_url_query_escape() {
     assert!(checked > 20, "only {checked} hosts carried a query");
 }
 
-// --- the local asset server and the stylesheet (second migration, ABI 2) -----------------------
 
 use diting_cosmetic_core::local::{is_asset_host, respond};
 use diting_cosmetic_core::payload::{decode_response, decode_rules};
 use diting_cosmetic_core::rules::host_suffixes;
 
-/// Renders one response the way the fixture recorded it:
-/// `status \0 content-type \0 name=value pairs \0 body`.
 fn wire_response(payload: &diting_cosmetic_core::payload::ResponsePayload) -> Vec<u8> {
     let mut names: Vec<&(String, String)> = payload.headers.iter().collect();
     names.sort_by(|left, right| left.0.cmp(&right.0));

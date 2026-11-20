@@ -19,14 +19,8 @@ import 'package:material_ui/material_ui.dart';
 
 part 'outbound_proxy_apps_page.dart';
 
-/// DITING's own package id (`applicationId` in `android/app/build.gradle.kts`).
-/// Upstream reads `context.packageName`; this constant must match or the "cannot select
-/// DITING itself" check breaks.
 const ditingSelfPackage = 'com.haoze.diting';
 
-/// Outbound proxy (upstream `OutboundProxySettingsScreen`). Config goes through
-/// `OutboundProxyStore`, so initial values arrive asynchronously from
-/// `outboundProxyConfigProvider`; a save bumps its revision.
 class OutboundProxyPage extends ConsumerStatefulWidget {
   const OutboundProxyPage({super.key});
 
@@ -40,12 +34,9 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
   final _username = TextEditingController();
   final _password = TextEditingController();
 
-  /// Filled once: another `read()` would overwrite what the user is typing.
   OutboundProxyConfig? _loaded;
   bool _saving = false;
 
-  /// Status polling, as upstream's one-second loop: `outbound_proxy_status` goes connecting
-  /// -> ready or error once the tunnel starts.
   Timer? _poll;
 
   @override
@@ -64,8 +55,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     super.dispose();
   }
 
-  /// Re-reads the store only while the tunnel may still come up; `ready`, `error` and
-  /// `disabled` are terminal, so polling them only causes rebuilds.
   void _tick() {
     if (!mounted) {
       return;
@@ -79,7 +68,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
 
   void _bump() => ref.read(outboundProxyRevisionProvider.notifier).bump();
 
-  /// Persists a config change and, when given, the matching engine status.
   Future<void> _persist(OutboundProxyConfig config, {String? status}) async {
     final store = ref.read(outboundProxyStoreProvider);
     await store.write(config);
@@ -110,7 +98,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
   Future<void> _save(OutboundProxyConfig base) async {
     final l10n = context.l10n;
     final draft = _compose(base);
-    // Upstream skips validation while disabled, or a disabled draft could never be saved.
     final error = draft.enabled
         ? draft.validationError(
             selfPackage: ditingSelfPackage,
@@ -174,8 +161,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
 
   Set<String>? _installedPackages() {
     final snapshot = ref.read(installedAppsProvider).value;
-    // Null when the list is unavailable (missing channel), so `validationError` skips the
-    // "not installed" check instead of failing a valid package.
     return snapshot == null || snapshot.error != null
         ? null
         : snapshot.packageNames;
@@ -198,7 +183,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
       config.proxyAppPackage,
       apps?.apps ?? const [],
     );
-    // Validation problems are shown only while enabled, matching upstream.
     final validation = config.enabled
         ? _compose(config).validationError(
             selfPackage: ditingSelfPackage,
@@ -234,8 +218,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
                 onChanged: _saving
                     ? null
                     : (value) => _persist(
-                        // As upstream: the switch persists immediately and moves to
-                        // connecting or disabled; other fields wait for save.
                         config.copyWith(enabled: value),
                         status: value ? 'connecting' : 'disabled',
                       ),
@@ -345,7 +327,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     );
   }
 
-  /// Proxy scope: all apps (original behaviour) or only the picked target apps.
   Widget _scopeSection(BuildContext context, OutboundProxyConfig config) {
     final l10n = context.l10n;
     final perApp = config.scope == OutboundProxyScope.apps;
@@ -383,8 +364,6 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
     );
   }
 
-  /// The four engine states: disabled, connecting, ready and error. Unknown values display
-  /// as disabled, as upstream does.
   static String _statusLabel(AppL10n l10n, OutboundProxyConfig config) {
     if (!config.enabled) {
       return l10n.outboundStatusOff;

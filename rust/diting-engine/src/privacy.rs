@@ -1,14 +1,5 @@
-//! U10: address classification for DNS rebinding protection.
-//!
-//! A public name that resolves to a private, loopback or link-local address is the DNS-rebinding
-//! pattern: an attacker-controlled name points the victim's browser at an internal service. This
-//! module is the pure predicate the forwarding path consults; the engine only calls it when the
-//! feature is enabled, so a disabled suite costs nothing.
-
 use std::net::IpAddr;
 
-/// `true` for the addresses rebinding protection rejects: loopback, RFC 1918 private, link-local,
-/// CGNAT, unspecified/broadcast, IPv6 unique-local and IPv4-mapped forms of the above.
 pub fn is_private_or_loopback(text: &str) -> bool {
     match text.trim().parse::<IpAddr>() {
         Ok(IpAddr::V4(v4)) => {
@@ -18,7 +9,6 @@ pub fn is_private_or_loopback(text: &str) -> bool {
                 || v4.is_link_local()
                 || v4.is_unspecified()
                 || v4.is_broadcast()
-                // 100.64.0.0/10 carrier-grade NAT.
                 || (octets[0] == 100 && (64..=127).contains(&octets[1]))
         }
         Ok(IpAddr::V6(v6)) => {
@@ -31,7 +21,6 @@ pub fn is_private_or_loopback(text: &str) -> bool {
             if unique_local || link_local {
                 return true;
             }
-            // ::ffff:a.b.c.d collapses to an IPv4 address.
             if let Some(v4) = v6.to_ipv4_mapped() {
                 let octets = v4.octets();
                 return v4.is_private()
@@ -45,7 +34,6 @@ pub fn is_private_or_loopback(text: &str) -> bool {
     }
 }
 
-/// `true` when any answer address is a rebinding target.
 pub fn any_private<'a>(mut addresses: impl Iterator<Item = &'a str>) -> bool {
     addresses.any(is_private_or_loopback)
 }

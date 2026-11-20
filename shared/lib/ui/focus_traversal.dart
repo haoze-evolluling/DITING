@@ -1,8 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'focus.dart';
 
-/// With no target in a direction the search continues outside the page, so left lands on the
-/// sidebar.
 class PageTraversalPolicy extends ReadingOrderTraversalPolicy
     with _CrossScopeFocus {
   @override
@@ -77,8 +75,6 @@ class PageTraversalPolicy extends ReadingOrderTraversalPolicy
       _isUncovered(node, level);
 }
 
-/// Outside the pages a row ends at its last control; only a move into another region leaves its
-/// band.
 class _RemoteTraversalPolicy extends ReadingOrderTraversalPolicy
     with _CrossScopeFocus {
   @override
@@ -119,7 +115,6 @@ class _RemoteTraversalPolicy extends ReadingOrderTraversalPolicy
 }
 
 mixin _CrossScopeFocus on FocusTraversalPolicy {
-  // Each policy keeps a history per scope so reversing a move returns where it started.
   void _focusAcross(
     FocusScopeNode from,
     FocusNode target,
@@ -162,7 +157,6 @@ bool _isInBand(Rect from, Rect rect, TraversalDirection direction) =>
     ? rect.right > from.left && rect.left < from.right
     : rect.bottom > from.top && rect.top < from.bottom;
 
-// A covered route's scope is marked skipped; its nodes stay in the tree.
 bool _isUncovered(FocusNode node, FocusScopeNode scope) {
   for (final ancestor in node.ancestors) {
     if (ancestor == scope) {

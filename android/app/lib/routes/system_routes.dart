@@ -13,7 +13,6 @@ import 'package:diting_shared/ui/navigator.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-/// Appearance, settings sub pages and system routes.
 abstract final class SystemPaths {
   static const theme = '/theme';
   static const dayNight = '/theme/day-night';
@@ -24,34 +23,22 @@ abstract final class SystemPaths {
   static const notification = '/theme/notification';
   static const background = '/theme/background';
 
-  /// Home-screen launcher icon style.
   static const launcherIcon = '/theme/launcher-icon';
 
-  /// Font family. No upstream equivalent; kept at the user's request.
   static const fontFamily = '/font-family';
 
-  /// Font size, a sub page of [fontFamily]. Upstream had a slider on the appearance page.
   static const fontSize = '/font-size';
 
-  /// Foreground/background behaviour (upstream `FOREGROUND_BACKGROUND_SETTINGS`).
   static const foregroundBackground = '/settings/background';
 
-  /// Language settings (upstream `LANGUAGE_SETTINGS`).
   static const language = '/settings/language';
 
-  /// Developer options hub. Upstream had no such page; it is the only entry
-  /// to the retained pages and sits in the settings app bar.
   static const developer = '/developer';
   static const sponsor = '/sponsor';
 
-  /// Retained page: no upstream UI, kept at the user's request.
   static const ipQuality = '/ip-quality';
 }
 
-/// Appearance, settings and system routes, assembled by `lib/router.dart`. All set
-/// `parentNavigatorKey: rootNavigatorKey`: they are full pages covering the whole tree, so the
-/// nested navigator would keep the bottom dock visible.
-/// A full-screen system page on the root navigator, the shape every leaf route shares.
 GoRoute _route(String path, Widget page) => GoRoute(
   path: path,
   parentNavigatorKey: rootNavigatorKey,
@@ -74,6 +61,5 @@ List<RouteBase> systemRoutes() => [
   _route(SystemPaths.language, const SettingsLanguagePage()),
   _route(SystemPaths.developer, const DeveloperPage()),
   _route(SystemPaths.sponsor, const SponsorPage()),
-  // Retained page.
   _route(SystemPaths.ipQuality, const IpQualityPage()),
 ];

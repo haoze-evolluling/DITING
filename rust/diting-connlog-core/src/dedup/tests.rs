@@ -41,12 +41,10 @@ fn the_set_never_grows_past_the_bound() {
     assert_eq!(dedup.size(), MAX_ENTRIES as u32);
     assert_eq!(dedup.cleared(), 0);
 
-    // A duplicate at the bound must not trigger the overflow reset.
     assert!(dedup.mark("", "app", "dest", 0, 6, ""));
     assert_eq!(dedup.size(), MAX_ENTRIES as u32);
     assert_eq!(dedup.cleared(), 0);
 
-    // The next *new* key clears the whole set first, then inserts itself.
     assert!(!dedup.mark("", "app", "dest", MAX_ENTRIES as i32, 6, ""));
     assert_eq!(dedup.size(), 1);
     assert_eq!(dedup.cleared(), 1);

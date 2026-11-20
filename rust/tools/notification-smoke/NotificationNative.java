@@ -1,10 +1,5 @@
 package com.haoze.diting.platform;
 
-/// Host-JVM smoke test for the notification kernel's JNI boundary.
-///
-/// It proves the three exported symbols match the signatures `NotificationNative.kt` declares and
-/// that the item list, running-text chain and detail line round trip. The rules themselves belong
-/// to the Rust tests.
 public final class NotificationNative {
     private static int checks;
 

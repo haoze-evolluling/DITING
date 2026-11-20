@@ -3,14 +3,10 @@ import 'dart:math' as math;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-// The shape names below come from material_new_shapes (which still owns `Morph` and
-// `toPath`); hide material_ui's built-in copies so the import stays unambiguous.
 import 'package:material_new_shapes/material_new_shapes.dart';
 import 'package:material_ui/material_ui.dart'
     hide CornerRounding, MaterialShapes, RoundedPolygon;
 
-/// Home power button: stopped, starting, running, stopping. Only the running state morphs:
-/// knob and both halos grow into cookie9Sided together, so no layer keeps the old shape.
 class HomePowerButton extends StatelessWidget {
   const HomePowerButton({
     super.key,
@@ -45,8 +41,6 @@ class HomePowerButton extends StatelessWidget {
       label: label,
       value: state.label(context.l10n),
       child: Center(
-        // The knob only occupies the middle of the 240 box; dropping the caption below
-        // lets the box shrink to the halo diameter instead of leaving dead space.
         child: SizedBox(
           width: 240,
           height: 176,
@@ -62,8 +56,6 @@ class HomePowerButton extends StatelessWidget {
   }
 }
 
-/// Three concentric shapes on one controller; size and color interpolate linearly, shape
-/// uses easeOutBack of the same curve.
 class _PowerVisual extends StatefulWidget {
   const _PowerVisual({
     required this.running,
@@ -183,7 +175,6 @@ class _PowerVisualState extends State<_PowerVisual>
   }
 }
 
-/// One halo layer: draws shape and color only, sized by the parent per frame.
 class _Halo extends StatelessWidget {
   const _Halo({required this.shape, required this.size, required this.color});
 
@@ -202,7 +193,6 @@ class _Halo extends StatelessWidget {
   }
 }
 
-/// Interpolatable [ShapeBorder] between a circle and the nine-sided cookie.
 class _MorphBorder extends ShapeBorder {
   const _MorphBorder(this.progress);
 
@@ -239,7 +229,6 @@ class _MorphBorder extends ShapeBorder {
   int get hashCode => progress.hashCode;
 }
 
-/// Built once: Morph pairs its curves at construction, so keep it out of the per-frame paint path.
 final _morph = Morph(MaterialShapes.circle, MaterialShapes.cookie9Sided);
 
 Path _morphPath(double progress) =>

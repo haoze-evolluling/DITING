@@ -1,17 +1,7 @@
-//! A 5-field cron: `minute hour day-of-month month day-of-week`.
-//!
-//! Each field accepts `*`, `*/step`, `a`, `a-b`, `a-b/step` and comma lists of those. Day-of-week
-//! is `0..=6` with Sunday as `0`; `7` is accepted and folded to Sunday. Occurrences land on minute
-//! boundaries in the `civil` frame (see [`crate::civil`]), so a DST jump is handled by the caller
-//! mapping civil↔UTC, not here. The search is bounded so a malformed or impossible expression
-//! (e.g. `0 0 30 2 *`) cannot spin forever.
-
 use crate::civil::{self, Civil, MINUTE_MS};
 
-/// Five years of minutes; long enough for a leap-year February 29th expression.
 const MAX_SEARCH_MINUTES: i64 = 366 * 24 * 60 * 5;
 
-/// A parsed cron expression.
 #[derive(Debug, Clone)]
 pub struct Cron {
     minutes: Vec<bool>,
@@ -21,7 +11,6 @@ pub struct Cron {
     days_of_week: Vec<bool>,
 }
 
-/// Parses one field into a membership table indexed by value.
 fn parse_field(expr: &str, low: i64, high: i64) -> Result<Vec<bool>, &'static str> {
     if expr.is_empty() {
         return Err("empty field");
@@ -64,7 +53,6 @@ fn parse_field(expr: &str, low: i64, high: i64) -> Result<Vec<bool>, &'static st
 }
 
 impl Cron {
-    /// Parses `minute hour day-of-month month day-of-week`.
     pub fn parse(expr: &str) -> Result<Cron, &'static str> {
         let fields: Vec<&str> = expr.split_whitespace().collect();
         if fields.len() != 5 {
@@ -74,7 +62,6 @@ impl Cron {
         let hours = parse_field(fields[1], 0, 23)?;
         let days_of_month = parse_field(fields[2], 1, 31)?;
         let months = parse_field(fields[3], 1, 12)?;
-        // Day-of-week accepts 7 as Sunday; fold it into 0.
         let raw_dow = parse_field(fields[4], 0, 7)?;
         let mut days_of_week = vec![false; 7];
         for (index, matched) in raw_dow.iter().enumerate().take(7) {
@@ -92,7 +79,6 @@ impl Cron {
         })
     }
 
-    /// Whether `civil` matches every field.
     pub fn matches(&self, civil: &Civil) -> bool {
         self.minutes[civil.minute as usize]
             && self.hours[civil.hour as usize]
@@ -101,7 +87,6 @@ impl Cron {
             && self.days_of_week[civil.weekday as usize]
     }
 
-    /// The first occurrence strictly after `from_ms`, or `None` within the bounded search.
     pub fn next_after(&self, from_ms: i64) -> Option<i64> {
         let mut moment = from_ms.div_euclid(MINUTE_MS) * MINUTE_MS + MINUTE_MS;
         for _ in 0..MAX_SEARCH_MINUTES {
@@ -113,7 +98,6 @@ impl Cron {
         None
     }
 
-    /// The most recent occurrence at or before `now_ms`, or `None` within the bounded search.
     pub fn latest_at_or_before(&self, now_ms: i64) -> Option<i64> {
         let mut moment = now_ms.div_euclid(MINUTE_MS) * MINUTE_MS;
         for _ in 0..MAX_SEARCH_MINUTES {
@@ -144,14 +128,12 @@ mod tests {
         assert!(cron.matches(&civil_at(2024, 1, 1, 17, 45)));
         assert!(!cron.matches(&civil_at(2024, 1, 1, 17, 50)));
         assert!(!cron.matches(&civil_at(2024, 1, 1, 8, 0)));
-        // 2024-01-06 is a Saturday.
         assert!(!cron.matches(&civil_at(2024, 1, 6, 9, 0)));
 
         let listy = Cron::parse("0,30 8,20 1,15 * *").expect("valid");
         assert!(listy.matches(&civil_at(2024, 3, 15, 20, 30)));
         assert!(!listy.matches(&civil_at(2024, 3, 14, 20, 30)));
 
-        // Sunday may be written 0 or 7.
         assert!(Cron::parse("0 0 * * 7")
             .unwrap()
             .matches(&civil_at(2024, 1, 7, 0, 0)));
@@ -172,7 +154,6 @@ mod tests {
     #[test]
     fn next_and_latest_occurrences_cross_midnight_and_month() {
         let cron = Cron::parse("30 23 * * *").expect("valid");
-        // 23:45 → the next 23:30 is tomorrow.
         let from = civil::epoch_ms(civil::days_from_civil(2024, 1, 31), 23 * 60 + 45);
         let next = cron.next_after(from).expect("next");
         let civil_next = civil::split(next);
@@ -185,7 +166,6 @@ mod tests {
             ),
             (2, 1, 23, 30)
         );
-        // Latest at 23:45 is today 23:30.
         let latest = cron.latest_at_or_before(from).expect("latest");
         assert_eq!(civil::split(latest).day, 31);
     }

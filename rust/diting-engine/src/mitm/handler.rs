@@ -1,32 +1,3 @@
-//! The interception pipeline: peek, classify, then route one TCP flow to TLS, HTTP or passthrough.
-//!
-//! This is `mitm_handler.go` after stage 3 already applied the gate:
-//!
-//! ```text
-//! gate (diting-gate-core, MODE_MITM_TCP) → Intercept
-//!   1. peek the first bytes                  (peekFlow, 4 KiB, 10 s)
-//!   2. classify                              (diting-sniffer-core: TLS SNI / HTTP Host / neither)
-//!   3. local asset host   → answer locally    (local.rs, TLS terminated with a minted leaf)
-//!   4. CNAME rewrite      → 302 to the target (local.rs)
-//!   5. TLS + blocked host → drop              (diting-policy-core, `https_domain_rule`)
-//!   6. filter refuses     → passthrough       (diting-mitm-core: blacklist, bypass, bank heuristics)
-//!   7. TLS  → terminate, handshake upstream, relay HTTP/1.1
-//!   8. HTTP → dial, relay HTTP/1.1
-//! ```
-//!
-//! Two orderings are load-bearing and are kept from Go:
-//!
-//! * **the client handshake comes first.** A client that pins its certificate aborts in the first
-//!   flight, so the upstream radio is never touched; only a client that accepted the minted leaf pays
-//!   for the upstream connection.
-//! * **passthrough is decided before the upstream dial.** A host the filter protects is relayed as
-//!   opaque bytes, so a banking app sees the real certificate chain.
-//!
-//! Failure logging is unchanged: `handshake_failed` / `client_tls` records a failure streak (three in
-//! ten minutes blacklists the host, two when the client rejected our certificate),
-//! `upstream_failed` / `upstream_tls` is reported once, and an EV or mTLS upstream is blacklisted with
-//! its reason.
-
 use std::sync::Arc;
 
 use tokio::net::TcpStream;
@@ -46,12 +17,9 @@ use crate::tunnel::stats::TunnelCounters;
 use crate::tunnel::writeback::MAX_PENDING_WRITE;
 use diting_sniffer_core::Kind;
 
-/// `PORT_HTTP`: the plaintext port the MITM gate intercepts.
 pub const PORT_HTTP: u16 = 80;
-/// `PORT_HTTPS`.
 pub const PORT_HTTPS: u16 = 443;
 
-/// One intercepted TCP flow, from the first peeked byte to the last relayed one.
 pub async fn handle_tcp(
     engine: Arc<Engine>,
     events: Arc<Events>,
@@ -61,9 +29,6 @@ pub async fn handle_tcp(
     rx: mpsc::Receiver<Inbound>,
 ) {
     let Some(mitm) = engine.mitm_state().session() else {
-        // `StopStackMitm` landed between the gate and this task: relay it opaquely, which is what an
-        // uninstalled handler would have done. The reservation is the same per-flow write budget a
-        // normal relay uses, so a large response still gets backpressure rather than a reset.
         let credit = Arc::new(Semaphore::new(MAX_PENDING_WRITE));
         crate::tunnel::relay::relay_tcp(
             Arc::clone(&engine),
@@ -96,7 +61,6 @@ pub async fn handle_tcp(
         Kind::Tls => Protocol::Https,
         Kind::Http => Protocol::Http,
         Kind::Unknown => {
-            // Neither TLS nor HTTP: hand the bytes to the passthrough relay untouched.
             relay_peeked(&engine, &events, &counters, key, &context, stream).await;
             return;
         }
@@ -108,7 +72,6 @@ pub async fn handle_tcp(
         return;
     }
 
-    // 3. The embedded stylesheet origin answers without a network round trip.
     if local::is_asset_host(&hostname) {
         let mode = LocalMode::Assets {
             engine: Arc::clone(&engine),
@@ -117,7 +80,6 @@ pub async fn handle_tcp(
         return;
     }
 
-    // 4. A rewritten CNAME becomes a 302 to the real origin.
     if let Some(target) = rewrite_target(&engine, &hostname) {
         let mode = LocalMode::Redirect {
             target,
@@ -129,7 +91,6 @@ pub async fn handle_tcp(
         return;
     }
 
-    // 5. A blocked host is dropped before any TLS work, like Go's pre-handshake check.
     if protocol.is_https() {
         if let Some(reason) = blocked_reason(&engine, &hostname, &context.app) {
             engine.mitm_state().settings().log_http(
@@ -144,7 +105,6 @@ pub async fn handle_tcp(
         }
     }
 
-    // 6. The filter is the last word: blacklists, bypass patterns and the banking heuristics.
     if !mitm.filter().allows_interception(&hostname, now_ms()) {
         engine.mitm_state().settings().log_http(
             &context.app,
@@ -157,12 +117,9 @@ pub async fn handle_tcp(
         return;
     }
 
-    // 7/8. Intercept.
     let upstream = match dial_upstream(&engine, &counters, key, context.uid).await {
         Ok(upstream) => upstream,
         Err(_) => {
-            // Go's `mitm_relay.go` logged the dial failure into the HTTP log before giving up:
-            // `upstream_tls` for a TLS flow, `upstream_dial` for plain HTTP.
             engine.mitm_state().settings().log_http(
                 &context.app,
                 &hostname,
@@ -198,7 +155,6 @@ pub async fn handle_tcp(
     }
 }
 
-/// The client handshake, then the upstream handshake, then the HTTP relay.
 #[allow(clippy::too_many_arguments)]
 async fn intercept_tls(
     engine: Arc<Engine>,
@@ -214,7 +170,6 @@ async fn intercept_tls(
     let client = match tokio_rustls::TlsAcceptor::from(config).accept(stream).await {
         Ok(client) => client,
         Err(error) => {
-            // A pinning client aborts here: the failure streak is what blacklists the host.
             record_failure(&engine, &mitm, &hostname, &error.to_string());
             engine.mitm_state().settings().log_http(
                 &context.app,
@@ -269,12 +224,10 @@ async fn intercept_tls(
     events.push_command(Event::CloseWrite(key));
 }
 
-/// Why the flow must not be intercepted, or `None` when it may be.
 fn refusal(facts: &crate::mitm::upstream::UpstreamFacts) -> Option<&'static str> {
     refusal_reason(facts.client_cert_requested, facts.extended_validation)
 }
 
-/// The Go rule: a `CertificateRequest` or an EV policy OID means "leave this one alone".
 fn refusal_reason(client_cert_requested: bool, extended_validation: bool) -> Option<&'static str> {
     if client_cert_requested {
         return Some("client-certificate (mTLS) request");
@@ -285,7 +238,6 @@ fn refusal_reason(client_cert_requested: bool, extended_validation: bool) -> Opt
     None
 }
 
-/// The local-only flows (assets, redirect) still need the client side terminated when it is TLS.
 async fn serve_local(
     mitm: &Arc<Mitm>,
     stream: ClientStream,
@@ -303,7 +255,6 @@ async fn serve_local(
     local::serve_local(stream, mode).await.ok();
 }
 
-/// `dialUpstream`: the flow's original destination, through the outbound transport.
 async fn dial_upstream(
     engine: &Arc<Engine>,
     counters: &Arc<TunnelCounters>,
@@ -327,7 +278,6 @@ async fn dial_upstream(
     }
 }
 
-/// The passthrough relay for a flow this handler will not decrypt.
 async fn relay_peeked(
     engine: &Arc<Engine>,
     events: &Arc<Events>,
@@ -375,7 +325,6 @@ fn blacklist(engine: &Arc<Engine>, mitm: &Arc<Mitm>, host: &str, reason: &str) {
     }
 }
 
-/// The SNI, the HTTP `Host`, or the destination address: `logHTTPEvent`'s authority column.
 fn hostname_for(sniffed_host: &[u8], key: TcpKey) -> String {
     let text = String::from_utf8_lossy(sniffed_host).to_string();
     let text = diting_go_compat::text::go_lower(diting_go_compat::text::go_trim_space(&text));
@@ -385,13 +334,11 @@ fn hostname_for(sniffed_host: &[u8], key: TcpKey) -> String {
     diting_go_compat::text::go_lower(&netstack::address_text(key.local.addr)).into_owned()
 }
 
-/// `rewriteCNAME`: a hostname rewrite target, or nothing.
 fn rewrite_target(engine: &Engine, host: &str) -> Option<String> {
     let entry = engine.rewrites().lookup(host)?;
     (!entry.cname.is_empty()).then_some(entry.cname)
 }
 
-/// `checkDomainBlockedAndReason`, with Go's `https_domain_rule` fallback for an empty reason.
 fn blocked_reason(engine: &Engine, host: &str, package: &str) -> Option<String> {
     let reason = crate::mitm::http::domain_blocked(engine, host, package)?;
     Some(if reason.is_empty() {
@@ -412,7 +359,6 @@ mod tests {
             Some("client-certificate (mTLS) request")
         );
         assert_eq!(refusal_reason(false, true), Some("EV certificate"));
-        // mTLS wins when both are true, exactly like the Go branch order.
         assert_eq!(
             refusal_reason(true, true),
             Some("client-certificate (mTLS) request")

@@ -48,7 +48,6 @@ fn the_burst_is_spent_and_refilled_by_elapsed_time() {
     assert!(!limiter.allow(client.as_ref(), NOW, DEFAULT_MAX_BUCKETS));
     assert_eq!(limiter.bucket_count(), 1);
 
-    // 0.5s at 10/s is exactly five tokens.
     let later = NOW + 500_000_000;
     for _ in 0..5 {
         assert!(limiter.allow(client.as_ref(), later, DEFAULT_MAX_BUCKETS));
@@ -76,7 +75,6 @@ fn a_disabled_limiter_allows_everything_and_creates_no_buckets() {
     assert_eq!(limiter.bucket_count(), 0);
     assert!(!limiter.enabled());
 
-    // Enabling keeps whatever buckets already exist but starts counting again.
     limiter.configure(&config(true, 1.0, 1, 32, 128, &[]));
     assert!(limiter.allow(client.as_ref(), NOW, DEFAULT_MAX_BUCKETS));
     assert!(!limiter.allow(client.as_ref(), NOW, DEFAULT_MAX_BUCKETS));
@@ -152,7 +150,6 @@ fn prefixes_aggregate_clients_into_one_bucket() {
     assert!(limiter.allow(address("192.168.2.10").as_ref(), NOW, DEFAULT_MAX_BUCKETS));
     assert_eq!(limiter.bucket_count(), 2);
 
-    // A mapped client shares the IPv4 bucket.
     assert!(limiter.allow(
         address("::ffff:192.168.3.10").as_ref(),
         NOW,
@@ -170,7 +167,6 @@ fn update_raises_capacity_by_the_delta_and_clamps_when_lowered() {
         assert!(limiter.allow(client.as_ref(), NOW, DEFAULT_MAX_BUCKETS));
     }
 
-    // +15 capacity shows up immediately: 15 tokens, five of them spent here.
     limiter.configure(&config(true, 0.000001, 20, 32, 128, &[]));
     let mut allowed = 0;
     for _ in 0..5 {
@@ -180,7 +176,6 @@ fn update_raises_capacity_by_the_delta_and_clamps_when_lowered() {
     }
     assert_eq!(allowed, 5);
 
-    // Lowering the burst clamps the stored 10 tokens down to 3.
     limiter.configure(&config(true, 0.000001, 3, 32, 128, &[]));
     let mut allowed = 0;
     for _ in 0..4 {
@@ -205,11 +200,9 @@ fn the_oldest_bucket_is_evicted_at_capacity() {
     assert!(limiter.allow(third.as_ref(), NOW + 2_000_000_000, 3));
     assert_eq!(limiter.bucket_count(), 3);
 
-    // Evicts `first` (oldest last-refill), then `fourth` gets a full bucket.
     assert!(limiter.allow(fourth.as_ref(), NOW + 3_000_000_000, 3));
     assert_eq!(limiter.bucket_count(), 3);
 
-    // `first` comes back as a brand-new bucket, evicting `second`.
     assert!(limiter.allow(first.as_ref(), NOW + 3_000_000_000, 3));
     assert_eq!(limiter.bucket_count(), 3);
     assert!(limiter.allow(first.as_ref(), NOW + 3_000_000_000, 3));
@@ -240,7 +233,6 @@ fn a_backwards_clock_takes_tokens_away() {
         assert!(limiter.allow(client.as_ref(), NOW, DEFAULT_MAX_BUCKETS));
     }
     assert!(limiter.allow(client.as_ref(), NOW + 10_000_000_000, DEFAULT_MAX_BUCKETS));
-    // 5s backwards: 4 remaining tokens minus 5 seconds of "refill" is negative.
     assert!(!limiter.allow(client.as_ref(), NOW + 5_000_000_000, DEFAULT_MAX_BUCKETS));
     assert!(!limiter.allow(client.as_ref(), NOW + 5_000_000_000, DEFAULT_MAX_BUCKETS));
 }

@@ -14,7 +14,6 @@ import java.io.File
 import java.io.OutputStream
 import java.security.MessageDigest
 
-/// OS-level operations with no Dart equivalent; the SAF pickers and task list need an Activity.
 class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {
@@ -23,15 +22,12 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         private const val REQUEST_EXPORT_DOCUMENT = 0x5701
         private const val REQUEST_IMPORT_DOCUMENT = 0x5702
 
-        /// Local-file subscriptions keep a long-lived read grant, unlike a one-shot import.
         private const val REQUEST_PICK_TEXT_FILE = 0x5703
 
-        /// User-supplied fonts are copied into app storage, so a one-shot read is enough.
         private const val REQUEST_PICK_FONT_FILE = 0x5704
 
         private const val FONT_DIR = "fonts"
 
-        /// Anything smaller than this cannot hold a usable TrueType table directory.
         private const val MIN_FONT_BYTES = 1024
 
         private const val EXPORT_DIR = "exports"
@@ -45,7 +41,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
 
     private val storage = AppStorageCleaner(activity)
 
-    /// Fallback copy for local rule files when no persistable SAF grant can be taken.
     private val ruleCache = RuleFileCache(activity)
 
     private val wifi = WifiSsidReader(activity)
@@ -54,7 +49,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
     }
 
-    /// Re-applies recents hiding on resume, so a cold start needs no push from Dart
     fun reapplyRecentsPrivacy() {
         runCatching {
             val hide = context
@@ -74,21 +68,14 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             "clearCrashLogs" -> result.success(storage.clearCrashLogs())
             "exportText" -> exportText(call, result)
             "memoryInfo" -> result.success(memoryInfo())
-            // Null means "cannot tell" (no permission); "" means "not on Wi-Fi".
             "currentSsid" -> result.success(wifi.currentSsid())
-            // File-system cleanup sqflite cannot reach: it only sees `databases/`.
             "clearUpdateCache" -> result.success(storage.clearUpdateCache(call.argument<Boolean>("includeTemp") ?: true))
             "clearCustomBackgroundCache" -> result.success(storage.clearCustomBackgroundCache())
-            // Both are picker round trips; the answer arrives through onActivityResult.
-            // The export opens the document and keeps it open, so Dart can stream the JSON in
-            // group-sized chunks instead of handing over one string.
             "beginExportDocument" -> beginExportDocument(call, result)
             "appendExportChunk" -> appendExportChunk(call, result)
             "endExportDocument" -> endExportDocument(call, result)
             "abortExportDocument" -> abortExportDocument(result)
             "importDocument" -> importDocument(result)
-            // Local-file subscriptions: the grant must outlive the picker dialog, so these are
-            // separate from importDocument, which only reads the text once.
             "pickPersistableTextFile" -> pickPersistableTextFile(result)
             "pickFontFile" -> pickFontFile(result)
             "deleteFontFile" -> deleteFontFile(call, result)
@@ -98,8 +85,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
     }
 
-    /// Claims [pending] for this picker flow and opens [intent]; a second request while one is
-    /// already open gets `picker_busy` instead of overwriting the first result.
     private fun startPicker(
         result: MethodChannel.Result,
         pending: MethodChannel.Result?,
@@ -119,12 +104,9 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             }
     }
 
-    /// Opens the save picker and keeps the chosen document open for [appendExportChunk].
     private fun beginExportDocument(call: MethodCall, result: MethodChannel.Result) {
         val suggested = call.argument<String>("name")?.takeIf { it.isNotBlank() }
             ?: "diting-backup.json"
-        // The backup is JSON; the request-log export sends "text/csv". Defaulting keeps every
-        // existing caller working.
         val mimeType = call.argument<String>("mimeType")?.takeIf { it.isNotBlank() }
             ?: "application/json"
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
@@ -137,11 +119,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
     }
 
-    /// Appends one chunk of the exported document.
-    ///
-    /// The backup used to travel as a single string: built in the Dart heap, copied across the
-    /// channel, turned into a byte array and written in one go, so a big rule list existed four
-    /// times at once. Chunks go straight to the file.
     private fun appendExportChunk(call: MethodCall, result: MethodChannel.Result) {
         val session = exportSession
         if (session == null || call.argument<Int>("handle") != session.handle) {
@@ -185,8 +162,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         )
     }
 
-    /// Drops a half-written export: the document is closed and deleted, so a failed or empty export
-    /// does not leave a truncated file in the user's folder.
     private fun abortExportDocument(result: MethodChannel.Result) {
         closeExportSession(delete = true)
         result.success(true)
@@ -202,7 +177,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     private fun importDocument(result: MethodChannel.Result) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            // `application/json` alone hides files a file manager labelled `text/plain`.
             type = "*/*"
         }
         startPicker(result, pendingImportResult, REQUEST_IMPORT_DOCUMENT, intent) {
@@ -216,7 +190,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             REQUEST_PICK_FONT_FILE -> finishPickFontFile(resultCode, data)
             REQUEST_EXPORT_DOCUMENT -> finishExportDocument(resultCode, data)
             REQUEST_IMPORT_DOCUMENT -> finishImportDocument(resultCode, data)
-            // Not one of ours: let the next bridge in MainActivity see the result.
             else -> false
         }
 
@@ -230,7 +203,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
         pending.success(
             runCatching {
-                // "wt" truncates: a shorter backup would leave the previous tail.
                 val stream = activity.contentResolver.openOutputStream(uri, "wt")
                     ?: error("无法打开导出文件")
                 closeExportSession(delete = false)
@@ -284,12 +256,9 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         return true
     }
 
-    /// Opens the document picker and keeps the returned grant, so a local subscription can be
-    /// re-imported later without asking the user to pick the file again.
     private fun pickPersistableTextFile(result: MethodChannel.Result) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            // Rule files are plain text but file managers label them inconsistently.
             type = "text/*"
         }
         startPicker(result, pendingTextResult, REQUEST_PICK_TEXT_FILE, intent) {
@@ -305,7 +274,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             pending.success(mapOf("cancelled" to true))
             return true
         }
-        // takePersistableUriPermission survives a reboot; without it the uri dies with the task.
         val granted = runCatching {
             activity.contentResolver.takePersistableUriPermission(
                 uri,
@@ -315,8 +283,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         pending.success(
             runCatching {
                 val text = readUriText(uri) ?: error("无法读取该文件")
-                // A provider that granted no persistent access would make the subscription
-                // unreadable after a restart; keep a private copy as a read fallback.
                 if (!granted) ruleCache.write(uri, text)
                 mapOf(
                     "uri" to uri.toString(),
@@ -335,13 +301,9 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         return true
     }
 
-    /// Opens the document picker for a font file. The bytes are copied into `filesDir/fonts` right
-    /// away, so Dart can register them with `loadFontFromList` without holding a URI grant forever.
     private fun pickFontFile(result: MethodChannel.Result) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
-            // `font/*` matches almost nothing on Android, and plenty of file managers label a TTF
-            // `application/octet-stream`, so accept anything and validate by content.
             type = "*/*"
         }
         startPicker(result, pendingFontResult, REQUEST_PICK_FONT_FILE, intent) {
@@ -362,7 +324,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
                 val bytes = activity.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     ?: error("无法读取该文件")
                 require(bytes.size >= MIN_FONT_BYTES) { "这不是有效的字体文件" }
-                // `00 01` (TrueType) / `OTTO` (CFF) / `true` / `ttcf` (collection).
                 val magic = bytes.copyOfRange(0, 4)
                 val sfnt = (magic[0].toInt() == 0 && magic[1].toInt() == 1) ||
                     (magic[0] == 'O'.code.toByte() && magic[1] == 'T'.code.toByte()) ||
@@ -393,8 +354,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         return true
     }
 
-    /// Deletes a font copied in by [finishPickFontFile]; unknown paths are ignored, so a stale
-    /// entry cannot make Dart fail to save.
     private fun deleteFontFile(call: MethodCall, result: MethodChannel.Result) {
         val path = call.argument<String>("path")
         if (!path.isNullOrBlank()) {
@@ -409,7 +368,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         result.success(null)
     }
 
-    /// Re-reads a previously picked file; the stored grant is what makes this work after a restart.
     private fun readPersistedText(call: MethodCall, result: MethodChannel.Result) {
         val raw = call.argument<String>("uri")
         if (raw.isNullOrBlank()) {
@@ -419,7 +377,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         val uri = Uri.parse(raw)
         result.success(
             runCatching {
-                // A revoked or non-persistable grant falls back to the private copy.
                 val text = runCatching { readUriText(uri) }.getOrNull()
                     ?: ruleCache.read(uri)
                     ?: error("无法读取该文件")
@@ -430,7 +387,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         )
     }
 
-    /// Drops the grant when the subscription is deleted; a stale grant would leak read access.
     private fun releasePersistedText(call: MethodCall, result: MethodChannel.Result) {
         val raw = call.argument<String>("uri")
         if (!raw.isNullOrBlank()) {
@@ -441,7 +397,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
                     Intent.FLAG_GRANT_READ_URI_PERMISSION,
                 )
             }
-            // Drop the read fallback taken when the provider granted no persistent access.
             ruleCache.delete(uri)
         }
         result.success(null)
@@ -451,7 +406,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         .openInputStream(uri)
         ?.use { it.readBytes().toString(Charsets.UTF_8) }
 
-    /// Display name for a `content://` URI; `lastPathSegment` is the opaque document id
     private fun displayNameOf(uri: Uri): String? = runCatching {
         activity.contentResolver.query(
             uri,
@@ -468,14 +422,11 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         }
     }.getOrNull()
 
-    // One slot per picker flow: a stuck or slow result in one flow must not block the others,
-    // and each onActivityResult branch claims a code only when its own request is pending.
     private var pendingExportResult: MethodChannel.Result? = null
     private var pendingImportResult: MethodChannel.Result? = null
     private var pendingTextResult: MethodChannel.Result? = null
     private var pendingFontResult: MethodChannel.Result? = null
 
-    /// The document an export is being streamed into; null when no export is in flight.
     private var exportSession: ExportSession? = null
 
     private var exportHandle = 0
@@ -487,7 +438,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         result.success(applyRecentsPrivacyInternal(hide))
     }
 
-    /// Sets `excludeFromRecents` on every task; false when no task list is reachable yet
     private fun applyRecentsPrivacyInternal(hide: Boolean): Boolean = runCatching {
         val manager = context.getSystemService(ActivityManager::class.java) ?: return false
         manager.appTasks.forEach { task ->
@@ -503,7 +453,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     }
 
     private fun requestIgnoreBatteryOptimizations(result: MethodChannel.Result) {
-        // Newer Android opens the optimisation list; the settings screen keeps the button useful.
         val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
             .setData(Uri.parse("package:${context.packageName}"))
         val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
@@ -512,8 +461,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         result.success(ok)
     }
 
-    /// Process plus device totals, in KB. Never add `totalPss` to the heaps:
-    /// it counts `.so` and `.dex` too
     private fun memoryInfo(): Map<String, Any> {
         val self = android.os.Debug.MemoryInfo()
         val hasSelf = runCatching { android.os.Debug.getMemoryInfo(self) }.isSuccess
@@ -536,7 +483,6 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         )
     }
 
-    /// Writes `content` to `getExternalFilesDir/exports/<name>`; no SAF picker, USB can read it.
     private fun exportText(call: MethodCall, result: MethodChannel.Result) {
         val name = call.argument<String>("name")
             ?.takeIf { it.isNotBlank() }
@@ -553,5 +499,4 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     }
 }
 
-/// Human-readable failure text for a channel error payload.
 private fun Throwable.reason(): String = message ?: javaClass.simpleName

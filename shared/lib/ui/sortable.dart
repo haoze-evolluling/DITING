@@ -15,7 +15,6 @@ import 'package:material_ui/material_ui.dart';
 import 'focus.dart';
 part 'sortable_a.dart';
 
-/// The sort mode a [CommonScaffold] keeps for its body, or a section for its own rows.
 class SortModeScope extends InheritedWidget {
   const SortModeScope({super.key, required this.sorting, required super.child});
 
@@ -31,7 +30,6 @@ class SortModeScope extends InheritedWidget {
 
 typedef SortableItemData = ({int index, bool sorting});
 
-/// While a scope above sorts, rows below give up taps and menus for a [SortHandle].
 class SortableItem extends StatelessWidget {
   const SortableItem({super.key, required this.index, required this.child});
 
@@ -49,7 +47,6 @@ class SortableItem extends StatelessWidget {
     final sorting = SortModeScope.maybeOf(context)?.sorting ?? false;
     return _SortableItemScope(
       data: (index: index, sorting: sorting),
-      // Long-pressing a row anywhere lifts it, as an iOS list does.
       child: ReorderableDelayedDragStartListener(
         index: index,
         enabled: sorting,
@@ -81,7 +78,6 @@ class DisclosureIndicator extends StatelessWidget {
   }
 }
 
-/// A row's trailing button doing something else, held to the [DisclosureIndicator]'s box.
 class DetailButton extends StatelessWidget {
   const DetailButton({
     super.key,
@@ -109,8 +105,6 @@ class DetailButton extends StatelessWidget {
   }
 }
 
-/// Its row drags; with focus, a select key lifts the row and the up and down
-/// keys move it, so a remote or a keyboard can sort without a pointer.
 class SortHandle extends StatefulWidget {
   const SortHandle({super.key, required this.index});
 

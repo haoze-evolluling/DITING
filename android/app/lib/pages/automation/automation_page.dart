@@ -1,15 +1,3 @@
-/// Automation centre (A1 / A14): the rule list, the scenario settings (including the merged
-/// on-demand connection) and the audit timeline.
-///
-/// The list is a view over `automation_rule`; opening a row edits its condition-action document,
-/// tapping the switch enables or pauses it. The timeline is the append-only `automation_event` log,
-/// so "when and why did it fire" is answerable without the log tables. On-demand used to live under
-/// 自定义资源; it is now a section here because it is another way a scenario decides the tunnel.
-///
-/// Layout: one overview card states the rule situation at a glance (or invites the first rule), then
-/// a single grouped surface holds every scenario setting, with the rules and the timeline as their
-/// own sections. The page reads top-down — overview, then inputs, then history — instead of a stack
-/// of equally-weighted cards.
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
@@ -47,8 +35,6 @@ class AutomationPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          // The explainer reads as page-level help, not a surface of its own, so the overview below
-          // is the first card the eye lands on. It used to be a card stacked on the empty card.
           PageIntroText(text: l10n.automationIntro),
           if (list != null)
             _AutomationOverview(
@@ -58,7 +44,6 @@ class AutomationPage extends ConsumerWidget {
             )
           else if (rules.hasError)
             PageIntroText(text: '${rules.error}'),
-          // The rules themselves, only when there are some: the overview already covers "none".
           if (list != null && list.isNotEmpty)
             generateSection(
               title: l10n.automationRulesSection,
@@ -73,8 +58,6 @@ class AutomationPage extends ConsumerWidget {
                   ),
               ],
             ),
-          // One grouped surface for every scenario setting. The on-demand connection and the three
-          // entry points used to be two separate, separately-headed sections; they belong together.
           generateSection(
             title: l10n.automationSettingsSection,
             items: [
@@ -129,9 +112,6 @@ class AutomationPage extends ConsumerWidget {
   }
 }
 
-/// The page's focal card: a live summary of the rule set, or a first-run invitation when there are
-/// none. It gives the page a headline to hang its sections under, which the old flat "intro card +
-/// empty card" pair never did.
 class _AutomationOverview extends StatelessWidget {
   const _AutomationOverview({
     required this.total,
@@ -148,7 +128,6 @@ class _AutomationOverview extends StatelessWidget {
     final l10n = context.l10n;
     final scheme = context.colorScheme;
     final empty = total == 0;
-    // Invite when empty, confirm while any rule is active, stay neutral when all are paused.
     final Color accent;
     if (empty) {
       accent = scheme.primary;
@@ -200,7 +179,6 @@ class _AutomationOverview extends StatelessWidget {
   }
 }
 
-/// A settings row that pushes another page.
 class _NavRow extends StatelessWidget {
   const _NavRow({
     required this.glyph,

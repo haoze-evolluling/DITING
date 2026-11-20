@@ -1,4 +1,3 @@
-/// U2 全局搜索的状态：一个查询串 + 由其派生的结果列表。
 library;
 
 import 'package:diting_android/data/global_search_index.dart';
@@ -23,7 +22,6 @@ final globalSearchQueryProvider =
       GlobalSearchQueryNotifier.new,
     );
 
-/// 结果由查询派生；空查询直接返回空，避免每帧重建整个索引。
 final globalSearchResultsProvider = Provider<List<GlobalSearchEntry>>((ref) {
   final query = ref.watch(globalSearchQueryProvider);
   if (query.trim().isEmpty) return const [];

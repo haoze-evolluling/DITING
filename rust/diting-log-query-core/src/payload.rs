@@ -1,5 +1,3 @@
-//! Typed reads of the JSON payload. Missing and mistyped fields are `None`, never a guess.
-
 use serde_json::{Map, Value};
 use std::sync::OnceLock;
 
@@ -74,7 +72,6 @@ pub fn nullable_text(value: Option<&Value>) -> Value {
         .unwrap_or(Value::Null)
 }
 
-/// A double field; integer JSON numbers are promoted.
 pub fn number(value: &Value, key: &str) -> Option<f64> {
     value.get(key).and_then(Value::as_f64)
 }

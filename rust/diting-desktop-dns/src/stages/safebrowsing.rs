@@ -1,10 +1,3 @@
-//! AdGuard Safe Browsing / parental control (hash-prefix lookups).
-//!
-//! The domain and its parents are SHA-256 hashed; only the first two bytes of each digest travel
-//! to `*.sb.dns.adguard.com` / `*.pc.dns.adguard.com`, so the third party learns a prefix, not the
-//! name. The core facade owns the cache, the verdict and the counters; this stage performs the TXT
-//! query and fails open — a reputation outage must not take the network down.
-
 use std::sync::Arc;
 use std::time::Duration;
 

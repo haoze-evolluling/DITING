@@ -1,17 +1,10 @@
 package com.haoze.diting.engine;
 
-/// The TUN session facade the engine will expose to `VpnService`, declared here exactly as Kotlin
-/// will declare it.
-///
-/// The smoke test loads the host `libditing_tun_spike` and drives this class, so a renamed native, a
-/// swapped argument order or a wrong callback signature fails on the host instead of on a phone.
 public final class TunSession implements AutoCloseable {
-    /// `VpnService.protect(int)`; `false` (or a thrown exception) must stop the dial.
     public interface Protector {
         boolean protect(long fd);
     }
 
-    /// The batch callback the data plane uses; the payload is one JSON row.
     public interface PacketCallback {
         void onPacket(String json);
     }
@@ -39,7 +32,6 @@ public final class TunSession implements AutoCloseable {
         nativeSetCallback(handle, callback);
     }
 
-    /// Null on success, otherwise the error text.
     public String start(String target) {
         requireHandle();
         return nativeStart(handle, target);
@@ -50,13 +42,11 @@ public final class TunSession implements AutoCloseable {
         nativeStop(handle);
     }
 
-    /// Test hook: queue `count` synthetic packets, the way a TUN device would deliver them.
     public void feed(int count) {
         requireHandle();
         nativeFeed(handle, count);
     }
 
-    /// Waits until `delivered` callbacks have arrived; `false` on timeout.
     public boolean waitForCallbacks(long delivered, long timeoutMs) {
         requireHandle();
         return nativeWaitForCallbacks(handle, delivered, timeoutMs);
@@ -81,8 +71,6 @@ public final class TunSession implements AutoCloseable {
         }
     }
 
-    /// Smoke-test hook: calls the native with a raw handle, to prove a released handle is a lookup
-    /// miss rather than a use-after-free.
     public static String statsForRawHandle(long handle) {
         return nativeGetStats(handle);
     }

@@ -3,13 +3,10 @@ import 'dart:io';
 const hdr =
     '// Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.';
 
-// Moves [start,end] (1-based, inclusive, method-level ranges inside a class
-// body) out of `file` into a new part file as an extension on `cls`.
 void extract(String file, String cls, String pname, int start, int end) {
   final lines = File(file).readAsLinesSync();
   final moved = lines.sublist(start - 1, end);
   final rest = [...lines.sublist(0, start - 1), ...lines.sublist(end)];
-  // register the part after existing part directives
   var at = 0;
   for (var i = 0; i < rest.length; i++) {
     final t = rest[i].trim();

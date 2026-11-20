@@ -1,4 +1,3 @@
-/// Rule-test simulator (R1): type a domain and qtype, see the exact verdict the engine would make.
 library;
 
 import 'package:diting_android/data/native/rule_test_bridge.dart';
@@ -9,13 +8,9 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A small page body: the query form on top, the verdict card below. All judgement lives in
-/// `diting-policy-core` through the native bridge; this widget only collects input and renders the
-/// answer, so a simulator result is always the engine's own.
 class RuleTestPage extends ConsumerStatefulWidget {
   const RuleTestPage({super.key, this.initialDomain});
 
-  /// 从命中排行「一键解释」带过来的域名；非空时自动跑一次。
   final String? initialDomain;
 
   @override
@@ -35,7 +30,6 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
     final initial = widget.initialDomain?.trim() ?? '';
     if (initial.isNotEmpty) {
       _domain.text = initial;
-      // 一键解释：进来就直接给出判定，省去再点一次「运行」。
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _run();
       });
@@ -80,8 +74,6 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
     }
   }
 
-  /// A pragmatic client-side check; the engine still normalises and decides. Rejects empty input and
-  /// obvious typos before a snapshot is built.
   static bool _looksLikeDomain(String value) {
     if (value.isEmpty || value.length > 253 || value.contains(' ')) {
       return false;

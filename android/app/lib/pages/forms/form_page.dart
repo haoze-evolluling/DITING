@@ -1,4 +1,3 @@
-/// Form building blocks (upstream `form_page.dart` / `form_row.dart`).
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -9,8 +8,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'form_row_fields.dart';
 
-/// Form page container: title, `FormRow`s, a top error bar and a save action. The save
-/// label is configurable because demo pages need text such as "test connection".
 class FormPage extends StatelessWidget {
   const FormPage({
     super.key,
@@ -27,12 +24,10 @@ class FormPage extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  /// `null` renders a read-only form without a bottom action.
   final VoidCallback? onSave;
 
   final String? saveLabel;
 
-  /// Top error bar; it expands itself when non-empty.
   final String? error;
 
   final bool saving;
@@ -55,8 +50,6 @@ class FormPage extends StatelessWidget {
             spacing: 4,
             children: [
               if (title.isNotEmpty) ListHeader(title: title),
-              // Horizontal padding comes from the outer [padding] so the card aligns
-              // with its header and footer.
               generateSection(padding: EdgeInsets.zero, items: children),
               if (footer case final footer?) ListFooter(text: footer),
             ],
@@ -79,7 +72,6 @@ class FormPage extends StatelessWidget {
   }
 }
 
-/// With a trailing widget the title is capped at half width so the value is not ellipsized.
 class FormRow extends StatelessWidget {
   static const double _spacing = 16;
   static const double _titleMaxWidthFactor = 0.5;
@@ -179,7 +171,6 @@ class FormRow extends StatelessWidget {
   }
 }
 
-/// Round "+ / -" button (upstream `EntryButton`).
 class EntryButton extends StatelessWidget {
   const EntryButton.add({super.key, required this.onPressed}) : _add = true;
 
@@ -203,8 +194,6 @@ class EntryButton extends StatelessWidget {
   }
 }
 
-/// Small info button that opens a message (upstream `InfoMessageButton`), for rows
-/// whose explanation should not be permanently visible.
 class InfoMessageButton extends StatelessWidget {
   const InfoMessageButton({super.key, required this.message});
 

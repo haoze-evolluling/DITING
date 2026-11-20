@@ -1,7 +1,3 @@
-// Desktop hub subscription lists (desktop parity): the counters, the
-// per-list health and the four writes. Every value must come from `/filter/stats` and
-// `/filter/lists`; each write re-reads both, and a rejected write is reported instead of assumed.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_filter_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_filter_lists_page.dart';

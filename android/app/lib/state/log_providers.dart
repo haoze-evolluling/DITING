@@ -1,4 +1,3 @@
-/// Log data for the dashboard, read from the database of the active mode.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -12,18 +11,14 @@ import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Each mode reads its own log database.
 final activeLogDatabaseFileProvider = Provider<String>((ref) {
   return ref.watch(activeDataSetProvider).logsDatabase;
 });
 
-/// `null` on fresh installs, where the Dart layer has not created the file yet.
 final activeLogDatabaseProvider = FutureProvider<Database?>(
   (ref) => AppDatabase.open(ref.watch(activeLogDatabaseFileProvider)),
 );
 
-/// All three dashboard views read the same file; "refresh" and "clear" bump the revision so one
-/// action reloads them.
 class DnsLogRevisionNotifier extends Notifier<int> {
   @override
   int build() => 0;
@@ -44,8 +39,6 @@ Future<T> _viaDatabase<T>(
   return db == null ? empty : build(db);
 }
 
-/// Provider id to display name from the shared catalog, so one provider cannot appear under two
-/// names across the log pages.
 Map<String, String> providerDisplayNames(LegacySettings settings) => {
   for (final provider in [
     ...defaultDnsProviders(currentL10n),
@@ -54,7 +47,6 @@ Map<String, String> providerDisplayNames(LegacySettings settings) => {
     provider.id: provider.name,
 };
 
-/// Latest rows from the active mode's database.
 final dnsLogsProvider = FutureProvider<List<DnsLogRecord>>((ref) async {
   ref.watch(dnsLogRevisionProvider);
   return _viaDatabase(
@@ -73,7 +65,6 @@ final dnsCacheProvider = FutureProvider<List<DnsCacheRecord>>((ref) async {
   );
 });
 
-/// Ranking rows with provider ids already resolved to display names.
 final raceRankingProvider = FutureProvider<RaceRankingBoard>((ref) async {
   ref.watch(dnsLogRevisionProvider);
   final names = providerDisplayNames(ref.watch(legacySettingsProvider));

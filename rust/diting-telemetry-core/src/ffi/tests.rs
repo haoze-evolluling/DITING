@@ -93,7 +93,6 @@ fn the_log_buffer_goes_through_the_abi() {
         assert_eq!(rows[1].domain, "b.example");
         assert_eq!(diting_telemetry_log_pending(kernel), 0);
 
-        // A bad payload is reported, not queued.
         let garbage = [LAYOUT_VERSION, 0, 0];
         assert_eq!(
             diting_telemetry_log_push(kernel, garbage.as_ptr(), garbage.len()),
@@ -205,7 +204,6 @@ fn the_package_cache_goes_through_the_abi() {
         assert_eq!(length, 11);
         assert_eq!(&buffer[..11], b"com.example");
 
-        // Too small, then a miss.
         let mut tiny = [0u8; 4];
         assert_eq!(
             diting_telemetry_package_lookup(kernel, 10_001, 0, tiny.as_mut_ptr(), tiny.len()),
@@ -222,7 +220,6 @@ fn the_package_cache_goes_through_the_abi() {
             TEXT_MISS
         );
 
-        // Empty names are not cached.
         assert_eq!(
             diting_telemetry_package_store(kernel, 10_002, ptr::null(), 0, 0),
             STATUS_OK

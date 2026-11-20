@@ -1,9 +1,3 @@
-/// The web console's session: whether an admin exists, whether this browser holds a valid token, and
-/// the login background the login page renders.
-///
-/// The desktop window never uses any of this: it reaches the service over loopback IPC with the
-/// configured `ipc_token`, so [desktopWebConsoleProvider] is false and the gate steps aside. The
-/// browser that loaded the same bundle from the LAN console is the case this file exists for.
 library;
 
 import 'dart:async';
@@ -16,24 +10,17 @@ import 'package:diting_desktop/data/host/desktop_platform_host.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Container for the browser session, kept apart from the desktop host's IPC keys.
 const desktopSessionTokenKey = 'session_token';
 const desktopSessionUserKey = 'session_user';
 
-/// The origin the bundle was loaded from: the API base and the base of the background image URL.
 final desktopPageOriginProvider = Provider<Uri>(
   (ref) => desktopPageOrigin ?? Uri.base,
 );
 
-/// True when the bundle is being served to a browser, i.e. the LAN web console. The native Windows
-/// window (`flutter run -d windows`) is never web, so it skips authentication entirely.
 final desktopWebConsoleProvider = Provider<bool>(
   (ref) => kIsWeb,
 );
 
-/// Fires when the service answers 401 to a request that carried a session token. A plain object
-/// rather than a provider state, so the API client can signal without depending on the auth state
-/// that depends on the client.
 class DesktopAuthSignal {
   final _controller = StreamController<void>.broadcast();
 
@@ -52,8 +39,6 @@ final desktopAuthSignalProvider = Provider<DesktopAuthSignal>((ref) {
   return signal;
 });
 
-/// The session token this browser holds. Empty in the desktop window, where the IPC token is used
-/// instead. Changing it rebuilds the API client, so every page re-reads with the new credential.
 class DesktopSessionTokenNotifier extends Notifier<String> {
   @override
   String build() {
@@ -87,16 +72,12 @@ final desktopSessionTokenProvider =
     );
 
 enum DesktopAuthPhase {
-  /// The first `/auth/status` read is in flight.
   checking,
 
-  /// No usable session: the login (or setup) page is shown.
   signedOut,
 
-  /// The token was accepted by a protected route.
   signedIn,
 
-  /// The service itself could not be reached; the gate offers a retry instead of a login form.
   unreachable,
 }
 
@@ -111,12 +92,10 @@ class DesktopAuthState {
 
   final DesktopAuthPhase phase;
 
-  /// Whether an admin password exists; before that the console asks for one instead of logging in.
   final bool initialized;
   final String username;
   final Duration lockoutRemaining;
 
-  /// Only set for [DesktopAuthPhase.unreachable]; a rejected credential is the form's own error.
   final DesktopApiException? error;
 
   bool get checking => phase == DesktopAuthPhase.checking;
@@ -127,8 +106,6 @@ class DesktopAuthState {
 class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
   @override
   DesktopAuthState build() {
-    // Read, not watch: a new client (from a token change) must not restart the state machine, or the
-    // screen would drop back to "checking" right after a successful login.
     final signal = ref.watch(desktopAuthSignalProvider);
     final subscription = signal.stream.listen((_) => _expire());
     ref.onDispose(subscription.cancel);
@@ -166,7 +143,6 @@ class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
         return;
       }
       try {
-        // The only way to know a stored token is still valid: ask a protected route.
         await _client.status();
         state = DesktopAuthState(
           phase: DesktopAuthPhase.signedIn,
@@ -213,7 +189,6 @@ class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
     }
   }
 
-  /// First-run setup: the service stores the credential, then the same session is opened.
   Future<DesktopApiException?> setUp({
     required String username,
     required String password,
@@ -227,8 +202,6 @@ class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
     return signIn(username: username, password: password);
   }
 
-  /// Rotating the credential from the login page: the service invalidates every other session, so
-  /// the caller returns to the login form instead of assuming it is still signed in.
   Future<DesktopApiException?> changePassword({
     required String username,
     required String oldPassword,
@@ -262,7 +235,6 @@ class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
     return failure;
   }
 
-  /// A 401 from a page: the session is gone, so drop the token and ask for credentials again.
   void _expire() {
     if (!ref.read(desktopWebConsoleProvider)) return;
     if (state.phase != DesktopAuthPhase.signedIn) return;
@@ -274,7 +246,6 @@ class DesktopAuthNotifier extends Notifier<DesktopAuthState> {
     );
   }
 
-  /// After a rejected credential the service's own status is the truth about which case it was.
   Future<void> _refreshFailure() async {
     try {
       final status = await _client.authStatus();
@@ -299,8 +270,6 @@ final desktopAuthProvider =
       DesktopAuthNotifier.new,
     );
 
-/// The login page's background, as the service reports it. Loaded on demand, because only the login
-/// page renders it.
 class DesktopLoginBackgroundNotifier extends Notifier<DesktopLoginBackground?> {
   @override
   DesktopLoginBackground? build() => null;
@@ -312,7 +281,6 @@ class DesktopLoginBackgroundNotifier extends Notifier<DesktopLoginBackground?> {
           .loginBackground();
       if (ref.mounted) state = background;
     } on DesktopApiException {
-      // The login form still works without a wallpaper; nothing to report here.
     }
   }
 

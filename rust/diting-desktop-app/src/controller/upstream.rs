@@ -1,5 +1,3 @@
-//! Upstream resolver configuration, bootstrap and reachability test.
-
 use std::collections::HashMap;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -11,7 +9,6 @@ use diting_desktop_core::resolver::{DesktopResolver, ProviderSettings, ResolverS
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureUpstreamRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureUpstreamRequest {
@@ -33,7 +30,6 @@ pub struct ConfigureUpstreamRequest {
     pub fallback_on_error: Option<bool>,
 }
 
-/// `ipc.ConfigureBootstrapRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureBootstrapRequest {
@@ -43,7 +39,6 @@ pub struct ConfigureBootstrapRequest {
     pub servers: Vec<diting_desktop_api::config::BootstrapServer>,
 }
 
-/// `ipc.TestUpstreamRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TestUpstreamRequest {
@@ -55,7 +50,6 @@ pub struct TestUpstreamRequest {
     pub url: String,
 }
 
-/// `ipc.TestUpstreamResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TestUpstreamResponse {
@@ -113,12 +107,10 @@ fn validate_providers(
 }
 
 impl AppRuntime {
-    /// `GetUpstreamConfig`.
     pub fn upstream_config(&self) -> ResolverConfig {
         self.config().upstream
     }
 
-    /// `ConfigureUpstream`.
     pub fn configure_upstream(
         &self,
         request: ConfigureUpstreamRequest,
@@ -135,8 +127,6 @@ impl AppRuntime {
             return Err(ControllerError::new("未包含任何有效的上游配置项"));
         }
 
-        // Read, mutate, apply and persist under the runtime's config lock: otherwise two admin
-        // requests can each build from the same snapshot and silently revert one another.
         self.with_config_update(|config| {
             let mut upstream = config.upstream.clone();
 
@@ -187,7 +177,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ConfigureBootstrap`.
     pub fn configure_bootstrap(
         &self,
         request: ConfigureBootstrapRequest,
@@ -206,10 +195,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `TestUpstream`.
-    ///
-    /// The probe runs through the same engine transports as production queries, so a successful
-    /// test proves the protocol, TLS setup and bootstrap path, not just that a socket opened.
     pub async fn test_upstream(&self, request: TestUpstreamRequest) -> TestUpstreamResponse {
         let target = if !request.server.trim().is_empty() {
             request.server.trim().to_string()
@@ -248,7 +233,6 @@ impl AppRuntime {
         let result =
             tokio::time::timeout(Duration::from_secs(3), resolver.resolve(&query, "")).await;
         let latency = started.elapsed().as_secs_f64() * 1000.0;
-        // Dropping the temporary resolver closes its pooled connections.
         drop(resolver);
         match result {
             Ok(Ok(_)) => TestUpstreamResponse {
@@ -270,7 +254,6 @@ fn failed(message: impl Into<String>, latency_ms: f64) -> TestUpstreamResponse {
     }
 }
 
-/// Builds a single-provider test configuration, defaulting the port/path like the Go probe did.
 fn probe_provider(protocol: &str, target: &str, url: &str) -> Result<ProviderSettings, String> {
     let provider = ProviderSettings {
         id: "upstream-test".to_string(),
@@ -322,7 +305,6 @@ fn with_default_port(target: &str, port: u16) -> String {
     if has_port {
         trimmed.to_string()
     } else if trimmed.contains(':') {
-        // A bare IPv6 literal is not bracketed yet.
         format!("[{trimmed}]:{port}")
     } else {
         format!("{trimmed}:{port}")
@@ -343,7 +325,6 @@ fn doh_url(target: &str, url: &str) -> String {
     value
 }
 
-/// Builds a minimal single-question DNS query.
 fn plain_query(name: &str, qtype: u16) -> Vec<u8> {
     let id = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -376,7 +357,6 @@ mod tests {
         assert_eq!(plain.server, "1.1.1.1:53");
         let dot = probe_provider("DOT", "dns.alidns.com", "").unwrap();
         assert_eq!(dot.server, "dns.alidns.com:853");
-        // An explicit port wins, and a bare IPv6 literal is bracketed.
         assert_eq!(with_default_port("1.1.1.1:5353", 53), "1.1.1.1:5353");
         assert_eq!(with_default_port("::1", 53), "[::1]:53");
     }

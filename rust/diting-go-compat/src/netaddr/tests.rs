@@ -1,11 +1,7 @@
-//! `net` behaviour pinned by hand: the parsers come from different libraries on the two sides, so
-//! the accept/reject table (and the text of the errors) is asserted here.
-
 use super::*;
 
 #[test]
 fn parse_ip_matches_net_parse_ip() {
-    // Accepted: dotted quad, IPv6 shorthands, IPv4-mapped and IPv4-embedded forms.
     assert_eq!(
         hex(&parse_ip("1.2.3.4").unwrap()),
         "00000000000000000000ffff01020304"
@@ -39,7 +35,6 @@ fn parse_ip_matches_net_parse_ip() {
         "20010db8000000000000000000000001"
     );
 
-    // Rejected by both: leading zeros, wrong field counts, zones, hostnames, whitespace, empties.
     for text in [
         "",
         " ",
@@ -132,8 +127,6 @@ fn join_host_port_brackets_colons() {
     assert_eq!(join_host_port_text("example.com", "80"), "example.com:80");
     assert_eq!(join_host_port_text("::1", "853"), "[::1]:853");
     assert_eq!(join_host_port_text("", "53"), ":53");
-    // The text port is kept verbatim, even when it is not a number: the resolver endpoints are
-    // validated by shape only, so `net.JoinHostPort` must not reject or rewrite it.
     assert_eq!(join_host_port_text("example.com", "053"), "example.com:053");
     assert_eq!(join_host_port_text("example.com", ""), "example.com:");
     assert_eq!(join_host_port("example.com", 80), "example.com:80");

@@ -1,5 +1,3 @@
-//! Encrypted DNS configuration, certificates and Apple profiles.
-
 use std::net::IpAddr;
 
 use serde::{Deserialize, Serialize};
@@ -19,7 +17,6 @@ use diting_desktop_core::mobileconfig::{
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureEncryptedDNSRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureEncryptedDNSRequest {
@@ -49,7 +46,6 @@ pub struct ConfigureEncryptedDNSRequest {
     pub cert: Option<CertConfig>,
 }
 
-/// `ipc.GenerateCertRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerateCertRequest {
@@ -67,7 +63,6 @@ pub struct GenerateCertRequest {
     pub force: bool,
 }
 
-/// `ipc.ImportCertRequest` after base64 decoding (the IPC layer owns the base64 codec).
 #[derive(Debug, Clone, Default)]
 pub struct ImportCertRequest {
     pub mode: String,
@@ -77,7 +72,6 @@ pub struct ImportCertRequest {
     pub password: String,
 }
 
-/// `ipc.ConfigureACLRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureACLRequest {
@@ -91,7 +85,6 @@ pub struct ConfigureACLRequest {
     pub confirm_unrestricted: bool,
 }
 
-/// `core.CertInfo` wire shape.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CertInfoDto {
@@ -133,7 +126,6 @@ impl From<CertInfo> for CertInfoDto {
     }
 }
 
-/// `ipc.EncryptedDNSStatusResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptedDNSStatusResponse {
@@ -153,18 +145,15 @@ pub struct EncryptedDNSStatusResponse {
     pub cert_expired: bool,
 }
 
-/// Certificate import mode tokens.
 pub const CERT_IMPORT_MODE_PEM: &str = "pem";
 pub const CERT_IMPORT_MODE_PKCS12: &str = "pkcs12";
 
-/// Mobile config binary plus the headers the raw endpoint needs.
 pub struct MobileConfig {
     pub data: Vec<u8>,
     pub content_type: &'static str,
     pub file_ext: &'static str,
 }
 
-/// Fills in SANs only when the caller supplied none, like `DeriveCertNames` in the Go controller.
 fn derive_cert_names(config: &mut CertConfig, server_name: &str, listen_address: &str) {
     if config.dns_names.is_empty() && config.ip_addresses.is_empty() {
         let (dns_names, ip_addresses) =
@@ -174,13 +163,11 @@ fn derive_cert_names(config: &mut CertConfig, server_name: &str, listen_address:
     }
 }
 
-/// Whether a trusted-source entry trusts the whole Internet.
 pub fn is_unrestricted_trust(entry: &str) -> bool {
     let trimmed = entry.trim();
     trimmed == "0.0.0.0/0" || trimmed == "::/0"
 }
 
-/// Normalizes and validates the reverse-proxy trusted source list.
 pub fn normalize_trusted_sources(entries: &[String]) -> Result<Vec<String>, String> {
     let mut seen = std::collections::HashSet::new();
     let mut out = Vec::new();
@@ -214,7 +201,6 @@ pub fn has_unrestricted_trust(entries: &[String]) -> bool {
     entries.iter().any(|entry| is_unrestricted_trust(entry))
 }
 
-/// Stable UUID-ish identifier derived from the clock; profile identity only, not security.
 fn new_profile_uuid() -> String {
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -265,7 +251,6 @@ impl AppRuntime {
             .collect()
     }
 
-    /// `GetEncryptedDNS`.
     pub fn encrypted_dns_status(&self) -> EncryptedDNSStatusResponse {
         let config = self.config().encrypted;
         self.cert.reload();
@@ -292,13 +277,10 @@ impl AppRuntime {
         }
     }
 
-    /// `ConfigureEncryptedDNS`.
     pub fn configure_encrypted_dns(
         &self,
         request: ConfigureEncryptedDNSRequest,
     ) -> Result<(), ControllerError> {
-        // The snapshot read and the persistence share the runtime's config lock so a concurrent
-        // management request cannot be reverted by this one.
         self.with_config_update(|config| {
             let mut encrypted = config.encrypted.clone();
             if let Some(value) = request.enabled {
@@ -356,7 +338,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `GenerateEncryptedCert`.
     pub fn generate_encrypted_cert(
         &self,
         request: GenerateCertRequest,
@@ -396,7 +377,6 @@ impl AppRuntime {
             .map_err(ControllerError::new)
     }
 
-    /// `ImportEncryptedCert` (PKCS#12 bodies are base64-decoded by the caller).
     pub fn import_encrypted_cert(&self, request: ImportCertRequest) -> Result<(), ControllerError> {
         match request.mode.as_str() {
             CERT_IMPORT_MODE_PEM => {
@@ -422,7 +402,6 @@ impl AppRuntime {
             .map_err(ControllerError::new)
     }
 
-    /// `ConfigureEncryptedACL`.
     pub fn configure_encrypted_acl(
         &self,
         request: ConfigureACLRequest,
@@ -453,7 +432,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `BuildEncryptedMobileConfig`.
     pub fn build_mobile_config(&self, protocol: &str) -> Result<MobileConfig, ControllerError> {
         let mut config: Config = self.config();
         if !config.encrypted.enabled {

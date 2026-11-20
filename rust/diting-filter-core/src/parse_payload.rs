@@ -1,16 +1,3 @@
-//! The compact binary layout the parser entry points share with Go
-//! (`desktop/service/internal/core/parse_native.go`).
-//!
-//! Two payloads, both little endian, both starting with their own layout byte so a mismatched
-//! Go/Rust pair is a loud rejection instead of a misread field:
-//!
-//! * request: the text to parse (one line or a whole document);
-//! * reply: the parsed lines, in list order.
-//!
-//! Text lengths are `u32` here, not the `u16` the matcher payload uses: a single list can be a few
-//! megabytes and one regex rule can be a kilobyte, so the narrow length would be a truncation
-//! waiting to happen. The parser runs once per list load, never per query.
-
 use std::borrow::Cow;
 
 use crate::parse::ParsedLine;
@@ -19,16 +6,8 @@ use crate::rule::{
     FLAG_ALLOW, FLAG_EXACT, FLAG_IMPORTANT, FLAG_REGEX, FLAG_REWRITE, FLAG_WILDCARD,
 };
 
-/// Layout version of both payloads below; `parseNativeLayoutVersion` in Go must match.
 pub const LAYOUT_VERSION: u8 = 1;
 
-/// Decodes a parser request into the text to parse. The list name stays in Go: it is a label the
-/// parser never looks at.
-///
-/// The text is decoded lossily on purpose. Filter lists are plain files from the internet and are
-/// not always UTF-8; Go strings could carry such bytes through (its `strings.ToLower` turns them
-/// into U+FFFD, which IDNA then rejects), so the port does the same instead of failing the whole
-/// list over one bad byte.
 pub fn decode_request(data: &[u8]) -> Result<Cow<'_, str>, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -42,7 +21,6 @@ pub fn decode_request(data: &[u8]) -> Result<Cow<'_, str>, DecodeError> {
     Ok(String::from_utf8_lossy(text))
 }
 
-/// Encodes the reply: one record per parsed line.
 pub fn encode_parsed_lines(lines: &[ParsedLine]) -> Vec<u8> {
     let mut out = vec![LAYOUT_VERSION];
     out.extend_from_slice(&(lines.len() as u32).to_le_bytes());
@@ -60,7 +38,6 @@ pub fn encode_parsed_lines(lines: &[ParsedLine]) -> Vec<u8> {
     out
 }
 
-/// Decodes a reply back into lines; only the tests need it, Go reads the same bytes field by field.
 pub fn decode_parsed_lines(data: &[u8]) -> Result<Vec<ParsedLine>, DecodeError> {
     let mut reader = Reader::new(data);
     let layout = reader.u8("layout")?;
@@ -101,7 +78,6 @@ pub fn decode_parsed_lines(data: &[u8]) -> Result<Vec<ParsedLine>, DecodeError> 
     Ok(lines)
 }
 
-/// Packs the booleans, using the matcher's flag bits so Go has one table, not two.
 fn flags_of(line: &ParsedLine) -> u8 {
     let mut flags = 0u8;
     if line.is_allow {

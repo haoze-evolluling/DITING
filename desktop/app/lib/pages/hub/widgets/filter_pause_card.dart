@@ -1,8 +1,3 @@
-/// The temporary pause: the console's `RulesPanel.vue` header block. Pausing stops every rule until
-/// the chosen duration ends (or until resumed by hand), and a service restart clears it.
-///
-/// The switch and the duration are a local choice; the pause itself is the service's runtime state,
-/// re-read after every call.
 library;
 
 import 'dart:async';
@@ -18,7 +13,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The four durations the console offers, in minutes.
 const List<int> desktopPauseMinutes = [5, 30, 60, 480];
 
 String _durationLabel(BuildContext context, int minutes) {

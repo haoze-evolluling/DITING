@@ -1,6 +1,3 @@
-/// Minimal Markdown block parser for model output. Ported from the 1.4.x Kotlin `MarkdownBlock`:
-/// same regexes and same order, so a report renders the same in both apps. A full Markdown package
-/// would be a new dependency for one screen; the reports only ever use these eight shapes.
 library;
 
 sealed class MarkdownBlock {
@@ -23,7 +20,6 @@ class MarkdownParagraph extends MarkdownBlock {
 class MarkdownBulletItem extends MarkdownBlock {
   const MarkdownBulletItem(this.indent, this.text);
 
-  /// Nesting level, 0-4; the renderer turns it into a left inset.
   final int indent;
   final String text;
 }
@@ -31,7 +27,6 @@ class MarkdownBulletItem extends MarkdownBlock {
 class MarkdownNumberedItem extends MarkdownBlock {
   const MarkdownNumberedItem(this.number, this.text);
 
-  /// Includes the trailing dot, e.g. `3.`.
   final String number;
   final String text;
 }
@@ -72,7 +67,6 @@ bool _isTableStart(List<String> lines, int index) {
   final next = lines[index + 1].trim();
   if (!current.startsWith('|') || !current.endsWith('|')) return false;
   if (!next.startsWith('|') || !next.endsWith('|')) return false;
-  // Trim first: the separator regex is anchored, so ` --- ` would otherwise not match.
   final cells = next
       .split('|')
       .map((cell) => cell.trim())
@@ -80,7 +74,6 @@ bool _isTableStart(List<String> lines, int index) {
   return cells.isNotEmpty && cells.every(_tableSeparatorCellRegex.hasMatch);
 }
 
-/// True when the line at [index] begins any block other than a paragraph.
 bool _startsBlock(List<String> lines, int index) {
   final line = lines[index];
   final trimmed = line.trim();
@@ -95,7 +88,6 @@ bool _startsBlock(List<String> lines, int index) {
       _isTableStart(lines, index);
 }
 
-/// Splits raw model output into blocks. Never throws: anything unrecognised becomes a paragraph.
 List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
   final lines = rawText.split('\n');
   final blocks = <MarkdownBlock>[];
@@ -106,13 +98,11 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
     final line = lines[i];
     final trimmed = line.trim();
 
-    // 1. Blank line: no block, just advance.
     if (trimmed.isEmpty) {
       i++;
       continue;
     }
 
-    // 2. Fenced code block (``` or ~~~), closed by the same delimiter.
     if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
       final delimiter = trimmed.startsWith('```') ? '```' : '~~~';
       final language = trimmed.replaceFirst(delimiter, '').trim();
@@ -122,19 +112,17 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
         codeLines.add(lines[i]);
         i++;
       }
-      if (i < n) i++; // Skip the closing delimiter.
+      if (i < n) i++;
       blocks.add(MarkdownCodeBlock(language, codeLines.join('\n')));
       continue;
     }
 
-    // 3. Horizontal rule.
     if (_hrRegex.hasMatch(trimmed)) {
       blocks.add(const MarkdownDivider());
       i++;
       continue;
     }
 
-    // 4. Heading.
     final heading = _headingRegex.firstMatch(trimmed);
     if (heading != null) {
       blocks.add(
@@ -144,7 +132,6 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
       continue;
     }
 
-    // 5. Blockquote: consecutive `>` lines become one block.
     if (trimmed.startsWith('>')) {
       final quoteLines = <String>[];
       while (i < n && lines[i].trim().startsWith('>')) {
@@ -155,10 +142,9 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
       continue;
     }
 
-    // 6. Table: only when the next line is a separator row, otherwise `a | b` stays a paragraph.
     if (_isTableStart(lines, i)) {
       final headers = _tableCells(trimmed);
-      i += 2; // Header and separator.
+      i += 2;
       final rows = <List<String>>[];
       while (i < n &&
           lines[i].trim().startsWith('|') &&
@@ -170,7 +156,6 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
       continue;
     }
 
-    // 7. Unordered list item.
     final bullet = _bulletRegex.firstMatch(line);
     if (bullet != null) {
       final indent = (bullet.group(1)!.length ~/ 2).clamp(0, 4);
@@ -179,7 +164,6 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
       continue;
     }
 
-    // 8. Ordered list item.
     final numbered = _numberedRegex.firstMatch(line);
     if (numbered != null) {
       blocks.add(
@@ -192,7 +176,6 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
       continue;
     }
 
-    // 9. Paragraph: swallow everything up to the next block boundary.
     final paragraphLines = <String>[];
     while (i < n && !_startsBlock(lines, i)) {
       paragraphLines.add(lines[i].trim());
@@ -201,14 +184,12 @@ List<MarkdownBlock> parseMarkdownBlocks(String rawText) {
     if (paragraphLines.isNotEmpty) {
       blocks.add(MarkdownParagraph(paragraphLines.join('\n')));
     } else {
-      // Nothing consumed: step forward so an unexpected line cannot loop forever.
       i++;
     }
   }
   return blocks;
 }
 
-/// `| a | b |` → `[a, b]`: drop the empty strings the leading and trailing pipes produce.
 List<String> _tableCells(String row) {
   final cells = row.split('|').map((cell) => cell.trim()).toList();
   if (cells.length < 2) return cells;

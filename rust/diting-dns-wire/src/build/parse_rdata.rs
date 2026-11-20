@@ -1,11 +1,3 @@
-//! Record payload decoding: the inverse of [`super::rdata::RData::encode`].
-//!
-//! `wire` is always the whole message, because every name inside rdata may legally use a
-//! compression pointer whose target is message-relative. `end` caps how far the *inline* bytes of
-//! this rdata may reach; pointers are still followed through the full message by
-//! [`crate::unpack_name`]. A name that does not consume its rdata exactly is rejected: re-encoding
-//! would otherwise silently drop the trailing bytes.
-
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use crate::bits::{read_u16, read_u32};
@@ -16,11 +8,6 @@ use crate::build::types::{
 };
 use crate::name::unpack_name;
 
-/// Decodes one record payload laid out at `wire[start..start + rdlength]`.
-///
-/// Returns `None` when the declared length runs past the message or a known record type is
-/// malformed. Unknown types (and the empty payload of any non-TXT type) are preserved verbatim as
-/// [`RData::Raw`], so a message can be rewritten without losing records.
 pub fn parse_rdata(wire: &[u8], start: usize, rdlength: usize, rtype: u16) -> Option<RData> {
     let end = start.checked_add(rdlength)?;
     if end > wire.len() {
@@ -29,8 +16,6 @@ pub fn parse_rdata(wire: &[u8], start: usize, rdlength: usize, rtype: u16) -> Op
     let bytes = &wire[start..end];
 
     if rdlength == 0 {
-        // A zero-length TXT is an empty string list; for every other type keep the empty payload
-        // as raw bytes so the round trip is exact.
         return Some(if rtype == TYPE_TXT {
             RData::Txt(Vec::new())
         } else {
@@ -163,10 +148,6 @@ pub fn parse_rdata(wire: &[u8], start: usize, rdlength: usize, rtype: u16) -> Op
     })
 }
 
-/// Decodes the `(key, length, value)` triplets of an SVCB/HTTPS parameter list.
-///
-/// Order is preserved exactly as it appeared on the wire; the encoder re-sorts it later because
-/// RFC 9460 requires strictly increasing keys.
 pub fn decode_svc_params(bytes: &[u8]) -> Option<Vec<SvcParam>> {
     let mut params = Vec::new();
     let mut offset = 0usize;
@@ -187,7 +168,6 @@ pub fn decode_svc_params(bytes: &[u8]) -> Option<Vec<SvcParam>> {
     Some(params)
 }
 
-/// Reads a lone name and insists it fills the whole rdata.
 fn name_only(wire: &[u8], start: usize, end: usize) -> Option<String> {
     let (name, offset) = unpack_name(wire, start, end)?;
     if offset != end {
@@ -196,7 +176,6 @@ fn name_only(wire: &[u8], start: usize, end: usize) -> Option<String> {
     Some(name)
 }
 
-/// Reads `count`-prefixed `<character-string>`s until `end`.
 fn character_strings(wire: &[u8], start: usize, end: usize) -> Option<Vec<Vec<u8>>> {
     let mut strings = Vec::new();
     let mut offset = start;
@@ -213,7 +192,6 @@ fn character_strings(wire: &[u8], start: usize, end: usize) -> Option<Vec<Vec<u8
     Some(strings)
 }
 
-/// Reads one UTF-8 `<character-string>` and returns it with the offset just past it.
 fn read_character_string(wire: &[u8], start: usize, end: usize) -> Option<(String, usize)> {
     if start >= end {
         return None;

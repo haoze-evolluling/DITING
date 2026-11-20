@@ -1,5 +1,3 @@
-//! `/api/v1/safesearch/config` and `/api/v1/filter/safebrowsing`.
-
 use hyper::http::Method;
 
 use diting_desktop_app::controller::safebrowsing::ConfigureSafeBrowsingRequest;
@@ -33,8 +31,6 @@ pub fn handle_safebrowsing(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(request) => request,
                 Err(response) => return response,
             };
-            // Normalization can rewrite out-of-range values, so the response carries what the
-            // engine actually uses rather than what the client asked for.
             match server.runtime().configure_safe_browsing(request) {
                 Ok(status) => ok_data_message(status, "声誉查询配置已更新"),
                 Err(error) => internal_error(error.message),

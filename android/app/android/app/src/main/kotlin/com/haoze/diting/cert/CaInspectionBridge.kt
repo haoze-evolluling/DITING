@@ -22,7 +22,6 @@ import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
 
-/// The MITM root CA; `installed` = SHA-256 match in the `user:` store, the only writable one.
 class CaInspectionBridge(private val context: Context) :
     MethodChannel.MethodCallHandler {
 
@@ -31,7 +30,6 @@ class CaInspectionBridge(private val context: Context) :
 
         const val EXPORTED_CERTIFICATE_NAME = "谛听-HTTPS-Inspection-Root-CA.crt"
 
-        /// Engine() is too slow for the platform thread; a failed dlopen must surface
         private val worker = Executors.newSingleThreadExecutor { runnable ->
             Thread(runnable, "diting-ca").apply { isDaemon = true }
         }
@@ -41,10 +39,8 @@ class CaInspectionBridge(private val context: Context) :
         private const val CA_KEY_FILE = "ca.key"
         private const val MITM_BLACKLIST_FILE = "mitm_blacklist.txt"
 
-        /// Staging area for the installer hand-off; declared in `res/xml/file_paths.xml`
         private const val EXPORT_DIR = "ca-export"
 
-        /// Shown by the system installer; distinctive so the user can tell it from other CAs
         private const val CA_DISPLAY_NAME = "谛听 HTTPS 检查根证书"
     }
 
@@ -62,15 +58,12 @@ class CaInspectionBridge(private val context: Context) :
                 val uri = call.argument<String>("uri").orEmpty()
                 runAsync(result, "ca_export_failed") { export(Uri.parse(uri)) }
             }
-            // File system + intent work: never on the platform thread for the write, and the
-            // installer must be launched from a thread it can see the grant from.
             "installCa" -> runAsync(result, "ca_install_failed") { installCertificate() }
             "saveCa" -> runAsync(result, "ca_save_failed") { saveToDownloads() }
             else -> result.notImplemented()
         }
     }
 
-    /// Runs [block] on the worker and answers on the platform thread.
     private fun runAsync(
         result: MethodChannel.Result,
         errorCode: String,
@@ -82,9 +75,6 @@ class CaInspectionBridge(private val context: Context) :
     private fun inspect(regenerate: Boolean): Map<String, Any?> {
         if (regenerate) reset()
 
-        // Reading the cached `ca.crt` avoids spawning the engine on every page open: the engine
-        // exists to mint the pair, not to serve it back. Only a missing file pays the cost (and
-        // only then can a missing/ABI-mismatched `libditing_native.so` surface).
         val cached = if (regenerate) null else readCachedPem()
         val text = when (val outcome = if (cached != null) Success(cached) else generate()) {
             is Failure -> return unavailable(outcome.message)
@@ -98,7 +88,6 @@ class CaInspectionBridge(private val context: Context) :
             "installed" to (fingerprint != null && isInstalled(fingerprint)),
             "fingerprintSha256" to fingerprint,
             "pem" to text,
-            // Present but unparsable: something this device's CertificateFactory rejects.
             "error" to if (fingerprint == null) "根证书无法解析" else null,
         )
     }
@@ -111,9 +100,6 @@ class CaInspectionBridge(private val context: Context) :
         "error" to error,
     )
 
-    /// Hands the PEM to the system certificate installer through a `content://` URI. Without
-    /// this the only thing the app could do was open the security settings screen, which is why
-    /// "install" never actually installed anything.
     private fun installCertificate(): Map<String, Any?> {
         val pem = currentPem()
             ?: return installResult("none", null, "还没有可用证书，请先重新生成根证书")
@@ -123,9 +109,6 @@ class CaInspectionBridge(private val context: Context) :
         runCatching { file.writeText(pem, Charsets.UTF_8) }
             .onFailure { return installResult("none", null, describe(it)) }
 
-        // KeyChain.createInstallIntent() is the only hand-off the platform installer accepts for
-        // a CA: ACTION_VIEW on the file merely opens CertInstaller's "install this from Settings"
-        // notice, which has a single Close button and installs nothing.
         val installerStarted = runCatching {
             context.startActivity(
                 KeyChain.createInstallIntent().apply {
@@ -135,7 +118,6 @@ class CaInspectionBridge(private val context: Context) :
                 },
             )
         }.isSuccess || runCatching {
-            // Older ROMs only understand the file-based ACTION_VIEW hand-off.
             val uri: Uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
@@ -153,8 +135,6 @@ class CaInspectionBridge(private val context: Context) :
             return installResult("installer", file.absolutePath, null)
         }
 
-        // No installer activity (rare, some OEM roms strip it): the file is staged, so send the
-        // user to the manual entry point and say so instead of pretending it installed.
         val settings = runCatching {
             context.startActivity(
                 Intent(Settings.ACTION_SECURITY_SETTINGS)
@@ -171,8 +151,6 @@ class CaInspectionBridge(private val context: Context) :
     private fun installResult(mode: String, path: String?, error: String?): Map<String, Any?> =
         mapOf("mode" to mode, "path" to path, "error" to error)
 
-    /// Copies the PEM into the shared Download folder so it can be installed later from a file
-    /// manager, or fetched over USB. MediaStore needs no storage permission on Android 10+.
     private fun saveToDownloads(): Map<String, Any?> {
         val pem = currentPem()
             ?: return saveResult(false, null, "还没有可用证书，请先重新生成根证书")
@@ -199,7 +177,6 @@ class CaInspectionBridge(private val context: Context) :
         }.getOrElse { saveToPrivateDownloads(pem) }
     }
 
-    /// Fallback for API < 29 and MediaStore failures: app-private Downloads, no permission needed.
     private fun saveToPrivateDownloads(pem: String): Map<String, Any?> = runCatching {
         val root = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
             ?: File(context.filesDir, "downloads")
@@ -219,7 +196,6 @@ class CaInspectionBridge(private val context: Context) :
         stream.use { it.write(pem.toByteArray(Charsets.UTF_8)) }
     }
 
-    /// Cached PEM first; the engine is the generator of record, not a read path.
     private fun currentPem(): String? = readCachedPem() ?: (generate() as? Success)?.value
 
     private fun readCachedPem(): String? = runCatching {
@@ -229,9 +205,7 @@ class CaInspectionBridge(private val context: Context) :
             ?.takeIf { it.isNotBlank() }
     }.getOrNull()
 
-    /// Asks the Rust engine to mint the pair (it writes `ca.crt` into the mitm directory).
     private fun generate(): Outcome = runCatching {
-        // Engine() must be stopped: its DNS cache cleaner task only exits via stop().
         val engine = Engine()
         try {
             engine.startStackMitm(certificateDirectory().absolutePath)
@@ -241,7 +215,6 @@ class CaInspectionBridge(private val context: Context) :
         }
     }.fold(
         onSuccess = { Success(it) },
-        // ABI mismatch (an arm64-only libditing_native.so on x86_64) shows up here and is reported.
         onFailure = { Failure(describe(it)) },
     )
 
@@ -269,7 +242,6 @@ class CaInspectionBridge(private val context: Context) :
         return fingerprintOfBytes(certificate.encoded)
     }
 
-    /// Colon-separated uppercase hex, as displayed verbatim
     private fun fingerprintOfBytes(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256")
             .digest(bytes)
@@ -277,7 +249,6 @@ class CaInspectionBridge(private val context: Context) :
 
     private fun describe(error: Throwable): String {
         val message = error.message.orEmpty()
-        // UnsatisfiedLinkError's message is the only real diagnostic, so pass it through.
         return when {
             error is UnsatisfiedLinkError -> "证书引擎加载失败：$message"
             message.isEmpty() -> error.javaClass.simpleName
@@ -285,7 +256,6 @@ class CaInspectionBridge(private val context: Context) :
         }
     }
 
-    /// Tiny sealed result so `inspect()` can tell "engine failed" from "engine gave nothing".
     private sealed interface Outcome
 
     private class Success(val value: String) : Outcome

@@ -1,10 +1,3 @@
-//! Encrypted Client Hello parameter stripping (RFC 9460 §6.3).
-//!
-//! When ECH is advertised in DNS, a client can complete a TLS handshake to a name the local
-//! policy never gets to see. Removing the `ech` SvcParam from HTTPS/SVCB answers forces a
-//! visible SNI. The stage runs as a postlude because the parameter arrives in the upstream (or
-//! cached) answer.
-
 use async_trait::async_trait;
 use diting_dns_wire::build::ParsedMessage;
 

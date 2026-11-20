@@ -1,5 +1,3 @@
-//! Response metadata: record walk, TTL offsets, chain targets, A/AAAA text and ID/TTL patching.
-
 use crate::bits::{read_u16, read_u32};
 use crate::name::unpack_name;
 
@@ -11,7 +9,6 @@ const TYPE_OPT: u16 = 41;
 const TYPE_SVCB: u16 = 64;
 const TYPE_HTTPS: u16 = 65;
 
-/// Which record put a domain in a response chain.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChainKind {
     Cname,
@@ -42,49 +39,25 @@ impl ChainKind {
     }
 }
 
-/// One CNAME/SVCB/HTTPS target of the answer section, normalized like Go did.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChainTarget {
     pub domain: String,
     pub kind: ChainKind,
 }
 
-/// Everything `putMsg` used to read off the unpacked `*dns.Msg`, read straight from the wire.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ResponseMeta {
-    /// TC bit of the header.
     pub truncated: bool,
-    /// Low four bits of the header flags.
     pub rcode: u8,
-    /// `anCount` of the header; equals `len(msg.Answer)` for every message this parser accepts.
     pub answer_count: u16,
-    /// Minimum TTL over the non-OPT answers, else the authority SOA fallback.
     pub min_ttl: Option<u32>,
-    /// TTL offsets of the non-OPT answer records.
     pub answer_ttl_offsets: Vec<u16>,
-    /// TTL offsets of the non-OPT records right after the question when the answer is empty.
     pub authority_ttl_offsets: Vec<u16>,
-    /// CNAME/SVCB/HTTPS targets of the answer section, in record order.
     pub chain_targets: Vec<ChainTarget>,
-    /// A/AAAA answers as Go printed them, deduplicated in record order.
     pub ips: Vec<String>,
-    /// `strings.Join(ips, ",")`.
     pub resolved_ips: String,
 }
 
-/// Parses the sections the cache needs; `None` means "do not cache this answer".
-///
-/// The walk mirrors what `dns.Msg.Unpack` accepted, not just what RFC 1035 allows: a message that
-/// ends exactly on a record boundary is accepted with the declared-but-missing records dropped,
-/// a zero-length rdata is accepted for every type (`noRdata`), and a SOA whose rdata stops on a
-/// field boundary keeps its remaining fields zero. Those cases only exist in malformed upstream
-/// answers, but the answer the old cache stored for them is reproduced exactly.
-///
-/// Two deliberate differences remain. Rdata of record types the cache does not read is skipped by
-/// `rdLength` instead of being validated field by field (so a broken MX/TXT is cached instead of
-/// dropped), and a response whose question section is cut mid-field is rejected here while
-/// `unpackQuestion` swallowed that error and reported a zero `qclass`. Both only affect malformed
-/// data; valid answers take exactly the same path as before.
 pub fn parse_response(wire: &[u8]) -> Option<ResponseMeta> {
     if wire.len() < 12 {
         return None;
@@ -113,9 +86,6 @@ pub fn parse_response(wire: &[u8]) -> Option<ResponseMeta> {
     let mut parsed_answers = 0usize;
 
     for index in 0..answer_count + authority_count + additional_count {
-        // `unpackRRslice` stops without an error when the message ends on a record boundary and
-        // the header still claims more records; the parsed sections are simply shorter. Keep that
-        // (only malformed or hand-cut messages get here, but the old cache stored them too).
         if offset == wire.len() {
             break;
         }
@@ -161,7 +131,6 @@ pub fn parse_response(wire: &[u8]) -> Option<ResponseMeta> {
     Some(meta)
 }
 
-/// Copies `wire` and overwrites the query ID and every indexed TTL.
 pub fn patch_response(wire: &[u8], offsets: &[u16], query_id: u16, ttl: u32) -> Option<Vec<u8>> {
     let mut patched = vec![0u8; wire.len()];
     if patch_response_into(wire, offsets, query_id, ttl, &mut patched) {
@@ -171,7 +140,6 @@ pub fn patch_response(wire: &[u8], offsets: &[u16], query_id: u16, ttl: u32) -> 
     }
 }
 
-/// Same as [`patch_response`] but writes into a caller-owned buffer of exactly `wire.len()` bytes.
 pub fn patch_response_into(
     wire: &[u8],
     offsets: &[u16],
@@ -211,8 +179,6 @@ fn parse_answer(
         meta.answer_ttl_offsets.push(to_offset(header + 4)?);
     }
 
-    // `noRdata` in miekg/dns: a zero-length record is accepted for every type without unpacking
-    // its body, so an empty A/AAAA/CNAME/SVCB is "valid but carries nothing".
     if rd_length == 0 {
         return Some(());
     }
@@ -238,7 +204,6 @@ fn parse_answer(
             push_chain_target(meta, &name, ChainKind::Cname);
         }
         TYPE_SVCB | TYPE_HTTPS => {
-            // Priority only: the generated unpacker returns as soon as the rdata slice ends.
             if rd_length < 2 {
                 return None;
             }
@@ -256,11 +221,6 @@ fn parse_answer(
     Some(())
 }
 
-/// Parses an SOA rdata like miekg/dns did and returns `(header TTL, MINIMUM)`.
-///
-/// The generated unpacker returns as soon as the rdata slice ends, and `UnpackRRWithHeader` only
-/// insists that the whole rdata was consumed. A record that stops exactly on a field boundary is
-/// therefore accepted with the remaining fields zero, which is why the MINIMUM here can be `0`.
 fn parse_soa(
     wire: &[u8],
     ttl: u32,
@@ -284,7 +244,6 @@ fn parse_soa(
     }
 }
 
-/// `strings.TrimSuffix(strings.ToLower(strings.TrimSpace(name)), ".")`, skipping empty results.
 fn push_chain_target(meta: &mut ResponseMeta, name: &str, kind: ChainKind) {
     let trimmed = name.trim_matches(is_go_space);
     let lowered = trimmed.to_ascii_lowercase();
@@ -298,7 +257,6 @@ fn push_chain_target(meta: &mut ResponseMeta, name: &str, kind: ChainKind) {
     });
 }
 
-/// The ASCII half of Go's `unicode.IsSpace` (`\v` included, unlike Rust's ASCII trim).
 fn is_go_space(character: char) -> bool {
     matches!(character, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r')
 }
@@ -314,7 +272,6 @@ pub fn format_ipv4(bytes: &[u8]) -> String {
     format!("{}.{}.{}.{}", bytes[0], bytes[1], bytes[2], bytes[3])
 }
 
-/// `net.IP.String()`: IPv4-mapped addresses print dotted, everything else in RFC 5952 form.
 pub fn format_ipv6(bytes: &[u8]) -> String {
     let mut raw = [0u8; 16];
     raw.copy_from_slice(&bytes[..16]);

@@ -1,9 +1,3 @@
-//! Client access control.
-//!
-//! The blocked list wins over the allow list; a non-empty allow list means everything else is
-//! refused. Refused queries carry the marker EDE reads so the client learns "prohibited" rather
-//! than a bare REFUSED.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

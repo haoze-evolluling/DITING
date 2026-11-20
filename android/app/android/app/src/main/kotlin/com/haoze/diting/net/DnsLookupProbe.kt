@@ -6,20 +6,14 @@ import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 
-/// One manual lookup in the shape `DnsLookupResult.fromMap` reads: tunnel or system resolver.
-///
-/// The engine call, the system resolver and the map shape stay here; only the "is this a literal
-/// IP" gate moved to `rust/diting-probe-core` (`host.rs`).
 internal object DnsLookupProbe {
 
     fun lookup(domain: String, viaTunnel: Boolean, ipv4: Boolean): Map<String, Any?> {
         val host = NetHost.sanitize(domain)
-        // `domain` names what was actually looked up, so the empty case reports "".
         if (host.isEmpty()) return error("", "请输入要查询的域名")
         return if (viaTunnel) tunnelLookup(host, ipv4) else systemLookup(host, ipv4)
     }
 
-    /// UDP query to a user-specified resolver, same shape as `lookup`; server is an IP
     fun customServerLookup(domain: String, server: String, ipv4: Boolean): Map<String, Any?> {
         val host = NetHost.sanitize(domain)
         if (host.isEmpty()) return error("", "请输入要查询的域名")
@@ -43,8 +37,6 @@ internal object DnsLookupProbe {
         )
     }
 
-    /// Hand-rolled in `rust/diting-probe-core`: `getByName` also resolves hostnames, so
-    /// "dns.google" would pass a plain `InetAddress` check.
     private fun isIpLiteral(value: String): Boolean = ProbeNative.isIpLiteral(value)
 
     private fun tunnelLookup(host: String, ipv4: Boolean): Map<String, Any?> {
@@ -59,7 +51,6 @@ internal object DnsLookupProbe {
         val json = runCatching { JSONObject(raw) }.getOrNull()
             ?: return error(host, "隧道解析结果无效", elapsed)
 
-        // Error object wins: with no upstream yet the engine returns a bare error object.
         json.optString("error").takeIf { it.isNotEmpty() }?.let { message ->
             return error(host, translateEngineError(message), elapsed)
         }
@@ -70,7 +61,6 @@ internal object DnsLookupProbe {
 
         return when (source) {
             "rewrite", "upstream", "blocked" -> result(host, source, answers, elapsed, null)
-            // `nodata`: no address record; the Dart model has no label for it, so report the rcode.
             else -> error(host, noDataMessage(reason), elapsed)
         }
     }
@@ -92,7 +82,6 @@ internal object DnsLookupProbe {
             }
         }
         if (answers.isEmpty()) return error(host, "系统解析未返回对应记录", elapsed)
-        // The OS resolver did reach one (possibly the tunnel DNS): that is `upstream`.
         return result(host, "upstream", answers, elapsed, null)
     }
 
@@ -106,7 +95,6 @@ internal object DnsLookupProbe {
                 mapOf(
                     "type" to type,
                     "value" to value,
-                    // TTLs are optional in the payload; 0 means not reported, never expired.
                     
                     "ttl" to (ttls?.optInt(index, 0) ?: 0),
                 ),
@@ -118,7 +106,6 @@ internal object DnsLookupProbe {
     private fun answer(type: String, value: String): Map<String, Any?> =
         mapOf("type" to type, "value" to value, "ttl" to 0)
 
-    /// Same wording the legacy app's `errorLabel()` used for the one token users hit
     private fun translateEngineError(raw: String): String = when (raw) {
         "tunnel resolver not active" -> "隧道解析器未就绪（DNS 尚未生效）"
         "empty domain" -> "请输入要查询的域名"

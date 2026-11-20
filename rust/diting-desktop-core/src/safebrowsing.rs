@@ -1,17 +1,9 @@
-//! Safe Browsing / parental-control facade.
-//!
-//! The kernel (`diting-safebrowsing-core`) owns the hash caches and the verdict; this facade owns
-//! the configuration, the counters the API reports and the lock discipline the DNS hot path needs.
-//! The asynchronous TXT lookup stays in the DNS stage, which is the only layer allowed to talk to
-//! an upstream resolver.
-
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use diting_desktop_api::config::security::SafeBrowsingConfig;
 use diting_safebrowsing_core::engine::Engine;
 
-/// Cumulative counters, mirroring `core.SafeBrowsingStats`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct SafeBrowsingStats {
     pub cache_hits: i64,
@@ -21,7 +13,6 @@ pub struct SafeBrowsingStats {
     pub blocked: i64,
 }
 
-/// Shared reputation engine used by the DNS stage and the management API.
 pub struct SafeBrowsingEngine {
     config: RwLock<SafeBrowsingConfig>,
     engine: Engine,
@@ -46,7 +37,6 @@ impl SafeBrowsingEngine {
         }
     }
 
-    /// Applies a new configuration. The kernel rebuilds its caches only when size or TTL changed.
     pub fn configure(&self, config: SafeBrowsingConfig) {
         self.engine
             .configure(cache_size(&config), cache_ttl_ms(&config));
@@ -61,7 +51,6 @@ impl SafeBrowsingEngine {
         &self.engine
     }
 
-    /// Records one verdict. `from_cache` and `blocked` are independent facts.
     pub fn record(&self, from_cache: bool, blocked: bool) {
         if from_cache {
             self.cache_hits.fetch_add(1, Ordering::Relaxed);
@@ -74,7 +63,6 @@ impl SafeBrowsingEngine {
         }
     }
 
-    /// Records a lookup that could not be completed (timeout, transport error, bad response).
     pub fn record_failure(&self) {
         self.failures.fetch_add(1, Ordering::Relaxed);
     }

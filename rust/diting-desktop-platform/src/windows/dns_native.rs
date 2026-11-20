@@ -1,10 +1,3 @@
-//! Native Windows DNS configuration.
-//!
-//! `SetInterfaceDnsSettings` is strict: one wrong-family or non-literal address rejects the whole
-//! call with ERROR_INVALID_PARAMETER, leaving the adapter untouched. The snapshot is therefore
-//! normalized first, and the `netsh` path is used as a fallback because a failed restore means the
-//! machine stays pinned to `127.0.0.1` and the user cannot reach the network to retry.
-
 use std::collections::HashSet;
 use std::net::{IpAddr, SocketAddr};
 use std::ptr;
@@ -26,8 +19,6 @@ extern "system" {
     fn DnsFlushResolverCache() -> i32;
 }
 
-/// Flushes the resolver cache natively, falling back to `ipconfig /flushdns` when the export is
-/// unavailable or fails.
 pub(crate) async fn flush_dns_cache(executor: &dyn CommandExecutor) -> PlatformResult<()> {
     if flush_dns_cache_native().is_ok() {
         return Ok(());
@@ -39,7 +30,6 @@ pub(crate) async fn flush_dns_cache(executor: &dyn CommandExecutor) -> PlatformR
 }
 
 pub(crate) fn flush_dns_cache_native() -> PlatformResult<()> {
-    // SAFETY: the export takes no arguments and merely invalidates resolver state.
     if unsafe { DnsFlushResolverCache() } == 0 {
         Err(PlatformError::message("DnsFlushResolverCache 失败"))
     } else {
@@ -47,18 +37,12 @@ pub(crate) fn flush_dns_cache_native() -> PlatformResult<()> {
     }
 }
 
-/// Normalizes one DNS server literal for a specific stack.
-///
-/// Windows rejects `fe80::1%12` (zone), `[fe80::1]` (brackets), `8.8.8.8:53` (port), protocol
-/// URLs, and cross-family entries. Returning `None` here lets the caller drop only the bad entry
-/// instead of losing the entire list.
 pub(crate) fn normalize_dns_address(raw: &str, is_ipv6: bool) -> (String, bool) {
     let mut text = raw.trim();
     if text.is_empty() {
         return (String::new(), false);
     }
 
-    // `8.8.8.8:53` / `[fe80::1]:53`: let the std parser strip the port when it can.
     if let Ok(socket) = text.parse::<SocketAddr>() {
         return normalize_ip_for_stack(socket.ip(), is_ipv6);
     }
@@ -84,7 +68,6 @@ fn normalize_ip_for_stack(ip: IpAddr, is_ipv6: bool) -> (String, bool) {
     if is_ipv6 {
         match ip {
             IpAddr::V6(address) => {
-                // `::ffff:a.b.c.d` is IPv4-mapped and must not be sent to the IPv6 stack.
                 if address.to_ipv4_mapped().is_some() {
                     (String::new(), false)
                 } else {
@@ -104,8 +87,6 @@ fn normalize_ip_for_stack(ip: IpAddr, is_ipv6: bool) -> (String, bool) {
     }
 }
 
-/// Splits a mixed list into same-family literals, deduplicated in original order. The dropped
-/// entries are returned for logging; a caller that ignores them may silently lose a DNS server.
 pub(crate) fn normalize_servers_for_stack(
     servers: &[String],
     is_ipv6: bool,
@@ -161,8 +142,6 @@ fn parse_guid(guid: &str) -> Option<windows_sys::core::GUID> {
     })
 }
 
-/// Applies one stack's DNS list through `SetInterfaceDnsSettings`. An empty list passes a null
-/// `NameServer`, which is how Windows is told to fall back to DHCP.
 pub(crate) fn set_interface_dns_settings_native(
     guid_str: &str,
     is_ipv6: bool,
@@ -179,7 +158,6 @@ pub(crate) fn set_interface_dns_settings_native(
         flags |= DNS_SETTING_IPV6 as u64;
     }
 
-    // The UTF-16 buffer must outlive the API call; `settings` only borrows its pointer.
     let mut name_server: Vec<u16> = if servers.is_empty() {
         Vec::new()
     } else {
@@ -208,8 +186,6 @@ pub(crate) fn set_interface_dns_settings_native(
         ProfileNameServer: ptr::null_mut(),
     };
 
-    // SAFETY: `settings` is fully initialized and every pointer either null or points at a live
-    // buffer for the duration of the call.
     let status = unsafe { SetInterfaceDnsSettings(guid, &settings) };
     if status != 0 {
         let detail = std::io::Error::from_raw_os_error(status as i32);
@@ -240,7 +216,6 @@ async fn run_netsh(
     }
 }
 
-/// Replaces a stack's DNS list via `netsh`. An empty list restores DHCP.
 pub(crate) async fn set_stack_dns_netsh(
     executor: &dyn CommandExecutor,
     adapter_name: &str,
@@ -345,7 +320,6 @@ fn format_servers(servers: &[String]) -> String {
     format!("[{}]", servers.join(" "))
 }
 
-/// Applies both stacks. `v4`/`v6` empty means that stack returns to DHCP.
 pub(crate) async fn set_adapter_dns_dual_stack_native(
     executor: &dyn CommandExecutor,
     guid: &str,
@@ -371,8 +345,6 @@ pub(crate) async fn reset_adapter_dns_native(
     set_adapter_dns_dual_stack_native(executor, guid, adapter_name, &[], &[]).await
 }
 
-/// Resets every adapter whose DNS still contains a loopback address. Failures are aggregated
-/// because swallowing them would report a successful self-heal while the adapter stays broken.
 pub(crate) async fn reset_residual_loopback_dns_native(
     executor: &dyn CommandExecutor,
 ) -> PlatformResult<()> {
@@ -392,9 +364,6 @@ pub(crate) async fn reset_residual_loopback_dns_native(
     join_errors(errors)
 }
 
-/// Last-resort sweep: adapters that failed snapshot restoration are forced back to DHCP so the
-/// machine regains connectivity. The snapshot is intentionally preserved so a later restore can
-/// still write the original static servers.
 pub(crate) async fn force_reset_loopback_adapters_to_dhcp(
     executor: &dyn CommandExecutor,
     adapters: &[AdapterState],

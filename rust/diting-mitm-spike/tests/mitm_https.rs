@@ -1,9 +1,3 @@
-//! End-to-end proof that the Rust MITM relay preserves the semantics the Go engine depended on.
-//!
-//! Each test runs a real TLS origin, the proxy and a real TLS client on loopback. The assertions are
-//! the semantics the migration had to preserve: what the client sees on the wire (leaf, ALPN, headers,
-//! body framing) and what the origin sees on the request.
-
 mod support;
 
 use std::sync::Arc;
@@ -31,7 +25,6 @@ async fn the_handshake_uses_a_leaf_minted_for_the_sni() {
     let origin = spawn_origin(&pki, OriginAuth::Plain, |_request, _record| text("ok")).await;
     let proxy = spawn_proxy(&pki, &origin, false, true).await;
 
-    // A browser offers h2 first; the relay only speaks HTTP/1.1, so ALPN must land on http/1.1.
     let mut client = TestClient::connect(
         proxy.addr,
         UPSTREAM_HOST,
@@ -119,8 +112,6 @@ async fn an_injected_html_page_is_chunked_and_the_connection_stays_usable() {
     );
     assert!(body.starts_with("<html><head><link"));
 
-    // The chunked framing terminates properly, so keep-alive survives an injected response. Go had to
-    // force `Connection: close` because net/http refused to chunk it.
     let second = client.get("/again").await.expect("second request");
     assert_eq!(second.status(), StatusCode::OK);
     let second_body = collect_text(second).await;
@@ -186,8 +177,6 @@ async fn a_gzip_html_body_is_decoded_and_injected() {
             .await
             .expect("handshake");
 
-    // No Accept header at all: the proxy must still decode, because the upstream ignored the fact
-    // that its Accept-Encoding was removed.
     let response = client.get("/").await.expect("GET /");
     assert!(response.headers().get(header::CONTENT_ENCODING).is_none());
     let body = collect_text(response).await;
@@ -288,7 +277,6 @@ async fn a_chunked_upstream_body_streams_through() {
 async fn an_untrusted_upstream_certificate_is_fail_closed() {
     let pki = Pki::new();
     let origin = spawn_origin(&pki, OriginAuth::Plain, |_request, _record| text("secret")).await;
-    // The proxy's trust store is empty: the origin's CA is not in it.
     let proxy = spawn_proxy(&pki, &origin, true, false).await;
     let mut client =
         TestClient::connect(proxy.addr, UPSTREAM_HOST, pki.mitm_ca_pem(), &[b"http/1.1"])
@@ -327,8 +315,6 @@ async fn an_mtls_client_certificate_request_blocks_interception() {
 #[tokio::test]
 async fn a_dead_upstream_connection_is_replaced_before_the_next_request() {
     let pki = Pki::new();
-    // Every connection this origin serves is closed right after the response, with no
-    // `Connection: close` header, which is how a real server loses keep-alive silently.
     let origin = spawn_raw_origin(&pki).await;
     let proxy = spawn_proxy_at(&pki, origin.addr, false, true).await;
     let mut client =
@@ -348,7 +334,6 @@ async fn a_dead_upstream_connection_is_replaced_before_the_next_request() {
     );
 }
 
-/// Waits for the first event with `status`; the relay records from spawned tasks, so this polls.
 async fn event_with_status(proxy: &Proxy, status: &str) -> HttpEvent {
     for _ in 0..300 {
         if let Some(event) = proxy

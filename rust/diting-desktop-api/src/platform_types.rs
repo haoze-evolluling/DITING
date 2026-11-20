@@ -1,40 +1,22 @@
-//! Platform value types mirrored from the former Go service's `internal/platform/types.go`.
-//!
-//! These are JSON/state-file DTOs only; the OS work lives in `diting-desktop-platform`. Field
-//! names, `omitempty` markers and string constants match the Go definitions so IPC payloads and
-//! the takeover state file stay wire-compatible.
-
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
 use crate::config::serde_util::nullable_vec;
 
-/// Auto-start managed by a system service (starts before login).
 pub const AUTO_START_MECHANISM_SERVICE: &str = "service";
-/// Auto-start as a per-user login item.
 pub const AUTO_START_MECHANISM_LOGIN_ITEM: &str = "login_item";
-/// Auto-start through a systemd unit.
 pub const AUTO_START_MECHANISM_SYSTEMD: &str = "systemd";
-/// Auto-start through an XDG desktop entry.
 pub const AUTO_START_MECHANISM_XDG: &str = "xdg";
-/// No auto-start mechanism configured.
 pub const AUTO_START_MECHANISM_NONE: &str = "none";
 
-/// Core service is running.
 pub const SERVICE_STATE_RUNNING: &str = "running";
-/// Core service is stopped.
 pub const SERVICE_STATE_STOPPED: &str = "stopped";
-/// Core service is not installed.
 pub const SERVICE_STATE_NOT_INSTALLED: &str = "not_installed";
-/// Core service is starting.
 pub const SERVICE_STATE_START_PENDING: &str = "start_pending";
-/// Core service is stopping.
 pub const SERVICE_STATE_STOP_PENDING: &str = "stop_pending";
-/// Core service state could not be determined.
 pub const SERVICE_STATE_UNKNOWN: &str = "unknown";
 
-/// Network adapter properties and DNS configuration.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdapterInfo {
@@ -64,7 +46,6 @@ pub struct AdapterInfo {
     pub has_residual_loopback: bool,
 }
 
-/// Original per-adapter configuration captured before takeover.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AdapterState {
@@ -86,10 +67,6 @@ pub struct AdapterState {
     pub ipv6_dns: Vec<String>,
 }
 
-/// Persisted DNS takeover state used for crash recovery.
-///
-/// `timestamp` is Go's `time.Time`, serialized as RFC3339 text. It is kept as a string so a
-/// state file written by the Go service round-trips unchanged without pulling in a date library.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TakeoverState {
@@ -117,12 +94,10 @@ impl Default for TakeoverState {
     }
 }
 
-/// Go's zero `time.Time` JSON representation.
 fn zero_timestamp() -> String {
     "0001-01-01T00:00:00Z".to_string()
 }
 
-/// LAN address and the adapter that owns it.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LANAddressInfo {
@@ -134,7 +109,6 @@ pub struct LANAddressInfo {
     pub is_ipv6: bool,
 }
 
-/// Details of a process occupying a port.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PortConflict {
@@ -158,7 +132,6 @@ pub struct PortConflict {
     pub diagnosis: String,
 }
 
-/// Aggregate result of checking whether the DNS port is available.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PortCheckResult {
@@ -174,7 +147,6 @@ pub struct PortCheckResult {
     pub diagnostic: String,
 }
 
-/// Specialized port-conflict error carrying the diagnostic probe result.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PortConflictError {
     pub result: Option<PortCheckResult>,
@@ -182,7 +154,6 @@ pub struct PortConflictError {
 }
 
 impl PortConflictError {
-    /// Build from a probe result.
     pub fn from_result(result: PortCheckResult) -> Self {
         Self {
             result: Some(result),
@@ -190,7 +161,6 @@ impl PortConflictError {
         }
     }
 
-    /// Build from an underlying error description.
     pub fn from_message(message: impl Into<String>) -> Self {
         Self {
             result: None,
@@ -215,20 +185,17 @@ impl fmt::Display for PortConflictError {
 
 impl std::error::Error for PortConflictError {}
 
-/// Host auto-start management status.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AutoStartStatus {
     #[serde(default)]
     pub enabled: bool,
-    /// `service` / `login_item` / `systemd` / `xdg` / `none`.
     #[serde(default)]
     pub mechanism: String,
     #[serde(default)]
     pub detail: String,
 }
 
-/// Background core service status.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CoreServiceStatus {
@@ -236,7 +203,6 @@ pub struct CoreServiceStatus {
     pub installed: bool,
     #[serde(default)]
     pub running: bool,
-    /// See `SERVICE_STATE_*`.
     #[serde(default)]
     pub state: String,
     #[serde(default)]
@@ -249,7 +215,6 @@ pub struct CoreServiceStatus {
     pub can_install: bool,
     #[serde(default)]
     pub message: String,
-    /// Absent from older service versions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_start: Option<AutoStartStatus>,
 }

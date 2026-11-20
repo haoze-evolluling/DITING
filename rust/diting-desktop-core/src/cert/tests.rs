@@ -1,5 +1,3 @@
-//! Certificate manager tests.
-
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -77,7 +75,6 @@ fn ensure_loads_reuses_and_regenerates() {
     let temp = TempDir::new("ensure");
     let manager = CertManager::new(temp.path(), config());
 
-    // Nothing on disk yet: the manager is not loaded.
     assert!(!manager.info().loaded);
     assert!(!manager.info().error.is_empty());
 
@@ -183,8 +180,6 @@ fn import_pem_switches_to_file_source() {
     assert_eq!(manager.config().source, CERT_SOURCE_FILE);
 }
 
-/// PKCS#12 fixture inherited from the former Go service's tests (`dns-lan.p12`, password
-/// `s3cret`).
 const PKCS12_FIXTURE: &[u8] = include_bytes!("../../tests/data/dns-lan.p12");
 const PKCS12_PASSWORD: &str = "s3cret";
 
@@ -305,7 +300,6 @@ fn imported_files_are_not_reused_as_self_signed() {
     let imported_cert = temp.path().join(IMPORTED_CERT_FILE);
     let before = fs::read(&imported_cert).unwrap();
 
-    // source=file now points at imported.crt, so the fixed-name pair must be generated anew.
     assert!(manager.ensure_self_signed(config()).expect("generate"));
     assert!(temp.path().join(SELF_SIGNED_CERT_FILE).is_file());
     assert_eq!(fs::read(imported_cert).unwrap(), before);

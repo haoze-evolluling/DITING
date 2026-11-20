@@ -1,8 +1,3 @@
-/// The LAN web console's state and its three writes.
-///
-/// Every write answers with a success flag, so each one re-reads `/web/status`: the service decides
-/// the listening address and whether the firewall rule exists. A rejected write keeps the last
-/// state and returns the reason.
 library;
 
 import 'dart:async';

@@ -4,7 +4,6 @@ part of 'popup.dart';
 
 class _CommonPopupMenuState extends State<CommonPopupMenu>
     with SingleTickerProviderStateMixin {
-  /// 0 at the item to 1 at its card, on one spring, so a fold mid-unfold turns around.
   late final _unfold = AnimationController.unbounded(vsync: this, value: 1);
   late final Animation<double> _items = _unfold.drive(const _Span(0.05, 0.4));
   late final Animation<double> _arrow = _unfold.drive(_arrowTurns);
@@ -64,7 +63,6 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     super.dispose();
   }
 
-  /// A capped menu builds only the rows in view, so its rows must share one height.
   bool _buildsLazily(_MenuLevel level) =>
       widget.maxVisibleItems != null &&
       level.owner == null &&
@@ -80,7 +78,6 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     if (!mounted || row == null) {
       return;
     }
-    // Whole rows above, not centring, keep the half row a label cut at the foot.
     final visible = _maxVisibleItems;
     final alignment = (visible ~/ 2) / (visible - 0.5);
     Scrollable.maybeOf(row)?.position
@@ -199,7 +196,6 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     return _cardKeys[index];
   }
 
-  /// Where the top sub menu's card stands in the popup, for it to return from.
   Rect? _topCardIn(RenderBox popup) {
     final top = _resolveLevels().length - 1;
     if (top == 0 || top >= _cardKeys.length) {
@@ -245,7 +241,6 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
   }
 
   void _unfoldTop() {
-    // A spring stops within its tolerance; the card lands on its bounds.
     _springTo(1, _unfoldSpring).then((_) {
       if (mounted && !_folding) {
         _unfold.value = 1;
@@ -292,7 +287,6 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
     }
   }
 
-  /// Hit tests where the menu paints, which a press swells or stretches.
   _MenuRow? _rowAt(Offset position) {
     final box = _menuKey.currentContext?.findRenderObject();
     if (box is! RenderBox || !box.hasSize || box.size.isEmpty) {
@@ -414,7 +408,6 @@ class _CommonPopupMenuState extends State<CommonPopupMenu>
           _pop();
         }
       },
-      // The platter clips the menu as it opens and does not swell, so a swell would cut its edges.
       child: ValueListenableBuilder<bool>(
         valueListenable: _platter ?? const AlwaysStoppedAnimation(false),
         builder: (_, platter, child) =>

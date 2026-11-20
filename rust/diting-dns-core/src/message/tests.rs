@@ -1,6 +1,3 @@
-//! Unit tests for the message kernel; `tests/corpus.rs` replays the wire corpus generated from
-//! the original Go implementation.
-
 use super::*;
 
 fn header(id: u16, flags: u16, qd: u16, an: u16, ns: u16, ar: u16) -> Vec<u8> {
@@ -79,7 +76,7 @@ fn validate_accepts_noerror_and_nxdomain_and_rejects_other_rcodes() {
     );
 
     let mut nxdomain = a_answer("example.com.", [1, 2, 3, 4]);
-    nxdomain[3] = 0x83; // rcode 3, keep the QR bit
+    nxdomain[3] = 0x83;
     assert_eq!(
         validate(&q, &nxdomain),
         Validation {
@@ -184,10 +181,10 @@ fn extract_normalizes_chain_targets() {
 fn extract_reads_the_edns_extended_rcode() {
     let mut opt = header(0, 0, 0, 0, 0, 0);
     opt.clear();
-    opt.extend_from_slice(&[0u8]); // root owner
+    opt.extend_from_slice(&[0u8]);
     opt.extend_from_slice(&TYPE_OPT.to_be_bytes());
     opt.extend_from_slice(&1232u16.to_be_bytes());
-    opt.extend_from_slice(&0x0100_0000u32.to_be_bytes()); // extended rcode 1 -> 16
+    opt.extend_from_slice(&0x0100_0000u32.to_be_bytes());
     opt.extend_from_slice(&0u16.to_be_bytes());
 
     let mut wire = header(0x1234, 0x8180, 1, 0, 0, 1);

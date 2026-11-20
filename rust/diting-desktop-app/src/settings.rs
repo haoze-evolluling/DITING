@@ -1,9 +1,3 @@
-//! Conversions from the JSON configuration to the runtime settings each engine consumes.
-//!
-//! The API crate owns the file shape; the core crate owns the runtime shape. Keeping the mapping
-//! here means neither has to depend on the other's defaults and the whole conversion is testable
-//! without spinning up a server.
-
 use diting_desktop_api::config::{CacheConfig, Config, QueryLogConfig, ResolverConfig};
 use diting_desktop_core::cache::CacheSettings;
 use diting_desktop_core::querylog::Config as QueryLogSettings;
@@ -90,7 +84,6 @@ pub fn querylog_settings(config: &QueryLogConfig) -> QueryLogSettings {
     }
 }
 
-/// Client group id → dedicated provider ids (`ClientGroup.UpstreamIDs`).
 pub fn group_upstreams(config: &Config) -> Vec<(String, Vec<String>)> {
     if !config.client.groups_enabled {
         return Vec::new();

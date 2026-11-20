@@ -1,15 +1,9 @@
-//! Row mapping: one rule's table row plus its `*_source` rows become one value the UI can show.
-//!
-//! A rule is active only when the row *and* one of its sources are enabled, its origin is decided by
-//! the sources it carries, and a subscription rule is named after the subscription that brought it.
-
 use std::collections::BTreeMap;
 
 use serde_json::{json, Value};
 
 use crate::probe::{flag, get, text};
 
-/// `preset` / `sub_<id>` / `useradd` provenance, reduced to the three origins the UI shows.
 fn origin_of(sources: &[(String, bool)]) -> &'static str {
     if sources.iter().any(|(source, _)| source == "preset") {
         return "preset";
@@ -48,14 +42,12 @@ pub fn subscriptions(value: &Value) -> BTreeMap<i64, String> {
     names
 }
 
-/// One rule from its row and the source rows that belong to it.
 pub fn rule_from_split(
     kind: &str,
     row: &Value,
     sources: &[(String, bool)],
     subscriptions: &BTreeMap<i64, String>,
 ) -> Value {
-    // No source row means the rule was written without provenance; it is then judged by its own flag.
     let source_enabled = sources.is_empty() || sources.iter().any(|(_, enabled)| *enabled);
     let app_scope = text(row, "appScope").map(|scope| scope.trim().to_string());
     let app_scope = match app_scope {
@@ -81,8 +73,6 @@ pub fn rule_from_split(
     })
 }
 
-/// Joined rows (`r.* , sourceName, sourceEnabled`) to rules; consecutive rows share an `id` because
-/// the query orders by `r.id DESC`.
 pub fn rule_from_joined(
     kind: &str,
     joined: &[Value],
@@ -105,7 +95,6 @@ pub fn rule_from_joined(
     rules
 }
 
-/// Rules loaded for one app: rule rows in `id DESC` order plus their source rows.
 pub fn rule_from_sources(
     kind: &str,
     rules: &[Value],

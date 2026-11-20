@@ -1,5 +1,3 @@
-/// Filtered read of the legacy `dns_log` table for the request log page. Per-status SQL, bucket
-/// classification and the `message` parse live in `rust/diting-log-query-core`.
 library;
 
 import 'package:sqflite/sqflite.dart';
@@ -21,7 +19,6 @@ class DnsLogRow {
     this.blockSubscriptionId,
   });
 
-  /// A page row already classified by the kernel; no second FFI round trip on the getters.
   factory DnsLogRow.fromParsed(Map<String, Object?> row) {
     final message = row['message'] as String?;
     return DnsLogRow(
@@ -55,8 +52,6 @@ class DnsLogRow {
   final String? packageName;
   final int? blockSubscriptionId;
 
-  /// Kernel classification, filled eagerly by [DnsLogRow.fromParsed] and lazily for rows the
-  /// tests construct by hand.
   Map<String, Object?>? _classification;
 
   Map<String, Object?> get _flags =>
@@ -72,11 +67,8 @@ class DnsLogRow {
 
   bool get isBlocked => _flags['isBlocked'] as bool? ?? false;
 
-  /// The Chinese markers are the ones legacy rule descriptions emit.
   bool get isRewritten => _flags['isRewritten'] as bool? ?? false;
 
-  /// Display bucket. Connection rows fold into bypassed or blocked; everything unrecognised counts
-  /// as error.
   RequestStatus get status => switch (_flags['status']) {
     'passed' => RequestStatus.passed,
     'rewritten' => RequestStatus.rewritten,
@@ -85,12 +77,10 @@ class DnsLogRow {
     _ => RequestStatus.error,
   };
 
-  /// Parsed `dns_log.message` fields, already tokenised by the kernel.
   DnsLogMessage get messageFields => DnsLogMessage.fromParsed(
     (_flags['messageFields'] as Map?)?.cast<String, Object?>() ?? const {},
   );
 
-  /// Raw fields for a kernel aggregate; classification is recomputed there.
   Map<String, Object?> toKernelRow() => {
     'id': id,
     'timestamp': timestamp,
@@ -104,8 +94,6 @@ class DnsLogRow {
   };
 }
 
-/// Parsed `dns_log.message` (`app=.., resolved=.., blocked_by=.., error=.., elapsed=NNms`); each
-/// token splits on its first `=`.
 class DnsLogMessage {
   const DnsLogMessage({
     this.app,
@@ -129,8 +117,6 @@ class DnsLogMessage {
   final String? error;
   final int? elapsedMs;
 
-  /// Keeps the known keys only; unknown tokens are dropped because the detail sheet labels each
-  /// field.
   static DnsLogMessage parse(String? message) => DnsLogMessage.fromParsed(
     RustLogQueryCore.instance.classify('dnsMessage', {'message': message}),
   );
@@ -141,7 +127,6 @@ class DnsQueryRepository {
 
   final Database _db;
 
-  /// Request count per attributed package; rows without a package are skipped.
   Future<Map<String, int>> countByPackage() async {
     final plan = RustLogQueryCore.instance.plan('dns.query.countByPackage');
     final rows = await _db.rawQuery(plan.sql, plan.args);
@@ -151,7 +136,6 @@ class DnsQueryRepository {
     };
   }
 
-  /// Newest first. The page chips select one bucket at a time, so there is no `IN (...)` path.
   Future<List<DnsLogRow>> recent({
     int limit = 200,
     RequestStatus status = RequestStatus.all,
@@ -164,7 +148,6 @@ class DnsQueryRepository {
       'status': status.token,
       'query': query,
       'packageName': ?packageName,
-      // Inclusive `timestamp` cursor: the merged feed pages by time, not by row offset.
       'before': ?before,
     });
     final rows = await _db.rawQuery(plan.sql, plan.args);
@@ -174,11 +157,6 @@ class DnsQueryRepository {
     ];
   }
 
-  /// Newest-first rows for a CSV export, bounded by [limit] and an optional `[since, until]`
-  /// window.
-  ///
-  /// [packages] narrows to those packages; an empty set means every app. The statement itself
-  /// lives in `dns.query.export`, so the status clauses stay shared with the list page.
   Future<List<DnsLogRow>> export({
     int limit = 1000,
     RequestStatus status = RequestStatus.all,

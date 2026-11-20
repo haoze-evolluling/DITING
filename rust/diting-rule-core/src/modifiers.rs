@@ -1,8 +1,3 @@
-//! `$modifier` handling for one rule line, plus the conservative regex syntax check.
-//!
-//! The token order below is the order the original parser tested them in; a token that is not recognised
-//! makes the whole line unsupported, so this order is semantic.
-
 use crate::domain::{
     is_content_type_web_token, is_sinkhole, is_valid_dns_type, is_web_only_modifier,
     looks_like_literal_ip, normalize_domain, parse_numeric_address_safe,
@@ -20,9 +15,6 @@ pub(crate) struct ModifierState {
     pub(crate) is_badfilter: bool,
     pub(crate) denyallow: Option<String>,
     pub(crate) dns_type: Option<String>,
-    /// A content-type/party modifier was seen and ignored so the host-level rule can be kept. The
-    /// caller drops it again for allow rules, where broadening to "all types/parties" would loosen
-    /// blocking rather than tighten it.
     pub(crate) demoted: bool,
 }
 
@@ -32,15 +24,12 @@ enum ModifierOutcome {
     Unsupported,
 }
 
-/// Which `CategorizedLine` the caller must return when a token is rejected. Kept separate from
-/// `CategorizedLine` so the error path stays small.
 pub(crate) enum ModifierRejection {
     Invalid,
     Unsupported,
     Ignored,
 }
 
-/// `dnsrewrite=a;b;c` takes the last part; a leading NXDOMAIN/REFUSED/SERVFAIL means a blackhole.
 fn dnsrewrite_last_part(raw_spec: &str) -> String {
     let parts: Vec<&str> = raw_spec
         .split(';')
@@ -189,7 +178,6 @@ fn apply_dnsrewrite(token: &str, state: &mut ModifierState) -> ModifierOutcome {
     ModifierOutcome::Accepted
 }
 
-/// Applies the whole modifier list; the first failing token wins.
 pub(crate) fn apply_modifiers(
     spec: &str,
     state: &mut ModifierState,
@@ -204,7 +192,6 @@ pub(crate) fn apply_modifiers(
             state.important = true;
             ModifierOutcome::Accepted
         } else if lower.starts_with("~denyallow=") {
-            // The modifier is already an exclusion list, so `~` is dropped but the rule is kept.
             ModifierOutcome::Accepted
         } else if lower.starts_with("app=") || lower.starts_with("~app=") {
             apply_app_scope(token, lower.starts_with("~app="), state)
@@ -218,14 +205,11 @@ pub(crate) fn apply_modifiers(
             state.is_badfilter = true;
             ModifierOutcome::Accepted
         } else if is_content_type_web_token(&lower) {
-            // Keep the host-level part: a `$script`/`$third-party` rule still names an ad host that
-            // is worth blocking at the DNS layer. `line.rs` re-drops this for allow rules.
             state.demoted = true;
             ModifierOutcome::Accepted
         } else if is_web_only_modifier(&lower) {
             return Err(ModifierRejection::Ignored);
         } else if lower == "all" || lower == "empty" {
-            // `$all` matches every content type: no extra constraint at DNS level.
             ModifierOutcome::Accepted
         } else {
             ModifierOutcome::Unsupported
@@ -239,10 +223,6 @@ pub(crate) fn apply_modifiers(
     Ok(())
 }
 
-/// Conservative ECMAScript syntax check. The Rust side only rejects patterns that are invalid in
-/// any dialect (unbalanced groups/classes, dangling escape, quantifier with nothing to repeat); a
-/// pattern that is stored but cannot be compiled is dropped when the matcher is built, exactly like
-/// the original parser's invalid rules were.
 pub(crate) fn is_valid_regex(pattern: &str) -> bool {
     if pattern.is_empty() {
         return false;
@@ -281,7 +261,6 @@ pub(crate) fn is_valid_regex(pattern: &str) -> bool {
                 index += 1;
             }
             b']' => {
-                // A lone `]` is a literal in ECMAScript.
                 prev_atom = true;
                 prev_quantifier = false;
                 index += 1;
@@ -310,8 +289,6 @@ pub(crate) fn is_valid_regex(pattern: &str) -> bool {
                 index += 1;
             }
             b'?' => {
-                // After an atom it is a quantifier, after a quantifier it makes it lazy, and right
-                // after `(` it opens a group prefix such as `(?:`.
                 let prefix = index > 0 && bytes[index - 1] == b'(';
                 if !prev_atom && !prev_quantifier && !prefix {
                     return false;
@@ -327,7 +304,6 @@ pub(crate) fn is_valid_regex(pattern: &str) -> bool {
                     index = end;
                 }
                 _ => {
-                    // Not a quantifier: ECMAScript treats the brace as a literal.
                     prev_atom = true;
                     prev_quantifier = false;
                     index += 1;
@@ -348,7 +324,6 @@ pub(crate) fn is_valid_regex(pattern: &str) -> bool {
     depth == 0 && !in_class
 }
 
-/// End offset (just past `}`) when `{n}` / `{n,}` / `{n,m}` starts at `index`.
 fn quantifier_end(bytes: &[u8], index: usize) -> Option<usize> {
     let mut cursor = index + 1;
     let start = cursor;

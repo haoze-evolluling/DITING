@@ -28,10 +28,10 @@ import sys
 
 from PIL import Image, ImageDraw
 
-try:  # as a package module
+try:
     from . import vector_raster as vr
     from .paths import ANDROID_RES_DIR, BRAND_DIR, SHARED_DIR
-except ImportError:  # run directly
+except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from core import vector_raster as vr  # type: ignore[no-redef]
     from core.paths import ANDROID_RES_DIR, BRAND_DIR, SHARED_DIR
@@ -41,7 +41,6 @@ if hasattr(sys.stdout, "reconfigure"):
 
 SVG_PATH = os.path.join(BRAND_DIR, "adguard_logo.svg")
 
-# Legacy launcher bitmap sizes, mdpi..xxxhdpi.
 ANDROID_DENSITIES = (
     ("mdpi", 48),
     ("hdpi", 72),
@@ -50,16 +49,11 @@ ANDROID_DENSITIES = (
     ("xxxhdpi", 192),
 )
 
-# The SVG's own coordinate system.
 VIEW_BOX = (0.0, 0.0, 64.0, 64.0)
 
-# Adaptive icon foreground. The system crops the 108dp layer to roughly the central 72dp mask, so
-# the logo must be sized against that visible edge. The default DITING icon's solid artwork fills
-# about half of the mask; the AdGuard shield is a solid shape, so matching that ratio (rather than
-# filling the whole 64dp-of-108 foreground) keeps the two icons visually consistent.
 FOREGROUND_ARTBOARD = 108.0
-ICON_MASK_EDGE = 72.0  # visible diameter after the launcher mask, in layer units
-LOGO_RATIO = 0.52  # shield bounding box / visible edge
+ICON_MASK_EDGE = 72.0
+LOGO_RATIO = 0.52
 FOREGROUND_LOGO_SIDE = ICON_MASK_EDGE * LOGO_RATIO
 FOREGROUND_SCALE = FOREGROUND_LOGO_SIDE / 64.0
 FOREGROUND_OFFSET = (FOREGROUND_ARTBOARD - FOREGROUND_LOGO_SIDE) / 2.0
@@ -75,7 +69,6 @@ def _normalize_color(value: str) -> str:
     elif len(text) == 4:
         text = "".join(char * 2 for char in text)
     elif len(text) == 8:
-        # Drop an explicit alpha; the launcher icon is fully opaque.
         text = text[2:]
     if len(text) != 6:
         raise ValueError(f"无法解析颜色: {value}")
@@ -213,7 +206,6 @@ def export_all(log=print) -> list:
     res = ANDROID_RES_DIR
     files = []
 
-    # 1. Legacy density bitmaps.
     for density, size in ANDROID_DENSITIES:
         image = render(size)
         for name in ("ic_launcher_adguard.png", "ic_launcher_adguard_round.png"):
@@ -223,7 +215,6 @@ def export_all(log=print) -> list:
             files.append(target)
         log(f"PNG {size}x{size}: mipmap-{density}/ic_launcher_adguard.png")
 
-    # 2. Adaptive icon foreground + fallbacks.
     files.append(_write_text(
         os.path.join(res, "drawable", "ic_launcher_adguard_foreground.xml"),
         foreground_vector_xml(),
@@ -239,7 +230,6 @@ def export_all(log=print) -> list:
         log,
     ))
 
-    # 3. In-app preview thumbnail for the appearance page.
     preview = os.path.join(SHARED_DIR, "assets", "images", "icon_adguard.png")
     os.makedirs(os.path.dirname(preview), exist_ok=True)
     compose_preview(512).save(preview, "PNG", optimize=True)

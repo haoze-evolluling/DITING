@@ -29,7 +29,6 @@ fn blocked_list_wins_over_allowed() {
     assert!(reason.contains("10.0.0.1"));
     assert!(reason.contains("黑名单"));
 
-    // A different member of the allowlist passes.
     assert_eq!(control.check(Some(ip("10.0.0.2"))), (true, String::new()));
 }
 

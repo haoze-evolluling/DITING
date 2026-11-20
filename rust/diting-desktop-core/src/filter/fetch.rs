@@ -1,11 +1,3 @@
-//! Subscription fetching: conditional HTTP, local files, atomic cache writes and checksums.
-//!
-//! Mirrors `rule_list_fetch.go`: `http://`/`https://` sources use an ETag / `If-Modified-Since`
-//! conditional GET (a `304` keeps the cached copy), every other URL is read as a local path. The
-//! response body is capped at 50 MiB and written through a temporary file so a crash cannot leave a
-//! truncated rule list behind. Transport errors may fall back to an existing cache; an explicit
-//! HTTP error may not.
-
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -13,13 +5,11 @@ use std::time::Duration;
 use reqwest::header::{ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED};
 use sha2::{Digest, Sha256};
 
-/// `io.LimitReader(..., 50*1024*1024)`.
 pub(crate) const MAX_LIST_BYTES: usize = 50 * 1024 * 1024;
 
 const USER_AGENT: &str = "DITING-DNS-Engine/1.0";
 const TIMEOUT: Duration = Duration::from_secs(15);
 
-/// One conditional fetch outcome.
 pub(crate) struct FetchOutcome {
     pub(crate) data: Option<Vec<u8>>,
     pub(crate) etag: String,
@@ -27,7 +17,6 @@ pub(crate) struct FetchOutcome {
     pub(crate) not_modified: bool,
 }
 
-/// A fetch failure, split the way Go's `isTransientFetchError` needs.
 #[derive(Debug)]
 pub(crate) enum FetchError {
     HttpStatus { status: u16, url: String },
@@ -36,7 +25,6 @@ pub(crate) enum FetchError {
 }
 
 impl FetchError {
-    /// Non-HTTP failures may reuse a local cache; explicit HTTP rejections may not.
     pub(crate) fn is_transient(&self) -> bool {
         !matches!(self, FetchError::HttpStatus { .. })
     }
@@ -60,7 +48,6 @@ impl FetchError {
     }
 }
 
-/// Fetches one source, carrying the previous validators for HTTP sources.
 pub(crate) async fn fetch_conditional(
     url: &str,
     etag: &str,
@@ -171,7 +158,6 @@ fn header_value(response: &reqwest::Response, name: reqwest::header::HeaderName)
         .to_string()
 }
 
-/// `<data_dir>/<id>.txt`.
 pub(crate) fn cache_path(data_dir: &str, id: &str) -> PathBuf {
     Path::new(data_dir).join(format!("{id}.txt"))
 }
@@ -184,7 +170,6 @@ pub(crate) fn remove_cache(data_dir: &str, id: &str) {
     let _ = std::fs::remove_file(cache_path(data_dir, id));
 }
 
-/// `.tmp` + rename, matching `writeListCacheAtomic`.
 pub(crate) fn write_cache_atomic(data_dir: &str, id: &str, data: &[u8]) -> std::io::Result<()> {
     let dir = Path::new(data_dir);
     std::fs::create_dir_all(dir)?;
@@ -213,7 +198,6 @@ pub(crate) fn write_cache_atomic(data_dir: &str, id: &str, data: &[u8]) -> std::
     result
 }
 
-/// `listChecksum`: lowercase hex SHA-256.
 pub(crate) fn list_checksum(data: &[u8]) -> String {
     use std::fmt::Write as _;
     let digest = Sha256::digest(data);

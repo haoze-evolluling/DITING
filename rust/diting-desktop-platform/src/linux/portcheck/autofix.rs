@@ -1,5 +1,3 @@
-//! Automatic repair of the systemd-resolved stub listener occupying 53.
-
 use std::path::Path;
 
 use crate::error::{PlatformError, PlatformResult};
@@ -9,7 +7,6 @@ use crate::linux::files;
 
 use super::owner::{is_systemd_resolved_process, systemd_resolved_pid};
 
-/// Writes the `DNSStubListener=no` drop-in and restarts systemd-resolved.
 pub(crate) async fn disable_resolved_stub_listener(
     executor: &dyn CommandExecutor,
 ) -> PlatformResult<()> {
@@ -30,7 +27,6 @@ pub(crate) async fn disable_resolved_stub_listener(
         .run_checked("systemctl", &["restart", "systemd-resolved"])
         .await
     {
-        // Some WSL/container images lack the unit; fall back to terminating the stub directly.
         if let Err(fallback) = stop_resolved_stub_process(executor).await {
             return Err(PlatformError::message(format!(
                 "重启 systemd-resolved 失败 ({error})，且回退停止 stub 亦失败: {fallback}（已写入 {RESOLVED_DROP_FILE}，卸载谛听后请手动删除）"
@@ -40,11 +36,8 @@ pub(crate) async fn disable_resolved_stub_listener(
     Ok(())
 }
 
-/// Terminates the systemd-resolved stub process when no systemd unit is available.
 async fn stop_resolved_stub_process(executor: &dyn CommandExecutor) -> PlatformResult<()> {
     let pid = systemd_resolved_pid();
-    // Not finding the process means "cannot handle", not "nothing to do": returning success would
-    // report a no-op self-heal as fixed while the stub keeps listening.
     if pid == 0 {
         return Err(PlatformError::message(
             "未能定位 systemd-resolved 进程，无法终止 stub 监听器",

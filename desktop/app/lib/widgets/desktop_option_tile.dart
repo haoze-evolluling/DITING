@@ -1,9 +1,3 @@
-/// One selectable option inside a dashboard card: the title with its mark, and the note under it.
-///
-/// Every "pick one of these" group on the desktop hub (upstream scheduling, blocking response, the
-/// `ANY` response) is the same control, so the choice lives here instead of in three copies. The
-/// background is the card's tone level — the dashboard card is its own surface, so an unselected
-/// tile still reads as a button rather than as loose text.
 library;
 
 import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
@@ -21,14 +15,11 @@ class DesktopOptionTile extends StatelessWidget {
 
   final String label;
 
-  /// The one or two sentences that tell the options apart; omitted for a bare label tile.
   final String? description;
 
   final bool selected;
   final VoidCallback? onPressed;
 
-  /// Lines the note may take before it ellipsizes: a tile in a two-column grid is narrower than a
-  /// full-width row and wraps sooner.
   static const int _descriptionMaxLines = 3;
 
   @override

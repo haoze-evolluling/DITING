@@ -1,23 +1,8 @@
-//! The C ABI `android/engine/ipcache_native.go` loads with `dlopen`.
-//!
-//! | symbol | meaning |
-//! | --- | --- |
-//! | `diting_ipcache_abi_version` | ABI number the loader validates |
-//! | `diting_ipcache_new` | one engine's cache with the requested capacity |
-//! | `diting_ipcache_free` | drop a handle |
-//! | `diting_ipcache_put` | remember (or refresh) one IP → domain mapping |
-//! | `diting_ipcache_get` | copy the domain text into the caller's buffer |
-//! | `diting_ipcache_len` | current entry count (tests) |
-//!
-//! A null handle misses every lookup and ignores writes, which is the "cache unavailable" shape.
-//! Empty IPs/domains are no-ops on both sides.
-
 use std::slice;
 use std::str;
 
 use crate::cache::IpDomainCache;
 
-/// Must match `ipCacheABIVersion` in `android/engine/ipcache_native.go`.
 pub const ABI_VERSION: u32 = 1;
 
 const STATUS_OK: u32 = 0;
@@ -27,23 +12,16 @@ const RESULT_MISS: isize = -1;
 const RESULT_TOO_SMALL: isize = -2;
 const RESULT_BAD_ARGUMENT: isize = -3;
 
-/// ABI version of the library.
 #[no_mangle]
 pub extern "C" fn diting_ipcache_abi_version() -> u32 {
     ABI_VERSION
 }
 
-/// Creates a cache; a non-positive capacity means the default 2048.
 #[no_mangle]
 pub extern "C" fn diting_ipcache_new(max_size: i32) -> *mut IpDomainCache {
     Box::into_raw(Box::new(IpDomainCache::new(max_size)))
 }
 
-/// Drops a handle created by [`diting_ipcache_new`].
-///
-/// # Safety
-///
-/// `handle` must come from `diting_ipcache_new` and must not be used afterwards.
 #[no_mangle]
 pub unsafe extern "C" fn diting_ipcache_free(handle: *mut IpDomainCache) {
     if !handle.is_null() {
@@ -51,11 +29,6 @@ pub unsafe extern "C" fn diting_ipcache_free(handle: *mut IpDomainCache) {
     }
 }
 
-/// `put`: empty keys are ignored by the kernel; a null handle is a no-op.
-///
-/// # Safety
-///
-/// Both slices must be readable for their stated lengths.
 #[no_mangle]
 pub unsafe extern "C" fn diting_ipcache_put(
     handle: *const IpDomainCache,
@@ -75,11 +48,6 @@ pub unsafe extern "C" fn diting_ipcache_put(
     STATUS_OK
 }
 
-/// `get`: writes the domain text and returns its length, or `-1` on a miss.
-///
-/// # Safety
-///
-/// `ip` must be readable for `ip_len` bytes and `out` writable for `out_cap` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn diting_ipcache_get(
     handle: *const IpDomainCache,
@@ -112,18 +80,11 @@ pub unsafe extern "C" fn diting_ipcache_get(
     }
 }
 
-/// Current entry count.
-///
-/// # Safety
-///
-/// The handle must be valid for the duration of the call.
 #[no_mangle]
 pub unsafe extern "C" fn diting_ipcache_len(handle: *const IpDomainCache) -> u32 {
     handle.as_ref().map_or(0, IpDomainCache::len)
 }
 
-/// Reads a text argument. A zero length is the empty string; a null pointer with a non-zero length
-/// or invalid UTF-8 is a caller bug.
 unsafe fn text_argument<'a>(text: *const u8, len: usize) -> Option<&'a str> {
     if len == 0 {
         return Some("");

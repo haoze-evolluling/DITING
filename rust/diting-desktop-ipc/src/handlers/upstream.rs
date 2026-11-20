@@ -1,5 +1,3 @@
-//! Upstream configuration, connectivity test, bootstrap and `sdns://` stamps.
-
 use hyper::http::Method;
 use serde_json::json;
 

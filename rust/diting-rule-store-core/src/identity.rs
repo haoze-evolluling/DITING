@@ -1,12 +1,3 @@
-//! What makes two rule rows the same, and which row a single edit writes.
-//!
-//! Legacy databases have no unique index on the rule tables, so every duplicate check is an explicit
-//! predicate here rather than an `INSERT OR IGNORE`. Three identities exist and they are not
-//! interchangeable:
-//! * global — `pattern` + `important` + `appScope` + `appInverted` + `dnsType` + `isRegex`;
-//! * scoped — the per-app edit only looks at `pattern` + `important` + `appScope` + `appInverted`;
-//! * full block — the `*` marker, matched through the `|`-separated `appScope` list.
-
 use std::net::IpAddr;
 
 use serde_json::{json, Value};
@@ -30,10 +21,6 @@ impl TargetType {
     }
 }
 
-/// A rewrite target is an address or a hostname; anything unparsable is a CNAME target.
-///
-/// `std`'s `IpAddr` and Dart's `InternetAddress.tryParse` agree on the cases a rule can contain
-/// (both reject leading zeros, zone ids, brackets and IPv4 with the wrong number of octets).
 pub fn rewrite_target_type(target: Option<&str>) -> TargetType {
     match target {
         None | Some("") => TargetType::Cname,
@@ -53,7 +40,6 @@ pub fn tables(kind: &str) -> (&'static str, &'static str) {
     }
 }
 
-/// `appScope` is a `|`-separated package list, so a package may be the whole value or a slice.
 fn scope_clause(column: &str) -> String {
     format!("({column} = ? OR {column} LIKE ? OR {column} LIKE ? OR {column} LIKE ?)")
 }
@@ -67,15 +53,11 @@ fn scope_args(package: &str) -> Vec<Value> {
     ]
 }
 
-/// The three list predicates the rule pages ask for, in one place: the `|`-separated scope list only
-/// exists in the database, so every "does this rule apply to app X" question goes through here.
 pub fn predicate(name: &str, package: &str) -> (String, Vec<Value>) {
     let scope = scope_clause("appScope");
     let mut scope_values = scope_args(package);
     match name {
-        // Rules loaded for one app: its own scoped rules, never the `*` marker.
         "loadForApp" => {
-            // The `*` argument belongs to the trailing `pattern <> ?`.
             let mut args = scope_values;
             args.push(json!("*"));
             (
@@ -102,11 +84,8 @@ pub fn predicate(name: &str, package: &str) -> (String, Vec<Value>) {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Flavor {
-    /// Global identity: everything the legacy unique index covered.
     Global,
-    /// Per-app edit: `pattern` + `important` + `appScope` only, so a global twin is never matched.
     Scoped,
-    /// The `*$app=<pkg>` marker.
     FullBlock,
 }
 
@@ -118,7 +97,6 @@ pub fn parse_flavor(value: &str) -> Flavor {
     }
 }
 
-/// One rule's identity: the predicate that finds it and the row a new one is written with.
 pub struct Identity {
     pub table: &'static str,
     pub source_table: &'static str,
@@ -128,8 +106,6 @@ pub struct Identity {
     pub row: serde_json::Map<String, Value>,
 }
 
-/// `rule` carries the parsed rule (`pattern`, `rawLine`, `important`, `appScope`, `appInverted`,
-/// `isWildcard`, `denyallow`, `isRegex`, `dnsType`) plus, for a rewrite, `target`.
 pub fn identity(
     kind: &str,
     flavor: Flavor,
@@ -165,7 +141,6 @@ pub fn identity(
     let mut where_parts = vec![String::from("pattern = ?"), String::from("important = ?")];
     let mut args = vec![json!(pattern), json!(i32::from(important))];
     if flavor == Flavor::FullBlock {
-        // The marker matches any slice of the `|`-separated scope list.
         let (where_sql, scope_values) = predicate("fullBlock", package.unwrap_or_default());
         return Identity {
             table,
@@ -176,7 +151,6 @@ pub fn identity(
             row: domain_row(rule, &pattern, now, package, flavor),
         };
     } else if let Some(scope) = package {
-        // A per-app edit always looks at the package it is editing.
         where_parts.push(String::from("appScope = ?"));
         args.push(json!(scope));
     } else {
@@ -204,8 +178,6 @@ pub fn identity(
             crate::probe::flag(rule, "isRegex").unwrap_or(false),
         )));
     } else if flavor != Flavor::FullBlock {
-        // Both the per-app edit and the `*` marker ignore inverted rules; the marker already added
-        // its own clause above.
         where_parts.push(String::from("appInverted = 0"));
     }
 
@@ -237,8 +209,6 @@ fn rewrite_row(rule: &Value, target_type: TargetType, now: i64) -> serde_json::M
     row
 }
 
-/// The full row of a new domain rule: every flag the engine reads is written, never left to a
-/// column default.
 fn domain_row(
     rule: &Value,
     pattern: &str,
@@ -246,7 +216,6 @@ fn domain_row(
     package: Option<&str>,
     flavor: Flavor,
 ) -> serde_json::Map<String, Value> {
-    // The marker reads back as `*$app=<pkg>`, and a per-app edit keeps pattern == rawLine.
     let raw_line = match (flavor, package) {
         (Flavor::FullBlock, scope) => format!("*$app={}", scope.unwrap_or_default()),
         (Flavor::Scoped, _) => pattern.to_string(),

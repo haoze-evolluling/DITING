@@ -1,9 +1,3 @@
-//! ICS (`SharedAccess`) detection and autofix.
-//!
-//! The service query is native when possible and falls back to `sc queryex`, which is available
-//! even when the SCM API is blocked. Stopping runs on the blocking pool so the raw service handle
-//! never has to be `Send` across an await point.
-
 use std::mem::size_of;
 use std::ptr;
 use std::time::{Duration, Instant};
@@ -20,7 +14,6 @@ use crate::error::{PlatformError, PlatformResult};
 use crate::exec::CommandExecutor;
 
 fn check_ics_status_native() -> PlatformResult<(bool, u32)> {
-    // SAFETY: all handles are checked and closed before returning.
     unsafe {
         let scm = OpenSCManagerW(ptr::null(), ptr::null(), SC_MANAGER_CONNECT);
         if scm.is_null() {
@@ -33,7 +26,6 @@ fn check_ics_status_native() -> PlatformResult<(bool, u32)> {
         let service = OpenServiceW(scm, name.as_ptr(), SERVICE_QUERY_STATUS);
         CloseServiceHandle(scm);
         if service.is_null() {
-            // Service missing or not queryable: Go treated this as "not running".
             return Ok((false, 0));
         }
 
@@ -61,8 +53,6 @@ fn check_ics_status_native() -> PlatformResult<(bool, u32)> {
     }
 }
 
-/// Parses `sc queryex SharedAccess`. Handles the English and Chinese state lines and extracts the
-/// PID; used only when the native SCM query fails.
 pub(crate) fn parse_sc_queryex(output: &str) -> (bool, u32) {
     let mut running = false;
     let mut pid = 0u32;
@@ -98,8 +88,6 @@ pub(crate) async fn check_ics_status(executor: &dyn CommandExecutor) -> (bool, u
     }
 }
 
-/// Stops and disables the SharedAccess service, matching the Go autofix. Polling is bounded so a
-/// stuck service cannot hang the IPC request forever.
 pub(crate) async fn stop_and_disable_shared_access() -> PlatformResult<()> {
     tokio::task::spawn_blocking(stop_and_disable_shared_access_blocking)
         .await
@@ -107,8 +95,6 @@ pub(crate) async fn stop_and_disable_shared_access() -> PlatformResult<()> {
 }
 
 fn stop_and_disable_shared_access_blocking() -> PlatformResult<()> {
-    // SAFETY: handles are checked/closed; `ChangeServiceConfigW` is passed null pointers for the
-    // fields it should leave unchanged.
     let service = unsafe {
         let scm = OpenSCManagerW(ptr::null(), ptr::null(), SC_MANAGER_CONNECT);
         if scm.is_null() {
@@ -132,7 +118,6 @@ fn stop_and_disable_shared_access_blocking() -> PlatformResult<()> {
 
     let mut status: SERVICE_STATUS_PROCESS = unsafe { std::mem::zeroed() };
     let mut needed = 0u32;
-    // SAFETY: `service` is valid; disabling is best effort exactly like the Go implementation.
     let queried = unsafe {
         ChangeServiceConfigW(
             service,

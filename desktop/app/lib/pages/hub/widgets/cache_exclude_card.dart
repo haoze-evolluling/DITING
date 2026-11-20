@@ -1,8 +1,3 @@
-/// The cache exclude rules: the domains that must bypass the cache entirely.
-///
-/// The old desktop console's `CacheExcludeCard.vue` is the blueprint: one Go RE2 expression per
-/// line, the same three presets, the same 256-rule and 512-character bounds, and a save button that
-/// only lights up once the text differs from what the service holds.
 library;
 
 import 'dart:async';
@@ -18,7 +13,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The service's own bounds, repeated here so a reader sees the truncation before saving.
 const int _maxPatterns = 256;
 const int _maxPatternLength = 512;
 

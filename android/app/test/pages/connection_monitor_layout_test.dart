@@ -1,5 +1,3 @@
-// 连接监控：实时连接与应用洞察共用一页。两段视图都在平板宽度下双栏、手机宽度下单列。
-
 import 'package:diting_android/data/native/flow_bridge.dart';
 import 'package:diting_android/pages/network/connection_monitor_page.dart';
 import 'package:diting_android/state/flow_providers.dart';
@@ -69,7 +67,6 @@ Future<void> _openInsights(WidgetTester tester) async {
 }
 
 Future<void> _unmount(WidgetTester tester) async {
-  // Unmount so the page's refresh timer is cancelled before the test ends.
   await tester.pumpWidget(const SizedBox());
 }
 
@@ -79,7 +76,6 @@ void main() {
 
     expect(find.text('Alpha'), findsWidgets);
     expect(find.text('Beta'), findsWidgets);
-    // The most recent connection's app is selected first (Beta, seq 2).
     expect(find.text('beta.example'), findsOneWidget);
     expect(find.text('alpha.example'), findsNothing);
 
@@ -106,7 +102,6 @@ void main() {
     await _pump(tester, const Size(1200, 900));
     await _openInsights(tester);
 
-    // Both report cards share the left pane; the right shows the first app's map.
     expect(find.text('Alpha'), findsWidgets);
     expect(find.text('Beta'), findsWidgets);
     expect(find.text('alpha.example'), findsOneWidget);

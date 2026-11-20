@@ -1,10 +1,3 @@
-//! rustc's `FxHasher` construction, seeded per process: a multiply-rotate hash that is several
-//! times faster than the default SipHash for the short strings the rule index is keyed by.
-//!
-//! Rule lists come from remote subscriptions, so the seed is drawn from `RandomState` instead of
-//! being a constant: an attacker cannot precompute colliding keys offline to turn an import into an
-//! O(n²) walk.
-
 use std::hash::{BuildHasher, Hasher, RandomState};
 
 const SEED: u64 = 0x51_7c_c1_b7_27_22_0a_95;

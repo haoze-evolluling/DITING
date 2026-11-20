@@ -1,10 +1,3 @@
-/// The local authoritative zones: one row per zone with its build result, an expandable RFC 1035 text
-/// area, and a preview that runs the service's own parser before saving.
-///
-/// The old desktop console's `ZoneFileCard.vue` is the blueprint. Zone text is edited locally and only
-/// "save all" posts it; a rejected save rolls the list back to what the service still holds. The switch
-/// and the default TTL are [ZoneSettingsCard], because a list of editable blocks and its header
-/// settings in one card made it the tallest card in the window.
 library;
 
 import 'dart:async';
@@ -21,12 +14,10 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Below this the state chip moves under the row, so a narrow window does not squeeze the apex.
 const double _chipInlineBreakpoint = 560;
 
 const double _badgeWidth = 132;
 
-/// A new zone starts as a working example, exactly like the console's template.
 const String _zoneTemplate =
     '\$ORIGIN example.lan.\n'
     '@   IN SOA ns.example.lan. admin.example.lan. (1 7200 3600 1209600 300)\n'
@@ -43,8 +34,6 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
   final _zones = <DesktopZoneEntry>[];
   final _previews = <String, ({bool ok, String text})>{};
 
-  /// The provider's zone list this card last copied, by identity. A new answer replaces the drafts;
-  /// a rebuild for any other reason leaves them alone.
   List<DesktopZoneEntry>? _adopted;
 
   String _expanded = '';
@@ -58,8 +47,6 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
     _previews.clear();
   }
 
-  /// Posts the whole list. On a rejection the drafts go back to [rollback], because a zone list the
-  /// service did not accept must not stay on screen as if it had been applied.
   Future<void> _persist({
     required List<DesktopZoneEntry> rollback,
     String? success,

@@ -9,11 +9,9 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Text scale, shown against a live sample so the effect is visible before leaving the page.
 class FontSizePage extends ConsumerWidget {
   const FontSizePage({super.key});
 
-  /// Slider granularity: 0.8→1.4 in 5% steps keeps the presets below reachable by dragging.
   static const _step = 0.05;
 
   @override
@@ -119,7 +117,6 @@ class FontSizePage extends ConsumerWidget {
 
   static const _presets = [0.85, 1.0, 1.2, 1.4];
 
-  /// A dragged value between presets highlights none and shows the exact percentage instead.
   static double _nearestPreset(double scale) {
     for (final preset in _presets) {
       if ((scale - preset).abs() < 0.001) {
@@ -142,8 +139,6 @@ class FontSizePage extends ConsumerWidget {
   };
 }
 
-/// The sample itself: three text levels in one card, so the relative rhythm between title, body and
-/// caption is visible at a glance.
 class _SizePreview extends StatelessWidget {
   const _SizePreview({required this.scale});
 

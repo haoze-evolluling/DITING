@@ -17,15 +17,11 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Runtime permissions the onboarding and troubleshooting screens ask for. Each one is a real
-/// system dialog or settings hand-off: the app cannot grant any of them itself, and reporting a
-/// made-up state was the previous behaviour.
 class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "com.haoze.diting/permissions"
 
-        /// A vendor runtime permission, granted only on MIUI/HyperOS, ColorOS, EMUI and friends.
         private const val GET_INSTALLED_APPS = "com.android.permission.GET_INSTALLED_APPS"
 
         private const val REQUEST_NOTIFICATION = 0x5801
@@ -50,7 +46,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
         }
     }
 
-    /// Snapshot of every permission the onboarding lists, keyed by the Dart enum name.
     private fun states(): Map<String, Boolean> = mapOf(
         "vpn" to isVpnGranted(),
         "notification" to isNotificationGranted(),
@@ -65,16 +60,12 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
 
     private fun isNotificationGranted(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            // Below 13 the permission does not exist; what matters is whether the user muted
-            // the channel, which only the notification settings can change.
             val manager = activity.getSystemService(NotificationManager::class.java)
             return manager?.areNotificationsEnabled() ?: true
         }
         return hasPermission(Manifest.permission.POST_NOTIFICATIONS)
     }
 
-    /// A granted vendor permission, or a successful probe: the probe is what AOSP/Pixel rely on,
-    /// since they expose QUERY_ALL_PACKAGES instead of a runtime permission.
     private fun isAppListGranted(): Boolean {
         if (hasPermission(GET_INSTALLED_APPS)) {
             return true
@@ -110,8 +101,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
         }
     }
 
-    /// `VpnService.prepare` returns either "already granted" or the consent intent; there is no
-    /// runtime permission for the tunnel.
     private fun requestVpn(result: MethodChannel.Result) {
         val intent = runCatching { VpnService.prepare(activity) }.getOrNull()
         if (intent == null) {
@@ -128,7 +117,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
 
     private fun requestNotification(result: MethodChannel.Result) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            // No dialog exists, so the honest answer is "open the settings screen".
             openNotificationSettings()
             result.success(states())
             return
@@ -156,9 +144,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
             return
         }
         pending = result
-        // The vendor permission has no AOSP dialog: requestPermissions throws or answers denied
-        // at once. The Dart caller opens the settings screen when the request leaves the
-        // permission denied, so a second hand-off here would stack two settings activities.
         runCatching {
             ActivityCompat.requestPermissions(
                 activity,
@@ -179,7 +164,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
         val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
             .setData(Uri.parse("package:${activity.packageName}"))
         val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-        // The direct intent is a dialog only where the ROM allows it; the list is always there.
         val intent = if (activity.packageManager.resolveActivity(direct, 0) != null) {
             direct
         } else {
@@ -193,7 +177,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
             }
     }
 
-    /// No dialog exists: the per-app "display over other apps" screen is the only way in.
     private fun requestOverlay(result: MethodChannel.Result) {
         if (FloatingLogOverlay.canDrawOverlays(activity)) {
             result.success(states())
@@ -211,8 +194,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
             }
     }
 
-    /// Resolves whatever request is pending with a fresh snapshot; MainActivity forwards every
-    /// unknown result code here last, so returning false means "not mine".
     fun onActivityResult(requestCode: Int, resultCode: Int): Boolean {
         val mine = requestCode == REQUEST_NOTIFICATION ||
             requestCode == REQUEST_APP_LIST ||
@@ -223,7 +204,6 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
         return true
     }
 
-    /// Same contract for the runtime-permission callback; false when it belongs to someone else.
     fun onRequestPermissionsResult(requestCode: Int): Boolean {
         if (requestCode != REQUEST_NOTIFICATION && requestCode != REQUEST_APP_LIST) {
             return false

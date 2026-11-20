@@ -1,5 +1,3 @@
-//! `/api/v1/encrypted/*`: status, configuration, certificates and profiles.
-
 use base64::Engine;
 use hyper::header::HeaderValue;
 use hyper::http::{Method, StatusCode};
@@ -117,7 +115,6 @@ pub async fn handle_acl(server: &Server, ctx: &Ctx<'_>) -> Resp {
             };
             match server.runtime().configure_encrypted_acl(request) {
                 Ok(()) => {
-                    // The trusted-proxy list is baked into the listeners at start time.
                     server.runtime().reload_encrypted().await;
                     write_status(server, "反向代理可信来源已更新")
                 }

@@ -1,5 +1,3 @@
-/// Small shared pieces of the protection pages: the subscription health badge, the timestamp shape
-/// and the counters strip. Nothing here decides blocking state; the service does.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -9,13 +7,11 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// `07-14 09:32` — the console's `formatMonthDayTime`, in the host's time zone.
 String desktopMonthDayTime(DateTime time) {
   String two(int value) => value.toString().padLeft(2, '0');
   return '${two(time.month)}-${two(time.day)} ${two(time.hour)}:${two(time.minute)}';
 }
 
-/// Empty before the first pull; the row then shows only the "never updated" text.
 String desktopFilterHealthLabel(BuildContext context, DesktopFilterList list) {
   final l10n = context.l10n;
   return switch (list.lastStatus) {
@@ -35,7 +31,6 @@ DashboardChipTone desktopFilterHealthTone(DesktopFilterList list) =>
       _ => DashboardChipTone.idle,
     };
 
-/// The service's own reason for the last pull; falls back to the badge's explanation.
 String desktopFilterHealthDetail(BuildContext context, DesktopFilterList list) {
   if (list.lastError.isNotEmpty) return list.lastError;
   final l10n = context.l10n;
@@ -48,7 +43,6 @@ String desktopFilterHealthDetail(BuildContext context, DesktopFilterList list) {
   };
 }
 
-/// `1 小时 5 分` — the console's `pauseRemainingText`, rounded down as it does.
 String desktopPauseRemaining(BuildContext context, Duration remaining) {
   final l10n = context.l10n;
   final seconds = remaining.inSeconds;
@@ -68,7 +62,6 @@ String desktopPauseRemaining(BuildContext context, Duration remaining) {
   return l10n.desktopFilterPauseSeconds(seconds);
 }
 
-/// One `label : value` block of the counters strip.
 class FilterMetric extends StatelessWidget {
   const FilterMetric({
     super.key,
@@ -90,8 +83,6 @@ class FilterMetric extends StatelessWidget {
       spacing: 2,
       children: [
         Row(
-          // The block sits in a Wrap on a narrow card: a Row sized to its parent would stretch
-          // every counter to the full width and stack the four of them one per line.
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
@@ -119,9 +110,6 @@ class FilterMetric extends StatelessWidget {
   }
 }
 
-/// A title, an explanation and a switch: the console's repeated row shape for the protection
-/// switches. The surrounding block owns the tap, so a narrow window does not need a pixel-perfect
-/// hit on the track.
 class FilterToggleRow extends StatelessWidget {
   const FilterToggleRow({
     super.key,
@@ -137,7 +125,6 @@ class FilterToggleRow extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
 
-  /// Shown under the row when the switch is on and the choice needs a caution.
   final String? warning;
 
   @override

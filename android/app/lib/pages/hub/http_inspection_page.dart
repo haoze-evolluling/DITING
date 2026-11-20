@@ -20,9 +20,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'http_inspection_apps_page.dart';
 
-/// HTTPS inspection (upstream `HttpInspectionSettingsScreen`). Switch and app list live in
-/// `http_inspection_enabled` / `http_inspection_app_packages`; CA readiness comes from
-/// `CaCertificateService`.
 class HttpInspectionPage extends ConsumerWidget {
   const HttpInspectionPage({super.key});
 
@@ -65,8 +62,6 @@ class HttpInspectionPage extends ConsumerWidget {
                       subtitle: Text(
                         _appsHint(context, caReady, caHint, apps.length),
                       ),
-                      // A dead row reads as "the app is broken"; explain the missing certificate
-                      // instead and offer the one screen that fixes it.
                       onTap: caReady
                           ? () => context.push('/hub/https-inspection/apps')
                           : () => _explainCaMissing(context, ca),
@@ -154,8 +149,6 @@ class HttpInspectionPage extends ConsumerWidget {
     );
   }
 
-  /// Bypass suffixes are user-maintained and grow without bound; a lazy sliver keeps the first
-  /// frame flat no matter how many are configured.
   List<Widget> _bypassSlivers(
     BuildContext context,
     WidgetRef ref,
@@ -212,7 +205,6 @@ class HttpInspectionPage extends ConsumerWidget {
     );
   }
 
-  /// Tapping a gated row while the CA is unready used to do nothing at all.
   static Future<void> _explainCaMissing(
     BuildContext context,
     CaCertificateState? state,
@@ -246,7 +238,6 @@ class HttpInspectionPage extends ConsumerWidget {
     }
   }
 
-  /// One-line CA status shown under the master switch and the app row.
   static String _caHint(
     BuildContext context,
     CaCertificateState? ca,
@@ -309,8 +300,6 @@ class HttpInspectionPage extends ConsumerWidget {
         : context.l10n.httpInspUrlPaused;
   }
 
-  /// "Certificate exists but is not installed" and "not generated yet" need different copy:
-  /// install it from system settings, or regenerate first.
   static String _caProblem(AppL10n l10n, bool available, bool installed) {
     if (!available) {
       return l10n.httpInspCaMissing;
@@ -324,7 +313,6 @@ class HttpInspectionPage extends ConsumerWidget {
   static void _bump(WidgetRef ref) =>
       ref.read(legacySettingsRevisionProvider.notifier).bump();
 
-  /// Writes one of the three content toggles, leaving the other two untouched.
   static void _setToggles(
     WidgetRef ref,
     LegacySettings settings, {
@@ -340,8 +328,6 @@ class HttpInspectionPage extends ConsumerWidget {
     _bump(ref);
   }
 
-  /// Toggles inspection, asking first when domain rules are off: decrypting traffic with
-  /// `domain_rules_enabled` off looks "on but useless", so the dialog enables both at once.
   Future<void> _setEnabled(
     BuildContext context,
     WidgetRef ref,

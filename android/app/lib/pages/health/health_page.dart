@@ -1,4 +1,3 @@
-/// U1 保护健康页：从「是否运行」升级到「是否有效」，给出四维评分与下一步建议。
 library;
 
 import 'package:diting_android/pages/health/health_score.dart';
@@ -61,7 +60,6 @@ Color _severityColor(BuildContext context, HealthSeverity severity) {
   };
 }
 
-/// The score bands shared by the overall level and every dimension.
 HealthSeverity _severityForScore(int score) {
   if (score >= 80) return HealthSeverity.ok;
   if (score >= 55) return HealthSeverity.warning;

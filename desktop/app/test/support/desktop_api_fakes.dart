@@ -1,5 +1,3 @@
-/// A stand-in for the local service API, built on `package:http`'s `MockClient` so the real
-/// [DesktopApiClient] and its parsing run in every desktop test.
 library;
 
 import 'dart:convert';
@@ -15,22 +13,17 @@ import 'desktop_zone_fakes.dart';
 export 'desktop_rewrite_fakes.dart';
 export 'desktop_zone_fakes.dart';
 
-/// A JSON answer in UTF-8. `http.Response(String)` encodes as latin-1, which cannot carry the
-/// Chinese names a real service returns.
 http.Response utf8Json(Object? data) => http.Response.bytes(
   utf8.encode(jsonEncode(data)),
   200,
   headers: {'content-type': 'application/json; charset=utf-8'},
 );
 
-/// Envelope the service uses for every answer.
 Map<String, Object?> apiEnvelope(Object? data) => {
   'success': true,
   'data': data,
 };
 
-/// A `GET /api/v1/status` payload. Every value can be overridden, so a test states only the fields
-/// it asserts on.
 Map<String, Object?> statusPayload({
   String version = '2.2.9',
   int pid = 4242,
@@ -164,7 +157,6 @@ Map<String, Object?> statusPayload({
   },
 };
 
-/// A `GET /api/v1/querylog/search` payload with the newest entry first.
 Map<String, Object?> queryLogPayload({int count = 3}) => {
   'total': count,
   'entries': [
@@ -183,7 +175,6 @@ Map<String, Object?> queryLogPayload({int count = 3}) => {
   ],
 };
 
-/// A `GET /api/v1/querylog/stats` payload: the service's 24-hour rolling window.
 Map<String, Object?> queryStatsPayload({
   int queries = 12345,
   int blocked = 987,
@@ -211,7 +202,6 @@ Map<String, Object?> queryStatsPayload({
   'topClients': topClients,
 };
 
-/// A `GET /api/v1/querylog/config` payload.
 Map<String, Object?> queryLogConfigPayload({
   bool enabled = true,
   int maxEntries = 10000,
@@ -228,8 +218,6 @@ Map<String, Object?> queryLogConfigPayload({
   'dataDir': dataDir,
 };
 
-/// A `GET /api/v1/upstream/configure` payload. The service returns lower-case mode and always
-/// includes `fallbackOnRcode`, which the form must round-trip.
 Map<String, Object?> upstreamPayload({
   String mode = 'primary_backup',
   List<Map<String, Object?>>? providers,
@@ -286,7 +274,6 @@ Map<String, Object?> upstreamPayload({
   'fallbackOnError': fallbackOnError,
 };
 
-/// A `POST /api/v1/upstream/test` answer for a reachable node.
 Map<String, Object?> upstreamProbePayload({
   double latencyMs = 23.5,
   String error = '',
@@ -296,7 +283,6 @@ Map<String, Object?> upstreamProbePayload({
   if (error.isNotEmpty) 'error': error,
 };
 
-/// A `POST /api/v1/upstream/stamp` answer.
 Map<String, Object?> stampPayload({
   String protocol = 'DOH',
   String server = 'dns.alidns.com',
@@ -325,13 +311,11 @@ Map<String, Object?> servicePayload({
   'autoStart': autoStart == null ? null : {'enabled': autoStart},
 };
 
-/// A `GET /api/v1/status` `dns64` payload.
 Map<String, Object?> dns64Payload({
   bool enabled = false,
   List<String> prefixes = const ['64:ff9b::/96'],
 }) => {'enabled': enabled, 'prefixes': prefixes};
 
-/// A `GET /api/v1/filter/stats` payload.
 Map<String, Object?> filterStatsPayload({
   bool enabled = true,
   int totalRules = 2048,
@@ -354,7 +338,6 @@ Map<String, Object?> filterStatsPayload({
   'pausedRemainingSec': paused ? pausedRemainingSec : 0,
 };
 
-/// A `GET /api/v1/filter/lists` payload.
 Map<String, Object?> filterListsPayload({
   List<Map<String, Object?>>? lists,
 }) {
@@ -384,7 +367,6 @@ Map<String, Object?> filterListsPayload({
   return {'total': rows.length, 'lists': rows};
 }
 
-/// A `GET /api/v1/filter/config` payload: the fields the protection pages edit.
 Map<String, Object?> filterConfigPayload({
   bool enabled = true,
   String blockMode = 'null_ip',
@@ -409,7 +391,6 @@ Map<String, Object?> filterConfigPayload({
   'bogusNxDomainNetworks': bogusNxDomainNetworks,
 };
 
-/// A `GET /api/v1/filter/pause` payload.
 Map<String, Object?> filterPausePayload({
   bool paused = false,
   int remainingSeconds = 0,
@@ -421,7 +402,6 @@ Map<String, Object?> filterPausePayload({
   'blockingEnabled': blockingEnabled,
 };
 
-/// A `GET /api/v1/filter/schedule` payload.
 Map<String, Object?> schedulePayload({
   bool enabled = false,
   List<Map<String, Object?>> schedules = const [],
@@ -434,7 +414,6 @@ Map<String, Object?> schedulePayload({
   'activeId': activeId,
 };
 
-/// A `GET /api/v1/filter/services` payload.
 Map<String, Object?> servicesPayload({
   List<Map<String, Object?>>? services,
   List<Map<String, Object?>>? groups,
@@ -481,14 +460,12 @@ Map<String, Object?> servicesPayload({
   };
 }
 
-/// A `GET /api/v1/safesearch/config` payload.
 Map<String, Object?> safeSearchPayload({
   bool enabled = false,
   List<String> disabled = const [],
   int ttl = 300,
 }) => {'enabled': enabled, 'disabled': disabled, 'ttl': ttl};
 
-/// A `GET /api/v1/filter/safebrowsing` payload.
 Map<String, Object?> safeBrowsingPayload({
   bool enabled = false,
   bool parentalEnabled = false,
@@ -521,7 +498,6 @@ Map<String, Object?> safeBrowsingPayload({
   'blockMode': blockMode,
 };
 
-/// A `GET /api/v1/clients` payload.
 List<Map<String, Object?>> clientsPayload() => [
   {
     'ip': '192.168.1.20',
@@ -532,7 +508,6 @@ List<Map<String, Object?>> clientsPayload() => [
   {'ip': '192.168.1.21', 'name': '', 'queryCount': 7, 'lastSeen': 0},
 ];
 
-/// A `POST /api/v1/filter/check` payload.
 Map<String, Object?> ruleCheckPayload({
   bool blocked = true,
   String action = 'block',
@@ -549,7 +524,6 @@ Map<String, Object?> ruleCheckPayload({
   'rewritten': ?rewritten,
 };
 
-/// A `GET /api/v1/portcheck` payload.
 Map<String, Object?> portCheckPayload({
   bool available = false,
   bool hasICS = true,
@@ -580,7 +554,6 @@ Map<String, Object?> portCheckPayload({
   'diagnostic': diagnostic,
 };
 
-/// A `GET /api/v1/web/status` payload.
 Map<String, Object?> webStatusPayload({
   bool enabled = false,
   int port = 15353,
@@ -601,13 +574,11 @@ Map<String, Object?> webStatusPayload({
   'username': username,
 };
 
-/// A `POST /api/v1/takeover/emergency-restore` payload.
 Map<String, Object?> emergencyRestorePayload({
   bool healed = true,
   String message = '已成功恢复网络 DNS 设置！',
 }) => {'healed': healed, 'message': message};
 
-/// A `GET /api/v1/auth/status` payload.
 Map<String, Object?> authPayload({
   bool initialized = true,
   bool webEnabled = true,
@@ -623,7 +594,6 @@ Map<String, Object?> authPayload({
   'lockoutRemainingSec': lockoutRemainingSec,
 };
 
-/// A `GET /api/v1/auth/background` payload.
 Map<String, Object?> backgroundPayload({
   String type = 'none',
   String url = '',
@@ -638,7 +608,6 @@ Map<String, Object?> backgroundPayload({
   'updatedAt': updatedAt,
 };
 
-/// A `GET /api/v1/adapters` payload: one connected adapter and one disconnected.
 List<Map<String, Object?>> adaptersPayload() => [
   {
     'id': 'wlan-guid',
@@ -670,7 +639,6 @@ List<Map<String, Object?>> adaptersPayload() => [
   },
 ];
 
-/// A `GET /api/v1/dns/lan` payload.
 Map<String, Object?> lanPayload({
   bool allowLan = false,
   List<String> listenAddresses = const ['127.0.0.1:53'],
@@ -687,7 +655,6 @@ Map<String, Object?> lanPayload({
   'firewallBackend': firewallBackend,
 };
 
-/// A `GET /api/v1/clients/groups` payload.
 Map<String, Object?> groupsPayload() => {
   'enabled': true,
   'groups': [
@@ -722,7 +689,6 @@ Map<String, Object?> groupsPayload() => {
   ],
 };
 
-/// A `GET /api/v1/encrypted/dns/status` payload.
 Map<String, Object?> encryptedPayload({
   bool enabled = true,
   bool dotEnabled = true,
@@ -797,8 +763,6 @@ Map<String, Object?> encryptedPayload({
   'certExpired': certExpired,
 };
 
-/// Records the paths it was asked for, and can be told to fail after [failAfter] requests to model
-/// a service that drops while the window is open.
 class FakeDesktopBackend {
   FakeDesktopBackend({
     Map<String, Object?>? status,
@@ -885,228 +849,158 @@ class FakeDesktopBackend {
   Map<String, Object?> queryLog;
   Map<String, Object?> queryStats;
 
-  /// Mutated by a `POST /api/v1/querylog/config`, as the service merges the body it receives.
   Map<String, Object?> logConfig;
 
-  /// Mutated by a `POST /api/v1/upstream/configure`, as the service replaces what it receives.
   Map<String, Object?> upstream;
 
-  /// The answer `/api/v1/upstream/test` gives next.
   Map<String, Object?> probe;
 
-  /// The answer `/api/v1/upstream/stamp` gives next.
   Map<String, Object?> stamp;
 
-  /// The cache the service reports; `POST /cache/config` merges into [cacheConfig], and
-  /// `POST /cache/clear` empties [cacheEntries] and the stats count.
   Map<String, Object?> cacheStats;
   Map<String, Object?> cacheConfig;
   Map<String, Object?> cacheEntries;
   List<Map<String, Object?>> cacheTop;
   Map<String, Object?> cachePersist;
 
-  /// Mutated by `POST /dns/rewrite/configure` and `/dns/rewrite/rules`, as the service merges what
-  /// it receives. `GET /status` carries it as its `rewrite` field.
   Map<String, Object?> rewrite;
 
-  /// Mutated by `POST /dns/dns64/configure`; `GET /status` carries it as its `dns64` field.
   Map<String, Object?> dns64;
 
-  /// Bodies of every DNS64 save, in order.
   final dns64Updates = <Map<String, Object?>>[];
 
-  /// Mutated by the four filter-list writes; the counters follow `activeLists`.
   Map<String, Object?> filterStats;
   Map<String, Object?> filterLists;
 
-  /// Bodies of every list add and update, the ids of every delete and every refresh, in order.
   final filterListAdds = <Map<String, Object?>>[];
   final filterListUpdates = <Map<String, Object?>>[];
   final filterListDeletes = <String>[];
   final filterListRefreshes = <String>[];
 
-  /// Mutated by `POST /filter/rules`; `GET /filter/rules` answers with it.
   List<String> customRules;
 
-  /// Bodies of every custom-rule save, in order.
   final customRuleUpdates = <List<String>>[];
 
-  /// Mutated by `POST /filter/config`; `GET /filter/config` answers with it.
   Map<String, Object?> filterConfig;
 
-  /// Mutated by `POST /filter/pause`; `GET /filter/pause` answers with it.
   Map<String, Object?> filterPause;
 
-  /// Bodies of every config save and every pause call, in order.
   final filterConfigUpdates = <Map<String, Object?>>[];
   final filterPauseRequests = <Map<String, Object?>>[];
 
-  /// Mutated by `POST /filter/schedule`; `GET /filter/schedule` answers with it.
   Map<String, Object?> schedule;
 
-  /// Bodies of every time-plan save, in order.
   final scheduleUpdates = <Map<String, Object?>>[];
 
-  /// Mutated by `POST /filter/services`; `GET /filter/services` answers with it.
   Map<String, Object?> services;
 
-  /// Bodies of every service-selection save, in order.
   final servicesUpdates = <Map<String, Object?>>[];
 
-  /// Mutated by the alias and limit saves.
   List<Map<String, Object?>> clients;
 
-  /// Mutated by the client-group save; the service drops groups without members.
   Map<String, Object?> groups;
 
-  /// Mutated by the port autofix.
   Map<String, Object?> portCheck;
 
-  /// Answered to `/filter/check`; tests that need another verdict pass it in.
   Map<String, Object?> ruleCheck;
 
-  /// Mutated by the web-console and credential writes.
   Map<String, Object?> web;
 
-  /// Bodies of every web configure, firewall and credential write, in order.
   final webUpdates = <Map<String, Object?>>[];
   final firewallUpdates = <Map<String, Object?>>[];
   final passwordUpdates = <Map<String, Object?>>[];
 
-  /// Answered to `/adapters`; the takeover writes mutate [status]'s `takeover` block instead.
   List<Map<String, Object?>> adapters;
 
-  /// Bodies of every per-adapter takeover, in order.
   final adapterTakeovers = <Map<String, Object?>>[];
 
-  /// Mutated by the LAN DNS writes; `GET /dns/lan` answers with it.
   Map<String, Object?> lan;
 
-  /// Bodies of every LAN DNS configure and firewall write, in order.
   final lanUpdates = <Map<String, Object?>>[];
   final lanFirewallUpdates = <Map<String, Object?>>[];
 
-  /// Mutated by the setup call; `/auth/status` answers with it.
   Map<String, Object?> auth;
 
-  /// Answered to `/auth/background`; the background writes replace it.
   Map<String, Object?> background;
 
-  /// When false, `POST /auth/login` answers 401 like a wrong password.
   bool loginAccepted = true;
 
-  /// When true, `GET /status` answers 401 so a stored token can be shown as expired.
   bool statusRejected = false;
 
-  /// Answered to `/takeover/emergency-restore`; every call is counted.
   Map<String, Object?> emergency;
 
-  /// How many times the emergency restore was requested.
   int emergencyRestores = 0;
 
-  /// Bodies of every login, background save and background reset, in order.
   final loginRequests = <Map<String, Object?>>[];
   final backgroundUpdates = <Map<String, Object?>>[];
   final backgroundResets = <Map<String, Object?>>[];
 
-  /// Bodies of every simulated lookup, in order.
   final ruleCheckUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every port autofix call, in order.
   final autofixUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every client-group save, in order.
   final groupsUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every client alias, ACL and rate-limit save, in order.
   final aliasUpdates = <Map<String, Object?>>[];
   final accessUpdates = <Map<String, Object?>>[];
   final rateLimitUpdates = <Map<String, Object?>>[];
 
-  /// Mutated by the encrypted-DNS configure / certificate calls.
   Map<String, Object?> encrypted;
 
-  /// Bodies of every encrypted-DNS save, certificate generation and import, in order.
   final encryptedUpdates = <Map<String, Object?>>[];
   final certGenerations = <Map<String, Object?>>[];
   final certImports = <Map<String, Object?>>[];
 
-  /// Mutated by the safe-search and reputation saves.
   Map<String, Object?> safeSearch;
   Map<String, Object?> safeBrowsing;
 
-  /// Bodies of every safe-search and reputation save, in order.
   final safeSearchUpdates = <Map<String, Object?>>[];
   final safeBrowsingUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every privacy-side save, in order.
   final privacyUpdates = <Map<String, Object?>>[];
   final unqualifiedUpdates = <Map<String, Object?>>[];
   final ecsUpdates = <Map<String, Object?>>[];
   final rebindUpdates = <Map<String, Object?>>[];
   final hostsUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every rewrite config save, in order.
   final rewriteConfigUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every rule save, and the domains of every delete, in order.
   final rewriteRuleUpdates = <Map<String, Object?>>[];
   final rewriteDeletes = <String>[];
 
-  /// Mutated by `POST /dns/zone/config`; the fake rebuilds every zone's state after each save.
   Map<String, Object?> zone;
 
-  /// The answer `/api/v1/dns/zone/test` gives next.
   Map<String, Object?> zoneTest;
 
-  /// Bodies of every zone config save and every zone preview, in order.
   final zoneConfigUpdates = <Map<String, Object?>>[];
   final zoneTests = <Map<String, Object?>>[];
 
-  /// Bodies of every cache config save, in order.
   final cacheConfigUpdates = <Map<String, Object?>>[];
 
-  /// Query parameters of every `/api/v1/cache/entries` call, in order.
   final cacheQueries = <Map<String, String>>[];
 
-  /// How many times each cache action was called.
   int cacheClears = 0;
   int cacheDumps = 0;
   int cacheLoads = 0;
 
-  /// Bodies of every upstream save, in order.
   final upstreamUpdates = <Map<String, Object?>>[];
 
-  /// Bodies of every latency probe, in order.
   final probes = <Map<String, Object?>>[];
 
-  /// Bodies of every config update, so a test can assert what the page sent rather than what it
-  /// then re-read.
   final configUpdates = <Map<String, Object?>>[];
 
-  /// Number of `/api/v1/status` answers that succeed before every later one fails; null never
-  /// fails. Counting only the snapshot keeps a test from depending on how many other reads the
-  /// dashboard happens to issue.
   int? failAfter;
 
-  /// Applied to every answer, so a 401 test does not need a different fake.
   int statusCode;
 
-  /// Paths that answer with an error while the rest of the service stays healthy. The home page
-  /// now reads the log API next to `/status`, so a log-only outage needs its own switch.
   final failingPaths = <String>{};
 
-  /// When set, every POST is refused while reads keep working: a write the service rejected must
-  /// be reported, not assumed.
   bool rejectWrites = false;
 
-  /// When false, `/api/v1/health` answers 503, which is how the connection card sees an outage.
   bool healthOk;
 
   final requests = <String>[];
 
-  /// Query parameters of every `/api/v1/querylog/search` call, in order, so a test can assert what
-  /// the page actually asked for rather than how it laid it out.
   final searches = <Map<String, String>>[];
 
   int _statusRequests = 0;

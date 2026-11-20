@@ -1,21 +1,3 @@
-//! Plain DNS: UDP with the mobile retry shape, TCP framing and the truncation fallback.
-//!
-//! `resolver_plain.go` in Rust. Three details are easy to lose and all three are user-visible:
-//!
-//! * the UDP read gets a short first budget (`providerStats.UDPRetryDelay()`, 1.5 s cold) instead of
-//!   the whole five-second query budget, because on a mobile link the first packet is often simply
-//!   dropped — then the query is resent, at most [`TUNING::plain_retry_limit`] times, inside the
-//!   budget. The deadline arithmetic itself is the kernel's
-//!   ([`diting_upstream_core::framing`]).
-//! * a `TC=1` UDP answer is a truncated answer (RFC 1035 §4.2.1): the query is retried over TCP, and
-//!   the truncated UDP answer is only returned when TCP fails as well (a partially usable answer
-//!   beats a SERVFAIL).
-//! * plain TCP is prefixed with the 2-byte length, and a zero length is *not* rejected — Go read it
-//!   as an empty response, which the caller's validation then failed.
-//!
-//! Both paths take the connect budget and the query budget from the tuning kernel, never from a
-//! local constant.
-
 use std::time::{Duration, Instant};
 
 use diting_dns_core::message::{status, validate};
@@ -29,13 +11,8 @@ use tokio::time::timeout_at;
 
 use crate::resolver::dial::Dialer;
 
-/// The plain UDP read buffer (`make([]byte, 4096)`).
 const UDP_BUFFER: usize = 4096;
 
-/// `queryPlainContext`: UDP first, TCP when the answer is truncated.
-///
-/// `retry_delay_ns` is the provider's adaptive retry interval (`providerStats.UDPRetryDelay()`),
-/// which the scheduler's statistics already computed before the attempt started.
 pub async fn query(
     dialer: &Dialer,
     host: &str,
@@ -43,9 +20,6 @@ pub async fn query(
     query: &[u8],
     retry_delay_ns: i64,
 ) -> Result<Vec<u8>, String> {
-    // Go: `if !outbound.SupportsUDP() { return queryPlainTCPContext(...) }`. An HTTP CONNECT proxy
-    // has no datagram mode, so plain DNS has to ride a framed TCP stream instead of failing every
-    // query.
     if !dialer.resolver_udp_supported() {
         return query_tcp(dialer, host, port, query).await;
     }
@@ -61,8 +35,6 @@ async fn query_udp(
     query: &[u8],
     retry_delay_ns: i64,
 ) -> Result<Vec<u8>, String> {
-    // Direct or SOCKS5 UDP ASSOCIATE, depending on the outbound scope: the resolver's own
-    // upstream queries follow the proxy under `scope:"all"`, like Go's `resolverOutbound()`.
     let socket = dialer
         .udp_transport(target)
         .await
@@ -84,8 +56,6 @@ async fn query_udp(
 
     let mut buffer = vec![0u8; UDP_BUFFER];
     let mut last_error = String::new();
-    // `for retry := 0; err != nil && retry < plainRetryLimit; retry++`: the retry index survives the
-    // iteration, so the second resend gets the whole remaining budget and no more.
     let mut retry = 0u32;
     let received = loop {
         match timeout_at(
@@ -125,8 +95,6 @@ async fn query_udp(
     }
 
     if is_truncated(response) {
-        // Keep the truncated answer only when TCP also failed: reporting a hard error would turn a
-        // partially usable answer into SERVFAIL.
         if let Ok(full) = query_tcp(dialer, host, port, query).await {
             return Ok(full);
         }
@@ -135,7 +103,6 @@ async fn query_udp(
     Ok(response.to_vec())
 }
 
-/// `queryPlainTCPContext`: one framed request, one framed response.
 async fn query_tcp(
     dialer: &Dialer,
     host: &str,
@@ -183,8 +150,6 @@ async fn exchange_tcp(stream: &mut TcpStream, query: &[u8]) -> Result<Vec<u8>, S
     Ok(response)
 }
 
-/// The text of a rejected answer: the rcode name when the upstream answered at all, the status code
-/// otherwise (which is the wording stage 1's log rows already use).
 pub fn invalid_answer(validation: &diting_dns_core::message::Validation) -> String {
     if validation.status == status::UPSTREAM_RCODE {
         return format!("upstream returned {}", rcode_name(validation.rcode));
@@ -192,7 +157,6 @@ pub fn invalid_answer(validation: &diting_dns_core::message::Validation) -> Stri
     format!("invalid upstream answer (status {})", validation.status)
 }
 
-/// `dns.RcodeToString` for the codes the engine can see, with the numeric fallback.
 pub fn rcode_name(rcode: u16) -> String {
     match rcode {
         0 => "NOERROR".to_string(),
@@ -205,7 +169,6 @@ pub fn rcode_name(rcode: u16) -> String {
     }
 }
 
-/// A `tokio` deadline from the nanosecond offsets the kernel's arithmetic produced.
 fn deadline_at(origin: Instant, offset_ns: i64) -> tokio::time::Instant {
     let origin = tokio::time::Instant::from_std(origin);
     if offset_ns <= 0 {

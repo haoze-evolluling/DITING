@@ -1,4 +1,3 @@
-/// Draft model, filtering and rows for per-app rules; split out to stay under the line cap.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,8 +10,6 @@ import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Mutable draft written once on save, unlike upstream write-through, so cancelling leaves
-/// nothing behind.
 class AppRulesDraft {
   AppRulesDraft({required this.master, required Map<String, Set<String>> rules})
     : _baseline = _copy(rules),
@@ -24,7 +21,6 @@ class AppRulesDraft {
     rules: settings.appAllowlistRules,
   );
 
-  /// The `app_allowlist_enabled` master switch.
   bool master;
 
   final Map<String, Set<String>> _baseline;
@@ -57,8 +53,6 @@ class AppRulesDraft {
     }
     domains.remove(domain);
     if (domains.isEmpty) {
-      // An empty set equals "not configured" in 1.4.3; keeping it would count the app as
-      // configured.
       _rules.remove(packageName);
     }
   }
@@ -84,7 +78,6 @@ class AppRulesDraft {
     _baselineMaster = master;
   }
 
-  /// Fingerprint of the stored value, encoded like [appRulesKey].
   String get baselineKey => appRulesKey(_baselineMaster, _baseline);
 
   static Map<String, Set<String>> _copy(Map<String, Set<String>> source) => {
@@ -92,9 +85,6 @@ class AppRulesDraft {
   };
 }
 
-/// Changed-value check for dropping the local draft. Compares fingerprints because
-/// `LegacySettings` returns fresh objects; the signature sorts keys, so an external write
-/// and our own save look identical.
 String appRulesKey(bool master, Map<String, Set<String>> rules) {
   final parts = <String>[];
   for (final packageName in rules.keys.toList()..sort()) {
@@ -104,8 +94,6 @@ String appRulesKey(bool master, Map<String, Set<String>> rules) {
   return '$master|${parts.join(';')}';
 }
 
-/// Persists `app_allowlist_enabled` and `app_allowlist_rules_json`; must `bump()`
-/// afterwards, since `SharedPreferences` writes are not observable.
 void saveAppRules(WidgetRef ref, AppRulesDraft draft) {
   ref.writeSettings((settings) {
     settings.setAppAllowlistEnabled(draft.master);
@@ -164,7 +152,6 @@ class AppRuleAppRow extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: AppTextRole.supportingText.of(context),
       ),
-      // The real icon replaced the old "configured" tick, so the state moves to a chip.
       trailing: (configured || app.isSystem)
           ? Row(
               mainAxisSize: MainAxisSize.min,
@@ -206,7 +193,6 @@ class AppAllowDomainRow extends StatelessWidget {
   }
 }
 
-/// "Add allow domain" dialog, returning a sanitized domain or null.
 Future<String?> showAppAllowDomainDialog(BuildContext context) async {
   return showFloatingDialog<String>(
     context: context,
@@ -214,8 +200,6 @@ Future<String?> showAppAllowDomainDialog(BuildContext context) async {
   );
 }
 
-/// Allow-domain input dialog. The controller is owned by the dialog: disposing it right
-/// after `await` invalidates the field's dependencies mid exit animation.
 class _AllowDomainDialog extends StatefulWidget {
   const _AllowDomainDialog();
 
@@ -323,8 +307,6 @@ class AppScopedRuleRow extends StatelessWidget {
 
 typedef AppScopedRuleInput = ({RuleKind kind, String pattern});
 
-/// "Add app DNS rule" dialog. Bare domains only: an unparsed rule such as `@@||x^` would
-/// never match in `block_rule` / `allow_rule`. The controller is owned by the dialog.
 Future<AppScopedRuleInput?> showAppScopedRuleDialog(
   BuildContext context,
 ) async {

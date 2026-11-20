@@ -1,33 +1,17 @@
-//! The rule index: four priority tiers, a bloom prefilter and the rewrite buckets.
-//!
-//! This is `RuleMatcher.BuildFromRules` + `RuleMatcher.Match` from the Go engine, plus the rewrite
-//! selection of `rule_matcher_rewrite.go`. Priority order (`$dnsrewrite` > `$important` allow >
-//! `$important` block > `@@` allow > block trie > wildcard/regex block) is unchanged, and so is the
-//! tie-breaking inside a tier: trie first, then the pattern lists in rule order, first hit wins.
-//!
-//! Answer construction for a rewrite hit stays in Go: this crate reports *which* rules produced the
-//! answer, Go turns their `RewriteAction` into `dns.RR`.
-
 use std::collections::HashMap;
 
 use crate::bloom::DomainBloomFilter;
 use crate::rule::{Rule, RCODE_SUCCESS, TYPE_CNAME};
 use crate::trie::DomainTrie;
 
-/// What a query resolved to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
-    /// No rule asked for anything.
     Pass,
-    /// A whitelist rule let the name through.
     Allow,
-    /// A blocklist rule stopped the name.
     Block,
-    /// A `$dnsrewrite` rule answers the name itself.
     Rewrite,
 }
 
-/// Why the decision came out the way it did; the strings Go reports are derived from these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Reason {
     ImportantAllow,
@@ -39,7 +23,6 @@ pub enum Reason {
 }
 
 impl Reason {
-    /// Stable code for the FFI payload.
     pub fn code(self) -> u8 {
         match self {
             Reason::ImportantAllow => 0,
@@ -52,18 +35,12 @@ impl Reason {
     }
 }
 
-/// The rewrite answer of a hit: the response code plus the rules whose values make up the answer.
-///
-/// `rules` holds the rule indices in the order the Go engine aggregated them, which matters because
-/// several `A` records of the same name are summed into one response. An empty `rules` with
-/// [`RCODE_SUCCESS`] is the authoritative NODATA case.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RewriteAnswer {
     pub rcode: u8,
     pub rules: Vec<u32>,
 }
 
-/// One verdict.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Decision {
     pub action: Action,
@@ -101,7 +78,6 @@ impl Decision {
     }
 }
 
-/// The built index. Immutable once built: a rule reload builds a new one.
 pub struct FilterIndex {
     rules: Vec<Rule>,
     important_allow_trie: DomainTrie,
@@ -122,7 +98,6 @@ pub struct FilterIndex {
 }
 
 impl FilterIndex {
-    /// `BuildFromRules`.
     pub fn build(rules: Vec<Rule>) -> Self {
         let total_rules = rules.len() as u32;
         let mut important_allow_trie = DomainTrie::new();
@@ -141,8 +116,6 @@ impl FilterIndex {
 
         for (index, rule) in rules.iter().enumerate() {
             let id = index as u32;
-            // Rewrite rules leave the block/allow tiers entirely: a bare `$dnsrewrite` exception
-            // cancels one rewrite, it must not turn the whole name into an allow rule.
             if rule.rewrite.is_some() {
                 if rule.is_allow() {
                     rewrite_cancels.push(id);
@@ -207,18 +180,15 @@ impl FilterIndex {
         }
     }
 
-    /// `RuleMatcher.Match`. `domain` is lowercase, trimmed and has no trailing dot.
     pub fn match_domain(&self, domain: &str, qtype: u16) -> Decision {
         if domain.is_empty() {
             return Decision::pass();
         }
 
-        // 0. `$dnsrewrite` answers before any block or allow rule is consulted.
         if let Some(decision) = self.match_rewrite(domain, qtype) {
             return decision;
         }
 
-        // 1. `$important` exceptions.
         if let Some(rule) = self.important_allow_trie.match_domain(domain) {
             if self.rules[rule as usize].dns_type_matches(qtype) {
                 return Decision::verdict(Action::Allow, Reason::ImportantAllow, rule);
@@ -230,7 +200,6 @@ impl FilterIndex {
             return Decision::verdict(Action::Allow, Reason::ImportantAllow, rule);
         }
 
-        // 2. `$important` blocklist.
         if let Some(rule) = self.important_block_trie.match_domain(domain) {
             if self.rules[rule as usize].applicable(domain, qtype) {
                 return Decision::verdict(Action::Block, Reason::ImportantBlock, rule);
@@ -241,7 +210,6 @@ impl FilterIndex {
             return Decision::verdict(Action::Block, Reason::ImportantBlock, rule);
         }
 
-        // 3. `@@` exceptions.
         if let Some(rule) = self.allow_trie.match_domain(domain) {
             if self.rules[rule as usize].dns_type_matches(qtype) {
                 return Decision::verdict(Action::Allow, Reason::Whitelist, rule);
@@ -251,7 +219,6 @@ impl FilterIndex {
             return Decision::verdict(Action::Allow, Reason::Whitelist, rule);
         }
 
-        // 4. Blocklist trie, behind the bloom prefilter.
         if self.bloom.might_contain_domain_or_parent(domain) {
             if let Some(rule) = self.block_trie.match_domain(domain) {
                 if self.rules[rule as usize].applicable(domain, qtype) {
@@ -260,7 +227,6 @@ impl FilterIndex {
             }
         }
 
-        // 5. Blocklist wildcard and regex rules.
         if let Some(rule) = self.first_matching(&self.block_patterns, domain, qtype, true) {
             let reason = if self.rules[rule as usize].is_regex() {
                 Reason::RegexBlock
@@ -273,10 +239,6 @@ impl FilterIndex {
         Decision::pass()
     }
 
-    /// First rule in list order whose pattern and type fit.
-    ///
-    /// `blocklist` selects `matchRuleApplicable` (type and exclusions) over `matchDNSType`: allow
-    /// rules ignore `$denyallow=`/`$to=`, exactly like the Go engine did.
     fn first_matching(
         &self,
         candidates: &[u32],
@@ -301,7 +263,6 @@ impl FilterIndex {
         None
     }
 
-    /// `collectRewriteRulesUnlocked` + `applyRewriteCancelsUnlocked` + `matchRewriteUnlocked`.
     fn match_rewrite(&self, domain: &str, qtype: u16) -> Option<Decision> {
         if self.rewrite_exact.is_empty() && self.rewrite_patterns.is_empty() {
             return None;
@@ -313,7 +274,6 @@ impl FilterIndex {
         }
         let first = *rules.first()?;
 
-        // 1. A failure response wins over any record.
         for rule in &rules {
             let Some(action) = self.rules[*rule as usize].rewrite.as_ref() else {
                 continue;
@@ -323,7 +283,6 @@ impl FilterIndex {
             }
         }
 
-        // 2. CNAME wins over other record types: the alias is a property of the name itself.
         for rule in &rules {
             let Some(action) = self.rules[*rule as usize].rewrite.as_ref() else {
                 continue;
@@ -333,7 +292,6 @@ impl FilterIndex {
             }
         }
 
-        // 3. Same-type records are summed into one answer; no record of that type is NODATA.
         let answers: Vec<u32> = rules
             .iter()
             .copied()
@@ -347,8 +305,6 @@ impl FilterIndex {
         Some(Decision::rewrite(first, RCODE_SUCCESS, answers))
     }
 
-    /// Exact buckets from the name upwards (parents inherit unless the rule is exact), then the
-    /// wildcard/regex rewrites in rule order.
     fn collect_rewrite_rules(&self, domain: &str) -> Vec<u32> {
         let mut out = Vec::new();
         let mut name = domain;
@@ -374,8 +330,6 @@ impl FilterIndex {
         out
     }
 
-    /// `applyRewriteCancelsUnlocked`: a bare exception clears everything, a valued one clears the
-    /// rules with the same normalized action key.
     fn apply_cancels(&self, rules: Vec<u32>, domain: &str) -> Vec<u32> {
         let mut kept = rules;
         for cancel in &self.rewrite_cancels {
@@ -403,17 +357,14 @@ impl FilterIndex {
         &self.rules
     }
 
-    /// `TotalRules`: every rule handed to the build, including rewrite and pattern rules.
     pub fn total_rules(&self) -> u32 {
         self.total_rules
     }
 
-    /// Whether any blocklist rule carries `$denyallow=`/`$to=`; reported for the Go-side fast path.
     pub fn has_deny_allow(&self) -> bool {
         self.has_deny_allow
     }
 
-    /// Regex/wildcard rules whose pattern this engine could not compile (they never match).
     pub fn uncompiled_patterns(&self) -> u32 {
         self.uncompiled_patterns
     }

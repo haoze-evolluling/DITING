@@ -1,12 +1,8 @@
-//! Subscription rows and the two edit forms. Column defaults and the storage spellings are
-//! persisted, so they are pinned here: `sqflite` only reads and writes what this module decides.
-
 use serde_json::{json, Value};
 
 use crate::payload;
 use crate::url::{self, UrlParts};
 
-/// `SubscriptionSourceType.fromStorage`: only the exact `local` spelling is local.
 pub fn source_type(value: Option<&str>) -> &'static str {
     if value == Some("local") {
         "local"
@@ -15,7 +11,6 @@ pub fn source_type(value: Option<&str>) -> &'static str {
     }
 }
 
-/// `SubscriptionKind.normalize`: trimmed, lower-cased `hosts` wins; everything else is `domain`.
 pub fn kind(value: Option<&str>) -> &'static str {
     match value.map(|value| value.trim().to_lowercase()).as_deref() {
         Some("hosts") => "hosts",
@@ -23,7 +18,6 @@ pub fn kind(value: Option<&str>) -> &'static str {
     }
 }
 
-/// `SubscriptionImportState.fromStorage`.
 pub fn import_state(value: Option<&str>) -> &'static str {
     match value {
         Some("importing") => "importing",
@@ -32,7 +26,6 @@ pub fn import_state(value: Option<&str>) -> &'static str {
     }
 }
 
-/// `SubscriptionAutoUpdateStatus.fromStorage`.
 pub fn auto_update_status(value: Option<&str>) -> &'static str {
     match value {
         Some("success") => "success",
@@ -49,8 +42,6 @@ fn optional_integer(row: &Value, key: &str) -> Value {
     payload::integer(row, key).map_or(Value::Null, Value::from)
 }
 
-/// One `subscription` row. Flags are INTEGER 0/1 in SQLite; `enabled` and `mirrorFallback` are
-/// `true` when the column is missing or mistyped, matching the legacy reader.
 pub fn record_from_row(row: &Value) -> Value {
     let source = source_type(row.get("sourceType").and_then(Value::as_str));
     json!({
@@ -76,7 +67,6 @@ pub fn record_from_row(row: &Value) -> Value {
     })
 }
 
-/// One `subscription_group` row; its switch defaults to on.
 pub fn group_from_row(row: &Value) -> Value {
     json!({
         "id": payload::integer_or(row, "id", 0),
@@ -86,7 +76,6 @@ pub fn group_from_row(row: &Value) -> Value {
     })
 }
 
-/// One `subscription_auto_update_item` row; `changed` is exactly `1` (not any truthy number).
 pub fn item_from_row(row: &Value) -> Value {
     json!({
         "batchId": payload::text_or_empty(row, "batchId"),
@@ -97,8 +86,6 @@ pub fn item_from_row(row: &Value) -> Value {
     })
 }
 
-/// The default name for a picked local rule file: the last `/` segment without its `.txt`.
-/// `None` means the caller falls back to the localised "local rule file" label.
 pub fn local_name_of(uri: &str) -> Option<String> {
     let segment = uri.rsplit('/').next().unwrap_or_default();
     let trimmed = if segment.to_lowercase().ends_with(".txt") {
@@ -117,10 +104,6 @@ fn is_local(source: &str) -> bool {
     source == "local"
 }
 
-/// Validates one add form and returns the row (`record`) the repository inserts.
-///
-/// Errors are tokens (`pickFile`, `pickTxt`, URL kinds, mirror kinds); the l10n sentence is built
-/// in Dart. A `null` record name means "use the localised local-file label".
 pub fn prepare_add(request: &Value) -> Value {
     let raw_url = payload::text_or_empty(request, "url");
     let source = source_type(request.get("sourceType").and_then(Value::as_str));
@@ -206,8 +189,6 @@ pub fn prepare_add(request: &Value) -> Value {
     })
 }
 
-/// Validates one edit form against the stored row and returns the column values to write plus
-/// whether the stored rules belong to an address/kind that just changed.
 pub fn prepare_edit(request: &Value) -> Value {
     let existing_map = payload::child(request, "existing");
     let existing = Value::Object(existing_map.clone());
@@ -263,8 +244,6 @@ pub fn prepare_edit(request: &Value) -> Value {
     })
 }
 
-/// Trimmed mirror-template form values; an empty name or template is rejected before the
-/// repository's name-clash check.
 pub fn prepare_mirror(request: &Value) -> Value {
     let name = payload::text_or_empty(request, "name").trim().to_owned();
     let template = payload::text_or_empty(request, "template")
@@ -276,7 +255,6 @@ pub fn prepare_mirror(request: &Value) -> Value {
     json!({ "name": name, "template": template })
 }
 
-/// Maps a list of rows of one table.
 pub fn rows(request: &Value, table: &str) -> Value {
     let parse: fn(&Value) -> Value = match table {
         "groups" => group_from_row,

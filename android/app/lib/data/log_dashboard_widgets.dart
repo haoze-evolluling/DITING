@@ -2,13 +2,9 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
-/// Cards of the log dashboard (`/logs`). Each log mode offers its own subset, see
-/// `logDashboardCatalogOf`; persisted by [name], so renaming a value drops it from stored layouts.
 enum LogDashboardWidget {
-  /// Title and description block at the top; its text follows the log mode.
   hero,
 
-  /// Request and data-usage totals over a picked window, with proportion bars.
   stats,
   trafficMonitor,
   requestOverview,
@@ -17,7 +13,6 @@ enum LogDashboardWidget {
   offModeMetric,
   resolutionPerf,
 
-  /// Only offered while an agent API key is configured.
   aiInsight,
   trafficStructure,
   recentRequests,

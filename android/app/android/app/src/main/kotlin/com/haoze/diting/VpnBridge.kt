@@ -10,7 +10,6 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-/// Dart-facing control plane; `prepare` shows the consent dialog, answered via `onPrepareResult`.
 class VpnBridge(
     private val activity: Activity,
     messenger: BinaryMessenger,
@@ -31,14 +30,12 @@ class VpnBridge(
             }
             "status" -> result.success(DitingVpnService.status(activity))
             "trafficRates" -> result.success(DitingVpnService.trafficRates())
-            // Null on success, otherwise the error text.
             "applyDnsConfig" -> result.success(
                 RuntimeDnsConfig.applyNormal(
                     activity,
                     call.argument<String>("dnsConfig").orEmpty(),
                 )
             )
-            // Re-applies the rule snapshot to a running tunnel; no-op when stopped.
             "reloadRules" -> {
                 DitingVpnService.requestReload(activity)
                 result.success(true)
@@ -64,16 +61,12 @@ class VpnBridge(
             context = activity,
             dnsConfig = dnsConfig,
             proxyJson = call.argument<String>("outboundProxy").orEmpty(),
-            // Android only lets the proxy app bind its loopback port, so its own sockets have to
-            // stay outside the TUN or every dial loops back into the proxy.
             proxyAppPackage = call.argument<String>("proxyAppPackage").orEmpty(),
             bypassLan = call.argument<Boolean>("bypassLan") ?: true,
             ipv6Mode = call.argument<String>("ipv6Mode") ?: "auto",
             excludedPackages = excluded,
-            // Package names; the service converts them before calling the UID-based engine setters.
             blockedPackages = call.argument<List<String>>("blockedPackages").orEmpty(),
             inspectionPackages = call.argument<List<String>>("inspectionPackages").orEmpty(),
-            // Pre-folded by Dart.
             inspectionEnabled = call.argument<Boolean>("inspectionEnabled") ?: false,
         )
         return try {

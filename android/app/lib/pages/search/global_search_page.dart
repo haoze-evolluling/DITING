@@ -1,4 +1,3 @@
-/// U2 全局搜索/命令面板页面：一个搜索框 + 按功能中心分类分组的直达列表，点条目直达。
 library;
 
 import 'package:diting_android/data/global_search_index.dart';
@@ -43,9 +42,6 @@ class GlobalSearchPage extends ConsumerWidget {
     );
   }
 
-  /// Empty prompt, no-result prompt, or the hits grouped by their feature-hub category. Grouping
-  /// matches the feature center's section cards, so a row carries only its own title/description
-  /// and the destination's own glyph instead of repeating the same search icon on every line.
   Widget _results(
     BuildContext context,
     String query,
@@ -81,7 +77,6 @@ class GlobalSearchPage extends ConsumerWidget {
     );
   }
 
-  /// Preserves index order: the seven feature-hub categories, then 「常用命令」.
   List<MapEntry<String, List<GlobalSearchEntry>>> _group(
     List<GlobalSearchEntry> results,
   ) {
@@ -108,7 +103,6 @@ class GlobalSearchPage extends ConsumerWidget {
   }
 
   void _open(BuildContext context, GlobalSearchEntry entry) {
-    // 标签页类目标以全屏页打开；其余正常 push，与功能中心的跳转语义一致。
     if (pushStandalone(context, entry.route)) return;
     openLocation(context, entry.route);
   }

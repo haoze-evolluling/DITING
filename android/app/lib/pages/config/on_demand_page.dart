@@ -1,4 +1,3 @@
-/// On-demand page (upstream `views/config/on_demand.dart`).
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -129,7 +128,6 @@ String _ruleSummary(MockSsidRule rule, AppL10n l10n) {
   return '$kinds · $delay';
 }
 
-/// One line for the switch's subtitle, so the current outcome is visible without opening a page.
 String _decisionSummary(SsidDecision decision, AppL10n l10n) =>
     switch (decision.state) {
       SsidMatchState.disabled => l10n.odStateDisabled,
@@ -139,8 +137,6 @@ String _decisionSummary(SsidDecision decision, AppL10n l10n) =>
       SsidMatchState.unmatched => l10n.odStateUnmatched,
     };
 
-/// Turns the switch on and immediately applies it: flipping the toggle alone only wrote a
-/// preference, so the tunnel state never followed the whitelist until the next restart.
 Future<void> _setEnabled(
   BuildContext context,
   WidgetRef ref,
@@ -154,16 +150,12 @@ Future<void> _setEnabled(
   await _applyAndHint(context, ref);
 }
 
-/// Re-evaluates the whitelist against the current network; the page has no network callback, so
-/// this is how a user applies it after switching Wi-Fi.
 Future<void> _applyAndHint(BuildContext context, WidgetRef ref) async {
   final outcome = await ref.read(onDemandRunnerProvider).apply(force: true);
   if (!context.mounted) return;
   showConfigHint(context, outcome.label(context.l10n));
 }
 
-/// What the whitelist decides for the network the device is on now. The card exists because a
-/// list alone never tells the user whether the tunnel would start.
 class _DecisionCard extends StatelessWidget {
   const _DecisionCard({required this.decision});
 
@@ -221,8 +213,6 @@ class _DecisionCard extends StatelessWidget {
   }
 }
 
-/// The name of the joined network, read from the platform channel; the row is also the place to
-/// re-read it, since the network can change while the page is open.
 class _NetworkSection extends ConsumerWidget {
   const _NetworkSection();
 
@@ -266,7 +256,6 @@ class _NetworkSection extends ConsumerWidget {
   }
 }
 
-/// Battery-optimization allowlist, the one prerequisite the app can actually query and request.
 class _BatterySection extends ConsumerWidget {
   const _BatterySection();
 

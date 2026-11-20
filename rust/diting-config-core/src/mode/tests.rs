@@ -1,5 +1,3 @@
-//! The mode table and its aliases.
-
 use super::*;
 
 #[test]
@@ -15,7 +13,6 @@ fn canonical_names_and_aliases() {
         ("brute_force_parallel", MODE_PARALLEL_RACE),
         ("smart_prediction", MODE_SMART_PREDICTION),
         ("prediction", MODE_SMART_PREDICTION),
-        // Go folds U+0130 to a plain `i`, so this really is `single`.
         ("sİngle", MODE_SINGLE),
     ] {
         assert_eq!(canonical_dns_mode(input).unwrap(), expected, "{input}");
@@ -28,7 +25,6 @@ fn unknown_modes_report_the_original_text() {
         canonical_dns_mode("nope").unwrap_err(),
         "unsupported DNS mode \"nope\""
     );
-    // Trimmed first, so a padded unknown mode is reported with its padding.
     assert_eq!(
         canonical_dns_mode(" sing le ").unwrap_err(),
         "unsupported DNS mode \" sing le \""

@@ -1,5 +1,3 @@
-//! N9: the LAN client rate limiter installed on the engine actually gates clients.
-
 use diting_engine::Engine;
 use diting_ratelimit_core::{Addr, Config};
 

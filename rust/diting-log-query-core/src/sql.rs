@@ -1,6 +1,3 @@
-//! Read-only SQL for the log tables. The statements are the legacy ones: ordering, status clauses
-//! and the `elapsed=` sub-string arithmetic are part of the meaning, not formatting.
-
 use serde_json::{json, Value};
 
 use crate::payload;
@@ -41,19 +38,10 @@ fn since_arg(request: &Value) -> Option<i64> {
     payload::integer(request, "since")
 }
 
-/// Inclusive upper bound on `timestamp`, for cursor paging of the merged request feed.
-///
-/// The feed interleaves `dns_log` and `http_request_log` by timestamp, so an `OFFSET` applied to
-/// each table separately would duplicate or skip rows at the seam. A cursor on the merged key is
-/// the only cheap option: each page reads at most `limit` rows per table no matter how deep the
-/// user has scrolled, where the old `LIMIT page * 50` widened the window and re-read every earlier
-/// row on every page.
 fn before_arg(request: &Value) -> Option<i64> {
     payload::integer(request, "before")
 }
 
-/// Inclusive upper bound on `timestamp`, used by the export plans (a bounded window rather than a
-/// paging cursor).
 fn until_arg(request: &Value) -> Option<i64> {
     payload::integer(request, "until")
 }
@@ -125,7 +113,6 @@ fn table_of(request: &Value) -> Option<&'static str> {
     }
 }
 
-/// Builds one statement; `None` means the query name is unknown.
 pub fn plan(request: &Value) -> Option<Value> {
     let query = request.get("name")?.as_str()?;
     let answer = match query {
@@ -163,7 +150,6 @@ OR message LIKE ?)",
                 plan = plan.arg(Value::from(before));
                 plan.sql.push_str(" AND timestamp <= ?");
             }
-            // `id` breaks timestamp ties so a cursor page boundary cannot drop or repeat a row.
             plan.sql.push_str(&format!(
                 " ORDER BY timestamp DESC, id DESC LIMIT {}",
                 limit_of(request, 200)
@@ -195,7 +181,6 @@ ORDER BY timestamp DESC, id DESC LIMIT {}",
             limit_of(request, 5)
         ))
         .answer(),
-        // R2 命中统计：按域名聚合被拦截次数（Top 排行）。
         "dns.topDomains" => Plan::new(
             "SELECT queryName AS domain, COUNT(*) AS count FROM dns_log \
 WHERE result = 'BLOCKED' AND timestamp >= ? \
@@ -204,8 +189,6 @@ GROUP BY queryName ORDER BY count DESC, domain ASC LIMIT ?",
         .arg(Value::from(since_arg(request).unwrap_or(0)))
         .arg(Value::from(limit_of(request, 20)))
         .answer(),
-        // R2 归因：从 message 的 `blocked_by=<原因>` 里抽出原因并聚合。`blocked_by=` 占 11 个
-        // 字符；原因到下一个空格为止，没有空格则取到结尾。没有该字段的行归为 `unknown`。
         "dns.topReasons" => Plan::new(
             "SELECT reason, COUNT(*) AS count FROM (SELECT CASE \
 WHEN instr(message, 'blocked_by=') > 0 THEN CASE \
@@ -220,7 +203,6 @@ WHERE reason != '' GROUP BY reason ORDER BY count DESC, reason ASC LIMIT ?",
         .arg(Value::from(since_arg(request).unwrap_or(0)))
         .arg(Value::from(limit_of(request, 20)))
         .answer(),
-        // R2 总拦截数（与排行同一时间窗），用于页面概览的分母。
         "dns.blockedCount" => Plan::new(
             "SELECT COUNT(*) AS n FROM dns_log WHERE result = 'BLOCKED' AND timestamp >= ?",
         )
@@ -300,7 +282,6 @@ OR matchedRule LIKE ?)",
                 plan = plan.arg(Value::from(until));
                 plan.sql.push_str(" AND timestamp <= ?");
             }
-            // The whole table is never read: a bounded window plus a hard cap keeps memory flat.
             plan.sql.push_str(&format!(
                 " ORDER BY timestamp DESC, id DESC LIMIT {}",
                 limit_of(request, 1000)
@@ -498,7 +479,6 @@ mod tests {
         assert!(domains.sql.ends_with("LIMIT ?"));
         assert_eq!(domains.args, vec![json!(5), json!(10)]);
 
-        // No `since` binds epoch 0, so "all time" is one code path.
         let reasons = plan_of(json!({ "name": "dns.topReasons", "limit": 20 }));
         assert!(reasons.sql.contains("instr(message, 'blocked_by=')"));
         assert!(reasons.sql.contains("GROUP BY reason"));
@@ -543,7 +523,6 @@ mod tests {
         assert!(plan
             .sql
             .ends_with("AND timestamp <= ? ORDER BY timestamp DESC, id DESC LIMIT 50"));
-        // packageName first, cursor last: the placeholder order has to match the clause order.
         assert_eq!(plan.args, vec![json!("com.x"), json!(1_700_000_000_000i64)]);
     }
 
@@ -616,7 +595,6 @@ mod tests {
             "AND timestamp >= ? AND timestamp <= ? \
 ORDER BY timestamp DESC, id DESC LIMIT 500"
         ));
-        // Placeholder order has to match clause order: packages, then since, then until.
         assert_eq!(
             plan.args,
             vec![json!("com.a"), json!("com.b"), json!(100), json!(200)]

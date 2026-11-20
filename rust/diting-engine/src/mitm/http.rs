@@ -1,28 +1,3 @@
-//! The HTTP/1.1 relay: hyper replaces `net/http`, and the body streams instead of buffering.
-//!
-//! `mitm_relay.go` + `mitm_common.go` + `engine_request_filter.go` in Rust. Both halves of the flow
-//! are already established when this module runs (the client TLS session and the upstream session),
-//! so what is left is the per-request decision chain:
-//!
-//! ```text
-//! 1. local asset host?          → answer from diting-cosmetic-core, no upstream round trip
-//! 2. request rule / domain rule → 403 "Blocked by DITING" (diting-request-core + diting-policy-core)
-//! 3. Accept: text/html?         → drop Accept-Encoding so the page arrives uncompressed
-//! 4. forward to the upstream    → hyper client conn, same `Incoming` body, no buffering
-//! 5. text/html response?        → splice the cosmetic <link> in while it streams (inject.rs)
-//! ```
-//!
-//! # Deliberate differences from Go
-//!
-//! * **keep-alive survives injection.** Go forced `Connection: close` because `net/http` cannot chunk
-//!   a response marked `Uncompressed`; hyper frames the injected body itself, so the connection stays
-//!   usable. The hop-by-hop headers Go re-framed by hand are stripped here and emitted by hyper.
-//! * **the client's request line is rebuilt in origin-form** (`req.Write` did the same): a browser
-//!   never sends absolute-form to a TLS origin, but a client that does must still be relayed.
-//! * **WebSocket upgrades are not relayed.** `hyper::upgrade` needs an explicit `on_upgrade` splice;
-//!   it is recorded as a stage 4b gap rather than half-implemented. An upgrade request is forwarded as
-//!   an ordinary HTTP request and its response is relayed as-is.
-
 use std::convert::Infallible;
 use std::sync::Arc;
 
@@ -39,12 +14,9 @@ use crate::engine::Engine;
 use crate::mitm::inject;
 use crate::mitm::local;
 
-/// Every error the relay can produce: hyper, rustls, io and the hand-written messages.
 pub type BoxError = Box<dyn std::error::Error + Send + Sync>;
-/// The one response body type: passthrough, injected or a generated page.
 pub type ResponseBody = http_body_util::combinators::UnsyncBoxBody<Bytes, BoxError>;
 
-/// The protocol label the HTTP log uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Protocol {
     Https,
@@ -52,7 +24,6 @@ pub enum Protocol {
 }
 
 impl Protocol {
-    /// `logHTTPEvent`'s `protocol` column.
     pub fn name(self) -> &'static str {
         match self {
             Protocol::Https => "HTTPS",
@@ -60,7 +31,6 @@ impl Protocol {
         }
     }
 
-    /// The scheme the request rules match on.
     pub fn scheme(self) -> &'static str {
         match self {
             Protocol::Https => "https",
@@ -68,7 +38,6 @@ impl Protocol {
         }
     }
 
-    /// The port a `Host` header without one implies.
     pub fn default_port(self) -> u16 {
         match self {
             Protocol::Https => 443,
@@ -81,7 +50,6 @@ impl Protocol {
     }
 }
 
-/// One intercepted request/response relay over two established byte streams.
 pub struct Relay {
     engine: Arc<Engine>,
     host: String,
@@ -104,7 +72,6 @@ impl Relay {
         }
     }
 
-    /// Runs the HTTP/1.1 relay until either side goes away.
     pub async fn serve<C, U>(self, client: C, upstream: U) -> Result<(), BoxError>
     where
         C: AsyncRead + AsyncWrite + Unpin + Send + 'static,
@@ -115,7 +82,6 @@ impl Relay {
             .map_err(|error| -> BoxError { Box::new(error) })?;
         let upstream = Arc::new(Mutex::new(send));
         let driver = tokio::spawn(async move {
-            // The driver ends when the upstream closes; a failure is that same event.
             let _ = connection.await;
         });
 
@@ -133,13 +99,10 @@ impl Relay {
             .serve_connection(TokioIo::new(client), service)
             .await
             .map_err(|error| -> BoxError { Box::new(error) });
-        // The client side is gone: stop the upstream connection driver too. Left detached it can
-        // keep the upstream socket (and a task) alive until the origin decides to close.
         driver.abort();
         outcome
     }
 
-    /// One request: the local asset check, the two rule families, then the upstream exchange.
     async fn handle(
         &self,
         mut request: Request<Incoming>,
@@ -148,8 +111,6 @@ impl Relay {
         let (host, _) = target(&request, &self.host, self.protocol.default_port());
         inject::strip_accept_encoding(request.headers_mut());
 
-        // `IsLocalAssetHost(reqHost)` inside `relayHTTPFlow`: a page can ask for the stylesheet under
-        // a different authority than the flow's, and that request never leaves the device.
         if local::is_asset_host(&host) {
             return local::asset_response(&request, self.engine.mitm_state().settings());
         }
@@ -175,7 +136,6 @@ impl Relay {
         response
     }
 
-    /// The request-rule match first, then the domain rules (`requestFilterDecision`).
     fn blocked_by(&self, host: &str, request: &Request<Incoming>) -> Option<String> {
         let settings = self.engine.mitm_state().settings();
         let decision =
@@ -190,7 +150,6 @@ impl Relay {
         domain_blocked(&self.engine, &domain_host, &self.package)
     }
 
-    /// A page worth rewriting gets the `<link>` spliced in; everything else is passed through.
     async fn rewrite_response(
         &self,
         upstream: Response<Incoming>,
@@ -204,7 +163,6 @@ impl Relay {
         inject::inject_html(upstream, &link).await
     }
 
-    /// `logHTTPEvent`, through the same sink the rest of the MITM path uses.
     fn log(&self, authority: &str, outcome: &str, rule: &str) {
         self.engine.mitm_state().settings().log_http(
             &self.package,
@@ -224,7 +182,6 @@ fn is_html(response: &Response<Incoming>) -> bool {
         .is_some_and(inject::is_html)
 }
 
-/// `checkDomainBlockedAndReason`: an active snapshot, a non-empty host, qtype 0.
 pub fn domain_blocked(engine: &Engine, host: &str, package: &str) -> Option<String> {
     let host = diting_go_compat::text::go_lower(diting_go_compat::text::go_trim_space(host));
     if host.is_empty() || !engine.policy().is_active() {
@@ -241,7 +198,6 @@ pub fn domain_blocked(engine: &Engine, host: &str, package: &str) -> Option<Stri
     })
 }
 
-/// The upstream host and port for a request: absolute-form URI, then `Host`, then the flow host.
 pub fn target(request: &Request<Incoming>, flow_host: &str, default_port: u16) -> (String, u16) {
     if let Some(authority) = request.uri().authority() {
         return (
@@ -259,7 +215,6 @@ pub fn target(request: &Request<Incoming>, flow_host: &str, default_port: u16) -
     (flow_host.to_string(), default_port)
 }
 
-/// `req.Write(serverConn)`: origin-form request line, no hop-by-hop headers, a `Host` header.
 pub fn normalize_request(
     request: Request<Incoming>,
     host: &str,
@@ -279,7 +234,6 @@ pub fn normalize_request(
     Ok(Request::from_parts(parts, body))
 }
 
-/// Headers hyper frames itself; forwarding them would double-frame the message.
 pub fn strip_hop_by_hop(headers: &mut http::HeaderMap) {
     for name in [
         "connection",
@@ -292,7 +246,6 @@ pub fn strip_hop_by_hop(headers: &mut http::HeaderMap) {
     }
 }
 
-/// A `Full` body boxed into the relay's one body type.
 pub fn full_response(
     status: StatusCode,
     content_type: &str,

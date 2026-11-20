@@ -1,9 +1,3 @@
-/// One client-group draft: name, members, blocking overrides, schedule and the two binding sets.
-///
-/// The old desktop console's `ClientGroupsCard.vue` group block is the blueprint. The editor is
-/// driven entirely by the draft its parent owns: every change emits a new [DesktopClientGroup] and
-/// the editor only adopts an incoming value that it did not just emit, so typing is never reset by a
-/// re-read.
 library;
 
 import 'dart:async';
@@ -20,7 +14,6 @@ import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The console's four group-level blocking modes; empty inherits the global one.
 const List<String> desktopGroupBlockModes = [
   '',
   'null_ip',

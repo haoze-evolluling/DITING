@@ -1,5 +1,3 @@
-/// Subscription auto-update settings: master switch, schedule (interval or wall-clock time) and
-/// per-group switches; nothing is rescheduled natively.
 library;
 
 import 'package:diting_android/data/db/subscription_models.dart';
@@ -23,11 +21,9 @@ class AutoUpdateSettings {
   final int intervalHours;
   final AutoUpdateSchedule schedule;
 
-  /// Minutes after local midnight, for the timed schedules.
   final int timeMinutes;
   final int sinceMs;
 
-  /// Whether the interval is a preset; drives the custom-interval row highlight.
   bool get isCustom =>
       !LegacySettings.subscriptionAutoUpdatePresetHours.contains(intervalHours);
 
@@ -52,7 +48,6 @@ final autoUpdateSettingsProvider = Provider<AutoUpdateSettings>((ref) {
   );
 });
 
-/// Settings writer; bumps the revision so `autoUpdateSettingsProvider` rebuilds.
 class AutoUpdateActions {
   AutoUpdateActions(this._ref);
 
@@ -63,12 +58,9 @@ class AutoUpdateActions {
   void setEnabled(bool enabled) {
     final settings = _ref.read(legacySettingsProvider);
     settings.setSubscriptionAutoUpdateEnabled(enabled);
-    // 1.4.3 keeps the chosen interval when the master switch is turned off.
     _bump();
   }
 
-  /// Rejects intervals outside 1-168 and returns false so the caller can warn. Choosing an
-  /// interval also switches the schedule back to interval mode.
   bool setIntervalHours(int hours) {
     if (hours < LegacySettings.minSubscriptionAutoUpdateIntervalHours ||
         hours > LegacySettings.maxSubscriptionAutoUpdateIntervalHours) {
@@ -83,8 +75,6 @@ class AutoUpdateActions {
     return true;
   }
 
-  /// Switches to a timed schedule. Restarts the cycle from now, so a slot that already passed
-  /// today does not fire the moment the user picks it.
   void setTimedSchedule(AutoUpdateSchedule schedule, int timeMinutes) {
     assert(schedule.isTimed);
     final settings = _ref.read(legacySettingsProvider);
@@ -96,7 +86,6 @@ class AutoUpdateActions {
     _bump();
   }
 
-  /// Group switch, stored in the `subscription_group.autoUpdateEnabled` column.
   Future<void> setGroupEnabled(int groupId, bool enabled) async {
     final repository = await _ref.read(subscriptionRepositoryProvider.future);
     await repository?.setGroupAutoUpdateEnabled(groupId, enabled);
@@ -107,7 +96,6 @@ final autoUpdateActionsProvider = Provider<AutoUpdateActions>(
   AutoUpdateActions.new,
 );
 
-/// Groups with their auto-update switch, straight from `subscription_group` rows.
 final autoUpdateGroupsProvider = FutureProvider<List<SubscriptionGroupRecord>>(
   (ref) => ref.watch(subscriptionGroupsProvider.future),
 );

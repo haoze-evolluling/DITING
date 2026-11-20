@@ -1,24 +1,9 @@
-//! Go `regexp` -> Rust `regex` translation for user rule patterns.
-//!
-//! Both engines are RE2 descendants, so most of the syntax carries over unchanged. The shorthands
-//! are the exception: Go's `\d`, `\w`, `\s` and `\b` are **ASCII only**, while the Rust crate makes
-//! them Unicode aware by default. Rules match lowercased DNS names, where the difference only shows
-//! up for non-ASCII digits/letters, but translating them keeps the two engines identical for ASCII
-//! input instead of relying on that.
-//!
-//! Unsupported constructs (`(?U)`, `\p{^Greek}`, ...) are translated where it is mechanical and
-//! otherwise left alone: a pattern that then fails to compile is dropped, exactly like an invalid
-//! pattern was dropped by the Go engine before the move. Known, documented differences are listed
-//! in `rust/README.md`.
-
 use regex::Regex;
 
-/// `\d` and friends, expansion outside / inside a character class.
 const ASCII_DIGIT: &str = "[0-9]";
 const ASCII_WORD: &str = "[0-9A-Za-z_]";
 const ASCII_SPACE: &str = "[\\t\\n\\f\\r ]";
 
-/// Translates one Go regular expression into the closest Rust equivalent.
 pub fn translate(pattern: &str) -> String {
     let mut out = String::with_capacity(pattern.len() + 8);
     let mut chars = pattern.chars().peekable();
@@ -44,8 +29,6 @@ pub fn translate(pattern: &str) -> String {
                     'b' => out.push_str(if in_class { "\\x08" } else { "(?-u:\\b)" }),
                     'p' | 'P' => {
                         if chars.peek() == Some(&'{') {
-                            // `\p{...}` is spelled the same, except Go's negated form
-                            // `\p{^Greek}`, which the Rust engine spells `\P{Greek}`.
                             chars.next();
                             if next == 'p' && chars.peek() == Some(&'^') {
                                 chars.next();
@@ -57,7 +40,6 @@ pub fn translate(pattern: &str) -> String {
                             }
                             continue;
                         }
-                        // `\pL` is accepted by Go, the Rust engine wants `\p{L}`.
                         let Some(name) = chars.next() else {
                             out.push('\\');
                             out.push(next);
@@ -95,8 +77,6 @@ pub fn translate(pattern: &str) -> String {
     out
 }
 
-/// True when a `|` appears at the top level of the pattern, which makes any literal prefix
-/// optional (`^a|^b`) and therefore unusable as a prefilter.
 fn top_level_alternation(pattern: &str) -> bool {
     let mut depth = 0i32;
     let mut in_class = false;
@@ -119,11 +99,6 @@ fn top_level_alternation(pattern: &str) -> bool {
     false
 }
 
-/// `regexAnchoredPrefix`: the ASCII literal every match of an anchored pattern must start with.
-///
-/// Go derives it with `regexp/syntax` + `Simplify`; this is the string-level equivalent for the
-/// shapes rules use (`^literal...`), and it is deliberately conservative: whenever the shape is not
-/// obvious the answer is "no prefix", which only costs the prefilter, never a match.
 pub fn anchored_prefix(pattern: &str) -> String {
     if top_level_alternation(pattern) {
         return String::new();
@@ -134,7 +109,6 @@ pub fn anchored_prefix(pattern: &str) -> String {
             return String::new();
         };
         let flags = &stripped[..close];
-        // `(?i:...)`/`(?:...)` are groups, not flags: give up rather than guess.
         if flags.is_empty() || !flags.bytes().all(|b| b.is_ascii_alphabetic() || b == b'-') {
             return String::new();
         }
@@ -150,15 +124,11 @@ pub fn anchored_prefix(pattern: &str) -> String {
             '\\' => {
                 let Some(next) = chars.next() else { break };
                 if next.is_ascii_alphanumeric() {
-                    // A shorthand or a hex escape: the collected prefix stays, it just cannot be
-                    // extended past this point.
                     return crate::text::go_lower(&prefix).into_owned();
                 }
                 prefix.push(next);
             }
             '*' | '+' | '?' | '{' => {
-                // The quantifier applies to the last collected character, which is therefore not
-                // part of the required prefix (`^ab?c` only requires `a`).
                 prefix.pop();
                 return crate::text::go_lower(&prefix).into_owned();
             }
@@ -172,7 +142,6 @@ pub fn anchored_prefix(pattern: &str) -> String {
     crate::text::go_lower(&prefix).into_owned()
 }
 
-/// `mayMatchPrefix`: non-ASCII domains are never rejected because `(?i)` folds more than ASCII.
 pub fn may_match_prefix(domain: &str, prefix: &str) -> bool {
     if prefix.is_empty() || !domain.is_ascii() {
         return true;
@@ -181,8 +150,6 @@ pub fn may_match_prefix(domain: &str, prefix: &str) -> bool {
         && domain.as_bytes()[..prefix.len()].eq_ignore_ascii_case(prefix.as_bytes())
 }
 
-/// Compiles one rule pattern the way `parseSpecialRule` does: an `(?i)` prefix unless the pattern
-/// already carries one, then the translation above.
 pub fn compile_rule_regex(pattern: &str) -> Result<Regex, String> {
     let prefixed = if crate::text::has_fold_prefix(pattern) {
         pattern.to_string()
@@ -222,9 +189,7 @@ mod tests {
 
     #[test]
     fn ascii_shorthands_really_are_ascii() {
-        // U+0661 ARABIC-INDIC DIGIT ONE is a Unicode digit; Go's `\d` is [0-9].
         assert!(!matches("^\\d+$", "\u{0661}"));
-        // U+017F LATIN SMALL LETTER LONG S folds to `s` in both engines.
         assert!(matches("^s+$", "\u{017F}"));
     }
 
@@ -246,7 +211,6 @@ mod tests {
 
     #[test]
     fn anchored_prefix_matches_the_go_reference_cases() {
-        // The cases the Go prefilter used to be tested with.
         let cases = [
             (r"(?i)^banner7\..*\.cn$", "banner7."),
             (r"(?i)^ad[0-9]+\.", "ad"),

@@ -7,7 +7,6 @@ import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
-/// Automation surface (A1 / A3 / A12 / A14) plus the on-demand connection merged into it.
 abstract final class AutomationPaths {
   static const root = '/automation';
   static const profiles = '/automation/profiles';

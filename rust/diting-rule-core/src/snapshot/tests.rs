@@ -1,9 +1,3 @@
-//! The snapshot builder: every classification branch, the export order and the JSON shape.
-//!
-//! The expectations below are the Kotlin `BlockRuleLoader` / `AllowRuleLoader` / `buildJson`
-//! semantics read line by line; `serde_json::Value` keeps map order irrelevant while array order is
-//! asserted exactly (the Go policy kernel loads maps, but the exported lists are ordered).
-
 use serde_json::Value;
 
 use super::*;
@@ -138,11 +132,8 @@ fn block_lists_keep_the_kotlin_export_order() {
         "/data/rule-index/domain/block.important.trie"
     );
     assert_eq!(json["allowTriePath"], "/data/rule-index/domain/allow.trie");
-    // A null path is omitted, not serialized as null.
     assert!(json.get("importantAllowTriePath").is_none());
 
-    // custom exact, custom wildcards. The subscription wildcard keeps its source by going out as a
-    // special rule, and the subscription exact is skipped because the trie holds it.
     assert_eq!(strings(&json["globalBlock"]), vec!["a.com", "*.w.com"]);
     assert_eq!(strings(&json["globalImportant"]), vec!["b.com", "*.iw.com"]);
     assert!(strings(&json["disabledRules"]).is_empty());
@@ -163,8 +154,6 @@ fn plain_subscription_rules_are_inlined_when_the_trie_is_missing() {
         vec!["b.com", "*.iw.com", "important-sub.com"]
     );
 
-    // The allow half is gated by its own flags: usable here, so its plain rows stay out. App-scoped
-    // rows never reach a global list.
     assert_eq!(
         strings(&json["globalAllow"]),
         vec![
@@ -199,8 +188,6 @@ fn the_allow_half_inlines_its_plain_rows_when_its_trie_is_missing() {
 fn app_rules_merge_both_halves_and_the_user_allowlist() {
     let json = document(&classified());
     let app = &json["appRules"];
-    // Allow buckets first, then block buckets, then the user allowlist (serde_json sorts the
-    // object keys, so the order only shows up in which packages exist).
     let mut packages: Vec<&String> = json["appRules"].as_object().unwrap().keys().collect();
     packages.sort();
     assert_eq!(packages, vec!["com.a", "com.b", "com.user"]);
@@ -208,7 +195,6 @@ fn app_rules_merge_both_halves_and_the_user_allowlist() {
     assert_eq!(strings(&app["com.a"]["block"]), vec!["scoped.com"]);
     assert_eq!(strings(&app["com.a"]["important"]), vec!["imp-scoped.com"]);
     assert_eq!(strings(&app["com.b"]["allow"]), Vec::<&str>::new());
-    // `scoped.com` names com.a and com.b, so it lands in both packages.
     assert_eq!(
         strings(&app["com.b"]["block"]),
         vec!["scoped.com", "sub-scoped.com"]
@@ -230,7 +216,6 @@ fn inverted_rules_keep_their_shape_and_deduplicated_packages() {
     assert_eq!(strings(&block[0]["excludedApps"]), vec!["com.c"]);
     assert_eq!(block[1]["pattern"], "inv-sub.com");
     assert_eq!(strings(&block[1]["excludedApps"]), vec!["com.d"]);
-    // Allow has no inverted rows in this fixture.
     assert!(json["invertedAllow"].as_array().unwrap().is_empty());
 }
 
@@ -273,7 +258,6 @@ fn an_empty_snapshot_matches_the_kotlin_empty_document() {
         ..SnapshotInput::default()
     });
     let object = json.as_object().expect("the document is an object");
-    // `serde_json::Value` sorts object keys; the Go side is order-insensitive either way.
     let mut keys: Vec<&str> = object.keys().map(String::as_str).collect();
     keys.sort();
     let mut expected = vec![
@@ -319,8 +303,6 @@ fn an_empty_app_scope_is_preserved_on_a_special_rule() {
 
 #[test]
 fn the_policy_kernel_decodes_the_document() {
-    // The Rust engine hands this exact document to `diting-policy-core`; parse it with that kernel's
-    // model so a renamed or reshaped field fails here instead of silently dropping rules.
     let document = build(&classified());
     let parsed = diting_policy_core::json::RuleSnapshot::parse(document.as_bytes())
         .expect("the policy kernel accepts the snapshot document");
@@ -366,9 +348,7 @@ fn an_empty_app_scope_counts_as_global_but_whitespace_does_not() {
         inverted(scope(row("inv-empty.com"), " | ")),
     ];
     let json = document(&input);
-    // `isNullOrEmpty()` lets the empty string through to the global list.
     assert_eq!(strings(&json["globalBlock"]), vec!["empty.com"]);
-    // " | " is a non-empty scope with no packages: the row lands in no bucket.
     let inverted_rules = json["invertedBlock"].as_array().unwrap();
     assert_eq!(inverted_rules.len(), 1);
     assert_eq!(inverted_rules[0]["pattern"], "inv-empty.com");

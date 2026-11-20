@@ -1,8 +1,3 @@
-//! Payload decoders for the two documents and for the record lists.
-//!
-//! Every field is positional; a short payload returns `None`, which the entry point reports as a
-//! rejected call (a null pointer) rather than a half-read config.
-
 use crate::bootstrap::BootstrapRow;
 use crate::document::{
     BootstrapEntry, CacheInput, ConnectionRateLimitInput, Dns64Input, DynamicInput, PrivacyInput,
@@ -18,8 +13,6 @@ fn read_protocol(reader: &mut Reader<'_>) -> Option<Protocol> {
     Some(protocol::from_storage(&storage).unwrap_or(Protocol::Plain))
 }
 
-/// U10 privacy flags: two spare bits of the settings byte carry the suite, so the payload layout is
-/// unchanged. Blocking HTTPS/SVCB is stored as the record-type names the document carries.
 fn privacy_from_flags(flags: u8, block_bit: u8, rebinding_bit: u8) -> PrivacyInput {
     PrivacyInput {
         block_record_types: if flags & block_bit != 0 {
@@ -181,7 +174,6 @@ pub fn server_settings(reader: &mut Reader<'_>) -> Option<ServerSettings> {
         enabled: flags & 0b100000 != 0,
     };
     let custom_upstreams_json = reader.opt_string()?;
-    // N9: LAN rate limiting follows the custom upstreams so the tunnel payload is unchanged.
     let rate_limit = RateLimitInput {
         enabled: flags & 0b1000000 != 0,
         rate: reader.i32()?,

@@ -27,7 +27,6 @@ class MockProvider {
   final String address;
   final int latencyMs;
 
-  /// Built-in providers cannot be edited or deleted.
   final bool isPreset;
 
   final bool isEnabled;
@@ -52,7 +51,6 @@ enum RuleKind {
     RuleKind.rewrite => l10n.ruleKindRewriteSummary,
   };
 
-  /// Same names as `AppGlyphs` constants; the page maps them to a Glyph.
   final String glyphName;
 }
 
@@ -94,11 +92,8 @@ class MockRule {
 
   final String? target;
 
-  /// `appScope` column, a `~`-separated package list, empty for global. Must reach the engine as
-  /// `appRules[pkg].block`, never `globalBlock`.
   final String? appScope;
 
-  /// Inverted app exclusion: packages in `appScope` are never blocked.
   final bool appInverted;
 
   MockRule copyWith({bool? enabled, bool? important}) {
@@ -156,7 +151,6 @@ final mockBlockRules = <MockRule>[
       id: 'block-$i',
       pattern: _blockPatterns[i],
       kind: RuleKind.block,
-      // The pattern list has twelve entries, so the last three are subscription rules.
       source: i < 9 ? RuleSource.user : RuleSource.subscription,
       enabled: i % 7 != 3,
       important: i % 5 == 0,

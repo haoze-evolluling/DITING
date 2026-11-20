@@ -1,9 +1,3 @@
-//! Adapter scanner backed by the native `GetAdaptersAddresses` enumeration.
-//!
-//! The executor parameter exists only to mirror the cross-platform constructor; Windows never
-//! shells out for adapter scanning, and silently discarding an injected executor (as the Go
-//! service's comment warns about) would be misleading, so it is retained but unused.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -34,8 +28,6 @@ impl AdapterScanner for WindowsAdapterScanner {
         scan_adapters_native()
     }
 
-    /// Keeps the Go selection rule verbatim: physical, `Up`, and holding a routable IPv4
-    /// gateway. No fallback adapter is invented; an empty result means takeover must not run.
     async fn active_physical_adapters(&self) -> PlatformResult<Vec<AdapterInfo>> {
         let all = self.scan_all().await?;
         Ok(all

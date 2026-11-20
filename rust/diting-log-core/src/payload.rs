@@ -1,15 +1,3 @@
-//! Fixed-layout payload reader/writer for the JNI calls.
-//!
-//! Every log entry point takes one `ByteArray` and answers with one `ByteArray`, so the layout is
-//! the contract instead of a JSON shape: a field rename cannot silently change a logged row or a
-//! counter, and a stale library fails on the length check instead of misreading fields.
-//!
-//! All integers are big-endian, matching `DataOutputStream`. Strings are `u32` byte length plus
-//! UTF-8. [`Reader::finish`] rejects trailing bytes, so a payload produced by a newer Kotlin side
-//! is a hard error rather than a partial read. Optional fields are a presence byte followed by the
-//! value, so a `NULL` column stays distinguishable from an empty string.
-
-/// Big-endian cursor over one payload.
 pub struct Reader<'a> {
     data: &'a [u8],
     offset: usize,
@@ -67,13 +55,11 @@ impl<'a> Reader<'a> {
         self.take(count)
     }
 
-    /// `u32` length plus opaque bytes (a packed row handed back to the SQL writer).
     pub fn blob(&mut self) -> Option<&'a [u8]> {
         let length = self.u32()? as usize;
         self.bytes(length)
     }
 
-    /// `u32` length plus UTF-8 bytes.
     pub fn string(&mut self) -> Option<String> {
         let length = self.u32()? as usize;
         let raw = self.bytes(length)?;
@@ -86,13 +72,11 @@ impl<'a> Reader<'a> {
         rest
     }
 
-    /// True when the whole payload was consumed.
     pub fn finish(&self) -> bool {
         self.offset == self.data.len()
     }
 }
 
-/// Append-only payload builder.
 pub struct Writer {
     data: Vec<u8>,
 }
@@ -155,7 +139,6 @@ impl Default for Writer {
 mod tests {
     use super::*;
 
-    /// Reads every field of the round-trip payload in order.
     fn read_all(reader: &mut Reader<'_>) {
         assert_eq!(reader.u8(), Some(7));
         assert_eq!(reader.u32(), Some(4));
@@ -180,14 +163,12 @@ mod tests {
         read_all(&mut reader);
         assert!(reader.finish());
 
-        // One trailing byte is drift, not something to ignore.
         let mut padded = payload.clone();
         padded.push(0);
         let mut reader = Reader::new(&padded);
         read_all(&mut reader);
         assert!(!reader.finish());
 
-        // Truncation is a failed read, never a default value.
         let mut reader = Reader::new(&payload[..payload.len() - 2]);
         assert!(reader.u8().is_some());
         assert!(reader.u32().is_some());

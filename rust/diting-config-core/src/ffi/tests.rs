@@ -1,5 +1,3 @@
-//! The exported entry points.
-
 use super::*;
 
 fn call(payload: &[u8]) -> (u32, Vec<u8>) {
@@ -47,6 +45,5 @@ fn bad_arguments_and_bad_payloads_are_status_codes() {
     );
     assert_eq!(call(&[]).0, STATUS_BAD_PAYLOAD);
     assert_eq!(call(&[42]).0, STATUS_BAD_PAYLOAD);
-    // Freeing a null payload is a no-op.
     unsafe { diting_config_free_bytes(std::ptr::null_mut(), 0) };
 }

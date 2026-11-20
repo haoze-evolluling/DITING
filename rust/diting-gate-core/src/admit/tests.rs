@@ -13,14 +13,12 @@ const PUBLIC: [u8; 4] = [93, 184, 216, 34];
 
 #[test]
 fn full_udp_order() {
-    // Blocked UID wins over everything, without a connection log.
     let mut flow = input(PORT_DNS, &PUBLIC);
     flow.uid_blocked = true;
     let decision = admit(MODE_FULL_UDP, &flow);
     assert_eq!(decision.action, ACTION_BLOCK_UID);
     assert!(!decision.log_connection);
 
-    // Port 53 is handled before the encrypted-DNS and allowlist gates, without a log.
     let mut flow = input(PORT_DNS, &PUBLIC);
     flow.encrypted_dns_blocked = true;
     flow.app_allowlist_allowed = false;
@@ -28,7 +26,6 @@ fn full_udp_order() {
     assert_eq!(decision.action, ACTION_HANDLE_DNS);
     assert!(!decision.log_connection);
 
-    // Encrypted DNS before the allowlist, still no log.
     let mut flow = input(853, &PUBLIC);
     flow.encrypted_dns_blocked = true;
     flow.app_allowlist_allowed = false;
@@ -43,7 +40,6 @@ fn full_udp_order() {
         ACTION_BLOCK_APP_ALLOWLIST
     );
 
-    // A QUIC block logs the connection first.
     let mut flow = input(443, &PUBLIC);
     flow.quic_drop = true;
     flow.quic_uid_selected = true;
@@ -51,7 +47,6 @@ fn full_udp_order() {
     assert_eq!(decision.action, ACTION_BLOCK_QUIC);
     assert!(decision.log_connection);
 
-    // A QUIC block only applies to port 443.
     let mut flow = input(8443, &PUBLIC);
     flow.quic_drop = true;
     flow.quic_uid_selected = true;
@@ -74,7 +69,6 @@ fn full_tcp_order() {
     assert_eq!(decision.action, ACTION_BLOCK_APP_ALLOWLIST);
     assert!(!decision.log_connection);
 
-    // Port 53 comes before encrypted DNS, and neither is logged on this path.
     let mut flow = input(PORT_DNS, &PUBLIC);
     flow.encrypted_dns_blocked = true;
     let decision = admit(MODE_FULL_TCP, &flow);
@@ -105,13 +99,11 @@ fn mitm_tcp_order() {
         ACTION_BLOCK_APP_ALLOWLIST
     );
 
-    // An unspecified address is dropped before anything is logged.
     let unspecified = [0u8; 4];
     let decision = admit(MODE_MITM_TCP, &input(443, &unspecified));
     assert_eq!(decision.action, ACTION_DROP_UNSPECIFIED);
     assert!(!decision.log_connection);
 
-    // Encrypted DNS is blocked after the log point and before port 53.
     let mut flow = input(853, &PUBLIC);
     flow.encrypted_dns_blocked = true;
     let decision = admit(MODE_MITM_TCP, &flow);
@@ -122,7 +114,6 @@ fn mitm_tcp_order() {
     assert_eq!(decision.action, ACTION_HANDLE_DNS);
     assert!(decision.log_connection);
 
-    // Loopback/private and non-80/443 flows bypass interception.
     let loopback = [127, 0, 0, 1];
     assert_eq!(
         admit(MODE_MITM_TCP, &input(443, &loopback)).action,
@@ -143,7 +134,6 @@ fn mitm_tcp_order() {
     assert_eq!(decision.action, ACTION_INTERCEPT);
     assert!(decision.log_connection);
 
-    // HTTP is intercepted too.
     let mut flow = input(80, &PUBLIC);
     flow.mitm_uid_allowed = true;
     assert_eq!(admit(MODE_MITM_TCP, &flow).action, ACTION_INTERCEPT);

@@ -1,10 +1,3 @@
-/// The independent fallback chain: a second chain the resolver only enters when the whole main
-/// chain fails or returns one of the selected response codes. `FallbackUpstreamCard.vue` defines the
-/// behaviour, including that clearing the chain is how the chain is turned off.
-///
-/// The triggers that decide *when* to enter the chain — timeout, response codes and lookup failures —
-/// are [FallbackPolicyCard] beside it: the chain itself is a list, and one card holding the list, the
-/// timeout and four code chips was taller than the window.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -17,8 +10,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Response codes offered as fallback triggers. NOERROR and NXDOMAIN are meaningful answers, so the
-/// console leaves NXDOMAIN off by default.
 const _rcodeChoices = [
   (value: 2, label: 'SERVFAIL'),
   (value: 5, label: 'REFUSED'),
@@ -278,8 +269,6 @@ class _TimeoutFieldState extends State<_TimeoutField> {
   @override
   void didUpdateWidget(covariant _TimeoutField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Follow the service when it reports a different value, but never while the user is typing a
-    // value the service has not seen yet.
     if (oldWidget.value != widget.value &&
         _controller.text == '${oldWidget.value}') {
       _controller.text = '${widget.value}';
@@ -330,8 +319,6 @@ class _TimeoutFieldState extends State<_TimeoutField> {
   }
 }
 
-/// When the fallback chain is entered: the timeout, the response codes and whether a failed lookup
-/// counts as a trigger. These are the switches of `FallbackUpstreamCard.vue`'s trigger section.
 class FallbackPolicyCard extends StatelessWidget {
   const FallbackPolicyCard({
     super.key,

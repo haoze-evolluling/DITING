@@ -1,6 +1,4 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-// Barrel of the vendored DITING design system. Files that only exist to serve
-// the desktop-only pieces were dropped upstream and are not re-exported here.
 export 'activate_box.dart';
 export 'animated_entries.dart';
 export 'animated_visibility.dart';

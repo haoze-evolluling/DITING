@@ -1,5 +1,3 @@
-//! Client identification, aliases and client groups.
-
 use std::collections::HashSet;
 use std::net::IpAddr;
 
@@ -9,10 +7,8 @@ use super::duration::{self, DurationValue};
 use super::filter::{is_valid_block_mode, retain_valid_schedules, BlockingSchedule};
 use super::serde_util::{is_false, nullable_vec};
 
-/// Group id used when no configured group matches a client.
 pub const DEFAULT_CLIENT_GROUP_ID: &str = "default";
 
-/// Static IP-to-name binding.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientAlias {
@@ -20,7 +16,6 @@ pub struct ClientAlias {
     pub name: String,
 }
 
-/// Client identification configuration.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientConfig {
@@ -56,7 +51,6 @@ where
     duration::deserialize_or_default(deserializer, DurationValue::from_hours(1))
 }
 
-/// One client group with its own rule/upstream policy.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientGroup {
@@ -89,10 +83,6 @@ pub struct ClientGroup {
 }
 
 impl ClientConfig {
-    /// Mirror `ClientConfig.Normalize` / `NormalizeClientGroupConfig`.
-    ///
-    /// As in Go, malformed entries are dropped rather than failing the whole config load. The
-    /// problem list is not surfaced because `normalizeConfig` ignores it too.
     pub fn normalize(&mut self) {
         let mut seen_ids = HashSet::new();
         let mut kept = Vec::with_capacity(self.groups.len());
@@ -153,7 +143,6 @@ fn dedup_trimmed(values: Vec<String>) -> Vec<String> {
     out
 }
 
-/// Validate an IP address or CIDR the way `parseIPOrCIDR` accepts them.
 fn is_valid_ip_or_cidr(entry: &str) -> bool {
     if let Some((address, prefix)) = entry.split_once('/') {
         let Ok(ip) = address.parse::<IpAddr>() else {

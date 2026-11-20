@@ -1,9 +1,3 @@
-//! Windows Defender Firewall rules for the LAN DNS listener and the web console.
-//!
-//! `netsh advfirewall` is used verbatim because the Go service already validated these argument
-//! lists and users may have scripts quoting rule names. Both checks and updates are idempotent:
-//! every configure call deletes the rules first, then re-adds only when enabling.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -12,17 +6,11 @@ use crate::error::{PlatformError, PlatformResult};
 use crate::exec::CommandExecutor;
 use crate::traits::FirewallManager;
 
-/// 谛听局域网 DNS UDP 入站规则。
 pub const FIREWALL_RULE_NAME_UDP: &str = "Diting DNS LAN Server (UDP)";
-/// 谛听局域网 DNS TCP 入站规则。
 pub const FIREWALL_RULE_NAME_TCP: &str = "Diting DNS LAN Server (TCP)";
-/// 谛听 Web 局域网远程管理 TCP 入站规则。
 pub const FIREWALL_RULE_NAME_WEB: &str = "Diting Web Admin (TCP)";
-/// Default web admin port used when the caller passes an invalid value.
 const DEFAULT_WEB_PORT: i32 = 15_353;
 
-/// Parses `netsh advfirewall firewall show rule` output. Only an explicitly enabled rule whose
-/// action is allow counts as active; a disabled or block rule must not silence the warning.
 pub(crate) fn is_firewall_rule_active(output: &str) -> bool {
     let mut enabled = false;
     let mut action_allow = false;
@@ -105,7 +93,6 @@ async fn add_rule(
     .map(|_| ())
 }
 
-/// Checks that both UDP and TCP port 53 rules exist, are enabled, and allow traffic.
 pub async fn check_firewall_port53(executor: &dyn CommandExecutor) -> PlatformResult<bool> {
     if !show_rule(executor, FIREWALL_RULE_NAME_UDP).await {
         return Ok(false);
@@ -113,7 +100,6 @@ pub async fn check_firewall_port53(executor: &dyn CommandExecutor) -> PlatformRe
     Ok(show_rule(executor, FIREWALL_RULE_NAME_TCP).await)
 }
 
-/// Adds or removes the port 53 rules. Existing rules are always removed first for idempotency.
 pub async fn configure_firewall_port53(
     executor: &dyn CommandExecutor,
     enable: bool,
@@ -153,12 +139,10 @@ pub async fn configure_firewall_port53(
     Ok(())
 }
 
-/// Checks the web admin firewall rule.
 pub async fn check_firewall_port_web(executor: &dyn CommandExecutor) -> PlatformResult<bool> {
     Ok(show_rule(executor, FIREWALL_RULE_NAME_WEB).await)
 }
 
-/// Adds or removes the web admin rule. A non-positive port falls back to 15353.
 pub async fn configure_firewall_port_web(
     executor: &dyn CommandExecutor,
     port: i32,

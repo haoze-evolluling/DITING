@@ -1,12 +1,6 @@
-//! The verdict of one policy query: the Go engine's `(blocked, reason)` pair, with the reason
-//! borrowed from the snapshot so a lookup never allocates.
-
-/// The verdict for one query.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Decision<'a> {
     pub blocked: bool,
-    /// Borrowed from the snapshot, so answering a query allocates nothing: the FFI hands the Go
-    /// caller a pointer into this string and Go copies it out immediately.
     pub reason: &'a str,
 }
 

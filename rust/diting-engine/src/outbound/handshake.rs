@@ -1,29 +1,11 @@
-//! The two proxy handshakes over one protected TCP connection.
-//!
-//! The bytes come from [`diting_proxy_core`] (greeting, auth, request, reply parser, HTTP CONNECT
-//! request); this module only reads and writes them, in the order Go's `socksNegotiate` /
-//! `socksConnect` / `httpConnect` used.
-//!
-//! # Error text
-//!
-//! The texts are the ones Kotlin shows through `OutboundProxyBridge.publishStatus`:
-//! `SOCKS5 greeting: …`, `invalid SOCKS5 greeting response`, `SOCKS5 authentication failed`,
-//! `SOCKS5 request: …`, the kernel's `SOCKS5 request failed with code N`, and
-//! `HTTP proxy returned <status>`. They are part of the contract the UI already renders, so they are
-//! kept verbatim.
-
 use diting_proxy_core::http;
 use diting_proxy_core::socks5::{self, AuthMethod, ReplyParse};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 
-/// The largest SOCKS5 reply frame the kernel's `parse_reply` can ask for.
 const REPLY_MAX: usize = 4 + 1 + 255 + 2;
-/// The largest HTTP CONNECT response head that is still a response (Go's `bufio` grew unbounded,
-/// but a proxy that sends more than this is not one we want to wait for).
 const HTTP_HEAD_MAX: usize = 16 * 1024;
 
-/// `socksConnect`: negotiate, then one `CONNECT` and its reply.
 pub async fn socks5_connect(
     stream: &mut TcpStream,
     username: &str,
@@ -39,7 +21,6 @@ pub async fn socks5_connect(
     read_reply(stream).await.map(|_| ())
 }
 
-/// `OpenPacket`'s `UDP ASSOCIATE`: negotiate, then the request whose reply names the relay.
 pub async fn socks5_udp_associate(
     stream: &mut TcpStream,
     username: &str,
@@ -79,7 +60,6 @@ async fn negotiate(stream: &mut TcpStream, username: &str, password: &str) -> Re
     socks5::auth_reply(&reply)
 }
 
-/// `readSocksReply`: read as much as the kernel needs, then take the relay endpoint.
 async fn read_reply(stream: &mut TcpStream) -> Result<String, String> {
     let mut buffer = vec![0u8; REPLY_MAX];
     let mut read = 0usize;
@@ -96,8 +76,6 @@ async fn read_reply(stream: &mut TcpStream) -> Result<String, String> {
     }
 }
 
-/// One `read` towards the frame the kernel asked for; the first failure gets the `SOCKS5 response:`
-/// prefix, the later ones stay bare (Go's `first` flag).
 async fn read_field(
     stream: &mut TcpStream,
     buffer: &mut [u8],
@@ -127,7 +105,6 @@ async fn read_field(
     Ok(filled)
 }
 
-/// `httpConnect`: the CONNECT request, then the status line of the reply.
 pub async fn http_connect(
     stream: &mut TcpStream,
     username: &str,
@@ -148,7 +125,6 @@ pub async fn http_connect(
 
 struct Status {
     code: u16,
-    /// `resp.Status`: the code plus the reason phrase (`403 Forbidden`).
     text: String,
 }
 
@@ -176,7 +152,6 @@ async fn read_status(stream: &mut TcpStream) -> Result<Status, String> {
     parse_status_line(&line)
 }
 
-/// `HTTP/1.1 200 Connection established` → `200 Connection established`.
 fn parse_status_line(line: &str) -> Result<Status, String> {
     let mut parts = line.splitn(3, ' ');
     let _version = parts.next().unwrap_or_default();

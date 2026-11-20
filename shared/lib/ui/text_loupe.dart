@@ -5,7 +5,6 @@ import 'package:diting_shared/ui/shape.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:material_ui/material_ui.dart';
 
-// Geometry and timing follow CupertinoTextMagnifier; the capsule is a superellipse.
 const _loupeSize = Size(80, 47.5);
 const _loupeGapAboveLineCenter = 26.0;
 const _loupeEdgePadding = 10.0;
@@ -13,7 +12,6 @@ const _loupeDragResistance = 10.0;
 const _loupeInOutDuration = Duration(milliseconds: 150);
 const _loupeFollowDuration = Duration(milliseconds: 45);
 
-/// An iOS-style text loupe for a [MagnifierBuilder]; hide plays its animation out first.
 class TextLoupe extends StatefulWidget {
   final MagnifierController controller;
   final ValueListenable<MagnifierInfo> magnifierInfo;

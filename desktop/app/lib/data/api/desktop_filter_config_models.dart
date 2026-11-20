@@ -1,8 +1,3 @@
-/// The blocking engine's own config (`GET /api/v1/filter/config`) and its pause state.
-///
-/// Only the fields the protection pages edit are parsed. The service merges a `POST` over the config
-/// it already holds, so [DesktopFilterConfig.toJson] deliberately leaves the subscription lists,
-/// custom rules and schedules out: they have their own write paths.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -18,7 +13,6 @@ List<String> _strings(Object? value) => switch (value) {
   _ => const [],
 };
 
-/// The three answer shapes a blocked name can get, in the console's order.
 const List<String> desktopBlockModes = ['null_ip', 'nxdomain', 'refused'];
 
 class DesktopFilterConfig {
@@ -49,7 +43,6 @@ class DesktopFilterConfig {
 
   final bool enabled;
 
-  /// `null_ip` | `nxdomain` | `refused`; empty when an older service does not report it.
   final String blockMode;
 
   final String blockingIPv4;
@@ -60,7 +53,6 @@ class DesktopFilterConfig {
   final bool bogusNxDomain;
   final List<String> bogusNxDomainNetworks;
 
-  /// A mode the page does not know is shown as-is rather than silently replaced.
   String get effectiveBlockMode =>
       blockMode.isEmpty ? desktopBlockModes.first : blockMode;
 
@@ -103,7 +95,6 @@ class DesktopFilterConfig {
   };
 }
 
-/// `GET /api/v1/filter/pause`: the runtime pause, which a service restart clears.
 class DesktopFilterPause {
   const DesktopFilterPause({
     required this.paused,
@@ -127,6 +118,5 @@ class DesktopFilterPause {
   final bool paused;
   final Duration remaining;
 
-  /// The master switch, so the page can tell "turned off" from "paused".
   final bool blockingEnabled;
 }

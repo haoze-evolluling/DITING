@@ -1,5 +1,3 @@
-/// Turns the request log into CSV. Rows come from both tables with the same filters the list page
-/// uses; the CSV is written in chunks so a large export never exists as one string.
 library;
 
 import 'package:diting_android/data/db/dns_query_repository.dart';
@@ -10,8 +8,6 @@ import 'package:diting_android/state/observability_providers.dart'
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// The databases an export reads from. A null side is skipped: express mode has no
-/// `http_request_log`, and a fresh install may have no file yet.
 class RequestLogExportSource {
   const RequestLogExportSource({this.dnsDb, this.httpDb});
 
@@ -24,17 +20,14 @@ class RequestLogExportResult {
 
   final int count;
 
-  /// True when more rows matched than [RequestLogExportOptions.maxRows].
   final bool truncated;
 }
 
-/// Receives the CSV as it is produced.
 typedef RequestLogCsvSink = Future<void> Function(String chunk);
 
 class RequestLogCsvExporter {
   const RequestLogCsvExporter();
 
-  /// Chunk size handed to the sink; keeps the Dart side from holding the whole document.
   static const _flushChars = 64 * 1024;
 
   Future<RequestLogExportResult> exportTo(
@@ -50,8 +43,6 @@ class RequestLogCsvExporter {
     final limit = options.maxRows.clamp(1, requestLogExportMaxRows);
     final status = options.status;
 
-    // One extra row per table is not needed: each table is capped at `limit`, so the merged top
-    // `limit` cannot miss a row that belongs in it.
     final dnsFuture =
         options.source == RequestSource.https || source.dnsDb == null
         ? Future.value(const <DnsLogRow>[])
@@ -73,7 +64,6 @@ class RequestLogCsvExporter {
             packages: options.packages,
           );
 
-    // Await together: a sequential await would leave the other error unhandled when one throws.
     final (dnsRows, httpRows) = await (dnsFuture, httpFuture).wait;
 
     final merged =
@@ -82,7 +72,6 @@ class RequestLogCsvExporter {
           for (final row in httpRows) ObservedRequest.fromHttp(row),
         ]..sort((a, b) {
           final byTime = b.timestamp.compareTo(a.timestamp);
-          // A stable tie-break keeps two exports of the same window identical.
           return byTime != 0 ? byTime : b.key.compareTo(a.key);
         });
     final truncated = merged.length > limit;
@@ -106,7 +95,6 @@ class RequestLogCsvExporter {
       }
     }
 
-    // Excel needs the BOM to read UTF-8; CRLF matches what spreadsheet apps expect.
     buffer.write('\uFEFF');
     pending = 3;
     await emit(
@@ -127,8 +115,6 @@ class RequestLogCsvExporter {
   static String _line(List<String> fields) =>
       '${fields.map(_escapeField).join(',')}\r\n';
 
-  /// RFC 4180: every field quoted, embedded quotes doubled. Quoting everything keeps commas,
-  /// newlines and leading/trailing spaces intact in any spreadsheet app.
   static String _escapeField(String value) =>
       '"${value.replaceAll('"', '""')}"';
 

@@ -1,14 +1,3 @@
-//! Document reader: validate the envelope, merge every group against the local snapshot, and
-//! answer with an import plan.
-//!
-//! Input  `{content, nowMs, hasDatabase, current: {<key>: <snapshot>}}`
-//! Output `{fatal: {kind, detail} | null, exportedAt, outcomes: [{group, added, skipped,
-//!          updated, error}], writes: [{field, value}], ops: [op], subscriptionCount}`
-//!
-//! The plan is split on purpose: a `write` is one settings field the app should store, an `op` is
-//! one statement against the rule database. Both are unconditional — every decision (merge, dedupe,
-//! counters, clamps) happens here, so the app cannot drift from the backup semantics.
-
 use serde_json::{json, Map, Value};
 
 use crate::export::{check_envelope, present_groups};
@@ -20,7 +9,6 @@ mod prefs;
 mod rules;
 mod settings;
 
-/// One settings field to store, or one database statement to run.
 #[derive(Default)]
 pub struct Plan {
     pub writes: Vec<Value>,
@@ -111,12 +99,10 @@ pub fn run(input: &Value) -> Value {
         match apply(group, &value, &snapshot, now, has_database, &mut plan) {
             Ok(outcome) => {
                 if group == Group::Subscriptions {
-                    // Used to ask the user to refresh the imported subscriptions.
                     subscription_count = outcome.added;
                 }
                 outcomes.push(outcome);
             }
-            // A group that cannot be applied is reported; the rest of the file still lands.
             Err(kind) => outcomes.push(Outcome::failed(group, kind)),
         }
     }
@@ -159,14 +145,12 @@ fn apply(
     })
 }
 
-/// `_stringSet`: trimmed, non-empty strings from a list or an object's keys.
 pub fn string_set(value: &Value) -> Vec<String> {
     let mut values: Vec<String> = crate::value::string_set(value).into_keys().collect();
     values.sort();
     values
 }
 
-/// Union of the local set and the incoming one: an import never removes entries.
 pub fn union(local: &[String], incoming: &[String]) -> Vec<String> {
     let mut merged: Vec<String> = local.to_vec();
     for value in incoming {
@@ -182,8 +166,6 @@ pub fn same_order(left: &[String], right: &[String]) -> bool {
     left == right
 }
 
-/// Array of strings from a JSON list, keeping every `String` in order (including blanks), matching
-/// `[for (final id in list) if (id is String) id]`.
 pub fn strings(value: &Value) -> Vec<String> {
     match value {
         Value::Array(items) => items
@@ -195,12 +177,10 @@ pub fn strings(value: &Value) -> Vec<String> {
     }
 }
 
-/// `item is Map` check for document entries.
 pub fn as_record(value: &Value) -> Option<&Map<String, Value>> {
     value.as_object()
 }
 
-/// Text that must be a non-blank string, trimmed (`_text`).
 pub fn text_field(value: &Value, key: &str) -> Option<String> {
     crate::value::trimmed(value, key)
 }

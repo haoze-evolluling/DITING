@@ -22,7 +22,6 @@ part 'snap_sheet_b.dart';
 part 'snap_sheet_c.dart';
 part 'snap_sheet_d.dart';
 
-/// Receives the sheet's own scroll controller, or null with no detents to drag between.
 typedef SnapSheetBuilder = Widget Function(
   BuildContext context,
   ScrollController? controller,
@@ -30,20 +29,16 @@ typedef SnapSheetBuilder = Widget Function(
 
 const snapSheetDetents = [9 / 16, 0.9];
 
-/// UIKit's presentation spring, mass 3 and stiffness 1000, critically damped.
 const _stiffness = 1000 / 3;
 
 final _omega = math.sqrt(_stiffness);
 
-/// A sheet thrown at its detent overshoots it slightly on iOS.
 const _thrownRatio = 0.8;
 const _fullThrow = 0.3;
 const _hardestThrow = 0.75;
 
-/// UIScrollView.DecelerationRate.fast, which iOS projects a release with.
 const _projectionTime = 0.99 / (1 - 0.99) / 1000;
 
-/// UIKit's rubber band past the tallest detent, read from iOS 27.
 const _rubberBandExtent = 100.0;
 const _rubberBandCoefficient = 0.55;
 
@@ -51,10 +46,8 @@ const _settleTolerance = Tolerance(distance: 0.5, velocity: 10);
 
 const _peakEase = 120.0;
 
-/// [_settleTolerance] for a sheet about 500 pixels tall, in UIKit's 0.5 s.
 const _presentationTolerance = Tolerance(distance: 0.001, velocity: 0.02);
 
-/// Wheel events closer than this are one turn, as Chromium latches one wheel sequence.
 const _wheelTurnGap = Duration(milliseconds: 500);
 
 class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
@@ -111,7 +104,6 @@ class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
     controller!.animateWith(_presentation(1, velocity));
   }
 
-  /// Springs back while a guard decides, then closes with [velocity] as UIKit does.
   void _close(double velocity) {
     _restore(0);
     _closingVelocity = velocity;
@@ -184,7 +176,6 @@ class SnapSheetRoute<T> extends PopupRoute<T> with SheetCoverRouteMixin<T> {
   }
 }
 
-/// A throw away from the target is dropped, as UIKit drops it.
 ({double velocity, double ratio}) _launch(
   double distance,
   double velocity, {
@@ -215,7 +206,6 @@ double _rounded(double x, double width) {
   return reach * reach / (4 * width);
 }
 
-/// How far a drag past the tallest detent shows, easing off as [overshoot] grows.
 double _rubberBand(double overshoot, double extent) {
   if (overshoot <= 0 || extent <= 0) {
     return 0;
@@ -223,7 +213,6 @@ double _rubberBand(double overshoot, double extent) {
   return (1 - 1 / (overshoot * _rubberBandCoefficient / extent + 1)) * extent;
 }
 
-/// The overshoot that shows [stretch], so a held sheet resumes where it showed.
 double _overshootOf(double stretch, double extent) {
   if (stretch <= 0 || extent <= 0) {
     return 0;

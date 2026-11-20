@@ -1,9 +1,3 @@
-//! Prompt text for the two analysis modes.
-//!
-//! The four-section structure and the badge words (【高危】/【建议加入白名单】…) are what the
-//! Markdown viewer colours, so editing this text also changes the rendered report. Both prompts are
-//! addressed to the model, not to the user, which is why they are not localised.
-
 use crate::traffic::Summary;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,7 +21,6 @@ fn resolved_system_prompt(system_prompt: &str, fallback: &str) -> String {
     }
 }
 
-/// Domain analysis: the four sections users expect, with the caller's log context in between.
 pub fn domain_request(domain: &str, system_prompt: &str, context: Option<&str>) -> AnalysisRequest {
     let mut out = String::with_capacity(1024);
     out.push_str("请对以下目标域名进行网络安全与解析特征分析：\n");
@@ -64,8 +57,6 @@ pub fn domain_request(domain: &str, system_prompt: &str, context: Option<&str>) 
     }
 }
 
-/// Traffic analysis: the rendered summary, then either the four sections or an explicit
-/// "samples are missing, do not invent any".
 pub fn traffic_request(summary: &Summary, system_prompt: &str) -> AnalysisRequest {
     let mut out = String::with_capacity(1536);
     out.push_str("以下是当前设备近期产生的网络请求与 DNS 解析监控统计数据：\n");
@@ -136,7 +127,6 @@ mod tests {
         assert!(request.user_prompt.contains(
             "目标域名：example.com\n\n【近期设备请求与命中上下文】：\nDNS: a.test -> BLOCKED\n\n请按以下结构"
         ));
-        // A blank context must not leave an empty section header behind.
         let blank = domain_request("example.com", "", Some("   "));
         assert!(!blank.user_prompt.contains("上下文"));
     }

@@ -1,9 +1,3 @@
-//! Per-user login auto-start via `HKCU\...\Run`.
-//!
-//! The desktop toggle means "start when this user signs in", so writes always target
-//! `HKEY_CURRENT_USER`. Status reporting also scans `HKEY_USERS` because the service may run as
-//! LocalSystem while the login item was registered in an interactive user's hive.
-
 use std::ptr;
 
 use diting_desktop_api::platform_types::{
@@ -48,7 +42,6 @@ impl AutoStartManager for WindowsAutoStart {
             let exe = std::env::current_exe()
                 .map_err(|error| PlatformError::message(format!("获取执行路径失败: {error}")))?;
             let value = format!("\"{}\" --minimized", exe.display());
-            // SAFETY: the key is valid and the value buffer lives through the call.
             let status = unsafe { write_string(key, RUN_VALUE_NAME, &value) };
             unsafe { RegCloseKey(key) };
             if status != ERROR_SUCCESS {
@@ -63,7 +56,6 @@ impl AutoStartManager for WindowsAutoStart {
             });
         }
 
-        // The value may already be absent; that is still success.
         unsafe {
             delete_value(key, RUN_VALUE_NAME);
             RegCloseKey(key);
@@ -76,8 +68,6 @@ impl AutoStartManager for WindowsAutoStart {
     }
 }
 
-/// Checks the login item across the current user and every loaded user hive. Used by the service
-/// status aggregation, which cannot assume the service account owns the interactive hive.
 pub(crate) fn login_item_enabled() -> bool {
     if run_value_present(HKEY_CURRENT_USER, &[]) {
         return true;
@@ -103,7 +93,6 @@ fn run_value_present(root: HKEY, subkeys: &[&str]) -> bool {
     let Some(key) = open_key(root, &path) else {
         return false;
     };
-    // SAFETY: `key` is owned here and closed after the query.
     let value = unsafe {
         let value = read_string(key, RUN_VALUE_NAME);
         RegCloseKey(key);
@@ -122,7 +111,6 @@ fn loaded_user_sids() -> Vec<String> {
     loop {
         let mut name = [0u16; 256];
         let mut length = name.len() as u32;
-        // SAFETY: buffered enumeration with the documented in/out length.
         let status = unsafe {
             RegEnumKeyExW(
                 users,
@@ -152,7 +140,6 @@ fn loaded_user_sids() -> Vec<String> {
 fn open_key(root: HKEY, path: &str) -> Option<HKEY> {
     let path = wide(path);
     let mut key: HKEY = ptr::null_mut();
-    // SAFETY: NUL-terminated path and a valid out-pointer.
     let status = unsafe { RegOpenKeyExW(root, path.as_ptr(), 0, KEY_QUERY_VALUE, &mut key) };
     if status == ERROR_SUCCESS {
         Some(key)
@@ -164,7 +151,6 @@ fn open_key(root: HKEY, path: &str) -> Option<HKEY> {
 fn open_enum_key() -> Option<HKEY> {
     let empty = wide("");
     let mut key: HKEY = ptr::null_mut();
-    // SAFETY: `empty` is a NUL-terminated empty string; `key` is a valid out-pointer.
     let status = unsafe {
         RegOpenKeyExW(
             HKEY_USERS,
@@ -185,7 +171,6 @@ fn create_run_key() -> PlatformResult<HKEY> {
     let path = wide(RUN_KEY);
     let mut key: HKEY = ptr::null_mut();
     let mut disposition = 0u32;
-    // SAFETY: all pointers are valid; null security attributes means the default ACL.
     let status = unsafe {
         RegCreateKeyExW(
             HKEY_CURRENT_USER,
@@ -208,8 +193,6 @@ fn create_run_key() -> PlatformResult<HKEY> {
     }
 }
 
-/// # Safety
-/// `key` must be an open registry key.
 unsafe fn read_string(key: HKEY, name: &str) -> Option<String> {
     let name = wide(name);
     let mut kind = 0u32;
@@ -252,8 +235,6 @@ unsafe fn read_string(key: HKEY, name: &str) -> Option<String> {
     Some(String::from_utf16_lossy(&units))
 }
 
-/// # Safety
-/// `key` must be an open key with `KEY_SET_VALUE`.
 unsafe fn write_string(key: HKEY, name: &str, value: &str) -> u32 {
     let name = wide(name);
     let data: Vec<u16> = value.encode_utf16().chain(std::iter::once(0)).collect();
@@ -267,8 +248,6 @@ unsafe fn write_string(key: HKEY, name: &str, value: &str) -> u32 {
     )
 }
 
-/// # Safety
-/// `key` must be an open key with `KEY_SET_VALUE`.
 unsafe fn delete_value(key: HKEY, name: &str) {
     let name = wide(name);
     RegDeleteValueW(key, name.as_ptr());

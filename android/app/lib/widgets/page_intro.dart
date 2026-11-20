@@ -1,7 +1,6 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A page-level paragraph with no card around it: indented 16 and pushed 12 below the app bar.
 class PageIntroText extends StatelessWidget {
   const PageIntroText({super.key, required this.text});
 

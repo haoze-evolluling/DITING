@@ -1,5 +1,3 @@
-//! Policy tests mirroring the Go arithmetic that was deleted with `dns_cache_policy.go`.
-
 use super::*;
 
 fn config(mode: TtlMode) -> Config {
@@ -24,7 +22,6 @@ fn defaults_match_the_go_normalizer() {
     assert_eq!(config.min_ttl_seconds, 60);
     assert_eq!(config.stale_fallback_seconds, 300);
     assert_eq!(config.negative_ttl_seconds, 30);
-    // An enabled cache always caches negative answers, even when the caller said no.
     assert!(config.negative_ttl_enabled);
 
     let disabled = Config::default().normalized();
@@ -54,7 +51,6 @@ fn effective_ttl_caps_at_max() {
     config.max_ttl_seconds = 60;
     assert_eq!(config.effective_ttl(3600), 60);
     assert_eq!(config.effective_ttl(30), 30);
-    // The default mode behaves like the cap, exactly like the Go `default:` branch.
     assert_eq!(config.effective_ttl(3600), 60);
 }
 
@@ -73,7 +69,6 @@ fn effective_ttl_applies_the_minimum_last() {
     config.min_ttl_seconds = 30;
     assert_eq!(config.effective_ttl(5), 30);
     assert_eq!(config.effective_ttl(300), 300);
-    // A zero upstream TTL is lifted to the minimum, not kept as "do not cache".
     assert_eq!(config.effective_ttl(0), 30);
 }
 

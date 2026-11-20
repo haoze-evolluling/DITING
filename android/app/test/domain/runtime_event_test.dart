@@ -48,7 +48,6 @@ void main() {
     expect(summary.errors, 1);
     expect(summary.warnOrAbove, 2);
     expect(summary.hasSlowStartup, isTrue);
-    // One error plus the slow startup stage.
     expect(summary.anomalyCount, 2);
     expect(summary.hasAnomaly, isTrue);
   });

@@ -1,10 +1,3 @@
-/// Models for the upstream resolver config (`GET /api/v1/upstream/configure`) and the latency probe
-/// (`POST /api/v1/upstream/test`).
-///
-/// The old desktop console's `UpstreamPanel.vue` and `UpstreamEditModal.vue` are the blueprint: the
-/// same four scheduling modes, the same provider fields, the same independent fallback chain, the
-/// same conditional routes, and a bootstrap list that only accepts plain IP addresses. Every parser
-/// tolerates a missing field, because an older service build must not blank the form.
 library;
 
 int _int(Object? value) => switch (value) {
@@ -31,7 +24,6 @@ List<Map<String, Object?>> _maps(Object? value) => [
     if (item is Map) item.cast<String, Object?>(),
 ];
 
-/// The four scheduling modes, in the console's order. The service accepts the upper-case spelling.
 const List<String> desktopUpstreamModes = [
   'single',
   'primary_backup',
@@ -39,7 +31,6 @@ const List<String> desktopUpstreamModes = [
   'smart_prediction',
 ];
 
-/// Transport protocols, in the editor's order.
 const List<String> desktopUpstreamProtocols = [
   'PLAIN',
   'DOT',
@@ -48,11 +39,9 @@ const List<String> desktopUpstreamProtocols = [
   'DOQ',
 ];
 
-/// DoH and DoH3 carry a URL; DoT, DoQ and plain DNS take a `host:port` address.
 bool desktopIsHttpsStyle(String protocol) =>
     protocol == 'DOH' || protocol == 'DOH3';
 
-/// One `core.ProviderConfig`. Used for the main chain and the fallback chain alike.
 class DesktopUpstreamProvider {
   const DesktopUpstreamProvider({
     required this.id,
@@ -76,15 +65,12 @@ class DesktopUpstreamProvider {
   final String id;
   final String protocol;
 
-  /// `host:port`, or an `sdns://` stamp the service understands.
   final String server;
   final String url;
   final int weight;
 
-  /// SHA-256 fingerprint. Non-empty means it replaces the system CA chain for this host.
   final String pin;
 
-  /// What the node row prints: the URL for HTTPS-style protocols, the address otherwise.
   String get address => url.isNotEmpty ? url : server;
 
   DesktopUpstreamProvider copyWith({
@@ -113,7 +99,6 @@ class DesktopUpstreamProvider {
   };
 }
 
-/// One `core.BootstrapServer`; the address must be an IP, optionally with a port.
 class DesktopBootstrapServer {
   const DesktopBootstrapServer({
     required this.id,
@@ -155,7 +140,6 @@ class DesktopBootstrapServer {
   };
 }
 
-/// `core.ResolverConfig`. Sent back whole, because the service merges what it receives.
 class DesktopUpstreamConfig {
   const DesktopUpstreamConfig({
     required this.mode,
@@ -198,7 +182,6 @@ class DesktopUpstreamConfig {
           DesktopUpstreamProvider.fromJson(item),
       ],
       fallbackTimeoutMs: _int(json['fallbackTimeoutMs']),
-      // Absent means "the service default"; an explicit empty list means "no rcode triggers".
       fallbackOnRcode: rcode is List
           ? [for (final value in rcode) _int(value)]
           : defaultFallbackRcodes,
@@ -213,20 +196,16 @@ class DesktopUpstreamConfig {
   final bool bootstrapEnabled;
   final List<DesktopBootstrapServer> bootstrapServers;
 
-  /// Domain suffix to upstream address, as the console's split-DNS card stores it.
   final Map<String, String> conditionalRoutes;
 
-  /// An independent chain: the main chain gets its own timeout before the whole of this runs.
   final List<DesktopUpstreamProvider> fallbackProviders;
 
-  /// 0 means the service default. The form shows [defaultFallbackTimeoutMs] in that case.
   final int fallbackTimeoutMs;
   final List<int> fallbackOnRcode;
   final bool fallbackOnError;
 
   bool get fallbackEnabled => fallbackProviders.isNotEmpty;
 
-  /// What the form should show: the service's own default when it reports 0.
   int get effectiveFallbackTimeoutMs =>
       fallbackTimeoutMs > 0 ? fallbackTimeoutMs : defaultFallbackTimeoutMs;
 
@@ -252,8 +231,6 @@ class DesktopUpstreamConfig {
     fallbackOnError: fallbackOnError ?? this.fallbackOnError,
   );
 
-  /// The console sends the whole config, including an explicit empty fallback chain, so turning
-  /// the fallback off actually turns it off.
   Map<String, Object?> toJson() => {
     'mode': mode.toUpperCase(),
     'providers': [for (final provider in providers) provider.toJson()],
@@ -271,7 +248,6 @@ class DesktopUpstreamConfig {
   };
 }
 
-/// `POST /api/v1/upstream/stamp` answer: the fields the editor can autofill.
 class DesktopStampResult {
   const DesktopStampResult({
     required this.protocol,
@@ -308,8 +284,6 @@ class DesktopStampResult {
   final bool noLog;
 }
 
-/// One latency probe. [error] is set when the service said the node failed, which is a result, not
-/// an outage of the service itself.
 class DesktopUpstreamProbe {
   const DesktopUpstreamProbe({this.latencyMs, this.error});
 

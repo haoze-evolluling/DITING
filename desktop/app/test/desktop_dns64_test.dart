@@ -1,7 +1,3 @@
-// Desktop hub DNS64 page (desktop parity): the synthesizer switch,
-// the RFC 6052 prefix list and the protections the service applies. Every value must come from
-// `/status`; a save posts the whole form and re-reads it, and a rejected write is reported.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_desktop/data/api/desktop_dns64_models.dart';
 import 'package:diting_desktop/pages/hub/desktop_dns64_page.dart';
@@ -94,7 +90,6 @@ void main() {
     );
     final l10n = l10nOf(tester);
 
-    // 开关只提交开关：前缀草稿由前缀卡片的保存按钮提交。
     await tester.enterText(
       inPrefixes(find.byType(TextField)),
       '64:ff9b::/96\n2001:db8::/32',

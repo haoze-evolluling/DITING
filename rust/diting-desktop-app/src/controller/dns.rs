@@ -1,5 +1,3 @@
-//! DNS listener lifecycle (`/api/v1/dns/start|stop`).
-
 use diting_desktop_api::platform_types::PortCheckResult;
 
 use crate::controller::{effective_listen_addresses, ControllerError};
@@ -20,7 +18,6 @@ fn fallback_conflict(message: impl Into<String>) -> ControllerError {
 }
 
 impl AppRuntime {
-    /// Starts DNS, refusing to bind when an occupied 53 port would silently split traffic.
     pub async fn start_dns_checked(&self) -> Result<(), ControllerError> {
         if self.is_dns_running() {
             return Ok(());
@@ -58,7 +55,6 @@ impl AppRuntime {
         Ok(())
     }
 
-    /// Stops DNS, restoring system DNS first so the host never loses resolution.
     pub async fn stop_dns_checked(&self) -> Result<(), ControllerError> {
         if let Some(platform) = self.platform() {
             if let Some(manager) = platform.dns_manager.clone() {

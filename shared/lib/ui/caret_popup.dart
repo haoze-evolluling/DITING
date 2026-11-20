@@ -8,7 +8,6 @@ const _maxHeight = 400.0;
 const _gap = 4.0;
 const _margin = 8.0;
 
-/// Opens below the caret line when it fits there, above it otherwise, measuring the popup.
 class CaretPopupLayout extends SingleChildLayoutDelegate {
   final Rect caretRect;
   final EdgeInsets padding;

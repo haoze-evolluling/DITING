@@ -1,5 +1,3 @@
-//! Endpoint validation, pinned case by case against the old `validateDNSProvider`.
-
 use super::*;
 
 #[test]
@@ -9,8 +7,6 @@ fn plain_and_dot_take_host_port() {
         ("plain", "1.1.1.1:53"),
         ("PLAIN", "[2606:4700:4700::1111]:53"),
         ("DOT", "dns.google:853"),
-        // The old check only looks at the shape: a trailing colon, a leading zero and a port
-        // above 65535 all passed.
         ("PLAIN", "1.1.1.1:"),
         ("PLAIN", "1.1.1.1:053"),
         ("PLAIN", "1.1.1.1:65536"),
@@ -54,7 +50,6 @@ fn plain_and_dot_reject_bad_addresses() {
             "{server}"
         );
     }
-    // The mode name in the error is the upper-cased protocol.
     assert!(validate_provider("dot", "1.1.1.1", "")
         .unwrap_err()
         .starts_with("invalid DOT endpoint"));
@@ -138,7 +133,6 @@ fn doq_url_splits_like_the_old_helper() {
         ("dns.adguard.com", "dns.adguard.com", "853"),
         ("dns.adguard.com:8853", "dns.adguard.com", "8853"),
         ("quic://[2606:4700::1111]:853", "2606:4700::1111", "853"),
-        // A bracketed host without a port does not split, so the whole text stays the host.
         ("[2606:4700::1111]", "[2606:4700::1111]", "853"),
         (
             "quic://dns.adguard.com:8853/path?x=1",

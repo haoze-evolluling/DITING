@@ -1,7 +1,3 @@
-// The app's in-place picker: the current value and a down chevron that opens the same
-// [CommonPopupMenu] the rest of the app uses, so a select never falls back to the platform
-// dropdown and never draws a field-like box that no other page uses.
-
 import 'package:diting_shared/ui/context.dart';
 import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:diting_shared/ui/popup.dart';
@@ -20,9 +16,6 @@ String _labelOf<T>(List<SelectOption<T>> items, T value) {
   return '';
 }
 
-/// A compact inline picker: the current value and a chevron. Tapping opens [CommonPopupMenu]
-/// with the current entry checked. Mirrors the window picker on the log stats card, so every
-/// select in the app reads the same way.
 class PopupSelectButton<T> extends StatelessWidget {
   const PopupSelectButton({
     super.key,

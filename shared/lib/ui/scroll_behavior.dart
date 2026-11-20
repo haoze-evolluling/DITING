@@ -80,7 +80,6 @@ class NextClampingScrollPhysics extends ClampingScrollPhysics {
     return NextClampingScrollPhysics(parent: buildParent(ancestor));
   }
 
-  // iOS momentum is sized for its friction fling; a clamping one multiplies it.
   @override
   double carriedMomentum(double existingVelocity) => 0;
 

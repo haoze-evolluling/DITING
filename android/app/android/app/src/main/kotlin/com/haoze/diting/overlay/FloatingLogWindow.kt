@@ -30,11 +30,6 @@ import io.flutter.plugin.common.MethodChannel
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/// One overlay window hosting a dedicated Flutter engine that runs `floatingLogMain`.
-///
-/// The window is resized to the ball or the panel, so touches outside it reach the app below.
-/// Dragging is handled here on raw screen coordinates: done in Dart, the pointer's local position
-/// would shift as the window moves under it. Flutter keeps taps, scrolls and buttons.
 internal class FloatingLogWindow(context: Context) {
     private val context = context.applicationContext
     private val windowManager = this.context.getSystemService(WindowManager::class.java)
@@ -59,10 +54,8 @@ internal class FloatingLogWindow(context: Context) {
 
     private var expanded = false
 
-    /// Height in dp of the panel strip that drags the window; zero in ball mode means "all of it".
     private var dragStripDp = 0
 
-    /// Side edge the open panel rests against: -1 left, 1 right.
     private var panelSide = 1
     private var ballX = 0
     private var ballY = 0
@@ -72,7 +65,6 @@ internal class FloatingLogWindow(context: Context) {
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, intent: Intent?) {
             val lifecycle = engine?.lifecycleChannel ?: return
-            // Paused engines draw no frames and Dart stops its polling timers.
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> lifecycle.appIsPaused()
                 Intent.ACTION_USER_PRESENT, Intent.ACTION_SCREEN_ON -> lifecycle.appIsResumed()
@@ -84,7 +76,6 @@ internal class FloatingLogWindow(context: Context) {
         val flutterEngine = FlutterEngine(context)
         engine = flutterEngine
         val messenger = flutterEngine.dartExecutor.binaryMessenger
-        // Dart reads the same SharedPreferences containers as the app (theme, language, sizes).
         LegacyPrefsBridge(context).register(messenger)
         channel = MethodChannel(messenger, CHANNEL).also { it.setMethodCallHandler(::onMethodCall) }
         flutterEngine.platformChannel.setPlatformMessageHandler(platformHandler)
@@ -155,9 +146,6 @@ internal class FloatingLogWindow(context: Context) {
         }
     }
 
-    /// Resizes the window to the panel or the ball. Dart draws an empty frame first, so the stale
-    /// frame the texture view stretches over the new size shows nothing. The panel opens against
-    /// the screen edge the ball rests on.
     private fun setExpanded(expand: Boolean, widthDp: Int, heightDp: Int, dragStripDp: Int) {
         snapAnimator?.cancel()
         val (screenW, screenH) = screenSize()
@@ -177,7 +165,6 @@ internal class FloatingLogWindow(context: Context) {
                 params.x = if (panelSide < 0) dp(EDGE_DP) else screenW - params.width - dp(EDGE_DP)
                 params.y = ballY
             } else if (panelSide > 0) {
-                // A resize keeps the right edge where it was.
                 params.x = oldRight - params.width
             }
             clampInto(screenW, screenH)
@@ -194,8 +181,6 @@ internal class FloatingLogWindow(context: Context) {
         update()
     }
 
-    /// Only a focused search field needs the keyboard; otherwise the window must not steal focus
-    /// (or the back key) from the app underneath.
     private fun setFocusable(value: Boolean) {
         val flags = if (value) BASE_FLAGS else BASE_FLAGS or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
         if (params.flags == flags) return
@@ -217,7 +202,6 @@ internal class FloatingLogWindow(context: Context) {
             update()
             return
         }
-        // The ball rests against the nearer side edge, like a system bubble.
         val target = if (params.x + params.width / 2 < screenW / 2) {
             dp(EDGE_DP)
         } else {
@@ -288,8 +272,6 @@ internal class FloatingLogWindow(context: Context) {
 
     private fun opacity(): Float = prefs.getFloat(KEY_OPACITY, 1f)
 
-    /// Intercepts a drag before Flutter sees it: anywhere on the ball, or on the panel's header
-    /// strip. A press that stays within the touch slop is left to Flutter as a tap.
     private inner class DragFrame(context: Context) : FrameLayout(context) {
         private var downRawX = 0f
         private var downRawY = 0f
@@ -335,7 +317,6 @@ internal class FloatingLogWindow(context: Context) {
             return true
         }
 
-        /// Back only arrives while the search field holds focus; Dart clears it.
         override fun dispatchKeyEvent(event: KeyEvent): Boolean {
             if (event.keyCode == KeyEvent.KEYCODE_BACK) {
                 if (event.action == KeyEvent.ACTION_UP) channel?.invokeMethod("back", null)
@@ -345,7 +326,6 @@ internal class FloatingLogWindow(context: Context) {
         }
     }
 
-    /// No Activity, so the stock PlatformPlugin is absent; Dart still needs clipboard and haptics.
     private val platformHandler = object : PlatformChannel.PlatformMessageHandler {
         private val clipboard get() = context.getSystemService(ClipboardManager::class.java)
 

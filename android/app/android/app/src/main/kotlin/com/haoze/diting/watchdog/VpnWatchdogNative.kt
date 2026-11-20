@@ -38,12 +38,6 @@ internal enum class VpnReconnectAction {
     }
 }
 
-/// Native VPN-slot watchdog (`rust/diting-vpn-config-core/src/watchdog.rs`).
-///
-/// Kotlin still owns the Handler timers, the ConnectivityManager callback, the notification and
-/// `VpnService.prepare`; the confirmation window, occupied/released phases, debounce and reconnect
-/// decision come from here. The library is required: a revoke on a build without it throws instead
-/// of following a second state machine.
 internal class VpnWatchdogNative private constructor() {
     external fun newHandle(): Long
     external fun free(handle: Long)
@@ -87,14 +81,12 @@ internal class VpnWatchdogNative private constructor() {
 
         fun free(handle: Long) = instance.free(handle)
 
-        /// Starts a new confirmation window and returns the first poll delay.
         fun start(handle: Long, nowMs: Long): Long {
             val delay = instance.start(handle, nowMs)
             check(delay >= 0L) { "native VPN watchdog rejected the handle" }
             return delay
         }
 
-        /// One poll; the returned delay is what the caller should schedule next.
         fun evaluate(handle: Long, nowMs: Long, occupied: Boolean): VpnWatchdogStep {
             val bytes = requireNotNull(instance.evaluate(handle, nowMs, occupied)) {
                 "native VPN watchdog rejected the poll"

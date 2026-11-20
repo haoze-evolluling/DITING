@@ -1,5 +1,3 @@
-//! The snapshot payload layout: round trip, nullable text and drift rejection.
-
 use super::*;
 
 fn row(pattern: &str, flags: u8) -> Row {
@@ -110,7 +108,6 @@ fn a_drifted_payload_is_rejected() {
     assert!(decode(&[]).is_none());
     assert!(decode(&encoded[..encoded.len() - 1]).is_none());
 
-    // A length that disagrees with the payload is rejected instead of being read as a row count.
     let mut huge = Vec::new();
     huge.push(LAYOUT_VERSION);
     huge.push(0);

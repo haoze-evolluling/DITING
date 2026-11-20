@@ -54,7 +54,6 @@ final remoteSelectKeys = {
 class RemoteFocusAdapter extends StatefulWidget {
   final bool enabled;
 
-  /// Whether a keyboard is up that covers the screen without insetting it.
   final ValueListenable<bool>? floatingKeyboard;
   final Widget child;
 
@@ -95,7 +94,6 @@ class _RemoteFocusAdapterState extends State<RemoteFocusAdapter> {
       child: widget.enabled
           ? _RemoteFocusLanding(
               child: _RemoteArrowKeys(
-                // Keys bubble outward; the keyboard must hear those arrows take.
                 child: _RemoteKeyboard(
                   floatingKeyboard: widget.floatingKeyboard,
                   child: FocusTraversalGroup(

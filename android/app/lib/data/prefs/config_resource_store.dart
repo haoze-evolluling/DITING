@@ -1,4 +1,3 @@
-/// User agents and on-demand SSID rules as whole JSON blobs, in a container of their own.
 library;
 
 import 'dart:convert';
@@ -10,7 +9,6 @@ import 'package:flutter/foundation.dart';
 class ConfigResourceStore {
   const ConfigResourceStore(this._store);
 
-  /// Deliberately not one of the legacy container names.
   static const container = 'diting_config_resources';
 
   static const _userAgentsKey = 'user_agents_json';
@@ -21,7 +19,6 @@ class ConfigResourceStore {
 
   final LegacyPrefsStore _store;
 
-  /// Each group falls back to its defaults independently, so one corrupt blob resets nothing else.
   ConfigResourceSnapshot load() {
     final stored = _decodeList(_userAgentsKey, _userAgentFromMap);
     final userAgents = _reconcileUserAgents(stored);
@@ -32,7 +29,6 @@ class ConfigResourceStore {
         : null;
     return ConfigResourceSnapshot(
       userAgents: userAgents,
-      // A stale selection (a retired preset, say) points at nothing, so it reads as no override.
       selectedUserAgent: userAgents.any((agent) => agent.value == selectedValue)
           ? selectedValue
           : null,
@@ -41,8 +37,6 @@ class ConfigResourceStore {
     );
   }
 
-  /// Keeps persisted custom entries, drops retired built-ins and adds newly shipped ones.
-  /// Without this, an upgrade would never surface new presets once the list reached disk.
   List<MockUserAgent> _reconcileUserAgents(List<MockUserAgent>? stored) {
     if (stored == null) return mockUserAgents;
     final builtinValues = <String>{
@@ -75,7 +69,6 @@ class ConfigResourceStore {
     ]),
   );
 
-  /// An empty string is written to tell "no override" from unset.
   void saveSelectedUserAgent(String? value) =>
       _store.putString(container, _selectedUaKey, value ?? '');
 
@@ -96,9 +89,6 @@ class ConfigResourceStore {
   void saveOnDemand(bool value) =>
       _store.putBool(container, _onDemandKey, value);
 
-  /// The network the whitelist was last applied to, so re-evaluating the same network never
-  /// overrides a manual start/stop. `''` (not on Wi-Fi) is a real value; null means never
-  /// evaluated.
   String? loadLastEvaluatedSsid() {
     final raw = _store.read(container, _lastSsidKey);
     return raw is String ? raw : null;
@@ -107,7 +97,6 @@ class ConfigResourceStore {
   void saveLastEvaluatedSsid(String ssid) =>
       _store.putString(container, _lastSsidKey, ssid);
 
-  /// A missing key returns null so defaults are used; an empty array is valid and stays.
   List<T>? _decodeList<T>(
     String key,
     T? Function(Map<String, Object?>) decode,
@@ -130,7 +119,6 @@ class ConfigResourceStore {
     for (final item in decoded) {
       if (item is! Map) continue;
       final value = decode(Map<String, Object?>.from(item));
-      // A bad entry drops only itself.
       if (value != null) result.add(value);
     }
     return result;
@@ -141,7 +129,6 @@ class ConfigResourceStore {
     if (value is! String || value.trim().isEmpty) return null;
     final name = map['name'];
     final label = name is String ? name.trim() : '';
-    // Rows saved before names existed get a short inferred label, never the raw UA on the card.
     return MockUserAgent(
       value: value,
       name: label.isNotEmpty ? label : _inferName(value),
@@ -149,8 +136,6 @@ class ConfigResourceStore {
     );
   }
 
-  /// A short label for a legacy row that shipped without a name. Best-effort for
-  /// the common UA shapes; anything unrecognised is truncated.
   String _inferName(String value) {
     if (value.startsWith('curl/')) return 'curl';
     if (value.contains('Edg/')) return 'Edge';

@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.Intent
 import com.haoze.diting.vpn.VpnPlanNative
 
-/// Last start configuration of the full tunnel, replayed by the quick settings tile. Rules are not
-/// part of it: the service rebuilds the engine snapshot from the rule database.
 internal object VpnStartConfig {
     private const val KEY_LAST_OUTBOUND_PROXY = "last_outbound_proxy"
     private const val KEY_LAST_PROXY_APP = "last_outbound_proxy_app"
@@ -16,9 +14,6 @@ internal object VpnStartConfig {
     private const val KEY_LAST_INSPECTION_PACKAGES = "last_inspection_packages"
     private const val KEY_LAST_INSPECTION_ENABLED = "last_inspection_enabled"
 
-    // Not wired from Flutter yet; an explicit disabled config stops the engine logging a parse
-    // failure.
-    // The default lives in `rust/diting-vpn-config-core` with the rest of the restore chain.
 
     fun remember(
         context: Context,
@@ -45,7 +40,6 @@ internal object VpnStartConfig {
             .apply()
     }
 
-    /// Null until the service was started at least once.
     fun restoreIntent(context: Context): Intent? {
         val prefs = context.getSharedPreferences(DitingVpnService.PREFS_NAME, Context.MODE_PRIVATE)
         val dnsConfig = prefs.getString(DitingVpnService.KEY_LAST_DNS_CONFIG, null)

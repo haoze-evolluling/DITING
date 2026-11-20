@@ -1,4 +1,3 @@
-/// Read/write access to the `automation_*` tables (A1 / A3 / A14).
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
@@ -11,7 +10,6 @@ class AutomationRepository {
 
   final Database _db;
 
-  /// Called after every write so the provider layer can bump its revision.
   final AutomationWriteHook? onChanged;
 
   void _changed() => onChanged?.call();
@@ -35,7 +33,6 @@ class AutomationRepository {
   }
 
   Future<void> saveRule(AutomationRule rule) async {
-    // Replace, not upsert-by-diff: the whole document is the unit the editor edits.
     await _db.insert(
       'automation_rule',
       rule.toRow(),
@@ -88,7 +85,6 @@ class AutomationRepository {
   }
 
   Future<void> logEvent(AutomationEvent event) async {
-    // The audit timeline is append-only; deleting a rule must not erase its history.
     await _db.insert('automation_event', event.toRow());
     _changed();
   }

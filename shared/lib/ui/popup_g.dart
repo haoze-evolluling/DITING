@@ -10,7 +10,6 @@ class _MenuRow {
   final bool togglesSubMenu;
 }
 
-/// Follows a press across the rows and picks the one it is let go on, as iOS menus do.
 class _RowPressRecognizer extends OneSequenceGestureRecognizer {
   _RowPressRecognizer({super.debugOwner});
 
@@ -90,7 +89,6 @@ class _RowPressRecognizer extends OneSequenceGestureRecognizer {
   String get debugDescription => 'menu row press';
 }
 
-/// A menu card a sub menu grows out of the item that opens it, at [grow] 0 to 1.
 @visibleForTesting
 class PopupMenuCard extends SingleChildRenderObjectWidget {
   const PopupMenuCard({

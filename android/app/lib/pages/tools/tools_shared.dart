@@ -1,7 +1,5 @@
 part of 'tools_page.dart';
 
-/// Shared input field wrapper for the tool pages. `FilledInputTheme` because a bare `TextField`
-/// falls back to the outlined Material default, which clashes with the cards.
 class _ToolField extends StatelessWidget {
   const _ToolField({
     required this.controller,
@@ -17,8 +15,6 @@ class _ToolField extends StatelessWidget {
   final Glyph glyph;
   final ValueChanged<String>? onSubmitted;
 
-  /// For fields that sync to the provider while typing (for example a persisted speed-test
-  /// domain); fields read only on submit can omit it.
   final ValueChanged<String>? onChanged;
   final bool enabled;
 
@@ -41,8 +37,6 @@ class _ToolField extends StatelessWidget {
   }
 }
 
-/// The card every tool's target field sits on. Without it the field's own fill floats straight on
-/// the page background, unlike every other control on these pages.
 class _ToolInputCard extends StatelessWidget {
   const _ToolInputCard({required this.child});
 
@@ -57,8 +51,6 @@ class _ToolInputCard extends StatelessWidget {
   }
 }
 
-/// Shared "via tunnel" switch row. Each tool has its own flag in `network_tools_settings` (keys
-/// copied from the legacy `NetworkToolsSettingsStore`); off means the physical network is used.
 class _ViaTunnelRow extends ConsumerWidget {
   const _ViaTunnelRow({
     required this.storageKey,
@@ -88,7 +80,6 @@ class _ViaTunnelRow extends ConsumerWidget {
   }
 }
 
-/// Shared notice bar for failures, fallback notes and input errors.
 class _ToolNotice extends StatelessWidget {
   const _ToolNotice({
     required this.text,
@@ -129,8 +120,6 @@ class _ToolNotice extends StatelessWidget {
   }
 }
 
-/// A titled `label: value` card. The header is optional but every tool uses it, so results are
-/// announced rather than appearing as loose rows.
 class _ToolSection extends StatelessWidget {
   const _ToolSection({this.title, required this.rows, this.footer});
 
@@ -160,7 +149,6 @@ class _ToolSection extends StatelessWidget {
   }
 }
 
-/// Shared action row; [running] disables the button rather than hiding it.
 class _RunButton extends StatelessWidget {
   const _RunButton({
     required this.glyph,
@@ -190,7 +178,6 @@ class _RunButton extends StatelessWidget {
   }
 }
 
-/// The idle state every tool shows before its first run: a filled card, not bare caption text.
 class _ToolEmptyCard extends StatelessWidget {
   const _ToolEmptyCard({
     required this.glyph,

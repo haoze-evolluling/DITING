@@ -1,9 +1,3 @@
-//! Bogus NXDOMAIN correction.
-//!
-//! Some networks answer a nonexistent name with a navigation page instead of NXDOMAIN. The
-//! configured address set identifies those pages. Rewriting to NXDOMAIN must happen after the cache
-//! (so the correction is what gets cached) and before the response leaves the pipeline.
-
 use async_trait::async_trait;
 use diting_desktop_core::filter::RuleEngine;
 use diting_dns_wire::build::ParsedMessage;
@@ -57,7 +51,6 @@ impl Stage for BogusNxDomainStage {
         let Some(hit) = self.engine.bogus_nxdomain(&addresses) else {
             return;
         };
-        // Keep the answer type for the log by building a fresh NXDOMAIN; the question is unchanged.
         let Some(builder) = start_reply(ctx) else {
             return;
         };

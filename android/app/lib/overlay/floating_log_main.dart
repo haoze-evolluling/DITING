@@ -1,8 +1,3 @@
-/// Entry of the floating log window's own Flutter engine (`floatingLogMain` in `main.dart`).
-///
-/// The window is a separate engine started by the VPN service, so nothing from the app's
-/// provider tree exists here: settings are read once from the same SharedPreferences containers,
-/// and the theme, language, font and text scale are rebuilt from them.
 library;
 
 import 'dart:async';
@@ -28,12 +23,10 @@ Future<void> runFloatingLog() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = await loadLegacyPrefsStore();
   final settings = LegacySettings(store);
-  // Same reason as the app: an unregistered family silently falls back to the system font.
   await FontRepository(settings: settings).registerAll();
   runApp(FloatingLogApp(settings: settings));
 }
 
-/// Native side of the window: size, focus and the few actions only Android can take.
 class FloatingLogWindowChannel {
   FloatingLogWindowChannel({MethodChannel? channel})
     : _channel =
@@ -42,7 +35,6 @@ class FloatingLogWindowChannel {
 
   final MethodChannel _channel;
 
-  /// Resizes the window to the panel, or back to the ball.
   Future<void> setExpanded(
     bool expanded, {
     Size size = Size.zero,
@@ -63,7 +55,6 @@ class FloatingLogWindowChannel {
 
   Future<void> dismiss() => _call('dismiss');
 
-  /// Back reaches the window only while it is focusable, i.e. while the search field is focused.
   void onBack(VoidCallback handler) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'back') handler();
@@ -74,9 +65,7 @@ class FloatingLogWindowChannel {
     try {
       await _channel.invokeMethod<void>(method, arguments);
     } on PlatformException {
-      // The window is going away; nothing to recover.
     } on MissingPluginException {
-      // Widget tests and non-Android hosts.
     }
   }
 }
@@ -91,7 +80,6 @@ class FloatingLogApp extends StatefulWidget {
 
   final LegacySettings settings;
 
-  /// Replaceable for tests.
   final FloatingLogWindowChannel? window;
   final FloatingLogSource? source;
 
@@ -144,8 +132,6 @@ class _FloatingLogAppState extends State<FloatingLogApp> {
   }
 }
 
-/// The window runs in its own engine, so it resolves the active mode from the same prefs snapshot
-/// the rest of the app reads rather than from a provider tree.
 FloatingLogSource _defaultSource(LegacySettings settings) {
   final dataSet = DataSet.fromWorkModeValue(settings.workModeRaw);
   return FloatingLogSource(
@@ -154,10 +140,8 @@ FloatingLogSource _defaultSource(LegacySettings settings) {
   );
 }
 
-/// Panel sizes in dp, indexed by the legacy `floating_log_panel_size` value.
 const floatingLogPanelSizes = [Size(300, 380), Size(340, 460), Size(380, 560)];
 
-/// Switches between the ball and the panel and owns the "new blocked" badge.
 class FloatingLogHost extends StatefulWidget {
   const FloatingLogHost({
     super.key,
@@ -177,19 +161,14 @@ class FloatingLogHost extends StatefulWidget {
 class _FloatingLogHostState extends State<FloatingLogHost> {
   static const _badgeInterval = Duration(seconds: 4);
 
-  /// Panels are wider than this and the ball's window is not, so the size tells which one is live.
   static const _ballWindowLimit = 160.0;
 
   bool _expanded = false;
 
-  /// Draws nothing while the window changes size. Until Flutter draws at the new size, Android
-  /// stretches the last frame over the window; an empty frame stretches into nothing, so neither
-  /// the ball nor the panel ever shows distorted.
   bool _blank = false;
   bool _switching = false;
   late int _sizeIndex = widget.settings.floatingLogPanelSize;
 
-  /// Blocked requests since the panel was last closed; the ball shows the number.
   int _badge = 0;
   int _seenAt = DateTime.now().millisecondsSinceEpoch;
   Timer? _badgeTimer;
@@ -210,7 +189,6 @@ class _FloatingLogHostState extends State<FloatingLogHost> {
     super.dispose();
   }
 
-  /// The native side pauses the engine while the screen is off; polling stops with it.
   void _onLifecycle(AppLifecycleState state) {
     final active = state == AppLifecycleState.resumed;
     if (active == _active) return;
@@ -235,10 +213,8 @@ class _FloatingLogHostState extends State<FloatingLogHost> {
     setState(() => _badge = count);
   }
 
-  /// Clears the window, resizes it, then draws the new layout once the window has its size.
   Future<void> _switchTo({required bool expanded, required Size size}) async {
     setState(() => _blank = true);
-    // One frame draws the empty frame, the next makes sure it reached the screen.
     await WidgetsBinding.instance.endOfFrame;
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
@@ -287,8 +263,6 @@ class _FloatingLogHostState extends State<FloatingLogHost> {
       type: MaterialType.transparency,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Each layout draws only in a window of its own size: the panel never lays out in the
-          // ball's square, and the ball never shows in the panel-sized window.
           final panelWindow = constraints.maxWidth > _ballWindowLimit;
           if (_blank || _expanded != panelWindow) {
             return const SizedBox.shrink();

@@ -1,5 +1,3 @@
-//! The entry points that carry engine documents as bytes instead of strings.
-
 use jni::objects::{JByteArray, JObject};
 use jni::sys::{jbyteArray, jlong, jstring};
 use jni::JNIEnv;
@@ -13,10 +11,6 @@ fn answer_bytes(env: &JNIEnv<'_>, value: Option<Vec<u8>>) -> jbyteArray {
     }
 }
 
-/// `statsSnapshot()`: the six counters the status card reads, as big-endian `u64`s.
-///
-/// The dashboard polls the status channel every three seconds; this is one crossing and no JSON
-/// instead of `getStats` + `getDNSCacheStats` and two object parses.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStatsSnapshot<'local>(
     mut env: JNIEnv<'local>,
@@ -29,8 +23,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStatsSnapshot<'
     answer_bytes(&env, payload)
 }
 
-/// `getDNSCacheSnapshot(limit)`: the same entries as `getDNSCacheEntries`, packed for the log
-/// kernel's cache mirror instead of JSON. Kotlin forwards the bytes to `LogNative.mirrorRows`.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheSnapshot<'local>(
     mut env: JNIEnv<'local>,
@@ -48,11 +40,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeGetDnsCacheSnap
     answer_bytes(&env, payload)
 }
 
-/// `applyRuleSnapshotBytes(payload)`: the same snapshot as `applyRuleSnapshot`, but the document
-/// crosses as UTF-8 bytes.
-///
-/// The snapshot is built by the rule kernel as a `byte[]`; converting it to a Java `String` and
-/// back to modified UTF-8 in the JNI layer copied a document that can be several megabytes twice.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeApplyRuleSnapshotBytes<'local>(
     mut env: JNIEnv<'local>,

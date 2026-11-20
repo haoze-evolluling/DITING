@@ -1,11 +1,7 @@
-//! The filter state machine: allow list, bypass rules, blacklist expiry, failure streaks and the
-//! persistent file. Every test injects `now_ms`, so nothing here depends on the wall clock.
-
 use std::path::{Path, PathBuf};
 
 use super::*;
 
-/// A path under the system temp dir that no other test shares.
 fn temp_path(name: &str) -> PathBuf {
     let mut path = std::env::temp_dir();
     path.push(format!("diting-mitm-{}-{}.txt", std::process::id(), name));
@@ -28,8 +24,6 @@ fn allowed_uids_parse_like_the_go_csv() {
     assert!(filter.is_uid_allowed(1002));
     assert!(!filter.is_uid_allowed(1003));
 
-    // Only the digit characters count, exactly like the Go parser: `1a2` is UID 12, `-3` is 3 and
-    // UID 0 is dropped.
     assert_eq!(filter.set_allowed_uids_csv("1a2,0,-3,abc"), 2);
     assert!(filter.is_uid_allowed(12));
     assert!(filter.is_uid_allowed(3));
@@ -52,7 +46,6 @@ fn bypass_rules_drop_comments_and_normalize() {
     assert!(!filter.allows_interception("cdn.blog.example", 0));
     assert!(filter.allows_interception("other.org", 0));
 
-    // Replacing the rules drops the previous ones.
     assert_eq!(filter.set_bypass_rules("other.org"), 1);
     assert!(filter.allows_interception("example.com", 0));
     assert!(!filter.allows_interception("other.org", 0));
@@ -62,7 +55,6 @@ fn bypass_rules_drop_comments_and_normalize() {
 fn sensitive_hosts_and_addresses_are_never_intercepted() {
     let filter = Filter::new();
     assert!(!filter.allows_interception("bank.com", 0));
-    // The port is stripped after lowercasing, and `bank` is a whole label.
     assert!(!filter.allows_interception("API.BANK.com:443", 0));
     assert!(!filter.allows_interception("1.2.3.4", 0));
     assert!(!filter.allows_interception(" ::1 ", 0));
@@ -92,19 +84,16 @@ fn blacklist_entries_expire() {
     );
     assert!(!filter.allows_interception("example.com", now));
 
-    // A live entry is not rewritten.
     assert!(filter
         .blacklist("example.com", "pinning", now + 1)
         .is_none());
     assert_eq!(filter.blacklist_count(now + 1), 1);
 
-    // Live one millisecond before the deadline, gone at it.
     let deadline = now + DEFAULT_BLACKLIST_TTL_MS;
     assert!(!filter.allows_interception("example.com", deadline - 1));
     assert!(filter.allows_interception("example.com", deadline));
     assert_eq!(filter.blacklist_count(deadline), 0);
 
-    // An empty host is refused outright, like the Go early return.
     assert!(filter.blacklist("   ", "pinning", now).is_none());
 }
 
@@ -132,7 +121,6 @@ fn failure_streaks_blacklist_after_three_generic_errors() {
     assert_eq!(added.host, "example.com");
     assert!(!filter.allows_interception("example.com", now + 2));
 
-    // The blacklist entry comes with the usual lifetime.
     assert_eq!(
         filter.blacklist_count(now + 2 + DEFAULT_BLACKLIST_TTL_MS - 1),
         1
@@ -170,13 +158,9 @@ fn failure_streaks_restart_after_the_window() {
     filter.record_failure("example.com", "boom", now);
     filter.record_failure("example.com", "boom", now + 1);
 
-    // Exactly one window after the last failure still counts (`now.Sub(lastSeen) > window` is what
-    // started a new streak in Go).
     let counted = filter.record_failure("example.com", "boom", now + 1 + FAILURE_WINDOW_MS);
     assert_eq!(counted.count, 3);
 
-    // Past the window *from the last failure* the streak starts over. The third call above moved
-    // `lastSeen` to `now + 1 + FAILURE_WINDOW_MS`.
     let restarted =
         filter.record_failure("example.com", "boom", now + 1 + 2 * FAILURE_WINDOW_MS + 1);
     assert_eq!(restarted.count, 1);
@@ -210,7 +194,6 @@ fn remove_and_clear() {
     assert_eq!(filter.blacklist_count(now), 0);
     assert!(filter.allows_interception("other.com", now));
 
-    // The streak is gone too: the next failure starts at one.
     assert_eq!(filter.record_failure("third.com", "boom", now).count, 1);
 }
 
@@ -230,8 +213,6 @@ fn persistent_blacklist_round_trips() {
         added.write_error
     );
 
-    // `host|unix_seconds|reason`, exactly the line the Go version wrote: the reason keeps the case
-    // it was given, and only loading a line lowercases it (the loader lowercases whole lines).
     let written = fs::read_to_string(&path).expect("read the blacklist file");
     assert_eq!(
         written,
@@ -241,7 +222,6 @@ fn persistent_blacklist_round_trips() {
         )
     );
 
-    // A fresh filter reloads it and keeps refusing interception.
     let reloaded = Filter::new();
     assert_eq!(reloaded.load_persistent(as_text(&path), now + 1_000), 1);
     assert_eq!(reloaded.blacklist_count(now + 1_000), 1);
@@ -253,8 +233,6 @@ fn persistent_blacklist_round_trips() {
         Some("ev certificate")
     );
 
-    // Loading after the deadline drops the expired lines. Exactly at the deadline the line is
-    // still kept (Go compared with `now.After(expiry)`) but counts as dead.
     let expired = Filter::new();
     let later = now + DEFAULT_BLACKLIST_TTL_MS;
     assert_eq!(expired.load_persistent(as_text(&path), later), 1);
@@ -262,7 +240,6 @@ fn persistent_blacklist_round_trips() {
     assert_eq!(expired.load_persistent(as_text(&path), later + 1), 0);
     assert_eq!(expired.blacklist_count(later + 1), 0);
 
-    // `clear_blacklist` truncates the file, so nothing comes back on the next start.
     reloaded.clear_blacklist();
     assert_eq!(
         fs::read_to_string(&path).expect("read the blacklist file"),

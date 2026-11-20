@@ -1,9 +1,3 @@
-/// The web console's login and first-run setup page, plus the wallpaper it renders.
-///
-/// The old desktop console's `views/LoginView.vue` is the blueprint: one card over an optional
-/// background image, a lockout countdown, the theme and palette shortcuts, and the background editor.
-/// Only the browser that loaded the console sees this page — the desktop window talks to the service
-/// over loopback IPC and never authenticates.
 library;
 
 import 'dart:async';

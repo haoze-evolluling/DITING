@@ -1,6 +1,3 @@
-/// Read/delete access to the legacy `dns_log` table; rows are written natively through
-/// [DnsLogWriter]. The statement, the row defaults and the daily counters live in
-/// `rust/diting-log-query-core`.
 library;
 
 import 'package:sqflite/sqflite.dart';
@@ -51,10 +48,6 @@ class DnsLogRepository {
     ];
   }
 
-  /// PASSED and REWRITTEN count as passed. Aggregated in SQL: the dashboard re-runs this every 10 s,
-  /// and shipping every row of a busy day (100k+) over the platform channel to regex it in Dart
-  /// was the most expensive read in the app. `elapsed=` parsing mirrors [elapsedMsOf]: SQLite's
-  /// integer cast stops at the `ms` suffix.
   Future<DnsLogDailyStats> dailyStats({DateTime? since}) async {
     final start = (since ?? _startOfToday()).millisecondsSinceEpoch;
     final plan = RustLogQueryCore.instance.plan('dns.daily', {'since': start});
@@ -65,7 +58,6 @@ class DnsLogRepository {
         : DnsLogDailyStats.fromParsed(parsed.first);
   }
 
-  /// Reads `elapsed=123ms`; the writer only emits it for positive durations.
   static int? elapsedMsOf(String? message) =>
       (RustLogQueryCore.instance.classify('dnsElapsed', {
             'message': message,
@@ -125,16 +117,12 @@ class DnsLogDailyStats {
   final int bypassed;
   final int cached;
 
-  /// Mean `elapsed=` over timed rows only; rule-blocked rows carry no timing.
   final int averageLatencyMs;
 
   final int latencySamples;
 
-  /// Mirrors engine `hitRatio`: errors join the denominator (cache lookup precedes upstream
-  /// failure) and a stale-while-revalidate reply counts as a stale hit.
   final double cacheHitRate;
 
-  /// The shape the overview aggregate consumes.
   Map<String, Object?> toKernel() => {
     'total': total,
     'passed': passed,

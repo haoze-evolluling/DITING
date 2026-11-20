@@ -1,8 +1,3 @@
-/// The cache page's two read-only cards: the acceleration engine (switch, hit rate, the two
-/// actions) and the telemetry figures the service counts.
-///
-/// The old desktop console's `CachePanel.vue` is the blueprint. Every figure is the service's;
-/// the page only formats it.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -28,8 +23,6 @@ class CacheEngineCard extends StatelessWidget {
 
   final DesktopCacheStats stats;
 
-  /// The switch follows the config, not the counters: a stats poll must not move a control the
-  /// reader is about to press.
   final bool enabled;
   final bool busy;
   final bool clearing;
@@ -215,7 +208,6 @@ class CacheTelemetryCard extends StatelessWidget {
   }
 }
 
-/// Two columns of three figures; a narrow card stacks to one column of six.
 class _MetricGrid extends StatelessWidget {
   const _MetricGrid({required this.metrics});
 

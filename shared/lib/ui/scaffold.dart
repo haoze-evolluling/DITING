@@ -66,7 +66,6 @@ class CommonScaffold extends StatefulWidget {
 
   final IconButtonData? confirmationAction;
 
-  /// Opens the [searchState] of a page in its bar rather than at its foot.
   final bool searchInBar;
   final AppBarSearchState? searchState;
   final List<IconButtonData> searchActions;

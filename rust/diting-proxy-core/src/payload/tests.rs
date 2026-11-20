@@ -1,5 +1,3 @@
-//! The envelope: round trips, the rejection rules and the shapes the Go decoder reads.
-
 use super::*;
 use crate::config::SCOPE_APPS;
 
@@ -9,7 +7,6 @@ fn reply_response(bytes: &[u8]) -> Vec<u8> {
     }))
 }
 
-/// Reads response bodies field by field so the assertions do not hard-code byte offsets.
 struct Cursor<'a> {
     payload: &'a [u8],
     position: usize,
@@ -107,7 +104,6 @@ fn every_op_round_trips() {
 
 #[test]
 fn malformed_envelopes_are_rejected() {
-    // Wrong layout byte, unknown opcode, truncated field, trailing bytes, non-UTF-8 text.
     assert_eq!(decode_request(&[]), None);
     assert_eq!(decode_request(&[2, OP_SOCKS_UDP_ASSOCIATE]), None);
     assert_eq!(decode_request(&[LAYOUT_VERSION, 42]), None);
@@ -144,7 +140,6 @@ fn configure_response_uses_the_normalized_fields() {
     let encoded = encode_response(handle(request));
     let mut cursor = Cursor::new(&encoded);
     assert_eq!(cursor.u8(), 0, "status byte");
-    // enabled | protocol | host | port | scope | uid count + ids
     assert_eq!(cursor.u8(), 1);
     assert_eq!(cursor.text(), "socks5");
     assert_eq!(cursor.text(), "127.0.0.1");

@@ -83,7 +83,6 @@ Glyph _g_sidebar_(double progress) {
   ], matchTextDirection: true);
 }
 
-/// Play at 0, pause at 1; past either end it keeps turning, so it bounces.
 Glyph _g_playPause_(double progress) {
   final fold = progress.clamp(0.0, 1.0);
   final turn = math.pi / 2 * progress;

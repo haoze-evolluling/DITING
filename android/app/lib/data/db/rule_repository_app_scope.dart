@@ -1,8 +1,5 @@
 part of 'rule_repository.dart';
 
-// Per-app rules (`appScope`) and the `*` full-block marker, split out of RuleRepository. Every
-// predicate comes from the core: the scope list is `|`-separated, so "does this rule apply to app X"
-// is four `LIKE` comparisons that must not be rewritten by hand.
 
 extension RuleRepositoryAppScope on RuleRepository {
   static Map<String, Object?> _predicate(String name, String packageName) =>
@@ -12,7 +9,6 @@ extension RuleRepositoryAppScope on RuleRepository {
         'package': packageName,
       });
 
-  /// Excludes the `*` full-block marker; sources are read, so all-disabled yields false.
   Future<List<MockRule>> loadForApp(String packageName) async {
     final subscriptions = await _subscriptionNames();
     final scoped = _predicate('loadForApp', packageName);
@@ -46,8 +42,6 @@ extension RuleRepositoryAppScope on RuleRepository {
     return result;
   }
 
-  /// Returns the new row, or null when an identical scoped rule already exists; that duplicate is
-  /// re-enabled and gets a `useradd` source.
   Future<MockRule?> addForApp(
     RuleKind kind,
     String pattern,
@@ -77,7 +71,6 @@ extension RuleRepositoryAppScope on RuleRepository {
       );
       if (existing.isNotEmpty) {
         final id = existing.first['id'] as int;
-        // Re-enable a disabled duplicate instead of silently no-oping.
         await txn.update(
           tables.table,
           {'enabled': 1},
@@ -102,7 +95,6 @@ extension RuleRepositoryAppScope on RuleRepository {
     );
   }
 
-  /// Whether the app has the `*` full-block rule (`*$app=<pkg>`).
   Future<bool> hasFullBlock(String packageName) async {
     final predicate = _predicate('fullBlockEnabled', packageName);
     final rows = await _db.query(
@@ -115,7 +107,6 @@ extension RuleRepositoryAppScope on RuleRepository {
     return rows.isNotEmpty;
   }
 
-  /// Enables or removes the app's `pattern = '*'` full-block rule; returns the new state.
   Future<bool> setFullBlock(String packageName, bool enabled) async {
     final tables = RuleRepository._tables[RuleKind.block]!;
     final predicate = _predicate('fullBlock', packageName);

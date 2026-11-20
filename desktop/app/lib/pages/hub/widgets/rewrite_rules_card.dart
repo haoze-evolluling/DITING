@@ -1,8 +1,3 @@
-/// The rewrite rule table: a client-side search over the fields the console searches, one row per
-/// rule, and the two row actions.
-///
-/// The console filters the list it already has (`RewritePanel.vue`); there is no server-side search
-/// endpoint for rewrite rules, so this page does the same instead of inventing one.
 library;
 
 import 'dart:async';
@@ -23,9 +18,6 @@ const double _typeWidth = 140;
 const double _ttlWidth = 72;
 const double _actionsWidth = 76;
 
-/// Below this the table becomes a stacked row: domain, type chips and target on their own lines with
-/// the actions beside them. A 400-point card cannot carry five columns, and squeezing them cut the
-/// domain to three characters and the target to eight.
 const double _wideBreakpoint = 560;
 
 class RewriteRulesCard extends ConsumerStatefulWidget {
@@ -354,8 +346,6 @@ class _Row extends StatelessWidget {
     );
   }
 
-  /// Narrow card: the same facts as three short lines instead of five columns, so the domain and
-  /// the target keep their own width instead of both ellipsizing to a few characters.
   Widget _stacked(BuildContext context) {
     final l10n = context.l10n;
     return Padding(
@@ -401,8 +391,6 @@ class _Row extends StatelessWidget {
   }
 }
 
-/// What the rule answers: the failure code, the alias, the addresses, the text lines or the explicit
-/// records. One line each, with the remainder counted, so a long rule cannot push the table apart.
 class _Target extends StatelessWidget {
   const _Target({required this.rule});
 

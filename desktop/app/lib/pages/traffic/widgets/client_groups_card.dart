@@ -1,8 +1,3 @@
-/// The client-group card: the master switch, one editor per group and the single save button.
-///
-/// The old desktop console's `ClientGroupsCard.vue` is the blueprint. The whole configuration is one
-/// document: nothing is written until "save", and the service may drop groups without members, so a
-/// save adopts the re-read configuration.
 library;
 
 import 'dart:async';
@@ -40,8 +35,6 @@ class _ClientGroupsCardState extends ConsumerState<ClientGroupsCard> {
   bool _dirty = false;
   int _nextKey = 0;
 
-  /// Stable row keys: deleting a middle group must not move the next group's text into the row
-  /// above it, which is exactly what an index key does.
   List<_Draft> _wrap(List<DesktopClientGroup> groups) => [
     for (final group in groups) _Draft(_nextKey++, group),
   ];
@@ -95,8 +88,6 @@ class _ClientGroupsCardState extends ConsumerState<ClientGroupsCard> {
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    // A group without members can never match, and an incomplete window is not a window: the
-    // console drops both before it writes.
     final groups = [
       for (final group in _groups)
         if (group.clients.isNotEmpty)
@@ -239,7 +230,6 @@ class _ClientGroupsCardState extends ConsumerState<ClientGroupsCard> {
   }
 }
 
-/// A draft row with a key that survives edits and deletions.
 class _Draft {
   const _Draft(this.key, this.group);
 

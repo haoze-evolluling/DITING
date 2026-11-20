@@ -1,17 +1,7 @@
-//! The two name tables: the upstream protocol (`ParseProtocol`) and the block response mode
-//! (`ParseResponseType`).
-//!
-//! Both are "unknown spelling means the zero value" tables, and both zero values are the defaults
-//! (`PLAIN` upstreams, `CUSTOM_IP` blocks). The protocol table folds case (`strings.ToUpper`), the
-//! response table does not: `ApplyDNSConfig` upper-cases the config value itself before calling it,
-//! while `SetBlockResponseType` passes the caller's text straight in — so `"nxdomain"` from a
-//! settings payload is `CUSTOM_IP`, exactly as before.
-
 use diting_go_compat::text::go_upper;
 
 use crate::quote::go_quote;
 
-/// `DNSProtocol`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Protocol {
     Plain,
@@ -40,7 +30,6 @@ impl Protocol {
         }
     }
 
-    /// The name `dnsProviderConfig.Protocol` holds after normalization (`PLAIN`, `DOH`, `DOT`, `DOQ`).
     pub fn name(self) -> &'static str {
         match self {
             Protocol::Plain => "PLAIN",
@@ -51,7 +40,6 @@ impl Protocol {
     }
 }
 
-/// `ParseProtocol`: upper-case, then match; anything unknown is `PLAIN`.
 pub fn parse_protocol(text: &str) -> Protocol {
     let upper = go_upper(text);
     match upper.as_ref() {
@@ -62,9 +50,6 @@ pub fn parse_protocol(text: &str) -> Protocol {
     }
 }
 
-/// The validated protocol of one provider: `strings.ToUpper` then the strict table, which rejects
-/// anything that is not one of the four (`unsupported protocol "HYPER"`). The error carries the
-/// upper-cased spelling, because the old caller upper-cased before validating.
 pub fn validated_protocol(text: &str) -> Result<Protocol, String> {
     let upper = go_upper(text);
     match upper.as_ref() {
@@ -72,12 +57,10 @@ pub fn validated_protocol(text: &str) -> Result<Protocol, String> {
         "DOH" => Ok(Protocol::Doh),
         "DOT" => Ok(Protocol::Dot),
         "DOQ" => Ok(Protocol::Doq),
-        // `ApplyDNSConfig` upper-cased the name before validating, so the error shows that form.
         _ => Err(format!("unsupported protocol {}", go_quote(&upper))),
     }
 }
 
-/// `ResponseType`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResponseType {
     CustomIp,
@@ -107,7 +90,6 @@ impl ResponseType {
     }
 }
 
-/// `ParseResponseType`: case-sensitive, unknown means `CUSTOM_IP`.
 pub fn parse_response_type(text: &str) -> ResponseType {
     match text {
         "NXDOMAIN" => ResponseType::NxDomain,
@@ -117,7 +99,6 @@ pub fn parse_response_type(text: &str) -> ResponseType {
     }
 }
 
-/// `ParseResponseType(strings.ToUpper(text))`, the shape `ApplyDNSConfig` used.
 pub fn parse_response_type_upper(text: &str) -> ResponseType {
     parse_response_type(&go_upper(text))
 }

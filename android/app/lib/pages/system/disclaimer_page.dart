@@ -1,4 +1,3 @@
-/// Disclaimer page, read-only; `initial_agreement_accepted` was accepted at first run.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

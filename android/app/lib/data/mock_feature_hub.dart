@@ -1,6 +1,5 @@
 part of 'mock_data.dart';
 
-/// One card; `description` is shared with the hidden-features page.
 class MockFeatureCard {
   const MockFeatureCard({
     required this.title,
@@ -17,10 +16,8 @@ class MockFeatureCard {
   final String glyphName;
   final String route;
 
-  /// Empty means the card is fixed.
   final String? featureKey;
 
-  /// Whether express mode (the narrow DNS-only route) shows the card.
   final bool expressVisible;
 
   final String? longPressRoute;
@@ -35,36 +32,6 @@ class MockFeatureCategory {
   final List<MockFeatureCard> cards;
 }
 
-/// Routes are literals here; `test/route_catalog_test.dart` keeps them in sync.
-///
-/// Information architecture — the hub is grouped by **what the feature does and when a user
-/// reaches for it**, not by where the code lives. Six purpose-based sections with four cards each,
-/// plus 应用流量统计 and 日志仪表盘, which also live in the bottom dock but now have a hub entry,
-/// and 前后台行为, moved here from 其他设置. 数据与维护 holds six cards. The last card keeps the
-/// half-width column so rows stay aligned. The three work modes share one layout:
-///
-///   Within each category the cards follow the order a user actually walks through: observe
-///   first, then configure, then advanced or destructive actions last.
-///
-///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
-///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
-///   3. 应用与网络     连接监控 / 应用流量统计 / 网络工具 / 连接限速
-///   4. 高级与诊断     网络诊断 / AI 分析 / HTTPS 检查 / 出站代理
-///   5. 数据与维护     备份迁移 / 日志模式 / 日志仪表盘 / 故障排查 / 数据清理 / 前后台行为
-///   6. 界面与数据     外观 / 隐藏功能 / 其他设置 / 关于
-///
-/// Low-frequency functions stay folded into a parent page's secondary "更多功能" section instead
-/// of taking a first-class card:
-///   - 解析服务商 → 引导解析
-///   - 解析策略 → DNS64
-///   - 规则控制 → 域名黑名单 / 域名白名单 / 域名覆写 / 规则测试 / 临时暂停 / 拦截响应 / 场景自动化
-///   - 规则订阅 → 自动更新 / 镜像模板 / 版本回滚 / User-Agent 管理
-///   - 应用规则 → 禁止联网应用 / 排除应用
-///   - 应用流量/日志 keep their dock entry and open full screen from the hub; 网络工具/设置 are
-///     also full-screen entries from the dock.
-///
-/// Express mode (DNS-only) keeps only the sections that still apply and hides the tunnel-bound
-/// ones (应用与网络 / 高级与诊断), so it never offers an entry whose switches cannot take effect.
 List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     <MockFeatureCategory>[
   MockFeatureCategory(

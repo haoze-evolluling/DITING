@@ -1,12 +1,5 @@
-//! The two real log tables folded into the numbers the traffic prompt shows the model.
-//!
-//! Aggregation and the rendered section live together because the prompt says exactly what the
-//! counters mean ("缓存命中" is `cached = 1`, not "answered from cache"), and splitting them across
-//! languages is how those two drift.
-
 use std::cmp::Ordering;
 
-/// One `dns_log` row, reduced to the three fields the summary reads.
 pub struct DnsRow {
     pub domain: String,
     pub result: String,
@@ -19,16 +12,13 @@ pub struct Summary {
     pub blocked_dns: u32,
     pub rewritten_dns: u32,
     pub cached_dns: u32,
-    /// Highest request counts first; ties on the domain so two runs of the same rows agree.
     pub top_domains: Vec<(String, u32)>,
     pub http_samples: u32,
     pub blocked_http: u32,
     pub bypassed_http: u32,
-    /// `Some` when this mode has no HTTPS surface at all (express), or the table is missing.
     pub unavailable_reason: Option<String>,
 }
 
-/// Eight is the prompt's budget: more rows push the actual instructions out of the model's window.
 const TOP_DOMAINS: usize = 8;
 
 impl Summary {
@@ -36,8 +26,6 @@ impl Summary {
         self.dns_samples == 0 && self.http_samples == 0
     }
 
-    /// Text for the model. Empty data says "no records" instead of omitting the section, which
-    /// would read as "nothing mentioned means nothing wrong".
     pub fn render(&self) -> String {
         let mut out = String::with_capacity(512);
         out.push_str("【近期 DNS 监控统计】\n");
@@ -74,8 +62,6 @@ impl Summary {
     }
 }
 
-/// `String.compareTo` in Dart/JVM compares UTF-16 code units, which is not the UTF-8 byte order for
-/// astral characters; domain names are usually ASCII, but a Chinese or emoji host must not reorder.
 fn compare_utf16(left: &str, right: &str) -> Ordering {
     let mut left_units = left.encode_utf16();
     let mut right_units = right.encode_utf16();
@@ -92,7 +78,6 @@ fn compare_utf16(left: &str, right: &str) -> Ordering {
     }
 }
 
-/// `result` is compared case-insensitively, exactly like the Dart original (`toUpperCase`).
 pub fn summarize(dns: &[DnsRow], http_outcomes: &[String], unavailable: Option<String>) -> Summary {
     let mut counts: Vec<(String, u32)> = Vec::new();
     let mut blocked = 0u32;

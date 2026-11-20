@@ -6,10 +6,6 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-/// Makes app-wide haptics follow the user's preference.
-///
-/// Hosts without this scope stay silent, which keeps desktop and widget tests free of platform
-/// calls.
 class HapticFeedbackScope extends InheritedWidget {
   const HapticFeedbackScope({
     super.key,
@@ -28,13 +24,10 @@ class HapticFeedbackScope extends InheritedWidget {
       enabled != oldWidget.enabled;
 }
 
-/// Shared haptic vocabulary. Every call is a no-op when the setting is off or the host has no
-/// [HapticFeedbackScope].
 abstract final class AppHaptics {
   static final _clock = Stopwatch()..start();
   static int _lastEmissionMs = -1000;
 
-  /// Two feedback requests can arrive for one tap when a control has nested gesture handlers.
   static const _repeatGuard = Duration(milliseconds: 32);
 
   static bool get _supported => defaultTargetPlatform == TargetPlatform.android;
@@ -54,7 +47,6 @@ abstract final class AppHaptics {
   static void longPress(BuildContext context) =>
       _emit(context, HapticFeedback.mediumImpact);
 
-  /// Confirms that haptics were just enabled, before the scope rebuilds with the new value.
   static void enabled() {
     if (!_supported) {
       return;
@@ -76,11 +68,6 @@ abstract final class AppHaptics {
   }
 }
 
-/// Adds one haptic tap for a real control press without vibrating for blank areas, focus changes
-/// or ordinary scrolling.
-///
-/// The hit-test path contains the semantics render objects that Flutter wires to tappable
-/// controls, including `InkWell`, buttons and `GestureDetector(onTap:)`.
 class AppHapticTapFeedback extends StatefulWidget {
   const AppHapticTapFeedback({super.key, required this.child});
 
@@ -135,9 +122,6 @@ class _AppHapticTapFeedbackState extends State<AppHapticTapFeedback> {
     if (candidate == null || candidate.moved) {
       return;
     }
-    // A control without a long-press recognizer still reports its tap on release, however long
-    // the press was. Only skip when the target really handles a long press, so a slow tap is not
-    // mistaken for one.
     if (candidate.hasLongPress &&
         event.timeStamp - candidate.downAt > kLongPressTimeout) {
       return;

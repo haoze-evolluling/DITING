@@ -1,10 +1,3 @@
-//! `connLogKey`, reproduced byte for byte.
-//!
-//! The Go version appended the ints with `strconv.AppendInt(..., 10)`, which is the plain decimal
-//! spelling (negative values keep the leading `-`). Ports and protocols are non-negative here, but
-//! the port is an `i32` on the boundary so the negative case is still pinned by a test.
-
-/// Builds the dedupe key `[blk|]app|dest|port|proto[|reason]`.
 pub fn build_key(
     prefix: &str,
     app: &str,

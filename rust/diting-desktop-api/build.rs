@@ -1,8 +1,3 @@
-//! Injects the desktop service's version metadata.
-//!
-//! The single source of truth is `desktop/app/pubspec.yaml`; a direct `cargo build` without a
-//! Flutter checkout still succeeds and reports `dev`, matching the Go build's `-ldflags` fallback.
-
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -55,8 +50,6 @@ fn command(program: &str, args: &[&str]) -> Option<String> {
 }
 
 fn now_iso() -> String {
-    // Build scripts must not depend on a date library; seconds since the epoch are enough for a
-    // fallback and the service only displays this string.
     match std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH) {
         Ok(duration) => format!("unix:{}", duration.as_secs()),
         Err(_) => "dev".to_string(),

@@ -1,4 +1,3 @@
-/// Detail sheet for one `dns_cache` row, laid out like the request detail sheet.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -10,7 +9,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Rows under 30 s of TTL are about to drop out of the cache; the list marks them orange too.
 const int cacheExpiringSeconds = 30;
 
 class DnsCacheDetailSheet extends StatelessWidget {
@@ -18,7 +16,6 @@ class DnsCacheDetailSheet extends StatelessWidget {
 
   final DnsCacheRecord entry;
 
-  /// Separate column (`lastHitAt`), read by the list page; null when never hit.
   final int? lastHitAt;
 
   @override

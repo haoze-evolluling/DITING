@@ -1,4 +1,3 @@
-/// Log dashboard card layout: one stored order per log mode, plus the edit-mode switch.
 library;
 
 import 'package:diting_android/data/log_dashboard_widgets.dart';
@@ -7,13 +6,6 @@ import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Cards a log mode can show, in the order a fresh install shows them. A card outside this list
-/// has no data in that mode (the traffic monitor is meaningless when only blocks are logged), so
-/// the add sheet never offers it there.
-///
-/// Order follows what a user opens the page for: the headline figures, then what just happened,
-/// then why it was blocked, then usage, and the resolver internals (cache, race, bootstrap) last.
-/// The off mode leads with why the page is empty and whether resolving is still healthy.
 List<LogDashboardWidget> logDashboardCatalogOf(LegacyLogMode mode) =>
     switch (mode) {
       LegacyLogMode.all => const [
@@ -48,8 +40,6 @@ List<LogDashboardWidget> logDashboardCatalogOf(LegacyLogMode mode) =>
       ],
     };
 
-/// Stored layout of one log mode. Holds the AI card even without an API key so adding a key
-/// brings it back in place; [visibleLogDashboardWidgetsProvider] does the filtering.
 final logDashboardWidgetsProvider =
     NotifierProvider.family<
       LogDashboardWidgetsNotifier,
@@ -72,7 +62,6 @@ class LogDashboardWidgetsNotifier extends Notifier<List<LogDashboardWidget>> {
       return catalog;
     }
     final byName = {for (final widget in catalog) widget.name: widget};
-    // Unknown names, and cards this mode no longer offers, are skipped.
     return [for (final name in stored) ?byName[name]];
   }
 
@@ -88,9 +77,6 @@ class LogDashboardWidgetsNotifier extends Notifier<List<LogDashboardWidget>> {
     _commit(state.where((item) => item != widget).toList());
   }
 
-  /// Moves a card within [visible], the list the board shows. [newIndex] is already adjusted,
-  /// as [ReorderableListView.onReorderItem] passes it. Hidden cards (the AI card without a key)
-  /// keep their stored slots, so a reorder never loses them.
   void moveVisible(
     List<LogDashboardWidget> visible,
     int oldIndex,
@@ -114,7 +100,6 @@ class LogDashboardWidgetsNotifier extends Notifier<List<LogDashboardWidget>> {
 
   void reset() => _commit(logDashboardCatalogOf(mode));
 
-  /// An emptied board is a real choice, so it is written as `[]`.
   void _commit(List<LogDashboardWidget> next) {
     state = next;
     ref.read(legacySettingsProvider).setLogDashboardWidgetOrder(
@@ -124,7 +109,6 @@ class LogDashboardWidgetsNotifier extends Notifier<List<LogDashboardWidget>> {
   }
 }
 
-/// Cards that can render right now: the AI card needs a configured API key.
 final visibleLogDashboardWidgetsProvider =
     Provider.family<List<LogDashboardWidget>, LegacyLogMode>((ref, mode) {
       final showAi = ref.watch(agentKeyConfiguredProvider);
@@ -134,8 +118,6 @@ final visibleLogDashboardWidgetsProvider =
       ];
     });
 
-/// Edit mode of the log dashboard; separate from home's so editing one board does not flip the
-/// other. Auto-disposed, so leaving the page ends editing.
 final logDashboardEditingProvider =
     NotifierProvider.autoDispose<LogDashboardEditingNotifier, bool>(
       LogDashboardEditingNotifier.new,

@@ -5,10 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 
-/// 系统时间/开机变化接收器（A7）：exported=false，仅系统隐式广播可触达。
-///
-/// 重启、校时、切时区或应用更新后重排一次性到期闹钟，并确保周期心跳任务仍在，
-/// 避免系统清理掉定时任务后自动化静默失效。
 class ScheduleBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action: String = intent.action ?: return

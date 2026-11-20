@@ -1,9 +1,3 @@
-//! System command execution.
-//!
-//! Nearly every Windows takeover step is a `netsh`/`sc`/`powershell` invocation and the Linux
-//! backends shell out to `resolvectl`, `nmcli` and firewall tools. The executor exists so tests can
-//! swap in a recorder and so a missing tool is reported as one failed step, not a panic.
-
 use std::process::Stdio;
 use std::time::Duration;
 
@@ -12,7 +6,6 @@ use tokio::process::Command;
 
 use crate::error::{PlatformError, PlatformResult};
 
-/// Combined stdout/stderr plus the exit status.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CommandOutput {
     pub stdout: Vec<u8>,
@@ -26,12 +19,10 @@ impl CommandOutput {
     }
 }
 
-/// Runs external programs. Production uses [`SystemExecutor`]; tests use a recorder.
 #[async_trait]
 pub trait CommandExecutor: Send + Sync {
     async fn run(&self, program: &str, args: &[&str]) -> PlatformResult<CommandOutput>;
 
-    /// Runs a command and rejects a non-zero exit status with combined output as the message.
     async fn run_checked(&self, program: &str, args: &[&str]) -> PlatformResult<String> {
         let output = self.run(program, args).await?;
         if output.success {
@@ -46,12 +37,8 @@ pub trait CommandExecutor: Send + Sync {
     }
 }
 
-/// Deadline for one system command. Takeover steps are short-lived, but a `systemctl stop` may
-/// legitimately wait out systemd's 90 s stop timeout, so the bound is above that; a wedged
-/// `netsh`/`resolvectl` still cannot pin the caller forever.
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(120);
 
-/// Production executor: inherits the service environment, captures combined output.
 #[derive(Debug, Clone)]
 pub struct SystemExecutor {
     timeout: Option<Duration>,
@@ -70,7 +57,6 @@ impl SystemExecutor {
         }
     }
 
-    /// Commands that are known to hang (service control) get an explicit deadline.
     pub fn with_timeout(timeout: Duration) -> Self {
         Self {
             timeout: Some(timeout),
@@ -84,7 +70,6 @@ impl CommandExecutor for SystemExecutor {
         let mut command = Command::new(program);
         command
             .args(args)
-            // A timed-out command must not survive as an orphan still holding the pipes.
             .kill_on_drop(true)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

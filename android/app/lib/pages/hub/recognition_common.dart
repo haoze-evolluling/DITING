@@ -1,4 +1,3 @@
-/// Shared avatar, row and list skeleton for the recognition lists, so they cannot drift apart.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -13,8 +12,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Circular avatar from the cloud, cached on disk, with a person glyph when unavailable. A member
-/// the cloud document decorates gets the flowing halo from [RainbowAvatarFrame].
 class RecognitionAvatar extends ConsumerWidget {
   const RecognitionAvatar({super.key, required this.member, this.size = 48});
 
@@ -24,7 +21,6 @@ class RecognitionAvatar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (member.frame == null) return _circle(context, ref, size);
-    // The halo lives inside the same square, so a decorated row keeps the plain row's height.
     return RainbowAvatarFrame(
       size: size,
       child: _circle(context, ref, size - rainbowAvatarPadding * 2),
@@ -107,9 +103,6 @@ class RecognitionMemberRow extends StatelessWidget {
   }
 }
 
-/// A small `×N` pill after a sponsor's name, marking how many times they supported the project.
-/// Reuses [StatusPill] so the tint, radius and caption size stay the same as every other status tag
-/// in the app.
 class _SponsorCountBadge extends StatelessWidget {
   const _SponsorCountBadge({required this.count});
 
@@ -128,8 +121,6 @@ class _SponsorCountBadge extends StatelessWidget {
   }
 }
 
-/// List page skeleton; the two pages differ only in `title`, `intro`, `sectionTitle` and
-/// `sortable`.
 class RecognitionListPage extends ConsumerStatefulWidget {
   const RecognitionListPage({
     super.key,
@@ -160,7 +151,6 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
   @override
   void initState() {
     super.initState();
-    // Fetch once even with an empty cache, otherwise a fresh install stays on "no list".
     WidgetsBinding.instance.addPostFrameCallback((_) => _ensureFresh());
   }
 
@@ -187,8 +177,6 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
     final async = ref.watch(recognitionMembersProvider);
     final data = async.value;
     final state = data ?? const RecognitionState();
-    // A silent refresh runs once after the first data arrives; it only hits the network
-    // when the cache is older than `freshWindow`.
     if (!_requestedFirstLoad && data != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _ensureFresh());
     }
@@ -276,8 +264,6 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
   }
 }
 
-/// Footer stating where the data came from and when it updated. A failed refresh says
-/// "showing the local cache" instead of pretending to succeed.
 class _StatusFooter extends StatelessWidget {
   const _StatusFooter({required this.state});
 

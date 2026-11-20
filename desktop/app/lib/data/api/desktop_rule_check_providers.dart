@@ -1,8 +1,3 @@
-/// One simulated lookup at a time.
-///
-/// The simulator has no stored state on the service: each call is a fresh judgement, so the notifier
-/// keeps only the last answer and the request's own error. A new run clears the previous verdict
-/// instead of letting a stale one sit beside a newer domain.
 library;
 
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
@@ -23,7 +18,6 @@ class DesktopRuleCheckState {
   final DesktopApiException? error;
   final bool running;
 
-  /// The query the result belongs to, so the verdict card names the same domain that was tested.
   final String domain;
   final String qtype;
 }

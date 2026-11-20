@@ -28,7 +28,6 @@ enum _VisibilityMotion {
   });
 }
 
-/// Animates navigation visibility together with the surrounding layout.
 class AnimatedVisibility extends StatefulWidget {
   final bool visible;
   final _VisibilityMotion _motion;
@@ -122,7 +121,6 @@ class _AnimatedVisibilityState extends State<AnimatedVisibility>
     final content = _includeChild
         ? AnimatedBuilder(
             animation: _animation,
-            // Settled, it keeps what paints past its bounds: shadows, a lens.
             builder: (_, child) => ClipRect(
               clipBehavior: _controller.isCompleted ? Clip.none : Clip.hardEdge,
               child: Align(

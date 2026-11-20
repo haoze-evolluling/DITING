@@ -15,9 +15,6 @@ import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Multi-select of the apps routed through the outbound proxy in per-app scope. Every toggle is
-/// written straight to `OutboundProxyStore`, like the single-select proxy app picker; the
-/// tunnel picks the list up on its next start.
 class OutboundProxyTargetsPage extends ConsumerStatefulWidget {
   const OutboundProxyTargetsPage({super.key});
 
@@ -34,7 +31,6 @@ class _OutboundProxyTargetsPageState
   AppListSort _sort = AppListSort.labelAsc;
   Timer? _debounce;
 
-  /// Local copy, seeded once: rapid toggles must not each start from a stale provider value.
   Set<String>? _selected;
 
   @override
@@ -67,7 +63,6 @@ class _OutboundProxyTargetsPageState
         ? null
         : {...config.targetPackages};
     final snapshot = ref.watch(installedAppsProvider);
-    // Apps outside the TUN can never be proxied, so offering them would be a silent no-op.
     final apps = [
       for (final app in snapshot.value?.apps ?? const <InstalledApp>[])
         if (app.packageName != ditingSelfPackage &&

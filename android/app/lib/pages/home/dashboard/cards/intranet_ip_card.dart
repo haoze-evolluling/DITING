@@ -118,7 +118,6 @@ class IntranetIpCard extends ConsumerWidget {
     );
   }
 
-  /// The tunnel modes bind DNS to loopback, so the address is informational only.
   static String _lanHint(AppWorkMode mode, bool noNetwork, AppL10n l10n) {
     if (noNetwork) return l10n.intranetConnectHint;
     return l10n.intranetModeNotListening(mode.title(l10n));

@@ -1,25 +1,3 @@
-//! Rust core for the Android AI-analysis assistant: clipboard recognition, the legacy key
-//! obfuscator, prompt building, the traffic summary behind the prompt, and the OpenAI-compatible
-//! protocol layer.
-//!
-//! This is the only implementation. `RustAgentCore.instance` loads the library at runtime and
-//! throws when the artifact is missing or its ABI version differs, so a build that forgot
-//! `python rust/build_android.py` fails on the first call instead of quietly running a second copy
-//! of the semantics.
-//!
-//! The HTTP transport and the localised sentences stay in Dart: closing a socket is the only way to
-//! abort a pending read, and user-facing text belongs with the app's localisation.
-//!
-//! Layout:
-//! * [`paste`] — the four-step clipboard recogniser (`agent_api_text_parser.dart`).
-//! * [`secret`] — the XOR-mask + Base64 key obfuscator (`key_obfuscator.dart`).
-//! * [`prompt`] — the two analysis prompts (`agent_prompts.dart`).
-//! * [`traffic`] — log-table aggregation and the rendered section (`agent_traffic_summary.dart`).
-//! * [`api`] — endpoint derivation, request body and both response shapes (`agent_api_client.dart`).
-//! * [`wire`] — the little-endian payload reader/writer.
-//! * [`payload`] — the traffic-summary block shared by two entries.
-//! * [`ffi`] — the C ABI surface.
-
 pub mod api;
 pub mod ffi;
 pub mod paste;

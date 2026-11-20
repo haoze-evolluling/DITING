@@ -1,15 +1,3 @@
-//! The pure evaluator: one plan ([`evaluate`]) or many independent rules ([`evaluate_rules`]).
-//!
-//! A *plan* is the subscription shape — one `schedule` cadence applied to a list of `records`
-//! (each with `lastAttemptAt`) — and produces `{due, nextDueAt, windowActive}`. Interval and the
-//! two wall-clock cadences keep their original semantics byte-for-byte (the 3-day look-back, the
-//! anchor day, every-other-day parity and "due from `lastAttemptAt`"), so
-//! `diting-subscription-core` can delegate here without a behaviour change. `cron`, `window` and
-//! `pause` extend the same interface.
-//!
-//! `now` and every wall-clock slot are injected as civil milliseconds ([`crate::civil`]); the
-//! kernel never reads a clock or a timezone.
-
 use std::collections::HashMap;
 
 use serde_json::{json, Value};
@@ -20,8 +8,6 @@ use crate::payload;
 
 const HOUR_MS: i64 = 3_600_000;
 
-/// The cadence a plan follows. `Interval` is "every N hours since the last attempt"; the two
-/// wall-clock cadences consume the caller-supplied `day → slot` table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Cadence {
     Interval,
@@ -33,8 +19,6 @@ pub enum Cadence {
 }
 
 impl Cadence {
-    /// `schedule` (plan) or `kind` (rule) spelling → cadence; anything unknown is `Interval`, the
-    /// legacy default the subscription kernel used.
     pub fn from(value: Option<&str>) -> Cadence {
         match value {
             Some("daily") => Cadence::Daily,
@@ -47,7 +31,6 @@ impl Cadence {
     }
 }
 
-/// The `(id, lastAttemptAt)` rows a plan is evaluated against.
 fn records(request: &Value) -> Vec<(i64, i64)> {
     payload::list(request, "records")
         .iter()
@@ -60,7 +43,6 @@ fn records(request: &Value) -> Vec<(i64, i64)> {
         .collect()
 }
 
-/// The subscription-compatible slot plan. Mirrors the legacy `Plan` one-for-one.
 struct SlotPlan {
     cadence: Cadence,
     interval_hours: i64,
@@ -85,8 +67,6 @@ impl SlotPlan {
         }
     }
 
-    /// The most recent scheduled moment at or before `now`; three days covers the every-other-day
-    /// gap and a slot later today.
     fn latest_slot_at(&self, now: i64) -> Option<i64> {
         for offset in 0..3 {
             let day = self.now_day - offset;
@@ -102,8 +82,6 @@ impl SlotPlan {
         None
     }
 
-    /// The first scheduled moment strictly after `from`; the anchor day makes this wait for the
-    /// next slot when the chosen time already passed.
     fn next_slot_after(&self, from: i64) -> Option<i64> {
         let start = if self.now_ms < self.since_ms {
             self.since_before_day
@@ -123,7 +101,6 @@ impl SlotPlan {
         None
     }
 
-    /// Due from `lastAttemptAt`; a never-attempted row is due at once.
     fn is_due(&self, last_attempt_at: i64) -> bool {
         if last_attempt_at <= 0 {
             return true;
@@ -226,7 +203,6 @@ fn eval_cron(request: &Value, now_ms: i64) -> Option<Value> {
     Some(json!({ "due": due, "nextDueAt": next_due, "windowActive": false }))
 }
 
-/// Whether `minute_of_day` falls inside `[start, end)`; `end < start` is an overnight window.
 fn in_window(minute_of_day: i64, start: i64, end: i64) -> bool {
     if start < end {
         minute_of_day >= start && minute_of_day < end
@@ -242,7 +218,6 @@ fn eval_window(request: &Value, now_ms: i64) -> Option<Value> {
     let end = payload::integer(request, "windowEndMinutes")?;
     let civil_now = civil::split(now_ms);
     let active = in_window(civil_now.minute_of_day, start, end);
-    // The opening time of the window that contains (or most recently preceded) `now`.
     let start_today = civil::epoch_ms(civil_now.days, start);
     let overnight_and_before_end = start > end && civil_now.minute_of_day < end;
     let window_start = if overnight_and_before_end {
@@ -270,7 +245,6 @@ fn eval_window(request: &Value, now_ms: i64) -> Option<Value> {
     } else if !due.is_empty() {
         json!(now_ms)
     } else {
-        // The next opening strictly after now.
         let next_open = if start_today > now_ms {
             start_today
         } else {
@@ -292,7 +266,6 @@ fn eval_pause(request: &Value, now_ms: i64) -> Option<Value> {
             if paused {
                 false
             } else {
-                // Became due at `until`; not attempted since.
                 last < until || last <= 0
             }
         })
@@ -310,7 +283,6 @@ fn eval_pause(request: &Value, now_ms: i64) -> Option<Value> {
     Some(json!({ "due": due, "nextDueAt": next_due, "windowActive": false }))
 }
 
-/// One evaluation for a whole plan: the due ids, the next due moment and whether a window is open.
 pub fn evaluate(request: &Value) -> Option<Value> {
     let cadence = Cadence::from(request.get("schedule").and_then(Value::as_str));
     let now_ms = payload::integer_or(request, "nowMs", 0);
@@ -322,9 +294,6 @@ pub fn evaluate(request: &Value) -> Option<Value> {
     }
 }
 
-/// Evaluates a `{ "rules": [{ "id", "kind", ... }] }` document, aggregating every rule's due ids,
-/// the earliest next moment and whether any window is currently open. Each rule is evaluated by
-/// the same [`evaluate`] path, so the two entry points cannot disagree.
 pub fn evaluate_rules(now_ms: i64, document: &Value) -> Value {
     let now_day = civil::split(now_ms).days;
     let mut due: Vec<Value> = Vec::new();

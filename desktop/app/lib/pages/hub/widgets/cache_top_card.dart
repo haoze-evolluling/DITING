@@ -1,7 +1,3 @@
-/// The ten names with the most local cache hits, ranked by the service.
-///
-/// The console's `CacheTopDomains.vue` is the blueprint: a rank badge, the name and its record
-/// type, a share bar and the hit count. The list is neither re-sorted nor extended here.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

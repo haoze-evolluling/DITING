@@ -1,5 +1,3 @@
-//! The kind/prefix whitelist and the pattern fold.
-
 use super::*;
 
 #[test]
@@ -33,7 +31,6 @@ fn the_pattern_needs_a_scheme_prefix() {
     ] {
         assert!(normalize("block", pattern).is_none(), "{pattern}");
     }
-    // The scheme itself is enough: the old check only looked at the prefix.
     assert!(normalize("block", "https://").is_some());
     assert!(normalize("block", "http://").is_some());
 }

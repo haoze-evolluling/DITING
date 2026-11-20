@@ -1,8 +1,3 @@
-// R6: the rule-set version store and the native diff/record kernel.
-//
-// Uses an in-memory sqflite database for the store and the real Rust core for the diff and the
-// retention decision, so the preview and the stored history come from the same implementation.
-
 import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/rules/rust_rule_version_core.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,7 +95,6 @@ void main() {
       }
       final history = await repository.history('sub_1', limit: 50);
       expect(history, hasLength(10));
-      // Newest first: the last recorded version is the head.
       expect(history.first.rules, ['||v13.com^']);
       expect(history.last.rules, ['||v4.com^']);
     });

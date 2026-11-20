@@ -1,5 +1,3 @@
-/// Sites probed by the site-latency card and its detail page. Domains let each CDN map the probe
-/// to a nearby node, which is what the card reports.
 library;
 
 import 'package:diting_android/data/site_latency_categories.dart';
@@ -25,7 +23,6 @@ class SiteLatencyTarget {
   final SiteCategory category;
 }
 
-/// The four sites the dashboard card shows unless the user picks others.
 const defaultDashboardSiteIds = <String>[
   'baidu',
   'douyin',
@@ -33,7 +30,6 @@ const defaultDashboardSiteIds = <String>[
   'netease',
 ];
 
-/// Everything the user can put on the card or probe from the detail page.
 const siteLatencyTargets = <SiteLatencyTarget>[
   SiteLatencyTarget(
     id: 'baidu',
@@ -345,7 +341,6 @@ const siteLatencyTargets = <SiteLatencyTarget>[
   ),
 ];
 
-/// Every known id, used to drop ids from an older install or a restored backup.
 final Set<String> siteLatencyIds = {for (final t in siteLatencyTargets) t.id};
 
 SiteLatencyTarget? siteLatencyById(String id) {
@@ -357,14 +352,11 @@ SiteLatencyTarget? siteLatencyById(String id) {
   return null;
 }
 
-/// Targets of one category, in catalog order.
 List<SiteLatencyTarget> siteLatencyInCategory(SiteCategory category) => [
   for (final target in siteLatencyTargets)
     if (target.category == category) target,
 ];
 
-/// The card's slots: unknown ids and duplicates drop, and nothing is padded — a card the user
-/// trimmed to two sites draws two cells rather than silently refilling the empty slots.
 List<SiteLatencyTarget> resolveDashboardSites(Iterable<String> ids) {
   final picked = <SiteLatencyTarget>[];
   for (final id in ids) {

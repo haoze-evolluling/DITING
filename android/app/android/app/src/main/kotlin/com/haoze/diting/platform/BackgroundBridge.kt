@@ -11,21 +11,15 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.security.MessageDigest
 
-/// Native half of the custom background: picking a `content://` image and caching it locally.
-/// Picking needs an Activity round trip; BitmapFactory downsamples without OOM and converts
-/// HEIC, which Flutter cannot decode. Caches are named by URI hash.
 class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
     companion object {
         const val CHANNEL = "com.haoze.diting/background"
 
-        /// Must not overlap PlatformBridge: it claims 0x5701-0x5704 and is checked first in
-        /// MainActivity.onActivityResult, so a shared code silently swallows the image result.
         private const val REQUEST_PICK_IMAGE = 0x5705
 
         private const val CACHE_DIR = "background"
 
-        /// Longest decoded edge; larger keeps more detail at a memory cost
         private const val MAX_DIMENSION = 2048
     }
 
@@ -61,7 +55,6 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
             }
     }
 
-    /// Called from `MainActivity.onActivityResult`; true when the request was ours
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode != REQUEST_PICK_IMAGE) return false
         val pending = pendingPickResult ?: return true
@@ -73,7 +66,6 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
         }
         Thread {
             runCatching {
-                // Needed to re-read this content:// image when the cache is rebuilt.
                 activity.contentResolver.takePersistableUriPermission(
                     uri,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION,
@@ -97,7 +89,6 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
         return true
     }
 
-    /// Local cache path for a URI, decoding it first when missing
     private fun resolve(call: MethodCall, result: MethodChannel.Result) {
         val uri = call.argument<String>("uri")?.trim().orEmpty()
         if (uri.isEmpty()) {
@@ -134,7 +125,6 @@ class BackgroundBridge(private val activity: Activity) : MethodChannel.MethodCal
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
-    /// Downsampled PNG: the wallpaper fills one screen, so more pixels only waste memory.
     private fun cacheImage(uri: Uri): String? {
         val resolver = activity.contentResolver
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }

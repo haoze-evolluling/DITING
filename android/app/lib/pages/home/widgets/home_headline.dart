@@ -6,11 +6,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// The fixed top of the home page: power button, then the sentence for the current state.
-///
-/// Returns list children rather than one wrapper so each layer keeps its own semantics node (a
-/// single `Column` would merge the sentence into the button's label) and the paragraph stays a
-/// separate scroll item, exactly as before the desktop home started sharing it.
 List<Widget> buildHomeHeadline({
   required BuildContext context,
   required WidgetRef ref,

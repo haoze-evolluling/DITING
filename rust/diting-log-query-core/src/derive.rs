@@ -1,13 +1,9 @@
-//! Aggregates shared by the dashboard, request feed and statistics cards. Every ratio, fold and
-//! sort order here is one of the legacy counting rules; labels stay in Dart.
-
 use serde_json::{json, Map, Value};
 
 use crate::classify;
 use crate::payload;
 use crate::util::{b, child, dart_cmp, i, items, n, percent, resolved_name, s};
 
-/// The request feed: both tables merged newest-first, with the page window applied.
 fn feed(request: &Value) -> Option<Value> {
     let limit = payload::integer_or(request, "limit", 0).max(0);
     let dns = items(request, "dns");
@@ -64,7 +60,6 @@ fn feed(request: &Value) -> Option<Value> {
     Some(json!({ "items": merged, "hasMore": has_more }))
 }
 
-/// Request counts of both tables per package, most requests first and name as the tie-breaker.
 fn app_counts(request: &Value) -> Option<Value> {
     let mut merged: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
     for row in items(request, "dns")
@@ -92,7 +87,6 @@ fn app_counts(request: &Value) -> Option<Value> {
     }))
 }
 
-/// Race board for the dashboard: a compact summary plus named ranking rows.
 fn race_board(request: &Value) -> Option<Value> {
     let summary = child(request, "summary");
     let entries = items(request, "ranking")
@@ -116,7 +110,6 @@ fn race_board(request: &Value) -> Option<Value> {
     }))
 }
 
-/// Full race page: summary, named ranking, per-strategy rows and smart-selection rows.
 fn race_stats(request: &Value) -> Option<Value> {
     let summary = child(request, "summary");
     let entries = items(request, "ranking")
@@ -210,8 +203,6 @@ fn bootstrap_stats(request: &Value) -> Option<Value> {
     Some(answer)
 }
 
-/// Subscription interception rows; `sortByName` distinguishes the page (hits, then name) from the
-/// overview card (hits only).
 fn subscription_stats(request: &Value) -> Option<Value> {
     let total = payload::integer_or(request, "total", 0);
     let subscriptions: std::collections::HashMap<i64, &Map<String, Value>> =

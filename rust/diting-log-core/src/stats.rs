@@ -1,22 +1,10 @@
-//! The notification's numbers: request counters buckets and the transfer rates derived from the
-//! traffic ticks.
-//!
-//! `RequestStats` and `TrafficRateMonitor` were two process-wide singletons fed by the engine
-//! callbacks; they now share one handle because every reader (the notification, the dashboard card)
-//! takes both in the same breath. The classification lives here so the dashboard's "rewritten also
-//! counts as passed" rule has exactly one implementation.
-
 use std::sync::Mutex;
 
 use crate::row::{is_blank, DnsInput};
 
-/// A late or post-idle tick is divided by at most this interval, so a burst is not turned into a
-/// fraction by the whole idle gap (the engine only ticks when it has data, so gaps can be seconds).
 const MAX_RATE_INTERVAL_MS: i64 = 2_000;
-/// No data tick for this long means the link is idle: report zero instead of the last value.
 const RATE_STALE_MS: i64 = 3_000;
 
-/// `RequestStats.Snapshot`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct RequestSnapshot {
     pub total: i64,
@@ -37,7 +25,6 @@ struct Inner {
     rx_bps: i64,
 }
 
-/// The request counters plus the rate monitor.
 #[derive(Debug, Default)]
 pub struct Stats {
     inner: Mutex<Inner>,
@@ -48,10 +35,6 @@ impl Stats {
         Self::default()
     }
 
-    /// `RequestStats.onDns`: one entry of the engine's batch DNS log.
-    ///
-    /// Connection and firewall lines are flows, not queries, so they stay out like they do on the
-    /// dashboard's request overview; a blank domain is not a query either.
     pub fn record_dns(&self, input: &DnsInput) {
         if is_blank(&input.domain) {
             return;
@@ -83,7 +66,6 @@ impl Stats {
         }
     }
 
-    /// `RequestStats.onHttp`: the HTTPS outcome, mapped like `httpRowStatusOf` on the Dart side.
     pub fn record_http(&self, outcome: &str) {
         let mut inner = self.inner.lock().unwrap_or_else(|error| error.into_inner());
         inner.requests.total += 1;
@@ -94,7 +76,6 @@ impl Stats {
                 inner.requests.passed += 1;
             }
             "blocked" | "invalid" => inner.requests.filtered += 1,
-            // Bypassed flows count toward the total only.
             "passthrough" | "bypassed" | "unsupported_protocol" | "resource_bypass" => {}
             _ => inner.requests.failed += 1,
         }
@@ -112,11 +93,6 @@ impl Stats {
         inner.requests = RequestSnapshot::default();
     }
 
-    /// `TrafficRateMonitor.onTick`: per-second rates from the tick delta.
-    ///
-    /// The first tick only stamps the clock (there is no interval to divide by yet), and a
-    /// non-positive interval is ignored rather than divided by zero. The interval is clamped to
-    /// [`MAX_RATE_INTERVAL_MS`] so the first tick after an idle gap is not divided by the gap.
     pub fn tick_rate(&self, tx: i64, rx: i64, now_ms: i64) {
         let mut inner = self.inner.lock().unwrap_or_else(|error| error.into_inner());
         let previous = inner.last_at_ms;
@@ -125,7 +101,6 @@ impl Stats {
             if elapsed <= 0 {
                 return;
             }
-            // Divide by the interval this delta covers, but never by the whole idle gap.
             let interval = elapsed.min(MAX_RATE_INTERVAL_MS);
             inner.tx_bps = tx.wrapping_mul(1000) / interval;
             inner.rx_bps = rx.wrapping_mul(1000) / interval;
@@ -135,8 +110,6 @@ impl Stats {
         inner.last_at_ms = now_ms;
     }
 
-    /// The rates for `now_ms`. A link that has not ticked for [`RATE_STALE_MS`] is idle, so the last
-    /// value must not be reported forever.
     pub fn rate_snapshot(&self, now_ms: i64) -> (i64, i64) {
         let inner = self.inner.lock().unwrap_or_else(|error| error.into_inner());
         if inner.last_at_ms == 0 || now_ms.wrapping_sub(inner.last_at_ms) > RATE_STALE_MS {
@@ -183,7 +156,6 @@ mod tests {
         };
         stats.record_dns(&cached);
         let snapshot = stats.request_snapshot();
-        // A cached answer counts as passed *and* cached.
         assert_eq!(
             (snapshot.total, snapshot.passed, snapshot.cached),
             (2, 2, 1)
@@ -263,17 +235,14 @@ mod tests {
     fn rates_need_two_ticks_and_a_positive_interval() {
         let stats = Stats::new();
         stats.tick_rate(1000, 2000, 10_000);
-        // The first tick only stamps the clock.
         assert_eq!(stats.rate_snapshot(10_000), (0, 0));
 
         stats.tick_rate(3000, 5000, 11_000);
         assert_eq!(stats.rate_snapshot(11_000), (3000, 5000));
 
-        // A late callback divides by the real interval, here two seconds.
         stats.tick_rate(6000, 10_000, 13_000);
         assert_eq!(stats.rate_snapshot(13_000), (3000, 5000));
 
-        // A clock that did not move (or went back) leaves the rates alone.
         stats.tick_rate(9000, 15_000, 13_000);
         assert_eq!(stats.rate_snapshot(13_000), (3000, 5000));
 
@@ -288,10 +257,8 @@ mod tests {
         stats.tick_rate(100_000, 200_000, 11_000);
         assert_eq!(stats.rate_snapshot(11_000), (100_000, 200_000));
 
-        // No tick for more than RATE_STALE_MS: the link is idle, so do not keep the old value.
         assert_eq!(stats.rate_snapshot(15_000), (0, 0));
 
-        // The empty-tick path feeds (0, 0) every second, which also drives the rate to zero.
         stats.tick_rate(0, 0, 12_000);
         assert_eq!(stats.rate_snapshot(12_000), (0, 0));
     }
@@ -300,7 +267,6 @@ mod tests {
     fn a_post_idle_tick_is_not_divided_by_the_whole_gap() {
         let stats = Stats::new();
         stats.tick_rate(1, 1, 1_000);
-        // 60 s of silence, then 100 KB in one burst: clamp to 2 s, not 60 s.
         stats.tick_rate(100_000, 100_000, 61_000);
         assert_eq!(stats.rate_snapshot(61_000), (50_000, 50_000));
     }

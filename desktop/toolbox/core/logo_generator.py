@@ -28,21 +28,19 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from PIL import Image
 
-try:  # 作为包导入
+try:
     from . import vector_raster as vr
     from .paths import ANDROID_RES_DIR, BRAND_XML, DESKTOP_APP_DIR, SERVICE_DIR, SHARED_DIR
-except ImportError:  # 直接脚本运行
+except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from core import vector_raster as vr  # type: ignore[no-redef]
     from core.paths import ANDROID_RES_DIR, BRAND_XML, DESKTOP_APP_DIR, SERVICE_DIR, SHARED_DIR
 
 AND = "{http://schemas.android.com/apk/res/android}"
 
-# === 品牌调色板（唯一真源） ===
 LIGHT = {"background": "#FAF8F9", "foreground": "#007AFE"}
 DARK = {"background": "#1F1F22", "foreground": "#2E83FF"}
 
-# Android 传统启动器位图规格（px）：mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi
 ANDROID_DENSITIES: Sequence[Tuple[str, int]] = (
     ("mdpi", 48),
     ("hdpi", 72),
@@ -54,9 +52,6 @@ ANDROID_DENSITIES: Sequence[Tuple[str, int]] = (
 DESKTOP_SIZES = (1024, 512, 256)
 ICO_SIZES = (16, 24, 32, 48, 64, 128, 256)
 
-# Android 12+ splash icon. The brand card is authored on a 144dp artboard; the platform bounds
-# the splash icon to a 192dp circle on a 288dp artboard, so the card is kept at 150dp — its
-# rounded corners (radius 80.8 of 144, i.e. 84.2dp) stay inside that circle and never clip.
 SPLASH_ARTBOARD = 288.0
 SPLASH_CARD_SIDE = 150.0
 
@@ -65,9 +60,6 @@ def _log_default(level: str, message: str) -> None:
     print(f"[{level.upper()}] {message}")
 
 
-# --------------------------------------------------------------------------- #
-# 源矢量解析
-# --------------------------------------------------------------------------- #
 def load_shapes(palette: Dict[str, str], xml_path: Optional[str] = None) -> Tuple[List[vr.Shape], Tuple[float, float, float, float]]:
     """把 Android VectorDrawable 解析为可按任意配色渲染的形状序列。"""
     path = xml_path or BRAND_XML
@@ -182,9 +174,6 @@ def adaptive_svg() -> str:
     )
 
 
-# --------------------------------------------------------------------------- #
-# 导出
-# --------------------------------------------------------------------------- #
 def _save_png(image: Image.Image, path: str, log: Callable[[str, str], None]) -> str:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     image.save(path, "PNG", optimize=True)
@@ -211,16 +200,12 @@ def export_desktop(log: Callable[[str, str], None]) -> List[str]:
     light_192 = light_1024.resize((192, 192), Image.LANCZOS)
     light_64 = light_1024.resize((64, 64), Image.LANCZOS)
 
-    # NSIS 安装包与系统服务图标
     files.append(_save_png(light_1024, os.path.join(server, "build", "appicon.png"), log))
     files.append(_save_ico(light_512, os.path.join(server, "build", "windows", "icon.ico"), log))
-    # Linux 桌面启动器 / 窗口管理器图标
     files.append(_save_png(light_512, os.path.join(server, "build", "linux", "diting.png"), log))
 
-    # Flutter Windows 原生窗口图标
     files.append(_save_ico(light_512, os.path.join(desktop_app, "windows", "runner", "resources", "app_icon.ico"), log))
 
-    # Flutter Web 控制台（局域网浏览器访问）图标
     web = os.path.join(desktop_app, "web")
     icons = os.path.join(web, "icons")
     files.append(_save_png(light_64, os.path.join(web, "favicon.png"), log))
@@ -250,7 +235,6 @@ def splash_icon_xml(xml_path: Optional[str] = None) -> str:
     """
     source = xml_path or BRAND_XML
     root = ET.parse(source).getroot()
-    # 元素名不带命名空间（只有 android:xxx 属性带），与 load_shapes 的遍历方式一致。
     card = next((n for n in root.iter("path") if n.get(AND + "strokeColor")), None)
     totem = next((n for n in root.iter("group") if n.get(AND + "scaleX")), None)
     if card is None or totem is None:
@@ -335,8 +319,6 @@ def export_android_launcher(res_dir: str, log: Callable[[str, str], None], label
             _save_png(base.resize((size, size), Image.LANCZOS), target, log)
             files.append(target)
 
-    # 清掉早期版本留下的 mipmap-night-* 位图：它们会在深色模式下压过自适应图标，
-    # 把图标降级成位图并招来桌面端的白色底板。目录空了就一并删掉。
     for density, _ in ANDROID_DENSITIES:
         stale = os.path.join(res_dir, f"mipmap-night-{density}")
         if os.path.isdir(stale):
@@ -365,15 +347,11 @@ def export_all(on_log: Optional[Callable[[str, str], None]] = None) -> Dict[str,
     exported += export_flutter_assets(log)
     flutter_res = ANDROID_RES_DIR
     exported += export_android_launcher(flutter_res, log, "android/app")
-    # Flutter 是唯一在 v31 主题里声明了启动图标的工程。
     exported += export_android_splash(flutter_res, log, "android/app")
     log("info", f"完成，共导出 {len(exported)} 个品牌资源文件")
     return {"success": True, "files": exported, "palettes": {"light": LIGHT, "dark": DARK}}
 
 
-# --------------------------------------------------------------------------- #
-# 维护工具箱兼容层（旧接口：自定义底色 / 图腾色）
-# --------------------------------------------------------------------------- #
 def generate_squircle_svg(
     bg_color: str = LIGHT["background"],
     totem_color: str = LIGHT["foreground"],

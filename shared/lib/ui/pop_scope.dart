@@ -30,7 +30,6 @@ class CommonPopScope extends StatelessWidget {
               if (didPop) {
                 return;
               }
-              // BackLayerScope adds its entry a frame late, so a route below rebuilds nothing here.
               if (route?.willHandlePopInternally == true) {
                 Navigator.of(context).pop();
                 return;

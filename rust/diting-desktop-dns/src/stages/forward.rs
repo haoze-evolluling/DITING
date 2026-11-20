@@ -1,9 +1,3 @@
-//! Terminal upstream forwarding.
-//!
-//! `DesktopResolver` has already applied the conditional route, the client group's dedicated
-//! upstreams and the fallback chain. This stage only turns a transport failure into SERVFAIL so the
-//! client never hangs, and records the error for EDE and the query log.
-
 use std::sync::Arc;
 
 use async_trait::async_trait;

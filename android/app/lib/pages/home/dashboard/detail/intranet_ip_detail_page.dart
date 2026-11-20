@@ -11,9 +11,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Intranet IP detail: the card fits one address and a one-line hint. This page lists the whole
-/// network snapshot — interface, IPv4/IPv6, gateway, DNS servers, VPN and private-DNS state — plus
-/// the local address for diagnostics.
 class IntranetIpDetailPage extends ConsumerWidget {
   const IntranetIpDetailPage({super.key});
 
@@ -135,8 +132,6 @@ class IntranetIpDetailPage extends ConsumerWidget {
                 )
               : DashboardDetailRows(
                   rows: [
-                    // Numbered: a column of rows all labelled "DNS" left no way to tell
-                    // which server was the primary one.
                     for (final (index, server) in dnsServers.indexed)
                       DashboardDetailRow(
                         label: index == 0
@@ -164,8 +159,6 @@ class IntranetIpDetailPage extends ConsumerWidget {
   );
 }
 
-/// Tap-to-copy row for the address other devices should use. Kept as its own card so the action
-/// reads as a button rather than as one more plain list row.
 class _CopyCard extends StatelessWidget {
   const _CopyCard({required this.address});
 

@@ -1,13 +1,3 @@
-/// The native DNS configuration core: the Rust crate in `rust/diting-dns-config-core`, loaded over
-/// `dart:ffi`.
-///
-/// The library is required. [`RustDnsConfigCore.instance`] throws when the artifact is missing, the
-/// platform is unsupported or the ABI version differs, so a build that forgot
-/// `python rust/build_android.py` fails on the first config push instead of quietly pushing a
-/// second, drifting document.
-///
-/// Payload layout lives in `rust/diting-dns-config-core/src/ffi.rs`; `_abiVersion` must match
-/// `ABI_VERSION` there.
 library;
 
 import 'dart:convert';
@@ -19,13 +9,10 @@ part 'rust_dns_config_core_build.dart';
 part 'rust_dns_config_core_payload.dart';
 part 'rust_dns_config_core_records.dart';
 
-/// Must match `ABI_VERSION` in `rust/diting-dns-config-core/src/ffi.rs`.
 const _abiVersion = 3;
 
-/// `"DDC1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31434444;
 
-// Operation bytes, mirroring the Rust constants.
 const _opSplitAddress = 0;
 const _opParseProviders = 1;
 const _opEncodeProviders = 2;
@@ -43,12 +30,10 @@ class RustDnsConfigCore {
 
   final KernelCore _core;
 
-  /// Resolved library path, surfaced in diagnostics.
   String get libraryPath => _core.libraryPath;
 
   static RustDnsConfigCore? _instance;
 
-  /// The loaded core; throws [StateError] when no usable artifact was found.
   static RustDnsConfigCore get instance => _instance ??= _load();
 
   static RustDnsConfigCore _load() => RustDnsConfigCore._(
@@ -61,7 +46,6 @@ class RustDnsConfigCore {
     ),
   );
 
-  /// `_splitAddress`: DoH keeps the text as its URL, everything else becomes host + port.
   ({String url, String host, int port}) splitProviderAddress(
     String protocolStorage,
     String address,
@@ -115,7 +99,6 @@ class RustDnsConfigCore {
     return _call('providers', writer).providerRows();
   }
 
-  /// `host:port`, bracketing a bare IPv6 host so the engine can parse the result.
   String joinHostPort(String host, int port) {
     final reader = _call(
       'providers',
@@ -127,7 +110,6 @@ class RustDnsConfigCore {
     return reader.string();
   }
 
-  /// `bootstrap_custom_json` rows, including the `enabled` flag the settings page toggles.
   List<BootstrapRow> parseCustomBootstrap(String? raw) {
     final reader = _call(
       'providers',
@@ -148,7 +130,6 @@ class RustDnsConfigCore {
     return reader.string();
   }
 
-  /// `_opPresetFromPolicy`: which preset the raw cache keys describe.
   int cachePresetFromPolicy({
     required String mode,
     required int maxTtlSeconds,
@@ -167,7 +148,6 @@ class RustDnsConfigCore {
     staleFallbackSeconds: staleFallbackSeconds,
   );
 
-  /// The stored preset when it parses, otherwise the derived one.
   int currentCachePreset(
     String? presetRaw, {
     required String mode,
@@ -211,7 +191,6 @@ class RustDnsConfigCore {
     return _call('presets', writer).u8();
   }
 
-  /// The nine values a preset writes into the prefs.
   CacheValues presetValues(int index) => _readCacheValues(
     _call(
       'presets',
@@ -221,7 +200,6 @@ class RustDnsConfigCore {
     ),
   );
 
-  /// The prefs spelling of a preset index.
   String presetStorage(int index) => _call(
     'presets',
     _PayloadWriter()
@@ -247,7 +225,6 @@ class RustDnsConfigCore {
     );
   }
 
-  /// Sends one payload to [entry] and checks the reply header.
   _PayloadReader _call(String entry, _PayloadWriter writer) {
     final reply = _core.invoke(writer.finish(), entry: entry);
     if (reply.isEmpty) {

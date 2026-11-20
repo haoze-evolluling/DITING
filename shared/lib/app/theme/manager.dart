@@ -2,8 +2,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:material_ui/material_ui.dart';
 
-/// The inputs a theme is assembled from. Equal [AppThemeSpec]s must produce the same
-/// [ThemeData], which lets [AppThemeCache] skip a rebuild.
 @immutable
 class AppThemeSpec {
   const AppThemeSpec({
@@ -21,20 +19,12 @@ class AppThemeSpec {
   final bool pureBlack;
   final ColorStyle style;
 
-  /// Overrides `ThemeData.fontFamily` (`.withAppTypography` rewrites sizes but keeps the family);
-  /// null keeps the platform default from `appFontFamilyFallback`.
   final String? fontFamily;
 
-  /// Ignores [fontFamily] and `appFontFamilyFallback`, leaving the font to the engine's system
-  /// default. The desktop window opts in so it draws exactly like a native Windows app; Android
-  /// keeps the fallback chain its Han glyphs depend on.
   final bool useSystemFonts;
 
-  /// Makes the page background transparent so the wallpaper shows through; same as upstream
-  /// `DITINGTheme(transparentBackground)`.
   final bool transparentPage;
 
-  /// Only used by the settings previews; the app always builds both specs from an [AppThemePair].
   AppThemeSpec copyWith({
     Color? seedColor,
     Brightness? brightness,
@@ -77,9 +67,6 @@ class AppThemeSpec {
   );
 }
 
-/// Builds the theme as upstream `theme_manager.dart`: seeded scheme, `.toPureBlack` (dark only),
-/// `.withAppShapes`, `.withAppSurfaces`, `.withAppTypography`. Order is load-bearing:
-/// `withAppSurfaces` reads the resolved `colorScheme`, so it must follow `toPureBlack`.
 ThemeData buildAppTheme(
   AppThemeSpec spec, {
   TargetPlatform? platform,
@@ -99,7 +86,6 @@ ThemeData buildAppTheme(
       backButtonIconBuilder: (_) => const GlyphIcon(AppGlyphs.chevronBack),
       closeButtonIconBuilder: (_) => const GlyphIcon(AppGlyphs.close),
     ),
-    // Transparent page background only; cards and sheets stay opaque.
     colorScheme: scheme,
     fontFamily: spec.useSystemFonts ? null : spec.fontFamily,
     fontFamilyFallback: spec.useSystemFonts
@@ -111,17 +97,11 @@ ThemeData buildAppTheme(
   );
 }
 
-/// Caches the last theme per brightness. [ThemeData] never compares equal to a fresh one and
-/// [ThemeCrossFade] keys its cross-fade off that, so an uncached rebuild on every unrelated state
-/// change would flash the screen.
 class AppThemeCache {
-  /// Bounded so a long drag across the palette picker cannot grow the map; 16 covers 9 palettes
-  /// times 2 brightness.
   static const maxEntries = 16;
 
   final Map<AppThemeSpec, ThemeData> _themes = {};
 
-  /// Number of cached themes; tests assert the bound.
   int get length => _themes.length;
 
   ThemeData of(
@@ -133,7 +113,6 @@ class AppThemeCache {
     if (cached != null) {
       return cached;
     }
-    // Insertion order is eviction order and the set is tiny, so plain FIFO is enough.
     if (_themes.length >= maxEntries) {
       _themes.remove(_themes.keys.first);
     }
@@ -144,11 +123,9 @@ class AppThemeCache {
     );
   }
 
-  /// Drops everything; only tests and a locale switch need this.
   void clear() => _themes.clear();
 }
 
-/// A convenience wrapper: the light and dark themes a `MaterialApp` wants.
 class AppThemePair {
   AppThemePair({
     required this.seedColor,
@@ -163,13 +140,10 @@ class AppThemePair {
   final bool pureBlack;
   final ColorStyle style;
 
-  /// True when a custom background is on: page background is transparent.
   final bool transparentPage;
 
-  /// Font family chosen on `/font-family`; null keeps the platform default.
   final String? fontFamily;
 
-  /// Drops [fontFamily] and the platform fallback chain; see [AppThemeSpec.useSystemFonts].
   final bool useSystemFonts;
 
   AppThemeSpec get lightSpec => AppThemeSpec(

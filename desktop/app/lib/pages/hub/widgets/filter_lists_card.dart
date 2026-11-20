@@ -1,8 +1,3 @@
-/// The subscription lists: a counters strip, the add/refresh actions and one tile per list with its
-/// health, its last pull and the three per-row actions.
-///
-/// The old desktop console's `RuleListsPanel.vue` is the blueprint. The page never edits a rule
-/// count or a health badge by hand: it sends the write and shows the rows the service answers with.
 library;
 
 import 'dart:async';
@@ -19,10 +14,8 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Two tiles appear once two still fit their URL and footer; below this they stack.
 const double _twoColumnBreakpoint = 900;
 
-/// The counters above the lists: what the engine blocked, how large it is and how many lists are on.
 class FilterSummaryCard extends StatelessWidget {
   const FilterSummaryCard({
     super.key,
@@ -33,7 +26,6 @@ class FilterSummaryCard extends StatelessWidget {
 
   final DesktopFilterSummary summary;
 
-  /// The master switch; only the page that owns the config write path passes it.
   final ValueChanged<bool>? onToggle;
   final bool saving;
 
@@ -128,7 +120,6 @@ class FilterSummaryCard extends StatelessWidget {
   }
 }
 
-/// The list itself: header actions, the empty state and the tiles.
 class FilterListsCard extends ConsumerWidget {
   const FilterListsCard({super.key});
 

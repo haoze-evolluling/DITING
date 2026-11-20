@@ -1,6 +1,3 @@
-//! The vectors the Go tests (`rewrite_test.go` / `rewrite_records_test.go`) pin, run directly on
-//! the engine.
-
 use super::*;
 
 fn rule(domain: &str) -> RuleConfig {
@@ -57,7 +54,6 @@ fn exact_rules_answer_by_query_type() {
         Record::Aaaa([0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
     );
 
-    // A matched rule without a record of the query type is authoritative NODATA.
     let result = engine.lookup("nas.lan", 15);
     assert!(result.matched);
     assert!(result.answers.is_empty());
@@ -86,7 +82,6 @@ fn wildcards_match_by_longest_suffix_and_keep_configuration_order() {
         a_addresses(&engine.lookup("my.lan", TYPE_A).answers),
         vec![[10, 0, 0, 1]]
     );
-    // The wildcard also matches its own suffix, like the old `norm == w.suffix` branch.
     assert_eq!(
         a_addresses(&engine.lookup("lan", TYPE_A).answers),
         vec![[10, 0, 0, 1]]
@@ -124,7 +119,6 @@ fn shortcut_cname_chains_and_stops_on_loops() {
     assert!(result.matched);
     assert!(!result.answers.is_empty());
 
-    // A CNAME query gets the alias without chasing.
     let result = engine.lookup("alias1.lan", TYPE_CNAME);
     assert_eq!(result.answers.len(), 1);
     assert_eq!(
@@ -203,7 +197,6 @@ fn explicit_records_are_filtered_by_query_type_and_cname_wins_its_owner() {
         Record::Cname("final.lan.".to_string())
     );
 
-    // Only the legal A record survives the compile pass.
     let result = engine.lookup("mixed.lan", TYPE_A);
     assert_eq!(result.answers.len(), 1);
     assert_eq!(result.answers[0].record, Record::A([10, 0, 0, 1]));
@@ -235,7 +228,6 @@ fn rcode_overrides_the_answer_and_unknown_names_fall_back() {
     assert_eq!(result.rcode, 5);
     assert!(result.answers.is_empty());
 
-    // A typo keeps the rule alive with NOERROR.
     let result = engine.lookup("typo.lan", TYPE_A);
     assert_eq!(result.rcode, RCODE_SUCCESS);
     assert_eq!(result.answers.len(), 1);

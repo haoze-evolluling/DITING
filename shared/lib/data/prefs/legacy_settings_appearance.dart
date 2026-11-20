@@ -1,8 +1,6 @@
 part of 'legacy_settings.dart';
 
-// Appearance and home-screen settings, all in the global `dns_vpn_prefs` container.
 
-/// Key of one log mode's stored card order.
 String logDashboardWidgetOrderKey(String mode) =>
     'log_dashboard_widget_order_$mode';
 
@@ -25,7 +23,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     storageValue,
   );
 
-  /// `none` / `standard` / `ultra`; persisted, since it decides whether the app renders offscreen.
   String get liquidGlassModeRaw =>
       _string(LegacySettings.uiContainer, 'liquid_glass_mode') ?? 'none';
 
@@ -35,7 +32,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     storageValue,
   );
 
-  /// `floating` / `docked`; persisted for the same reason.
   String get bottomBarStyleRaw =>
       _string(LegacySettings.uiContainer, 'bottom_bar_style') ?? 'floating';
 
@@ -45,7 +41,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     storageValue,
   );
 
-  /// `none` / `fade` / `slide` / `scale`; same persistence requirement.
   String get tabTransitionRaw =>
       _string(LegacySettings.uiContainer, 'tab_transition') ?? 'slide';
 
@@ -55,21 +50,18 @@ extension LegacyAppearanceSettings on LegacySettings {
     storageValue,
   );
 
-  /// Pure black theme, only visible in dark mode; off by default as in 1.4.3.
   bool get pureBlackEnabled =>
       _bool(LegacySettings.uiContainer, 'pure_black_theme', false);
 
   void setPureBlackEnabled(bool value) =>
       _store.putBool(LegacySettings.uiContainer, 'pure_black_theme', value);
 
-  /// Raw linear text scale; `clampTextScale` applies the layout bounds when read.
   double get textScale =>
       _double(LegacySettings.uiContainer, 'app_text_scale', 1);
 
   void setTextScale(double value) =>
       _store.putFloat(LegacySettings.uiContainer, 'app_text_scale', value);
 
-  /// `ThemeData.fontFamily` override; a missing or empty value means the platform default.
   String? get fontFamily {
     final raw = _string(LegacySettings.uiContainer, 'app_font_family');
     return raw == null || raw.isEmpty ? null : raw;
@@ -81,22 +73,16 @@ extension LegacyAppearanceSettings on LegacySettings {
     family ?? '',
   );
 
-  /// JSON list of the fonts the user imported; the shape lives in
-  /// `lib/data/fonts/font_repository.dart`, which owns the parsing.
   String? get importedFontsRaw =>
       _string(LegacySettings.uiContainer, 'app_imported_fonts');
 
   void setImportedFontsRaw(String raw) =>
       _store.putString(LegacySettings.uiContainer, 'app_imported_fonts', raw);
 
-  /// Dashboard card order by `DashboardWidget.name`; null when the board was never edited, so the
-  /// built-in defaults apply while an emptied board still restores as empty.
   List<String>? get dashboardWidgetOrder => _decodeWidgetNames(
     _string(LegacySettings.uiContainer, 'dashboard_widget_order'),
   );
 
-  /// Log dashboard card order for one log mode (`LegacyLogMode.storageValue`); each mode keeps
-  /// its own layout because each mode shows a different card set. Null means never edited.
   List<String>? logDashboardWidgetOrder(String mode) => _decodeWidgetNames(
     _string(LegacySettings.uiContainer, logDashboardWidgetOrderKey(mode)),
   );
@@ -139,7 +125,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     _double(LegacySettings.uiContainer, 'home_component_opacity', 1),
   );
 
-  /// Per-element opacity falls back to the shared component opacity.
   double homeOpacity(String storageKey) => LegacySettings._clampedOpacity(
     _double(LegacySettings.uiContainer, storageKey, componentOpacity),
   );
@@ -186,9 +171,6 @@ extension LegacyAppearanceSettings on LegacySettings {
     value,
   );
 
-  /// Launcher icon style id (`default` / `adguard`). PackageManager persists the enabled
-  /// activity-alias itself; this mirror lets the app restore the choice after an update and show
-  /// the selected tile without querying the platform synchronously.
   String get launcherIconStyleRaw =>
       _string(LegacySettings.uiContainer, 'launcher_icon_style') ?? 'default';
 

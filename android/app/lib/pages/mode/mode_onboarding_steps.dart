@@ -1,6 +1,5 @@
 part of 'mode_onboarding_page.dart';
 
-/// Step 1: confirm the work mode. Display only, since the mode was already chosen.
 class _ChooseModeStep extends StatelessWidget {
   const _ChooseModeStep({required this.mode});
 
@@ -79,10 +78,6 @@ _PermissionSpec _batteryPermission(AppL10n l10n, String detail) => (
   detail: detail,
 );
 
-/// Step 2: request the permissions this mode needs. Every row is a real request: `VPN 连接` opens
-/// the system consent dialog, `通知` the runtime permission (or the notification settings screen
-/// below Android 13), `忽略电池优化` the allowlist dialog, and `应用列表` the vendor permission with a
-/// settings fallback. Denial consequences are spelled out, since the service degrades silently.
 class _PermissionStep extends ConsumerWidget {
   const _PermissionStep();
 
@@ -90,8 +85,6 @@ class _PermissionStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final mode = ref.watch(workModeProvider);
-    // In the root variant there is no VPN consent to request; the settings page reports whether
-    // root is actually available.
     final rootTakeover =
         mode == AppWorkMode.normal && ref.watch(rootDnsTakeoverProvider);
     final permissions = switch (mode) {

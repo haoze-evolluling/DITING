@@ -34,14 +34,11 @@ class BackupStats {
   final int listedApps;
 }
 
-/// Real stats: providers from prefs, subscriptions and rules from their tables, apps from three
-/// lists.
 final backupStatsProvider = FutureProvider<BackupStats>((ref) async {
   ref.watch(legacySettingsRevisionProvider);
   ref.watch(subscriptionRevisionProvider);
   ref.watch(dnsLogRevisionProvider);
   final settings = ref.watch(legacySettingsProvider);
-  // Rules, subscriptions and their settings all live in the active data set's database.
   final db = await ref.watch(subscriptionDatabaseProvider.future);
 
   var subscriptions = 0;
@@ -53,12 +50,9 @@ final backupStatsProvider = FutureProvider<BackupStats>((ref) async {
     } on Exception {
       subscriptions = 0;
     }
-    // Counted in SQLite: the overview needs a number, and loading the three tables to count them
-    // exhausted the heap on subscription-sized databases.
     try {
       customRules = await RuleRepository(db).countUser();
     } on Exception {
-      // A missing table counts as 0: this tile is an overview, not an error.
       customRules = 0;
     }
   }
@@ -86,7 +80,6 @@ final backupImporterProvider = Provider<BackupImporter>(
   (ref) => const BackupImporter(),
 );
 
-/// What [BackupActions.exportToDocument] ended up doing; the page only needs to report it.
 class BackupExportOutcome {
   const BackupExportOutcome.saved(BackupExportResult this.result)
     : cancelled = false,
@@ -106,7 +99,6 @@ class BackupExportOutcome {
     : result = null,
       cancelled = false;
 
-  /// Set only when the document was written.
   final BackupExportResult? result;
   final bool cancelled;
   final String? error;
@@ -130,11 +122,6 @@ class BackupActions {
         );
   }
 
-  /// Exports straight into the document the user picks, one chunk per group.
-  ///
-  /// The picker opens first: nothing is generated until there is somewhere to write it, and the
-  /// JSON never exists as a whole string. An empty selection deletes the file again instead of
-  /// leaving an empty document behind.
   Future<BackupExportOutcome> exportToDocument(Set<BackupGroup> groups) async {
     final bridge = _ref.read(platformBridgeProvider);
     final begun = await bridge.beginExportDocument(
@@ -182,7 +169,6 @@ class BackupActions {
     }
   }
 
-  /// Opens the system picker, parses and merges the picked file.
   Future<BackupImportResult> importFromDocument() async {
     final picked = await _ref.read(platformBridgeProvider).importDocument();
     if (picked.cancelled) return const BackupImportResult.cancelled();
@@ -194,7 +180,6 @@ class BackupActions {
     return importText(text, sourceName: picked.name);
   }
 
-  /// Merges backup text (WebDAV restore path, no file picker).
   Future<BackupImportResult> importText(
     String text, {
     String? sourceName,
@@ -218,8 +203,6 @@ class BackupActions {
     return result;
   }
 
-  /// Rule-writing groups went into the active database; recompile its tries so the next service
-  /// start does not pay the compile itself (the stamp re-check would force it otherwise).
   void _refreshIndexesIfNeeded(BackupImportResult result) {
     const ruleGroups = {
       BackupGroup.subscriptions,

@@ -1,10 +1,3 @@
-/// The `hub` branch's cache page: the acceleration engine, the service's telemetry, the ten hottest
-/// names, the policy forms (TTL, fallback, prefetch), persistence and its snapshot, the exclude rules
-/// and the cached-entry table.
-///
-/// The old desktop console (`ResolveView.vue` and its `accel/CachePanel.vue`) is the functional
-/// blueprint. The page owns no cache logic: it polls `/api/v1/cache/stats|top|persist`, posts the
-/// whole config to `/api/v1/cache/config`, and shows what the service re-reads.
 library;
 
 import 'dart:async';

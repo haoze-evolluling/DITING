@@ -1,13 +1,3 @@
-/// The native rule core: the Rust crate in `rust/diting-rule-core`, loaded over `dart:ffi`.
-///
-/// The library is required. [`RustRuleCore.instance`] throws when the artifact is missing, the
-/// platform is unsupported or the ABI version differs, so a build that forgot
-/// `python rust/build_android.py` fails at the first import instead of quietly running a second
-/// parser that could drift from the shipped one.
-///
-/// Payload layout lives in `rust/diting-rule-core/src/ffi.rs`; `_abiVersion` must match
-/// `ABI_VERSION` there, and the Rust tests fail on a payload change precisely so this number moves
-/// with it.
 library;
 
 import 'dart:convert';
@@ -17,19 +7,14 @@ import 'dart:typed_data';
 
 import 'package:diting_android/data/rules/rule_models.dart';
 
-/// Must match `ABI_VERSION` in `rust/diting-rule-core/src/ffi.rs`.
 const _abiVersion = 2;
 
-/// Must match `SEARCH_ABI_VERSION` in `rust/diting-rule-core/src/search_ffi.rs`.
 const _searchAbiVersion = 1;
 
-/// `"DRC1"` read as a little-endian u32; the first field of every payload.
 const _payloadMagic = 0x31435244;
 
-/// `"DRQ1"`, the first field of every search result payload.
 const _searchResultMagic = 0x31515244;
 
-/// Explicit library path, for a dev build or a test runner outside the app bundle.
 const _pathVariable = 'DITING_RULE_CORE_LIB';
 
 typedef _AbiVersionNative = Uint32 Function();
@@ -79,12 +64,10 @@ class RustRuleCore {
   final _StreamNextDart _streamNext;
   final _StreamFreeDart _streamFree;
 
-  /// Resolved library path, surfaced in the benchmark tool and diagnostics.
   final String libraryPath;
 
   static RustRuleCore? _instance;
 
-  /// The loaded core; throws [StateError] when no usable artifact was found.
   static RustRuleCore get instance => _instance ??= _load();
 
   static RustRuleCore _load() {
@@ -143,7 +126,6 @@ class RustRuleCore {
     );
   }
 
-  /// Parses a whole rule document. Throws [StateError] on a rejected payload.
   CategorizedRules parse(String text) {
     final bytes = utf8.encode(text);
     final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
@@ -167,9 +149,6 @@ class RustRuleCore {
     }
   }
 
-  /// Builds a search index from `payload` (layout in `search_ffi.rs`) and returns its handle.
-  ///
-  /// Throws [StateError] when the payload was rejected.
   int buildSearchIndex(Uint8List payload) {
     final inputPtr = payload.isEmpty ? nullptr : _alloc(payload.length);
     try {
@@ -186,9 +165,6 @@ class RustRuleCore {
     }
   }
 
-  /// Row indices in `handle` whose pattern or target contains [needle], ascending.
-  ///
-  /// Throws [StateError] on a rejected query payload.
   Uint32List matchSearchIndex(int handle, String needle) {
     final bytes = utf8.encode(needle);
     final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
@@ -212,22 +188,14 @@ class RustRuleCore {
     }
   }
 
-  /// Releases an index built by [buildSearchIndex]. Unknown or already freed handles are ignored.
   void freeSearchIndex(int handle) {
     _searchFree(handle);
   }
 
-  /// Lines per streaming chunk. Large enough to amortize the per-call FFI/setup cost, small enough
-  /// that one chunk's `CategorizedRules` plus its import plan stays a bounded working set.
   static const int _streamChunkLines = 2048;
 
-  /// Streams [text] as bounded [CategorizedRules] chunks (see [RuleStreamParse]).
   RuleStreamParse streamParse(String text) => streamParseBytes(utf8.encode(text));
 
-  /// Streams raw document bytes, skipping the String → bytes re-encode a decoded body would need.
-  ///
-  /// The bytes are copied into the native session, so this releases its input buffer before
-  /// returning the session.
   RuleStreamParse streamParseBytes(Uint8List bytes) {
     final inputPtr = bytes.isEmpty ? nullptr : _alloc(bytes.length);
     try {
@@ -245,8 +213,6 @@ class RustRuleCore {
   }
 
   static String? _libraryName() {
-    // Cargo turns `diting-rule-core` into `libditing_rule_core.so` / `.dylib` and
-    // `diting_rule_core.dll`; see `[lib] name` in the crate manifest.
     if (Platform.isAndroid) return 'libditing_native.so';
     if (Platform.isLinux) return 'libditing_rule_core.so';
     if (Platform.isWindows) return 'diting_rule_core.dll';
@@ -254,8 +220,6 @@ class RustRuleCore {
     return null;
   }
 
-  /// Probe order: explicit path, the packaged library name, then repo build output — the last one
-  /// lets `flutter test` on the desktop host exercise the real native path without an APK.
   static Iterable<String> _libraryCandidates() sync* {
     final explicit = Platform.environment[_pathVariable];
     if (explicit != null && explicit.isNotEmpty) {
@@ -280,9 +244,6 @@ class RustRuleCore {
   }
 }
 
-/// A pull session over a streaming document parse. Each [next] returns the next bounded chunk and
-/// decodes it into a short-lived [CategorizedRules]; call [dispose] (ideally in a `finally`) to
-/// release the native session.
 class RuleStreamParse {
   RuleStreamParse._(this._core, this._handle);
 
@@ -290,8 +251,6 @@ class RuleStreamParse {
   int _handle;
   bool _done = false;
 
-  /// The next chunk, or null once the document is exhausted. Throws [FormatException] on a payload
-  /// that does not decode.
   CategorizedRules? next() {
     if (_done) return null;
     final outLenPtr = _core._alloc(sizeOf<Size>()).cast<Size>();
@@ -313,7 +272,6 @@ class RuleStreamParse {
     }
   }
 
-  /// Releases the native session. Idempotent.
   void dispose() {
     if (_handle != 0) {
       _core._streamFree(_handle);
@@ -323,11 +281,6 @@ class RuleStreamParse {
   }
 }
 
-/// Sequential reader over the search result payload (`encode_hits` in `search_ffi.rs`).
-///
-/// The row indices are copied into a `Uint32List` instead of being read one by one: a broad query
-/// matches most of a subscription-sized table, and a boxed `List<int>` of 100k hits costs more than
-/// the scan that produced it.
 Uint32List _decodeHits(Uint8List payload) {
   final reader = _PayloadReader(payload);
   if (reader.readU32() != _searchResultMagic) {
@@ -342,9 +295,6 @@ Uint32List _decodeHits(Uint8List payload) {
   if (start + count * 4 > payload.length) {
     throw const FormatException('rule search payload runs past the buffer');
   }
-  // The payload is what Rust's allocator returned (8-byte aligned) and the index block starts at
-  // offset 12, so the view is aligned; every Flutter target is little-endian, which is the byte
-  // order `encode_hits` writes. Copied because the payload is released by the caller.
   return Uint32List.fromList(payload.buffer.asUint32List(start, count));
 }
 
@@ -386,14 +336,11 @@ CategorizedRules _decodeRules(Uint8List payload) {
   );
 }
 
-// ParsedRule record bits (see `encode_rule` in ffi.rs).
 const _flagImportant = 1;
 const _flagAppInverted = 2;
 const _flagWildcard = 4;
 const _flagRegex = 8;
 
-// ParsedUrlRule record bits (see `encode_url_rule` in ffi.rs): `isAllow` is bit 1, so `important`
-// moves to bit 2 — reusing `_flagImportant` here read the allow bit instead.
 const _flagUrlAllow = 1;
 const _flagUrlImportant = 2;
 
@@ -452,7 +399,6 @@ ParsedCosmeticRule _readCosmeticRule(_PayloadReader reader) {
   );
 }
 
-/// Sequential little-endian reader over the payload Rust wrote.
 class _PayloadReader {
   _PayloadReader(this._bytes) : _view = ByteData.sublistView(_bytes);
 
@@ -493,10 +439,6 @@ class _PayloadReader {
     return _stringAt(start, length);
   }
 
-  /// `String.fromCharCodes` for ASCII (the common case, no decode pass) and UTF-8 otherwise.
-  ///
-  /// `utf8.decode` drops a leading BOM, but `rawLine` must stay byte-identical to the line the
-  /// user imported (a UTF-8-BOM file keeps its BOM in the first rule), so the BOM is re-attached.
   String _stringAt(int start, int length) {
     if (length == 0) return '';
     var isAscii = true;

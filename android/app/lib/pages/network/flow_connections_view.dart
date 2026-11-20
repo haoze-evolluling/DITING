@@ -1,6 +1,3 @@
-/// N4 实时连接视图：按 应用 → 域名 → 远端 展示正在发生的连接（协议 / 状态 / 上下行）。
-///
-/// 连接监控页的一段内容；不带自己的 Scaffold，滚动由外层 `PageBody` 负责。
 library;
 
 import 'package:diting_android/data/native/flow_bridge.dart';
@@ -28,8 +25,6 @@ class _FlowConnectionsViewState extends State<FlowConnectionsView> {
     }
     if (groups.isEmpty) return const SizedBox.shrink();
 
-    // U9: on a tablet the app list becomes a left pane and the selected app's connections the
-    // right, so a busy device does not force one long mixed scroll.
     final wide = MediaQuery.sizeOf(context).width >= 720;
     final apps = groups.keys.toList();
     final selectedApp = _selectedApp;

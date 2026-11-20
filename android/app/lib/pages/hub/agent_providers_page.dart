@@ -7,8 +7,6 @@ import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// AI provider management (upstream `AiProviderManageScreen`), persisted by `AgentApiNotifier` so
-/// "test connection" reflects what is on disk. An empty key keeps the existing one.
 class AgentProvidersPage extends ConsumerWidget {
   const AgentProvidersPage({super.key});
 

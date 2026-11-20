@@ -14,15 +14,12 @@ import 'package:material_ui/material_ui.dart';
 
 part 'page_transition_card.dart';
 
-/// iOS 27 pushes and pops a page on a critically damped spring of 0.3 s that
-/// sets off at nine times its distance a second, as measured on the simulator.
 final _pushSpring = SpringDescription.withDurationAndBounce(
   duration: const Duration(milliseconds: 300),
 );
 const _pushSpeed = 9.0;
 const _settleTolerance = Tolerance(distance: 1e-3, velocity: 1e-2);
 
-/// For what reads a route's duration rather than following its animation.
 Duration _settlingTimeOf(SpringDescription spring, double launchSpeed) {
   final simulation = SpringSimulation(
     spring,
@@ -41,8 +38,6 @@ Duration _settlingTimeOf(SpringDescription spring, double launchSpeed) {
 const cardCoveredSlide = 0.3;
 const cardCoveredDim = Color.from(alpha: 0.1, red: 0, green: 0, blue: 0);
 
-/// UIKit's zoom shrinks the page it covers toward its center by 34.667 dp of
-/// width, to no less than 80%, and dims it.
 const _recededShrinkWidth = 34.667;
 const _recededMinScale = 0.8;
 const _recededDim = Color.from(alpha: 0.15, red: 0, green: 0, blue: 0);
@@ -50,7 +45,6 @@ const _recededDim = Color.from(alpha: 0.15, red: 0, green: 0, blue: 0);
 double _recededShrinkOf(Size size) =>
     math.min(1 - _recededMinScale, _recededShrinkWidth / size.width);
 
-/// What a 4% black Gaussian of sigma 12 casts past the card's leading edge.
 const _cardShadowSigma = 12.0;
 const _cardShadowStops = [0.0, 1 / 6, 1 / 3, 1 / 2, 2 / 3, 1.0];
 final _cardShadowColors = [
@@ -88,8 +82,6 @@ T measureAtRest<T>(T Function() measure) {
 
 bool get isMeasuringAtRest => _measuringAtRest;
 
-/// How a route moves its page's bar items: [lifted] out of a snapshot of the
-/// page, [moving] while the page moves under a bar that holds still.
 typedef BarItemsMotion = ({
   bool lifted,
   bool moving,
@@ -97,15 +89,9 @@ typedef BarItemsMotion = ({
   double? tracking,
 });
 
-/// The display's corners where the platform reports them, which Android does
-/// from API 31; elsewhere a moving page stays square.
 BorderRadius displayRadiusOf(BuildContext context) =>
     MediaQuery.displayCornerRadiiOf(context) ?? BorderRadius.zero;
 
-/// The [ModalRoute.delegatedTransition] of every card route. Sharing it keeps
-/// Flutter from wrapping one's page in another's transition, which would move
-/// the page to a new parent and rebuild all of it; any other route under a
-/// card route stays still.
 Widget? _cardRouteMotion(
   BuildContext context,
   Animation<double> animation,
@@ -114,14 +100,11 @@ Widget? _cardRouteMotion(
   Widget? child,
 ) => null;
 
-/// iOS 27's navigation push.
 mixin CardRouteMixin<T> on ModalRoute<T> {
   BorderRadius cardRadiusOf(BuildContext context) => displayRadiusOf(context);
 
   Color settledFillOf(Color surface) => surface;
 
-  /// A root page hosts a nested navigator whose own branch animations build
-  /// every frame; snapshotting it would freeze those animations.
   @protected
   bool get snapshotWhileMoving => true;
 
@@ -131,16 +114,12 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
   @protected
   SpringDescription get closeSpring => _pushSpring;
 
-  /// The speed a spring from rest sets off at, as a multiple of its distance
-  /// a second.
   @protected
   double get openLaunchSpeed => _pushSpeed;
 
   @protected
   double get closeLaunchSpeed => _pushSpeed;
 
-  /// Whether this route shrinks the page it covers, as iOS's zoom does,
-  /// rather than sliding it back.
   @protected
   bool get recedesCovered => false;
 
@@ -167,11 +146,9 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
     _ => const AlwaysStoppedAnimation(0.0),
   };
 
-  /// How far a drag back of this route shows the bar items under it.
   @protected
   double? get barItemsUncovering => null;
 
-  /// Whether [animation]'s card has moved in and not yet moved back out.
   @protected
   bool hasCome(Animation<double> animation) => switch (animation.status) {
     AnimationStatus.forward => animation.value > 0,
@@ -180,7 +157,6 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
     AnimationStatus.dismissed => false,
   };
 
-  /// iOS's bar items hold still while a push moves the pages under them.
   @protected
   BarItemsMotion computeBarItems() {
     final secondary = secondaryAnimation!;
@@ -204,12 +180,8 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
   @protected
   void updateBarItems() => _barItems.value = computeBarItems();
 
-  // Impeller redraws a moving page in full each frame.
   final _motionSnapshot = SnapshotController();
 
-  // Only a page going out of view is drawn from its snapshot. One coming into
-  // view stays live, as a frozen picture of it would show what it held when
-  // last covered, such as a press still fading out, until it settles.
   void _updateMotionSnapshot() {
     final animation = this.animation!;
     final secondary = secondaryAnimation!;
@@ -259,7 +231,6 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
   bool canTransitionTo(TransitionRoute<dynamic> nextRoute) =>
       nextRoute is CardRouteMixin;
 
-  // The navigator announces a route pushed over this one while it pops.
   @override
   void didChangeNext(Route<dynamic>? nextRoute) {
     final next = isActive ? nextRoute : null;
@@ -319,8 +290,6 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
     if (!snapshotWhileMoving) {
       return child;
     }
-    // The snapshot has no host over it, so one within takes the page's panes
-    // for it, and they come out as glass rather than a flat tint.
     final path = PageBackgroundScope.pathOf(context);
     final content = path == null
         ? child
@@ -367,12 +336,9 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
     final controller = this.controller!;
     final velocity = controller.isAnimating ? controller.velocity : null;
     final popped = super.didPop(result);
-    // A pop that only drops a local history entry, such as a search layer,
-    // leaves the route in place.
     if (!popped) {
       return false;
     }
-    // A drag back lets go with its own spring.
     if (this case DragBackRouteMixin<T>(isDragBackActive: true)) {
       return popped;
     }
@@ -450,6 +416,3 @@ class HomeRoute<T> extends PageRoute<T> with CardRouteMixin<T> {
     );
   }
 }
-
-/// Moves the page by painting alone, so it is neither rebuilt nor laid out
-/// again while it moves.

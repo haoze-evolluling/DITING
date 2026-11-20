@@ -1,5 +1,3 @@
-/// Ball, filter chips and rows of the floating log window. Status colours and glyphs come from
-/// the request page so both surfaces read the same.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -21,8 +19,6 @@ String floatingLogTime(int timestamp, {bool withDate = false}) {
       : clock;
 }
 
-/// The collapsed window: the brand icon on a raised disc, plus the count of blocked requests since
-/// the panel was last closed.
 class FloatingLogBall extends StatelessWidget {
   const FloatingLogBall({super.key, required this.badge, required this.onTap});
 
@@ -96,7 +92,6 @@ class FloatingLogBall extends StatelessWidget {
   }
 }
 
-/// One status filter with its count; the selected one is filled with the accent container.
 class FloatingLogFilterChip extends StatelessWidget {
   const FloatingLogFilterChip({
     super.key,
@@ -112,7 +107,6 @@ class FloatingLogFilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  /// Status colour of the dot; null for "all".
   final Color? color;
 
   @override
@@ -167,8 +161,6 @@ class FloatingLogFilterChip extends StatelessWidget {
   }
 }
 
-/// A request row; tapping it unfolds the rule, handling and resolution details in place, since a
-/// sheet would not fit the window. Long press copies the host.
 class FloatingLogRow extends StatelessWidget {
   const FloatingLogRow({
     super.key,
@@ -182,7 +174,6 @@ class FloatingLogRow extends StatelessWidget {
   final bool expanded;
   final VoidCallback onTap;
 
-  /// Called with the text to copy.
   final ValueChanged<String> onCopy;
 
   @override
@@ -375,7 +366,6 @@ class _SmallButton extends StatelessWidget {
   }
 }
 
-/// Status buckets offered as chips, in the order of the request page's menu.
 const floatingLogStatuses = [
   RequestStatus.all,
   RequestStatus.blocked,
@@ -385,7 +375,6 @@ const floatingLogStatuses = [
   RequestStatus.passed,
 ];
 
-/// Shown while the list is scrolled away from the top and new rows arrive; tapping jumps back.
 class FloatingLogNewRowsPill extends StatelessWidget {
   const FloatingLogNewRowsPill({
     super.key,
@@ -438,7 +427,6 @@ class FloatingLogNewRowsPill extends StatelessWidget {
   }
 }
 
-/// In-panel confirmation; the window has no ScaffoldMessenger and a system toast would stack.
 class FloatingLogToast extends StatelessWidget {
   const FloatingLogToast({super.key, required this.message});
 

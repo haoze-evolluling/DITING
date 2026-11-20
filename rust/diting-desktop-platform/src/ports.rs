@@ -1,12 +1,5 @@
-//! Listener address predicates and quick bind probes.
-//!
-//! Used before takeover: if 53 is already occupied by another resolver the service must refuse to
-//! start rather than steal the socket. `SO_REUSEADDR` is deliberately *not* set — on Windows it
-//! would let a second process bind the same UDP port and silently split DNS traffic.
-
 use std::net::{SocketAddr, UdpSocket};
 
-/// True when every address is a local loopback endpoint (no LAN exposure).
 pub fn is_only_loopback(udp_addrs: &[String], tcp_addrs: &[String]) -> bool {
     udp_addrs
         .iter()
@@ -19,7 +12,6 @@ pub fn is_loopback_address(address: &str) -> bool {
     host == "127.0.0.1" || host == "::1" || host == "localhost"
 }
 
-/// `AreAddressesAvailable`: all UDP and TCP addresses can be bound right now.
 pub fn are_addresses_available(udp_addrs: &[String], tcp_addrs: &[String]) -> bool {
     udp_addrs.iter().all(|address| test_udp_bind(address))
         && tcp_addrs.iter().all(|address| test_tcp_bind(address))

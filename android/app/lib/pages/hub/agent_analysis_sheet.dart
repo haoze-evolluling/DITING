@@ -1,8 +1,3 @@
-/// The AI report sheet, opened from a log row, a request detail or the settings test buttons.
-///
-/// One sheet owns one run: it records the session id returned by [AgentAnalysisNotifier.start]
-/// and only shows results that belong to it, so a stale answer from a previous sheet can never
-/// appear here.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -21,7 +16,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Opens the report sheet for [target]; resolves when the sheet closes.
 Future<void> openAgentAnalysis(
   BuildContext context,
   AgentAnalysisTarget target,
@@ -41,8 +35,6 @@ class AgentAnalysisSheet extends ConsumerStatefulWidget {
 
   final AgentAnalysisTarget target;
 
-  /// A finished session to show instead of starting a new one, used by the dashboard card so
-  /// tapping it does not spend another request. Zero means "start fresh".
   final int adoptSessionId;
 
   @override
@@ -50,24 +42,20 @@ class AgentAnalysisSheet extends ConsumerStatefulWidget {
 }
 
 class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
-  /// Session this sheet started; results with another id are not ours to show.
   int _sessionId = 0;
   bool _showDigest = false;
 
-  /// Feedback for the last rule write, cleared when a new run starts.
   String? _appliedAction;
 
   @override
   void initState() {
     super.initState();
-    // The first frame has to paint before the notifier can publish a state change.
     WidgetsBinding.instance.addPostFrameCallback((_) => _startIfReady());
   }
 
   void _startIfReady() {
     if (!mounted) return;
     if (widget.adoptSessionId != 0) {
-      // Reuse the run the caller already has; only start over if it has been replaced since.
       final existing = ref.read(agentAnalysisProvider);
       if (existing.sessionId == widget.adoptSessionId && existing.success) {
         setState(() => _sessionId = widget.adoptSessionId);
@@ -119,7 +107,6 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     return CommonScaffold(
       title: widget.target.title(context.l10n),
       body: ListView(
-        // The sheet title floats over the body, so this top padding is required.
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
           _Header(target: widget.target),
@@ -144,7 +131,6 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     );
   }
 
-  /// The single mutually exclusive state panel, or null once the result is shown.
   Widget? _statusSection({
     required AgentApiState api,
     required AgentAnalysisState state,
@@ -198,7 +184,6 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     if (mine && state.success) {
       return null;
     }
-    // Nothing running for this sheet: either it was superseded or it never started.
     return _Notice(
       glyph: AppGlyphs.sparkle,
       title: _sessionId == 0
@@ -377,7 +362,6 @@ class _ResultMeta extends StatelessWidget {
   }
 }
 
-/// One mutually exclusive state panel: disabled, unconfigured, loading, failure or empty.
 class _Notice extends StatelessWidget {
   const _Notice({
     required this.glyph,

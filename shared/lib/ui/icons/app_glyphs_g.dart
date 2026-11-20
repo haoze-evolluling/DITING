@@ -1,6 +1,4 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-// Brand marks from Simple Icons (CC0-1.0; trademarks belong to their owners). The `path d` goes
-// through `GlyphPath` rather than `flutter_svg`, so every icon shares one render and theming path.
 part of 'app_glyphs.dart';
 
 const _g_baidu_ = Glyph([
@@ -26,7 +24,6 @@ const _g_baidu_ = Glyph([
   ),
 ]);
 
-/// Douyin. ByteDance uses the same note mark for Douyin and TikTok.
 const _g_douyin_ = Glyph([
   GlyphPath(
     'M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 '

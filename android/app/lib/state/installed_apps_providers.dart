@@ -1,5 +1,3 @@
-/// The installed-app inventory every picker shares; a platform error degrades to an empty list,
-/// never a throw.
 library;
 
 import 'dart:async';
@@ -9,7 +7,6 @@ import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Overridden in `main()`; the default gives an honest "no apps" page on non-Android hosts.
 final installedAppsSourceProvider = Provider<InstalledAppsSource>(
   (ref) => const EmptyInstalledAppsSource(),
 );
@@ -19,17 +16,13 @@ class InstalledAppsSnapshot {
 
   const InstalledAppsSnapshot.empty([this.error]) : apps = const [];
 
-  /// Sorted by label (`AppListSort.LABEL_ASC`, the 1.4.3 default).
   final List<InstalledApp> apps;
 
-  /// Non-null when enumeration failed; the picker shows the reason instead of "no apps".
   final String? error;
 
-  /// Fast membership test for the outbound-proxy validator, which runs on every key stroke.
   Set<String> get packageNames => {for (final app in apps) app.packageName};
 }
 
-/// Bumpable revision for manual refresh; an app installed while a picker is open is rare enough.
 class InstalledAppsRevision extends Notifier<int> {
   @override
   int build() => 0;
@@ -47,8 +40,6 @@ final installedAppsProvider = FutureProvider<InstalledAppsSnapshot>((
   final source = ref.watch(installedAppsSourceProvider);
   try {
     final apps = await source.list();
-    // Sort here: ordering belongs to `InstalledAppsSnapshot`, so no source can hand pages an
-    // unordered list.
     return InstalledAppsSnapshot(
       apps: [...apps]..sort(AppListSort.labelAsc.compare),
     );
@@ -63,38 +54,19 @@ final installedAppsProvider = FutureProvider<InstalledAppsSnapshot>((
   }
 });
 
-/// Convenience for pages that only need the list (null while loading).
 final installedAppListProvider = Provider<List<InstalledApp>?>((ref) {
   return ref.watch(installedAppsProvider).value?.apps;
 });
 
-/// Icons asked for per channel call. Small batches keep each message (and the decode it causes on
-/// the UI isolate) short and let rows fill in as batches land, instead of the whole list waiting
-/// for one call that carries hundreds of PNGs.
 const appIconBatchSize = 24;
 
-/// Upper bound on icons held in memory. Only packages that were actually drawn are ever fetched,
-/// so this is a safety net for a long session (scrolling every picker) rather than a working set:
-/// at 192 px a PNG averages ~30 KB, so 240 entries stay under ~8 MB.
 const maxCachedAppIcons = 240;
 
-/// Package name to encoded launcher icon, fetched only when a row actually draws one.
-///
-/// Nothing prefetches the inventory: reading this provider for the whole installed list used to
-/// mmap every installed APK into the process (400+ `Resources` objects) right after startup, which
-/// pushed PSS past 700 MB before the user had opened a single picker. Widgets ask for the packages
-/// they are about to paint via [AppIconsNotifier.request]; the cache is LRU-bounded by request
-/// order so a long session cannot grow it without limit.
-///
-/// A missing entry renders as a placeholder glyph, so rows never wait on the platform.
 class AppIconsNotifier extends Notifier<Map<String, Uint8List>> {
-  /// Access-ordered: re-inserting on request makes iteration order "least recently asked for".
   final Map<String, Uint8List> _icons = <String, Uint8List>{};
 
-  /// Requested but not handed to the platform yet.
   final Set<String> _queued = <String>{};
 
-  /// Handed to the platform, awaiting a reply; must not be queued again.
   final Set<String> _inFlight = <String>{};
 
   bool _draining = false;
@@ -110,16 +82,12 @@ class AppIconsNotifier extends Notifier<Map<String, Uint8List>> {
     return const {};
   }
 
-  /// Asks for these icons. Safe to call from `initState` / `didUpdateWidget`: repeats and already
-  /// cached packages are dropped, and every request in one frame is coalesced into a single batch
-  /// run so a list of 20 rows does not fire 20 channel calls.
   void request(Iterable<String> packages) {
     var added = false;
     for (final name in packages) {
       if (name.isEmpty || _inFlight.contains(name)) continue;
       final cached = _icons.remove(name);
       if (cached != null) {
-        // Touch: keep it, and move it to the young end of the LRU order.
         _icons[name] = cached;
         continue;
       }
@@ -127,15 +95,12 @@ class AppIconsNotifier extends Notifier<Map<String, Uint8List>> {
     }
     if (!added || _scheduled) return;
     _scheduled = true;
-    // After the frame: `request` is called from build-phase `initState`, and a synchronous
-    // channel call there would reenter the framework.
     scheduleMicrotask(() {
       _scheduled = false;
       unawaited(_drain());
     });
   }
 
-  /// Reads the icon without scheduling a fetch; `null` means "not here (yet)".
   Uint8List? iconOf(String packageName) => _icons[packageName];
 
   Future<void> _drain() async {
@@ -153,7 +118,6 @@ class AppIconsNotifier extends Notifier<Map<String, Uint8List>> {
         } on MissingPluginException {
           return;
         } on PlatformException {
-          // One unreadable batch must not strand the rest of the queue.
           loaded = const {};
         } finally {
           _inFlight.removeAll(batch);
@@ -172,8 +136,6 @@ class AppIconsNotifier extends Notifier<Map<String, Uint8List>> {
     }
   }
 
-  /// Drops the oldest requests once the ceiling is passed. A row still on screen re-requests on
-  /// its next build, so an eviction costs one channel round trip, never a permanent placeholder.
   void _evict() {
     while (_icons.length > maxCachedAppIcons) {
       _icons.remove(_icons.keys.first);
@@ -186,8 +148,6 @@ final appIconsProvider =
       AppIconsNotifier.new,
     );
 
-/// Resolves package names to engine UIDs; uninstalled packages are absent rather than -1, so
-/// callers drop them.
 Future<Map<String, int>> resolveInstalledUids(
   InstalledAppsSource source,
   Iterable<String> packages,
@@ -208,7 +168,6 @@ String _describe(PlatformException error) {
       : currentL10n.appListReadFailed(message);
 }
 
-/// 1.4.3 `AppListFilter` in declaration order; an unknown `storageValue` falls back to [user].
 enum AppListFilter {
   all('ALL'),
   system('SYSTEM'),
@@ -239,7 +198,6 @@ enum AppListFilter {
   };
 }
 
-/// 1.4.3 `AppListSort` with the same storage values; labels compare lowercased, then by package.
 enum AppListSort {
   labelAsc('LABEL_ASC'),
   labelDesc('LABEL_DESC'),
@@ -276,7 +234,6 @@ enum AppListSort {
     if (verdict != 0) {
       return descending ? -verdict : verdict;
     }
-    // The tie-break stays ascending in both directions, as in 1.4.3.
     return a.packageName.compareTo(b.packageName);
   }
 
@@ -288,7 +245,6 @@ enum AppListSort {
   }
 }
 
-/// Query, filter and sort in one place so every picker filters identically.
 List<InstalledApp> visibleInstalledApps({
   required List<InstalledApp> apps,
   required String query,

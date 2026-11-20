@@ -1,6 +1,3 @@
-// The Windows tray bridge: the label mapping stays complete for every locale,
-// and the runner is re-labelled once per locale change (never per rebuild).
-
 import 'package:diting_desktop/data/host/desktop_tray.dart';
 import 'package:diting_desktop/widgets/desktop_tray_sync.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -36,8 +33,6 @@ void main() {
   testWidgets('pushes the active locale once and again after a switch', (
     tester,
   ) async {
-    // The invariant check runs before tearDowns, so the override is reset inside
-    // the test body (finally) rather than through addTearDown.
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     try {
       final calls = <MethodCall>[];
@@ -72,7 +67,6 @@ void main() {
       final zh = calls.single.arguments as Map<Object?, Object?>;
       expect(zh['open_window'], '打开主界面');
 
-      // An unchanged locale must not re-send on rebuild.
       await pumpLocale(const Locale('zh'));
       expect(calls, hasLength(1));
 

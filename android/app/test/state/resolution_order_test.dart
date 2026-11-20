@@ -1,7 +1,3 @@
-// Primary-backup order is persisted per id list and the engine tries providers in that order, so
-// leaving and re-entering the page must keep what the user arranged instead of resetting to the
-// catalog's first entry.
-
 import 'dart:convert';
 
 import 'package:diting_android/pages/hub/resolution_mode_page.dart';
@@ -52,7 +48,6 @@ void _ordering() {
     await tester.pumpAndSettle();
   }
 
-  /// Vertical position of a provider row; the smaller one is tried first.
   double topOf(WidgetTester tester, String name) =>
       tester.getTopLeft(find.text(name)).dy;
 
@@ -97,7 +92,6 @@ void _ordering() {
     await tester.pumpAndSettle();
 
     expect(topOf(tester, '阿里云'), lessThan(topOf(tester, '腾讯云 DNSPod')));
-    // DNS 组的项不参与 DoH 组的换位，槽位保持不动。
     expect(persistedOrder(store), [
       'preset_alidns_doh',
       'preset_dnspod_doh',
@@ -116,7 +110,6 @@ void _ordering() {
     await tester.tap(moveUpOf('阿里云'));
     await tester.pumpAndSettle();
 
-    // 重新挂载（模拟退出页面后再次进入）读同一份偏好。
     await pumpPage(tester, store, key: const ValueKey('reentry'));
 
     expect(topOf(tester, '腾讯云 DNSPod'), lessThan(topOf(tester, '阿里云')));
@@ -124,8 +117,6 @@ void _ordering() {
   });
 }
 
-/// Cards and the status card must read the same order the engine follows instead of the catalog's
-/// preset order.
 void _displayOrder() {
   ProviderContainer container() {
     final dns = {

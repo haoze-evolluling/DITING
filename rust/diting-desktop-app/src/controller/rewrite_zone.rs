@@ -1,5 +1,3 @@
-//! DNS rewrite rules and local authoritative zones.
-
 use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::{RewriteRule, ZoneConfig, ZoneEntry};
@@ -10,7 +8,6 @@ use diting_desktop_core::zone::{
 use crate::controller::ControllerError;
 use crate::AppRuntime;
 
-/// `ipc.ConfigureRewriteRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureRewriteRequest {
@@ -22,7 +19,6 @@ pub struct ConfigureRewriteRequest {
     pub rules: Option<Vec<RewriteRule>>,
 }
 
-/// `ipc.ConfigureZoneRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConfigureZoneRequest {
@@ -34,7 +30,6 @@ pub struct ConfigureZoneRequest {
     pub zones: Option<Vec<ZoneEntry>>,
 }
 
-/// `ipc.ZoneTestRequest`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoneTestRequest {
@@ -46,7 +41,6 @@ pub struct ZoneTestRequest {
     pub ttl: u32,
 }
 
-/// `ipc.ZoneTestResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoneTestResponse {
@@ -56,7 +50,6 @@ pub struct ZoneTestResponse {
     pub error: String,
 }
 
-/// `core.ZoneState`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoneStateDto {
@@ -68,7 +61,6 @@ pub struct ZoneStateDto {
     pub error: String,
 }
 
-/// `ipc.ZoneConfigResponse`.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoneConfigResponse {
@@ -128,7 +120,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `GetZoneConfig`.
     pub fn zone_config(&self) -> ZoneConfigResponse {
         let config = self.config().zone;
         let states: Vec<ZoneStateDto> = self
@@ -158,7 +149,6 @@ impl AppRuntime {
         }
     }
 
-    /// `ConfigureZone`.
     pub fn configure_zone(&self, request: ConfigureZoneRequest) -> Result<(), ControllerError> {
         if let Some(ttl) = request.ttl {
             if ttl == 0 {
@@ -181,7 +171,6 @@ impl AppRuntime {
         .map_err(ControllerError::new)
     }
 
-    /// `ParseZonePreview`: validates through the real engine and previews the record lines.
     pub fn zone_test(&self, request: ZoneTestRequest) -> ZoneTestResponse {
         match preview_zone(&request) {
             Ok(records) => ZoneTestResponse {

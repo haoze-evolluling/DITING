@@ -1,14 +1,9 @@
-/// Subscription URL and mirror helpers. The rules — placeholder set, Java `URLEncoder` spelling,
-/// replacement order, validation order and the lexical line count — live in
-/// `rust/diting-subscription-core/src/url.rs`; this file keeps `Uri` parsing and the localised
-/// sentences.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 
-/// Persisted accepted placeholders, also used for the error sentence.
 const mirrorPlaceholders = <String>{
   '{url}',
   '{urlEncoded}',
@@ -38,7 +33,6 @@ String _mirrorErrorText(String kind) => switch (kind) {
 
 String? _errorOf(Map<String, Object?> answer) => answer['error'] as String?;
 
-/// One sentence for every token the add/edit forms and the mirror helpers can return.
 String subscriptionFormErrorText(String kind) => switch (kind) {
   'pickFile' => currentL10n.subscriptionPickRuleFile,
   'pickTxt' => currentL10n.subscriptionPickTxtFile,
@@ -48,16 +42,12 @@ String subscriptionFormErrorText(String kind) => switch (kind) {
   _ => _urlErrorText(kind),
 };
 
-/// URI components for mirror building: an empty path is `/`, matching the legacy path join. The
-/// downloader also uses this, so the request it plans and the preview it shows agree.
 Map<String, Object?> mirrorUrlParts(Uri? uri) {
   final parts = uriParts(uri);
   if ((parts['path'] as String).isEmpty) parts['path'] = '/';
   return parts;
 }
 
-/// Validates and normalizes a mirror template. Null means no template; a malformed one throws
-/// [FormatException] for the edit panel to report.
 String? normalizeMirrorTemplate(String? template) {
   final answer = _core.call({'op': 'url.normalize', 'template': template});
   final error = _errorOf(answer);
@@ -65,8 +55,6 @@ String? normalizeMirrorTemplate(String? template) {
   return answer['template'] as String?;
 }
 
-/// Builds the mirror URL from a template. `{urlEncoded}` follows Java `URLEncoder` (keeps `*`,
-/// encodes `~`), not `Uri.encodeComponent`.
 String buildMirrorUrl(String template, String originalUrl) {
   final uri = Uri.tryParse(originalUrl);
   if (uri == null) {
@@ -95,15 +83,11 @@ String extractNameFromUrl(String url) {
   return answer['name'] as String? ?? url;
 }
 
-/// Lexically counts effective lines (non-empty, non-comment): a download-layer figure, not the
-/// imported rule count.
 int countEffectiveRuleLines(String content) {
   final answer = _core.call({'op': 'url.lines', 'content': content});
   return (answer['count'] as num?)?.toInt() ?? 0;
 }
 
-/// Basic URL validation: an absolute HTTP(S) URL with a host. Null means valid, otherwise the
-/// returned text is shown to the user.
 String? validateSubscriptionUrl(String url) {
   final trimmed = url.trim();
   final answer = _core.call({

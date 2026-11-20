@@ -1,15 +1,9 @@
-//! The retention sweep's plan and the crash-buffer selection.
-
 use super::Writer;
 use crate::crash;
 use crate::payload::Reader;
 use crate::retention::{self, StoredDays};
 
-// ---------------------------------------------------------------------------------------------
-// Retention plan
-// ---------------------------------------------------------------------------------------------
 
-/// `u8 hasLogDays | i32 logDays | u8 hasTrafficDays | i32 trafficDays | i64 nowMs`.
 pub fn retention_plan(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let log_days = read_stored_days(&mut reader)?;
@@ -48,11 +42,7 @@ fn read_stored_days(reader: &mut Reader<'_>) -> Option<StoredDays> {
     })
 }
 
-// ---------------------------------------------------------------------------------------------
-// Crash buffer selection
-// ---------------------------------------------------------------------------------------------
 
-/// `string packageName | u32 lineCount | lines`.
 pub fn crash_select(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let package_name = reader.string()?;
@@ -88,7 +78,6 @@ mod tests {
         writer.i64(1_000 * retention::DAY_MS);
         let payload = retention_plan(&writer.into_vec()).unwrap();
         let mut reader = Reader::new(&payload);
-        // 7 is the default window; both cutoffs are `now_ms - days * DAY_MS`.
         assert_eq!(reader.i32(), Some(7));
         assert_eq!(reader.i64(), Some(993 * retention::DAY_MS));
         assert_eq!(reader.i32(), Some(60));
@@ -113,7 +102,6 @@ mod tests {
         writer.string("drop com.other.app");
         let payload = crash_select(&writer.into_vec()).unwrap();
         let mut reader = Reader::new(&payload);
-        // The header starts a new block, so only the first line's block names the package.
         assert_eq!(reader.u32(), Some(1));
         assert_eq!(reader.string().as_deref(), Some("keep com.haoze.diting"));
         assert!(reader.finish());

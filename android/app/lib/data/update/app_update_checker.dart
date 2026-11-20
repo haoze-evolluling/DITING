@@ -1,5 +1,3 @@
-/// Checks GitHub Releases and parses the latest version: drop the `v`, cut at `-`, compare as
-/// integers; APK assets prefer `arm64-v8a`.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -58,8 +56,6 @@ class AppUpdateChecker {
     this.mirrorTemplate,
   });
 
-  /// The legacy `AppUpdateManager.RELEASE_URL`; the compile-time override points at a mirror or a
-  /// local fake server.
   static const defaultReleaseUrl = String.fromEnvironment(
     'DITING_RELEASE_URL',
     defaultValue:
@@ -69,10 +65,8 @@ class AppUpdateChecker {
   final String releaseUrl;
   final Duration timeout;
 
-  /// `/config/user-agents` override; GitHub 403s a request without one.
   final String userAgent;
 
-  /// Global mirror template; the release query tries it first and falls back to direct.
   final String? mirrorTemplate;
 
   Future<UpdateCheckResult> check(String currentVersion) async {
@@ -103,7 +97,6 @@ class AppUpdateChecker {
       final request = await client
           .getUrl(Uri.parse(releaseUrl))
           .timeout(timeout);
-      // GitHub 403s a request without a User-Agent; `Accept` selects the schema.
       request.headers.set(
         HttpHeaders.acceptHeader,
         'application/vnd.github+json',
@@ -133,8 +126,6 @@ class AppUpdateChecker {
     }
   }
 
-  /// Turns a non-200 into something the user can act on. A GitHub 403 means rate limiting or a real
-  /// refusal; the body `message` tells them apart.
   static String _statusMessage(int status, String body) {
     final answer = RustAppUpdateCore.instance.statusMessage(status, body);
     final code = (answer['status'] as num?)?.toInt() ?? status;
@@ -150,8 +141,6 @@ class AppUpdateChecker {
     };
   }
 
-  /// Parses a `releases/latest` body. Missing fields are tolerated, but a missing version is an
-  /// explicit error rather than "already latest".
   static UpdateCheckResult parseLatestRelease(
     String payload,
     String currentVersion,
@@ -196,8 +185,6 @@ class AppUpdateChecker {
     _ => throw StateError('app update core: unknown error code "$code"'),
   };
 
-  /// Compares versions component by component as integers. Anything unparseable counts as "not
-  /// newer".
   static bool isNewerVersion(String remote, String current) =>
       RustAppUpdateCore.instance.isNewerVersion(remote, current);
 }

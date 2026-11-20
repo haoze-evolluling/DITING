@@ -11,7 +11,6 @@ import os
 import sys
 import webview
 
-# 添加 desktop 目录至 sys.path，保证 toolbox 包正常被识别
 TOOLBOX_DIR = os.path.dirname(os.path.abspath(__file__))
 DESKTOP_DIR = os.path.dirname(TOOLBOX_DIR)
 if DESKTOP_DIR not in sys.path:
@@ -36,7 +35,6 @@ def main():
 
     api = ApiBridge()
 
-    # 应用窗口图标（品牌导出产物）
     icon_path = os.path.join(paths.SERVICE_DIR, "build", "windows", "icon.ico")
     if not os.path.exists(icon_path):
         icon_path = None
@@ -49,12 +47,10 @@ def main():
         height=args.height,
         min_size=(980, 640),
         text_select=True,
-        # 与前端默认「墨夜」底色一致，避免原生窗口在内容加载前闪出白底
         background_color="#131316",
     )
     api.set_window(window)
 
-    # 启动 PyWebView 事件循环 (在 Windows 上默认使用 WebView2 引擎)
     webview.start(debug=args.debug, icon=icon_path)
 
 

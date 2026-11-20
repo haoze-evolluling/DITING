@@ -1,5 +1,3 @@
-//! HTTP/1.1 + HTTP/2 server with optional WebSocket upgrades.
-
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock, Weak};
@@ -28,12 +26,10 @@ use crate::router;
 use crate::ws::{self, DesktopQueryObserver, WsHub};
 use crate::AppRuntime;
 
-/// Hard body cap for every management request (Go `maxRequestBodyBytes`).
 pub const MAX_BODY_BYTES: usize = 4 << 20;
 
 const WEBSOCKET_GUID: &str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
-/// The management API server.
 pub struct Server {
     runtime: Arc<AppRuntime>,
     auth: Arc<AuthManager>,
@@ -42,7 +38,6 @@ pub struct Server {
     shutdown: Mutex<Option<oneshot::Sender<()>>>,
     join: Mutex<Option<JoinHandle<()>>>,
     started: AtomicBool,
-    /// Weak self-reference so a request handler can rebind the listener from inside a connection.
     self_ref: OnceLock<Weak<Server>>,
 }
 
@@ -62,7 +57,6 @@ impl Server {
         }
     }
 
-    /// Creates a server with an externally owned hub (tests use this to observe broadcasts).
     pub fn with_hub(runtime: Arc<AppRuntime>, hub: Arc<WsHub>) -> Self {
         let config = runtime.config();
         let auth = Arc::new(AuthManager::from_web(&config.web));
@@ -94,7 +88,6 @@ impl Server {
         self.runtime.config().ipc
     }
 
-    /// Builds the observer the service installs before starting DNS.
     pub fn query_observer(&self) -> Arc<dyn QueryObserver> {
         Arc::new(DesktopQueryObserver::new(
             Arc::clone(&self.hub),
@@ -103,14 +96,11 @@ impl Server {
         ))
     }
 
-    /// Binds the configured address and serves until [`Server::shutdown`].
     pub async fn start(self: &Arc<Self>) -> Result<(), String> {
         if self.started.swap(true, Ordering::SeqCst) {
             return Err("IPC 服务已启动".to_string());
         }
         let _ = self.self_ref.set(Arc::downgrade(self));
-        // A failed bind must not leave the service marked as started: the management API would be
-        // unreachable and every retry would answer "already started".
         let (listener, local) = match self.bind_configured().await {
             Ok(bound) => bound,
             Err(error) => {
@@ -125,12 +115,6 @@ impl Server {
         Ok(())
     }
 
-    /// Rebinds to the current configuration without dropping existing connections.
-    ///
-    /// The old accept loop is stopped before the new socket is bound (a wildcard bind conflicts
-    /// with the previous loopback socket). Connections already accepted keep running on their own
-    /// tasks until the client closes them, which is what lets the triggering request answer at
-    /// all.
     pub async fn restart(self: &Arc<Self>) -> Result<SocketAddr, String> {
         if let Some(sender) = self.shutdown.lock().await.take() {
             let _ = sender.send(());
@@ -138,10 +122,7 @@ impl Server {
         if let Some(handle) = self.join.lock().await.take() {
             let _ = tokio::time::timeout(std::time::Duration::from_secs(1), handle).await;
         }
-        // Give the OS a moment to release the port; the Go server slept 100 ms before rebinding.
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        // The old accept loop is gone at this point. If the new bind fails, drop to the stopped
-        // state so a later `start()` can recover instead of answering "already started" forever.
         let (listener, local) = match self.bind_configured().await {
             Ok(bound) => bound,
             Err(error) => {
@@ -158,10 +139,6 @@ impl Server {
         Ok(local)
     }
 
-    /// Rebinds the live listener; used by the Web-console configuration endpoint.
-    ///
-    /// Handlers only see `&Server`, so the upgrade to `Arc<Server>` goes through the weak
-    /// self-reference installed by [`Server::start`].
     pub async fn restart_listener(&self) -> Result<SocketAddr, String> {
         let Some(server) = self.self_ref.get().and_then(Weak::upgrade) else {
             return Err("IPC 服务尚未启动".to_string());
@@ -194,13 +171,8 @@ impl Server {
                 .await
                 .is_err()
             {
-                // The accept loop is already asked to stop; leaning on the timeout keeps shutdown
-                // bounded even if a connection task is stuck in a handshake.
             }
         }
-        // Always clear the flag, even when there was no loop to join (a start that failed after
-        // setting it, or a restart that already took the handle). Otherwise the service can never
-        // be started again.
         self.started.store(false, Ordering::SeqCst);
     }
 
@@ -208,7 +180,6 @@ impl Server {
         *self.listener_addr.lock().await
     }
 
-    /// Bearer/session/loopback verification shared by every protected route.
     pub fn verify_token(&self, token: &str, remote: SocketAddr, headers: &HeaderMap) -> bool {
         let config = self.runtime.config();
         let ipc_token = config.ipc.auth_token;
@@ -230,7 +201,6 @@ impl Server {
     }
 }
 
-/// Accepts connections until the shutdown signal fires, handing each connection to its own task.
 fn spawn_accept_loop(
     server: Arc<Server>,
     listener: TcpListener,
@@ -285,7 +255,6 @@ async fn handle_request(server: &Server, request: Request<Incoming>, remote: Soc
         return with_cors(response, &headers);
     }
 
-    // WebSocket upgrades need the original request, so they are routed before the body is read.
     if path == "/api/v1/events" {
         return with_cors(handle_websocket(server, request, remote).await, &headers);
     }

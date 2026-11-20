@@ -1,25 +1,3 @@
-//! The root CA and the per-host leaf certificates.
-//!
-//! Everything the old `mitm_cert_manager.go` did with `crypto/x509` happens here, with the same
-//! profile:
-//!
-//! * root CA: P-256, self-signed, subject `O=DITING, CN=DITING HTTPS Inspection Root CA`, valid
-//!   from `now - 24h` to `now + 10 * 365d`, `KeyUsage = certSign | cRLSign`, `CA:TRUE,
-//!   pathlen:1`, and a subject key identifier (SHA-1 of the public key). Go wrote no authority key
-//!   identifier on the self-signed CA, so neither do we.
-//! * leaf: subject `O=DITING, CN=<host>`, valid from `now - 1h` to `now + 24h`,
-//!   `KeyUsage = digitalSignature`, `EKU = serverAuth` (non-critical, like `crypto/x509`),
-//!   `CA:FALSE`, the CA's key identifier as its AKI, and a SAN list holding `<host>` plus
-//!   `*.<rest>` when the part after the first label still contains a dot (the old rule, quirks
-//!   included: `example.com` gets no wildcard, `www.example.com` gets `*.example.com`).
-//! * one shared P-256 leaf key per handle, exactly like the old `sharedLeafKey`.
-//!
-//! Private keys are SEC1 `EC PRIVATE KEY` with the named-curve parameters, because that is what
-//! `x509.MarshalECPrivateKey` wrote and what `x509.ParseECPrivateKey` (and therefore an older APK)
-//! reads. Loading also accepts PKCS#8, which the Go side never wrote but costs nothing to allow.
-//!
-//! Nothing here reads a clock: every entry point takes `now_unix` seconds.
-
 use const_oid::db::rfc4519::{COMMON_NAME, ORGANIZATION_NAME};
 use const_oid::db::rfc5280::{ID_CE_BASIC_CONSTRAINTS, ID_KP_SERVER_AUTH};
 use const_oid::db::rfc5912::ID_EC_PUBLIC_KEY;
@@ -50,20 +28,13 @@ use x509_cert::Certificate;
 
 use crate::pem;
 
-/// `caOrganization` in the old Go file.
 pub const CA_ORGANIZATION: &str = "DITING";
-/// `caCommonName` in the old Go file.
 pub const CA_COMMON_NAME: &str = "DITING HTTPS Inspection Root CA";
-/// `time.Now().Add(-24 * time.Hour)` on the CA template.
 pub const CA_VALIDITY_BEFORE_SECS: i64 = 24 * 60 * 60;
-/// `time.Now().Add(10 * 365 * 24 * time.Hour)` on the CA template.
 pub const CA_VALIDITY_AFTER_SECS: i64 = 10 * 365 * 24 * 60 * 60;
-/// `time.Now().Add(-1 * time.Hour)` on the leaf template.
 pub const LEAF_VALIDITY_BEFORE_SECS: i64 = 60 * 60;
-/// `time.Now().Add(24 * time.Hour)` on the leaf template.
 pub const LEAF_VALIDITY_AFTER_SECS: i64 = 24 * 60 * 60;
 
-/// The root CA plus the shared leaf key of one engine.
 pub struct CertAuthority {
     ca_cert: Certificate,
     ca_cert_der: Vec<u8>,
@@ -74,24 +45,18 @@ pub struct CertAuthority {
     leaf_secret: SecretKey,
 }
 
-/// A freshly generated CA and the SEC1 PEM the caller has to persist.
 pub struct GeneratedCa {
     pub authority: CertAuthority,
     pub ca_key_pem: String,
 }
 
-/// One minted leaf certificate.
 pub struct IssuedLeaf {
-    /// Leaf certificate PEM followed by the CA certificate PEM (`tls.X509KeyPair` input).
     pub chain_pem: String,
-    /// The shared leaf key as SEC1 PEM.
     pub key_pem: String,
-    /// The leaf's `NotAfter`, so the caller's cache expires it at the same instant.
     pub not_after_unix: i64,
 }
 
 impl CertAuthority {
-    /// `generateCA`: a fresh P-256 root with a new leaf key.
     pub fn generate(now_unix: i64) -> Result<GeneratedCa, String> {
         let ca_secret = SecretKey::random(&mut OsRng);
         let ca_signing = SigningKey::from(&ca_secret);
@@ -139,7 +104,6 @@ impl CertAuthority {
         })
     }
 
-    /// `loadCA`: parse and validate a persisted root.
     pub fn load(cert_pem: &str, key_pem: &str, now_unix: i64) -> Result<Self, String> {
         let cert_block = pem::decode(cert_pem)
             .ok_or_else(|| "decode CA cert PEM: no PEM block found".to_string())?;
@@ -195,7 +159,6 @@ impl CertAuthority {
         CertAuthority::new(ca_cert, ca_signing, ca_spki, SecretKey::random(&mut OsRng))
     }
 
-    /// `getCertForHost`: one leaf for `host`, valid around `now_unix`.
     pub fn issue(&self, host: &str, now_unix: i64) -> Result<IssuedLeaf, String> {
         let not_after_unix = now_unix
             .checked_add(LEAF_VALIDITY_AFTER_SECS)
@@ -265,17 +228,14 @@ impl CertAuthority {
         })
     }
 
-    /// `GetCACertPEM`.
     pub fn ca_pem(&self) -> &str {
         &self.ca_cert_pem
     }
 
-    /// The CA certificate in DER (tests and diagnostics).
     pub fn ca_der(&self) -> &[u8] {
         &self.ca_cert_der
     }
 
-    /// The parsed CA certificate (tests and diagnostics).
     pub fn ca_certificate(&self) -> &Certificate {
         &self.ca_cert
     }
@@ -303,7 +263,6 @@ impl CertAuthority {
     }
 }
 
-/// The `DNSNames` the old code built: the host, plus `*.<rest>` when `rest` has another dot.
 pub fn dns_names(host: &str) -> Result<GeneralNames, String> {
     let mut names = Vec::with_capacity(2);
     names.push(GeneralName::DnsName(Ia5String::new(host).map_err(
@@ -320,7 +279,6 @@ pub fn dns_names(host: &str) -> Result<GeneralNames, String> {
     Ok(names)
 }
 
-/// `EKU = serverAuth` marked non-critical, which is what `crypto/x509` writes.
 struct NonCriticalExtendedKeyUsage(ExtendedKeyUsage);
 
 impl AssociatedOid for NonCriticalExtendedKeyUsage {
@@ -346,7 +304,6 @@ impl Encode for NonCriticalExtendedKeyUsage {
 fn random_serial() -> Result<SerialNumber, String> {
     let mut bytes = [0u8; 16];
     OsRng.fill_bytes(&mut bytes);
-    // Positive, non-zero, at most 128 bits: the same shape `rand.Int(1 << 128)` produced.
     bytes[0] = (bytes[0] & 0x7f) | 0x01;
     SerialNumber::new(&bytes).map_err(|err| format!("generate serial: {err}"))
 }
@@ -379,7 +336,6 @@ fn name(common_name: &str) -> Result<Name, String> {
 }
 
 fn rdn(oid: ObjectIdentifier, value: &str) -> Result<RelativeDistinguishedName, String> {
-    // `crypto/x509` writes PrintableString when it can and UTF8String otherwise.
     let any = match PrintableStringRef::new(value) {
         Ok(printable) => Any::from(printable),
         Err(_) => Any::from(
@@ -417,7 +373,6 @@ fn is_ca(cert: &Certificate) -> bool {
         .unwrap_or(false)
 }
 
-/// The `CommonName` and every `Organization` of the subject.
 pub fn subject(cert: &Certificate) -> (Option<String>, Vec<String>) {
     let mut common_name = None;
     let mut organizations = Vec::new();
@@ -434,7 +389,6 @@ pub fn subject(cert: &Certificate) -> (Option<String>, Vec<String>) {
     (common_name, organizations)
 }
 
-/// `Time` to unix seconds without the pre-epoch panic in `to_unix_duration`.
 pub fn time_to_unix(time: Time) -> i64 {
     let date = time.to_date_time();
     let days = days_from_civil(date.year().into(), date.month(), date.day());
@@ -444,7 +398,6 @@ pub fn time_to_unix(time: Time) -> i64 {
         + i64::from(date.seconds())
 }
 
-/// Howard Hinnant's `days_from_civil`: days since 1970-01-01 for a proleptic Gregorian date.
 fn days_from_civil(year: i64, month: u8, day: u8) -> i64 {
     let year = if month <= 2 { year - 1 } else { year };
     let era = if year >= 0 { year } else { year - 399 } / 400;
@@ -456,7 +409,6 @@ fn days_from_civil(year: i64, month: u8, day: u8) -> i64 {
     era * 146_097 + day_of_era - 719_468
 }
 
-/// `YYYY-MM-DD` for the load error message (`time.Format("2006-01-02")`).
 pub fn ymd(unix: i64) -> String {
     let days = unix.div_euclid(86_400);
     let shifted = days + 719_468;

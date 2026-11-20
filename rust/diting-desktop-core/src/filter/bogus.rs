@@ -1,21 +1,10 @@
-//! Bogus-NXDOMAIN detection (`bogus_nxdomain.go`).
-//!
-//! Some networks answer a non-existent name with a fixed navigation/advertising address instead of
-//! NXDOMAIN. When `bogusNxDomain` is enabled, an A/AAAA answer inside the configured set is treated
-//! as upstream hijacking and the DNS stage rewrites the response to NXDOMAIN.
-//!
-//! Entries accept single addresses and CIDR networks. Invalid entries are skipped while the rest of
-//! the set stays usable, exactly like the Go matcher.
-
 use std::net::IpAddr;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use crate::filter::types::BogusNxDomainHit;
 
-/// `maxBogusNXDomainNetworks`.
 const MAX_ENTRIES: usize = 256;
 
-/// One CIDR network.
 #[derive(Debug, Clone, Copy)]
 struct Network {
     base: IpAddr,
@@ -58,7 +47,6 @@ fn prefix_matches_v6(base: u128, address: u128, prefix: u8) -> bool {
     base & mask == address & mask
 }
 
-/// The compiled bogus-address set.
 #[derive(Debug)]
 pub(crate) struct BogusNXDomainMatcher {
     entries: Vec<String>,
@@ -68,7 +56,6 @@ pub(crate) struct BogusNXDomainMatcher {
 }
 
 impl BogusNXDomainMatcher {
-    /// Parses the list. The first invalid-entry message is returned alongside a usable matcher.
     pub(crate) fn new(entries: &[String]) -> (Self, Option<String>) {
         let mut matcher = Self {
             entries: Vec::new(),
@@ -116,7 +103,6 @@ impl BogusNXDomainMatcher {
         (matcher, problem)
     }
 
-    /// `MatchIP`, with Go's `net.IP.Equal` IPv4-mapped equivalence.
     pub(crate) fn matches(&self, address: IpAddr) -> bool {
         let address = canonical(address);
         if self.exact.contains(&address) {
@@ -127,7 +113,6 @@ impl BogusNXDomainMatcher {
             .any(|network| network.contains(address))
     }
 
-    /// `FindInMsg`: first A/AAAA address that hits the set.
     pub(crate) fn find(&self, addresses: &[IpAddr]) -> Option<IpAddr> {
         if self.entries.is_empty() {
             return None;
@@ -141,7 +126,6 @@ impl BogusNXDomainMatcher {
         None
     }
 
-    /// The hit shape the DNS stage turns into an NXDOMAIN verdict.
     pub(crate) fn hit(&self, addresses: &[IpAddr]) -> Option<BogusNxDomainHit> {
         self.find(addresses).map(|ip| BogusNxDomainHit {
             ip,
@@ -178,7 +162,6 @@ fn parse_cidr(entry: &str) -> Result<Network, String> {
     })
 }
 
-/// Go's `net.IP.To4()` view: an IPv4-mapped IPv6 literal is the same host as its IPv4 form.
 fn canonical(address: IpAddr) -> IpAddr {
     match address {
         IpAddr::V6(v6) => v6.to_ipv4_mapped().map_or(IpAddr::V6(v6), IpAddr::V4),

@@ -17,7 +17,6 @@ const _touchDevices = {
   PointerDeviceKind.invertedStylus,
 };
 
-/// A long press, menu key, or held select keeps the menu clear of the row it would cover.
 class ContextMenuRegion extends StatefulWidget {
   final List<CommonPopupMenuItem>? menuItems;
   final Widget child;
@@ -59,7 +58,6 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
     super.dispose();
   }
 
-  /// A row withdraws its menu while its item updates, which the open menu would still act on.
   void _closeUnlessEnabled() {
     if (_enabled) {
       return;
@@ -75,7 +73,6 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
       return;
     }
     _menu = null;
-    // This runs while the tree builds or unmounts, when nothing may pop.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (menu.isCurrent) {
         menu.navigator!.pop();
@@ -126,7 +123,6 @@ class _ContextMenuRegionState extends State<ContextMenuRegion> {
     _open(box.localToGlobal(box.size.bottomLeft(Offset.zero)), avoid: true);
   }
 
-  // Swallows the rest of the hold, which would otherwise repeat into the menu's first item.
   void _handleHold() {
     final key = _heldKey;
     _heldKey = null;

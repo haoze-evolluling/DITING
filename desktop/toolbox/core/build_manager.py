@@ -75,7 +75,6 @@ def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
                 pass
         return
 
-    # 类 Unix（Linux/macOS）：以 pkill 结束同名进程，未运行时 pkill 返回非零属正常
     for name in ("diting_desktop", "diting-service"):
         if not shutil.which("pkill"):
             break
@@ -194,7 +193,6 @@ def build_pipeline(
             return {"success": False, "message": "构建已取消", "cancelled": True}
         return {"success": False, "message": message}
 
-    # 版本号会拼入 WSL 命令行与产物文件名，限制字符集以防注入或非法路径
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+-]*", version):
         on_log("error", f"非法的版本号: {version} (仅允许字母、数字与 . _ + - 且需以字母或数字开头)")
         return {"success": False, "message": f"非法版本号: {version}"}
@@ -210,7 +208,6 @@ def build_pipeline(
     on_log("info", f"谛听 (DITING) 构建任务启动: Target={target}, Ver={version}, Type={build_type}")
     on_log("info", "=" * 50)
 
-    # 规范化构建目标
     tgt = target.lower().strip()
     if tgt in ("all", "installer"):
         tgt = "exe"
@@ -219,10 +216,8 @@ def build_pipeline(
         on_log("error", f"未知的构建目标: {target} (支持: exe, deb, both)")
         return {"success": False, "message": f"不支持的构建目标: {target}"}
 
-    # 1. 终止可能正在运行的实例，防止文件写锁
     stop_running_processes(on_log)
 
-    # 2. 前置依赖检查
     tools = check_toolchain(force=True)
     need_win = tgt in ("exe", "both")
     need_deb = tgt in ("deb", "both")
@@ -256,7 +251,6 @@ def build_pipeline(
         on_log("warn", "构建已在启动前取消。")
         return {"success": False, "message": "构建已取消", "cancelled": True}
 
-    # 3. 清理旧产物
     if clean and os.path.exists(bin_dir):
         on_log("info", f"清理旧构建产物: {bin_dir}")
         shutil.rmtree(bin_dir, ignore_errors=True)
@@ -265,16 +259,12 @@ def build_pipeline(
     if not build_web_console_assets(server_dir, on_log=on_log, is_cancelled=is_cancelled):
         return _fail("Web 控制台构建失败")
 
-    # 版本、构建时间与提交号由 cargo 的 build.rs 注入，这里不再需要 git 查询。
     is_rel = build_type.lower() == "release"
 
     built_artifacts = []
 
-    # 4. 构建 Windows EXE 安装包
     if need_win:
         on_log("info", ">>> [1/3] 正在构建 Flutter Windows 桌面端...")
-        # Flutter 的共享资源目录会把调试构建留下的 kernel_blob.bin 一路复制进 Release，
-        # 而 Release 用 app.so AOT 运行，不需要这份 ~96MB 的 JIT 内核。
         if is_rel:
             stale_kernel = os.path.join(flutter_project, "build", "flutter_assets", "kernel_blob.bin")
             if os.path.exists(stale_kernel):
@@ -343,7 +333,6 @@ def build_pipeline(
             on_log("error", f"未找到生成的安装包文件: {installer_path}")
             return _fail("未生成预期的 EXE 安装包产物")
 
-        # 仅保留最终安装包，清理所有中间编译产物
         for temp_path in (service_bin, app_stage, fallback_installer):
             if os.path.isdir(temp_path):
                 shutil.rmtree(temp_path, ignore_errors=True)
@@ -357,14 +346,10 @@ def build_pipeline(
         on_log("info", f"[OK] Windows 安装包生成成功 (仅输出安装包): {installer_path} ({format_size(sz)})")
         built_artifacts.append(installer_path)
 
-    # 5. 构建 Linux DEB 安装包
     if need_deb:
         if arch not in ("amd64", "arm64", "arm"):
             return {"success": False, "message": f"不支持的 Linux 架构: {arch}"}
         on_log("info", f">>> 正在打包 Linux 发行包 (.deb, linux/{arch})...")
-        # 始终以 bash 显式执行，避免脚本缺失可执行位（如 Windows 克隆检出）导致失败。
-        # 纯 Rust 服务由 Linux 侧 cargo 直接编译，不再从 Windows 交叉编译后传入二进制；
-        # 因此 WSL 内需要已安装 rustup（脚本会在缺失时给出明确提示）。
         if sys.platform == "win32":
             wsl_dir = server_dir.replace("\\", "/")
             cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package -a {arch} -v {version} -b {build_type}"]
@@ -381,7 +366,6 @@ def build_pipeline(
         if not os.path.exists(deb_file):
             return _fail("未找到生成的 DEB 安装包产物")
 
-        # 确保产物目录纯净：清理可能残留的 Linux 单二进制及临时目录
         raw_linux_bin = os.path.join(bin_dir, "diting-service")
         leftover_dir = os.path.join(bin_dir, f"diting_{version}_linux_{arch}")
         if os.path.exists(raw_linux_bin):

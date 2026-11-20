@@ -1,5 +1,3 @@
-//! One-line JSON control protocol shared with the Android bridge.
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

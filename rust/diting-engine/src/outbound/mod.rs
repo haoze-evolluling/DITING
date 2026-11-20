@@ -1,29 +1,3 @@
-//! The outbound transports: direct, SOCKS5 and HTTP CONNECT, with the per-UID proxy scope.
-//!
-//! `flow_outbound.go` + `engine_outbound_scope.go` in Rust. The decision half is unchanged:
-//! [`diting_proxy_core`] normalizes the config and speaks SOCKS5 / HTTP CONNECT on the wire,
-//! [`diting_gate_core::route`] decides whether a flow of a given UID uses the proxy. This module
-//! owns the sockets, the deadlines, the status callback and the two transports.
-//!
-//! ```text
-//! Route::Direct  → create socket → VpnService.protect → connect            (protected)
-//! Route::Proxy   → protected connect to the proxy → SOCKS5 / HTTP CONNECT → target
-//! UDP + SOCKS5   → UDP ASSOCIATE over a control connection → framed datagrams
-//! UDP + HTTP     → error: HTTP CONNECT has no datagram mode
-//! ```
-//!
-//! # Scope
-//!
-//! `enabled:false` is direct for everything. `scope:"all"` proxies every flow. `scope:"apps"` proxies
-//! only the selected UIDs, and an unattributable flow (`uid = -1`) stays direct — the rule
-//! [`diting_gate_core::route::proxies_uid`] already encodes.
-//!
-//! # Status
-//!
-//! `OutboundProxyStatusCallback` sees `disabled`, `connecting`, `ready` and `error`, deduplicated on
-//! `(state, message)` like Go's `proxyFlowOutbound.status`. `connecting` is emitted by
-//! [`crate::engine::Engine::start_full_with_link`], the rest by the dials themselves.
-
 pub mod handshake;
 pub mod udp;
 
@@ -38,18 +12,14 @@ use tokio::net::TcpStream;
 use crate::protect::ProtectorHandle;
 use crate::resolver::dial;
 
-/// `flowDialTimeout`: one upstream dial, including the proxy handshake.
 pub const DIAL_TIMEOUT: Duration = Duration::from_secs(10);
 
-/// Which transport a flow uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Route {
     Direct,
     Proxy,
 }
 
-/// One proxy configuration. The credentials are kept here because the kernel's normalized config
-/// deliberately drops them.
 #[derive(Clone, Debug, Default)]
 pub struct Config {
     enabled: bool,
@@ -62,7 +32,6 @@ pub struct Config {
     uids: Vec<i64>,
 }
 
-/// The JSON shape `ConfigureOutboundProxy` receives; the kernel validates and normalizes it.
 #[derive(Debug, Default, serde::Deserialize)]
 #[serde(default)]
 struct RawConfig {
@@ -77,7 +46,6 @@ struct RawConfig {
 }
 
 impl Config {
-    /// `parseOutboundProxyConfig`: blank means disabled, otherwise the kernel validates.
     pub fn parse(raw: &str) -> Result<Self, String> {
         if raw.trim().is_empty() {
             return Ok(Self::default());
@@ -118,18 +86,14 @@ impl Config {
         self.enabled
     }
 
-    /// Whether the engine's own DNS upstream dials follow the proxy (`resolverOutbound`): the whole
-    /// point of `scope:"all"` is that not even the resolver's queries leave directly.
     pub fn resolver_uses_proxy(&self) -> bool {
         self.enabled && !self.per_app()
     }
 
-    /// `perApp`: only the selected UIDs are proxied.
     pub fn per_app(&self) -> bool {
         scope::per_app(self.enabled, &self.scope)
     }
 
-    /// The transport for a flow owned by `uid`.
     pub fn route_for(&self, uid: i32) -> Route {
         if !self.enabled {
             return Route::Direct;
@@ -141,12 +105,10 @@ impl Config {
         }
     }
 
-    /// `proxyAddress`: `net.JoinHostPort`, so an IPv6 loopback (`::1`) becomes `[::1]:port`.
     pub fn proxy_address(&self) -> String {
         diting_go_compat::netaddr::join_host_port_text(&self.host, &self.port.to_string())
     }
 
-    /// HTTP CONNECT has no datagram mode; only a direct or SOCKS5 route can carry UDP.
     pub fn supports_udp(&self) -> bool {
         !self.enabled || self.protocol == "socks5"
     }
@@ -160,12 +122,10 @@ impl Config {
     }
 }
 
-/// `OutboundProxyStatusCallback.onOutboundProxyStatus(String, String)`.
 pub trait StatusSink: Send + Sync + 'static {
     fn status(&self, state: &str, message: &str);
 }
 
-/// The status callback plus the `(state, message)` dedupe Go kept on the proxy object.
 #[derive(Default)]
 pub struct StatusDispatcher {
     sink: RwLock<Option<Arc<dyn StatusSink>>>,
@@ -196,7 +156,6 @@ impl StatusDispatcher {
     }
 }
 
-/// One engine's outbound state: the config, the protector and the status dispatcher.
 #[derive(Clone)]
 pub struct Outbound {
     inner: Arc<Inner>,
@@ -209,7 +168,6 @@ struct Inner {
 }
 
 impl Outbound {
-    /// The direct-only state a fresh engine starts in.
     pub fn direct(protector: ProtectorHandle) -> Self {
         Self::new(
             Config::default(),
@@ -244,7 +202,6 @@ impl Outbound {
         self.inner.status.report(state, message);
     }
 
-    /// Dials `target` through `route`, reporting `ready`/`error` like `proxyFlowOutbound`.
     pub async fn dial_tcp(&self, route: Route, target: SocketAddr) -> Result<TcpStream, String> {
         if route == Route::Direct || !self.inner.config.enabled {
             return dial::connect_protected(target, &self.inner.protector, DIAL_TIMEOUT)
@@ -302,7 +259,6 @@ impl Outbound {
         }
     }
 
-    /// Opens a connected datagram transport to `target`.
     pub async fn dial_udp(
         &self,
         route: Route,

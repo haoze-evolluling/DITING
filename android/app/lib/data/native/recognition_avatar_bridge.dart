@@ -1,6 +1,3 @@
-/// On-disk avatar cache for the roster (`com.haoze.diting/recognition`). Avatars ship outside the
-/// APK, so caching avoids a refetch per cold start; Kotlin writes via `.part` + `renameTo`, and a
-/// missing channel degrades to "no cache".
 library;
 
 import 'package:flutter/services.dart';

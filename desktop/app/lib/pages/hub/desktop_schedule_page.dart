@@ -1,8 +1,3 @@
-/// The `hub` branch's time plan: the switch, the named windows and the service's "active now" state.
-///
-/// The old desktop console's `SchedulePanel.vue` and `ScheduleEditor.vue` are the blueprint. Windows
-/// are a local draft; only the save button posts them, and the page then shows what the service
-/// re-reads.
 library;
 
 import 'dart:async';

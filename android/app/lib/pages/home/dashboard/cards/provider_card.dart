@@ -9,8 +9,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Service provider card: the active provider in single mode, the race list otherwise. Both this
-/// card and the detail entry points open [showProviderSheet], so they cannot drift apart.
 class ProviderCard extends ConsumerWidget {
   const ProviderCard({super.key});
 
@@ -22,7 +20,6 @@ class ProviderCard extends ConsumerWidget {
     final catalog = ref.watch(dnsProviderCatalogProvider);
     final scale = DashboardDensityScope.scaleOf(context);
     final colorScheme = context.colorScheme;
-    // Edit mode greys the body but would still open the sheet on tap; editing wins.
     final editing = ref.watch(dashboardEditingProvider);
     final single = resolution.isSingle;
     final subtitle = single
@@ -50,7 +47,6 @@ class ProviderCard extends ConsumerWidget {
             ],
           ),
           SizedBox(height: 8 * scale),
-          // Two lines: the race summary lists every picked provider by name.
           Text(
             subtitle,
             maxLines: 2,

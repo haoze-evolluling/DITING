@@ -1,22 +1,7 @@
-//! The binary layout shared with `android/engine/connlog_native.go`.
-//!
-//! Mark request (Go -> kernel):
-//!
-//! ```text
-//! | u8 layout | i32 port | i32 protocol |
-//!   u32 prefix_len | prefix bytes | u32 app_len | app bytes |
-//!   u32 dest_len | dest bytes | u32 reason_len | reason bytes |
-//! ```
-//!
-//! A drifted version byte, a length that disagrees with the payload, trailing bytes or invalid
-//! UTF-8 are hard errors, never a misread.
-
-/// Must match `connLogPayloadLayoutVersion` in `android/engine/connlog_native.go`.
 pub const LAYOUT_VERSION: u8 = 1;
 
 const HEADER: usize = 1 + 4 + 4;
 
-/// One decoded mark request.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MarkRequest {
     pub prefix: String,
@@ -27,7 +12,6 @@ pub struct MarkRequest {
     pub reason: String,
 }
 
-/// Reads a mark request.
 pub fn decode_mark(payload: &[u8]) -> Option<MarkRequest> {
     if payload.len() < HEADER || payload[0] != LAYOUT_VERSION {
         return None;
@@ -68,7 +52,6 @@ fn read_text(payload: &[u8], position: &mut usize) -> Option<String> {
     Some(text)
 }
 
-/// Encodes a mark request (the tests and the Go layout tests use the same shape).
 pub fn encode_mark(
     prefix: &str,
     app: &str,

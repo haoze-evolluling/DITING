@@ -1,6 +1,3 @@
-// Whole-app smoke test of `DitingApp`: scopes above `Navigator`, tab state, route
-// building and the Android page transition.
-
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/mock_data.dart';
@@ -37,7 +34,6 @@ void main() {
   group('功能中心可见性', _featureHub);
 }
 
-/// Whole-app smoke test of `DitingApp`: scopes above `Navigator`, tab state, route building
 void _appShell() {
   installGlobalTestHooks();
 
@@ -82,7 +78,6 @@ void _appShell() {
     await pumpApp(tester);
     await tester.tap(find.text('功能中心'));
     await tester.pumpAndSettle();
-    // Assert category headings: card titles collide with bottom-bar labels
     expect(
       find.descendant(
         of: find.byType(FeatureHubPage),
@@ -97,7 +92,6 @@ void _appShell() {
 
   testWidgets('切换 tab 期间新旧两页同时在场', (tester) async {
     await pumpApp(tester);
-    // Home is the only branch on stage before the switch.
     expect(find.byType(DashboardBoard), findsOneWidget);
     expect(find.byType(FeatureHubPage), findsNothing);
 
@@ -105,9 +99,6 @@ void _appShell() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 90));
 
-    // Mid-transition the leaving page has not vanished yet: both branches are
-    // on stage, which is what makes the switch a real slide instead of an entry
-    // fade on a single page.
     expect(find.byType(FeatureHubPage), findsOneWidget);
     expect(find.byType(DashboardBoard), findsOneWidget);
 
@@ -122,8 +113,6 @@ void _appShell() {
     await tester.pumpAndSettle();
     expect(find.text('DNS 解析'), findsWidgets);
 
-    // Regression: the categories were cached in a provider that only watched the work mode and
-    // the hidden set, so the hub kept the previous language until the app restarted.
     ProviderScope.containerOf(tester.element(find.byType(FeatureHubPage)))
         .read(languageModeProvider.notifier)
         .select(AppLanguageMode.english);
@@ -152,14 +141,10 @@ void _appShell() {
       of: find.byType(PageBody),
       matching: find.byType(ListView),
     );
-    // `SafeArea` would pad the dock inset into the scroll view; `DockSpacer` gives way instead
     expect(tester.getRect(list).bottom, screenHeight);
   });
 
   testWidgets('系统手势区不会让浮条多让一次位', (tester) async {
-    // A 48px (16dp) gesture inset: the dock folds it into its own margin, so an extra `SafeArea`
-    // would lift the bar by another inset and spend the reserved gap on that padding instead,
-    // leaving content resting against the glass.
     tester.view.padding = const FakeViewPadding(bottom: 48);
     tester.view.viewPadding = const FakeViewPadding(bottom: 48);
     await pumpApp(tester, initialLocation: Routes.settings);
@@ -167,7 +152,6 @@ void _appShell() {
         tester.view.physicalSize.height / tester.view.devicePixelRatio;
     final dock = find.byType(NavigationDock);
     final inset = NavigationDock.insetOf(tester.element(dock));
-    // Hugs the edge, and the glass sits exactly `inset` minus the gap above the bottom margin
     expect(tester.getRect(dock).bottom, screenHeight);
     expect(
       tester.getRect(find.byType(FloatingNavigationBar)).top,
@@ -176,8 +160,6 @@ void _appShell() {
   });
 
   testWidgets('备用底栏的自带 SafeArea 不会吃掉预留间隙', (tester) async {
-    // Five items force the plain `NavigationBar`, whose own `SafeArea` pads the gesture inset.
-    // The reserve must count that inset too, otherwise the bar swallows the clearance above it.
     tester.view.padding = const FakeViewPadding(bottom: 48);
     tester.view.viewPadding = const FakeViewPadding(bottom: 48);
     await pumpApp(
@@ -198,13 +180,11 @@ void _appShell() {
       tester.element(find.byType(PageBody).first),
     );
     final barTop = tester.getRect(find.byType(NavigationBar)).top;
-    // Bottom of the reserved band minus the bar top is the clearance content gets
     expect(barTop - (screenHeight - reserve), moreOrLessEquals(dockContentGap));
   });
 
   testWidgets('订阅页读真实表：无旧库时是空状态而不是 mock 订阅', (tester) async {
     await pumpApp(tester, initialLocation: Routes.subscriptions);
-    // No 1.4.3 database on the test host, so the page renders its empty state
     expect(find.text('AdGuard 基础'), findsNothing);
     expect(find.text('EasyList China'), findsNothing);
     expect(find.text('还没有订阅'), findsOneWidget);
@@ -213,7 +193,6 @@ void _appShell() {
   });
 
   group('底栏点击落到正确的 tab', () {
-    // Regression: the bar reports destination indices, `goBranch` wants branch indices
     const userDock = [
       BottomBarDestination.home,
       BottomBarDestination.featureHub,
@@ -239,12 +218,8 @@ void _appShell() {
       }
     });
 
-    // Regression: hub entries pointing at other tabs' roots clone the shell
-    // Entering a tab page from the feature hub opens it standalone: no dock, and a way back.
     testWidgets('功能中心里指向其它 tab 的卡片以全屏页打开并给出返回键', (tester) async {
       await pumpApp(tester, initialLocation: Routes.hub, dock: userDock);
-      // The 网络工具 card opens the tools branch root; the dock also carries that label, so scope
-      // the finder to the hub grid.
       final card = find.descendant(
         of: find.byType(FeatureHubPage),
         matching: find.text('网络工具'),
@@ -301,8 +276,6 @@ void _appShell() {
       expect(find.byType(SettingsPage), findsOneWidget);
     });
 
-    // Regression: the alert is pushed on the root navigator while the page sits on a branch
-    // navigator; popping the page's own navigator removed the page and left a black screen.
     testWidgets('分支页面的清除弹窗取消后仍停留在流量统计', (tester) async {
       await pumpApp(tester, initialLocation: Routes.traffic, dock: userDock);
       await tester.tap(find.byTooltip('清除历史'));
@@ -316,11 +289,8 @@ void _appShell() {
       expect(find.byType(NavigationDock), findsOneWidget);
     });
 
-    // Regression: the logs dashboard used to switch to the traffic branch, which kept the bar
-    // and left no way back; it now opens the full-screen twin like the hub card does.
     testWidgets('日志仪表盘的流量监控以全屏页打开并给出返回键', (tester) async {
       await pumpApp(tester, initialLocation: Routes.logs, dock: userDock);
-      // The monitor sits below the fold; tap its own detail button, not the first one on the page.
       final detail = find.descendant(
         of: find.byType(TrafficMonitorCard),
         matching: find.byTooltip('详情'),
@@ -337,13 +307,11 @@ void _appShell() {
       expect(find.byType(NavigationDock), findsOneWidget);
     });
 
-    // Regression: a page outside the bar must report -1, not light up "home"
     testWidgets('日志仪表盘编辑模式可移除卡片，完成后卡片不再显示', (tester) async {
       await pumpApp(tester, initialLocation: Routes.logs, dock: userDock);
       expect(find.text('请求日志仪表盘'), findsOneWidget);
       await tester.tap(find.byTooltip('编辑仪表盘'));
       await tester.pumpAndSettle();
-      // The hero is the first card; its remove badge is the first one.
       await tester.tap(find.byType(DashboardRemoveBadge).first);
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('完成'));
@@ -353,7 +321,6 @@ void _appShell() {
       expect(find.text('流量监控'), findsOneWidget);
     });
 
-    // Regression: a page outside the bar must report -1, not light up "home"
     testWidgets('当前页不在底栏里时底栏不点亮任何一项', (tester) async {
       await pumpApp(tester, initialLocation: Routes.traffic, dock: userDock);
       final dock = tester.widget<NavigationDock>(find.byType(NavigationDock));
@@ -361,8 +328,6 @@ void _appShell() {
     });
 
     testWidgets('宽屏备用底栏也不点亮任何一项', (tester) async {
-      // Wide windows replace the floating dock with the plain `NavigationBar`, which has no
-      // "nothing selected" state; clamping the index to 0 used to light up 首页 on `/traffic`.
       await pumpApp(
         tester,
         initialLocation: Routes.traffic,
@@ -399,8 +364,6 @@ class _Dock extends BottomBarNotifier {
   List<BottomBarDestination> build() => _dock;
 }
 
-/// Guards that every hub card points at a registered route; per-route layout and fallback are
-/// covered by `layout_regression_test.dart`, which pumps the same catalogue at three sizes
 void _routeCatalog() {
   installGlobalTestHooks();
 
@@ -418,7 +381,6 @@ void _routeCatalog() {
     await tester.pumpAndSettle();
   }
 
-  /// Asserts the mounted page neither threw nor landed on the fallback page.
   void expectReached(WidgetTester tester, String route, String label) {
     expect(tester.takeException(), isNull, reason: '$label ($route) 构建抛异常');
     expect(
@@ -430,7 +392,6 @@ void _routeCatalog() {
 
   group('功能中心卡片可达', () {
     testWidgets('每张卡片的 route 都能构建', (tester) async {
-      // Deduplicate: several entries can point at the same page.
       final routes = <String>{
         for (final category in _featureCategories)
           for (final card in category.cards) card.route,
@@ -453,7 +414,6 @@ void _routeCatalog() {
   });
 }
 
-/// Guards second-level pages are full-screen pages that carry FlClash's card transition.
 void _routeTransition() {
   installGlobalTestHooks();
 
@@ -472,7 +432,6 @@ void _routeTransition() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
-    // Mid-transition: `/about` is mounted but not yet in place.
     expect(find.byType(AboutPage), findsOneWidget);
     final route = ModalRoute.of(tester.element(find.byType(AboutPage)));
     expect(route, isNotNull);
@@ -482,7 +441,6 @@ void _routeTransition() {
       reason: '没有转场时长 = go_router 退化成 `NoTransitionPage`，页面是硬切的',
     );
 
-    // Still moving: animation below 1 and the position differs from the final one.
     expect(route.animation!.value, lessThan(1.0));
     final midX = tester.getTopLeft(find.byType(AboutPage)).dx;
     await tester.pumpAndSettle();
@@ -504,7 +462,6 @@ void _routeTransition() {
   });
 }
 
-/// Guards feature-hub visibility: hidden cards drop their category, fixed cards stay
 final _zh = lookupAppL10n(const Locale('zh'));
 final _featureCategories = mockFeatureCategories(_zh);
 

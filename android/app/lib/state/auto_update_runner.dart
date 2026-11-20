@@ -1,5 +1,3 @@
-/// Foreground catch-up for 1.4.3 `executePeriodic`: runs on start, on resume and at the next due
-/// moment while the app stays in the foreground, as there is no WorkManager.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,15 +9,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 enum AutoUpdateSkip {
   disabled,
 
-  /// Legacy DB missing (fresh install).
   noDatabase,
 
-  /// No eligible subscriptions (remote, enabled, group allowed).
   noSubscriptions,
 
   notDue,
 
-  /// A manual update is running; yield (1.4.3 `BlockedByManualOperation`).
   busy;
 
   String label(AppL10n l10n) => switch (this) {
@@ -31,19 +26,15 @@ enum AutoUpdateSkip {
   };
 }
 
-/// Result of one check; a null [skip] means a real run happened.
 class AutoUpdateRun {
   const AutoUpdateRun({this.skip, this.summary, this.ranCount = 0, this.dueAt});
 
-  /// Why the run was skipped; null when it executed.
   final AutoUpdateSkip? skip;
 
-  /// Run summary, e.g. "3 updated, 1 unchanged".
   final String? summary;
 
   final int ranCount;
 
-  /// Next due time (epoch ms) for the "next update" label.
   final int? dueAt;
 
   bool get didRun => skip == null;
@@ -54,11 +45,9 @@ class AutoUpdateRunner {
 
   final Ref _ref;
 
-  /// Interval-mode shortcuts kept for callers and tests; see [AutoUpdatePlan].
   static bool isDue(SubscriptionRecord record, int intervalHours, int nowMs) =>
       _intervalPlan(intervalHours).isDue(record, nowMs);
 
-  /// Next due time (epoch ms); null when no subscription is eligible.
   static int? nextDueAt(
     List<SubscriptionRecord> records,
     int intervalHours,
@@ -70,7 +59,6 @@ class AutoUpdateRunner {
     intervalHours: hours,
   );
 
-  /// Never throws: lifecycle callbacks drive it, so an exception would red-screen on every resume.
   Future<AutoUpdateRun> runIfDue() async {
     final settings = _ref.read(autoUpdateSettingsProvider);
     if (!settings.enabled) {
@@ -96,7 +84,6 @@ class AutoUpdateRunner {
         dueAt: plan.nextDueAt(records, now),
       );
     }
-    // Mutually exclusive with manual updates: yield now, catch up next round.
     if (_ref.read(subscriptionUpdateProvider).isBusy) {
       return const AutoUpdateRun(skip: AutoUpdateSkip.busy);
     }
@@ -132,7 +119,6 @@ final autoUpdateLastRunProvider =
       AutoUpdateLastRunNotifier.new,
     );
 
-/// Eligible subscriptions (remote, enabled, group allowed) for the "next update" label.
 final autoUpdatableSubscriptionsProvider =
     FutureProvider<List<SubscriptionRecord>>((ref) async {
       ref.watch(subscriptionRevisionProvider);

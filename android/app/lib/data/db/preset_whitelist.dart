@@ -1,5 +1,3 @@
-/// Parser for the preset passthrough whitelist asset; seeded rows must match the legacy seeder:
-/// domains lowercased, trailing dot removed, first occurrence wins.
 library;
 
 typedef PresetEntry = ({String domain, String group});

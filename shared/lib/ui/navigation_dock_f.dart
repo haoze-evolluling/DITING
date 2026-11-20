@@ -2,11 +2,9 @@
 
 part of 'navigation_dock.dart';
 
-// Pointer handling split out of _FloatingNavigationBarState, under the file line cap.
 
 extension _FloatingNavigationBarPointer on _FloatingNavigationBarState {
   void _handleHover(PointerHoverEvent event) {
-    // The engine synthesizes a hover before a touch lands, so a tap would leave the highlight on.
     if (event.kind == PointerDeviceKind.touch) {
       return;
     }
@@ -109,7 +107,6 @@ extension _FloatingNavigationBarPointer on _FloatingNavigationBarState {
     }
   }
 
-  /// Carries a drag let go mid-flick on to the next destination, at most one past.
   void _fling(double velocityX) {
     final pressed = _pressedIndex;
     if (!_dragging || pressed == null) {

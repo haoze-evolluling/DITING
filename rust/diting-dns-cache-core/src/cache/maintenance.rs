@@ -1,15 +1,9 @@
-//! Recency and expiry upkeep split out of `cache.rs`: the hit path only decides *whether* an entry
-//! should move, the shard rewrites here, and the sweeper walks the shards without blocking
-//! lookups on the idle ones.
-
 use std::time::Instant;
 
 use super::{read_guard, write_guard, Cache};
 use std::sync::atomic::Ordering;
 
 impl Cache {
-    /// Moves the entry to the front of its shard's recency order. The identity check keeps a
-    /// concurrent replacement from being promoted on behalf of the entry the hit saw.
     pub(super) fn promote(&self, index: usize, key: &[u8], seq: u64) {
         let mut shard = write_guard(&self.shards[index]);
         if shard.entries.get(key).map(|entry| entry.lru_seq) != Some(seq) {
@@ -22,7 +16,6 @@ impl Cache {
         }
     }
 
-    /// Drops an entry the lookup found expired, but only if it is still the same entry.
     pub(super) fn remove_if(&self, index: usize, key: &[u8], seq: u64) {
         let mut shard = write_guard(&self.shards[index]);
         let same = shard
@@ -35,8 +28,6 @@ impl Cache {
         }
     }
 
-    /// Background sweep: an idle shard is only read-locked, a shard with expired entries is
-    /// rewritten once and every removed entry counts as an eviction.
     pub(super) fn sweep_expired(&self, now: Instant) {
         for shard in &self.shards {
             {

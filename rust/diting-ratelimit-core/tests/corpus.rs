@@ -1,11 +1,3 @@
-//! Replays the trace produced by the Go `RateLimiter` before this crate replaced it
-//! (`internal/core/zz_ratelimit_fixture_gen_test.go`, deleted with the Go implementation).
-//!
-//! Each row is `op | arg1..arg6 | expect`. The script covers the default normalisation, the token
-//! bucket (burst / refill / clamping / a backwards clock), IPv4 and IPv6 prefix aggregation,
-//! exemption parsing (literals, CIDRs, mapped forms, whitespace, invalid entries), the v4-mapped
-//! CIDR corner cases, capacity eviction, the dead idle sweep, and burst changes on update.
-
 use diting_ratelimit_core::{Addr, Config, Info, RateLimiter, DEFAULT_MAX_BUCKETS};
 
 const TRACE: &str = include_str!("fixtures/ratelimit_trace.tsv");

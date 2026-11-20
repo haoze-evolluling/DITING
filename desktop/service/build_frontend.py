@@ -94,7 +94,6 @@ def main() -> int:
     if args.deps_only:
         return 0
 
-    # 清空 dist，避免上一版产物残留。
     if DIST_DIR.exists():
         shutil.rmtree(DIST_DIR)
     DIST_DIR.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,5 @@
 part of 'form_page.dart';
 
-/// Right-aligned text field row (upstream `FormRowTextField`). No border: the row's focus ring is
-/// the outline. The cursor gets a few extra pixels so the rounded end does not clip it.
 class FormRowTextField extends StatelessWidget {
   static const double _cursorWidth = 2;
   static const double _caretMargin = 1 + _cursorWidth;
@@ -38,7 +36,6 @@ class FormRowTextField extends StatelessWidget {
   final bool obscureText;
   final bool autofocus;
 
-  /// Addresses, ports and paths: lining digits, and no autocorrect or suggestions.
   final bool machineText;
 
   final bool invalid;
@@ -126,7 +123,6 @@ class FormRowTextField extends StatelessWidget {
   }
 }
 
-/// Password row with a reveal button (upstream `FormRowSecretTextField`).
 class FormRowSecretTextField extends StatefulWidget {
   const FormRowSecretTextField({
     super.key,
@@ -185,7 +181,6 @@ class _FormRowSecretTextFieldState extends State<FormRowSecretTextField> {
   }
 }
 
-/// Right-aligned read-only value, such as a version number.
 class FormRowValue extends StatelessWidget {
   const FormRowValue({
     super.key,
@@ -200,7 +195,6 @@ class FormRowValue extends StatelessWidget {
   final String title;
   final String value;
 
-  /// Lining digits for version numbers and the like.
   final bool tabular;
 
   final String? description;

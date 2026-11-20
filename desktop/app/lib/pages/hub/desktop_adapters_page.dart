@@ -1,9 +1,3 @@
-/// The `hub` branch's adapter takeover page: which network connections the service can see, and which
-/// of them currently have their DNS pointed at the local resolver.
-///
-/// The old desktop console's `DevicesView` → `network/AdaptersPanel.vue` is the functional blueprint.
-/// The page never decides what is taken over: `/adapters` reports the adapters and `/status` reports
-/// the takeover set, and every write re-reads both.
 library;
 
 import 'dart:async';

@@ -24,7 +24,6 @@ const _crossAxisMargin = 2.0;
 const _minThumbLength = 48.0;
 const _bottomInsetGap = 8.0;
 
-// Each band the pointer strays sideways from the thumb halves the content's travel.
 const _scrubBandWidth = 48.0;
 const _scrubRates = [1.0, 0.5, 0.25, 0.125];
 
@@ -80,7 +79,6 @@ class CommonScrollBar extends StatelessWidget {
     if (padding == EdgeInsets.zero) {
       return _buildScrollBar(context, child);
     }
-    // Scrollbar insets its track by MediaQuery padding; give it its own and not the child.
     final mediaQuery = MediaQuery.of(context);
     return MediaQuery(
       data: mediaQuery.copyWith(padding: mediaQuery.padding + padding),
@@ -92,13 +90,11 @@ class CommonScrollBar extends StatelessWidget {
   }
 }
 
-/// What of the floating bar MediaQuery padding leaves to cover.
 double _barClearance(BuildContext context) {
   final overlap = FloatingBarScope.of(context) ?? 0;
   return max(0.0, overlap - MediaQuery.paddingOf(context).top);
 }
 
-/// The ambient behavior less the bar it would stack on the scrollable [controller] drives.
 class _OwnBarScrollBehavior extends ScrollBehavior {
   const _OwnBarScrollBehavior({
     required this.ambient,
@@ -176,7 +172,6 @@ class _AppScrollbar extends RawScrollbar {
          minThumbLength: _minThumbLength,
          crossAxisMargin: _crossAxisMargin,
          fadeDuration: const Duration(milliseconds: 250),
-         // Long enough to let go and grab the thumb again before it fades.
          timeToFade: const Duration(milliseconds: 1200),
        );
 

@@ -2,8 +2,6 @@
 
 part of 'dialog.dart';
 
-/// [AlertDialog] takes only a color, so the pane goes where its [Material] lays out its
-/// [PhysicalShape].
 class _AlertGlass extends SingleChildRenderObjectWidget {
   const _AlertGlass({
     required this.style,
@@ -80,7 +78,6 @@ class _RenderAlertGlass extends RenderProxyBox {
       _pane.clear();
     } else {
       final rect = _surfaceRectIn(this).shift(offset);
-      // One capture serves the entry's scale and a press.
       _pane.paint(
         context,
         rect,
@@ -102,20 +99,15 @@ class CommonDialog extends StatelessWidget {
   final Widget? trailing;
   final Widget? child;
 
-  /// Text buttons laid out as an iOS alert does: last is the filled default, first (cancel) ends a
-  /// stack.
   final List<Widget>? actions;
   final EdgeInsets? padding;
 
   final bool hasFields;
 
-  /// The last action destroys data: red on the plain fill, as in UIKit.
   final bool destructive;
 
-  /// Pane width in dp; `null` keeps the alert's intrinsic sizing. Clamped to what the screen shows.
   final double? width;
 
-  /// Margin between pane and screen edge; `null` keeps [AlertDialog]'s own 40 a side.
   final EdgeInsets? insetPadding;
 
   const CommonDialog({
@@ -131,7 +123,6 @@ class CommonDialog extends StatelessWidget {
     this.insetPadding,
   });
 
-  /// [width] clamped to the space the dialog's own inset padding leaves.
   double? _resolvedWidth(BuildContext context) {
     final width = this.width;
     if (width == null) {
@@ -152,8 +143,6 @@ class CommonDialog extends StatelessWidget {
     final dialog = AlertDialog(
       backgroundColor: glass ? Colors.transparent : null,
       insetPadding: insetPadding,
-      // A fixed width must go on `AlertDialog.constraints`; a `maxWidth` on `content` is not
-      // enough.
       constraints: resolvedWidth == null
           ? null
           : BoxConstraints(minWidth: resolvedWidth, maxWidth: resolvedWidth),
@@ -252,7 +241,6 @@ class CommonDialog extends StatelessWidget {
   }
 }
 
-/// A title centred on its whole width, beside a control at its end.
 class _CenteredTitle extends MultiChildRenderObjectWidget {
   _CenteredTitle({required Widget title, required Widget trailing})
     : super(children: [title, trailing]);
@@ -370,7 +358,6 @@ class _RenderCenteredTitle extends RenderBox
   }
 }
 
-/// Text buttons laid out and filled as [CommonDialog] sets its own.
 class AlertActions extends StatelessWidget {
   const AlertActions({
     super.key,

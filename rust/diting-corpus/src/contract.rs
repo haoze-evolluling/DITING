@@ -1,26 +1,9 @@
-//! The contract corpus: every document Kotlin parses, frozen field by field.
-//!
-//! These are the documents the migration had to keep byte for byte: the Kotlin
-//! readers (`EngineStats.kt`, `DnsCacheMirror.kt`, `DnsLogWriter`, `TrafficIngest`) read fixed field
-//! names and silently show zeros for anything renamed. Two kinds of entry live in the fixture:
-//!
-//! * **produced** entries are recomputed on every replay and compared as exact strings, so renaming a
-//!   field or changing an error text fails the test (`getStats`, cache stats/entries, `resolveDomain`,
-//!   the packed DNS log batch);
-//! * **declared** entries have no producer inside this crate and freeze the shape the engine and
-//!   Kotlin already implement: the packed traffic tick and the
-//!   `logHTTPEvent(flow, host, protocol, status, reason)` tuple used by the MITM relay logs.
-//!
-//! Timestamps are the one exception, matching the repo rule "时间相关分支靠注入时钟的单测": the cache
-//! entry fixture freezes the *field names* and the count, not the clock readings inside them.
-
 use serde_json::{json, Value};
 
 use diting_engine::logs::batch_payload;
 use diting_engine::Engine;
 use diting_telemetry_core::LogItem;
 
-/// The packed batch as hex: the fixture is JSON, the payload is binary.
 fn hex(bytes: &[u8]) -> String {
     let mut text = String::with_capacity(bytes.len() * 2);
     for byte in bytes {
@@ -29,10 +12,8 @@ fn hex(bytes: &[u8]) -> String {
     text
 }
 
-/// The query/answer pair used to put one entry into the cache.
 const CACHE_NAME: &str = "cached.example.test";
 
-/// Builds the whole fixture document.
 pub fn build() -> String {
     json!({
         "note": "Stage 0 contract corpus: the JSON documents Kotlin parses. Produced entries are \
@@ -44,8 +25,6 @@ pub fn build() -> String {
     .to_string()
 }
 
-/// A cache policy with the cache switched on: the engine starts with a disabled cache (the real
-/// policy arrives in `ApplyDNSConfig`), and an empty entries document would freeze nothing.
 fn enabled_cache_policy() -> diting_dns_cache_core::policy::Config {
     diting_dns_cache_core::policy::Config {
         enabled: true,
@@ -63,7 +42,6 @@ fn produced() -> Value {
     engine.note_query(true);
     let counted_stats = engine.stats_json();
 
-    // One cache entry, so the entries document is not empty; only the field names are frozen.
     let query = crate::dns::query(CACHE_NAME, 1);
     let answer = crate::dns::upstream_answer(&query, &[[203, 0, 113, 7]]);
     let inserted = engine.cache().put(&query, &answer);
@@ -117,7 +95,6 @@ fn declared() -> Value {
     })
 }
 
-/// Three rows with fixed inputs: the batch document is a pure function of them.
 fn log_rows() -> Vec<LogItem> {
     vec![
         LogItem {
@@ -162,7 +139,6 @@ fn log_rows() -> Vec<LogItem> {
     ]
 }
 
-/// Replays the fixture: every produced entry has to match exactly.
 pub fn replay(document: &str) -> Result<usize, String> {
     let frozen: Value =
         serde_json::from_str(document).map_err(|err| format!("parse the fixture: {err}"))?;

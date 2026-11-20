@@ -1,26 +1,3 @@
-//! Dynamic MITM certificates: the root CA on disk and one leaf per host, minted inside the handshake.
-//!
-//! This is `mitm_cert_manager.go` after migration. Go kept four things here, and all four have a
-//! counterpart:
-//!
-//! | Go | Here |
-//! |---|---|
-//! | `initCA` (`ca.crt`/`ca.key`, load-or-generate-and-save) | [`CertStore::load_or_generate`] |
-//! | `GetCertificate` + `GetDynamicTLSConfigForHost` | [`CertStore::server_config`] over [`HostResolver`] |
-//! | a 512-entry LRU of `*tls.Certificate` | a bounded map pruned on insert ([`MAX_CACHED_LEAVES`]) |
-//! | `WarmLocalAssetCert` | [`CertStore::warm`] |
-//!
-//! `GetCertificate` becomes [`rustls::server::ResolvesServerCert`]. `resolve` is synchronous, so
-//! minting happens inline exactly like Go did (one P-256 signature plus one DER encode), and the
-//! cache lock *is* the single flight: a second handshake for the same host waits for the mutex
-//! instead of a `sync.WaitGroup`.
-//!
-//! ALPN is `http/1.1` only, like `NextProtos: []string{"http/1.1"}`: the relay speaks HTTP/1.1 and
-//! does not implement the HTTP/2 framing the browsers would otherwise negotiate.
-//!
-//! The directory and both file names are frozen (`.go-mitm/ca.crt`, `.go-mitm/ca.key`): a root the
-//! user already installed has to keep validating after the upgrade.
-
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -33,31 +10,21 @@ use rustls::server::{ClientHello, ResolvesServerCert};
 use rustls::sign::CertifiedKey;
 use rustls::ServerConfig;
 
-/// `NextProtos: []string{"http/1.1"}`.
 pub const ALPN: &[u8] = b"http/1.1";
-/// `time.Now().Before(cached.expiresAt.Add(-5 * time.Minute))`.
 pub const RENEW_MARGIN_SECS: i64 = 5 * 60;
-/// `certCacheMaxEntries`: the cap the Go LRU was created with.
 pub const MAX_CACHED_LEAVES: usize = 512;
-/// `0644` for `ca.crt`, `0600` for `ca.key`.
 const CA_CERT_MODE: u32 = 0o644;
 const CA_KEY_MODE: u32 = 0o600;
 
-/// How the root CA was obtained, so the caller can log what Go logged.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CaStatus {
-    /// `ca.crt` and `ca.key` were on disk and validated.
     Loaded,
-    /// The CA was generated and written to `cert_dir`.
     Generated,
-    /// The CA was generated but could not be written (read-only directory).
     GeneratedUnsaved(String),
-    /// The files existed but did not load, so the CA was regenerated over them.
     Regenerated(String),
 }
 
 impl CaStatus {
-    /// The lines `initCA` printed, in the same order.
     pub fn messages(&self, cert_dir: &str) -> Vec<String> {
         match self {
             CaStatus::Loaded => vec![format!("MITM CA loaded from disk: {cert_dir}")],
@@ -80,7 +47,6 @@ struct CachedLeaf {
     not_after_unix: i64,
 }
 
-/// The root CA plus the cache of leaves already minted for a host.
 pub struct CertStore {
     authority: CertAuthority,
     leaves: Mutex<HashMap<String, CachedLeaf>>,
@@ -88,7 +54,6 @@ pub struct CertStore {
 }
 
 impl CertStore {
-    /// A store over an existing authority (the tests mint one instead of reading `.go-mitm`).
     pub fn new(authority: CertAuthority) -> CertStore {
         CertStore {
             authority,
@@ -97,12 +62,6 @@ impl CertStore {
         }
     }
 
-    /// `NewCertManager(certDir)`: load `ca.crt`/`ca.key` when both exist and validate, otherwise
-    /// generate a fresh root and persist it.
-    ///
-    /// A generation that cannot be saved is *not* an error: Go logged a warning and kept serving,
-    /// because the session works fine and only the installed root would stop matching after a
-    /// restart.
     pub fn load_or_generate(cert_dir: &str) -> Result<(CertStore, CaStatus), String> {
         let cert_path = Path::new(cert_dir).join(super::CA_CERT_FILE);
         let key_path = Path::new(cert_dir).join(super::CA_KEY_FILE);
@@ -136,22 +95,18 @@ impl CertStore {
         Ok((CertStore::new(authority), status))
     }
 
-    /// The root CA, for the export/inspection paths and for the local asset server.
     pub fn authority(&self) -> &CertAuthority {
         &self.authority
     }
 
-    /// `GetCACertPEM`.
     pub fn ca_pem(&self) -> &str {
         self.authority.ca_pem()
     }
 
-    /// How many leaves are cached right now.
     pub fn cached_len(&self) -> usize {
         self.lock().len()
     }
 
-    /// How many leaves have been minted since the store was created.
     pub fn minted_count(&self) -> u64 {
         *self
             .minted
@@ -159,15 +114,11 @@ impl CertStore {
             .unwrap_or_else(|error| error.into_inner())
     }
 
-    /// `WarmLocalAssetCert`: mint the local asset host's leaf before the first page needs it.
     pub fn warm(&self, host: &str) -> Result<(), String> {
         self.leaf_for(host, super::now_ms() / 1000).map(|_| ())
     }
 
-    /// `getCertificateWithDedup`: reuse a leaf unless it is within [`RENEW_MARGIN_SECS`] of expiry.
     pub fn leaf_for(&self, host: &str, now_unix: i64) -> Result<Arc<CertifiedKey>, String> {
-        // Never mint a nameless certificate: a flow with neither SNI nor a known hostname must fail
-        // the handshake instead of presenting something no client can validate.
         if host.trim().is_empty() {
             return Err("cannot mint a certificate for an empty host".to_string());
         }
@@ -183,8 +134,6 @@ impl CertStore {
         let not_after_unix = issued.not_after_unix;
         let key = Arc::new(certified_key(&issued)?);
         if cache.len() >= MAX_CACHED_LEAVES {
-            // Coarse, but the Go LRU's only job was to cap memory; expired leaves are useless and
-            // everything else is re-minted in one signing operation on demand.
             cache.retain(|_, leaf| now_unix < leaf.not_after_unix - RENEW_MARGIN_SECS);
             if cache.len() >= MAX_CACHED_LEAVES {
                 cache.clear();
@@ -204,9 +153,6 @@ impl CertStore {
         Ok(key)
     }
 
-    /// `GetDynamicTLSConfigForHost(defaultHost)`: the server config for one intercepted flow.
-    ///
-    /// `default_host` is the flow's hostname, used when the client sends no SNI (a literal IP, say).
     pub fn server_config(self: &Arc<Self>, default_host: Option<&str>) -> Arc<ServerConfig> {
         let mut config = ServerConfig::builder_with_provider(super::provider())
             .with_safe_default_protocol_versions()
@@ -227,7 +173,6 @@ impl CertStore {
     }
 }
 
-/// The resolver handed to rustls; it carries the flow hostname as the SNI fallback.
 struct HostResolver {
     store: Arc<CertStore>,
     default_host: Option<String>,
@@ -249,12 +194,10 @@ impl ResolvesServerCert for HostResolver {
             Some(name) => name.to_string(),
             None => self.default_host.clone()?,
         };
-        // Failing here fails the handshake, which is what Go did when minting failed.
         self.store.leaf_for(&host, super::now_ms() / 1000).ok()
     }
 }
 
-/// `loadCA`: read both files and validate the pair.
 fn load(cert_path: &Path, key_path: &Path, now_unix: i64) -> Result<CertAuthority, String> {
     let cert_pem =
         fs::read_to_string(cert_path).map_err(|error| format!("read CA cert: {error}"))?;
@@ -262,7 +205,6 @@ fn load(cert_path: &Path, key_path: &Path, now_unix: i64) -> Result<CertAuthorit
     CertAuthority::load(&cert_pem, &key_pem, now_unix)
 }
 
-/// `saveCA`: `ca.crt` at 0644 and `ca.key` at 0600, creating the directory first.
 fn save(
     cert_dir: &str,
     cert_path: &Path,
@@ -286,10 +228,8 @@ fn set_mode(path: &Path, mode: u32) {
 
 #[cfg(not(unix))]
 fn set_mode(_path: &Path, _mode: u32) {
-    // The host tests on Windows have no POSIX modes; the device is always unix.
 }
 
-/// The PEM pair `tls.X509KeyPair` consumed, as a rustls signing key.
 fn certified_key(issued: &IssuedLeaf) -> Result<CertifiedKey, String> {
     let chain = parse_certs(&issued.chain_pem)?;
     if chain.is_empty() {

@@ -1,24 +1,3 @@
-//! The binary layouts shared with `android/engine/allowlist_native.go`.
-//!
-//! Configure request (`SetAppAllowlist`, Go -> kernel):
-//!
-//! ```text
-//! | u8 layout | u32 uid_count |
-//!   uid_count × ( i32 uid | u32 domain_count | domain_count × ( u32 len | bytes ) )
-//! ```
-//!
-//! Remember request (`rememberAppAllowlistResponse`, Go -> kernel):
-//!
-//! ```text
-//! | u8 layout | i32 uid | u32 qname_len | qname bytes |
-//!   u32 record_count | record_count × ( u8 addr_len | addr bytes | u32 ttl )
-//! ```
-//!
-//! Integers are little-endian. A drifted version byte, a count that disagrees with the payload, a
-//! trailing byte, an address that is not 4 or 16 bytes, or invalid UTF-8 are hard errors, never a
-//! misread.
-
-/// Must match `allowlistPayloadLayoutVersion` in `android/engine/allowlist_native.go`.
 pub const LAYOUT_VERSION: u8 = 1;
 
 const CONFIGURE_HEADER: usize = 1 + 4;
@@ -28,7 +7,6 @@ const DOMAIN_HEADER: usize = 4;
 const REMEMBER_HEADER: usize = 1 + 4 + 4;
 const RECORD_HEADER: usize = 1 + 4;
 
-/// One decoded remember request.
 #[derive(Debug, Clone, PartialEq)]
 pub struct RememberRequest {
     pub uid: i32,
@@ -36,7 +14,6 @@ pub struct RememberRequest {
     pub records: Vec<(Vec<u8>, u32)>,
 }
 
-/// Reads the configure request.
 pub fn decode_configure(payload: &[u8]) -> Option<Vec<(i32, Vec<String>)>> {
     if payload.len() < CONFIGURE_HEADER || payload[0] != LAYOUT_VERSION {
         return None;
@@ -56,8 +33,6 @@ pub fn decode_configure(payload: &[u8]) -> Option<Vec<(i32, Vec<String>)>> {
         let domain_count =
             u32::from_le_bytes(payload[position + 4..position + 8].try_into().ok()?) as usize;
         position += UID_HEADER;
-        // Every domain needs its 4-byte length prefix, so a count above the remaining budget is
-        // already invalid.
         if domain_count > (payload.len() - position) / DOMAIN_HEADER {
             return None;
         }
@@ -87,7 +62,6 @@ pub fn decode_configure(payload: &[u8]) -> Option<Vec<(i32, Vec<String>)>> {
     Some(entries)
 }
 
-/// Encodes a configure request (the tests build the same shape the Go side sends).
 pub fn encode_configure(entries: &[(i32, Vec<String>)]) -> Vec<u8> {
     let mut out = Vec::with_capacity(CONFIGURE_HEADER);
     out.push(LAYOUT_VERSION);
@@ -103,7 +77,6 @@ pub fn encode_configure(entries: &[(i32, Vec<String>)]) -> Vec<u8> {
     out
 }
 
-/// Reads the remember request.
 pub fn decode_remember(payload: &[u8]) -> Option<RememberRequest> {
     if payload.len() < REMEMBER_HEADER || payload[0] != LAYOUT_VERSION {
         return None;
@@ -154,7 +127,6 @@ pub fn decode_remember(payload: &[u8]) -> Option<RememberRequest> {
     })
 }
 
-/// Encodes a remember request.
 pub fn encode_remember(uid: i32, question_name: &str, records: &[(Vec<u8>, u32)]) -> Vec<u8> {
     let mut out = Vec::with_capacity(REMEMBER_HEADER + question_name.len());
     out.push(LAYOUT_VERSION);

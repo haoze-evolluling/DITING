@@ -1,4 +1,3 @@
-/// Opens the V2 SQLite stores, creating a missing file from [DatabaseSchema].
 library;
 
 import 'dart:io';
@@ -12,14 +11,6 @@ import 'package:sqflite/sqflite.dart';
 class AppDatabase {
   AppDatabase._();
 
-  /// Null means [fileName] could neither be opened nor created; callers degrade to "no database".
-  ///
-  /// [singleInstance] defaults to sqflite's process-wide reuse. Pass `false` to force a brand-new
-  /// connection: sqflite keeps its open-database registry in a `static` map shared by every
-  /// `FlutterEngine` in the process, so a connection left behind by a previous engine (the app runs
-  /// a fresh engine for each re-entered activity while a tunnel service keeps the process alive) is
-  /// otherwise handed back to the next one. The startup path uses this to recover from a wedged
-  /// connection (see `bootstrapRules`).
   static Future<Database?> open(
     String fileName, {
     bool create = true,
@@ -33,8 +24,6 @@ class AppDatabase {
     try {
       path = p.join(await getDatabasesPath(), fileName);
     } on StateError {
-      // No sqflite implementation on this host (widget tests, desktop): no database. Rule pages
-      // then show their empty state instead of crashing before the first frame.
       return null;
     }
     if (!await databaseExists(path)) {
@@ -53,7 +42,6 @@ class AppDatabase {
       );
       final applicationId = await _applicationId(db);
       if (applicationId == kind.applicationId) return db;
-      // A file at our path with a foreign header (restored backup, manual copy) is not usable.
       debugPrint('database application id mismatch: $fileName ($applicationId)');
       await db.close();
       if (!create) return null;
@@ -62,13 +50,9 @@ class AppDatabase {
       debugPrint('database open failed: $fileName ($error)');
       return null;
     }
-    // Outside the `try`, so an asynchronous failure inside `_create` still propagates to the
-    // caller instead of being caught here and folded into a null result.
     return _create(path, kind);
   }
 
-  /// Opens an existing database read-only without running a schema upgrade. Used by the one-time
-  /// migrator for the pre-V2 stores.
   static Future<Database?> openSource(String fileName) async {
     final String path;
     try {
@@ -107,8 +91,6 @@ class AppDatabase {
     }
   }
 
-  /// Deletes a database and its WAL/SHM sidecars. Native writers may still hold a connection, so
-  /// callers stop the data plane and close native handles first.
   static Future<void> deleteWithSidecars(String directory, String fileName) async {
     for (final suffix in const ['', '-wal', '-shm']) {
       final file = File(p.join(directory, '$fileName$suffix'));
@@ -130,14 +112,11 @@ class AppDatabase {
           await db.execute('PRAGMA application_id = ${kind.applicationId}');
         },
         onUpgrade: (db, from, to) async {
-          // A lower user_version means a damaged file; patching beats a reinstall.
           await _createIfMissing(db, statements);
         },
       );
     } on DatabaseException catch (error) {
       debugPrint('database create failed: ${kind.fileName} ($error)');
-      // Drop the half-built file, or the next launch opens a database missing tables and fails
-      // with "no such column".
       try {
         await deleteDatabase(path);
       } on DatabaseException catch (cleanupError) {
@@ -147,8 +126,6 @@ class AppDatabase {
     }
   }
 
-  /// `PRAGMA foreign_keys` is per connection, not stored in the file, so it must be set on every
-  /// open; without it `*_source` rows are not cascaded.
   static Future<void> _configure(Database db) async {
     await db.execute('PRAGMA foreign_keys = ON');
     await db.execute('PRAGMA busy_timeout = 5000');
@@ -159,8 +136,6 @@ class AppDatabase {
     return (rows.firstOrNull?.values.firstOrNull as num?)?.toInt() ?? 0;
   }
 
-  /// Creates only missing tables and indexes; `IF NOT EXISTS` cannot repair a table that exists
-  /// with different columns.
   static Future<void> _createIfMissing(
     Database db,
     List<String> statements,

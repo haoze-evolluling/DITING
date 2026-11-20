@@ -1,7 +1,3 @@
-/// Which dashboard cards exist, in what order, and whether the board is in edit mode.
-///
-/// Split out of `dashboard_providers.dart` because this half is pure preference state: the desktop
-/// home reads the same stored layout without pulling in the VPN/traffic providers next door.
 library;
 
 import 'package:diting_android/data/dashboard_models.dart';
@@ -10,8 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 LegacySettings _settings(Ref ref) => ref.read(legacySettingsProvider);
 
-/// [newIndex] is already adjusted by `ReorderableListView.onReorderItem`; only bounds and no-op
-/// moves are rejected.
 bool _isValidMove(int oldIndex, int newIndex, int length) =>
     oldIndex >= 0 &&
     oldIndex < length &&
@@ -19,8 +13,6 @@ bool _isValidMove(int oldIndex, int newIndex, int length) =>
     newIndex < length &&
     newIndex != oldIndex;
 
-/// Dashboard card layout (add, remove, reorder in edit mode), persisted by `DashboardWidget.name`
-/// so an app upgrade keeps the board while an unknown name is simply skipped.
 final dashboardWidgetsProvider =
     NotifierProvider<DashboardWidgetsNotifier, List<DashboardWidget>>(
       DashboardWidgetsNotifier.new,
@@ -36,7 +28,6 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
     final byName = {
       for (final widget in DashboardWidget.values) widget.name: widget,
     };
-    // Unknown names (a card removed in an earlier version) are skipped, not restored.
     return [for (final name in stored) ?byName[name]];
   }
 
@@ -59,8 +50,6 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
     }
   }
 
-  /// Moves a card; [ReorderableListView.onReorderItem]'s `newIndex` is already adjusted, so insert
-  /// as-is.
   void move(int oldIndex, int newIndex) {
     if (!_isValidMove(oldIndex, newIndex, state.length)) {
       return;
@@ -70,9 +59,6 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
     _commit(next);
   }
 
-  /// Moves a card within [visible], the list the board shows. [newIndex] is already adjusted,
-  /// as `ReorderableListView.onReorderItem` passes it. Cards hidden by the current mode keep
-  /// their stored slots, so a reorder never loses them.
   void moveVisible(List<DashboardWidget> visible, int oldIndex, int newIndex) {
     if (!_isValidMove(oldIndex, newIndex, visible.length)) {
       return;
@@ -94,8 +80,6 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
       if (!state.contains(widget)) widget,
   ];
 
-  /// Updates the provider and the store together. An emptied board is a real choice, so it is
-  /// written as `[]` instead of being removed; only a missing key restores the defaults.
   void _commit(List<DashboardWidget> next) {
     state = next;
     _write(_settings(ref), next);
@@ -108,7 +92,6 @@ class DashboardWidgetsNotifier extends Notifier<List<DashboardWidget>> {
   }
 }
 
-/// Edit mode switch; not persisted, leaving the page ends editing.
 final dashboardEditingProvider =
     NotifierProvider<DashboardEditingNotifier, bool>(
       DashboardEditingNotifier.new,

@@ -1,14 +1,10 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 import 'package:material_ui/material_ui.dart';
 
-/// Column-aligned digits without leaving the user's family: figures ask the face for its tabular
-/// numerals instead of switching to the platform's monospace face, so the imported font (or the
-/// system default) stays in charge everywhere.
 const appTabularFigures = <FontFeature>[FontFeature.tabularFigures()];
 
 enum _HanVariant { simplified, traditional, japanese, korean }
 
-// The system fallback picks Han forms by UI locale, so Chinese names draw with Japanese forms.
 const _hanFamilies = <TargetPlatform, Map<_HanVariant, List<String>>>{
   TargetPlatform.windows: {
     _HanVariant.simplified: ['Microsoft YaHei UI'],

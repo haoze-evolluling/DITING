@@ -1,9 +1,3 @@
-/// The rewrite page's data: the engine switch and default TTL, the rule list, and the four writes
-/// (toggle, TTL, save one rule, delete one rule).
-///
-/// Every write re-reads what the service kept instead of writing the expected result into the
-/// page, because the service validates domains, records and response codes and its answer is the
-/// only truth.
 library;
 
 import 'dart:async';
@@ -18,9 +12,6 @@ class DesktopRewriteState {
 
   final DesktopRewriteConfig? config;
 
-  /// The last read failed. The previous config stays on screen so the page can say "these are the
-  /// values from before" instead of blanking. A rejected write is not kept here: the caller already
-  /// has the service's reason and shows it, and the write never changed what the service holds.
   final DesktopApiException? error;
 
   final bool saving;
@@ -60,11 +51,6 @@ class DesktopRewriteNotifier extends Notifier<DesktopRewriteState> {
   Future<DesktopApiException?> deleteRule(String domain) =>
       _write((client) => client.deleteRewriteRule(domain));
 
-  /// One write at a time, then a full re-read. The rule list is part of the same state, so an edit
-  /// and a toggle cannot interleave into a page that shows half of each.
-  ///
-  /// A rejection is returned to the caller and leaves the state alone: the service still has the old
-  /// value, and the page is already showing it.
   Future<DesktopApiException?> _write(
     Future<void> Function(DesktopApiClient client) body,
   ) async {

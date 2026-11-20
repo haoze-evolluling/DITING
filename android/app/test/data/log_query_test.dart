@@ -1,6 +1,3 @@
-// The aggregates behind the race/bootstrap/subscription drill-downs, the statistics card and the
-// traffic page. Those numbers come from Rust; these tests pin the SQL shape and the counting.
-
 import 'package:diting_android/data/db/app_traffic_repository.dart';
 import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';

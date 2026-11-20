@@ -1,10 +1,3 @@
-//! Rule parsing, source selection and the compiled matcher.
-//!
-//! Rule *semantics* stay in `diting-filter-core`; this module is the bridge the Go engine used to
-//! be: it reads custom rules and subscription cache files through the kernel parser, expands the
-//! built-in service catalog, compiles the regexes/wildcards, and turns a kernel [`Decision`] back
-//! into a [`CheckHostResult`] using the side table of raw rule text and source names.
-
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
@@ -26,22 +19,17 @@ use crate::filter::types::{
     REASON_REGEX_BLOCK, REASON_WHITELIST, REASON_WILDCARD_BLOCK, REWRITE_TTL,
 };
 
-/// Source prefix for built-in service rules (`service:<id>`).
 pub(crate) const SERVICE_SOURCE_PREFIX: &str = "service:";
-/// Source name for user-defined rules.
 pub(crate) const CUSTOM_SOURCE: &str = "custom";
 
-/// One parsed rule plus the two strings the query log needs.
 #[derive(Debug, Clone)]
 pub(crate) struct CompiledRule {
     pub(crate) kernel: Rule,
     pub(crate) raw: String,
     pub(crate) source: String,
-    /// The full `$dnsrewrite` action (the kernel rule only needs its key and shape).
     pub(crate) rewrite: Option<RewriteAction>,
 }
 
-/// The rules of one build, kept per source class so groups can select list rules only.
 #[derive(Debug, Clone, Default)]
 pub(crate) struct RuleSet {
     pub(crate) custom: Vec<CompiledRule>,
@@ -50,7 +38,6 @@ pub(crate) struct RuleSet {
 }
 
 impl RuleSet {
-    /// Global priority order: custom → built-in services → subscription lists (declaration order).
     pub(crate) fn all(&self) -> Vec<&CompiledRule> {
         self.custom
             .iter()
@@ -59,7 +46,6 @@ impl RuleSet {
             .collect()
     }
 
-    /// Group selection: custom/service are always included; an empty id list inherits every list.
     pub(crate) fn for_group(&self, list_ids: &[String]) -> Vec<&CompiledRule> {
         let mut selected: Vec<&CompiledRule> = Vec::new();
         selected.extend(self.custom.iter());
@@ -78,14 +64,12 @@ impl RuleSet {
     }
 }
 
-/// The built matcher: the kernel index plus its rule side table.
 pub(crate) struct RuleMatcher {
     index: FilterIndex,
     entries: Vec<CompiledRule>,
 }
 
 impl RuleMatcher {
-    /// Builds an immutable index over the given rules, in order.
     pub(crate) fn build(rules: impl IntoIterator<Item = CompiledRule>) -> Self {
         let entries: Vec<CompiledRule> = rules.into_iter().collect();
         let kernel: Vec<Rule> = entries.iter().map(|rule| rule.kernel.clone()).collect();
@@ -99,7 +83,6 @@ impl RuleMatcher {
         self.index.total_rules()
     }
 
-    /// Evaluates one normalized domain and translates the kernel decision.
     pub(crate) fn match_domain(&self, domain: &str, qtype: u16) -> CheckHostResult {
         let decision = self.index.match_domain(domain, qtype);
         self.to_result(decision, domain, qtype)
@@ -144,7 +127,6 @@ impl RuleMatcher {
         }
     }
 
-    /// `rewriteRecords`: every winning rule's value becomes one record, in kernel order.
     fn build_rewrite(&self, answer: &RewriteAnswer, domain: &str, qtype: u16) -> RewriteResult {
         let mut result = RewriteResult {
             rcode: answer.rcode,
@@ -188,7 +170,6 @@ impl RuleMatcher {
     }
 }
 
-/// Loads custom rules through the single-line parser (Go's `ParseRuleLine`).
 pub(crate) fn parse_custom_rules(lines: &[String]) -> Vec<CompiledRule> {
     lines
         .iter()
@@ -197,7 +178,6 @@ pub(crate) fn parse_custom_rules(lines: &[String]) -> Vec<CompiledRule> {
         .collect()
 }
 
-/// Loads one subscription cache file; a missing/unreadable file contributes no rules.
 pub(crate) fn parse_list_file(data_dir: &Path, list_id: &str) -> Vec<CompiledRule> {
     let path = data_dir.join(format!("{list_id}.txt"));
     let Ok(data) = fs::read(path) else {
@@ -207,7 +187,6 @@ pub(crate) fn parse_list_file(data_dir: &Path, list_id: &str) -> Vec<CompiledRul
     parse_list_text(&text, list_id)
 }
 
-/// Loads a document held in memory (used by refresh to count rules before writing).
 pub(crate) fn parse_list_text(text: &str, source: &str) -> Vec<CompiledRule> {
     parse_document(text)
         .into_iter()
@@ -215,9 +194,6 @@ pub(crate) fn parse_list_text(text: &str, source: &str) -> Vec<CompiledRule> {
         .collect()
 }
 
-/// Expands selected built-in services and groups into block rules.
-///
-/// Unknown ids are skipped; a service selected both directly and through its group expands once.
 pub(crate) fn expand_services(service_ids: &[String], group_ids: &[String]) -> Vec<CompiledRule> {
     if service_ids.is_empty() && group_ids.is_empty() {
         return Vec::new();
@@ -235,17 +211,14 @@ pub(crate) fn expand_services(service_ids: &[String], group_ids: &[String]) -> V
     out
 }
 
-/// Whether a service group token exists in the catalog.
 pub(crate) fn service_group_exists(id: &str) -> bool {
     CATEGORIES.contains(&id.trim())
 }
 
-/// Whether a service id exists in the catalog.
 pub(crate) fn service_exists(id: &str) -> bool {
     diting_services_core::catalog::find(id.trim()).is_some()
 }
 
-/// `CountBlockedServiceRules`: deduplicated service/group union.
 pub(crate) fn count_service_rules(service_ids: &[String], group_ids: &[String]) -> usize {
     expand_services(service_ids, group_ids).len()
 }
@@ -260,7 +233,6 @@ fn expand_service(service: &'static Service) -> Vec<CompiledRule> {
         .collect()
 }
 
-/// Turns one parsed line into a kernel rule, dropping the same cases Go dropped.
 fn compile_line(parsed: ParsedLine, source: &str) -> Option<CompiledRule> {
     let mut flags = 0u8;
     if parsed.is_allow {
@@ -283,10 +255,8 @@ fn compile_line(parsed: ParsedLine, source: &str) -> Option<CompiledRule> {
     }
 
     let compiled_regex = if parsed.is_regex {
-        // Go drops an uncompilable `/regex/` rule outright.
         Some(compile_rule_regex(&parsed.pattern).ok()?)
     } else if parsed.is_wildcard {
-        // Go keeps a wildcard rule with a nil regex (it simply never matches).
         build_wildcard_regex(&parsed.pattern)
     } else {
         None
@@ -294,7 +264,6 @@ fn compile_line(parsed: ParsedLine, source: &str) -> Option<CompiledRule> {
 
     let rewrite = match parsed.rewrite.as_deref() {
         None => None,
-        // An unparsable `$dnsrewrite` value drops the whole rule, like Go did.
         Some(raw) => Some(RewriteAction::parse(raw).ok()?),
     };
 
@@ -323,7 +292,6 @@ fn compile_line(parsed: ParsedLine, source: &str) -> Option<CompiledRule> {
     })
 }
 
-/// `buildWildcardRegex`: optional sub-domain prefix, `*` → `.*`, case-insensitive.
 fn build_wildcard_regex(pattern: &str) -> Option<Regex> {
     let mut source = String::from("^(?:.*\\.)?");
     for character in pattern.chars() {
@@ -348,7 +316,6 @@ fn reason_name(reason: Reason) -> &'static str {
     }
 }
 
-/// Applies allowlist-only mode: only an allow/rewrite result survives.
 pub(crate) fn apply_allowlist_only(mut result: CheckHostResult) -> CheckHostResult {
     if result.blocked || result.action == VerdictAction::Allow || result.is_rewrite() {
         return result;
@@ -377,7 +344,6 @@ fn record_type_name(rrtype: u16) -> Option<&'static str> {
     })
 }
 
-/// Formats a typed record back into the API's `type/value` shape.
 fn record_value(record: &Record) -> String {
     match record {
         Record::A(bytes) => std::net::Ipv4Addr::from(*bytes).to_string(),
@@ -449,7 +415,6 @@ fn svc_param_text(param: &SvcParam) -> String {
     }
 }
 
-/// Presentation form of a record target: keep the root `.`, drop one trailing dot otherwise.
 fn trim_target(name: &str) -> &str {
     if name == "." {
         "."

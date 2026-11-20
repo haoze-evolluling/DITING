@@ -1,33 +1,5 @@
-//! The snapshot payload `RuleSnapshotPayload.kt` packs and the JNI bridge decodes.
-//!
-//! ```text
-//! u8 layout | u8 flags
-//! text block_trie_path                 (nullable)
-//! text important_block_trie_path       (nullable)
-//! text allow_trie_path                 (nullable)
-//! text important_allow_trie_path       (nullable)
-//! u32 app_allowlist_count
-//!   per entry: text package | u32 count | text domain × count
-//! u32 block_custom_count       | row × count
-//! u32 block_subscription_count | row × count
-//! u32 allow_custom_count       | row × count
-//! u32 allow_subscription_count | row × count
-//! ```
-//!
-//! Row: `text pattern | text source | u8 flags | text app_scope (nullable) |
-//! text denyallow (nullable) | text dns_type (nullable)`, flags = important (bit 0), appInverted
-//! (bit 1), isWildcard (bit 2), isRegex (bit 3).
-//!
-//! Flags: block index usable (bit 0), important block usable (bit 1), allow index usable (bit 2),
-//! important allow usable (bit 3), filter enabled (bit 4).
-//!
-//! `text` is `u32 length | bytes` (`u32::MAX` = null); every integer is little-endian. A drifted
-//! version byte, a length that disagrees with the payload or a trailing byte is a hard error, so a
-//! rebuilt library cannot read a stale Kotlin encoder as a different rule set.
-
 use crate::snapshot::{LoadInput, Row, SnapshotInput};
 
-/// Must match `RULE_SNAPSHOT_PAYLOAD_LAYOUT` in `RuleSnapshotPayload.kt`.
 pub const LAYOUT_VERSION: u8 = 1;
 
 const NULL_TEXT: u32 = u32::MAX;
@@ -65,8 +37,6 @@ impl<'a> Reader<'a> {
         Some(u32::from_le_bytes(self.take(4)?.try_into().ok()?))
     }
 
-    /// `u32 length` then that many bytes, as UTF-8 with invalid sequences replaced (Kotlin strings
-    /// are already valid UTF-16, so this only matters for a corrupted payload).
     fn text(&mut self) -> Option<String> {
         let length = self.u32()? as usize;
         Some(String::from_utf8_lossy(self.take(length)?).into_owned())
@@ -76,7 +46,6 @@ impl<'a> Reader<'a> {
         if self.u32()? == NULL_TEXT {
             return Some(None);
         }
-        // Rewind the length we just consumed and read it as a normal text.
         self.position -= 4;
         Some(Some(self.text()?))
     }
@@ -118,7 +87,6 @@ impl<'a> Reader<'a> {
     }
 }
 
-/// Decodes one snapshot request.
 pub fn decode(payload: &[u8]) -> Option<SnapshotInput> {
     let mut reader = Reader::new(payload)?;
     let flags = reader.u8()?;
@@ -174,7 +142,6 @@ pub fn decode(payload: &[u8]) -> Option<SnapshotInput> {
     })
 }
 
-/// Encodes a request the way the Kotlin encoder does; the tests use it to pin the layout.
 #[cfg(test)]
 pub fn encode(input: &SnapshotInput) -> Vec<u8> {
     let mut out = Vec::with_capacity(64);

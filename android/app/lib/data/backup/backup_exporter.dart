@@ -1,5 +1,3 @@
-/// Backup export: the Rust core writes the document, this file only hands it a snapshot of what
-/// the app currently holds (settings getters plus the four tables it may export).
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -38,15 +36,12 @@ class BackupExportResult {
     this.skipped = const [],
   });
 
-  /// The whole document. Empty for a streamed export ([BackupExporter.exportTo]): the JSON went to
-  /// the sink instead of being kept in memory.
   final String content;
   final String fileName;
   final List<BackupGroup> included;
 
   final Map<BackupGroup, int> counts;
 
-  /// Entries that could not be read, reported rather than counted as zero.
   final List<String> skipped;
 
   int get totalItems => counts.values.fold(0, (sum, value) => sum + value);
@@ -62,18 +57,13 @@ class BackupExportResult {
   );
 }
 
-/// Receives the document as it is produced. Each call carries one piece of the file, so a caller
-/// that uploads can start before the whole document has been handed over.
 typedef BackupChunkSink = Future<void> Function(String chunk);
 
 class BackupExporter {
   const BackupExporter();
 
-  /// Chunk size for [exportTo]: the document is one string by the time the core returns it, so this
-  /// only bounds how much a caller holds between awaits.
   static const _chunkBytes = 64 * 1024;
 
-  /// The whole document as one string, for the WebDAV upload and the tests.
   Future<BackupExportResult> export(
     BackupExportSource source, {
     Set<BackupGroup>? groups,
@@ -87,11 +77,6 @@ class BackupExporter {
     return result.withContent(buffer.toString());
   }
 
-  /// Streams [groups] only (all groups when null) to [sink].
-  ///
-  /// Every decision — which groups land in the file, what a group looks like, what is counted and
-  /// what is skipped — belongs to `rust/diting-backup-core`. A group whose local snapshot cannot be
-  /// read is reported in [BackupExportResult.skipped] and left out; it never aborts the export.
   Future<BackupExportResult> exportTo(
     BackupChunkSink sink,
     BackupExportSource source, {
@@ -131,7 +116,6 @@ class BackupExporter {
     }
 
     return BackupExportResult(
-      // Streamed: the document went to the sink, so nothing is kept here.
       content: '',
       fileName: '${BackupFormat.fileNamePrefix}-${BackupFormat.stampOf(now)}.json',
       included: included,
@@ -155,7 +139,6 @@ class BackupExporter {
     }
   }
 
-  /// `服务商：服务商配置不是合法 JSON`, so the user sees which group is missing and why.
   static String _skipMessage(Object? entry) {
     final key = entry is Map ? entry['group'] : null;
     final reason = entry is Map ? entry['reason'] : null;

@@ -12,10 +12,8 @@ class CommonPopupMenu extends StatefulWidget {
 
   final List<CommonPopupMenuItem> items;
 
-  /// Half the next row shows past these, telling the menu scrolls; rows in view share one height.
   final int? maxVisibleItems;
 
-  /// Smaller rows, icons and type, for menus inside small surfaces.
   final bool dense;
 
   @override

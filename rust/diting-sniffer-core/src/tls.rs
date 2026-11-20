@@ -1,23 +1,5 @@
-//! `parseClientHelloSNI`: the Server Name Indication out of a TLS `ClientHello`.
-//!
-//! The engine has already read the first chunk of the flow and wants the hostname before it
-//! decides whether to intercept. This walks the record the way the Go helper did:
-//!
-//! ```text
-//! TLS record: type(1) version(2) length(2) body
-//! body:       handshake type(1) length(3) [version(2) random(32) session_id ...]
-//! ```
-//!
-//! Every length is clamped the way the Go code clamped it (`record` and the extension list) or
-//! rejected when it would run past the buffer. The function returns an empty slice for anything
-//! that is not a well-formed enough `ClientHello` — a truncated peek is normal, not an error.
-//!
-//! The returned bytes are borrowed from `record`: they are the raw SNI bytes, not a `str`.
-
-/// The host_name entry inside the SNI extension.
 const SNI_EXTENSION: u16 = 0x0000;
 
-/// Extracts the first `host_name` entry from `record`, or `&[]` when there is none.
 pub fn parse_client_hello_sni(record: &[u8]) -> &[u8] {
     if record.len() < 5 || record[0] != 0x16 {
         return &[];
@@ -32,7 +14,6 @@ pub fn parse_client_hello_sni(record: &[u8]) -> &[u8] {
         return &[];
     }
 
-    // Skip the handshake type and length; `ch` starts at the ClientHello version.
     let ch = &body[4..];
 
     if ch.len() < 2 + 32 + 1 {
@@ -70,7 +51,6 @@ pub fn parse_client_hello_sni(record: &[u8]) -> &[u8] {
         let extension_data = &ext[4..4 + extension_data_len];
 
         if extension_type == SNI_EXTENSION {
-            // A server_name list: list length, then entries of (type, name length, name).
             if extension_data.len() < 5 {
                 return &[];
             }

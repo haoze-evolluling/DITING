@@ -1,30 +1,3 @@
-//! DTRI writer: the mmap-able subscription-rule index the Rust tunnel engine reads.
-//!
-//! A byte-for-byte port of the legacy `MappedSubscriptionRuleIndex.compile`; the Kotlin writer is
-//! gone (the app reaches this module through `RustRuleIndexCompiler`), and the byte-parity fixtures
-//! under `tests/fixtures/` are what pin the format. [`validate_header`] is the read side: Kotlin
-//! peeks at the mapped header and asks whether this build can read the file.
-//!
-//! Only plain rules belong in a trie. Wildcards, regexes, app-scoped / inverted rules and rules
-//! carrying `denyallow` or `dnstype` are skipped exactly like the Kotlin filter does, and the
-//! caller (`BlockRuleLoader`/`AllowRuleLoader`) already narrows the feed per file.
-//!
-//! File layout (all integers big-endian, identical to the Kotlin writer):
-//!
-//! ```text
-//! magic "DTRI" | version | nodes | edges | sources | bloomBits | bloomBytes |
-//! labelsBytes | sourcesBytes
-//! bloom | nodes * (source, firstEdge, edgeCount) | edges * (labelOffset, labelLength, child) |
-//! labels | sources * (length, UTF-8 bytes)
-//! ```
-//!
-//! Labels and patterns live in two shared byte pools instead of one `String` per trie node: a
-//! 100k-rule compile is mostly allocation-bound, and this keeps it to a handful of growing buffers.
-//!
-//! Known parity note: the bloom filter hashes UTF-16 code units (`& 0xff`), because that is what
-//! the Kotlin writer does. Plain patterns are ASCII after rule normalization, so this only matters
-//! for the Unicode fixtures we keep to pin the byte format.
-
 use std::borrow::Cow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -36,8 +9,6 @@ const NODE_SIZE: usize = 12;
 const EDGE_SIZE: usize = 12;
 const BLOOM_HASHES: usize = 7;
 
-/// One rule as the Kotlin side packs it. `important` is not part of the trie (the caller feeds the
-/// normal and important files separately), so it is not modelled here.
 #[derive(Debug, Clone)]
 pub struct Rule<'a> {
     pub pattern: &'a str,
@@ -50,12 +21,10 @@ pub struct Rule<'a> {
     pub dns_type: Option<&'a str>,
 }
 
-/// `!isNullOrEmpty()` in Kotlin: null and the empty string both mean "not set".
 fn is_set(value: Option<&str>) -> bool {
     matches!(value, Some(text) if !text.is_empty())
 }
 
-/// The Kotlin `compile` filter: these rules never enter a trie.
 fn is_skipped(rule: &Rule<'_>) -> bool {
     rule.is_wildcard
         || rule.pattern.contains('*')
@@ -66,36 +35,21 @@ fn is_skipped(rule: &Rule<'_>) -> bool {
         || is_set(rule.dns_type)
 }
 
-/// `EnabledRule.isPlainPattern()`: the rules a trie can hold.
-///
-/// This is the same predicate as `!is_skipped` on purpose: the snapshot builder used to ask Kotlin
-/// which rows to feed the writer, and the writer skipped the rest anyway. One implementation now
-/// serves both, so a row cannot be "plain" for the filter and "skipped" for the writer.
 pub fn is_plain(rule: &Rule<'_>) -> bool {
     !is_skipped(rule)
 }
 
-/// What a validated DTRI header says about the file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Validation {
-    /// The header matches and the sections cover the file exactly.
     Ok,
-    /// Shorter than a header, or the magic is not `DTRI`.
     Header,
-    /// A format version this build cannot read.
     Version,
-    /// `nodes`/`edges`/`sources`/`bloomBits` outside what a trie can be.
     Counts,
-    /// The section sizes do not add up to `file_length`.
     Sections { expected: u64 },
 }
 
-/// Header size in bytes (`HEADER_INTS * 4`).
 pub const HEADER_SIZE: u64 = HEADER_INTS as u64 * 4;
 
-/// `MappedSubscriptionRuleIndex.load`'s checks, over the mapped header and the file length.
-///
-/// The caller maps the file read-only; nothing here allocates or touches the rest of it.
 pub fn validate_header(header: &[u8], file_length: u64) -> Validation {
     if file_length < HEADER_SIZE || header.len() < HEADER_SIZE as usize {
         return Validation::Header;
@@ -139,14 +93,10 @@ pub fn validate_header(header: &[u8], file_length: u64) -> Validation {
     Validation::Ok
 }
 
-/// Compiles `rules` into a DTRI image. An empty input still produces a valid root-only file, which
-/// is what a subscription page set with nothing indexable has to look like.
 pub fn compile(rules: &[Rule<'_>]) -> Vec<u8> {
     let mut nodes: Vec<Node<'_>> = vec![Node::default()];
     let mut labels: String = String::new();
     let mut label_spans: HashMap<Box<str>, (u32, u32)> = HashMap::new();
-    // (parent node, label start, label length) -> child node. A trie node keyed by an interned
-    // label keeps the build O(labels) instead of scanning a fan-out of hundreds of children.
     let mut edges: HashMap<(u32, u32, u32), u32> = HashMap::new();
     let mut patterns: String = String::new();
     let mut sources: Vec<&str> = Vec::new();
@@ -162,7 +112,6 @@ pub fn compile(rules: &[Rule<'_>]) -> Vec<u8> {
         patterns.push_str(pattern);
         let pattern_end = patterns.len() as u32;
 
-        // Labels are stored from the TLD down: "ads.example.com" indexes com -> example -> ads.
         let mut node = 0usize;
         let mut end = pattern.len();
         while end > 0 {
@@ -208,7 +157,6 @@ pub fn compile(rules: &[Rule<'_>]) -> Vec<u8> {
         .map(|(index, name)| (*name, index as u32))
         .collect();
 
-    // Pre-order node numbering, children sorted by the same UTF-16 order the Kotlin writer uses.
     let mut order = Vec::with_capacity(nodes.len());
     let mut node_index = vec![usize::MAX; nodes.len()];
     assign(0, &nodes, &labels, &mut order, &mut node_index);
@@ -288,7 +236,6 @@ pub fn compile(rules: &[Rule<'_>]) -> Vec<u8> {
     out
 }
 
-/// Returns the `(start, length)` span of `label` in the shared pool, appending it on first use.
 fn intern(
     label: &str,
     labels: &mut String,
@@ -304,21 +251,9 @@ fn intern(
     span
 }
 
-/// Compiles the packed payload the Kotlin side sends over JNI. `None` means the payload is
-/// malformed (or absurdly large); the JNI bridge reports null and the Kotlin caller fails the
-/// snapshot build instead of writing a partial image.
-///
-/// ```text
-/// u32 count | count * (u32 patternLen, pattern, u32 sourceLen, source, u8 flags,
-///                      u32 appScopeLen | u32::MAX, appScope,
-///                      u32 denyallowLen | u32::MAX, denyallow,
-///                      u32 dnsTypeLen | u32::MAX, dnsType)
-/// flags: bit 0 wildcard, bit 1 appInverted, bit 2 regex
-/// ```
 pub fn compile_packed(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
-    // Every record needs at least the two length prefixes and the flags byte.
     if count > payload.len() {
         return None;
     }
@@ -362,11 +297,9 @@ pub fn compile_packed(payload: &[u8]) -> Option<Vec<u8>> {
 struct Node<'a> {
     children: Vec<LabelRef>,
     source: Option<&'a str>,
-    /// Range in the shared pattern pool, used for the bloom filter.
     pattern: Option<(u32, u32)>,
 }
 
-/// One `(label, child)` edge; the label lives in the shared label pool.
 #[derive(Clone, Copy)]
 struct LabelRef {
     start: u32,
@@ -409,8 +342,6 @@ fn assign(
     }
 }
 
-/// Kotlin `String.lowercase()` (invariant locale). ASCII input is the common case and skipping the
-/// allocation for it keeps the compile cheap without changing a single output byte.
 fn lowercase(pattern: &str) -> Cow<'_, str> {
     if !pattern.is_ascii() {
         return Cow::Owned(pattern.to_lowercase());
@@ -422,8 +353,6 @@ fn lowercase(pattern: &str) -> Cow<'_, str> {
     }
 }
 
-/// Kotlin's `String.compareTo` compares UTF-16 code units; sorting by UTF-8 bytes would order
-/// astral-plane labels differently.
 fn utf16_cmp(left: &str, right: &str) -> Ordering {
     left.encode_utf16().cmp(right.encode_utf16())
 }
@@ -437,7 +366,6 @@ fn add_bloom(bloom: &mut [u8], bits: usize, value: &str) {
     }
 }
 
-/// Kotlin `hashes`: FNV-1a offsets, folding each UTF-16 code unit through its low byte.
 fn hashes(value: &str) -> (i64, i64) {
     let mut h1: i64 = -3750763034362895579;
     let mut h2: i64 = h1;

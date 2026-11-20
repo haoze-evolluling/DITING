@@ -1,6 +1,3 @@
-//! The HTTP sniffer's fixed cases: method gate, header walk, whitespace trimming and the two
-//! Unicode details that make the port byte-exact.
-
 use crate::http::{go_trim_space_bytes, looks_like_http_request, parse_http_host};
 
 #[test]
@@ -52,7 +49,6 @@ fn host_name_comparison_folds_like_go() {
         assert_eq!(parse_http_host(&request), b"example.com");
     }
 
-    // U+017F folds to `s`; Go's EqualFold accepts it and so must the kernel.
     let mut request = b"GET / HTTP/1.1\r\nHo\xc5\xbft: fold.example\r\n\r\n".to_vec();
     request.extend_from_slice(b"");
     assert_eq!(parse_http_host(&request), b"fold.example");

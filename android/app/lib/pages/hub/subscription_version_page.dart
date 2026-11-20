@@ -1,4 +1,3 @@
-/// R6: subscription rule-set version history, diff preview and rollback.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -49,8 +48,6 @@ class _SubscriptionVersionPageState
             onRollback: (version) => _rollback(entry, version),
             busy: _busy,
           );
-          // U9: on a tablet, keep the subscription list beside the history instead of hiding it in a
-          // dropdown, so switching versions never costs a second tap through a menu.
           final wide = MediaQuery.sizeOf(context).width >= 720;
           if (wide) {
             return PageBody(

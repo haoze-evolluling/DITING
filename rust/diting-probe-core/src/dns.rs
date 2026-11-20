@@ -1,10 +1,3 @@
-//! DNS wire work for the diagnostics tools: the A/AAAA query `DnsServerProbe` /
-//! `DnsLatencyTester` built by hand in Kotlin, the "did the resolver answer" check, the custom
-//! server's answer walk, and the DoH endpoint derivation.
-//!
-//! The answer walk reuses [`diting_dns_wire::parse_answer_records`] — the same reader the DNS cache
-//! and the DNS message kernel use — instead of keeping a second `DataInputStream` parser in Kotlin.
-
 use diting_dns_wire::parse_answer_records;
 
 const HEADER_LEN: usize = 12;
@@ -13,7 +6,6 @@ const TYPE_CNAME: u16 = 5;
 const TYPE_AAAA: u16 = 28;
 const CLASS_IN: u16 = 1;
 
-/// `DnsServerProbe` / `DnsLatencyTester`'s binary question type.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum QueryType {
     A,
@@ -37,19 +29,14 @@ impl QueryType {
     }
 }
 
-/// Builds one single-question query with `RD = 1`.
-///
-/// None means a label was empty or longer than 63 bytes, which the Kotlin caller turned into
-/// `域名标签非法: <domain>`. Labels are cut the way `String.toByteArray(US_ASCII)` did: every
-/// non-ASCII character becomes `?`, one per code point.
 pub fn build_query(id: u16, qtype: QueryType, domain: &str) -> Option<Vec<u8>> {
     let trimmed = domain.trim_matches('.');
     let mut query = Vec::with_capacity(HEADER_LEN + trimmed.len() + 6);
 
     query.extend_from_slice(&id.to_be_bytes());
-    query.extend_from_slice(&0x0100u16.to_be_bytes()); // RD = 1
-    query.extend_from_slice(&1u16.to_be_bytes()); // QDCOUNT
-    query.extend_from_slice(&[0u8; 6]); // ANCOUNT + NSCOUNT + ARCOUNT
+    query.extend_from_slice(&0x0100u16.to_be_bytes());
+    query.extend_from_slice(&1u16.to_be_bytes());
+    query.extend_from_slice(&[0u8; 6]);
 
     for label in trimmed.split('.') {
         let mut bytes = Vec::with_capacity(label.len());
@@ -63,13 +50,12 @@ pub fn build_query(id: u16, qtype: QueryType, domain: &str) -> Option<Vec<u8>> {
         query.push(bytes.len() as u8);
         query.extend_from_slice(&bytes);
     }
-    query.push(0); // end of QNAME
+    query.push(0);
     query.extend_from_slice(&qtype.wire().to_be_bytes());
     query.extend_from_slice(&CLASS_IN.to_be_bytes());
     Some(query)
 }
 
-/// `DnsLatencyTester.isSuccess`: `QR = 1` and `RCODE = 0`, read from the fixed header only.
 pub fn response_succeeded(wire: &[u8]) -> bool {
     if wire.len() < HEADER_LEN {
         return false;
@@ -79,7 +65,6 @@ pub fn response_succeeded(wire: &[u8]) -> bool {
     qr && rcode == 0
 }
 
-/// One A/AAAA answer of a custom server's reply.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Answer {
     pub ipv4: bool,
@@ -87,12 +72,6 @@ pub struct Answer {
     pub value: String,
 }
 
-/// Outcome of reading one custom server's reply.
-///
-/// The four failure kinds are the four exception paths the Kotlin implementation had, kept apart
-/// because they print different messages: a short or non-response body, a truncated answer, an
-/// error rcode, and an answer section that ends before its declared records (where
-/// `DataInputStream` threw an `EOFException` with no message).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Reply {
     Ok(Vec<Answer>),
@@ -102,12 +81,7 @@ pub enum Reply {
     Incomplete,
 }
 
-/// Reads the answer section of one reply, keeping only `IN` A/AAAA records of the requested family.
 pub fn parse_server_reply(wire: &[u8], ipv4: bool) -> Reply {
-    // `wire[0] & 0x80`: the Kotlin check read the *first* byte, which is the high bit of the
-    // transaction ID rather than the QR flag in byte 2. It rejects about half of the replies, but
-    // fixing it here would change which lookups succeed, so the migration keeps it (see the
-    // "已知边界" section of rust/README.md).
     if wire.len() < HEADER_LEN || wire[0] & 0x80 == 0 {
         return Reply::Invalid;
     }
@@ -125,7 +99,6 @@ pub fn parse_server_reply(wire: &[u8], ipv4: bool) -> Reply {
         None => return Reply::Incomplete,
     };
     if records.len() < declared {
-        // The header promised more records than the datagram carried; the old reader hit EOF here.
         return Reply::Incomplete;
     }
 
@@ -145,7 +118,6 @@ pub fn parse_server_reply(wire: &[u8], ipv4: bool) -> Reply {
                 ttl: record.ttl,
                 value: format_ipv6(&record.rdata),
             }),
-            // CNAME is walked but never rendered, exactly like the Kotlin reader.
             TYPE_CNAME => {}
             _ => {}
         }
@@ -153,17 +125,10 @@ pub fn parse_server_reply(wire: &[u8], ipv4: bool) -> Reply {
     Reply::Ok(answers)
 }
 
-/// `(bytes[0] and 0xFF).joinToString(".")`.
 pub fn format_ipv4(bytes: &[u8]) -> String {
     format!("{}.{}.{}.{}", bytes[0], bytes[1], bytes[2], bytes[3])
 }
 
-/// The Kotlin `formatIpv6`: eight lowercase hex groups, the longest run of two or more zero groups
-/// compressed to `::`, no IPv4-mapped special case.
-///
-/// Deliberately not [`diting_dns_wire::format_ipv6`]: that one prints `net.IP.String()`, which folds
-/// `::ffff:a.b.c.d` to `a.b.c.d` for the Go engine. The probe used to print it in hex and the
-/// diagnostics panels show whatever came back, so this stays a separate formatter.
 pub fn format_ipv6(bytes: &[u8]) -> String {
     let mut groups = [0u16; 8];
     for (index, group) in groups.iter_mut().enumerate() {
@@ -204,8 +169,6 @@ pub fn format_ipv6(bytes: &[u8]) -> String {
     format!("{head}::{tail}")
 }
 
-/// `DnsLatencyTester`'s DoH endpoint: an explicit URL wins, a host that already carries a scheme is
-/// used as it is, everything else becomes `https://<host>/dns-query`.
 pub fn doh_endpoint(url: &str, host: &str) -> String {
     if !url.trim().is_empty() {
         return url.to_string();
@@ -226,14 +189,12 @@ mod tests {
 
     fn build_reply(rcode: u8, answers: &[(u16, u16, u32, Vec<u8>)]) -> Vec<u8> {
         let mut wire = vec![0u8; HEADER_LEN];
-        // ID high bit set: `parse_server_reply` tests that bit (see its comment).
         wire[0] = 0x81;
         wire[1] = 0x34;
-        wire[2] = 0x81; // QR = 1
+        wire[2] = 0x81;
         wire[3] = 0x80 | rcode;
-        wire[5] = 1; // QDCOUNT = 1
+        wire[5] = 1;
         wire[6..8].copy_from_slice(&(answers.len() as u16).to_be_bytes());
-        // One question, compression-free: q.example.com A IN.
         wire.extend_from_slice(&[
             1, b'q', 7, b'e', b'x', b'a', b'm', b'p', b'l', b'e', 3, b'c', b'o', b'm', 0,
         ]);
@@ -241,7 +202,7 @@ mod tests {
         wire.extend_from_slice(&CLASS_IN.to_be_bytes());
         for (rrtype, class, ttl, rdata) in answers {
             wire.push(0xC0);
-            wire.push(0x0C); // pointer back to the question name
+            wire.push(0x0C);
             wire.extend_from_slice(&rrtype.to_be_bytes());
             wire.extend_from_slice(&class.to_be_bytes());
             wire.extend_from_slice(&ttl.to_be_bytes());
@@ -263,7 +224,6 @@ mod tests {
             hex(&aaaa),
             "abcd01000001000000000000076578616d706c6503636f6d00001c0001"
         );
-        // `trim('.')` takes both ends, so a single label is enough.
         assert_eq!(
             hex(&build_query(0, QueryType::A, ".com.").unwrap()),
             "00000100000100000000000003636f6d0000010001"
@@ -272,13 +232,11 @@ mod tests {
 
     #[test]
     fn build_query_rejects_bad_labels() {
-        // "." trims to the empty string, whose single label is empty.
         assert!(build_query(0, QueryType::A, ".").is_none());
         assert!(build_query(0, QueryType::A, "").is_none());
         assert!(build_query(0, QueryType::A, "a..b").is_none());
         assert!(build_query(0, QueryType::A, &"a".repeat(64)).is_none());
         assert!(build_query(0, QueryType::A, &"a".repeat(63)).is_some());
-        // Non-ASCII becomes `?` per code point, like `toByteArray(US_ASCII)`.
         let query = build_query(0, QueryType::A, "ü.com").unwrap();
         assert_eq!(query[12], 1);
         assert_eq!(query[13], b'?');
@@ -291,7 +249,7 @@ mod tests {
         assert!(response_succeeded(&wire));
         wire[3] = 0x80 | 3;
         assert!(!response_succeeded(&wire));
-        wire[2] = 0x01; // no QR
+        wire[2] = 0x01;
         wire[3] = 0x80;
         assert!(!response_succeeded(&wire));
     }
@@ -308,8 +266,8 @@ mod tests {
                     rdata
                 }),
                 (TYPE_CNAME, CLASS_IN, 60, vec![0xC0, 0x0C]),
-                (TYPE_A, 3, 60, vec![5, 6, 7, 8]), // CHAOS class: skipped
-                (TYPE_A, CLASS_IN, 60, vec![1, 2, 3]), // wrong length: skipped
+                (TYPE_A, 3, 60, vec![5, 6, 7, 8]),
+                (TYPE_A, CLASS_IN, 60, vec![1, 2, 3]),
             ],
         );
         assert_eq!(
@@ -335,12 +293,11 @@ mod tests {
         let mut short = build_reply(0, &[]);
         short.truncate(11);
         assert_eq!(parse_server_reply(&short, true), Reply::Invalid);
-        // The Kotlin gate reads the ID high bit, so a reply without it is "incomplete".
         let mut no_id_bit = build_reply(0, &[]);
         no_id_bit[0] = 0x01;
         assert_eq!(parse_server_reply(&no_id_bit, true), Reply::Invalid);
         let mut no_qr = build_reply(0, &[]);
-        no_qr[2] &= 0x7F; // cleared QR is *not* rejected by that gate
+        no_qr[2] &= 0x7F;
         assert_eq!(parse_server_reply(&no_qr, true), Reply::Ok(Vec::new()));
 
         let mut truncated = build_reply(0, &[]);
@@ -356,12 +313,10 @@ mod tests {
             Reply::Rcode(15)
         );
 
-        // Declared two answers, carried one: the old reader hit EOF mid-loop.
         let mut incomplete = build_reply(0, &[(TYPE_A, CLASS_IN, 60, vec![1, 2, 3, 4])]);
         incomplete[7] = 2;
         assert_eq!(parse_server_reply(&incomplete, true), Reply::Incomplete);
 
-        // A question section that runs off the end.
         let mut cut = build_reply(0, &[]);
         cut.truncate(HEADER_LEN + 3);
         assert_eq!(parse_server_reply(&cut, true), Reply::Incomplete);
@@ -377,7 +332,6 @@ mod tests {
         assert_eq!(format("2001:db8:0:0:1:0:0:1"), "2001:db8::1:0:0:1");
         assert_eq!(format("1:2:3:4:5:6:7:8"), "1:2:3:4:5:6:7:8");
         assert_eq!(format("0:0:1:0:0:0:0:1"), "0:0:1::1");
-        // The first of two equally long zero runs is compressed, and no dotted quad is produced.
         assert_eq!(format("1:0:0:2:0:0:3:4"), "1::2:0:0:3:4");
         assert_eq!(format("::ffff:1.2.3.4"), "::ffff:102:304");
         assert_eq!(format("fe80::abcd:ef01"), "fe80::abcd:ef01");

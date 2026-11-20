@@ -1,8 +1,3 @@
-//! The per-query counters behind `MetricsStatus` and the `metrics` WebSocket event.
-//!
-//! Go kept them in `cmd/service/metrics.go`: total/success/failed counters plus the summed latency
-//! and process start time. QPS is the lifetime average, exactly as the old snapshot computed it.
-
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 

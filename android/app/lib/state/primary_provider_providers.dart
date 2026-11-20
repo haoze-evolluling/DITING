@@ -1,5 +1,3 @@
-/// Active primary provider plus shared relative-time labels, so the status and speed-test cards
-/// cannot disagree.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -7,15 +5,12 @@ import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Selected one in single mode, otherwise the provider tried first (the stored order is what the
-/// engine follows, so the first entry is the primary); null when absent.
 final primaryProviderProvider = Provider<MockProvider?>((ref) {
   final catalog = ref.watch(dnsProviderCatalogProvider);
   final selectedId = ref.watch(selectedProviderProvider);
   return catalog.where((provider) => provider.id == selectedId).firstOrNull;
 });
 
-/// Relative time from the real timestamp; without one, "not tested yet".
 String elapsedAgoLabel(DateTime? at) {
   if (at == null) return currentL10n.siteLatencyNotTested;
   final seconds = DateTime.now().difference(at).inSeconds;

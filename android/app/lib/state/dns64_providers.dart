@@ -1,4 +1,3 @@
-/// N8 state: the DNS64 synthesis switch, backed by the legacy settings store.
 library;
 
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';

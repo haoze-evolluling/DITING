@@ -1,9 +1,3 @@
-/// The blocking response: the three answer modes, and the save button that posts the choice.
-///
-/// The old desktop console's `RulesPanel.vue` "config" tab is the blueprint. The mode tiles are a local
-/// draft; only the button posts, and the card then adopts what the service kept. The response
-/// addresses and the list refresh interval are [FilterBlockingParamsCard], so a mode picker and three
-/// fields do not share one card.
 library;
 
 import 'dart:async';
@@ -50,7 +44,6 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
     _adopt(widget.config);
   }
 
-  /// Adopts the service's mode only when a new answer arrives and nothing has been picked since.
   void _adopt(DesktopFilterConfig config) {
     if (identical(_adopted, config)) return;
     _adopted = config;
@@ -135,7 +128,6 @@ class _FilterModeCardState extends ConsumerState<FilterModeCard> {
   }
 }
 
-/// The addresses a blocked name is answered with, and the interval the rule lists refresh on.
 class FilterBlockingParamsCard extends ConsumerStatefulWidget {
   const FilterBlockingParamsCard({
     super.key,
@@ -180,8 +172,6 @@ class _FilterBlockingParamsCardState
     super.dispose();
   }
 
-  /// Adopts the service's values only when a new answer arrives and nothing is being edited; a
-  /// switch elsewhere must not silently discard a half-typed address.
   void _adopt(DesktopFilterConfig config) {
     if (identical(_adopted, config)) return;
     _adopted = config;
@@ -339,7 +329,6 @@ class _AddressField extends StatelessWidget {
   }
 }
 
-/// The console's three mode labels and their explanations.
 String desktopBlockModeLabel(BuildContext context, String mode) {
   final l10n = context.l10n;
   return switch (mode) {

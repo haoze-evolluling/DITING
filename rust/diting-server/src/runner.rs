@@ -1,8 +1,3 @@
-//! Process startup, privileged binding and the long-lived serve loop.
-//!
-//! This lives in the library rather than `main.rs` so the Android fat cdylib can expose the same
-//! entry point through a C ABI and the tiny launcher can call it after loading that cdylib.
-
 use std::path::PathBuf;
 #[cfg(unix)]
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -30,12 +25,10 @@ struct Cli {
     drop_gid: Option<u32>,
 }
 
-/// Runs with the process arguments (without `argv[0]`).
 pub fn run_from_env() -> Result<(), String> {
     run_with_args(std::env::args().skip(1))
 }
 
-/// Runs with explicit arguments, as supplied by a launcher.
 pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
     let cli = parse_args(args)?;
     let root = is_effective_root();
@@ -53,8 +46,6 @@ pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
         .ensure_dirs()
         .map_err(|error| format!("创建服务器目录失败: {error}"))?;
 
-    // Privileged phase: bind the public DNS sockets and create the private control socket before
-    // any thread exists. Once privileges are dropped, every worker and writer starts as the app.
     let dns_config = dns_server_config(&config.desktop_config());
     let dns_sockets = BoundDnsSockets::bind(&dns_config).map_err(|error| {
         if root && cli.port == 53 {
@@ -153,7 +144,6 @@ static STOP_SIGNAL: AtomicBool = AtomicBool::new(false);
 
 #[cfg(unix)]
 extern "C" fn handle_stop_signal(_signal: libc::c_int) {
-    // Only async-signal-safe work here; the async loop below observes the flag.
     STOP_SIGNAL.store(true, Ordering::SeqCst);
 }
 
@@ -264,10 +254,6 @@ fn is_effective_root() -> bool {
 
 #[cfg(unix)]
 fn drop_privileges(uid: u32, gid: u32) -> Result<(), String> {
-    // Android grants socket creation to app UIDs through the supplementary `inet` group, not the
-    // UID alone. The public DNS listeners are bound before this call, but bootstrap and every
-    // upstream connection create sockets afterwards; clearing every group makes those calls fail
-    // with EACCES and leaves clients with SERVFAIL.
     #[cfg(target_os = "android")]
     let supplementary = [ANDROID_AID_INET];
     #[cfg(not(target_os = "android"))]

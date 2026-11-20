@@ -1,6 +1,3 @@
-/// Dart side of `com.haoze.diting/https_inspection`: `available` means the engine produced a CA,
-/// `installed` means its SHA-256 matches an entry in the Android user CA store, the only store an
-/// app can write.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -28,14 +25,12 @@ class CaCertificateState {
 
   final bool installed;
 
-  /// Uppercase colon-separated hex, the format 1.4.3 displayed verbatim.
   final String? fingerprintSha256;
 
   final String? pem;
 
   final String? error;
 
-  /// Legacy `https_inspection_ready` flag: ready AND `ca_backend == "go-v1"`, set from [installed].
   bool get ready => available && installed;
 
   static CaCertificateState fromMap(Map<Object?, Object?> map) =>
@@ -48,16 +43,11 @@ class CaCertificateState {
       );
 }
 
-/// What [CaCertificateService.install] managed to show.
 enum CaInstallTarget {
-  /// The system certificate installer accepted the staged file.
   installer,
 
-  /// No installer activity: the security settings screen was opened instead, so the user has to
-  /// pick the file from Download themselves.
   settings,
 
-  /// Nothing could be opened.
   none,
 }
 
@@ -70,7 +60,6 @@ class CaInstallResult {
 
   final CaInstallTarget target;
 
-  /// Absolute path of the staged `.crt`, so the UI can tell the user where it is.
   final String? path;
 
   final String? error;
@@ -93,7 +82,6 @@ class CaSaveResult {
 
   final bool saved;
 
-  /// `Download/…` when MediaStore wrote it, otherwise an absolute app-private path.
   final String? name;
 
   final String? error;
@@ -106,15 +94,10 @@ class CaSaveResult {
 }
 
 abstract class CaCertificateService {
-  /// Reads, and lazily generates, the CA; [regenerate] deletes `ca.crt`, `ca.key` and
-  /// `mitm_blacklist.txt`, invalidating every certificate the device trusted.
   Future<CaCertificateState> inspect({bool regenerate = false});
 
-  /// Hands the CA to the system certificate installer. Android offers no silent install, so this
-  /// is the furthest an app can go on its own.
   Future<CaInstallResult> install();
 
-  /// Copies the CA into the shared Download folder for manual installation later.
   Future<CaSaveResult> saveToDownloads();
 }
 
@@ -124,8 +107,6 @@ class MethodChannelCaCertificateService implements CaCertificateService {
 
   final MethodChannel _channel;
 
-  /// A rejected or empty answer becomes an empty map, so every caller keeps the "nothing
-  /// installed" defaults instead of throwing.
   static Map<Object?, Object?> _snapshot(Object? raw) =>
       raw is Map ? Map<Object?, Object?>.from(raw) : const {};
 

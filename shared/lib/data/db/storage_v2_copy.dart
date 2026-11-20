@@ -1,7 +1,3 @@
-/// Copy helpers for the one-time V2 migration.
-///
-/// The source stores are opened read-only; every row keeps its original id. The target files are
-/// disposable until the migration marker is written, so a crash can safely rebuild them.
 library;
 
 import 'dart:io';
@@ -23,8 +19,6 @@ class StorageCopyPlan {
   final List<String> tables;
 }
 
-/// The five copy plans. Normal mode has two sources (rules and logs) plus the global automation
-/// tables; express has its own legacy file.
 List<StorageCopyPlan> storageV2CopyPlans() => [
   StorageCopyPlan(
     target: DatabaseKind.normalRules,
@@ -76,7 +70,6 @@ class TableCopyResult {
   final int sourceRows;
   final int insertedRows;
 
-  /// The source database or table did not exist; the target table stays empty.
   final bool sourceMissing;
 
   bool get isAppendOnly => _appendOnlyTables.contains(table);
@@ -117,8 +110,6 @@ class StorageCopyException implements Exception {
   String toString() => message;
 }
 
-/// Tables whose row count must survive the copy exactly. Everything else may lose only duplicate
-/// or orphan rows, which the verifier records.
 const _appendOnlyTables = <String>{
   'dns_log',
   'dns_race_log',
@@ -131,8 +122,6 @@ const _appendOnlyTables = <String>{
 
 const _batchRows = 5000;
 
-/// Copies [plan] into an already-open target. [sourcePath] may not exist; a missing source leaves
-/// all target tables empty.
 Future<StorageCopyResult> copyStoragePlan(
   Database target,
   String sourcePath,
@@ -250,8 +239,6 @@ Future<int> _copyAll(
   return _changes(executor);
 }
 
-/// Copies a table with an `id` column in bounded batches so a large log table does not hold one
-/// huge transaction or materialise every id in memory.
 Future<int> _copyByid(
   DatabaseExecutor executor,
   String table,
@@ -322,6 +309,5 @@ Future<void> _ignoreFailure(Future<void> Function() action) async {
   try {
     await action();
   } catch (_) {
-    // The connection is going away or the copy already failed.
   }
 }

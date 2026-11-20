@@ -1,5 +1,3 @@
-/// Read access to the legacy `app_traffic_daily` table; rows are written natively. The statements
-/// and row defaults live in `rust/diting-log-query-core`.
 library;
 
 import 'package:sqflite/sqflite.dart';
@@ -26,7 +24,6 @@ class AppTrafficDaily {
         updatedAt: (row['updatedAt'] as num?)?.toInt() ?? 0,
       );
 
-  /// `yyyy-MM-dd` in the local zone; the earliest date in the group for the aggregated queries.
   final String date;
   final String packageName;
   final String appName;
@@ -36,10 +33,8 @@ class AppTrafficDaily {
 
   int get totalBytes => txBytes + rxBytes;
 
-  /// Share of [total] as 0..1; 0 while the list is still empty.
   double shareOf(int total) => total <= 0 ? 0 : totalBytes / total;
 
-  /// The shape the traffic aggregate consumes.
   Map<String, Object?> toKernel() => {
     'date': date,
     'packageName': packageName,
@@ -66,7 +61,6 @@ class AppTrafficRepository {
 
   Future<List<AppTrafficDaily>> byDate(String date) => _query('traffic.byDate', {'date': date});
 
-  /// Inclusive on both ends; comparing the `yyyy-MM-dd` strings compares dates.
   Future<List<AppTrafficDaily>> dateRange(String startDate, String endDate) =>
       _query('traffic.dateRange', {
         'startDate': startDate,
@@ -79,7 +73,6 @@ class AppTrafficRepository {
 
   Future<int> clearAll() => _db.delete('app_traffic_daily');
 
-  /// Local-zone `yyyy-MM-dd`, matching the native ingest key; a UTC key hits the wrong row.
   static String dateKey(DateTime time) {
     String two(int value) => value.toString().padLeft(2, '0');
     return '${time.year}-${two(time.month)}-${two(time.day)}';

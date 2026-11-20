@@ -10,16 +10,13 @@ import 'package:diting_shared/ui/surface.dart';
 import 'package:diting_shared/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Below this many items a sheet is short enough to scan without a search.
 const sheetSearchMinItemCount = 10;
 
-// As iOS 27 sets its field: the glyph's center 22 dp in, the clear button's 24.5.
 const double _glyphInset = 12;
 const double _textInset = 41;
 const double _clearReach = 49;
 const double _clearSize = 24;
 
-/// A search field as iOS 27 draws one, on [fill] or on what stands behind it.
 class SearchField extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final TextEditingController? controller;
@@ -74,8 +71,6 @@ class _SearchFieldState extends State<SearchField> {
     final remote = RemoteFocusAdapter.isEnabledOf(context);
     final pill = AppShape.input.copyWith(borderRadius: AppRadius.standard);
     final trailing = widget.trailing;
-    // On goo the surface behind the field is its fill; anywhere else the field
-    // draws its own, as iOS does when a field stands on a page.
     final fill =
         widget.fill ??
         (GooSurface.of(context)
@@ -97,8 +92,6 @@ class _SearchFieldState extends State<SearchField> {
           inputFormatters: TextInputLimits.limit(TextInputLimits.search),
           onChanged: widget.onChanged,
           onSubmitted: (_) => widget.onSubmitted?.call(),
-          // Not dense: a dense decorator fits its fill to the text and ignores
-          // the minimum height, which desktop's compact density left short.
           decoration: InputDecoration(
             constraints: BoxConstraints.tightFor(
               height: widget.height ?? TonalButtonSize.bar.button,

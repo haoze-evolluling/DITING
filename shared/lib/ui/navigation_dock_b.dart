@@ -2,7 +2,6 @@
 
 part of 'navigation_dock.dart';
 
-/// Lets a touch that misses the dock by at most [_hitSlop] still reach it.
 class _HitSlop extends SingleChildRenderObjectWidget {
   const _HitSlop({super.child});
 
@@ -27,7 +26,6 @@ class _RenderHitSlop extends RenderProxyBox {
     return true;
   }
 
-  // A pill's rounded ends clip hit tests; its straight core never does.
   Offset _onSpine(Offset position) {
     final radius = size.shortestSide / 2;
     return Offset(
@@ -37,7 +35,6 @@ class _RenderHitSlop extends RenderProxyBox {
   }
 }
 
-/// Grows under a press and stretches after a drag, as the bar's lens does; the press only paints.
 class ElasticPress extends StatefulWidget {
   const ElasticPress({
     super.key,
@@ -49,7 +46,6 @@ class ElasticPress extends StatefulWidget {
     required this.child,
   });
 
-  /// Leaves a press on the button inside to the swell alone.
   static const buttonStyle = ButtonStyle(
     splashFactory: NoSplash.splashFactory,
     overlayColor: WidgetStateMapper<Color?>({
@@ -69,7 +65,6 @@ class ElasticPress extends StatefulWidget {
   static ElasticPressHandle? maybeOf(BuildContext context) =>
       context.findAncestorStateOfType<_ElasticPressState>();
 
-  /// How far a full press scales a panel whose longest side is [side].
   static double growthOf(double side, {double maxGrowth = _maxPressGrowth}) =>
       math.min(_pressGrowth * 2, maxGrowth / side);
 
@@ -92,7 +87,6 @@ class ElasticPress extends StatefulWidget {
     return MatrixUtils.transformRect(rest.multiplied(painted), bounds);
   }
 
-  /// Calls [onMove] as presses around [box] move it, until the result is called.
   static VoidCallback followPresses(RenderObject box, VoidCallback onMove) {
     final presses = [
       for (var node = box.parent; node != null; node = node.parent)
@@ -108,7 +102,6 @@ class ElasticPress extends StatefulWidget {
     };
   }
 
-  /// How far a press, never a hover, swells the nearest press around [box].
   static double liftOf(RenderBox box) {
     for (var node = box.parent; node != null; node = node.parent) {
       if (node is _RenderPressTransform) {
@@ -122,7 +115,6 @@ class ElasticPress extends StatefulWidget {
   State<ElasticPress> createState() => _ElasticPressState();
 }
 
-/// Drives an [ElasticPress] with a press it does not hear, at global positions.
 abstract interface class ElasticPressHandle {
   void press(Offset position);
 
@@ -182,7 +174,6 @@ class _ElasticPressState extends State<ElasticPress>
     _swell(event.localPosition);
   }
 
-  // A press removed mid-gesture still hears its moves and release.
   void _handlePointerMove(PointerMoveEvent event) {
     if (!mounted || event.pointer != _pointer) {
       return;
@@ -220,7 +211,6 @@ class _ElasticPressState extends State<ElasticPress>
     _settle();
   }
 
-  // A tap lets go before the swell rises; it rises fully first, as UIKit does.
   void _settle() {
     if (!_releasing || _lift.value < _liftSnap) {
       return;
@@ -281,8 +271,6 @@ class _ElasticPressState extends State<ElasticPress>
   }
 }
 
-/// Lifts the [ElasticPress] around [child] part way while a pointer hovers over
-/// it, as iPadOS lifts a button under its pointer.
 class ElasticHover extends StatefulWidget {
   const ElasticHover({super.key, required this.child});
 
@@ -326,7 +314,6 @@ class _ElasticHoverState extends State<ElasticHover> {
   }
 }
 
-/// Leaves the press inside to [ElasticPress]; a foreground color merges its buttonStyle.
 class ElasticButton extends StatelessWidget {
   const ElasticButton({super.key, this.enabled = true, required this.child});
 

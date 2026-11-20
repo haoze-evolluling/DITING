@@ -1,10 +1,3 @@
-/// The host's core service, read-only: whether it is installed, whether it runs, and whether the
-/// host starts it on boot.
-///
-/// The old desktop console's `ServicePanel.vue` / `CoreServiceCard.vue` managed the service through
-/// native calls. Over the HTTP API only `/service/status` exists, so this card reports the host's
-/// answer and says plainly that installing, starting and the boot registration happen on the host —
-/// exactly the state the old console showed in web mode.
 library;
 
 import 'dart:async';

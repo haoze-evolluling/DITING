@@ -1,5 +1,3 @@
-//! The two name tables.
-
 use super::*;
 
 #[test]
@@ -14,7 +12,6 @@ fn protocol_folds_case_and_defaults_to_plain() {
         ("plain", Protocol::Plain),
         ("", Protocol::Plain),
         ("HYPER", Protocol::Plain),
-        // `ParseProtocol` upper-cases but does not trim.
         (" dot ", Protocol::Plain),
     ] {
         assert_eq!(parse_protocol(text), expected, "{text}");
@@ -25,7 +22,6 @@ fn protocol_folds_case_and_defaults_to_plain() {
 fn the_strict_table_rejects_unknown_names_with_the_original_text() {
     assert_eq!(validated_protocol("plain").unwrap(), Protocol::Plain);
     assert_eq!(validated_protocol("DoH").unwrap(), Protocol::Doh);
-    // The caller upper-cased before validating, so the error carries the upper-cased name.
     assert_eq!(
         validated_protocol("hyper").unwrap_err(),
         "unsupported protocol \"HYPER\""
@@ -49,7 +45,6 @@ fn response_type_is_case_sensitive() {
     ] {
         assert_eq!(parse_response_type(text), expected, "{text}");
     }
-    // The config path upper-cases first, so `"nxdomain"` there is still NXDOMAIN.
     assert_eq!(
         parse_response_type_upper("nxdomain"),
         ResponseType::NxDomain

@@ -1,6 +1,3 @@
-//! Helpers shared by the stages: replies with the right header bits, SOA records for RFC 2308
-//! negative caching, and small response mutators on top of [`ParsedMessage`].
-
 use std::net::IpAddr;
 
 use diting_dns_wire::build::{
@@ -11,7 +8,6 @@ use diting_dns_wire::CLASS_IN;
 
 use crate::context::DnsContext;
 
-/// Starts an authoritative reply (AA + RA) to the current request.
 pub fn start_reply(ctx: &DnsContext) -> Option<MessageBuilder> {
     MessageBuilder::reply_to(&ctx.request).map(|builder| {
         builder
@@ -20,12 +16,10 @@ pub fn start_reply(ctx: &DnsContext) -> Option<MessageBuilder> {
     })
 }
 
-/// Stores the builder's wire form as the response.
 pub fn respond(ctx: &mut DnsContext, builder: MessageBuilder) {
     ctx.response = builder.finish();
 }
 
-/// RFC 2308 negative-caching SOA, using the same placeholder names as the Go service.
 pub fn negative_soa(zone: &str, ttl: u32) -> ResourceRecord {
     ResourceRecord::new(
         normalize_trailing_dot(zone),
@@ -64,7 +58,6 @@ pub fn set_true(ctx: &mut DnsContext, key: &str) {
     ctx.set(key, "true");
 }
 
-/// Every address in all three sections (rebinding protection scans authority/additional too).
 pub fn message_ips(message: &ParsedMessage) -> Vec<IpAddr> {
     let mut result = Vec::new();
     for record in message
@@ -78,7 +71,6 @@ pub fn message_ips(message: &ParsedMessage) -> Vec<IpAddr> {
     result
 }
 
-/// Collects every A/AAAA answer plus IPv4/IPv6 hints from HTTPS/SVCB records, in section order.
 pub fn answer_ips(message: &ParsedMessage) -> Vec<IpAddr> {
     let mut result = Vec::new();
     for record in &message.answers {
@@ -117,7 +109,6 @@ fn collect_record_ips(record: &ResourceRecord, result: &mut Vec<IpAddr>) {
     }
 }
 
-/// Removes every ECH SvcParam (key 5) from HTTPS/SVCB records. Returns whether anything changed.
 pub fn strip_ech(message: &mut ParsedMessage) -> bool {
     let mut changed = false;
     for record in message
@@ -141,7 +132,6 @@ pub fn strip_ech(message: &mut ParsedMessage) -> bool {
     changed
 }
 
-/// Removes every `ipv6hint` SvcParam. Returns whether anything changed.
 pub fn strip_ipv6_hints(message: &mut ParsedMessage) -> bool {
     let mut changed = false;
     for record in message
@@ -166,7 +156,6 @@ pub fn svc_param(key: u16, value: Vec<u8>) -> SvcParam {
     SvcParam { key, value }
 }
 
-/// Appends an RFC 8914 EDE option; creates the OPT record when the message has none.
 pub fn add_ede(message: &mut ParsedMessage, code: u16, text: &str) {
     message.push_opt_option(diting_dns_wire::build::EdnsOption::Ede(
         diting_dns_wire::build::EdeOption::new(code, text),
@@ -216,7 +205,6 @@ mod tests {
             panic!("expected HTTPS");
         };
         assert!(svcb.params.is_empty());
-        // Removing a parameter a second time reports no change.
         assert!(!strip_ech(&mut message));
     }
 

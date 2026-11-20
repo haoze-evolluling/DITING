@@ -1,7 +1,3 @@
-// The storage contract exists twice: Dart creates the databases, native services read and write the
-// same files. A rename on one side would silently split writes from reads, so the two constant sets
-// are asserted equal here instead of relying on review.
-
 import 'dart:io';
 
 import 'package:diting_shared/data/db/storage_contract.dart';

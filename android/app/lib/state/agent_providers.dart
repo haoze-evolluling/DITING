@@ -1,4 +1,3 @@
-/// AI analysis layer: client, model listing, connectivity test and the state machine for one run.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -14,13 +13,10 @@ import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Real OpenAI-compatible client; tests inject a fake via `overrideWithValue`. Rebuilds when the
-/// `/config/user-agents` selection changes, so a gateway that filters on UA sees the chosen one.
 final agentApiClientProvider = Provider<AgentApiClient>(
   (ref) => AgentApiClient(userAgent: ref.watch(requestUserAgentProvider)),
 );
 
-/// Active provider as [AgentChatConfig]; null when no key is configured.
 final agentChatConfigProvider = Provider<AgentChatConfig?>((ref) {
   final state = ref.watch(agentApiProvider);
   final provider = state.activeProvider;
@@ -36,9 +32,6 @@ final agentChatConfigProvider = Provider<AgentChatConfig?>((ref) {
 
 enum AgentAnalysisPhase { idle, running, success, failure }
 
-/// One analysis run. [sessionId] identifies it: results are only written back when the id still
-/// matches, so a slow first request cannot overwrite a newer one (which the previous single-slot
-/// state allowed, showing the wrong domain's report).
 class AgentAnalysisState {
   const AgentAnalysisState({
     this.sessionId = 0,
@@ -52,18 +45,15 @@ class AgentAnalysisState {
     this.startedAt,
   });
 
-  /// 0 when no run has happened in this process.
   final int sessionId;
   final AgentAnalysisTarget? target;
   final AgentAnalysisPhase phase;
 
-  /// Markdown report, set when [phase] is success.
   final String? content;
   final String? error;
   final String? model;
   final int totalTokens;
 
-  /// What was sent to the model (traffic summary), so the user can audit the prompt.
   final String? promptDigest;
   final DateTime? startedAt;
 
@@ -80,14 +70,11 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
   @override
   AgentAnalysisState build() => const AgentAnalysisState();
 
-  /// Starts one run and returns its session id. [extraContext] carries context the caller already
-  /// has, e.g. blocking records.
   int start(
     AgentAnalysisTarget target, {
     List<String> extraContext = const [],
   }) {
     final session = ++_nextSession;
-    // A new run supersedes the previous one; leaving its socket open would waste tokens.
     _cancelToken?.cancel();
     final cancelToken = AgentCancelToken();
     _cancelToken = cancelToken;
@@ -102,7 +89,6 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
       _fail(session, target, currentL10n.agentApiKeyMissing);
       return session;
     }
-    // Fire and forget: the UI watches the state, and the guard below keeps a stale answer out.
     _run(session, target, config, extraContext, cancelToken);
     return session;
   }
@@ -148,13 +134,10 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
     } on AgentApiException catch (error) {
       _fail(session, target, error.message);
     } on Object catch (error) {
-      // Never leave the UI spinning: turn unknown errors into a readable message.
       _fail(session, target, currentL10n.agentAnalysisFailed('$error'));
     }
   }
 
-  /// Records a failure for [session] only; a superseded run's error must not replace the state of
-  /// the run that replaced it.
   void _fail(int session, AgentAnalysisTarget target, String error) {
     if (state.sessionId != session) return;
     state = AgentAnalysisState(
@@ -198,7 +181,6 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
         );
       case AgentTrafficTarget():
         if (db == null) {
-          // Without the legacy DB this feature is unavailable, not "no traffic".
           throw AgentApiException(currentL10n.agentNoLegacyDatabase);
         }
         final summary = await summarizeRecentTraffic(
@@ -208,8 +190,6 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
               ? currentL10n.agentExpressNoHttps
               : null,
         );
-        // Recorded before the request so the "查看送检摘要" panel has it while running. Guarded:
-        // a superseded run must not overwrite the digest of the one that replaced it.
         if (state.sessionId == session) {
           state = AgentAnalysisState(
             sessionId: state.sessionId,
@@ -232,8 +212,6 @@ final agentAnalysisProvider =
       AgentAnalysisNotifier.new,
     );
 
-/// Fetches the model list for the current dialog; one-shot user action, so it stays out of a
-/// provider.
 Future<List<String>> fetchAgentModels(
   WidgetRef ref, {
   required String baseUrl,

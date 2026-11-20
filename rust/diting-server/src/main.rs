@@ -1,5 +1,3 @@
-//! `diting-server`: Android's standalone LAN DNS service.
-
 fn main() {
     if let Err(error) = diting_server::run_from_env() {
         eprintln!("[错误] {error}");

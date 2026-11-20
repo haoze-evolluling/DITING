@@ -1,4 +1,3 @@
-// 分组管理入口回归：用户反馈新建分组后找不到重命名/删除入口，因此入口必须常驻在分组筛选行右侧。
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/pages/subscriptions/subscriptions_page.dart';
 import 'package:diting_android/state/subscription_providers.dart';
@@ -46,7 +45,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 入口固定在筛选行右侧，不随分组 chips 滚动隐藏。
     expect(find.text('管理分组'), findsOneWidget);
     await tester.tap(find.text('管理分组'));
     await tester.pumpAndSettle();

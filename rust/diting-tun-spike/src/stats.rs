@@ -1,5 +1,3 @@
-//! The counters and the one JSON document the Kotlin side reads.
-
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use serde_json::json;
@@ -7,22 +5,14 @@ use serde_json::json;
 use crate::callback::CallbackStats;
 use crate::protector::Evidence;
 
-/// Data-plane counters, all monotonic (the Kotlin side plots the deltas).
 #[derive(Debug, Default)]
 pub struct Counters {
-    /// Packets read from the TUN source.
     pub read: AtomicU64,
-    /// Bytes read from the TUN source.
     pub bytes_in: AtomicU64,
-    /// Packets dropped because the worker queue was full.
     pub dropped: AtomicU64,
-    /// Callbacks handed to the dispatcher (a full callback queue is counted there).
     pub events: AtomicU64,
-    /// Writes to the protected upstream socket that failed.
     pub write_failures: AtomicU64,
-    /// Reads that returned `EAGAIN`/`EINTR` and were retried immediately.
     pub retries: AtomicU64,
-    /// Reads that returned `ENETDOWN`/`EBUSY`/`ENOBUFS` and backed off.
     pub backoffs: AtomicU64,
 }
 
@@ -32,7 +22,6 @@ impl Counters {
     }
 }
 
-/// `getStats()`: the document the Kotlin facade parses (field names must stay stable).
 pub fn stats_json(
     live: usize,
     counters: &Counters,
@@ -71,7 +60,6 @@ pub fn stats_json(
     .to_string()
 }
 
-/// Tracked once per session so `getStats` can say whether a dial is up.
 #[derive(Debug, Default)]
 pub struct ConnectionState {
     connected: AtomicBool,

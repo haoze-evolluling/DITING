@@ -1,8 +1,3 @@
-/// The hub's appearance page: the palette and the day/night mode.
-///
-/// The old desktop console's `AppearancePanel.vue` is the functional blueprint. It writes the same
-/// appearance keys the Android pages write, so a choice made here survives a restart and shows up
-/// everywhere.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';

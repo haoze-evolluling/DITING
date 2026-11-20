@@ -1,19 +1,3 @@
-//! The JNI facade: handle registry, `catch_unwind` on every entry, and the two Kotlin callbacks.
-//!
-//! Same shape as the engine facade (`diting-engine/src/jni/mod.rs`), which stage 1 already validated
-//! for the control plane:
-//!
-//! * `nativeNew` returns a `u64` handle and the session lives in a global registry, so a stale handle
-//!   is a lookup miss instead of a use-after-free, and `nativeFree` during a running pipeline only
-//!   drops the registry entry — the pipeline keeps its own `Arc`s until it stops;
-//! * every entry runs under `catch_unwind`, and a panic becomes a Java `IllegalStateException`;
-//! * a Java exception thrown by `protect` or `onPacket` is cleared after the call. Leaving it pending
-//!   would make the *next* JNI call on that thread fail with a confusing error, and for `protect` the
-//!   cleared exception is treated as a refusal (fail closed), never as permission.
-//!
-//! The class here is `com.haoze.diting.engine.TunSession`, the spike's stand-in for the `Engine`
-//! facade; the JVM smoke test (`rust/tools/tun-spike-smoke`) declares exactly these methods.
-
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -32,18 +16,12 @@ use crate::protector::{Evidence, NoProtection, Protector};
 use crate::stats::{stats_json, Counters};
 use crate::RawSocket;
 
-/// The Kotlin class the JVM smoke test declares.
 pub const SESSION_CLASS: &str = "com/haoze/diting/engine/TunSession";
-/// `PacketCallback.onPacket(String)`.
 pub const CALLBACK_SIGNATURE: &str = "(Ljava/lang/String;)V";
-/// `SocketProtector.protect(long): boolean` — the gomobile argument shape Kotlin already has.
 pub const PROTECT_SIGNATURE: &str = "(J)Z";
-/// The thread name the JVM will see on every callback.
 pub const CALLBACK_THREAD: &str = "diting-tun-callback";
-/// The MTU the engine's VPN plan uses; packets are sized to it by the netstack.
 pub const MTU: usize = 1500;
 
-/// One session: the TUN source, the Kotlin callbacks and (while running) the pipeline.
 struct Session {
     vm: Option<Arc<JavaVM>>,
     source: LoopbackHandle,
@@ -64,7 +42,6 @@ fn next_handle() -> u64 {
     NEXT.fetch_add(1, Ordering::Relaxed)
 }
 
-/// How many sessions are alive; the smoke test uses it to catch a leaked `nativeFree`.
 pub fn live_sessions() -> usize {
     registry()
         .lock()
@@ -98,7 +75,6 @@ fn remove(handle: jlong) -> Option<Arc<Session>> {
         .remove(&handle)
 }
 
-/// Runs `run` with the session, turning a panic into a Java exception.
 fn with_session<R>(
     env: &mut JNIEnv<'_>,
     handle: jlong,
@@ -131,9 +107,7 @@ fn answer(env: &JNIEnv<'_>, value: Option<String>) -> jstring {
     }
 }
 
-// ---- the two Kotlin callbacks ------------------------------------------------------------------
 
-/// `SocketProtector.protect(long): boolean`, called on the flow thread before `connect`.
 struct JniProtector {
     vm: Arc<JavaVM>,
     target: GlobalRef,
@@ -141,7 +115,6 @@ struct JniProtector {
 
 impl Protector for JniProtector {
     fn protect(&self, fd: RawSocket) -> bool {
-        // Flow thread, not a JNI caller thread: attach here (permanently, so a thread pool reuses it).
         let Ok(mut env) = self.vm.attach_current_thread_permanently() else {
             return false;
         };
@@ -156,7 +129,6 @@ impl Protector for JniProtector {
             Err(_) => false,
         };
         if env.exception_check().unwrap_or(false) {
-            // A throwing protector is a refusal: dialling anyway would bypass the tunnel.
             let _ = env.exception_clear();
             return false;
         }
@@ -164,8 +136,6 @@ impl Protector for JniProtector {
     }
 }
 
-/// Builds the callback handler. It is constructed *on* the callback thread, which is where the JVM
-/// attachment happens — once for the thread's whole life.
 fn callback_factory(vm: Arc<JavaVM>, target: GlobalRef) -> impl FnMut(&str) + Send + 'static {
     let _ = vm.attach_current_thread_permanently();
     move |payload: &str| {
@@ -183,16 +153,12 @@ fn callback_factory(vm: Arc<JavaVM>, target: GlobalRef) -> impl FnMut(&str) + Se
             &[JValue::Object(&text)],
         );
         if env.exception_check().unwrap_or(false) {
-            // The app's callback threw. Clear it and keep delivering: a single bad batch must not
-            // poison the environment for every later callback on this thread.
             let _ = env.exception_clear();
         }
     }
 }
 
-// ---- entry points ------------------------------------------------------------------------------
 
-/// `TunSession()`: allocates a session and returns its handle.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeNew(
     mut env: JNIEnv<'_>,
@@ -220,7 +186,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeNew(
     }
 }
 
-/// `free()`: drops the registry entry and stops the pipeline it owned.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFree(
     _env: JNIEnv<'_>,
@@ -229,7 +194,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFree(
 ) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         if let Some(session) = remove(handle) {
-            // Taking the pipeline out stops it; in-flight threads hold their own `Arc`s meanwhile.
             let running = session
                 .running
                 .lock()
@@ -242,7 +206,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFree(
     }));
 }
 
-/// `setProtector(protector)`; null restores the pass-through protector.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetProtector(
     env: JNIEnv<'_>,
@@ -273,7 +236,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetProtecto
     }
 }
 
-/// `setCallback(callback)`; null clears it. Installed before `start`.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetCallback(
     env: JNIEnv<'_>,
@@ -297,10 +259,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetCallback
     }
 }
 
-/// `start(target)`: null on success, otherwise the error text.
-///
-/// `target` is `host:port` of the flow's original destination; the spike dials it directly instead of
-/// going through the netstack.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStart(
     mut env: JNIEnv<'_>,
@@ -322,8 +280,6 @@ fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
     let address: SocketAddr = target
         .parse()
         .map_err(|err| format!("invalid dial target '{target}': {err}"))?;
-    // Hold the slot for the whole start: checking and then releasing lets two concurrent starts
-    // both see "not running" and leave one pipeline orphaned when the second overwrites the first.
     let mut slot = session
         .running
         .lock()
@@ -345,7 +301,6 @@ fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
                 callback_factory(vm, callback)
             })?
         }
-        // No JVM (a host unit test) or no callback installed: still run the pipeline, drop payloads.
         None => Dispatcher::spawn(CALLBACK_THREAD, DEFAULT_CALLBACK_CAPACITY, || {
             |_payload: &str| {}
         })?,
@@ -362,7 +317,6 @@ fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// `stop()`: joins every thread and stops the callback thread.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStop(
     mut env: JNIEnv<'_>,
@@ -381,7 +335,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStop(
     });
 }
 
-/// Test hook: queues `count` synthetic 64-byte packets, the way a TUN device would deliver them.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFeed(
     mut env: JNIEnv<'_>,
@@ -401,7 +354,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFeed(
     });
 }
 
-/// `getStats()`
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeGetStats(
     mut env: JNIEnv<'_>,
@@ -446,8 +398,6 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeGetStats(
     answer(&env, document)
 }
 
-/// Waits until `delivered` callbacks have arrived, up to `timeout`. Used by the smoke test's Java
-/// side through `waitForCallbacks`, so the JVM never has to guess a sleep duration.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeWaitForCallbacks(
     mut env: JNIEnv<'_>,

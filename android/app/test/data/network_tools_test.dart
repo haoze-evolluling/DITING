@@ -1,6 +1,3 @@
-// Network tools against real HTTP replies: WebDAV and the IP quality checker,
-// where every branch is decided by an actual response.
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -16,7 +13,6 @@ void main() {
 void _davClient() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  // `flutter_test` installs `HttpOverrides.global` answering 400; this file uses a loopback server
   setUpAll(() => HttpOverrides.global = null);
 
   late HttpServer server;
@@ -46,7 +42,6 @@ void _davClient() {
         path: request.uri.path,
         authorized: authorized,
       ));
-      // Drain the body before responding, or the unread body keeps the socket open forever
       final body = await utf8.decoder.bind(request).join();
       if (!authorized) {
         request.response.statusCode = HttpStatus.unauthorized;
@@ -130,7 +125,6 @@ void _davClient() {
     });
 
     test('服务器不可达时报告无法连接', () async {
-      // Nothing listens on port 1: the shape of a nonexistent address.
       final result = await const DavClient().probe(
         const DavCredentials(
           server: 'http://127.0.0.1:1',
@@ -192,7 +186,6 @@ void _davClient() {
   });
 }
 
-/// Pins the checker against real HTTP replies, including the partial and empty cases
 
 void _ipQuality() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -270,8 +263,6 @@ void _ipQuality() {
     });
 
     test('第一个探测端点不通时用下一个，而不是整次检测失败', () async {
-      // `api.ipify.org` was reset while `api64.ipify.org` answered 200: one endpoint would report
-      // down
       stubAll(ip: '9.9.9.9');
       statuses['/ip'] = 500;
       routes['/ip2'] = jsonEncode({'ip': '8.8.8.8'});
@@ -356,5 +347,3 @@ void _ipQuality() {
     });
   });
 }
-
-/// Network-tool judging rules: host sanitizing, a sparse `fromMap`, and every panel state

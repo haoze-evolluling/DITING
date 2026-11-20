@@ -1,5 +1,3 @@
-/// Fetches, caches and validates the member list and avatars. Nothing is bundled; a config failing
-/// validation never overwrites the cache.
 library;
 
 import 'dart:async';
@@ -24,10 +22,8 @@ class RecognitionMembersRepository {
     this.userAgent = appFallbackUserAgent,
   }) : _avatars = avatarBridge ?? const RecognitionAvatarBridge();
 
-  /// Legacy container name, so upgrades keep their cache.
   static String get container => RecognitionPlan.instance.container;
 
-  /// Config cap of 256KB; a real list is far smaller.
   static int get maxConfigBytes => RecognitionPlan.instance.maxConfigBytes;
 
   static int get maxAvatarBytes => RecognitionPlan.instance.maxAvatarBytes;
@@ -37,11 +33,9 @@ class RecognitionMembersRepository {
   final LegacyPrefsStore store;
   final Duration timeout;
 
-  /// `/config/user-agents` override; the member list and avatars both use it.
   final String userAgent;
   final RecognitionAvatarBridge _avatars;
 
-  /// In-process avatar bytes; avoids re-reading the disk on scroll.
   final Map<String, Uint8List> _avatarMemoryCache = {};
 
   final Map<String, Future<Uint8List?>> _avatarInFlight = {};
@@ -65,8 +59,6 @@ class RecognitionMembersRepository {
     return DateTime.fromMillisecondsSinceEpoch(raw);
   }
 
-  /// Null means not modified (HTTP 304); any other failure throws and the caller keeps what it has.
-  /// Retried, as handshake errors are intermittent.
   Future<RecognitionMembers?> refresh() async {
     Object? lastError;
     for (var attempt = 0; attempt < _plan.refreshAttempts; attempt++) {
@@ -112,7 +104,6 @@ class RecognitionMembersRepository {
     }
   }
 
-  /// Memory first, then disk cache, then download; null means unavailable.
   Future<Uint8List?> loadAvatarBytes(String avatarFileName) {
     final cached = _avatarMemoryCache[avatarFileName];
     if (cached != null) return Future.value(cached);
@@ -123,8 +114,6 @@ class RecognitionMembersRepository {
     return future.whenComplete(() => _avatarInFlight.remove(avatarFileName));
   }
 
-  /// Serializes avatar downloads: a dozen concurrent TLS handshakes get dropped mid-flight on
-  /// emulators and weak networks.
   Future<T> _enqueue<T>(Future<T> Function() task) {
     final previous = _avatarQueue;
     final completer = Completer<void>();
@@ -140,8 +129,6 @@ class RecognitionMembersRepository {
       return stored;
     }
     final url = _plan.avatarBaseUrl + avatarFileName;
-    // TLS handshakes are occasionally cut mid-flight (`HandshakeException: ...handshake`) and an
-    // immediate retry usually works.
     for (var attempt = 0; attempt < _plan.avatarAttempts; attempt++) {
       try {
         final bytes = await _download(url);
@@ -149,7 +136,6 @@ class RecognitionMembersRepository {
           return null;
         }
         _avatarMemoryCache[avatarFileName] = bytes;
-        // A failed write only costs a re-download.
         await _avatars.write(avatarFileName, bytes);
         return bytes;
       } on Object catch (error) {
@@ -207,8 +193,6 @@ class RecognitionMembersRepository {
 
   void _writeCache(String raw, String? etag) {
     store.putString(_plan.container, _plan.configKey, raw);
-    // Millisecond timestamps (~1.7e12) overflow 32 bits, so putLong is required; putInt truncates
-    // to a 1970 date.
     store.putLong(
       _plan.container,
       _plan.savedAtKey,

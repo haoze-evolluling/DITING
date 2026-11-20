@@ -1,11 +1,3 @@
-/// DNS rebinding protection: the switch and the allowlist of domains allowed to answer with a
-/// private address.
-///
-/// The old desktop console's `PrivacyPanel.vue` (rebinding block and its modal) is the blueprint.
-/// The switch saves on the spot; the allowlist is edited in a dialog and posted with its own button.
-///
-/// The local hosts resolver used to share this card; it is [PrivacyHostsCard] now, because two
-/// independent modules and a modal button made one card taller than the window.
 library;
 
 import 'dart:async';
@@ -134,7 +126,6 @@ class PrivacyDefenceCard extends ConsumerWidget {
   }
 }
 
-/// Opens the allowlist editor. Returns the parsed domains, or null when cancelled.
 Future<List<String>?> showRebindDomainsDialog(
   BuildContext context, {
   required List<String> allowed,

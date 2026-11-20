@@ -68,9 +68,6 @@ class FloatingHeader extends StatelessWidget {
     required this.child,
   });
 
-  /// Nearly opaque: the scrim only has to suggest glass, and at 0.9 the
-  /// rows scrolling under a floating header stayed legible enough to read as
-  /// overlapping text instead of a translucent bar.
   static const _alpha = 0.96;
   static const _fadeSteps = 8;
 
@@ -171,7 +168,6 @@ class FloatingHeaderBody extends StatelessWidget {
   }
 }
 
-/// Holds its child clear of the part of the sheet that hangs below the screen.
 class SheetOverhangLift extends SingleChildRenderObjectWidget {
   const SheetOverhangLift({super.key, super.child});
 

@@ -1,6 +1,3 @@
-//! Container tests: the Go behaviours that used to be asserted by `dns_cache_test.go`,
-//! `dns_cache_snapshot_test.go` and the LRU regression in `dns_low_regression_test.go`.
-
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -75,7 +72,6 @@ fn store(cache: &Cache, name: &str, ttl: u32, ips: &[[u8; 4]]) -> bool {
     cache.put(&request, &response)
 }
 
-/// Rewrites the deadlines of the entry behind `name` so a test can travel in time.
 fn force_expired(cache: &Cache, name: &str, stale_seconds: i64) {
     let request = query(name, TYPE_A);
     let (buffer, parts) = build_key(&request).expect("key");
@@ -116,7 +112,7 @@ fn truncation_disables_caching() {
     let cache = Cache::new(config());
     let request = query("truncated.example.", TYPE_A);
     let mut response = answer("truncated.example.", 300, 0, &[[1, 2, 3, 4]]);
-    response[2] |= 0x02; // TC bit
+    response[2] |= 0x02;
     assert!(!cache.put(&request, &response));
     assert!(cache.get(&request, true).is_none());
     assert_eq!(cache.stats().total_misses, 1);
@@ -134,7 +130,6 @@ fn negative_answers_are_cached_and_flagged() {
     assert_eq!(hit.wire[3] & 0x0f, RCODE_NAME_ERROR);
     assert_eq!(cache.stats().negative_hits, 1);
 
-    // NODATA (NOERROR with no answers) takes the same path.
     let request = query("nodata.example.", TYPE_AAAA);
     let response = answer("nodata.example.", 10, 0, &[]);
     assert!(cache.put(&request, &response));
@@ -199,7 +194,6 @@ fn stale_fallback_serves_one_second_and_counts() {
     assert_eq!(ttl_at(&hit.wire, "stale.example."), 1);
     assert_eq!(cache.stats().stale_hits, 1);
 
-    // Without stale fallback the same entry is a miss and is evicted lazily.
     let mut plain = config;
     plain.stale_fallback_enabled = false;
     plain.stale_fallback_seconds = 0;
@@ -246,7 +240,6 @@ fn single_flight_recheck_does_not_count() {
     let request = query("once.example.", TYPE_A);
     assert!(cache.get(&request, true).is_none());
     assert!(store(&cache, "once.example.", 300, &[[192, 0, 2, 1]]));
-    // The re-check must find the entry without touching the counters.
     assert!(cache.get(&request, false).is_some());
     let stats = cache.stats();
     assert_eq!((stats.total_hits, stats.total_misses), (0, 1));
@@ -263,7 +256,6 @@ fn a_stale_recheck_does_not_count_as_a_stale_hit() {
     force_expired(&cache, "recheck.example.", 600);
 
     let request = query("recheck.example.", TYPE_A);
-    // The background refresh re-checks without serving: no counter may move.
     assert!(cache.get(&request, false).is_some());
     assert_eq!(cache.stats().stale_hits, 0);
     assert!(cache.get(&request, true).is_some());
@@ -305,7 +297,6 @@ fn clear_drops_every_shard_and_keeps_the_lru_consistent() {
     }
     cache.clear();
     assert_eq!(cache.stats().entry_count, 0);
-    // The shard must stay usable: inserting after a clear continues from a defined state.
     assert!(store(&cache, "after-clear.example.", 300, &[[10, 0, 0, 2]]));
     assert!(cache
         .get(&query("after-clear.example.", TYPE_A), true)
@@ -318,7 +309,6 @@ fn shards_evict_the_least_recently_used_entry() {
     let mut config = config();
     config.mode = crate::policy::TtlMode::FollowDnsTtl;
     let cache = Cache::new(config);
-    // 4096 entries is the budget; the 4097th distinct key evicts one per full shard.
     for index in 0..DEFAULT_MAX_ENTRIES + 64 {
         let name = format!("bulk-{index}.example.");
         assert!(store(&cache, &name, 300, &[[10, 0, 0, 1]]));
@@ -348,7 +338,6 @@ fn snapshot_is_hot_first_and_capped() {
     assert!(entries[0].last_hit_at_ms > 0);
     assert_eq!(cache.snapshot(1).len(), 1);
 
-    // An expired entry is filtered out of the projection.
     force_expired(&cache, "snapshot-2.example.", -1);
     let entries = cache.snapshot(10);
     assert!(entries
@@ -417,7 +406,6 @@ fn malformed_queries_and_responses_are_rejected() {
     let cache = Cache::new(config());
     assert!(!cache.put(&[0u8; 4], &[0u8; 4]));
     assert!(cache.get(&[0u8; 4], true).is_none());
-    // A response the wire parser cannot walk is not a cache candidate.
     assert!(!cache.put(&query("bad.example.", TYPE_A), &[0u8; 11]));
     cache.close();
 }

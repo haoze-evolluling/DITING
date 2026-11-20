@@ -1,14 +1,10 @@
-//! The sharded hit tally.
-
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Mutex;
 
-/// Default shard count; rounded up to a power of two so the index is a mask, not a modulo.
 pub const SHARDS: usize = 64;
 
-/// One row of a [`HitCounters::snapshot`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HitEntry {
     pub rule_id: i64,
@@ -22,19 +18,16 @@ struct Key {
     list_id: Option<i64>,
 }
 
-/// A sharded `(rule_id, list_id) → count` tally. Cheap to clone-free share via `&self`.
 pub struct HitCounters {
     shards: Vec<Mutex<HashMap<Key, u64>>>,
     mask: usize,
 }
 
 impl HitCounters {
-    /// The default 64-shard tally.
     pub fn new() -> Self {
         Self::with_shards(SHARDS)
     }
 
-    /// A tally with `shards` shards (rounded up to a power of two, at least one).
     pub fn with_shards(shards: usize) -> Self {
         let shards = shards.max(1).next_power_of_two();
         let mut shard_maps = Vec::with_capacity(shards);
@@ -54,12 +47,10 @@ impl HitCounters {
         &self.shards[index]
     }
 
-    /// Adds one hit for `(rule_id, list_id)`.
     pub fn increment(&self, rule_id: i64, list_id: Option<i64>) {
         self.increment_by(rule_id, list_id, 1);
     }
 
-    /// Adds `amount` hits for `(rule_id, list_id)`; a zero amount is a no-op.
     pub fn increment_by(&self, rule_id: i64, list_id: Option<i64>, amount: u64) {
         if amount == 0 {
             return;
@@ -72,7 +63,6 @@ impl HitCounters {
         *shard.entry(key).or_insert(0) += amount;
     }
 
-    /// Every non-zero row, sorted by `(rule_id, list_id)` so callers get a stable order.
     pub fn snapshot(&self) -> Vec<HitEntry> {
         let mut rows = Vec::new();
         for shard in &self.shards {
@@ -93,7 +83,6 @@ impl HitCounters {
         rows
     }
 
-    /// The sum across every shard.
     pub fn total(&self) -> u64 {
         self.shards
             .iter()
@@ -107,7 +96,6 @@ impl HitCounters {
             .sum()
     }
 
-    /// Clears every counter.
     pub fn reset(&self) {
         for shard in &self.shards {
             shard

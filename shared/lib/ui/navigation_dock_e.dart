@@ -2,7 +2,6 @@
 
 part of 'navigation_dock.dart';
 
-/// Paints what lies under the lens in [color], magnified as it lifts, cut to the lens shape.
 class _LensTint extends SingleChildRenderObjectWidget {
   const _LensTint({
     required this.part,
@@ -20,7 +19,6 @@ class _LensTint extends SingleChildRenderObjectWidget {
 
   final _LensPart part;
 
-  /// Whether to tint by lens position; false when no page is in the dock, so item 0 stays grey.
   final bool active;
   final _Spring lens;
   final double lensWidth;
@@ -292,7 +290,6 @@ class _RenderLensTint extends RenderProxyBox {
     if (child == null) {
       return;
     }
-    // With no selection, skip the lens tint: the lens rests at index 0 and would read as selected.
     if (!_active) {
       _outside.layer = null;
       _inside.layer = null;
@@ -312,7 +309,6 @@ class _RenderLensTint extends RenderProxyBox {
     Rect moved(Matrix4? motion) =>
         motion == null ? bounds : MatrixUtils.transformRect(motion, bounds);
     final lensBounds = _lensBounds;
-    // The lens rests [_barPadding] past its destination, over the edges of the neighbours.
     final reached = Rect.fromLTRB(
       lensBounds.left + _barPadding,
       lensBounds.top,

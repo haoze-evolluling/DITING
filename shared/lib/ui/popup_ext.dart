@@ -2,7 +2,6 @@
 
 part of 'popup.dart';
 
-// Build methods split out of _CommonPopupMenuState to stay under the file line cap.
 const _headerIndex = -1;
 const _levelWidthScale = 1.12;
 const _levelScaleStep = 0.05;
@@ -58,7 +57,6 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
         color: foregroundColor,
       );
     }
-    // A press is the menu's to follow across the rows, so the row's ink shows hover and focus only.
     final child = InkWell(
       customBorder: AppShape.all(_itemRadius),
       onTap: onTap,
@@ -195,7 +193,6 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
           if (section.title case final title?)
             _buildSectionTitle(context, title),
         ],
-        // The item a sub menu stands on hides under its header, which redraws it.
         Opacity(
           key: index == checked ? _checkedKey : null,
           opacity: index == covered ? 0 : 1,
@@ -256,7 +253,6 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
         : null;
     final rim = glass == null ? null : LiquidGlassRim.menu(colorScheme);
     final fill = SurfaceLevel.floatingOf(colorScheme).colorOf(colorScheme);
-    // A card behind a sub menu takes a tap as one outside that sub menu.
     return GestureDetector(
       excludeFromSemantics: true,
       onTap: receding ? _pop : null,

@@ -2,7 +2,6 @@
 
 part of 'scaffold.dart';
 
-// Build methods split out of CommonScaffoldState, under the file line cap.
 extension CommonScaffoldStateBuild on CommonScaffoldState {
   Widget _buildDockedSearch(AppBarSearchState searchState) {
     final colorScheme = context.colorScheme;
@@ -37,7 +36,6 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
         right: BottomInsetScope.dockedSearchMargin,
         bottom: BottomInsetScope.dockedSearchMargin,
       ),
-      // A surface of its own, so the list runs under it, not a sheet-wide band.
       child: SafeArea(
         left: false,
         top: false,
@@ -51,8 +49,6 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
             builder: (context, _) {
               final active =
                   _searchFocusNode.hasFocus || _textController.text.isNotEmpty;
-              // iOS 27 offers the cancel button while its bottom field is in
-              // use, drawn out of the field's end.
               return TweenAnimationBuilder<double>(
                 tween: Tween(end: active ? 1 : 0),
                 duration: context.motionDuration(_searchSettleDuration),
@@ -327,7 +323,6 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
           ? LiquidGlassStyle.regular(colorScheme)
           : null,
       color: context.raisedSurfaceLevel.colorOf(colorScheme),
-      // The field's own buttons stay off the bar's button fills and glass.
       field: IconButtonTheme(
         data: IconButtonTheme.of(context),
         child: SearchField(

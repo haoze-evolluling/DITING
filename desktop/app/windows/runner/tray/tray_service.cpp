@@ -15,9 +15,6 @@ namespace {
 constexpr wchar_t kServiceRegistryPath[] =
     L"SYSTEM\\CurrentControlSet\\Services\\DitingDNSService";
 
-// How far up the directory chain the development build layout is searched:
-// Release -> runner -> x64 -> windows -> build -> app -> desktop -> DITING
-// (where desktop\service\build\bin\diting-service.exe lives).
 constexpr int kMaxParentLevels = 12;
 
 std::wstring SystemMessage(DWORD code) {
@@ -76,7 +73,6 @@ std::wstring TrimQuotes(std::wstring value) {
   return value.substr(first, last - first + 1);
 }
 
-// The SCM ImagePath may carry arguments; the executable itself ends at ".exe".
 std::wstring CutAtExecutable(std::wstring path) {
   std::wstring lowered = path;
   std::transform(lowered.begin(), lowered.end(), lowered.begin(),
@@ -176,8 +172,6 @@ bool IsProcessElevated() {
   return ok != FALSE && elevation.TokenIsElevated != 0;
 }
 
-// Runs |executable| with |arguments| through the UAC prompt and waits for it,
-// exactly like the old desktop's runElevatedNative.
 bool RunElevated(const std::wstring& executable, const std::wstring& arguments,
                  std::wstring* error) {
   SHELLEXECUTEINFOW info{};
@@ -280,8 +274,6 @@ bool StopDirect(std::wstring* error) {
   return false;
 }
 
-// Restarting in-process means waiting for the SCM to settle; the caller is a
-// worker thread, so a bounded poll (3s, like the old Go manager) is safe.
 bool RestartDirect(std::wstring* error) {
   if (!StopDirect(error)) {
     return false;
@@ -295,7 +287,7 @@ bool RestartDirect(std::wstring* error) {
   return StartDirect(error);
 }
 
-}  // namespace
+}
 
 namespace tray_service {
 
@@ -310,8 +302,6 @@ TrayServiceStatus QueryStatus() {
   if (service == nullptr) {
     const DWORD code = GetLastError();
     CloseServiceHandle(manager);
-    // "Not installed" is still a known answer (it is not running); only a
-    // manager we cannot talk to leaves the state unknown.
     status.known = code == ERROR_SERVICE_DOES_NOT_EXIST;
     return status;
   }
@@ -374,4 +364,4 @@ bool Restart(std::wstring* error) {
   return RunElevatedServiceCommand(L"restart", error);
 }
 
-}  // namespace tray_service
+}

@@ -1,6 +1,3 @@
-/// Dart side of `com.haoze.diting/permissions`: the runtime permissions the onboarding step and the
-/// troubleshooting rows report on. Every method degrades to "unknown" instead of throwing, because
-/// a missing channel is a desktop/test host, not a failure.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -8,14 +5,12 @@ import 'package:flutter/services.dart';
 
 const permissionsChannelName = 'com.haoze.diting/permissions';
 
-/// The permissions the onboarding lists, per work mode. Names match the Kotlin `states()` keys.
 enum AppPermission {
   vpn,
   notification,
   appList,
   batteryOptimization,
 
-  /// "Display over other apps", needed by the floating log window.
   overlay;
 
   String label(AppL10n l10n) => switch (this) {
@@ -36,8 +31,6 @@ enum AppPermission {
   }
 }
 
-/// One permission's reported state. [granted] is null when the channel could not answer: the UI
-/// then says "unknown" rather than claiming the permission is missing.
 class PermissionState {
   const PermissionState({this.granted, this.openSettingsOnly = false});
 
@@ -45,7 +38,6 @@ class PermissionState {
 
   final bool? granted;
 
-  /// True when only a settings screen can change it (no runtime dialog exists on this ROM).
   final bool openSettingsOnly;
 
   bool get isGranted => granted == true;
@@ -79,8 +71,6 @@ class PermissionSnapshot {
   }
 }
 
-/// Real channel; [request] opens the system dialog (or the settings screen when no dialog exists)
-/// and resolves with a fresh snapshot once the user is done.
 class PermissionsBridge {
   PermissionsBridge({MethodChannel? channel})
     : _channel = channel ?? MethodChannel(permissionsChannelName);
@@ -114,12 +104,9 @@ class PermissionsBridge {
 
   Future<PermissionSnapshot> states() => _snapshot('states');
 
-  /// Resolves with the state after the round trip; an unavailable channel answers with
-  /// [PermissionSnapshot.unavailable].
   Future<PermissionSnapshot> request(AppPermission permission) =>
       _snapshot('request', {'permission': permission.name});
 
-  /// Fallback when a request fails or the user has permanently denied the permission.
   Future<bool> openNotificationSettings() => _flag('openNotificationSettings');
 
   Future<bool> openAppSettings() => _flag('openAppSettings');

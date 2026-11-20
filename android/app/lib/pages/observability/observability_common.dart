@@ -1,11 +1,9 @@
-/// Shared by the observability and traffic pages so byte and latency units cannot diverge.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Bytes as B / KB / MB / GB, base 1000 to match the traffic page.
 String obsFormatBytes(int bytes) {
   const units = ['B', 'KB', 'MB', 'GB'];
   var value = bytes.toDouble();
@@ -18,18 +16,14 @@ String obsFormatBytes(int bytes) {
   return '$text ${units[unit]}';
 }
 
-/// Latency text, from `0 ms` (cache hit) to `2000 ms` (timeout).
 String obsFormatLatency(int milliseconds, AppL10n l10n) =>
     milliseconds == 0 ? l10n.obsCacheHit : '$milliseconds ms';
 
-/// Bottom tip bar. Operations here do not need a dialog.
 void showObsTip(BuildContext context, String message) {
   ScaffoldMessenger.maybeOf(context)
       ?.showSnackBar(SnackBar(content: Text(message)));
 }
 
-/// First-load placeholder: a spinner, not fake `SkeletonText` rows, whose fixed widths make
-/// the list jump.
 class ObservabilityLoading extends StatelessWidget {
   const ObservabilityLoading({super.key, required this.label});
 
@@ -55,8 +49,6 @@ class ObservabilityLoading extends StatelessWidget {
   }
 }
 
-/// Empty state: illustration, text and an optional action. Returns [NullStatus] because
-/// NullStatusSwitcher takes NullStatus? directly.
 NullStatus obsEmpty({
   required String label,
   required NullStatusIllustration illustration,
@@ -69,8 +61,6 @@ NullStatus obsEmpty({
   action: action,
 );
 
-/// Read-failure state with retry. The failure is recoverable, so a retry button beats
-/// turning the page into an error page.
 class ObsFailure extends StatelessWidget {
   const ObsFailure({
     super.key,

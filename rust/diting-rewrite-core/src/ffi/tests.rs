@@ -1,12 +1,9 @@
-//! The C ABI surface: request decode, reply encode, status words and the type list.
-
 use std::slice;
 
 use super::*;
 use crate::payload::{encode_reply, LAYOUT_VERSION};
 use crate::record::build;
 
-/// A request payload in the layout `rewrite_native.go` writes.
 fn request(qtype: u16, ttl: u32, name: &str, type_name: &str, value: &str) -> Vec<u8> {
     fn push_text(out: &mut Vec<u8>, value: &str) {
         out.extend_from_slice(&(value.len() as u32).to_le_bytes());
@@ -37,7 +34,6 @@ fn a_record_crosses_the_boundary_field_by_field() {
     assert_eq!(status, STATUS_OK);
 
     let reply = unsafe { payload_slice(out, out_len) };
-    // layout, has_record, rrtype, owner (u32 length + bytes), ttl, address.
     assert_eq!(reply[0], LAYOUT_VERSION);
     assert_eq!(reply[1], 1);
     assert_eq!(&reply[2..4], &1u16.to_le_bytes());
@@ -51,7 +47,6 @@ fn a_record_crosses_the_boundary_field_by_field() {
 
 #[test]
 fn a_type_mismatch_is_a_reply_not_an_error() {
-    // An MX record asked for with qtype A: the caller must see "no record", not a failure.
     let reply = encode_reply(
         build("host.lan", 1, "MX", "32 mail.lan", 60)
             .unwrap()
@@ -94,7 +89,6 @@ fn a_malformed_request_is_rejected() {
     assert!(message.contains("layout"), "{message}");
     unsafe { diting_rewrite_free_bytes(out, out_len) };
 
-    // Trailing bytes mean the two sides disagree about the layout.
     let mut trailing = request(1, 60, "host.lan", "A", "10.0.0.1");
     trailing.push(0xEE);
     let status = unsafe {
@@ -116,7 +110,6 @@ fn the_type_list_crosses_the_boundary_sorted() {
     let reply = unsafe { payload_slice(out, out_len) };
     assert_eq!(reply[0], LAYOUT_VERSION);
     assert_eq!(&reply[1..3], &10u16.to_le_bytes());
-    // Sorted, `u32`-length strings: A, AAAA, CNAME, HTTPS, MX, NS, PTR, SRV, SVCB, TXT.
     assert_eq!(&reply[3..8], &[1, 0, 0, 0, b'A']);
     assert_eq!(&reply[8..16], &[4, 0, 0, 0, b'A', b'A', b'A', b'A']);
     assert!(reply.len() > 16);
@@ -138,7 +131,6 @@ fn bad_arguments_are_reported() {
     assert_eq!(status, STATUS_BAD_ARGS);
     let status = unsafe { diting_rewrite_record_types(std::ptr::null_mut(), &mut out_len) };
     assert_eq!(status, STATUS_BAD_ARGS);
-    // Freeing null is a no-op rather than a crash.
     unsafe { diting_rewrite_free_bytes(std::ptr::null_mut(), 0) };
 }
 
@@ -156,7 +148,6 @@ fn a_rewrite_value_crosses_the_boundary_field_by_field() {
     assert_eq!(status, STATUS_OK);
 
     let reply = unsafe { payload_slice(out, out_len) };
-    // layout, bare, rcode, rrtype, value (u32 length + bytes).
     assert_eq!(reply[0], LAYOUT_VERSION);
     assert_eq!(reply[1], 0, "not bare");
     assert_eq!(&reply[2..4], &0u16.to_le_bytes());
@@ -187,7 +178,6 @@ fn a_rejected_rewrite_value_reports_its_message() {
 
 #[test]
 fn the_action_key_crosses_the_boundary_normalized() {
-    // An IPv4-mapped literal must key like the plain address it maps to.
     let mut payload = vec![LAYOUT_VERSION, 0];
     payload.extend_from_slice(&0u16.to_le_bytes());
     payload.extend_from_slice(&1u16.to_le_bytes());
@@ -208,7 +198,6 @@ fn the_action_key_crosses_the_boundary_normalized() {
     assert_eq!(reply.len(), 17);
     unsafe { diting_rewrite_free_bytes(out, out_len) };
 
-    // A bare action keys as `bare` without touching the value.
     let mut bare = vec![LAYOUT_VERSION, 1];
     bare.extend_from_slice(&0u16.to_le_bytes());
     bare.extend_from_slice(&0u16.to_le_bytes());
@@ -242,7 +231,6 @@ fn action_requests_reject_a_mismatched_layout() {
     assert!(message.contains("layout"), "{message}");
     unsafe { diting_rewrite_free_bytes(out, out_len) };
 
-    // An unknown flag in the action fields is a layout mismatch too.
     let unknown_flag = [LAYOUT_VERSION, 2, 0, 0, 0, 0];
     let status = unsafe {
         diting_rewrite_action_key(
@@ -266,7 +254,6 @@ fn action_requests_reject_a_mismatched_layout() {
     assert_eq!(status, STATUS_BAD_ARGS);
 }
 
-/// Rebuilds the byte slice the library handed out.
 unsafe fn payload_slice(pointer: *mut u8, length: usize) -> &'static [u8] {
     if pointer.is_null() || length == 0 {
         return &[];
@@ -274,7 +261,6 @@ unsafe fn payload_slice(pointer: *mut u8, length: usize) -> &'static [u8] {
     slice::from_raw_parts(pointer, length)
 }
 
-/// One engine config: enabled, TTL 60, one exact rule with one IPv4 shortcut.
 fn engine_request() -> Vec<u8> {
     fn push_text(out: &mut Vec<u8>, value: &str) {
         out.extend_from_slice(&(value.len() as u32).to_le_bytes());
@@ -284,13 +270,13 @@ fn engine_request() -> Vec<u8> {
     out.extend_from_slice(&60u32.to_le_bytes());
     out.extend_from_slice(&1u32.to_le_bytes());
     push_text(&mut out, "nas.lan");
-    out.extend_from_slice(&0u32.to_le_bytes()); // rule TTL: engine default
-    out.extend_from_slice(&1u32.to_le_bytes()); // one IP
+    out.extend_from_slice(&0u32.to_le_bytes());
+    out.extend_from_slice(&1u32.to_le_bytes());
     push_text(&mut out, "192.168.1.100");
-    push_text(&mut out, ""); // no shortcut CNAME
-    out.extend_from_slice(&0u32.to_le_bytes()); // no shortcut TXT
-    out.extend_from_slice(&0u32.to_le_bytes()); // no explicit records
-    push_text(&mut out, ""); // no rcode override
+    push_text(&mut out, "");
+    out.extend_from_slice(&0u32.to_le_bytes());
+    out.extend_from_slice(&0u32.to_le_bytes());
+    push_text(&mut out, "");
     out
 }
 

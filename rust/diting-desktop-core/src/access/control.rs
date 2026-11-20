@@ -1,14 +1,3 @@
-//! Client allow/block list enforcement.
-//!
-//! Ported from `access_control.go`. The blocked list always wins; when the
-//! allowed list is non-empty, an address must match it. A missing client IP
-//! (for example an internal caller) is always allowed.
-//!
-//! Unlike Go, whose constructor returned an error and refused to start on a
-//! malformed entry, [`AccessControl::new`] keeps the valid entries and returns
-//! the diagnostics from [`AccessControl::configure`]. A bad entry must not take
-//! the whole resolver down, and the IPC layer already reports the diagnostics.
-
 use std::collections::HashSet;
 use std::fmt;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
@@ -16,7 +5,6 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use diting_desktop_api::config::AccessControlConfig;
 
-/// Compiled access lists and the configuration they came from.
 #[derive(Default)]
 struct Compiled {
     allowed_ips: HashSet<IpAddr>,
@@ -27,12 +15,10 @@ struct Compiled {
     config: AccessControlConfig,
 }
 
-/// Thread-safe client access-control engine.
 pub struct AccessControl {
     state: RwLock<Compiled>,
 }
 
-/// Counts of the entries that survived compilation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AccessStats {
     pub allowed_entries: usize,
@@ -49,7 +35,6 @@ impl AccessControl {
         control
     }
 
-    /// Recompiles both lists. Invalid entries are skipped and reported.
     pub fn configure(&self, config: &AccessControlConfig) -> Vec<String> {
         let mut problems = Vec::new();
         let mut allowed_ips = HashSet::new();
@@ -101,7 +86,6 @@ impl AccessControl {
         problems
     }
 
-    /// Returns `(allowed, reason)`. The reason is empty when allowed.
     pub fn check(&self, ip: Option<IpAddr>) -> (bool, String) {
         let Some(ip) = ip else {
             return (true, String::new());
@@ -109,7 +93,6 @@ impl AccessControl {
         let ip = normalize_ip(ip);
         let state = self.read();
 
-        // Blocked entries win over any allow entry.
         if state.blocked_ips.contains(&ip) {
             return (false, format!("客户端 IP {ip} 处于黑名单阻断列表中"));
         }
@@ -137,7 +120,6 @@ impl AccessControl {
         (true, String::new())
     }
 
-    /// The configuration this engine was last given.
     pub fn config(&self) -> AccessControlConfig {
         self.read().config.clone()
     }
@@ -169,8 +151,6 @@ enum Parsed {
     Net(Net),
 }
 
-/// Parses one list entry. An entry with `/` is a CIDR; otherwise it is an exact
-/// address. A v4-mapped exact address is folded to IPv4.
 fn parse_entry(text: &str) -> Option<Parsed> {
     if let Some((address, prefix)) = text.split_once('/') {
         let ip: IpAddr = address.parse().ok()?;

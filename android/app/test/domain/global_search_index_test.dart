@@ -31,7 +31,6 @@ void main() {
       '/hub/cache',
     ]);
     expect(filterGlobalSearch(entries, '健康').map((e) => e.route), ['/health']);
-    // 分组名 DNS 也应命中。
     expect(filterGlobalSearch(entries, 'dns').map((e) => e.route), [
       '/hub/cache',
     ]);

@@ -1,8 +1,3 @@
-/// The 53-port diagnosis: `/api/v1/portcheck` and its autofix.
-///
-/// The old desktop console's `DiagnosticsPanel.vue` port section is the blueprint. Every field is
-/// the platform probe's own wording: the page neither guesses which process holds the port nor
-/// decides that a conflict is harmless.
 library;
 
 bool _bool(Object? value) => value == true;
@@ -16,7 +11,6 @@ int _int(Object? value) => switch (value) {
 Map<String, Object?> _map(Object? value) =>
     value is Map ? value.cast<String, Object?>() : const {};
 
-/// One process listening on the DNS port.
 class DesktopPortConflict {
   const DesktopPortConflict({
     required this.port,
@@ -50,15 +44,12 @@ class DesktopPortConflict {
   final String processName;
   final String serviceName;
 
-  /// The Windows ICS / Linux resolved stub, the two the service knows how to stop.
   final bool isICS;
 
-  /// Whether the listener is the DITING service itself.
   final bool isSelf;
   final String diagnosis;
 }
 
-/// `GET /api/v1/portcheck`.
 class DesktopPortCheck {
   const DesktopPortCheck({
     required this.available,
@@ -94,20 +85,14 @@ class DesktopPortCheck {
   final bool available;
   final List<DesktopPortConflict> conflicts;
 
-  /// A system-level listener that the autofix can stop.
   final bool hasICS;
   final bool canAutofix;
 
-  /// The probe's combined report and advice; shown verbatim.
   final String diagnostic;
 
   bool get canRepair => !available && (canAutofix || hasICS);
 }
 
-/// `POST /api/v1/takeover/emergency-restore`: whether anything was actually restored.
-///
-/// The service answers with its own sentence, so the page shows that instead of inventing one;
-/// `healed == false` means the host was already clean, not that the button did nothing.
 class DesktopEmergencyRestore {
   const DesktopEmergencyRestore({required this.healed, required this.message});
 

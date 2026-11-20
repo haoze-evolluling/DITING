@@ -1,7 +1,5 @@
 part of 'rules_page.dart';
 
-/// Input dialog for a rewrite rule: domain plus target value. InputDialog takes one field,
-/// and two chained dialogs would leave the user unsure where they were after cancelling.
 class _RuleDialog extends StatefulWidget {
   const _RuleDialog({
     required this.title,
@@ -14,7 +12,6 @@ class _RuleDialog extends StatefulWidget {
   final String initialPattern;
   final String? initialTarget;
 
-  /// Existing patterns, used to report duplicates in place instead of after closing.
   final Set<String> existingPatterns;
 
   @override
@@ -101,8 +98,6 @@ class _RuleDialogState extends State<_RuleDialog> {
   }
 }
 
-/// Shared confirmation dialog. Only true runs a destructive action. Clear, delete and the
-/// whitelist relax all use it because there is no undo.
 Future<bool> _confirm(
   BuildContext context, {
   required String title,

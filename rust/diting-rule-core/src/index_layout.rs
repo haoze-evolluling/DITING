@@ -1,16 +1,7 @@
-//! `RuleIndexLayout`: where one dataset keeps its DTRI artifacts.
-//!
-//! The paths are relative to `filesDir`; Kotlin joins them with `File`. They live here so the
-//! layout, the stamp check and the engine's mmap target cannot disagree about a file name.
-
-/// The artifact names of one dataset, relative to `filesDir` (the root) or to the root itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Layout {
-    /// `rule-index` for normal, `rule-index/express` for express.
     pub root: &'static str,
-    /// `domain`, the folder holding the four tries.
     pub domain: &'static str,
-    /// `hosts`, kept for path parity with the legacy layout (no artifact is written there).
     pub hosts: &'static str,
     pub block: &'static str,
     pub block_important: &'static str,
@@ -18,7 +9,6 @@ pub struct Layout {
     pub allow_important: &'static str,
 }
 
-/// The four trie names and the two folders; only [`Layout::root`] varies per dataset.
 const DOMAIN: &str = "domain";
 const HOSTS: &str = "hosts";
 const BLOCK: &str = "block.trie";
@@ -26,7 +16,6 @@ const BLOCK_IMPORTANT: &str = "block.important.trie";
 const ALLOW: &str = "allow.trie";
 const ALLOW_IMPORTANT: &str = "allow.important.trie";
 
-/// `RuleDataset` tags: NORMAL (0), EXPRESS (1).
 pub fn layout(dataset: u8) -> Option<Layout> {
     let root = match dataset {
         0 => "rule-index",
@@ -50,8 +39,6 @@ mod tests {
 
     #[test]
     fn each_dataset_gets_its_own_root() {
-        // Every dataset writes its own artifacts under filesDir; sharing a root would make the
-        // rule databases overwrite each other's tries.
         assert_eq!(layout(0).unwrap().root, "rule-index");
         assert_eq!(layout(1).unwrap().root, "rule-index/express");
     }
@@ -65,7 +52,6 @@ mod tests {
         assert_eq!(normal.block_important, "block.important.trie");
         assert_eq!(normal.allow, "allow.trie");
         assert_eq!(normal.allow_important, "allow.important.trie");
-        // Only the root differs between datasets, so the tails are safe to share.
         let express = layout(1).unwrap();
         assert_eq!(
             (

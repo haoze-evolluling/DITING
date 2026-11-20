@@ -1,9 +1,3 @@
-/// The protection branch's subscription lists: the rows, the counters above them, and the four
-/// per-list writes.
-///
-/// The service is the only source of truth. Every write re-reads the list and the counters, so a
-/// rejected toggle flips back on its own, and a refresh shows the health status the service recorded
-/// rather than the one the page hoped for.
 library;
 
 import 'dart:async';
@@ -29,7 +23,6 @@ class DesktopFilterListsState {
   final bool isLoading;
   final bool saving;
 
-  /// The list whose refresh is in flight, or [allListsBusy] for a refresh of everything.
   final String? busyId;
 
   bool get isStale => !isLoading && lists.total > 0 && error != null;
@@ -37,7 +30,6 @@ class DesktopFilterListsState {
   bool isBusy(String id) => busyId == id;
 }
 
-/// Marks a refresh of every list; no list id can collide with it.
 const String allListsBusy = '*';
 
 class DesktopFilterListsNotifier extends Notifier<DesktopFilterListsState> {
@@ -67,8 +59,6 @@ class DesktopFilterListsNotifier extends Notifier<DesktopFilterListsState> {
     }
   }
 
-  /// Adds a subscription and lets the service start downloading it. Returns the failure for the
-  /// page's snackbar; on success the list is re-read, so the row shows the service's own state.
   Future<DesktopApiException?> add({
     required String name,
     required String url,
@@ -101,8 +91,6 @@ class DesktopFilterListsNotifier extends Notifier<DesktopFilterListsState> {
     await ref.read(desktopApiClientProvider).refreshFilterLists(id);
   });
 
-  /// Runs one write, then re-reads both answers. A failure keeps the previous rows on screen and
-  /// returns the service's reason to the caller.
   Future<DesktopApiException?> _write(Future<void> Function() action) async {
     if (state.saving) return null;
     state = DesktopFilterListsState(

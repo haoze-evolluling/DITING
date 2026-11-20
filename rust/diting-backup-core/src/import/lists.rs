@@ -1,7 +1,3 @@
-//! App-list groups: excluded / blocked / allowlist / HTTPS inspection.
-//!
-//! All four merge with local data and an import never removes an entry.
-
 use serde_json::{json, Value};
 
 use super::{string_set, union, Outcome, Plan};
@@ -36,7 +32,6 @@ pub fn blocked(value: &Value, current: &Value, plan: &mut Plan) -> Result<Outcom
     let merged = union(&local, &incoming);
     let added = merged.len() - local.len();
     plan.write("blocked.packages", json!(merged));
-    // OR the switch with the local value so an imported enable is not lost.
     let enabled =
         boolean(current, "enabled").unwrap_or(false) || boolean(value, "enabled").unwrap_or(false);
     plan.write("blocked.enabled", json!(enabled));
@@ -54,7 +49,6 @@ pub fn allowlist(value: &Value, current: &Value, plan: &mut Plan) -> Result<Outc
     let mut merged: Vec<(String, Vec<String>)> = Vec::new();
     if let Some(local) = get(current, "rules").and_then(as_object) {
         for (package, domains) in local {
-            // Local domains are a list per package, not a list of lists.
             merged.push((package.clone(), string_set(domains)));
         }
     }
@@ -62,7 +56,6 @@ pub fn allowlist(value: &Value, current: &Value, plan: &mut Plan) -> Result<Outc
     let mut added = 0u64;
     if let Some(rules) = get(value, "rules").and_then(as_object) {
         for (package, domains) in rules {
-            // Package names come from the file; blank ones cannot match an installed app.
             if package.trim().is_empty() {
                 continue;
             }
@@ -113,8 +106,6 @@ pub fn http_inspection(
     let merged = union(&local, &incoming);
     let added = merged.len() - local.len();
     plan.write("httpInspection.packages", json!(merged));
-    // Inspection is never enabled by an import: `https_inspection_ready` depends on a locally
-    // installed CA, so enabling it would break HTTPS. Only the HTTP/3 switch travels.
     if let Some(http3) = boolean(value, "http3Enabled") {
         plan.write("httpInspection.http3", json!(http3));
     }

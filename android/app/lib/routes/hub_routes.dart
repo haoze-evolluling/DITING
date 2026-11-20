@@ -32,7 +32,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
-/// Feature hub sub pages under `/hub/*`, one per `FeatureHubScreen.kt` card.
 abstract final class HubPaths {
   static const providerManagement = '/hub/providers';
   static const bootstrap = '/hub/bootstrap';
@@ -75,7 +74,6 @@ abstract final class HubPaths {
       '${Uri.encodeComponent(name)}';
 }
 
-/// A full-screen hub page on the root navigator, the shape every leaf route shares.
 GoRoute _route(String path, Widget page) => GoRoute(
   path: path,
   parentNavigatorKey: rootNavigatorKey,

@@ -1,22 +1,10 @@
-//! The engine's error type.
-//!
-//! The Go engine returned `error` from two entry points only (`ApplyDNSConfig`, `StartStandalone`)
-//! and a plain string from the rest, and Kotlin shows those strings verbatim (`RuntimeDnsConfig`
-//! puts `message` in the tile, `DitingDnsServerService` shows `"DNS 服务启动失败：…"`). The error
-//! texts are therefore part of the contract, so this type keeps them and implements `Display`
-//! instead of wrapping a foreign error.
-
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EngineError {
-    /// `parse DNS config: …` — the payload did not decode.
     ConfigParse(String),
-    /// The normalized config was rejected (`canonicalDNSMode`, provider validation).
     ConfigInvalid(String),
-    /// `IPv4 UDP Server failed to bind 0.0.0.0:port: …`
     Bind(String),
-    /// The engine is not running, or its server could not be started.
     State(String),
 }
 
@@ -51,5 +39,4 @@ impl fmt::Display for EngineError {
 
 impl std::error::Error for EngineError {}
 
-/// The result type every fallible engine entry point returns.
 pub type EngineResult<T> = Result<T, EngineError>;

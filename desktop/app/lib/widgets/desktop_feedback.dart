@@ -1,12 +1,9 @@
-/// The two things every hub write path says: a confirmation before a destructive call, and a
-/// transient answer afterwards. Shared so a page cannot invent its own dialog shape or snackbar.
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// One confirmation dialog. Returns true only when the user pressed the confirm action.
 Future<bool> confirmDesktopAction(
   BuildContext context, {
   required String title,
@@ -37,7 +34,6 @@ Future<bool> confirmDesktopAction(
   return result == true;
 }
 
-/// A transient answer for a write. The service's own message is used on failure.
 void showDesktopMessage(BuildContext context, String message) {
   ScaffoldMessenger.maybeOf(context)?.showSnackBar(
     SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
