@@ -27058,6 +27058,144 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'未授权'**
   String get serverRootDenied;
+
+  /// No description provided for @serverStatusTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行状态'**
+  String get serverStatusTitle;
+
+  /// No description provided for @serverUptime.
+  ///
+  /// In zh, this message translates to:
+  /// **'运行时长'**
+  String get serverUptime;
+
+  /// No description provided for @serverOverviewTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求概览'**
+  String get serverOverviewTitle;
+
+  /// No description provided for @serverLast24Hours.
+  ///
+  /// In zh, this message translates to:
+  /// **'最近 24 小时'**
+  String get serverLast24Hours;
+
+  /// No description provided for @serverTrafficTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析流量'**
+  String get serverTrafficTitle;
+
+  /// No description provided for @serverTrafficPeak.
+  ///
+  /// In zh, this message translates to:
+  /// **'峰值'**
+  String get serverTrafficPeak;
+
+  /// No description provided for @serverTrafficAverage.
+  ///
+  /// In zh, this message translates to:
+  /// **'平均'**
+  String get serverTrafficAverage;
+
+  /// No description provided for @serverPerHour.
+  ///
+  /// In zh, this message translates to:
+  /// **'每小时'**
+  String get serverPerHour;
+
+  /// No description provided for @serverBlockingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截分析'**
+  String get serverBlockingTitle;
+
+  /// No description provided for @serverAllowed.
+  ///
+  /// In zh, this message translates to:
+  /// **'已放行'**
+  String get serverAllowed;
+
+  /// No description provided for @serverTopBlocked.
+  ///
+  /// In zh, this message translates to:
+  /// **'拦截最多'**
+  String get serverTopBlocked;
+
+  /// No description provided for @serverCacheEfficiency.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存效率'**
+  String get serverCacheEfficiency;
+
+  /// No description provided for @serverCacheForwarded.
+  ///
+  /// In zh, this message translates to:
+  /// **'上游转发'**
+  String get serverCacheForwarded;
+
+  /// No description provided for @serverCacheErrors.
+  ///
+  /// In zh, this message translates to:
+  /// **'解析错误'**
+  String get serverCacheErrors;
+
+  /// No description provided for @serverTopDomainsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'热门域名'**
+  String get serverTopDomainsTitle;
+
+  /// No description provided for @serverTopClientsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'活跃客户端'**
+  String get serverTopClientsTitle;
+
+  /// No description provided for @serverQuickActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷操作'**
+  String get serverQuickActions;
+
+  /// No description provided for @serverNoStatistics.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无统计数据'**
+  String get serverNoStatistics;
+
+  /// No description provided for @serverNoTraffic.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有解析流量'**
+  String get serverNoTraffic;
+
+  /// No description provided for @serverTrafficStopped.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动服务器后，这里会显示最近的解析流量。'**
+  String get serverTrafficStopped;
+
+  /// No description provided for @serverNoRanking.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无排行数据'**
+  String get serverNoRanking;
+
+  /// No description provided for @serverCacheEntriesShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条'**
+  String serverCacheEntriesShort(int count);
+
+  /// No description provided for @serverUpstreamShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个上游'**
+  String serverUpstreamShort(int count);
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

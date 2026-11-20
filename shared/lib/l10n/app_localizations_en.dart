@@ -15631,4 +15631,78 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverRootDenied => 'not authorized';
+
+  @override
+  String get serverStatusTitle => 'Server status';
+
+  @override
+  String get serverUptime => 'Uptime';
+
+  @override
+  String get serverOverviewTitle => 'Request overview';
+
+  @override
+  String get serverLast24Hours => 'Last 24 hours';
+
+  @override
+  String get serverTrafficTitle => 'DNS traffic';
+
+  @override
+  String get serverTrafficPeak => 'Peak';
+
+  @override
+  String get serverTrafficAverage => 'Average';
+
+  @override
+  String get serverPerHour => 'per hour';
+
+  @override
+  String get serverBlockingTitle => 'Blocking analysis';
+
+  @override
+  String get serverAllowed => 'Allowed';
+
+  @override
+  String get serverTopBlocked => 'Top blocked';
+
+  @override
+  String get serverCacheEfficiency => 'Cache efficiency';
+
+  @override
+  String get serverCacheForwarded => 'Forwarded';
+
+  @override
+  String get serverCacheErrors => 'Errors';
+
+  @override
+  String get serverTopDomainsTitle => 'Top domains';
+
+  @override
+  String get serverTopClientsTitle => 'Active clients';
+
+  @override
+  String get serverQuickActions => 'Quick actions';
+
+  @override
+  String get serverNoStatistics => 'No statistics yet';
+
+  @override
+  String get serverNoTraffic => 'No DNS traffic yet';
+
+  @override
+  String get serverTrafficStopped =>
+      'Start the server to see recent DNS traffic here.';
+
+  @override
+  String get serverNoRanking => 'No ranking data yet';
+
+  @override
+  String serverCacheEntriesShort(int count) {
+    return '$count entries';
+  }
+
+  @override
+  String serverUpstreamShort(int count) {
+    return '$count upstreams';
+  }
 }

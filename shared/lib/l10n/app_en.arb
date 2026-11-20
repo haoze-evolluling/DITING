@@ -5683,5 +5683,28 @@
       }
     }
   },
-  "serverRootDenied": "not authorized"
+  "serverRootDenied": "not authorized",
+  "serverStatusTitle": "Server status",
+  "serverUptime": "Uptime",
+  "serverOverviewTitle": "Request overview",
+  "serverLast24Hours": "Last 24 hours",
+  "serverTrafficTitle": "DNS traffic",
+  "serverTrafficPeak": "Peak",
+  "serverTrafficAverage": "Average",
+  "serverPerHour": "per hour",
+  "serverBlockingTitle": "Blocking analysis",
+  "serverAllowed": "Allowed",
+  "serverTopBlocked": "Top blocked",
+  "serverCacheEfficiency": "Cache efficiency",
+  "serverCacheForwarded": "Forwarded",
+  "serverCacheErrors": "Errors",
+  "serverTopDomainsTitle": "Top domains",
+  "serverTopClientsTitle": "Active clients",
+  "serverQuickActions": "Quick actions",
+  "serverNoStatistics": "No statistics yet",
+  "serverNoTraffic": "No DNS traffic yet",
+  "serverTrafficStopped": "Start the server to see recent DNS traffic here.",
+  "serverNoRanking": "No ranking data yet",
+  "serverCacheEntriesShort": "{count} entries",
+  "serverUpstreamShort": "{count} upstreams"
 }

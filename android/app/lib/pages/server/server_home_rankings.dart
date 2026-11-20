@@ -1,0 +1,317 @@
+import 'dart:math' as math;
+
+import 'package:diting_android/data/server/server_runtime_models.dart';
+import 'package:diting_android/pages/server/server_common.dart';
+import 'package:diting_android/pages/server/server_home_parts.dart';
+import 'package:diting_android/routes/server_routes.dart';
+import 'package:diting_android/state/server_providers.dart';
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
+class ServerTopDomainsOverview extends StatelessWidget {
+  const ServerTopDomainsOverview({super.key, required this.stats});
+
+  final ServerStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _RankingCard(
+      glyph: AppGlyphs.target,
+      title: l10n.serverTopDomainsTitle,
+      items: stats.topDomains.take(5).toList(),
+      emptyText: l10n.serverNoRanking,
+      color: context.colorScheme.primary,
+    );
+  }
+}
+
+class ServerTopClientsOverview extends StatelessWidget {
+  const ServerTopClientsOverview({super.key, required this.stats});
+
+  final ServerStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return _RankingCard(
+      glyph: AppGlyphs.devices,
+      title: l10n.serverTopClientsTitle,
+      items: stats.topClients.take(5).toList(),
+      emptyText: l10n.serverNoRanking,
+      color: context.colorScheme.tertiary,
+    );
+  }
+}
+
+class _RankingCard extends StatelessWidget {
+  const _RankingCard({
+    required this.glyph,
+    required this.title,
+    required this.items,
+    required this.emptyText,
+    required this.color,
+  });
+
+  final Glyph glyph;
+  final String title;
+  final List<ServerNameCount> items;
+  final String emptyText;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxCount = items.isEmpty
+        ? 1
+        : items.map((item) => item.count).reduce(math.max);
+    return ServerSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 10,
+        children: [
+          ServerCardHeader(glyph: glyph, title: title),
+          if (items.isEmpty)
+            ServerEmptyPanel(
+              glyph: glyph,
+              title: emptyText,
+              body: context.l10n.serverLast24Hours,
+            )
+          else
+            for (final (index, item) in items.indexed)
+              _RankingRow(
+                rank: index + 1,
+                item: item,
+                maxCount: maxCount,
+                color: color,
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankingRow extends StatelessWidget {
+  const _RankingRow({
+    required this.rank,
+    required this.item,
+    required this.maxCount,
+    required this.color,
+  });
+
+  final int rank;
+  final ServerNameCount item;
+  final int maxCount;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colorScheme;
+    final progress = maxCount == 0
+        ? 0.0
+        : (item.count / maxCount).clamp(0.0, 1.0);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 10,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
+          decoration: ShapeDecoration(
+            color: rank <= 3
+                ? color.withValues(alpha: 0.13)
+                : scheme.onSurfaceVariant.withValues(alpha: 0.07),
+            shape: AppShape.standard,
+          ),
+          child: Text(
+            '$rank',
+            style: AppTextStyle.caption2
+                .of(context, emphasized: true)
+                .toTabular
+                .copyWith(color: rank <= 3 ? color : scheme.onSurfaceVariant),
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 5,
+            children: [
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyle.footnote.of(
+                        context,
+                        emphasized: rank == 1,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    serverCount(item.count),
+                    style: AppTextStyle.caption1
+                        .of(context, emphasized: true)
+                        .toTabular
+                        .copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+              ClipRRect(
+                borderRadius: AppRadius.standard,
+                child: Container(
+                  height: 5,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.09),
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FractionallySizedBox(
+                    widthFactor: progress,
+                    heightFactor: 1,
+                    child: ColoredBox(color: color),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The three newest queries, with enough metadata to spot cache hits and blocks.
+class ServerRecentQueries extends ConsumerWidget {
+  const ServerRecentQueries({super.key, required this.running});
+
+  final bool running;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!running) return const SizedBox.shrink();
+    final recent = ref.watch(
+      serverQueryLogProvider(const ServerLogQuery(limit: 3)),
+    );
+    final scheme = context.colorScheme;
+    final l10n = context.l10n;
+    return ServerSectionCard(
+      onPressed: () => context.go(ServerRoutes.logs),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          ServerCardHeader(
+            glyph: AppGlyphs.logs,
+            title: l10n.serverRecentQueries,
+            trailing: [
+              Text(
+                l10n.serverViewAll,
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: scheme.primary),
+              ),
+              const GlyphIcon(AppGlyphs.chevronForward, size: 17),
+            ],
+          ),
+          recent.when(
+            data: (result) => result.entries.isEmpty
+                ? Text(l10n.serverNoQueries, style: context.listSubtitleStyle)
+                : Column(
+                    spacing: 2,
+                    children: [
+                      for (final record in result.entries)
+                        _RecentQueryRow(record: record),
+                    ],
+                  ),
+            loading: () => const Center(child: CommonCircleLoading(size: 18)),
+            error: (error, _) =>
+                Text(error.toString(), style: context.listSubtitleStyle),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecentQueryRow extends StatelessWidget {
+  const _RecentQueryRow({required this.record});
+
+  final ServerQueryRecord record;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = context.colorScheme;
+    final l10n = context.l10n;
+    final color = record.blocked ? scheme.error : scheme.onSurfaceVariant;
+    final meta = [
+      if (record.client.isNotEmpty) record.client,
+      if (record.qtype.isNotEmpty) record.qtype,
+      if (record.cached) l10n.serverLogCached,
+      if (record.durationMs > 0) serverMs(record.durationMs),
+    ].join('  ·  ');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 10,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Container(
+              width: 7,
+              height: 7,
+              decoration: ShapeDecoration(
+                color: record.blocked ? scheme.error : scheme.success,
+                shape: AppShape.standard,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Text(
+                  record.domain,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyle.footnote.of(context, emphasized: true),
+                ),
+                if (meta.isNotEmpty)
+                  Text(
+                    meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyle.caption2
+                        .of(context)
+                        .copyWith(color: scheme.onSurfaceVariant),
+                  ),
+              ],
+            ),
+          ),
+          Text(
+            _statusLabel(context, record),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.caption1
+                .of(context, emphasized: true)
+                .copyWith(color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _statusLabel(BuildContext context, ServerQueryRecord record) {
+  if (record.blocked) return context.l10n.serverLogBlocked;
+  if (record.cached) return context.l10n.serverLogCached;
+  return switch (record.status) {
+    'allowed' => context.l10n.serverAllowed,
+    'error' => context.l10n.serverLogError,
+    _ => record.status,
+  };
+}

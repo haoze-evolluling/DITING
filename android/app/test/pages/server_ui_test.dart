@@ -157,6 +157,102 @@ void main() {
     final saved = await client.getConfig();
     expect(saved.cache.prefetchEnabled, isTrue);
   });
+
+  testWidgets('服务器首页展示运行状态与快捷入口', (tester) async {
+    final client = FakeServerClient(
+      status: ServerStatus(
+        running: true,
+        root: false,
+        port: 1053,
+        addresses: const ['192.168.1.23:1053'],
+        startedAt: DateTime.now().subtract(const Duration(minutes: 75)),
+      ),
+      stats: const ServerStats(
+        queries: 1200,
+        blocked: 240,
+        cached: 600,
+        forwarded: 960,
+        averageResponseMs: 8,
+        blockedRate: 0.2,
+        cacheHitRate: 0.5,
+      ),
+    );
+    await pumpServer(tester, ServerRoutes.root, client: client);
+
+    expect(find.text('运行状态'), findsOneWidget);
+    expect(find.text('正在监听'), findsOneWidget);
+    expect(find.text('快捷操作'), findsOneWidget);
+    expect(find.text('请求概览'), findsOneWidget);
+
+    await tester.tap(find.text('上游与调度'));
+    await tester.pumpAndSettle();
+    expect(find.text('当前调度'), findsOneWidget);
+  });
+
+  testWidgets('服务器首页展示流量、拦截、缓存与排行卡片', (tester) async {
+    final client = FakeServerClient(
+      status: const ServerStatus(
+        running: true,
+        root: false,
+        port: 1053,
+        addresses: ['192.168.1.23:1053'],
+      ),
+      stats: ServerStats(
+        queries: 12840,
+        blocked: 3180,
+        cached: 6120,
+        forwarded: 6620,
+        averageResponseMs: 8.4,
+        blockedRate: 3180 / 12840,
+        cacheHitRate: 6120 / 12840,
+        perHour: [
+          for (var hour = 0; hour < 24; hour++)
+            ServerHourPoint(
+              hour: DateTime(2026, 11, 19, hour),
+              queries: 180 + (hour * 37) % 560,
+              blocked: 30 + (hour * 11) % 130,
+              cached: 80 + (hour * 23) % 300,
+            ),
+        ],
+        topDomains: const [ServerNameCount(name: 'www.baidu.com', count: 1820)],
+        topClients: const [ServerNameCount(name: 'MacBook Pro', count: 4300)],
+      ),
+    );
+    await pumpServer(tester, ServerRoutes.root, client: client);
+
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('解析流量'),
+      320,
+      scrollable: scrollable,
+    );
+    expect(find.text('峰值'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('拦截分析'),
+      320,
+      scrollable: scrollable,
+    );
+    expect(find.text('拦截分析'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('缓存效率'),
+      320,
+      scrollable: scrollable,
+    );
+    expect(find.text('缓存效率'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('热门域名'),
+      320,
+      scrollable: scrollable,
+    );
+    expect(find.text('www.baidu.com'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('活跃客户端'),
+      320,
+      scrollable: scrollable,
+    );
+    expect(find.text('MacBook Pro'), findsOneWidget);
+  });
 }
 
 class _LogFake extends FakeServerClient {

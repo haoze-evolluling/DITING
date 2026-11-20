@@ -14736,4 +14736,77 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverRootDenied => '未授权';
+
+  @override
+  String get serverStatusTitle => '运行状态';
+
+  @override
+  String get serverUptime => '运行时长';
+
+  @override
+  String get serverOverviewTitle => '请求概览';
+
+  @override
+  String get serverLast24Hours => '最近 24 小时';
+
+  @override
+  String get serverTrafficTitle => '解析流量';
+
+  @override
+  String get serverTrafficPeak => '峰值';
+
+  @override
+  String get serverTrafficAverage => '平均';
+
+  @override
+  String get serverPerHour => '每小时';
+
+  @override
+  String get serverBlockingTitle => '拦截分析';
+
+  @override
+  String get serverAllowed => '已放行';
+
+  @override
+  String get serverTopBlocked => '拦截最多';
+
+  @override
+  String get serverCacheEfficiency => '缓存效率';
+
+  @override
+  String get serverCacheForwarded => '上游转发';
+
+  @override
+  String get serverCacheErrors => '解析错误';
+
+  @override
+  String get serverTopDomainsTitle => '热门域名';
+
+  @override
+  String get serverTopClientsTitle => '活跃客户端';
+
+  @override
+  String get serverQuickActions => '快捷操作';
+
+  @override
+  String get serverNoStatistics => '暂无统计数据';
+
+  @override
+  String get serverNoTraffic => '还没有解析流量';
+
+  @override
+  String get serverTrafficStopped => '启动服务器后，这里会显示最近的解析流量。';
+
+  @override
+  String get serverNoRanking => '暂无排行数据';
+
+  @override
+  String serverCacheEntriesShort(int count) {
+    return '$count 条';
+  }
+
+  @override
+  String serverUpstreamShort(int count) {
+    return '$count 个上游';
+  }
 }

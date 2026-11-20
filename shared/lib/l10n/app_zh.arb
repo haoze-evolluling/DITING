@@ -8343,5 +8343,42 @@
       }
     }
   },
-  "serverRootDenied": "未授权"
+  "serverRootDenied": "未授权",
+  "serverStatusTitle": "运行状态",
+  "serverUptime": "运行时长",
+  "serverOverviewTitle": "请求概览",
+  "serverLast24Hours": "最近 24 小时",
+  "serverTrafficTitle": "解析流量",
+  "serverTrafficPeak": "峰值",
+  "serverTrafficAverage": "平均",
+  "serverPerHour": "每小时",
+  "serverBlockingTitle": "拦截分析",
+  "serverAllowed": "已放行",
+  "serverTopBlocked": "拦截最多",
+  "serverCacheEfficiency": "缓存效率",
+  "serverCacheForwarded": "上游转发",
+  "serverCacheErrors": "解析错误",
+  "serverTopDomainsTitle": "热门域名",
+  "serverTopClientsTitle": "活跃客户端",
+  "serverQuickActions": "快捷操作",
+  "serverNoStatistics": "暂无统计数据",
+  "serverNoTraffic": "还没有解析流量",
+  "serverTrafficStopped": "启动服务器后，这里会显示最近的解析流量。",
+  "serverNoRanking": "暂无排行数据",
+  "serverCacheEntriesShort": "{count} 条",
+  "@serverCacheEntriesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverUpstreamShort": "{count} 个上游",
+  "@serverUpstreamShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
