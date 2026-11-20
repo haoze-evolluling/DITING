@@ -81,6 +81,7 @@ class _GroupManageSheet extends ConsumerWidget {
             )
           else
             generateSection(
+              title: context.l10n.subsGroupsList,
               items: [
                 if (groups.isEmpty)
                   ListItem(

@@ -71,6 +71,7 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
           // Same hop options as the legacy `TracerouteSection`: 15 and 30, defaulting to 15.
           const SizedBox(height: 12),
           generateSection(
+            title: l10n.toolTraceHops,
             items: [
               ListItem<int>.options(
                 leading: const GlyphIcon(AppGlyphs.connections),

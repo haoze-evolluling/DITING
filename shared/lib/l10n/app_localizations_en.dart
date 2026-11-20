@@ -294,6 +294,9 @@ class AppL10nEn extends AppL10n {
   String get flowEntrySubtitle => 'See live connections and remotes by app';
 
   @override
+  String get flowAppsSection => 'Apps';
+
+  @override
   String get flowRefresh => 'Refresh';
 
   @override
@@ -580,6 +583,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get providerSheetVisibility => 'Resolver visibility...';
+
+  @override
+  String get providerSheetActions => 'Provider management';
 
   @override
   String get providerSheetSingleFooter =>
@@ -2589,6 +2595,9 @@ class AppL10nEn extends AppL10n {
   String get fontSizePreview => 'Live preview';
 
   @override
+  String get fontSizePresets => 'Quick presets';
+
+  @override
   String get appearancePoem => 'Hear every sound, tell clear from murky';
 
   @override
@@ -3569,6 +3578,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get subsManageGroupsTitle => 'Manage groups';
+
+  @override
+  String get subsGroupsList => 'Groups';
 
   @override
   String get subsGroupRenameTitle => 'Rename group';
@@ -8492,6 +8504,9 @@ class AppL10nEn extends AppL10n {
   String get outboundSectionProxy => 'Proxy';
 
   @override
+  String get outboundProxyServerSection => 'Proxy server';
+
+  @override
   String get outboundEnable => 'Enable the outbound proxy';
 
   @override
@@ -8584,6 +8599,12 @@ class AppL10nEn extends AppL10n {
   @override
   String get resolutionBuiltinNote =>
       'Only switches the DNS / DoT / DoH protocol used by built-in providers; custom providers keep their own protocol.';
+
+  @override
+  String get resolutionCurrentSection => 'Current settings';
+
+  @override
+  String get resolutionBuiltinSection => 'Built-in protocol';
 
   @override
   String get resolutionConfigSection => 'Mode configuration';
@@ -14289,6 +14310,9 @@ class AppL10nEn extends AppL10n {
   String get troubleshootLogsDetailInfo => 'Log details';
 
   @override
+  String get troubleshootLogsActions => 'File actions';
+
+  @override
   String get troubleshootLogsFileName => 'File name';
 
   @override
@@ -14804,6 +14828,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get ruleVersionsPick => 'Choose a subscription';
+
+  @override
+  String get ruleVersionsHistory => 'Version history';
 
   @override
   String get ruleVersionsEmpty =>

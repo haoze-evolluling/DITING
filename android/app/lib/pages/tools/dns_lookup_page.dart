@@ -107,6 +107,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
           ),
           const SizedBox(height: 12),
           generateSection(
+            title: l10n.toolRecordType,
             items: [
               ListItem<bool>.options(
                 leading: const GlyphIcon(AppGlyphs.dns),
@@ -125,6 +126,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
           if (showServerMode) ...[
             const SizedBox(height: 12),
             generateSection(
+              title: l10n.toolDnsServers,
               items: [
                 ListItem<_DnsServerMode>.options(
                   leading: const GlyphIcon(AppGlyphs.dns),

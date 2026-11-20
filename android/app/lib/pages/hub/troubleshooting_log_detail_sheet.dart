@@ -161,6 +161,7 @@ class _TroubleshootingLogDetailSheetState
             ),
           ),
           SectionBlock(
+            title: l10n.troubleshootLogsLogContent,
             child: CommonCard(
               onPressed: _busy ? null : _openContent,
               padding: const EdgeInsets.all(14),
@@ -192,6 +193,7 @@ class _TroubleshootingLogDetailSheetState
             ),
           ),
           generateSection(
+            title: l10n.troubleshootLogsActions,
             items: [
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.send, size: 20),

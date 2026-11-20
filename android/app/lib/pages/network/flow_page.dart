@@ -96,6 +96,7 @@ class _FlowPageState extends ConsumerState<FlowPage> {
               SizedBox(
                 width: 280,
                 child: generateSection(
+                  title: context.l10n.flowAppsSection,
                   items: [
                     for (final app in apps)
                       ListItem(

@@ -116,6 +116,7 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
           // sheet before pushing, otherwise returning shows it again and looks stuck.
           const ListSectionGap(),
           generateSection(
+            title: context.l10n.providerSheetActions,
             items: [
               ListItem(
                 leading: const LeadingSlot(

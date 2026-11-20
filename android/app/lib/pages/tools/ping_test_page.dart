@@ -72,6 +72,7 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
           // Same count options as the legacy `PingSection`: 4 and 10 only.
           const SizedBox(height: 12),
           generateSection(
+            title: l10n.toolPing,
             items: [
               ListItem<int>.options(
                 leading: const GlyphIcon(AppGlyphs.send),

@@ -154,6 +154,7 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
         if (enabled) ...[
           const SizedBox(height: 12),
           generateSection(
+            title: l10n.floatingLogSizeTitle,
             items: [
               ListItem<int>.options(
                 leading: const GlyphIcon(AppGlyphs.eye),
@@ -171,6 +172,7 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
           ),
           const SizedBox(height: 12),
           generateSection(
+            title: l10n.floatingLogOpacity,
             items: [
               SliderCardRow(
                 label: l10n.floatingLogOpacity,

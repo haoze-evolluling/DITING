@@ -87,6 +87,7 @@ class _RequestLogExportAppPickerState
             if (_selected.isNotEmpty)
               ListHeader(title: l10n.obsExportSelectedApps(_selected.length)),
             generateSection(
+              title: _selected.isEmpty ? l10n.obsExportApps : null,
               items: [
                 ListItem(
                   // Same column as the app rows below it, which are led by a 40dp icon.

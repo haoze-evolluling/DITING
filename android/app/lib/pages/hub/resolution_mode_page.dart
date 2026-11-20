@@ -53,7 +53,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
       body: PageBody(
         children: [
           generateSection(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            title: context.l10n.resolutionCurrentSection,
             items: [
               ListItem<ResolutionMode>.options(
                 leading: const GlyphIcon(AppGlyphs.shuffle),
@@ -69,6 +69,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
           ),
           const SizedBox(height: 12),
           generateSection(
+            title: context.l10n.resolutionBuiltinSection,
             items: [
               ListItem<ProviderProtocol>.options(
                 leading: const GlyphIcon(AppGlyphs.dns),
@@ -268,6 +269,7 @@ class _ResolutionModeConfigPageState
           ),
           const SizedBox(height: 12),
           generateSection(
+            title: context.l10n.resolutionBuiltinSection,
             items: [
               ListItem<ProviderProtocol>.options(
                 leading: const GlyphIcon(AppGlyphs.dns),

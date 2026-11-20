@@ -69,6 +69,7 @@ class ServerQueryLogPage extends ConsumerWidget {
           ),
           const ListSectionGap(),
           generateSection(
+            title: context.l10n.serverQueryLogRetention,
             items: [
               ListItem<int>.options(
                 leading: const GlyphIcon(AppGlyphs.clock, size: 20),

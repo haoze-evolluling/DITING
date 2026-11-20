@@ -83,6 +83,7 @@ class _SsidFormSheetState extends ConsumerState<_SsidFormSheet> {
           padding: EdgeInsets.only(top: 8 + context.contentTopPadding),
           children: [
             generateSection(
+              title: context.l10n.commonName,
               items: [
                 ConfigFieldRow(
                   label: 'SSID',

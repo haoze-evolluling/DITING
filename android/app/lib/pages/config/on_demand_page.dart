@@ -41,6 +41,7 @@ class OnDemandConfigPage extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
+            title: context.l10n.odTitle,
             items: [
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.wifi),

@@ -76,6 +76,7 @@ class _SubscriptionVersionPageState
           return PageBody(
             children: [
               generateSection(
+                title: l10n.ruleVersionsPick,
                 items: [
                   ListItem(
                     leading: const GlyphIcon(AppGlyphs.link),
@@ -303,6 +304,7 @@ class _VersionHistory extends ConsumerWidget {
             }
             final current = history.first;
             return generateSection(
+              title: l10n.ruleVersionsHistory,
               items: [
                 for (var i = 0; i < history.length; i++)
                   _versionItem(context, l10n, history[i], i == 0, current),

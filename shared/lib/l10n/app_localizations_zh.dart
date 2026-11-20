@@ -273,6 +273,9 @@ class AppL10nZh extends AppL10n {
   String get flowEntrySubtitle => '按应用查看实时连接与远端';
 
   @override
+  String get flowAppsSection => '应用';
+
+  @override
   String get flowRefresh => '刷新';
 
   @override
@@ -553,6 +556,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get providerSheetVisibility => '服务显示...';
+
+  @override
+  String get providerSheetActions => '服务管理';
 
   @override
   String get providerSheetSingleFooter => '延迟取自上一次解析的健康记录，不是实时值。';
@@ -2455,6 +2461,9 @@ class AppL10nZh extends AppL10n {
   String get fontSizePreview => '实时预览';
 
   @override
+  String get fontSizePresets => '快速预设';
+
+  @override
   String get appearancePoem => '谛听万象，明察清浊';
 
   @override
@@ -3378,6 +3387,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get subsManageGroupsTitle => '分组管理';
+
+  @override
+  String get subsGroupsList => '分组列表';
 
   @override
   String get subsGroupRenameTitle => '重命名分组';
@@ -7995,6 +8007,9 @@ class AppL10nZh extends AppL10n {
   String get outboundSectionProxy => '代理';
 
   @override
+  String get outboundProxyServerSection => '代理服务器';
+
+  @override
   String get outboundEnable => '启用出站代理功能';
 
   @override
@@ -8079,6 +8094,12 @@ class AppL10nZh extends AppL10n {
   @override
   String get resolutionBuiltinNote =>
       '仅切换内置服务商使用的 DNS / DoT / DoH 协议；自定义服务商按自身协议展示。';
+
+  @override
+  String get resolutionCurrentSection => '当前设置';
+
+  @override
+  String get resolutionBuiltinSection => '内置协议';
 
   @override
   String get resolutionConfigSection => '模式配置';
@@ -13458,6 +13479,9 @@ class AppL10nZh extends AppL10n {
   String get troubleshootLogsDetailInfo => '日志信息';
 
   @override
+  String get troubleshootLogsActions => '文件操作';
+
+  @override
   String get troubleshootLogsFileName => '文件名';
 
   @override
@@ -13948,6 +13972,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get ruleVersionsPick => '选择订阅';
+
+  @override
+  String get ruleVersionsHistory => '版本历史';
 
   @override
   String get ruleVersionsEmpty => '该订阅还没有版本记录，更新一次后即可查看。';

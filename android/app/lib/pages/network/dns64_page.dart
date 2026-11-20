@@ -21,6 +21,7 @@ class Dns64Page extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
+            title: l10n.dns64Title,
             items: [
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.link),

@@ -68,6 +68,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
           ),
           const SizedBox(height: 12),
           generateSection(
+            title: l10n.obsProtocol,
             items: [
               ListItem<DnsLatencyProtocol>.options(
                 leading: const GlyphIcon(AppGlyphs.speed),

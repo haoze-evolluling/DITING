@@ -608,6 +608,12 @@ abstract class AppL10n {
   /// **'按应用查看实时连接与远端'**
   String get flowEntrySubtitle;
 
+  /// No description provided for @flowAppsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'应用'**
+  String get flowAppsSection;
+
   /// No description provided for @flowRefresh.
   ///
   /// In zh, this message translates to:
@@ -1135,6 +1141,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'服务显示...'**
   String get providerSheetVisibility;
+
+  /// No description provided for @providerSheetActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务管理'**
+  String get providerSheetActions;
 
   /// No description provided for @providerSheetSingleFooter.
   ///
@@ -4638,6 +4650,12 @@ abstract class AppL10n {
   /// **'实时预览'**
   String get fontSizePreview;
 
+  /// No description provided for @fontSizePresets.
+  ///
+  /// In zh, this message translates to:
+  /// **'快速预设'**
+  String get fontSizePresets;
+
   /// No description provided for @appearancePoem.
   ///
   /// In zh, this message translates to:
@@ -6341,6 +6359,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'分组管理'**
   String get subsManageGroupsTitle;
+
+  /// No description provided for @subsGroupsList.
+  ///
+  /// In zh, this message translates to:
+  /// **'分组列表'**
+  String get subsGroupsList;
 
   /// No description provided for @subsGroupRenameTitle.
   ///
@@ -14651,6 +14675,12 @@ abstract class AppL10n {
   /// **'代理'**
   String get outboundSectionProxy;
 
+  /// No description provided for @outboundProxyServerSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'代理服务器'**
+  String get outboundProxyServerSection;
+
   /// No description provided for @outboundEnable.
   ///
   /// In zh, this message translates to:
@@ -14806,6 +14836,18 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'仅切换内置服务商使用的 DNS / DoT / DoH 协议；自定义服务商按自身协议展示。'**
   String get resolutionBuiltinNote;
+
+  /// No description provided for @resolutionCurrentSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前设置'**
+  String get resolutionCurrentSection;
+
+  /// No description provided for @resolutionBuiltinSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置协议'**
+  String get resolutionBuiltinSection;
 
   /// No description provided for @resolutionConfigSection.
   ///
@@ -24635,6 +24677,12 @@ abstract class AppL10n {
   /// **'日志信息'**
   String get troubleshootLogsDetailInfo;
 
+  /// No description provided for @troubleshootLogsActions.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件操作'**
+  String get troubleshootLogsActions;
+
   /// No description provided for @troubleshootLogsFileName.
   ///
   /// In zh, this message translates to:
@@ -25570,6 +25618,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'选择订阅'**
   String get ruleVersionsPick;
+
+  /// No description provided for @ruleVersionsHistory.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本历史'**
+  String get ruleVersionsHistory;
 
   /// No description provided for @ruleVersionsEmpty.
   ///

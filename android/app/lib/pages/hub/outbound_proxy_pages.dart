@@ -256,6 +256,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
           _scopeSection(context, config),
           const SizedBox(height: 12),
           generateSection(
+            title: context.l10n.outboundProxyServerSection,
             items: [
               ListItem<OutboundProxyProtocol>.options(
                 leading: const GlyphIcon(AppGlyphs.link),

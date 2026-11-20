@@ -97,6 +97,7 @@ class FontSizePage extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           generateSection(
+            title: context.l10n.fontSizePresets,
             items: [
               ListItem<double>.options(
                 leading: const GlyphIcon(AppGlyphs.textSize),
