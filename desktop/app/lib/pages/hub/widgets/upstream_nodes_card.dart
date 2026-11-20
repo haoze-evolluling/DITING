@@ -34,9 +34,7 @@ class UpstreamNodesCard extends ConsumerWidget {
   Future<void> _add(BuildContext context) async {
     final provider = await showUpstreamEditor(context);
     if (provider == null || !context.mounted) return;
-    onChanged(
-      config.copyWith(providers: [...config.providers, provider]),
-    );
+    onChanged(config.copyWith(providers: [...config.providers, provider]));
   }
 
   Future<void> _edit(BuildContext context, int index) async {
@@ -71,9 +69,7 @@ class UpstreamNodesCard extends ConsumerWidget {
     );
     if (!confirmed || !context.mounted) return;
     onChanged(
-      config.copyWith(
-        providers: [...config.providers]..removeAt(index),
-      ),
+      config.copyWith(providers: [...config.providers]..removeAt(index)),
     );
   }
 
@@ -138,11 +134,7 @@ class UpstreamNodesCard extends ConsumerWidget {
                   probing: probes.isBusy(config.providers[index].id),
                   onTest: saving
                       ? null
-                      : () => _probe(
-                          context,
-                          ref,
-                          config.providers[index],
-                        ),
+                      : () => _probe(context, ref, config.providers[index]),
                   onEdit: saving ? null : () => _edit(context, index),
                   onDelete: saving ? null : () => _delete(context, index),
                 ),
@@ -227,7 +219,7 @@ class _NodeRow extends StatelessWidget {
             provider.address,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
           ),
           Wrap(
             spacing: 8,

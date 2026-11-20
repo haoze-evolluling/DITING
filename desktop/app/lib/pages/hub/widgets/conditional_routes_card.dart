@@ -64,8 +64,7 @@ class ConditionalRoutesCard extends StatelessWidget {
             glyph: AppGlyphs.swap,
             title: l10n.desktopUpstreamRoutesTitle,
             leading: [
-              if (routes.isNotEmpty)
-                DashboardChip(label: '${routes.length}'),
+              if (routes.isNotEmpty) DashboardChip(label: '${routes.length}'),
             ],
             trailing: [
               DashboardIconButton(
@@ -102,9 +101,7 @@ class ConditionalRoutesCard extends StatelessWidget {
                   domain: entry.key,
                   server: entry.value,
                   onEdit: saving ? null : () => _edit(context, entry.key),
-                  onDelete: saving
-                      ? null
-                      : () => _delete(context, entry.key),
+                  onDelete: saving ? null : () => _delete(context, entry.key),
                 ),
               ),
         ],
@@ -150,7 +147,7 @@ class _RouteRow extends StatelessWidget {
                   server,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .toTabular
                       .copyWith(color: colorScheme.onSurfaceVariant),
@@ -247,7 +244,7 @@ class _RouteEditorState extends State<_RouteEditor> {
                 labelText: l10n.desktopUpstreamRouteDomain,
                 hintText: '*.corp.internal',
               ),
-              style: AppTextStyle.callout.of(context),
+              style: AppTextRole.body.of(context),
             ),
             TextFormField(
               controller: _server,
@@ -255,14 +252,14 @@ class _RouteEditorState extends State<_RouteEditor> {
                 labelText: l10n.desktopUpstreamRouteServer,
                 hintText: '10.0.0.1:53',
               ),
-              style: AppTextStyle.callout.of(context),
+              style: AppTextRole.body.of(context),
             ),
             if (_error case final error?)
               Text(
                 error,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: context.colorScheme.error),
               ),

@@ -99,7 +99,7 @@ class _LoginChangePasswordCardState
       children: [
         Text(
           l10n.desktopLoginChangePassword,
-          style: AppTextStyle.title2.of(context, emphasized: true),
+          style: AppTextRole.sectionTitle.of(context),
         ),
         const SizedBox(height: 4),
         Text(
@@ -154,9 +154,7 @@ class _LoginChangePasswordCardState
           enabled: !_busy,
           obscureText: _obscure,
           onSubmitted: (_) => unawaited(_submit()),
-          decoration: InputDecoration(
-            labelText: l10n.desktopLoginConfirmLabel,
-          ),
+          decoration: InputDecoration(labelText: l10n.desktopLoginConfirmLabel),
         ),
         const SizedBox(height: 14),
         FilledButton(

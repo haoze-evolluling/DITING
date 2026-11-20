@@ -132,7 +132,7 @@ class _ClientAccessCardState extends ConsumerState<ClientAccessCard> {
             controller: _allowed,
             minLines: 3,
             maxLines: 6,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopTrafficAccessAllowed,
               hintText: l10n.desktopTrafficAccessAllowedHint,
@@ -149,7 +149,7 @@ class _ClientAccessCardState extends ConsumerState<ClientAccessCard> {
             controller: _blocked,
             minLines: 3,
             maxLines: 6,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopTrafficAccessBlocked,
               hintText: l10n.desktopTrafficAccessBlockedHint,

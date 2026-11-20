@@ -50,9 +50,7 @@ class _BlockedServiceGroupsCardState
 
   Future<void> _clearAll() async {
     final l10n = context.l10n;
-    final error = await ref
-        .read(desktopServicesProvider.notifier)
-        .clearAll();
+    final error = await ref.read(desktopServicesProvider.notifier).clearAll();
     if (!mounted) return;
     showDesktopMessage(
       context,
@@ -156,11 +154,10 @@ class _GroupChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       child: Text(
         label,
-        style: AppTextStyle.caption1
-            .of(context, emphasized: true)
+        style: AppTextRole.badge
+            .of(context)
             .copyWith(color: selected ? colorScheme.onPrimary : null),
       ),
     );
   }
 }
-

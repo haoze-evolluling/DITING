@@ -49,9 +49,9 @@ class _PrivacySafeSearchTtlCardState
 
   Future<void> _save(int ttl) async {
     final l10n = context.l10n;
-    final error = await ref
-        .read(desktopSafeSearchProvider.notifier)
-        .save({'ttl': ttl});
+    final error = await ref.read(desktopSafeSearchProvider.notifier).save({
+      'ttl': ttl,
+    });
     if (!mounted) return;
     if (error == null) setState(() => _dirty = false);
     showDesktopMessage(
@@ -79,7 +79,9 @@ class _PrivacySafeSearchTtlCardState
             title: l10n.desktopSafeSearchTtlCardTitle,
             leading: [
               if (config != null)
-                DashboardChip(label: l10n.desktopSafeSearchTtlChip(config.effectiveTtl)),
+                DashboardChip(
+                  label: l10n.desktopSafeSearchTtlChip(config.effectiveTtl),
+                ),
             ],
             trailing: [
               if (saving)
@@ -112,7 +114,7 @@ class _PrivacySafeSearchTtlCardState
                   decoration: InputDecoration(
                     labelText: l10n.desktopSafeSearchTtl,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                   onChanged: (_) {
                     if (!_dirty) setState(() => _dirty = true);
                     if (_invalid) setState(() => _invalid = false);

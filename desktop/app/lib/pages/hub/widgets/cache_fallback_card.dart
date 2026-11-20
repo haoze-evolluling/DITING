@@ -57,8 +57,9 @@ class _CacheFallbackCardState extends ConsumerState<CacheFallbackCard> {
     if (config != null && _staleSeconds.isEmpty) {
       _staleSeconds = '${config.staleFallbackSeconds}';
     }
-    void save(DesktopCacheConfig next) =>
-        unawaited(saveCacheSetting(context, ref, next, l10n.desktopCacheConfigSaved));
+    void save(DesktopCacheConfig next) => unawaited(
+      saveCacheSetting(context, ref, next, l10n.desktopCacheConfigSaved),
+    );
     return DashboardCard(
       semanticLabel: l10n.desktopCacheFallbackTitle,
       child: Column(
@@ -112,7 +113,7 @@ class _CacheFallbackCardState extends ConsumerState<CacheFallbackCard> {
                       decoration: InputDecoration(
                         labelText: l10n.desktopCacheStaleSeconds,
                       ),
-                      style: AppTextStyle.callout.of(context),
+                      style: AppTextRole.body.of(context),
                       onChanged: (value) => _staleSeconds = value,
                     ),
                   ),
@@ -130,7 +131,7 @@ class _CacheFallbackCardState extends ConsumerState<CacheFallbackCard> {
                   l10n.desktopCacheInvalidNumbers,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: context.colorScheme.error),
                 ),
@@ -140,8 +141,7 @@ class _CacheFallbackCardState extends ConsumerState<CacheFallbackCard> {
                 title: l10n.desktopCacheOptimistic,
                 body: l10n.desktopCacheOptimisticBody,
                 value: config.optimistic,
-                onChanged: (value) =>
-                    save(config.copyWith(optimistic: value)),
+                onChanged: (value) => save(config.copyWith(optimistic: value)),
               ),
             ],
           ],

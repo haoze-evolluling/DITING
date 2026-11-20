@@ -280,7 +280,7 @@ class _FilterBlockingParamsCardState
                     labelText: l10n.desktopFilterModeInterval,
                     helperText: l10n.desktopFilterModeIntervalHelper,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                   onChanged: (_) => _markDirty(),
                 ),
               ),
@@ -331,7 +331,7 @@ class _AddressField extends StatelessWidget {
       width: _fieldWidth,
       child: TextFormField(
         controller: controller,
-        style: AppTextStyle.callout.of(context).toTabular,
+        style: AppTextRole.body.of(context).toTabular,
         decoration: InputDecoration(labelText: label),
         onChanged: (_) => onChanged(),
       ),

@@ -155,7 +155,7 @@ class _LanWebCardState extends ConsumerState<LanWebCard> {
                     decoration: InputDecoration(
                       labelText: l10n.desktopLanWebPort,
                     ),
-                    style: AppTextStyle.callout.of(context).toTabular,
+                    style: AppTextRole.body.of(context).toTabular,
                     onChanged: (_) => setState(() => _portInvalid = false),
                   ),
                 ),

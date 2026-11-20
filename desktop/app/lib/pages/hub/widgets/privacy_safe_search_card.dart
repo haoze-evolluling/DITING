@@ -26,15 +26,13 @@ class PrivacySafeSearchCard extends ConsumerWidget {
     final state = ref.watch(desktopSafeSearchProvider);
     final config = state.config;
     final saving = state.saving;
-    Future<void> save(
-      Map<String, Object?> patch, {
-      required String success,
-    }) => savePrivacySetting(
-      context,
-      ref,
-      () => ref.read(desktopSafeSearchProvider.notifier).save(patch),
-      success,
-    );
+    Future<void> save(Map<String, Object?> patch, {required String success}) =>
+        savePrivacySetting(
+          context,
+          ref,
+          () => ref.read(desktopSafeSearchProvider.notifier).save(patch),
+          success,
+        );
     return DashboardCard(
       semanticLabel: l10n.desktopSafeSearchTitle,
       child: Column(
@@ -108,10 +106,9 @@ class PrivacySafeSearchCard extends ConsumerWidget {
                                         if (item != id) item,
                                     ];
                               unawaited(
-                                save(
-                                  {'disabled': disabled},
-                                  success: l10n.desktopSafeSearchServiceSaved,
-                                ),
+                                save({
+                                  'disabled': disabled,
+                                }, success: l10n.desktopSafeSearchServiceSaved),
                               );
                             },
                     ),
@@ -187,9 +184,9 @@ class _ProviderTile extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.callout.of(context, emphasized: true).copyWith(
-                color: selected ? colorScheme.onPrimary : null,
-              ),
+              style: AppTextRole.bodyStrong
+                  .of(context)
+                  .copyWith(color: selected ? colorScheme.onPrimary : null),
             ),
           ),
         ],

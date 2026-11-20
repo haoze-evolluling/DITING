@@ -179,15 +179,12 @@ class _RankBadge extends StatelessWidget {
       width: 18,
       height: 18,
       alignment: Alignment.center,
-      decoration: ShapeDecoration(
-        color: background,
-        shape: AppShape.standard,
-      ),
+      decoration: ShapeDecoration(color: background, shape: AppShape.standard),
       child: Text(
         '$rank',
         maxLines: 1,
-        style: AppTextStyle.caption1
-            .of(context, emphasized: true)
+        style: AppTextRole.badge
+            .of(context)
             .toTabular
             .copyWith(color: foreground),
       ),

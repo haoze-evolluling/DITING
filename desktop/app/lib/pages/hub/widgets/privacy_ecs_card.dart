@@ -19,11 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 class PrivacyEcsCard extends ConsumerStatefulWidget {
-  const PrivacyEcsCard({
-    super.key,
-    required this.config,
-    required this.saving,
-  });
+  const PrivacyEcsCard({super.key, required this.config, required this.saving});
 
   final DesktopPrivacyConfig config;
   final bool saving;
@@ -67,9 +63,7 @@ class _PrivacyEcsCardState extends ConsumerState<PrivacyEcsCard> {
     required String success,
   }) async {
     final l10n = context.l10n;
-    final error = await ref
-        .read(desktopPrivacyProvider.notifier)
-        .setEcs(next);
+    final error = await ref.read(desktopPrivacyProvider.notifier).setEcs(next);
     if (!mounted) return;
     if (error == null) setState(() => _dirty = false);
     showDesktopMessage(
@@ -153,7 +147,7 @@ class _PrivacyEcsCardState extends ConsumerState<PrivacyEcsCard> {
               helperText: l10n.desktopPrivacyEcsSubnetHelper,
               hintText: '203.0.113.0/24',
             ),
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             onChanged: (_) => setState(() => _dirty = true),
           ),
           const SizedBox(height: 10),
@@ -163,9 +157,7 @@ class _PrivacyEcsCardState extends ConsumerState<PrivacyEcsCard> {
               onPressed: config.ecsEnabled && !saving
                   ? () => unawaited(
                       _save(
-                        config.copyWith(
-                          ecsCustomSubnet: _subnet.text.trim(),
-                        ),
+                        config.copyWith(ecsCustomSubnet: _subnet.text.trim()),
                         success: l10n.desktopPrivacyEcsSaved,
                       ),
                     )

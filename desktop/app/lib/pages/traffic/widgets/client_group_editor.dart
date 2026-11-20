@@ -21,7 +21,12 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// The console's four group-level blocking modes; empty inherits the global one.
-const List<String> desktopGroupBlockModes = ['', 'null_ip', 'nxdomain', 'refused'];
+const List<String> desktopGroupBlockModes = [
+  '',
+  'null_ip',
+  'nxdomain',
+  'refused',
+];
 
 class ClientGroupEditor extends StatefulWidget {
   const ClientGroupEditor({
@@ -124,7 +129,7 @@ class _ClientGroupEditorState extends State<ClientGroupEditor> {
                   decoration: InputDecoration(
                     labelText: l10n.desktopGroupsName,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                   onChanged: (value) =>
                       _emit(group.copyWith(name: value.trim())),
                 ),
@@ -143,7 +148,9 @@ class _ClientGroupEditorState extends State<ClientGroupEditor> {
                   tooltip: l10n.desktopGroupsDelete,
                   size: 28,
                   glyphSize: 15,
-                  onPressed: disabled ? null : () => unawaited(_confirmDelete()),
+                  onPressed: disabled
+                      ? null
+                      : () => unawaited(_confirmDelete()),
                 ),
               ),
             ],
@@ -153,7 +160,7 @@ class _ClientGroupEditorState extends State<ClientGroupEditor> {
             enabled: !disabled,
             minLines: 2,
             maxLines: 5,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopGroupsMembers,
               hintText: l10n.desktopGroupsMembersHint,
@@ -337,11 +344,8 @@ class _Bindings extends StatelessWidget {
                     ),
                     child: Text(
                       option.label,
-                      style: AppTextStyle.caption1
-                          .of(
-                            context,
-                            emphasized: true,
-                          )
+                      style: AppTextRole.badge
+                          .of(context)
                           .copyWith(
                             color: selected.contains(option.id)
                                 ? context.colorScheme.onPrimary

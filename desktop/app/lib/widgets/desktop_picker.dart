@@ -47,9 +47,7 @@ class DesktopPicker extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.callout
-                        .of(context)
-                        .copyWith(color: color),
+                    style: AppTextRole.body.of(context).copyWith(color: color),
                   ),
                 ),
                 GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),

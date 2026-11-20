@@ -47,7 +47,10 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     super.dispose();
   }
 
-  Future<void> _toggleService(DesktopBlockedService service, bool blocked) async {
+  Future<void> _toggleService(
+    DesktopBlockedService service,
+    bool blocked,
+  ) async {
     final l10n = context.l10n;
     final error = await ref
         .read(desktopServicesProvider.notifier)
@@ -95,7 +98,9 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
             (query.isEmpty ||
                 service.name.toLowerCase().contains(query) ||
                 service.id.toLowerCase().contains(query) ||
-                service.rules.any((rule) => rule.toLowerCase().contains(query))))
+                service.rules.any(
+                  (rule) => rule.toLowerCase().contains(query),
+                )))
           service,
     ];
   }
@@ -159,7 +164,7 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
                       hintText: l10n.desktopServicesSearchHint,
                       prefixIcon: const GlyphIcon(AppGlyphs.search, size: 16),
                     ),
-                    style: AppTextStyle.callout.of(context),
+                    style: AppTextRole.body.of(context),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -197,11 +202,7 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     );
   }
 
-  Widget _grid(
-    BuildContext context,
-    DesktopBlockedServices data,
-    bool saving,
-  ) {
+  Widget _grid(BuildContext context, DesktopBlockedServices data, bool saving) {
     final l10n = context.l10n;
     final filtered = _filtered(data);
     if (filtered.isEmpty) {
@@ -288,9 +289,8 @@ class _BlockedServicesCardState extends ConsumerState<BlockedServicesCard> {
     expanded: _expanded == service.id,
     onToggle: (value) => unawaited(_toggleService(service, value)),
     onSchedule: () => unawaited(_editSchedule(service)),
-    onExpand: () => setState(
-      () => _expanded = _expanded == service.id ? '' : service.id,
-    ),
+    onExpand: () =>
+        setState(() => _expanded = _expanded == service.id ? '' : service.id),
   );
 }
 
@@ -442,10 +442,7 @@ class _RulesPanel extends StatelessWidget {
                   runSpacing: 4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text(
-                      service.name,
-                      style: DashboardText.rowTitle(context),
-                    ),
+                    Text(service.name, style: DashboardText.rowTitle(context)),
                     Text(
                       l10n.desktopServicesRuleCount(
                         data.groupName(service.group),
@@ -473,7 +470,7 @@ class _RulesPanel extends StatelessWidget {
               rule,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1
+              style: AppTextRole.caption
                   .of(context)
                   .toTabular
                   .copyWith(color: colorScheme.onSurfaceVariant),
@@ -518,10 +515,7 @@ class _Unavailable extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: DashboardText.label(context),
         ),
-        FilledButton.tonal(
-          onPressed: onRetry,
-          child: Text(l10n.desktopRetry),
-        ),
+        FilledButton.tonal(onPressed: onRetry, child: Text(l10n.desktopRetry)),
       ],
     );
   }

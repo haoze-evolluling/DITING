@@ -158,7 +158,7 @@ class _CacheConfigCardState extends ConsumerState<CacheConfigCard> {
                 l10n.desktopCacheInvalidNumbers,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: context.colorScheme.error),
               ),
@@ -169,7 +169,7 @@ class _CacheConfigCardState extends ConsumerState<CacheConfigCard> {
                 l10n.desktopCacheSaveFailed(error.message),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: context.colorScheme.error),
               ),
@@ -203,7 +203,7 @@ class _NumberField extends StatelessWidget {
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: InputDecoration(labelText: label),
-        style: AppTextStyle.callout.of(context),
+        style: AppTextRole.body.of(context),
         onChanged: onChanged,
       ),
     );

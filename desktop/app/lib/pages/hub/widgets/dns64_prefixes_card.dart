@@ -63,11 +63,13 @@ class _Dns64PrefixesCardState extends ConsumerState<Dns64PrefixesCard> {
 
   Future<void> _save() async {
     final l10n = context.l10n;
-    final error = await ref.read(desktopDns64Provider.notifier).save(
-      widget.config.copyWith(
-        prefixes: desktopDns64ParsePrefixes(_prefixes.text),
-      ),
-    );
+    final error = await ref
+        .read(desktopDns64Provider.notifier)
+        .save(
+          widget.config.copyWith(
+            prefixes: desktopDns64ParsePrefixes(_prefixes.text),
+          ),
+        );
     if (!mounted) return;
     showDesktopMessage(
       context,
@@ -129,7 +131,7 @@ class _Dns64PrefixesCardState extends ConsumerState<Dns64PrefixesCard> {
             minLines: 3,
             maxLines: 5,
             keyboardType: TextInputType.multiline,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             decoration: const InputDecoration(
               hintText: desktopDns64WellKnownPrefix,
             ),

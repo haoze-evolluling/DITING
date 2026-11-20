@@ -220,7 +220,7 @@ class _ScheduleRow extends StatelessWidget {
                   decoration: InputDecoration(
                     labelText: l10n.desktopScheduleName,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                   onChanged: (_) => onChanged(),
                 ),
               ),
@@ -255,7 +255,7 @@ class _ScheduleRow extends StatelessWidget {
                     labelText: l10n.desktopScheduleStart,
                     hintText: '08:00',
                   ),
-                  style: AppTextStyle.callout.of(context).toTabular,
+                  style: AppTextRole.body.of(context).toTabular,
                   onChanged: (_) => onChanged(),
                 ),
               ),
@@ -268,7 +268,7 @@ class _ScheduleRow extends StatelessWidget {
                     helperText: l10n.desktopScheduleEndHelper,
                     hintText: '18:00',
                   ),
-                  style: AppTextStyle.callout.of(context).toTabular,
+                  style: AppTextRole.body.of(context).toTabular,
                   onChanged: (_) => onChanged(),
                 ),
               ),
@@ -343,8 +343,8 @@ class _WeekdayChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Text(
         label,
-        style: AppTextStyle.caption1
-            .of(context, emphasized: true)
+        style: AppTextRole.badge
+            .of(context)
             .copyWith(color: selected ? color.onPrimary : null),
       ),
     );

@@ -214,7 +214,7 @@ class _AboutHero extends StatelessWidget {
           Text(
             context.l10n.aboutAppName,
             textAlign: TextAlign.center,
-            style: AppTextStyle.title3.of(context, emphasized: true),
+            style: AppTextRole.sectionTitle.of(context),
           ),
           const SizedBox(height: 8),
           Wrap(

@@ -233,9 +233,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
                   label: l10n.desktopZoneSaveAll,
                   onPressed: state.saving || _zones.isEmpty
                       ? null
-                      : () => unawaited(
-                          _persist(rollback: List.of(_zones)),
-                        ),
+                      : () => unawaited(_persist(rollback: List.of(_zones))),
                 ),
               ],
             ),
@@ -283,7 +281,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
         state != null &&
         (!state.loaded || state.error.isNotEmpty);
     final preview = _previews[zone.id];
-    final mono = AppTextStyle.callout
+    final mono = AppTextRole.body
         .of(context)
         .copyWith(fontFeatures: appTabularFigures);
     final chip = SizedBox(
@@ -369,7 +367,7 @@ class _ZoneFileCardState extends ConsumerState<ZoneFileCard> {
               state.error.isEmpty ? l10n.desktopZoneFailedReason : state.error,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1
+              style: AppTextRole.caption
                   .of(context)
                   .copyWith(color: colorScheme.error),
             ),

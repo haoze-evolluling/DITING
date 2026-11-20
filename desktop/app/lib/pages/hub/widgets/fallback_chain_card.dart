@@ -133,7 +133,11 @@ class FallbackChainCard extends StatelessWidget {
               ),
             )
           else ...[
-            for (var index = 0; index < config.fallbackProviders.length; index++)
+            for (
+              var index = 0;
+              index < config.fallbackProviders.length;
+              index++
+            )
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _FallbackRow(
@@ -194,7 +198,7 @@ class _FallbackRow extends StatelessWidget {
                   provider.address,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .toTabular
                       .copyWith(color: colorScheme.onSurfaceVariant),
@@ -244,8 +248,8 @@ class _RcodeChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Text(
         label,
-        style: AppTextStyle.caption1
-            .of(context, emphasized: true)
+        style: AppTextRole.badge
+            .of(context)
             .toTabular
             .copyWith(color: foreground),
       ),
@@ -312,7 +316,7 @@ class _TimeoutFieldState extends State<_TimeoutField> {
             decoration: InputDecoration(
               labelText: context.l10n.desktopUpstreamFallbackTimeout,
             ),
-            style: AppTextStyle.callout.of(context),
+            style: AppTextRole.body.of(context),
             onFieldSubmitted: (_) => _apply(),
           ),
         ),
@@ -380,9 +384,8 @@ class FallbackPolicyCard extends StatelessWidget {
             _TimeoutField(
               value: config.effectiveFallbackTimeoutMs,
               enabled: !saving,
-              onChanged: (value) => onChanged(
-                config.copyWith(fallbackTimeoutMs: value),
-              ),
+              onChanged: (value) =>
+                  onChanged(config.copyWith(fallbackTimeoutMs: value)),
             ),
             const SizedBox(height: 12),
             Text(
@@ -398,9 +401,7 @@ class FallbackPolicyCard extends StatelessWidget {
                   _RcodeChip(
                     label: choice.label,
                     selected: config.fallbackOnRcode.contains(choice.value),
-                    onPressed: saving
-                        ? null
-                        : () => _toggleRcode(choice.value),
+                    onPressed: saving ? null : () => _toggleRcode(choice.value),
                   ),
               ],
             ),
@@ -428,9 +429,8 @@ class FallbackPolicyCard extends StatelessWidget {
                   semanticLabel: l10n.desktopUpstreamFallbackOnError,
                   onChanged: saving
                       ? null
-                      : (value) => onChanged(
-                          config.copyWith(fallbackOnError: value),
-                        ),
+                      : (value) =>
+                            onChanged(config.copyWith(fallbackOnError: value)),
                 ),
               ],
             ),

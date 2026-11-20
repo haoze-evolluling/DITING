@@ -44,10 +44,10 @@ class _AddFilterListDialogState extends State<_AddFilterListDialog> {
       setState(() => _invalid = true);
       return;
     }
-    popFloatingDialog<FilterListDraft>(
-      context,
-      (name: _name.text.trim(), url: url),
-    );
+    popFloatingDialog<FilterListDraft>(context, (
+      name: _name.text.trim(),
+      url: url,
+    ));
   }
 
   @override
@@ -84,7 +84,7 @@ class _AddFilterListDialogState extends State<_AddFilterListDialog> {
                 labelText: l10n.desktopFilterListNameLabel,
                 hintText: l10n.desktopFilterListNameHint,
               ),
-              style: AppTextStyle.callout.of(context),
+              style: AppTextRole.body.of(context),
             ),
             TextFormField(
               controller: _url,
@@ -93,7 +93,7 @@ class _AddFilterListDialogState extends State<_AddFilterListDialog> {
                 labelText: l10n.desktopFilterListUrlLabel,
                 hintText: l10n.desktopFilterListUrlHint,
               ),
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
               onChanged: (_) {
                 if (_invalid) setState(() => _invalid = false);
               },
@@ -102,7 +102,7 @@ class _AddFilterListDialogState extends State<_AddFilterListDialog> {
             if (_invalid)
               Text(
                 l10n.desktopFilterListNeedUrl,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: colorScheme.error),
               ),

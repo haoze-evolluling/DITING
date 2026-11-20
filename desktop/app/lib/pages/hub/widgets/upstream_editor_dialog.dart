@@ -76,21 +76,13 @@ const _presetProviders = [
   }),
   _PresetProvider('AdGuard', {
     'PLAIN': (id: 'AdGuard (DNS)', server: '94.140.14.14:53', url: ''),
-    'DOT': (
-      id: 'AdGuard (DoT)',
-      server: 'dns.adguard-dns.com:853',
-      url: '',
-    ),
+    'DOT': (id: 'AdGuard (DoT)', server: 'dns.adguard-dns.com:853', url: ''),
     'DOH': (
       id: 'AdGuard (DoH)',
       server: 'dns.adguard-dns.com',
       url: 'https://dns.adguard-dns.com/dns-query',
     ),
-    'DOQ': (
-      id: 'AdGuard (DoQ)',
-      server: 'dns.adguard-dns.com:853',
-      url: '',
-    ),
+    'DOQ': (id: 'AdGuard (DoQ)', server: 'dns.adguard-dns.com:853', url: ''),
   }),
 ];
 
@@ -181,9 +173,7 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
       _stampMessage = null;
     });
     try {
-      final result = await ref
-          .read(desktopApiClientProvider)
-          .parseStamp(raw);
+      final result = await ref.read(desktopApiClientProvider).parseStamp(raw);
       if (!mounted) return;
       setState(() {
         _protocol = result.protocol;
@@ -271,14 +261,14 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
                 decoration: InputDecoration(
                   labelText: l10n.desktopUpstreamName,
                 ),
-                style: AppTextStyle.callout.of(context),
+                style: AppTextRole.body.of(context),
               ),
               Row(
                 spacing: 12,
                 children: [
                   Text(
                     l10n.desktopUpstreamProtocol,
-                    style: AppTextStyle.callout.of(context),
+                    style: AppTextRole.body.of(context),
                   ),
                   DesktopPicker(
                     glyph: AppGlyphs.layers,
@@ -314,7 +304,7 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
                   labelText: l10n.desktopUpstreamAddress,
                   hintText: '223.5.5.5:53 / dns.alidns.com',
                 ),
-                style: AppTextStyle.callout.of(context),
+                style: AppTextRole.body.of(context),
               ),
               if (desktopIsHttpsStyle(_protocol))
                 TextFormField(
@@ -323,21 +313,19 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
                     labelText: l10n.desktopUpstreamUrl,
                     hintText: 'https://dns.alidns.com/dns-query',
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                 ),
               TextFormField(
                 controller: _pin,
-                decoration: InputDecoration(
-                  labelText: l10n.desktopUpstreamPin,
-                ),
-                style: AppTextStyle.callout.of(context),
+                decoration: InputDecoration(labelText: l10n.desktopUpstreamPin),
+                style: AppTextRole.body.of(context),
               ),
               if (_pinShown)
                 Text(
                   l10n.desktopUpstreamPinWarning,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: context.colorScheme.warning),
                 ),
@@ -346,7 +334,7 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
                   error,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: context.colorScheme.error),
                 ),
@@ -366,8 +354,8 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
         children: [
           Text(
             context.l10n.desktopUpstreamPreset,
-            style: AppTextStyle.caption1
-                .of(context, emphasized: true)
+            style: AppTextRole.badge
+                .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
           Wrap(
@@ -387,9 +375,9 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
               note,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1.of(context).copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextRole.caption
+                  .of(context)
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
         ],
       ),
@@ -405,8 +393,8 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
         children: [
           Text(
             context.l10n.desktopUpstreamStamp,
-            style: AppTextStyle.caption1
-                .of(context, emphasized: true)
+            style: AppTextRole.badge
+                .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
           Row(
@@ -418,7 +406,7 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
                   decoration: InputDecoration(
                     hintText: context.l10n.desktopUpstreamStampHint,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                 ),
               ),
               TonalButton(
@@ -435,9 +423,9 @@ class _UpstreamEditorDialogState extends ConsumerState<UpstreamEditorDialog> {
               message,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1.of(context).copyWith(
-                color: colorScheme.success,
-              ),
+              style: AppTextRole.caption
+                  .of(context)
+                  .copyWith(color: colorScheme.success),
             ),
         ],
       ),

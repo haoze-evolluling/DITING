@@ -149,7 +149,7 @@ class _InputCard extends StatelessWidget {
           const SizedBox(height: AppGap.md),
           TextField(
             controller: domain,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopToolsRuleDomain,
               hintText: l10n.desktopToolsRuleDomainHint,
@@ -201,9 +201,7 @@ class _InputCard extends StatelessWidget {
                   ),
                   child: Text(
                     example,
-                    style: AppTextStyle.caption1
-                        .of(context, emphasized: true)
-                        .toTabular,
+                    style: AppTextRole.badge.of(context).toTabular,
                   ),
                 ),
             ],

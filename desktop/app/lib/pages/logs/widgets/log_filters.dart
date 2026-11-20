@@ -69,17 +69,15 @@ class LogFilterBar extends ConsumerWidget {
       controller: domain,
       hintText: l10n.desktopLogDomainHint,
       onChanged: onDomainChanged,
-      onSubmitted: () => ref
-          .read(desktopLogQueryProvider.notifier)
-          .setDomain(domain.text),
+      onSubmitted: () =>
+          ref.read(desktopLogQueryProvider.notifier).setDomain(domain.text),
     );
     final clientField = SearchField(
       controller: client,
       hintText: l10n.desktopLogClientHint,
       onChanged: onClientChanged,
-      onSubmitted: () => ref
-          .read(desktopLogQueryProvider.notifier)
-          .setClient(client.text),
+      onSubmitted: () =>
+          ref.read(desktopLogQueryProvider.notifier).setClient(client.text),
     );
     final controls = <Widget>[
       _StatusPicker(query: query),
@@ -236,7 +234,7 @@ class _ClearHistoryButton extends ConsumerWidget {
             GlyphIcon(AppGlyphs.delete, size: 16, color: color),
           Text(
             l10n.desktopLogClear,
-            style: AppTextStyle.callout.of(context).copyWith(color: color),
+            style: AppTextRole.body.of(context).copyWith(color: color),
           ),
         ],
       ),

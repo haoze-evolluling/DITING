@@ -113,8 +113,8 @@ class _TopRow extends StatelessWidget {
                 child: Text(
                   '$rank',
                   maxLines: 1,
-                  style: AppTextStyle.caption1
-                      .of(context, emphasized: true)
+                  style: AppTextRole.badge
+                      .of(context)
                       .toTabular
                       .copyWith(
                         color: leading

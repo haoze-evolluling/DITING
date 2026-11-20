@@ -119,7 +119,7 @@ class CacheSnapshotCard extends ConsumerWidget {
                 l10n.desktopActionFailed(error.message),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: context.colorScheme.error),
               ),

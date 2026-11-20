@@ -30,8 +30,7 @@ class EncryptedProxyCard extends ConsumerStatefulWidget {
   final bool saving;
 
   @override
-  ConsumerState<EncryptedProxyCard> createState() =>
-      _EncryptedProxyCardState();
+  ConsumerState<EncryptedProxyCard> createState() => _EncryptedProxyCardState();
 }
 
 class _EncryptedProxyCardState extends ConsumerState<EncryptedProxyCard> {
@@ -167,7 +166,7 @@ class _EncryptedProxyCardState extends ConsumerState<EncryptedProxyCard> {
               controller: _sources,
               minLines: 3,
               maxLines: 6,
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
               decoration: const InputDecoration(
                 hintText: '192.168.1.0/24\n10.0.0.1',
               ),
@@ -180,7 +179,7 @@ class _EncryptedProxyCardState extends ConsumerState<EncryptedProxyCard> {
                 labelText: l10n.desktopEncryptedProxyHeader,
                 hintText: 'CF-Connecting-IP',
               ),
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
               onChanged: (_) => setState(() => _dirty = true),
             ),
             const SizedBox(height: 8),

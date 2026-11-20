@@ -280,7 +280,7 @@ class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
               controller: _networks,
               minLines: 3,
               maxLines: 6,
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
               decoration: InputDecoration(
                 hintText: desktopBogusPresets.take(2).join('\n'),
               ),
@@ -315,16 +315,14 @@ class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
                     onPressed: saving
                         ? null
                         : () {
-                            final lines = desktopBogusNetworks(
-                              _networks.text,
-                            );
+                            final lines = desktopBogusNetworks(_networks.text);
                             if (lines.contains(preset)) return;
                             setState(() {
                               _dirty = true;
                               _networks.text = [...lines, preset].join('\n');
                             });
                           },
-                    child: Text(preset, style: AppTextStyle.caption1.of(context)),
+                    child: Text(preset, style: AppTextRole.caption.of(context)),
                   ),
               ],
             ),
@@ -342,8 +340,9 @@ class _BogusNxDomainCardState extends ConsumerState<BogusNxDomainCard> {
                         ? null
                         : () => setState(() {
                             _dirty = false;
-                            _networks.text = config.bogusNxDomainNetworks
-                                .join('\n');
+                            _networks.text = config.bogusNxDomainNetworks.join(
+                              '\n',
+                            );
                           }),
                     child: Text(l10n.desktopFilterAdvancedBogusReset),
                   ),

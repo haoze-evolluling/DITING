@@ -224,117 +224,125 @@ class _DesktopLoginPageState extends ConsumerState<DesktopLoginPage> {
                                       setState(() => _changing = false),
                                 )
                               : Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _CardHeader(setup: setup),
-                              const SizedBox(height: 14),
-                              if (_error case final error?) ...[
-                                _Notice(text: error, error: true),
-                                const SizedBox(height: 10),
-                              ],
-                              if (_success case final success?) ...[
-                                _Notice(text: success, error: false),
-                                const SizedBox(height: 10),
-                              ],
-                              if (_lockout > 0) ...[
-                                _LockoutNotice(seconds: _lockout),
-                                const SizedBox(height: 10),
-                              ],
-                              TextField(
-                                controller: _username,
-                                enabled: !_busy && _lockout <= 0,
-                                textInputAction: TextInputAction.next,
-                                autofillHints: const [AutofillHints.username],
-                                decoration: InputDecoration(
-                                  labelText: l10n.desktopLoginUserLabel,
-                                ),
-                              ),
-                              const SizedBox(height: AppGap.field),
-                              TextField(
-                                controller: _password,
-                                enabled: !_busy && _lockout <= 0,
-                                obscureText: _obscure,
-                                autofillHints: const [AutofillHints.password],
-                                onSubmitted: (_) => unawaited(_submit(setup)),
-                                decoration: InputDecoration(
-                                  labelText: setup
-                                      ? l10n.desktopLoginSetupPasswordLabel
-                                      : l10n.desktopLoginPasswordLabel,
-                                  suffixIcon: IconButton(
-                                    tooltip: _obscure
-                                        ? l10n.desktopLoginShowPassword
-                                        : l10n.desktopLoginHidePassword,
-                                    onPressed: () =>
-                                        setState(() => _obscure = !_obscure),
-                                    icon: GlyphIcon(
-                                      _obscure
-                                          ? AppGlyphs.eyeOff
-                                          : AppGlyphs.eye,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (setup) ...[
-                                const SizedBox(height: AppGap.field),
-                                TextField(
-                                  controller: _confirm,
-                                  enabled: !_busy && _lockout <= 0,
-                                  obscureText: _obscure,
-                                  onSubmitted: (_) =>
-                                      unawaited(_submit(setup)),
-                                  decoration: InputDecoration(
-                                    labelText:
-                                        l10n.desktopLoginConfirmLabel,
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: AppGap.lg),
-                              FilledButton(
-                                onPressed: _busy || _lockout > 0
-                                    ? null
-                                    : () => unawaited(_submit(setup)),
-                                child: _busy
-                                    ? const SizedBox.square(
-                                        dimension: 18,
-                                        child: CommonCircleLoading(),
-                                      )
-                                    : Text(
-                                        setup
-                                            ? l10n.desktopLoginSetupSubmit
-                                            : l10n.desktopLoginSubmit,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    _CardHeader(setup: setup),
+                                    const SizedBox(height: 14),
+                                    if (_error case final error?) ...[
+                                      _Notice(text: error, error: true),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    if (_success case final success?) ...[
+                                      _Notice(text: success, error: false),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    if (_lockout > 0) ...[
+                                      _LockoutNotice(seconds: _lockout),
+                                      const SizedBox(height: 10),
+                                    ],
+                                    TextField(
+                                      controller: _username,
+                                      enabled: !_busy && _lockout <= 0,
+                                      textInputAction: TextInputAction.next,
+                                      autofillHints: const [
+                                        AutofillHints.username,
+                                      ],
+                                      decoration: InputDecoration(
+                                        labelText: l10n.desktopLoginUserLabel,
                                       ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                spacing: 6,
-                                children: [
-                                  GlyphIcon(
-                                    AppGlyphs.lock,
-                                    size: 13,
-                                    color: colorScheme.primary,
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      l10n.desktopLoginSecurity,
-                                      style: DashboardText.label(context),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              if (!setup)
-                                Align(
-                                  alignment: AlignmentDirectional.centerStart,
-                                  child: TextButton(
-                                    onPressed: () =>
-                                        setState(() => _changing = true),
-                                    child: Text(
-                                      l10n.desktopLoginChangePassword,
+                                    const SizedBox(height: AppGap.field),
+                                    TextField(
+                                      controller: _password,
+                                      enabled: !_busy && _lockout <= 0,
+                                      obscureText: _obscure,
+                                      autofillHints: const [
+                                        AutofillHints.password,
+                                      ],
+                                      onSubmitted: (_) =>
+                                          unawaited(_submit(setup)),
+                                      decoration: InputDecoration(
+                                        labelText: setup
+                                            ? l10n.desktopLoginSetupPasswordLabel
+                                            : l10n.desktopLoginPasswordLabel,
+                                        suffixIcon: IconButton(
+                                          tooltip: _obscure
+                                              ? l10n.desktopLoginShowPassword
+                                              : l10n.desktopLoginHidePassword,
+                                          onPressed: () => setState(
+                                            () => _obscure = !_obscure,
+                                          ),
+                                          icon: GlyphIcon(
+                                            _obscure
+                                                ? AppGlyphs.eyeOff
+                                                : AppGlyphs.eye,
+                                            size: 18,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    if (setup) ...[
+                                      const SizedBox(height: AppGap.field),
+                                      TextField(
+                                        controller: _confirm,
+                                        enabled: !_busy && _lockout <= 0,
+                                        obscureText: _obscure,
+                                        onSubmitted: (_) =>
+                                            unawaited(_submit(setup)),
+                                        decoration: InputDecoration(
+                                          labelText:
+                                              l10n.desktopLoginConfirmLabel,
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: AppGap.lg),
+                                    FilledButton(
+                                      onPressed: _busy || _lockout > 0
+                                          ? null
+                                          : () => unawaited(_submit(setup)),
+                                      child: _busy
+                                          ? const SizedBox.square(
+                                              dimension: 18,
+                                              child: CommonCircleLoading(),
+                                            )
+                                          : Text(
+                                              setup
+                                                  ? l10n.desktopLoginSetupSubmit
+                                                  : l10n.desktopLoginSubmit,
+                                            ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      spacing: 6,
+                                      children: [
+                                        GlyphIcon(
+                                          AppGlyphs.lock,
+                                          size: 13,
+                                          color: colorScheme.primary,
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            l10n.desktopLoginSecurity,
+                                            style: DashboardText.label(context),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (!setup)
+                                      Align(
+                                        alignment:
+                                            AlignmentDirectional.centerStart,
+                                        child: TextButton(
+                                          onPressed: () =>
+                                              setState(() => _changing = true),
+                                          child: Text(
+                                            l10n.desktopLoginChangePassword,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                            ],
-                          ),
                         ),
                       ),
                     ),
@@ -380,7 +388,9 @@ class _Header extends StatelessWidget {
         spacing: 10,
         children: [
           Image.asset(
-            dark ? 'packages/diting_shared/assets/images/icon_dark.webp' : 'packages/diting_shared/assets/images/icon.webp',
+            dark
+                ? 'packages/diting_shared/assets/images/icon_dark.webp'
+                : 'packages/diting_shared/assets/images/icon.webp',
             width: 28,
             height: 28,
           ),
@@ -435,12 +445,10 @@ class _CardHeader extends StatelessWidget {
       children: [
         Text(
           l10n.desktopLoginTitle,
-          style: AppTextStyle.title2.of(context, emphasized: true),
+          style: AppTextRole.sectionTitle.of(context),
         ),
         Text(
-          setup
-              ? l10n.desktopLoginSetupSubtitle
-              : l10n.desktopLoginSubtitle,
+          setup ? l10n.desktopLoginSetupSubtitle : l10n.desktopLoginSubtitle,
           style: DashboardText.label(context),
         ),
       ],

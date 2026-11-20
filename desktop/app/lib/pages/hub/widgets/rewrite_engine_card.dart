@@ -131,7 +131,7 @@ class _RewriteEngineCardState extends ConsumerState<RewriteEngineCard> {
                   decoration: InputDecoration(
                     labelText: l10n.desktopRewriteDefaultTtl,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                   onChanged: (value) {
                     _ttl = value;
                     if (_invalid) setState(() => _invalid = false);
@@ -151,7 +151,7 @@ class _RewriteEngineCardState extends ConsumerState<RewriteEngineCard> {
               l10n.desktopRewriteTtlInvalid,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1
+              style: AppTextRole.caption
                   .of(context)
                   .copyWith(color: colorScheme.error),
             ),

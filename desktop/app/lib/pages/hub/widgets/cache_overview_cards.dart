@@ -95,7 +95,7 @@ class CacheEngineCard extends StatelessWidget {
                       maxLines: 1,
                       style: DashboardText.figure(
                         context,
-                        AppTextStyle.title2,
+                        AppTextRole.metricSmall,
                         color: colorScheme.onSurface,
                       ),
                     ),

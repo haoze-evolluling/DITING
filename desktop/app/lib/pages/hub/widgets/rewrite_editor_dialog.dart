@@ -241,7 +241,7 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
                   helperText: l10n.desktopRewriteDomainHelp,
                   helperMaxLines: 2,
                 ),
-                style: AppTextStyle.callout.of(context),
+                style: AppTextRole.body.of(context),
               ),
               Text(
                 l10n.desktopRewriteTargetMode,
@@ -293,7 +293,7 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
                   l10n.desktopRewriteRcodeWarning,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: colorScheme.warning),
                 ),
@@ -305,14 +305,14 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
                   labelText: l10n.desktopRewriteTtlLabel,
                   hintText: l10n.desktopRewriteTtlHint,
                 ),
-                style: AppTextStyle.callout.of(context),
+                style: AppTextRole.body.of(context),
               ),
               if (_error case final error?)
                 Text(
                   error,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: colorScheme.error),
                 ),
@@ -349,7 +349,7 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
             helperText: l10n.desktopRewriteIpsHelp,
             helperMaxLines: 2,
           ),
-          style: AppTextStyle.callout.of(context),
+          style: AppTextRole.body.of(context),
         ),
         _ShortcutType.cname => TextFormField(
           controller: _cname,
@@ -358,14 +358,14 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
             helperText: l10n.desktopRewriteCnameHelp,
             helperMaxLines: 2,
           ),
-          style: AppTextStyle.callout.of(context),
+          style: AppTextRole.body.of(context),
         ),
         _ShortcutType.txt => TextFormField(
           controller: _txt,
           minLines: 3,
           maxLines: 5,
           decoration: InputDecoration(labelText: l10n.desktopRewriteTxtLabel),
-          style: AppTextStyle.callout.of(context),
+          style: AppTextRole.body.of(context),
         ),
       },
     ];
@@ -396,7 +396,7 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
           l10n.desktopRewriteRecordEmpty,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.caption1
+          style: AppTextRole.caption
               .of(context)
               .copyWith(color: colorScheme.onSurfaceVariant),
         )
@@ -426,7 +426,7 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
                         _recordHints[record.type] ??
                         l10n.desktopRewriteRecordValueHint,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                 ),
               ),
               SizedBox.square(
@@ -443,7 +443,7 @@ class _RewriteEditorDialogState extends State<RewriteEditorDialog> {
         l10n.desktopRewriteRecordsHelp,
         maxLines: 4,
         overflow: TextOverflow.ellipsis,
-        style: AppTextStyle.caption1
+        style: AppTextRole.caption
             .of(context)
             .copyWith(color: colorScheme.onSurfaceVariant),
       ),

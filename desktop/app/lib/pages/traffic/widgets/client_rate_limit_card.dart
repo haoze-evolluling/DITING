@@ -170,8 +170,7 @@ class _ClientRateLimitCardState extends ConsumerState<ClientRateLimitCard> {
                 DashboardSwitch(
                   value: rateLimit.enabled,
                   semanticLabel: l10n.desktopTrafficRateLimitTitle,
-                  onChanged: (value) =>
-                      unawaited(_save(enabled: value)),
+                  onChanged: (value) => unawaited(_save(enabled: value)),
                 ),
             ],
           ),
@@ -220,7 +219,7 @@ class _ClientRateLimitCardState extends ConsumerState<ClientRateLimitCard> {
             controller: _exempt,
             minLines: 2,
             maxLines: 4,
-            style: AppTextStyle.callout.of(context).toTabular,
+            style: AppTextRole.body.of(context).toTabular,
             decoration: InputDecoration(
               labelText: l10n.desktopTrafficExempt,
               hintText: '127.0.0.1\n::1',
@@ -298,7 +297,7 @@ class _Field extends StatelessWidget {
           ),
         ],
         decoration: InputDecoration(labelText: label),
-        style: AppTextStyle.callout.of(context).toTabular,
+        style: AppTextRole.body.of(context).toTabular,
         onChanged: (_) => onChanged(),
       ),
     );

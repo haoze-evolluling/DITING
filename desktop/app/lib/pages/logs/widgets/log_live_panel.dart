@@ -110,7 +110,8 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
     final search = SearchField(
       controller: _search,
       hintText: l10n.desktopLiveSearchHint,
-      onChanged: (value) => setState(() => _needle = value.trim().toLowerCase()),
+      onChanged: (value) =>
+          setState(() => _needle = value.trim().toLowerCase()),
     );
     final controls = <Widget>[
       DesktopPicker(
@@ -157,7 +158,9 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
       ),
       TextButton(
         onPressed: ref.read(desktopLiveProvider.notifier).togglePaused,
-        child: Text(live.paused ? l10n.desktopLiveResume : l10n.desktopLivePause),
+        child: Text(
+          live.paused ? l10n.desktopLiveResume : l10n.desktopLivePause,
+        ),
       ),
     ];
     return LayoutBuilder(
@@ -170,7 +173,10 @@ class _LogLivePanelState extends ConsumerState<LogLivePanel> {
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            SizedBox(width: inline ? _searchWidth : constraints.maxWidth, child: search),
+            SizedBox(
+              width: inline ? _searchWidth : constraints.maxWidth,
+              child: search,
+            ),
             ...controls,
           ],
         );
@@ -313,7 +319,7 @@ class _BlockedOnlyToggle extends StatelessWidget {
           ),
           Text(
             context.l10n.desktopLiveOnlyBlocked,
-            style: AppTextStyle.callout.of(context).copyWith(color: color),
+            style: AppTextRole.body.of(context).copyWith(color: color),
           ),
         ],
       ),
@@ -332,7 +338,10 @@ class _LiveRow extends StatelessWidget {
     final l10n = context.l10n;
     final colorScheme = context.colorScheme;
     final (statusColor, statusLabel) = switch (entry.status) {
-      DesktopLiveStatus.passed => (colorScheme.onSurfaceVariant, l10n.logPassed),
+      DesktopLiveStatus.passed => (
+        colorScheme.onSurfaceVariant,
+        l10n.logPassed,
+      ),
       DesktopLiveStatus.blocked => (colorScheme.error, l10n.logBlocked),
       DesktopLiveStatus.cached => (colorScheme.success, l10n.logCacheHits),
       DesktopLiveStatus.stale => (colorScheme.warning, l10n.desktopLiveStale),
@@ -340,9 +349,7 @@ class _LiveRow extends StatelessWidget {
     };
     final label = DashboardText.label(context);
     return DashboardBlock(
-      color: entry.blocked
-          ? colorScheme.error.withValues(alpha: 0.06)
-          : null,
+      color: entry.blocked ? colorScheme.error.withValues(alpha: 0.06) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 2,
@@ -358,7 +365,11 @@ class _LiveRow extends StatelessWidget {
                   shape: AppShape.standard,
                 ),
               ),
-              Text(statusLabel, maxLines: 1, style: label.copyWith(color: statusColor)),
+              Text(
+                statusLabel,
+                maxLines: 1,
+                style: label.copyWith(color: statusColor),
+              ),
               if (entry.qtype.isNotEmpty)
                 DashboardChip(label: entry.qtype, tone: DashboardChipTone.idle),
               Expanded(
@@ -367,7 +378,9 @@ class _LiveRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: DashboardText.rowTitle(context).copyWith(
-                    decoration: entry.blocked ? TextDecoration.lineThrough : null,
+                    decoration: entry.blocked
+                        ? TextDecoration.lineThrough
+                        : null,
                     decorationColor: colorScheme.error,
                   ),
                 ),

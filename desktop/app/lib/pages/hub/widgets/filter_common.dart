@@ -16,10 +16,7 @@ String desktopMonthDayTime(DateTime time) {
 }
 
 /// Empty before the first pull; the row then shows only the "never updated" text.
-String desktopFilterHealthLabel(
-  BuildContext context,
-  DesktopFilterList list,
-) {
+String desktopFilterHealthLabel(BuildContext context, DesktopFilterList list) {
   final l10n = context.l10n;
   return switch (list.lastStatus) {
     'ok' => l10n.desktopFilterListHealthOk,
@@ -39,10 +36,7 @@ DashboardChipTone desktopFilterHealthTone(DesktopFilterList list) =>
     };
 
 /// The service's own reason for the last pull; falls back to the badge's explanation.
-String desktopFilterHealthDetail(
-  BuildContext context,
-  DesktopFilterList list,
-) {
+String desktopFilterHealthDetail(BuildContext context, DesktopFilterList list) {
   if (list.lastError.isNotEmpty) return list.lastError;
   final l10n = context.l10n;
   return switch (list.lastStatus) {
@@ -108,11 +102,10 @@ class FilterMetric extends StatelessWidget {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: DashboardText.figure(context, AppTextStyle.headline),
+                style: DashboardText.figure(context, AppTextRole.metricCompact),
               ),
             ),
-            if (unit != null)
-              Text(unit, style: DashboardText.unit(context)),
+            if (unit != null) Text(unit, style: DashboardText.unit(context)),
           ],
         ),
         Text(

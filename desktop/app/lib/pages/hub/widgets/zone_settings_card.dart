@@ -150,7 +150,7 @@ class _ZoneSettingsCardState extends ConsumerState<ZoneSettingsCard> {
                   decoration: InputDecoration(
                     labelText: l10n.desktopZoneDefaultTtl,
                   ),
-                  style: AppTextStyle.callout.of(context),
+                  style: AppTextRole.body.of(context),
                   onChanged: (_) {
                     if (_ttlInvalid) setState(() => _ttlInvalid = false);
                   },
@@ -171,7 +171,7 @@ class _ZoneSettingsCardState extends ConsumerState<ZoneSettingsCard> {
               l10n.desktopZoneTtlInvalid,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption1
+              style: AppTextRole.caption
                   .of(context)
                   .copyWith(color: context.colorScheme.error),
             ),

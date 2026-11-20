@@ -170,9 +170,8 @@ class EncryptedCertCard extends ConsumerWidget {
                     height: 28,
                     child: DashboardIconButton(
                       glyph: AppGlyphs.copy,
-                      tooltip: MaterialLocalizations.of(
-                        context,
-                      ).copyButtonLabel,
+                      tooltip: MaterialLocalizations.of(context)
+                          .copyButtonLabel,
                       size: 28,
                       glyphSize: 15,
                       onPressed: () => Clipboard.setData(
@@ -275,7 +274,8 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
     text: widget.config.certIpAddresses.join('\n'),
   );
   late final _days = TextEditingController(
-    text: '${widget.config.certValidDays > 0 ? widget.config.certValidDays : 365}',
+    text:
+        '${widget.config.certValidDays > 0 ? widget.config.certValidDays : 365}',
   );
   String _keyType = desktopCertKeyTypes.first;
 
@@ -366,7 +366,7 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertCommonName,
               ),
-              style: AppTextStyle.callout.of(context),
+              style: AppTextRole.body.of(context),
             ),
             TextFormField(
               controller: _dnsNames,
@@ -375,7 +375,7 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertDnsNames,
               ),
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
             ),
             TextFormField(
               controller: _ips,
@@ -384,7 +384,7 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertIpAddresses,
               ),
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
             ),
             SizedBox(
               width: 190,
@@ -394,7 +394,7 @@ class _GenerateCertDialogState extends State<_GenerateCertDialog> {
                 decoration: InputDecoration(
                   labelText: l10n.desktopEncryptedCertValidDays,
                 ),
-                style: AppTextStyle.callout.of(context),
+                style: AppTextRole.body.of(context),
                 onChanged: (_) => setState(() {}),
               ),
             ),
@@ -442,10 +442,7 @@ class _ImportCertDialogState extends State<_ImportCertDialog> {
               setState(() => _invalid = true);
               return;
             }
-            popFloatingDialog(context, (
-              cert: _cert.text,
-              key: _key.text,
-            ));
+            popFloatingDialog(context, (cert: _cert.text, key: _key.text));
           },
           child: Text(l10n.desktopEncryptedCertImportConfirm),
         ),
@@ -464,7 +461,7 @@ class _ImportCertDialogState extends State<_ImportCertDialog> {
               controller: _cert,
               minLines: 4,
               maxLines: 8,
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedCertPem,
               ),
@@ -473,7 +470,7 @@ class _ImportCertDialogState extends State<_ImportCertDialog> {
               controller: _key,
               minLines: 4,
               maxLines: 8,
-              style: AppTextStyle.callout.of(context).toTabular,
+              style: AppTextRole.body.of(context).toTabular,
               decoration: InputDecoration(
                 labelText: l10n.desktopEncryptedKeyPem,
               ),

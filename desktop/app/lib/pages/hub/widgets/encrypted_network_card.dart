@@ -102,18 +102,20 @@ class _EncryptedNetworkCardState extends ConsumerState<EncryptedNetworkCard> {
       return;
     }
     setState(() => _invalid = false);
-    unawaited(_configure(
-      {
-        'listenAddress': _listen.text.trim(),
-        'serverName': _serverName.text.trim(),
-        'dotPort': dot,
-        'dohPort': doh,
-        'doqPort': doq,
-        'dohPath': _dohPath.text.trim(),
-      },
-      success: l10n.desktopEncryptedNetworkSaved,
-      fromForm: true,
-    ));
+    unawaited(
+      _configure(
+        {
+          'listenAddress': _listen.text.trim(),
+          'serverName': _serverName.text.trim(),
+          'dotPort': dot,
+          'dohPort': doh,
+          'doqPort': doq,
+          'dohPath': _dohPath.text.trim(),
+        },
+        success: l10n.desktopEncryptedNetworkSaved,
+        fromForm: true,
+      ),
+    );
   }
 
   Future<void> _configure(
@@ -274,7 +276,7 @@ class _Field extends StatelessWidget {
             ? [FilteringTextInputFormatter.digitsOnly]
             : null,
         decoration: InputDecoration(labelText: label, hintText: hint),
-        style: AppTextStyle.callout.of(context).toTabular,
+        style: AppTextRole.body.of(context).toTabular,
         onChanged: (_) => onChanged(),
       ),
     );

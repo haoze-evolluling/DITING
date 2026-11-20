@@ -41,9 +41,7 @@ class BootstrapCard extends ConsumerWidget {
     );
     if (server == null || !context.mounted) return;
     onChanged(
-      config.copyWith(
-        bootstrapServers: [...config.bootstrapServers, server],
-      ),
+      config.copyWith(bootstrapServers: [...config.bootstrapServers, server]),
     );
   }
 
@@ -134,9 +132,8 @@ class BootstrapCard extends ConsumerWidget {
                 semanticLabel: l10n.desktopUpstreamBootstrapTitle,
                 onChanged: saving
                     ? null
-                    : (value) => onChanged(
-                        config.copyWith(bootstrapEnabled: value),
-                      ),
+                    : (value) =>
+                          onChanged(config.copyWith(bootstrapEnabled: value)),
               ),
               DashboardIconButton(
                 glyph: AppGlyphs.addCircle,
@@ -170,8 +167,8 @@ class BootstrapCard extends ConsumerWidget {
                 ),
                 child: _BootstrapRow(
                   server: config.bootstrapServers[index],
-                  probe: probes.results[
-                      'bootstrap:${config.bootstrapServers[index].id}'],
+                  probe: probes
+                      .results['bootstrap:${config.bootstrapServers[index].id}'],
                   probing: probes.isBusy(
                     'bootstrap:${config.bootstrapServers[index].id}',
                   ),
@@ -237,7 +234,7 @@ class _BootstrapRow extends StatelessWidget {
                       server.address,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.caption1
+                      style: AppTextRole.caption
                           .of(context)
                           .toTabular
                           .copyWith(color: colorScheme.onSurfaceVariant),
@@ -383,7 +380,7 @@ class _BootstrapEditorState extends State<_BootstrapEditor> {
               decoration: InputDecoration(
                 labelText: l10n.desktopUpstreamBootstrapName,
               ),
-              style: AppTextStyle.callout.of(context),
+              style: AppTextRole.body.of(context),
             ),
             TextFormField(
               controller: _address,
@@ -391,14 +388,14 @@ class _BootstrapEditorState extends State<_BootstrapEditor> {
                 labelText: l10n.desktopUpstreamBootstrapAddress,
                 hintText: '223.5.5.5:53',
               ),
-              style: AppTextStyle.callout.of(context),
+              style: AppTextRole.body.of(context),
             ),
             if (_error case final error?)
               Text(
                 error,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: context.colorScheme.error),
               ),

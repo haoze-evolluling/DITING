@@ -44,16 +44,14 @@ class DnsServiceCard extends StatelessWidget {
             label: l10n.desktopListeningOn,
             value: listen.isEmpty ? l10n.statusNotListening : listen,
             color: context.colorScheme.onSurface,
-            style: AppTextStyle.title2,
+            style: AppTextRole.metricSmall,
           ),
           DashboardMetricGrid(
             maxColumns: 3,
             metrics: [
               DashboardMetric(
                 label: l10n.desktopLanAllowed,
-                value: dns.allowLan
-                    ? l10n.commonEnabled
-                    : l10n.commonDisabled,
+                value: dns.allowLan ? l10n.commonEnabled : l10n.commonDisabled,
               ),
               DashboardMetric(
                 label: l10n.desktopTakeoverTitle,
@@ -103,7 +101,7 @@ class QueryMetricsCard extends StatelessWidget {
             label: l10n.desktopQueriesTotal,
             value: dashboardCount(metrics.total),
             color: context.colorScheme.onSurface,
-            style: AppTextStyle.title2,
+            style: AppTextRole.metricSmall,
           ),
           DashboardMetricGrid(
             metrics: [

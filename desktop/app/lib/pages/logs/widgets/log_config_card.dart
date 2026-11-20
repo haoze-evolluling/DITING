@@ -157,7 +157,7 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
                     decoration: InputDecoration(
                       labelText: l10n.desktopLogConfigMaxEntries,
                     ),
-                    style: AppTextStyle.callout.of(context),
+                    style: AppTextRole.body.of(context),
                     onChanged: (value) => _maxEntries = value,
                   ),
                 ),
@@ -170,7 +170,7 @@ class _LogConfigCardState extends ConsumerState<LogConfigCard> {
                     decoration: InputDecoration(
                       labelText: l10n.desktopLogConfigRetentionDays,
                     ),
-                    style: AppTextStyle.callout.of(context),
+                    style: AppTextRole.body.of(context),
                     onChanged: (value) => _retentionDays = value,
                   ),
                 ),

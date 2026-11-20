@@ -75,22 +75,15 @@ class _PrivacyReputationParamsCardState
     }
     setState(() => _invalid = false);
     unawaited(
-      savePrivacySetting(
-        context,
-        ref,
-        () async {
-          final error = await ref
-              .read(desktopReputationProvider.notifier)
-              .save({
-                'timeoutMs': timeout,
-                'cacheSize': cacheSize,
-                'cacheTTLSeconds': cacheTtl,
-              });
-          if (error == null && mounted) setState(() => _dirty = false);
-          return error;
-        },
-        l10n.desktopReputationParamsSaved,
-      ),
+      savePrivacySetting(context, ref, () async {
+        final error = await ref.read(desktopReputationProvider.notifier).save({
+          'timeoutMs': timeout,
+          'cacheSize': cacheSize,
+          'cacheTTLSeconds': cacheTtl,
+        });
+        if (error == null && mounted) setState(() => _dirty = false);
+        return error;
+      }, l10n.desktopReputationParamsSaved),
     );
   }
 
@@ -198,7 +191,7 @@ class _NumberField extends StatelessWidget {
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: InputDecoration(labelText: label),
-        style: AppTextStyle.callout.of(context),
+        style: AppTextRole.body.of(context),
         onChanged: (_) => onChanged(),
       ),
     );

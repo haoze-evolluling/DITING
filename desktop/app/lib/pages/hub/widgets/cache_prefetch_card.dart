@@ -63,8 +63,9 @@ class _CachePrefetchCardState extends ConsumerState<CachePrefetchCard> {
       _threshold = '${config.prefetchThreshold}';
       _before = '${config.prefetchBeforeExpiryMs}';
     }
-    void save(DesktopCacheConfig next) =>
-        unawaited(saveCacheSetting(context, ref, next, l10n.desktopCacheConfigSaved));
+    void save(DesktopCacheConfig next) => unawaited(
+      saveCacheSetting(context, ref, next, l10n.desktopCacheConfigSaved),
+    );
     return DashboardCard(
       semanticLabel: l10n.desktopCachePrefetchTitle,
       child: Column(
@@ -128,7 +129,7 @@ class _CachePrefetchCardState extends ConsumerState<CachePrefetchCard> {
                         helperText: l10n.desktopCachePrefetchThresholdHint,
                         helperMaxLines: 3,
                       ),
-                      style: AppTextStyle.callout.of(context),
+                      style: AppTextRole.body.of(context),
                       onChanged: (value) => _threshold = value,
                     ),
                   ),
@@ -143,7 +144,7 @@ class _CachePrefetchCardState extends ConsumerState<CachePrefetchCard> {
                         helperText: l10n.desktopCachePrefetchBeforeHint,
                         helperMaxLines: 3,
                       ),
-                      style: AppTextStyle.callout.of(context),
+                      style: AppTextRole.body.of(context),
                       onChanged: (value) => _before = value,
                     ),
                   ),
@@ -161,7 +162,7 @@ class _CachePrefetchCardState extends ConsumerState<CachePrefetchCard> {
                   l10n.desktopCacheInvalidNumbers,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: context.colorScheme.error),
                 ),
