@@ -43,11 +43,14 @@ class MockFeatureCategory {
 /// and 前后台行为, moved here from 其他设置. 数据与维护 holds six cards. The last card keeps the
 /// half-width column so rows stay aligned. The three work modes share one layout:
 ///
+///   Within each category the cards follow the order a user actually walks through: observe
+///   first, then configure, then advanced or destructive actions last.
+///
 ///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
 ///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件
-///   3. 应用与网络     连接监控 / 网络工具 / 连接限速 / 应用流量统计
-///   4. 高级与诊断     网络诊断 / HTTPS 检查 / 出站代理 / AI 分析
-///   5. 数据与维护     备份迁移 / 数据清理 / 故障排查 / 日志模式 / 日志仪表盘 / 前后台行为
+///   3. 应用与网络     连接监控 / 应用流量统计 / 网络工具 / 连接限速
+///   4. 高级与诊断     网络诊断 / AI 分析 / HTTPS 检查 / 出站代理
+///   5. 数据与维护     备份迁移 / 日志模式 / 日志仪表盘 / 故障排查 / 数据清理 / 前后台行为
 ///   6. 界面与数据     外观 / 隐藏功能 / 其他设置 / 关于
 ///
 /// Low-frequency functions stay folded into a parent page's secondary "更多功能" section instead
@@ -142,6 +145,14 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         expressVisible: false,
       ),
       MockFeatureCard(
+        title: l10n.hubAppTraffic,
+        description: l10n.hubAppTrafficDescription,
+        glyphName: 'dataUsage',
+        route: '/traffic',
+        featureKey: 'traffic_stats',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
         title: l10n.bottomBarNetworkTools,
         description: l10n.hubDiagnosticsDescription,
         glyphName: 'tools',
@@ -157,14 +168,6 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         featureKey: 'connection_rate_limit',
         expressVisible: false,
       ),
-      MockFeatureCard(
-        title: l10n.hubAppTraffic,
-        description: l10n.hubAppTrafficDescription,
-        glyphName: 'dataUsage',
-        route: '/traffic',
-        featureKey: 'traffic_stats',
-        expressVisible: false,
-      ),
     ],
   ),
   MockFeatureCategory(
@@ -176,6 +179,14 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         glyphName: 'target',
         route: '/network/diagnostics',
         featureKey: 'network_diagnostics',
+        expressVisible: false,
+      ),
+      MockFeatureCard(
+        title: l10n.hubAiAnalysis,
+        description: l10n.hubAiAnalysisDescription,
+        glyphName: 'sparkle',
+        route: '/hub/agent',
+        featureKey: 'agent_api',
         expressVisible: false,
       ),
       MockFeatureCard(
@@ -194,14 +205,6 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         featureKey: 'outbound_proxy',
         expressVisible: false,
       ),
-      MockFeatureCard(
-        title: l10n.hubAiAnalysis,
-        description: l10n.hubAiAnalysisDescription,
-        glyphName: 'sparkle',
-        route: '/hub/agent',
-        featureKey: 'agent_api',
-        expressVisible: false,
-      ),
     ],
   ),
   MockFeatureCategory(
@@ -213,20 +216,6 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         glyphName: 'export',
         route: '/hub/config-transfer',
         featureKey: 'data_management',
-      ),
-      MockFeatureCard(
-        title: l10n.hubDataCleanup,
-        description: l10n.hubDataCleanupDescription,
-        glyphName: 'broom',
-        route: '/hub/data-cleanup',
-        featureKey: 'data_cleanup',
-      ),
-      MockFeatureCard(
-        title: l10n.hubTroubleshooting,
-        description: l10n.hubTroubleshootingDescription,
-        glyphName: 'stethoscope',
-        route: '/hub/troubleshooting',
-        featureKey: 'troubleshooting',
       ),
       MockFeatureCard(
         title: l10n.logRetentionTitle,
@@ -241,6 +230,20 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         glyphName: 'logs',
         route: '/logs',
         featureKey: 'logs',
+      ),
+      MockFeatureCard(
+        title: l10n.hubTroubleshooting,
+        description: l10n.hubTroubleshootingDescription,
+        glyphName: 'stethoscope',
+        route: '/hub/troubleshooting',
+        featureKey: 'troubleshooting',
+      ),
+      MockFeatureCard(
+        title: l10n.hubDataCleanup,
+        description: l10n.hubDataCleanupDescription,
+        glyphName: 'broom',
+        route: '/hub/data-cleanup',
+        featureKey: 'data_cleanup',
       ),
       MockFeatureCard(
         title: l10n.foregroundTitle,
