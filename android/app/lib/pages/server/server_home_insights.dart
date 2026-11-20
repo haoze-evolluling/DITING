@@ -27,7 +27,6 @@ class ServerRequestOverview extends StatelessWidget {
         label: l10n.serverQueries,
         value: serverCount(stats.queries),
         color: scheme.primary,
-        emphasized: true,
       ),
       ServerMetricTile(
         glyph: AppGlyphs.block,
@@ -48,7 +47,7 @@ class ServerRequestOverview extends StatelessWidget {
         color: ServerHomeColors.mutedInk(context),
       ),
     ];
-    final singleColumn = MediaQuery.textScalerOf(context).scale(1) >= 1.3;
+    final scale = MediaQuery.textScalerOf(context).scale(1);
     return ServerSectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -59,31 +58,63 @@ class ServerRequestOverview extends StatelessWidget {
             title: l10n.serverOverviewTitle,
             trailing: [_WindowChip(label: l10n.serverLast24Hours)],
           ),
-          if (singleColumn) ...[
-            for (final (index, tile) in tiles.indexed) ...[
-              if (index > 0)
-                Divider(height: 17, color: ServerHomeColors.divider(context)),
-              tile,
-            ],
-          ] else ...[
-            for (var row = 0; row < 2; row++) ...[
-              if (row > 0)
-                Divider(height: 17, color: ServerHomeColors.divider(context)),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (scale < 1.3 && constraints.maxWidth >= 328) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final (index, tile) in tiles.indexed) ...[
+                      if (index > 0)
+                        Container(
+                          width: 1,
+                          height: 54,
+                          margin: const EdgeInsets.symmetric(horizontal: 6),
+                          color: ServerHomeColors.divider(context),
+                        ),
+                      Expanded(child: tile),
+                    ],
+                  ],
+                );
+              }
+              if (scale >= 1.3) {
+                return Column(
+                  spacing: 10,
+                  children: [
+                    for (final (index, tile) in tiles.indexed) ...[
+                      if (index > 0)
+                        Divider(
+                          height: 1,
+                          color: ServerHomeColors.divider(context),
+                        ),
+                      tile,
+                    ],
+                  ],
+                );
+              }
+              return Column(
+                spacing: 14,
                 children: [
-                  Expanded(child: tiles[row * 2]),
-                  Container(
-                    width: 1,
-                    height: 56,
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
-                    color: ServerHomeColors.divider(context),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 20,
+                    children: [
+                      Expanded(child: tiles[0]),
+                      Expanded(child: tiles[1]),
+                    ],
                   ),
-                  Expanded(child: tiles[row * 2 + 1]),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 20,
+                    children: [
+                      Expanded(child: tiles[2]),
+                      Expanded(child: tiles[3]),
+                    ],
+                  ),
                 ],
-              ),
-            ],
-          ],
+              );
+            },
+          ),
         ],
       ),
     );

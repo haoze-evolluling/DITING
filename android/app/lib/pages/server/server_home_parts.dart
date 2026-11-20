@@ -99,7 +99,6 @@ class ServerMetricTile extends StatelessWidget {
     required this.value,
     required this.color,
     this.hint,
-    this.emphasized = false,
   });
 
   final Glyph glyph;
@@ -107,66 +106,62 @@ class ServerMetricTile extends StatelessWidget {
   final String value;
   final Color color;
   final String? hint;
-  final bool emphasized;
 
   @override
   Widget build(BuildContext context) {
     final scheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        spacing: 7,
-        children: [
-          Row(
-            spacing: 8,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: ShapeDecoration(
-                  color: ServerHomeColors.accentWash(context),
-                  shape: AppShape.standard,
-                ),
-                child: GlyphIcon(glyph, size: 15, color: color),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      spacing: 5,
+      children: [
+        Row(
+          spacing: 4,
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: ShapeDecoration(
+                color: ServerHomeColors.accentWash(context),
+                shape: AppShape.standard,
               ),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
-                      .of(context)
-                      .copyWith(color: scheme.onSurfaceVariant),
-                ),
+              child: GlyphIcon(glyph, size: 13, color: color),
+            ),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: scheme.onSurfaceVariant),
               ),
-            ],
-          ),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              value,
-              maxLines: 1,
-              style: (emphasized ? AppTextStyle.title1 : AppTextStyle.title3)
-                  .of(context, emphasized: true)
-                  .toTabular
-                  .copyWith(color: scheme.onSurface),
             ),
+          ],
+        ),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: AppTextStyle.title2
+                .of(context, emphasized: true)
+                .toTabular
+                .copyWith(color: scheme.onSurface),
           ),
-          if (hint case final hint?)
-            Text(
-              hint,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.caption2
-                  .of(context)
-                  .copyWith(color: scheme.onSurfaceVariant),
-            ),
-        ],
-      ),
+        ),
+        if (hint case final hint?)
+          Text(
+            hint,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyle.caption2
+                .of(context)
+                .copyWith(color: scheme.onSurfaceVariant),
+          ),
+      ],
     );
   }
 }
