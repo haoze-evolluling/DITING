@@ -52,14 +52,4 @@ void main() {
     expect(doh.server, isEmpty);
     expect(doh.url, 'https://cloudflare-dns.com/dns-query');
   });
-
-  test('历史明文 DNS 协议读取为 PLAIN', () {
-    final provider = ServerProviderConfig.fromJson({
-      'id': '旧版明文',
-      'protocol': 'DNS',
-      'server': '1.1.1.1:53',
-    });
-
-    expect(provider.protocol, 'PLAIN');
-  });
 }

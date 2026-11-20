@@ -262,11 +262,6 @@ fn validate_upstream(config: &mut ResolverConfig) -> Result<(), String> {
             return Err("上游 DNS 服务名称不能为空".to_string());
         }
         let protocol = provider.protocol.trim().to_ascii_uppercase();
-        let protocol = if protocol == "DNS" {
-            "PLAIN".to_string()
-        } else {
-            protocol
-        };
         if !matches!(protocol.as_str(), "PLAIN" | "DOH" | "DOT" | "DOQ" | "DOH3") {
             return Err(format!("未知的 DNS 协议: {}", provider.protocol));
         }
@@ -350,17 +345,6 @@ mod tests {
         config.upstream.providers = diting_desktop_api::config::upstream::default_providers();
         config.upstream.providers[0].protocol = "HTTP".to_string();
         assert!(config.normalize(&paths, 1053, false, "0.0.0.0").is_err());
-    }
-
-    #[test]
-    fn legacy_dns_protocol_normalizes_to_plain() {
-        let paths = paths("dns-alias");
-        let mut config = ServerConfig::default();
-        config.upstream.providers[0].protocol = "DNS".to_string();
-
-        config.normalize(&paths, 1053, false, "0.0.0.0").unwrap();
-
-        assert_eq!(config.upstream.providers[0].protocol, "PLAIN");
     }
 
     #[test]

@@ -51,7 +51,6 @@ void main() {
       '服务商',
       'Bootstrap 摘要',
       '过滤规则',
-      '缓存',
       '日志记录',
       '服务器设置',
       '外观',
@@ -67,7 +66,6 @@ void main() {
     final providers = tester.getTopLeft(card('服务商'));
     final bootstrap = tester.getTopLeft(card('Bootstrap 摘要'));
     final filter = tester.getTopLeft(card('过滤规则'));
-    final cache = tester.getTopLeft(card('缓存'));
     final log = tester.getTopLeft(card('日志记录'));
     expect(providers.dx, greaterThan(upstream.dx));
     expect(providers.dy, closeTo(upstream.dy, 0.5));
@@ -75,10 +73,12 @@ void main() {
     expect(bootstrap.dy, greaterThan(upstream.dy));
     expect(filter.dx, closeTo(providers.dx, 0.5));
     expect(filter.dy, closeTo(bootstrap.dy, 0.5));
-    expect(cache.dx, closeTo(upstream.dx, 0.5));
-    expect(cache.dy, greaterThan(bootstrap.dy));
-    expect(log.dx, closeTo(providers.dx, 0.5));
-    expect(log.dy, closeTo(cache.dy, 0.5));
+    expect(log.dx, closeTo(upstream.dx, 0.5));
+    expect(log.dy, greaterThan(bootstrap.dy));
+    expect(
+      tester.getRect(card('日志记录')).width,
+      closeTo(tester.getRect(card('上游与调度')).width, 0.5),
+    );
 
     final settings = tester.getRect(card('服务器设置'));
     final appearance = tester.getRect(card('外观'));
@@ -91,20 +91,18 @@ void main() {
     expect(about.width, lessThan(settings.width + appearance.width));
   });
 
-  testWidgets('缓存高级设置从主页面进入并可返回', (tester) async {
-    await pumpServer(tester, ServerRoutes.cache);
+  testWidgets('缓存设置整合在上游页面', (tester) async {
+    await pumpServer(tester, ServerRoutes.upstream);
 
-    await tester.tap(
-      find.descendant(of: find.byType(ListItem), matching: find.text('高级选项')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('TTL 下限'), findsOneWidget);
-    expect(find.byType(BackButton), findsOneWidget);
-
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
     expect(find.text('缓存状态'), findsOneWidget);
-    expect(find.text('TTL 下限'), findsNothing);
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.text('TTL 下限'),
+      280,
+      scrollable: scrollable,
+    );
+    expect(find.text('TTL 下限'), findsOneWidget);
+    expect(find.text('高级选项'), findsNothing);
   });
 
   testWidgets('日志域名搜索防抖 300ms，客户端筛选独立生效', (tester) async {
@@ -169,10 +167,15 @@ void main() {
     expect(find.text('过滤状态'), findsOneWidget);
   });
 
-  testWidgets('缓存高级选项可切换预取', (tester) async {
+  testWidgets('缓存高级选项整合在上游页面并可切换预取', (tester) async {
     final client = _LogFake();
-    await pumpServer(tester, ServerRoutes.cacheAdvanced, client: client);
+    await pumpServer(tester, ServerRoutes.upstream, client: client);
 
+    await tester.scrollUntilVisible(
+      find.text('预取'),
+      280,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('预取'));
     await tester.pumpAndSettle();
 
@@ -182,8 +185,13 @@ void main() {
 
   testWidgets('缓存 TTL 模式通过弹出菜单切换', (tester) async {
     final client = _LogFake();
-    await pumpServer(tester, ServerRoutes.cache, client: client);
+    await pumpServer(tester, ServerRoutes.upstream, client: client);
 
+    await tester.scrollUntilVisible(
+      find.text('限制最大 TTL'),
+      280,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('限制最大 TTL'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('固定 TTL'));

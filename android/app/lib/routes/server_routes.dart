@@ -1,5 +1,3 @@
-import 'package:diting_android/pages/server/server_cache_page.dart';
-import 'package:diting_android/pages/server/server_cache_advanced_page.dart';
 import 'package:diting_android/pages/server/server_filter_page.dart';
 import 'package:diting_android/pages/server/server_filter_rules_page.dart';
 import 'package:diting_android/pages/server/server_filter_subscriptions_page.dart';
@@ -30,8 +28,6 @@ abstract final class ServerRoutes {
   static const filterRules = '/server/filter/rules';
   static const filterSubscriptions = '/server/filter/subscriptions';
   static const filterTest = '/server/filter/test';
-  static const cache = '/server/cache';
-  static const cacheAdvanced = '/server/cache/advanced';
   static const queryLog = '/server/query-log';
   static const settings = '/server/settings';
 }
@@ -91,8 +87,6 @@ List<RouteBase> serverRoutes() => [
     const ServerFilterSubscriptionsPage(),
   ),
   _leaf(ServerRoutes.filterTest, const ServerFilterTestPage()),
-  _leaf(ServerRoutes.cache, const ServerCachePage()),
-  _leaf(ServerRoutes.cacheAdvanced, const ServerCacheAdvancedPage()),
   _leaf(ServerRoutes.queryLog, const ServerQueryLogPage()),
   _leaf(ServerRoutes.settings, const ServerSettingsPage()),
 ];

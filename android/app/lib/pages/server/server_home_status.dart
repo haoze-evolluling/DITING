@@ -244,12 +244,6 @@ class ServerQuickActions extends StatelessWidget {
         path: ServerRoutes.filter,
       ),
       (
-        glyph: AppGlyphs.database,
-        title: l10n.serverCacheTitle,
-        subtitle: l10n.serverCacheEntriesShort(config.cache.maxEntries),
-        path: ServerRoutes.cache,
-      ),
-      (
         glyph: AppGlyphs.logs,
         title: l10n.serverLogsTitle,
         subtitle: l10n.serverLogDays(config.queryLog.retentionDays),

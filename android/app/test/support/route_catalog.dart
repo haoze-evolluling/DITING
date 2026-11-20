@@ -51,8 +51,6 @@ final Map<String, String> topLevelRoutes = {
   '服务器自定义规则': ServerRoutes.filterRules,
   '服务器规则订阅': ServerRoutes.filterSubscriptions,
   '服务器规则测试': ServerRoutes.filterTest,
-  '服务器缓存': ServerRoutes.cache,
-  '服务器缓存高级': ServerRoutes.cacheAdvanced,
   '服务器设置': ServerRoutes.settings,
   '服务器日志记录': ServerRoutes.queryLog,
   '连接限速': ConnectionRateLimitPaths.root,

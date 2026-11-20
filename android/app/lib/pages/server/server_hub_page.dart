@@ -22,11 +22,7 @@ class ServerHubPage extends ConsumerWidget {
     final config = snapshot.value?.config ?? const ServerConfig();
     final upstream = config.upstream;
     final filter = config.filter;
-    final cache = config.cache;
     final queryLog = config.queryLog;
-    final cacheMode = cache.mode == 'fixed'
-        ? context.l10n.serverCacheFixed
-        : context.l10n.serverCacheLimit;
     return CommonScaffold(
       title: context.l10n.serverHubTitle,
       body: PageBody(
@@ -40,6 +36,7 @@ class ServerHubPage extends ConsumerWidget {
           FeatureHubCategorySection(
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubDataPlane,
+              reserveOddCardSlot: true,
               cards: [
                 FeatureHubCardData(
                   title: context.l10n.serverUpstreamTitle,
@@ -77,15 +74,6 @@ class ServerHubPage extends ConsumerWidget {
                   ),
                   glyph: AppGlyphs.rules,
                   onTap: () => context.push(ServerRoutes.filter),
-                ),
-                FeatureHubCardData(
-                  title: context.l10n.serverCacheTitle,
-                  description: context.l10n.serverHubCacheSummary(
-                    cache.maxEntries,
-                    cacheMode,
-                  ),
-                  glyph: AppGlyphs.database,
-                  onTap: () => context.push(ServerRoutes.cache),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverQueryLogTitle,

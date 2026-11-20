@@ -52,7 +52,7 @@ class ServerProviderConfig {
   factory ServerProviderConfig.fromJson(Map<String, Object?> json) =>
       ServerProviderConfig(
         id: json['id'] as String? ?? '',
-        protocol: _serverProtocol(json['protocol'] as String?),
+        protocol: (json['protocol'] as String? ?? 'PLAIN').toUpperCase(),
         server: json['server'] as String? ?? '',
         url: json['url'] as String? ?? '',
         weight: (json['weight'] as num?)?.toInt() ?? 0,
@@ -67,12 +67,6 @@ class ServerProviderConfig {
     if (weight != 0) 'weight': weight,
     if (pin.isNotEmpty) 'pin': pin,
   };
-}
-
-String _serverProtocol(String? raw) {
-  final upper = (raw ?? 'PLAIN').trim().toUpperCase();
-  if (upper.isEmpty || upper == 'DNS') return 'PLAIN';
-  return upper;
 }
 
 class ServerBootstrapConfig {
