@@ -47,8 +47,8 @@ void main() {
     expect(find.text('配置中心'), findsOneWidget);
     expect(find.text('解析服务'), findsOneWidget);
     for (final title in [
-      '调度与缓存',
       '服务商',
+      '调度与缓存',
       'Bootstrap 摘要',
       '过滤规则',
       '日志记录',
@@ -62,22 +62,22 @@ void main() {
     expect(find.text('3 个服务器'), findsOneWidget);
     expect(find.textContaining('保留 7 天'), findsOneWidget);
 
-    final upstream = tester.getTopLeft(card('调度与缓存'));
     final providers = tester.getTopLeft(card('服务商'));
+    final upstream = tester.getTopLeft(card('调度与缓存'));
     final bootstrap = tester.getTopLeft(card('Bootstrap 摘要'));
     final filter = tester.getTopLeft(card('过滤规则'));
     final log = tester.getTopLeft(card('日志记录'));
-    expect(providers.dx, greaterThan(upstream.dx));
-    expect(providers.dy, closeTo(upstream.dy, 0.5));
-    expect(bootstrap.dx, closeTo(upstream.dx, 0.5));
-    expect(bootstrap.dy, greaterThan(upstream.dy));
-    expect(filter.dx, closeTo(providers.dx, 0.5));
+    expect(upstream.dx, greaterThan(providers.dx));
+    expect(upstream.dy, closeTo(providers.dy, 0.5));
+    expect(bootstrap.dx, closeTo(providers.dx, 0.5));
+    expect(bootstrap.dy, greaterThan(providers.dy));
+    expect(filter.dx, closeTo(upstream.dx, 0.5));
     expect(filter.dy, closeTo(bootstrap.dy, 0.5));
-    expect(log.dx, closeTo(upstream.dx, 0.5));
+    expect(log.dx, closeTo(providers.dx, 0.5));
     expect(log.dy, greaterThan(bootstrap.dy));
     expect(
       tester.getRect(card('日志记录')).width,
-      closeTo(tester.getRect(card('调度与缓存')).width, 0.5),
+      closeTo(tester.getRect(card('服务商')).width, 0.5),
     );
 
     final settings = tester.getRect(card('服务器设置'));

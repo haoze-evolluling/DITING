@@ -33,16 +33,12 @@ class ServerHubPage extends ConsumerWidget {
               onRetry: () =>
                   ref.read(serverControllerProvider.notifier).refresh(),
             ),
+          // Cards follow the setup order: providers first, then scheduling and cache, bootstrap,
+          // filtering and finally the query log that records the result.
           FeatureHubCategorySection(
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubDataPlane,
               cards: [
-                FeatureHubCardData(
-                  title: context.l10n.serverUpstreamTitle,
-                  description: serverModeLabel(context, upstream.mode),
-                  glyph: AppGlyphs.upstream,
-                  onTap: () => context.push(ServerRoutes.upstream),
-                ),
                 FeatureHubCardData(
                   title: context.l10n.serverUpstreamProviders,
                   description: upstream.providers.isEmpty
@@ -52,6 +48,12 @@ class ServerHubPage extends ConsumerWidget {
                         ),
                   glyph: AppGlyphs.dns,
                   onTap: () => context.push(ServerRoutes.upstreamProviders),
+                ),
+                FeatureHubCardData(
+                  title: context.l10n.serverUpstreamTitle,
+                  description: serverModeLabel(context, upstream.mode),
+                  glyph: AppGlyphs.upstream,
+                  onTap: () => context.push(ServerRoutes.upstream),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverBootstrapSummary,
