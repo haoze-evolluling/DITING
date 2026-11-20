@@ -56,12 +56,6 @@ class SettingsPage extends StatelessWidget {
                 subtitle: context.l10n.settingsLanguageSubtitle,
                 onPressed: () => context.push(SystemPaths.language),
               ),
-              NavEntryRow(
-                glyph: AppGlyphs.puzzle,
-                title: context.l10n.integrationTitle,
-                subtitle: context.l10n.integrationSubtitle,
-                onPressed: () => context.push(SystemPaths.integration),
-              ),
             ],
           ),
           generateSection(

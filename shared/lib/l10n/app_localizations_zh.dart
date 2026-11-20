@@ -13401,42 +13401,6 @@ class AppL10nZh extends AppL10n {
       '谛听已最小化到系统托盘，并在后台继续运行。\n点击托盘图标可重新打开主界面。';
 
   @override
-  String get integrationTitle => '小组件与自动化';
-
-  @override
-  String get integrationSubtitle => '桌面小组件、深链导入与自动化控制';
-
-  @override
-  String get integrationWidgetTitle => '桌面小组件';
-
-  @override
-  String get integrationWidgetBody =>
-      '长按桌面空白处，进入「小组件」，选择「谛听」即可添加。组件显示保护状态与今日拦截数，点右侧按钮可一键开启或关闭。';
-
-  @override
-  String get integrationDeepLinkTitle => '深链导入订阅';
-
-  @override
-  String get integrationDeepLinkBody =>
-      '在浏览器或其它应用中打开 diting://install-config?url=<订阅地址>，即可直接导入订阅（需先接受首次使用协议）。install-sub 为等价写法。';
-
-  @override
-  String get integrationAutomationTitle => '自动化控制';
-
-  @override
-  String get integrationAutomationBody =>
-      '通过 Tasker、MacroDroid 或 adb 发送以下动作，可启动、停止或切换当前模式：';
-
-  @override
-  String get integrationAutomationStart => '启动';
-
-  @override
-  String get integrationAutomationStop => '停止';
-
-  @override
-  String get integrationAutomationToggle => '切换';
-
-  @override
   String get deepLinkImportInvalid => '深链地址无效，无法导入订阅';
 
   @override

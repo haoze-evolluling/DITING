@@ -6,7 +6,6 @@ import 'package:diting_android/pages/appearance/launcher_icon_page.dart';
 import 'package:diting_android/pages/appearance/settings_parity_pages.dart';
 import 'package:diting_android/pages/appearance/theme_page.dart';
 import 'package:diting_android/pages/system/developer_page.dart';
-import 'package:diting_android/pages/system/integration_page.dart';
 import 'package:diting_android/pages/system/ip_quality_page.dart';
 import 'package:diting_android/pages/system/sponsor_page.dart';
 import 'package:diting_shared/routes/page.dart';
@@ -39,9 +38,6 @@ abstract final class SystemPaths {
 
   /// Language settings (upstream `LANGUAGE_SETTINGS`).
   static const language = '/settings/language';
-
-  /// Home screen widget, deep link and automation guide.
-  static const integration = '/settings/integration';
 
   /// Developer options hub. Upstream had no such page; it is the only entry
   /// to the retained pages and sits in the settings app bar.
@@ -76,7 +72,6 @@ List<RouteBase> systemRoutes() => [
   _route(SystemPaths.fontSize, const FontSizePage()),
   _route(SystemPaths.foregroundBackground, const SettingsBackgroundPage()),
   _route(SystemPaths.language, const SettingsLanguagePage()),
-  _route(SystemPaths.integration, const IntegrationPage()),
   _route(SystemPaths.developer, const DeveloperPage()),
   _route(SystemPaths.sponsor, const SponsorPage()),
   // Retained page.
