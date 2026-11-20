@@ -7,12 +7,11 @@ import 'package:diting_android/data/rules/rule_importer.dart';
 import 'package:diting_android/data/rules/rule_parser.dart';
 import 'package:diting_android/data/rules/rust_rule_version_core.dart';
 import 'package:diting_android/state/subscription_providers.dart';
+import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
-
-import '../../widgets/page_intro.dart';
 
 class SubscriptionVersionPage extends ConsumerStatefulWidget {
   const SubscriptionVersionPage({super.key});
@@ -36,17 +35,11 @@ class _SubscriptionVersionPageState
       body: entriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => PageBody(
-          children: [PageIntroCard(text: l10n.ruleVersionsUnavailable)],
+          children: [_ErrorNotice(text: l10n.ruleVersionsUnavailable)],
         ),
         data: (entries) {
           if (entries.isEmpty) {
-            return PageBody(
-              children: [
-                PageIntroCard(text: l10n.ruleVersionsIntro),
-                const ListSectionGap(),
-                _infoSection(l10n.ruleVersionsNone),
-              ],
-            );
+            return const PageBody(children: []);
           }
           final selectedId = _resolveSelection(entries);
           final entry = entries.firstWhere((e) => e.id == selectedId);
@@ -62,7 +55,6 @@ class _SubscriptionVersionPageState
           if (wide) {
             return PageBody(
               children: [
-                PageIntroCard(text: l10n.ruleVersionsIntro),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -83,8 +75,6 @@ class _SubscriptionVersionPageState
           }
           return PageBody(
             children: [
-              PageIntroCard(text: l10n.ruleVersionsIntro),
-              const ListSectionGap(),
               generateSection(
                 items: [
                   ListItem(
@@ -227,12 +217,25 @@ class _SubscriptionVersionPageState
   }
 }
 
-/// A single informational row, used for every "nothing to show / unavailable" state.
-Widget _infoSection(String message) => generateSection(
-  items: [
-    ListItem(leading: const GlyphIcon(AppGlyphs.info), title: Text(message)),
-  ],
-);
+class _ErrorNotice extends StatelessWidget {
+  const _ErrorNotice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: InlineNotice(
+        message: text,
+        glyph: AppGlyphs.error,
+        color: colorScheme.errorContainer,
+        foregroundColor: colorScheme.onErrorContainer,
+      ),
+    );
+  }
+}
 
 class _SubscriptionPicker extends StatelessWidget {
   const _SubscriptionPicker({
@@ -283,10 +286,10 @@ class _VersionHistory extends ConsumerWidget {
     final repositoryAsync = ref.watch(ruleVersionRepositoryProvider);
     return repositoryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _infoSection(l10n.ruleVersionsUnavailable),
+      error: (error, _) => _ErrorNotice(text: l10n.ruleVersionsUnavailable),
       data: (repository) {
         if (repository == null) {
-          return _infoSection(l10n.ruleVersionsUnavailable);
+          return _ErrorNotice(text: l10n.ruleVersionsUnavailable);
         }
         return FutureBuilder<List<StoredRuleVersion>>(
           future: repository.history('sub_$subscriptionId', limit: 10),
@@ -296,7 +299,7 @@ class _VersionHistory extends ConsumerWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (history.isEmpty) {
-              return _infoSection(l10n.ruleVersionsEmpty);
+              return const SizedBox.shrink();
             }
             final current = history.first;
             return generateSection(

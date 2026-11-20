@@ -8,7 +8,6 @@ import 'package:diting_android/pages/config/config_common.dart';
 import 'package:diting_android/state/config_providers_resources.dart';
 import 'package:diting_shared/ui/support/input_limits.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_android/widgets/note_card.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -65,7 +64,6 @@ class UserAgentsConfigPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          NoteCard(text: context.l10n.uaNote, glyph: AppGlyphs.account),
           // A read-only summary first: it answers "what is being sent right now" without the user
           // having to scan the whole candidate list for the selected row.
           generateSection(

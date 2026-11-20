@@ -73,7 +73,6 @@ class _OutboundProxyAppsPageState extends ConsumerState<OutboundProxyAppsPage> {
           SliverToBoxAdapter(
             child: Column(
               children: [
-                PageIntroCard(text: context.l10n.outboundAppsIntro),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: SearchField(

@@ -3,7 +3,6 @@ library;
 
 import 'package:diting_android/data/native/rule_test_bridge.dart';
 import 'package:diting_android/state/rule_test_providers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -98,7 +97,6 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
       title: context.l10n.ruleTestTitle,
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.ruleTestIntro),
           _paddedCard(
             context,
             Column(

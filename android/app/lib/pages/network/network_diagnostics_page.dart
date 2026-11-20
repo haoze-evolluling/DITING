@@ -6,7 +6,6 @@ library;
 
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/state/network_diagnostics_providers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -31,7 +30,6 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
       title: l10n.networkDiagnosticsTitle,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.networkDiagnosticsIntro),
           if (state.error != null)
             _ErrorNotice(text: l10n.networkDiagnosticsFailed),
           _DiagnosticsSection(

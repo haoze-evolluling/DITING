@@ -4,7 +4,6 @@ import 'package:diting_android/state/feature_hub_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -35,10 +34,6 @@ class HiddenFeaturesPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          PageIntroCard(
-            text:
-                context.l10n.hiddenFeaturesNote,
-          ),
           for (final entry in groups.entries)
             generateSection(
               title: entry.key,

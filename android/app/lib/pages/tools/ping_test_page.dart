@@ -60,7 +60,6 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
       title: l10n.toolPing,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.toolPingDesc),
           _ToolInputCard(
             child: _ToolField(
               controller: _target,

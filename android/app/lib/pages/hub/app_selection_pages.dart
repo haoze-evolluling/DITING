@@ -11,7 +11,6 @@ import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/unsaved_changes.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -320,7 +319,6 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
                         ),
                       ],
                     ),
-                  PageIntroCard(text: widget.info),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                     child: SearchField(

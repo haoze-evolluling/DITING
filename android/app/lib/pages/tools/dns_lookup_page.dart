@@ -96,7 +96,6 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
       title: l10n.toolDnsLookup,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.toolDnsLookupDesc),
           _ToolInputCard(
             child: _ToolField(
               controller: _domain,

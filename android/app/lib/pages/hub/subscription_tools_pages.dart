@@ -10,7 +10,6 @@ import 'package:diting_android/state/global_mirror_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';

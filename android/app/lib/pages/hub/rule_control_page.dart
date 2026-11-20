@@ -5,7 +5,6 @@ import 'package:diting_android/data/vpn/block_response_settings.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,11 +52,6 @@ class RuleControlPage extends ConsumerWidget {
       title: context.l10n.hubRuleControl,
       body: PageBody(
         children: [
-          PageIntroCard(
-            text: isNormal
-                ? context.l10n.ruleControlIntro
-                : context.l10n.ruleControlIntroLimited,
-          ),
           generateSection(
             title: context.l10n.ruleControlFilterSection,
             items: [

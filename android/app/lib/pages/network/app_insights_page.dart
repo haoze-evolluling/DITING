@@ -4,7 +4,6 @@ library;
 import 'package:diting_android/data/network/app_insights.dart';
 import 'package:diting_android/state/app_insights_providers.dart';
 import 'package:diting_android/state/flow_providers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -38,12 +37,7 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
       return CommonScaffold(
         title: l10n.appInsightsTitle,
         actions: actions,
-        body: PageBody(
-          children: [
-            PageIntroCard(text: l10n.appInsightsIntro),
-            PageIntroCard(text: l10n.appInsightsEmpty),
-          ],
-        ),
+        body: const PageBody(children: []),
       );
     }
 
@@ -61,7 +55,6 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
         actions: actions,
         body: PageBody(
           children: [
-            PageIntroCard(text: l10n.appInsightsIntro),
             _reportsSection(reports, null, null),
             for (final group in map) _groupSection(group, l10n),
           ],
@@ -79,7 +72,6 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
       actions: actions,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.appInsightsIntro),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -94,8 +86,6 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
                 child: Column(
                   children: [
                     for (final group in groups) _groupSection(group, l10n),
-                    if (groups.isEmpty)
-                      PageIntroCard(text: l10n.appInsightsNoDomains),
                   ],
                 ),
               ),

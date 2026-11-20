@@ -4,6 +4,7 @@
 import 'package:diting_android/data/network/app_insights.dart';
 import 'package:diting_android/pages/network/app_insights_page.dart';
 import 'package:diting_android/state/app_insights_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -59,6 +60,32 @@ Future<void> _pump(WidgetTester tester, Size size) async {
 }
 
 void main() {
+  testWidgets('空数据：不显示纯文字说明卡片', (tester) async {
+    const size = Size(400, 800);
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appReportsProvider.overrideWith((ref) => const <AppReport>[]),
+          connectionMapProvider.overrideWith(
+            (ref) => const <AppConnectionGroup>[],
+          ),
+        ],
+        child: AppHost(
+          size: size,
+          isMobile: true,
+          child: const AppInsightsPage(),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(CommonCard), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('平板宽度：报告卡与所选应用的连接地图并排', (tester) async {
     await _pump(tester, const Size(1200, 900));
 

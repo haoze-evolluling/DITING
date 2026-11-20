@@ -2,7 +2,6 @@
 library;
 
 import 'package:diting_android/state/dns64_providers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -21,10 +20,6 @@ class Dns64Page extends ConsumerWidget {
       title: l10n.dns64Title,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.dns64Intro),
-          // The card below has no section header to carry the gap, so it would butt straight
-          // against the intro card; add the same 24 the header would.
-          const ListSectionGap(),
           generateSection(
             items: [
               ListItem(

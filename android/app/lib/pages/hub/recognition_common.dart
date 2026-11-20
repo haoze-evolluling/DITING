@@ -7,7 +7,6 @@ import 'package:diting_android/state/recognition_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/empty_state.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/rainbow_avatar_frame.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -222,7 +221,6 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
       ],
       body: PageBody(
         children: [
-          PageIntroCard(text: widget.intro),
           if (!state.hasMembers && (state.isRefreshing || data == null))
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 64),

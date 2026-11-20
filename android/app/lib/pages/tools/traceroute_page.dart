@@ -59,7 +59,6 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
       title: l10n.toolTraceroute,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.toolTracerouteDesc),
           _ToolInputCard(
             child: _ToolField(
               controller: _target,

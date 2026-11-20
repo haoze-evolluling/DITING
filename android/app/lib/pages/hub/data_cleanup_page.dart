@@ -4,7 +4,6 @@ import 'package:diting_android/data/cleanup/cleanup_models.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,26 +21,22 @@ class DataCleanupPage extends ConsumerWidget {
       title: context.l10n.devDataCleanup,
       body: PageBody(
         children: [
-          PageIntroCard(
-            text: context.l10n.cleanupIntro,
-            extra: [
-              if (running != null)
-                Row(
-                  spacing: 8,
-                  children: [
-                    const CommonCircleLoading(size: 16),
-                    Expanded(
-                      child: Text(
-                        context.l10n.cleanupRunning(
-                          running.title(context.l10n),
-                        ),
-                        style: context.listCaptionStyle,
-                      ),
+          if (running != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                spacing: 8,
+                children: [
+                  const CommonCircleLoading(size: 16),
+                  Expanded(
+                    child: Text(
+                      context.l10n.cleanupRunning(running.title(context.l10n)),
+                      style: context.listCaptionStyle,
                     ),
-                  ],
-                ),
-            ],
-          ),
+                  ),
+                ],
+              ),
+            ),
           for (final group in cleanupGroups(context.l10n).entries)
             generateSection(
               title: group.key,

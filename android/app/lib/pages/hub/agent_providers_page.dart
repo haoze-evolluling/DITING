@@ -3,7 +3,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/pages/hub/agent_provider_editor.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -33,7 +32,6 @@ class AgentProvidersPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.agentProvidersIntro),
           generateSection(
             title: context.l10n.agentProvidersMine,
             items: [

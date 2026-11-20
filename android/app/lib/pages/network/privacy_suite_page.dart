@@ -2,7 +2,6 @@
 library;
 
 import 'package:diting_android/state/privacy_providers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -21,7 +20,6 @@ class PrivacySuitePage extends ConsumerWidget {
       title: l10n.privacySuiteTitle,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.privacySuiteIntro),
           generateSection(
             title: l10n.privacyDnsSection,
             items: [

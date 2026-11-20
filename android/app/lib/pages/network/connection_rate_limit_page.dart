@@ -6,7 +6,6 @@ import 'dart:async';
 import 'package:diting_android/state/connection_rate_limit_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_android/widgets/rate_limit_stepper_row.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -39,7 +38,6 @@ class ConnectionRateLimitPage extends ConsumerWidget {
       title: l10n.connectionRateLimitTitle,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.connectionRateLimitIntro),
           generateSection(
             title: l10n.connectionRateLimitSectionSwitch,
             items: [

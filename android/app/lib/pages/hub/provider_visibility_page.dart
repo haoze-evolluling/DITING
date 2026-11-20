@@ -3,7 +3,6 @@ import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -120,7 +119,6 @@ class _ProviderVisibilityPageState
       title: context.l10n.providerVisibilityTitle,
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.providerVisibilityNote),
           for (final protocol in ProviderProtocol.values)
             _protocolSection(protocol),
           const SizedBox(height: 24),

@@ -18,7 +18,6 @@ import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/leading_slot.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -196,7 +195,6 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
       ],
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.obsExportIntro),
           _ExportCard(
             title: l10n.obsExportRangeSection,
             children: [

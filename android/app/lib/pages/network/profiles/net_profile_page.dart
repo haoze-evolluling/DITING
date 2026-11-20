@@ -7,7 +7,7 @@ import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/state/automation_providers.dart';
 import 'package:diting_android/state/net_profile_providers.dart';
 import 'package:diting_android/widgets/chip_row.dart';
-import 'package:diting_android/widgets/page_intro.dart';
+import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -33,7 +33,6 @@ class NetProfilePage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.netProfileIntro),
           _asyncSection(
             contextAsync,
             (network) => generateSection(
@@ -71,7 +70,7 @@ class NetProfilePage extends ConsumerWidget {
           _asyncSection(
             profiles,
             (list) => list.isEmpty
-                ? PageIntroCard(text: context.l10n.netProfileEmpty)
+                ? const SizedBox.shrink()
                 : generateSection(
                     title: context.l10n.netProfileList,
                     items: [
@@ -145,8 +144,28 @@ Widget _asyncSection<T>(AsyncValue<T> value, Widget Function(T data) build) {
   return value.when(
     data: build,
     loading: () => const SizedBox.shrink(),
-    error: (error, _) => PageIntroCard(text: '$error'),
+    error: (error, _) => _ErrorNotice(text: '$error'),
   );
+}
+
+class _ErrorNotice extends StatelessWidget {
+  const _ErrorNotice({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: InlineNotice(
+        message: text,
+        glyph: AppGlyphs.error,
+        color: colorScheme.errorContainer,
+        foregroundColor: colorScheme.onErrorContainer,
+      ),
+    );
+  }
 }
 
 void _toggleValue(Set<String> values, String value) {

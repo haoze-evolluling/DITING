@@ -3,7 +3,6 @@ library;
 
 import 'package:diting_android/pages/health/health_score.dart';
 import 'package:diting_android/state/health_providers.dart';
-import 'package:diting_android/widgets/page_intro.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -20,7 +19,6 @@ class HealthPage extends ConsumerWidget {
       title: context.l10n.healthTitle,
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.healthIntro),
           asyncReport.when(
             loading: () =>
                 _paddedCard(context, Text(context.l10n.healthLoading)),

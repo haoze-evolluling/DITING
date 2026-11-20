@@ -46,7 +46,6 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
       title: l10n.toolSpeedTest,
       body: PageBody(
         children: [
-          PageIntroCard(text: l10n.toolSpeedTestDesc),
           if (available.isLoading) _ToolNotice(text: l10n.toolSpeedChecking),
           if (unavailable)
             _ToolNotice(

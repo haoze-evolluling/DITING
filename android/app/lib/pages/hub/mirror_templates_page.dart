@@ -22,7 +22,6 @@ class MirrorTemplatesPage extends ConsumerWidget {
       ],
       body: PageBody(
         children: [
-          PageIntroCard(text: context.l10n.mirrorTplIntro),
           if (rows != null) GlobalMirrorSection(templates: rows),
           generateSection(
             title: context.l10n.mirrorTplActions,

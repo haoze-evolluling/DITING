@@ -122,7 +122,6 @@ class _HttpInspectionAppsPageState
           SliverToBoxAdapter(
             child: Column(
               children: [
-                PageIntroCard(text: context.l10n.httpInspAppsIntro),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: SearchField(
