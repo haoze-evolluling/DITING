@@ -210,10 +210,10 @@ class _FigureRow extends StatelessWidget {
               spacing: 6,
               children: [
                 Align(
-                  alignment: Alignment.centerLeft,
+                  alignment: Alignment.center,
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
+                    alignment: Alignment.center,
                     child: Text(
                       cell.value,
                       maxLines: 1,
