@@ -52,7 +52,7 @@ class ServerProviderConfig {
   factory ServerProviderConfig.fromJson(Map<String, Object?> json) =>
       ServerProviderConfig(
         id: json['id'] as String? ?? '',
-        protocol: (json['protocol'] as String? ?? 'PLAIN').toUpperCase(),
+        protocol: _serverProtocol(json['protocol'] as String?),
         server: json['server'] as String? ?? '',
         url: json['url'] as String? ?? '',
         weight: (json['weight'] as num?)?.toInt() ?? 0,
@@ -67,6 +67,12 @@ class ServerProviderConfig {
     if (weight != 0) 'weight': weight,
     if (pin.isNotEmpty) 'pin': pin,
   };
+}
+
+String _serverProtocol(String? raw) {
+  final upper = (raw ?? 'PLAIN').trim().toUpperCase();
+  if (upper.isEmpty || upper == 'DNS') return 'PLAIN';
+  return upper;
 }
 
 class ServerBootstrapConfig {
@@ -432,35 +438,31 @@ class ServerConfig {
     upstream: const ServerUpstreamConfig(
       providers: [
         ServerProviderConfig(
-          id: 'AliDNS (DoT)',
-          protocol: 'DOT',
-          server: 'dns.alidns.com:853',
+          id: '阿里云 (DNS)',
+          protocol: 'PLAIN',
+          server: '223.5.5.5:53',
         ),
         ServerProviderConfig(
-          id: 'DNSPod (DoT)',
-          protocol: 'DOT',
-          server: 'dot.pub:853',
+          id: '腾讯云 (DNS)',
+          protocol: 'PLAIN',
+          server: '119.29.29.29:53',
         ),
       ],
       bootstrap: [
         ServerBootstrapConfig(
-          id: 'bs-ali',
-          name: 'AliDNS',
-          address: '223.5.5.5:53',
+          id: 'preset_volcengine',
+          name: '火山引擎',
+          address: '180.184.1.1',
         ),
         ServerBootstrapConfig(
-          id: 'bs-dnspod',
-          name: 'DNSPod',
-          address: '119.29.29.29:53',
+          id: 'preset_dnspod',
+          name: '腾讯云',
+          address: '119.29.29.29',
         ),
-      ],
-    ),
-    filter: const ServerFilterConfig(
-      lists: [
-        ServerFilterList(
-          id: 'adguard-dns-filter',
-          name: 'AdGuard DNS Filter',
-          url: 'https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt',
+        ServerBootstrapConfig(
+          id: 'preset_alidns',
+          name: '阿里云',
+          address: '223.5.5.5',
         ),
       ],
     ),

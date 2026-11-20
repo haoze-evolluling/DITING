@@ -5,7 +5,8 @@ use std::path::Path;
 
 use diting_desktop_api::config::filter::is_valid_block_mode;
 use diting_desktop_api::config::{
-    CacheConfig, Config as DesktopConfig, FilterConfig, QueryLogConfig, ResolverConfig,
+    BootstrapConfig, BootstrapServer, CacheConfig, Config as DesktopConfig, FilterConfig,
+    ProviderConfig, QueryLogConfig, ResolverConfig,
 };
 use serde::{Deserialize, Serialize};
 
@@ -35,15 +36,84 @@ impl Default for ListenConfig {
 /// `config.json` for server mode. It is intentionally smaller than the desktop configuration:
 /// listener identity, upstream, filtering, cache and query history are the whole management
 /// surface in the first release.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ServerConfig {
     pub listen: ListenConfig,
     pub upstream: ResolverConfig,
+    #[serde(default = "default_filter_config")]
     pub filter: FilterConfig,
     pub cache: CacheConfig,
     #[serde(rename = "queryLog", alias = "querylog")]
     pub query_log: QueryLogConfig,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        let mut upstream = ResolverConfig::default();
+        upstream.providers = default_server_providers();
+        upstream.bootstrap = BootstrapConfig {
+            enabled: true,
+            servers: default_server_bootstrap(),
+        };
+        Self {
+            listen: ListenConfig::default(),
+            upstream,
+            filter: default_filter_config(),
+            cache: CacheConfig::default(),
+            query_log: QueryLogConfig::default(),
+        }
+    }
+}
+
+/// Server mode starts without a subscription list; desktop keeps its own default.
+fn default_filter_config() -> FilterConfig {
+    FilterConfig {
+        lists: Vec::new(),
+        ..FilterConfig::default()
+    }
+}
+
+/// Match the normal mode's default pair, using the server's `PLAIN` protocol spelling.
+fn default_server_providers() -> Vec<ProviderConfig> {
+    vec![
+        ProviderConfig {
+            id: "阿里云 (DNS)".to_string(),
+            protocol: "PLAIN".to_string(),
+            server: "223.5.5.5:53".to_string(),
+            ..ProviderConfig::default()
+        },
+        ProviderConfig {
+            id: "腾讯云 (DNS)".to_string(),
+            protocol: "PLAIN".to_string(),
+            server: "119.29.29.29:53".to_string(),
+            ..ProviderConfig::default()
+        },
+    ]
+}
+
+/// The same three presets as normal mode's default bootstrap selection.
+fn default_server_bootstrap() -> Vec<BootstrapServer> {
+    vec![
+        BootstrapServer {
+            id: "preset_volcengine".to_string(),
+            name: "火山引擎".to_string(),
+            address: "180.184.1.1".to_string(),
+            weight: 1.0,
+        },
+        BootstrapServer {
+            id: "preset_dnspod".to_string(),
+            name: "腾讯云".to_string(),
+            address: "119.29.29.29".to_string(),
+            weight: 1.0,
+        },
+        BootstrapServer {
+            id: "preset_alidns".to_string(),
+            name: "阿里云".to_string(),
+            address: "223.5.5.5".to_string(),
+            weight: 1.0,
+        },
+    ]
 }
 
 impl ServerConfig {
@@ -192,6 +262,11 @@ fn validate_upstream(config: &mut ResolverConfig) -> Result<(), String> {
             return Err("上游 DNS 服务名称不能为空".to_string());
         }
         let protocol = provider.protocol.trim().to_ascii_uppercase();
+        let protocol = if protocol == "DNS" {
+            "PLAIN".to_string()
+        } else {
+            protocol
+        };
         if !matches!(protocol.as_str(), "PLAIN" | "DOH" | "DOT" | "DOQ" | "DOH3") {
             return Err(format!("未知的 DNS 协议: {}", provider.protocol));
         }
@@ -241,6 +316,29 @@ mod tests {
         );
         assert_eq!(config.query_log.retention_days, 7);
         assert_eq!(config.query_log.max_entries, 10_000);
+        assert!(config.filter.lists.is_empty());
+        assert_eq!(config.upstream.providers.len(), 2);
+        assert_eq!(config.upstream.providers[0].protocol, "PLAIN");
+        assert_eq!(config.upstream.providers[0].server, "223.5.5.5:53");
+        assert_eq!(
+            config
+                .upstream
+                .bootstrap
+                .servers
+                .iter()
+                .map(|server| server.id.as_str())
+                .collect::<Vec<_>>(),
+            ["preset_volcengine", "preset_dnspod", "preset_alidns"]
+        );
+    }
+
+    #[test]
+    fn missing_filter_uses_the_server_default_without_subscriptions() {
+        let config: ServerConfig = serde_json::from_str(
+            r#"{"upstream":{"providers":[{"id":"test","protocol":"PLAIN","server":"1.1.1.1:53"}]}}"#,
+        )
+        .unwrap();
+        assert!(config.filter.lists.is_empty());
     }
 
     #[test]
@@ -252,6 +350,17 @@ mod tests {
         config.upstream.providers = diting_desktop_api::config::upstream::default_providers();
         config.upstream.providers[0].protocol = "HTTP".to_string();
         assert!(config.normalize(&paths, 1053, false, "0.0.0.0").is_err());
+    }
+
+    #[test]
+    fn legacy_dns_protocol_normalizes_to_plain() {
+        let paths = paths("dns-alias");
+        let mut config = ServerConfig::default();
+        config.upstream.providers[0].protocol = "DNS".to_string();
+
+        config.normalize(&paths, 1053, false, "0.0.0.0").unwrap();
+
+        assert_eq!(config.upstream.providers[0].protocol, "PLAIN");
     }
 
     #[test]

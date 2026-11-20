@@ -43,14 +43,29 @@ class ServerHubPage extends ConsumerWidget {
               cards: [
                 FeatureHubCardData(
                   title: context.l10n.serverUpstreamTitle,
-                  description: upstream.providers.isEmpty
-                      ? context.l10n.serverUpstreamRequired
-                      : context.l10n.serverHubUpstreamSummary(
-                          upstream.providers.length,
-                          serverModeLabel(context, upstream.mode),
-                        ),
+                  description: serverModeLabel(context, upstream.mode),
                   glyph: AppGlyphs.upstream,
                   onTap: () => context.push(ServerRoutes.upstream),
+                ),
+                FeatureHubCardData(
+                  title: context.l10n.serverUpstreamProviders,
+                  description: upstream.providers.isEmpty
+                      ? context.l10n.serverUpstreamRequired
+                      : context.l10n.serverUpstreamShort(
+                          upstream.providers.length,
+                        ),
+                  glyph: AppGlyphs.dns,
+                  onTap: () => context.push(ServerRoutes.upstreamProviders),
+                ),
+                FeatureHubCardData(
+                  title: context.l10n.serverBootstrapSummary,
+                  description: upstream.bootstrap.isEmpty
+                      ? context.l10n.serverBootstrapDefault
+                      : context.l10n.serverBootstrapServerCount(
+                          upstream.bootstrap.length,
+                        ),
+                  glyph: AppGlyphs.language,
+                  onTap: () => context.push(ServerRoutes.upstreamBootstrap),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverFilterTitle,

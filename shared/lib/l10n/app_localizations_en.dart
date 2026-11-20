@@ -15074,8 +15074,7 @@ class AppL10nEn extends AppL10n {
   String get serverUpstreamTitle => 'Upstreams and routing';
 
   @override
-  String get serverUpstreamHubHint =>
-      'Configure providers, scheduling and bootstrap';
+  String get serverUpstreamHubHint => 'Adjust upstream scheduling';
 
   @override
   String get serverFilterTitle => 'Filtering rules';
@@ -15270,7 +15269,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverUpstreamProviderNote =>
-      'The first release supports plain DNS, DoT and DoH. Changes use server-specific configuration.';
+      'Choose a built-in normal/express-mode provider or add a custom DNS, DoT or DoH service. Changes use server-specific configuration.';
 
   @override
   String get serverUpstreamModeNote =>
@@ -15295,7 +15294,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverBootstrapNote =>
-      'Custom bootstrap entries are display-only for now; the built-in Rust resolver resolves upstream hostnames.';
+      'Bootstrap resolves DoT/DoH upstream hostnames. When enabled with no selections, the server uses its default bootstrap.';
 
   @override
   String get serverModeSingle => 'Single provider';

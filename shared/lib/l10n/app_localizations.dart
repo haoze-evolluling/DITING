@@ -26048,7 +26048,7 @@ abstract class AppL10n {
   /// No description provided for @serverUpstreamHubHint.
   ///
   /// In zh, this message translates to:
-  /// **'配置服务商、调度方式与 Bootstrap'**
+  /// **'调整上游调度方式'**
   String get serverUpstreamHubHint;
 
   /// No description provided for @serverFilterTitle.
@@ -26408,7 +26408,7 @@ abstract class AppL10n {
   /// No description provided for @serverUpstreamProviderNote.
   ///
   /// In zh, this message translates to:
-  /// **'首版支持明文 DNS、DoT 与 DoH；修改会写入服务器独立配置。'**
+  /// **'可选择普通/极速模式的内置服务商，也可添加自定义 DNS、DoT 或 DoH 服务；修改会写入服务器独立配置。'**
   String get serverUpstreamProviderNote;
 
   /// No description provided for @serverUpstreamModeNote.
@@ -26450,7 +26450,7 @@ abstract class AppL10n {
   /// No description provided for @serverBootstrapNote.
   ///
   /// In zh, this message translates to:
-  /// **'当前自定义 Bootstrap 仅展示；首版由 Rust 内置解析器解析上游主机名。'**
+  /// **'Bootstrap 用于解析 DoT/DoH 上游主机名；启用但未选择任何项时由服务端使用默认 Bootstrap。'**
   String get serverBootstrapNote;
 
   /// No description provided for @serverModeSingle.

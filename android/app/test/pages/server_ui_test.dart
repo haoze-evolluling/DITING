@@ -46,21 +46,38 @@ void main() {
 
     expect(find.text('配置中心'), findsOneWidget);
     expect(find.text('解析服务'), findsOneWidget);
-    for (final title in ['上游与调度', '过滤规则', '缓存', '日志记录', '服务器设置', '外观', '关于']) {
+    for (final title in [
+      '上游与调度',
+      '服务商',
+      'Bootstrap 摘要',
+      '过滤规则',
+      '缓存',
+      '日志记录',
+      '服务器设置',
+      '外观',
+      '关于',
+    ]) {
       expect(find.text(title), findsOneWidget, reason: '缺少配置入口 $title');
     }
-    expect(find.textContaining('2 个服务商'), findsOneWidget);
+    expect(find.text('2 个上游'), findsOneWidget);
+    expect(find.text('3 个服务器'), findsOneWidget);
     expect(find.textContaining('保留 7 天'), findsOneWidget);
 
     final upstream = tester.getTopLeft(card('上游与调度'));
+    final providers = tester.getTopLeft(card('服务商'));
+    final bootstrap = tester.getTopLeft(card('Bootstrap 摘要'));
     final filter = tester.getTopLeft(card('过滤规则'));
     final cache = tester.getTopLeft(card('缓存'));
     final log = tester.getTopLeft(card('日志记录'));
-    expect(filter.dx, greaterThan(upstream.dx));
-    expect(filter.dy, closeTo(upstream.dy, 0.5));
+    expect(providers.dx, greaterThan(upstream.dx));
+    expect(providers.dy, closeTo(upstream.dy, 0.5));
+    expect(bootstrap.dx, closeTo(upstream.dx, 0.5));
+    expect(bootstrap.dy, greaterThan(upstream.dy));
+    expect(filter.dx, closeTo(providers.dx, 0.5));
+    expect(filter.dy, closeTo(bootstrap.dy, 0.5));
     expect(cache.dx, closeTo(upstream.dx, 0.5));
-    expect(cache.dy, greaterThan(upstream.dy));
-    expect(log.dx, closeTo(filter.dx, 0.5));
+    expect(cache.dy, greaterThan(bootstrap.dy));
+    expect(log.dx, closeTo(providers.dx, 0.5));
     expect(log.dy, closeTo(cache.dy, 0.5));
 
     final settings = tester.getRect(card('服务器设置'));
@@ -232,6 +249,54 @@ void main() {
     await tester.tap(find.text('上游与调度'));
     await tester.pumpAndSettle();
     expect(find.text('当前调度'), findsOneWidget);
+  });
+
+  testWidgets('上游页面内联切换调度方式', (tester) async {
+    final client = FakeServerClient();
+    await pumpServer(tester, ServerRoutes.upstream, client: client);
+
+    expect(find.text('当前调度'), findsOneWidget);
+    await tester.tap(find.text('主备切换'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('并行竞速'));
+    await tester.pumpAndSettle();
+
+    final saved = await client.getConfig();
+    expect(saved.upstream.mode, 'parallel_race');
+    expect(find.text('并行竞速'), findsOneWidget);
+  });
+
+  testWidgets('服务商预设按服务器协议写入配置', (tester) async {
+    final client = FakeServerClient();
+    await pumpServer(tester, ServerRoutes.upstreamProviders, client: client);
+
+    await tester.tap(find.byTooltip('添加服务商'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(SearchField), '101.226.4.6');
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.ancestor(of: find.text('360'), matching: find.byType(ListItem)),
+    );
+    await tester.pumpAndSettle();
+
+    final saved = await client.getConfig();
+    expect(saved.upstream.providers, hasLength(3));
+    expect(saved.upstream.providers.last.protocol, 'PLAIN');
+    expect(saved.upstream.providers.last.server, '101.226.4.6:53');
+  });
+
+  testWidgets('Bootstrap 预设直接写入服务器配置', (tester) async {
+    final client = FakeServerClient();
+    await pumpServer(tester, ServerRoutes.upstreamBootstrap, client: client);
+
+    await tester.tap(find.text('阿里云'));
+    await tester.pumpAndSettle();
+
+    final saved = await client.getConfig();
+    expect(
+      saved.upstream.bootstrap.map((entry) => entry.id),
+      isNot(contains('preset_alidns')),
+    );
   });
 
   for (final (modeLabel, homeTitle) in [

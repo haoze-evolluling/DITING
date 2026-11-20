@@ -10,9 +10,9 @@ import 'package:diting_android/pages/server/server_logs_page.dart';
 import 'package:diting_android/pages/server/server_query_log_page.dart';
 import 'package:diting_android/pages/server/server_settings_page.dart';
 import 'package:diting_android/pages/server/server_shell.dart';
+import 'package:diting_android/pages/server/server_upstream_providers_page.dart';
 import 'package:diting_android/pages/server/server_upstream_page.dart';
 import 'package:diting_android/pages/server/server_upstream_bootstrap_page.dart';
-import 'package:diting_android/pages/server/server_upstream_scheduling_page.dart';
 import 'package:diting_shared/routes/page.dart';
 import 'package:diting_shared/shell/branch_transition_shell.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -24,7 +24,7 @@ abstract final class ServerRoutes {
   static const hub = '/server/hub';
   static const logs = '/server/logs';
   static const upstream = '/server/upstream';
-  static const upstreamScheduling = '/server/upstream/scheduling';
+  static const upstreamProviders = '/server/upstream/providers';
   static const upstreamBootstrap = '/server/upstream/bootstrap';
   static const filter = '/server/filter';
   static const filterRules = '/server/filter/rules';
@@ -82,7 +82,7 @@ List<RouteBase> serverRoutes() => [
     ],
   ),
   _leaf(ServerRoutes.upstream, const ServerUpstreamPage()),
-  _leaf(ServerRoutes.upstreamScheduling, const ServerUpstreamSchedulingPage()),
+  _leaf(ServerRoutes.upstreamProviders, const ServerUpstreamProvidersPage()),
   _leaf(ServerRoutes.upstreamBootstrap, const ServerUpstreamBootstrapPage()),
   _leaf(ServerRoutes.filter, const ServerFilterPage()),
   _leaf(ServerRoutes.filterRules, const ServerFilterRulesPage()),
