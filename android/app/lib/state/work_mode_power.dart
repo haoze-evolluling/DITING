@@ -23,8 +23,13 @@ class PowerNotifier extends Notifier<PowerState> {
 
   bool get _isExpress => ref.read(workModeProvider) == AppWorkMode.express;
 
+  /// Normal mode, but through root instead of `VpnService`.
+  bool get _isRoot => !_isExpress && ref.read(rootDnsTakeoverProvider);
+
   VpnController get _controller => _isExpress
       ? ref.read(expressVpnControllerProvider)
+      : _isRoot
+      ? ref.read(rootDnsControllerProvider)
       : ref.read(vpnControllerProvider);
 
   @override
@@ -40,6 +45,8 @@ class PowerNotifier extends Notifier<PowerState> {
     final settings = ref.read(legacySettingsProvider);
     final persisted = _isExpress
         ? settings.expressVpnRunning
+        : _isRoot
+        ? settings.rootDnsRunning
         : settings.vpnRunning;
     if (persisted) {
       _restoreOnLaunch =
@@ -57,9 +64,12 @@ class PowerNotifier extends Notifier<PowerState> {
     // Capture the dataset before awaiting: a concurrent switch must not write it.
     final mode = ref.read(workModeProvider);
     final express = mode == AppWorkMode.express;
+    final root = !express && ref.read(rootDnsTakeoverProvider);
     // Resolved before the await, so a mode switch cannot redirect this round trip.
     final controller = express
         ? ref.read(expressVpnControllerProvider)
+        : root
+        ? ref.read(rootDnsControllerProvider)
         : ref.read(vpnControllerProvider);
     final settings = ref.read(legacySettingsProvider);
     // One shot, consumed even when the status call fails.
@@ -70,6 +80,7 @@ class PowerNotifier extends Notifier<PowerState> {
       if (_disposed) return;
       if (restore &&
           !status.running &&
+          !status.starting &&
           !status.reclaiming &&
           ref.read(workModeProvider) == mode) {
         // The service died with the process (reboot, system kill); the user never stopped it.
@@ -77,20 +88,31 @@ class PowerNotifier extends Notifier<PowerState> {
         await _start();
         return;
       }
+      // Starting counts: root mode installs rules before it reports running, and treating that
+      // window as "stopped" would cancel the poll just as the service comes up.
+      final starting = status.starting && !status.running;
       // While reclaiming the user still wants the tunnel; the flag drives the next launch.
-      final wanted = status.running || status.reclaiming;
+      final wanted = status.running || status.reclaiming || starting;
       if (express) {
         settings.setExpressVpnRunning(wanted);
+      } else if (root) {
+        settings.setRootDnsRunning(wanted);
       } else {
         settings.setVpnRunning(wanted);
       }
       if (status.error != null && !status.running) {
         lastError = status.error;
         state = PowerState.error;
+      } else if (status.running) {
+        state = PowerState.running;
+      } else if (starting) {
+        state = PowerState.starting;
       } else {
-        state = status.running ? PowerState.running : PowerState.stopped;
+        state = PowerState.stopped;
       }
-      _guardTimer?.cancel();
+      // The start watchdog must keep running until the native side either reports running or
+      // fails; a settled state clears it.
+      if (!starting) _guardTimer?.cancel();
       ref
           .read(serviceStatsProvider.notifier)
           .applyNative(
@@ -98,8 +120,9 @@ class PowerNotifier extends Notifier<PowerState> {
             running: status.running,
             startedAt: status.startedAt,
           );
-      // Keeps polling while reclaiming so the reconnect shows up without a resume.
-      if (status.running || status.reclaiming) {
+      // Keeps polling while reclaiming or still starting so the transition shows up without a
+      // resume.
+      if (status.running || status.reclaiming || starting) {
         _ensureStatsPolling();
       } else {
         _cancelStatsPolling();
@@ -196,6 +219,7 @@ class PowerNotifier extends Notifier<PowerState> {
       return;
     }
     final express = mode == AppWorkMode.express;
+    final root = !express && ref.read(rootDnsTakeoverProvider);
     // One DNS config for every mode. The UI writes these keys to `dns_vpn_prefs` regardless of the
     // work mode, so reading the express dataset container here made the engine (and the
     // notification) ignore every provider/resolution change made in the app.
@@ -215,7 +239,27 @@ class PowerNotifier extends Notifier<PowerState> {
     }
     final controller = express
         ? ref.read(expressVpnControllerProvider)
+        : root
+        ? ref.read(rootDnsControllerProvider)
         : ref.read(vpnControllerProvider);
+    if (root) {
+      // Root takeover is DNS only: the proxy, app firewall and MITM all need the TUN data plane.
+      final result = await controller.start(
+        VpnStartRequest(dnsConfig: buildDnsConfig(settings).encode(settings)),
+      );
+      if (_disposed) return;
+      if (!result.started) {
+        _fail(result.error ?? currentL10n.workModeVpnStartFailed);
+        return;
+      }
+      settings.setRootDnsRunning(true);
+      // The service schedules and then loads rules, starts the engine and installs rules; keep
+      // the starting state (and its 30 s watchdog) until a status poll reports running.
+      state = PowerState.starting;
+      _ensureStatsPolling();
+      Timer(const Duration(milliseconds: 700), syncStatus);
+      return;
+    }
     final proxy = await ref.read(outboundProxyStoreProvider).read();
     if (_disposed) return;
     // A half-filled config fails validation and is dropped rather than failing the start.
@@ -280,6 +324,7 @@ class PowerNotifier extends Notifier<PowerState> {
 
   Future<void> stop() async {
     final express = _isExpress;
+    final root = _isRoot;
     _restoreOnLaunch = false;
     _cancelStatsPolling();
     _pendingPermissionStart = false;
@@ -295,6 +340,8 @@ class PowerNotifier extends Notifier<PowerState> {
     final settings = ref.read(legacySettingsProvider);
     if (express) {
       settings.setExpressVpnRunning(false);
+    } else if (root) {
+      settings.setRootDnsRunning(false);
     } else {
       settings.setVpnRunning(false);
     }
@@ -309,6 +356,7 @@ class PowerNotifier extends Notifier<PowerState> {
     final settings = ref.read(legacySettingsProvider);
     settings.setVpnRunning(false);
     settings.setExpressVpnRunning(false);
+    settings.setRootDnsRunning(false);
     state = PowerState.error;
   }
 

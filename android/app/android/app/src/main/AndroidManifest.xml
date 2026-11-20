@@ -168,6 +168,16 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="vpn" />
         </service>
+        <!-- Normal mode's root variant: an engine DNS listener plus iptables redirection, with no
+             VpnService and therefore no VPN consent. -->
+        <service
+            android:name=".root.RootDnsService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="dns_server" />
+        </service>
         <!-- Server mode: supervises the standalone Rust LAN DNS process. -->
         <service
             android:name=".server.ServerDnsService"

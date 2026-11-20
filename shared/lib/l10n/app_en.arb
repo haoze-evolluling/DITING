@@ -874,6 +874,25 @@
   "foregroundBatteryFooter": "With battery optimisation off, the system is less likely to reclaim the service process.",
   "foregroundIgnoreBattery": "Ignore battery optimisation",
   "foregroundIgnoreBatterySubtitle": "Ask to whitelist this app in the system",
+  "rootTakeoverSection": "Root takeover (no VPN)",
+  "rootTakeoverTitle": "Root DNS takeover",
+  "rootTakeoverSubtitle": "Redirect device DNS through root without VPN permission",
+  "rootTakeoverNormalOnly": "Normal mode only",
+  "rootTakeoverFooter": "When on, normal mode uses root to redirect device port-53 queries to the local DNS engine. App routing, HTTPS inspection and the outbound proxy need the VPN tunnel and are unavailable in this mode.",
+  "rootTakeoverProbeTitle": "Check root permission",
+  "rootTakeoverProbeChecking": "Checking root…",
+  "rootTakeoverProbeAvailable": "Root permission granted",
+  "rootTakeoverProbeUnavailable": "Root permission not granted: {message}",
+  "@rootTakeoverProbeUnavailable": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "rootTakeoverProbeUnavailableNoReason": "Root permission not granted",
+  "rootTakeoverProbeUnsupported": "Root takeover is not supported on this platform",
+  "rootTakeoverRunning": "Root DNS takeover is running",
   "dayNightTitle": "Day/night mode",
   "dayNightFollowSystemDescription": "Switches together with the system dark mode",
   "dayNightFooter": "Pure black only applies in dark mode; its switch lives in the Interface group of Appearance.",

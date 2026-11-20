@@ -7,8 +7,13 @@ import 'package:flutter/services.dart';
 const vpnChannelName = 'com.haoze.diting/vpn';
 const expressVpnChannelName = 'com.haoze.diting/express_vpn';
 
-/// The tunnel-like services that share the same lifecycle methods.
-const dataPlaneChannelNames = [vpnChannelName, expressVpnChannelName];
+/// The tunnel-like services that share the same lifecycle methods. The root channel is the
+/// normal mode's no-VPN variant; its `reloadRules` no-ops when nothing is running.
+const dataPlaneChannelNames = [
+  vpnChannelName,
+  expressVpnChannelName,
+  'com.haoze.diting/root_dns',
+];
 
 /// Best-effort in-place rule reload for whichever data plane is running, after a subscription or
 /// rule change. The non-running mode's channel simply no-ops. A missing platform (desktop/tests)
@@ -84,6 +89,7 @@ class VpnStatus {
   const VpnStatus({
     required this.running,
     required this.persisted,
+    this.starting = false,
     this.reclaiming = false,
     this.error,
     this.startedAt,
@@ -92,6 +98,11 @@ class VpnStatus {
 
   final bool running;
   final bool persisted;
+
+  /// Native start is still in progress (root mode loads rules and installs rules before it
+  /// reports running). The tunnel services answer `running` almost immediately, so this is false
+  /// there.
+  final bool starting;
 
   /// Another VPN took the slot and the service waits to reconnect; [running] is false meanwhile.
   final bool reclaiming;
@@ -110,6 +121,7 @@ class VpnStatus {
     return VpnStatus(
       running: map['running'] == true,
       persisted: map['persisted'] == true,
+      starting: map['starting'] == true,
       reclaiming: map['reclaiming'] == true,
       error: map['error'] as String?,
       startedAt: epochMillis(map['startedAt']),

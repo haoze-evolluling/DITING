@@ -19,12 +19,14 @@ import 'package:flutter_test/flutter_test.dart';
 import '../support/fake_vpn_controller.dart';
 
 part 'tunnel_state_test_on_demand.dart';
+part 'tunnel_state_test_root.dart';
 
 void main() {
   group('启动看门狗', _powerGuard);
   group('极速模式', _expressMode);
   group('引擎计数', _engineStats);
   group('按需连接', _onDemand);
+  group('Root 免 VPN 接管', _rootTakeover);
 }
 
 void _powerGuard() {

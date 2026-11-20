@@ -5220,6 +5220,78 @@ abstract class AppL10n {
   /// **'请求把本应用加入系统白名单'**
   String get foregroundIgnoreBatterySubtitle;
 
+  /// No description provided for @rootTakeoverSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'Root 免 VPN 接管'**
+  String get rootTakeoverSection;
+
+  /// No description provided for @rootTakeoverTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Root DNS 接管'**
+  String get rootTakeoverTitle;
+
+  /// No description provided for @rootTakeoverSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'通过 Root 重定向本机 DNS，无需 VPN 权限'**
+  String get rootTakeoverSubtitle;
+
+  /// No description provided for @rootTakeoverNormalOnly.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅普通模式可用'**
+  String get rootTakeoverNormalOnly;
+
+  /// No description provided for @rootTakeoverFooter.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启后，普通模式会通过 Root 将本机 53 端口查询重定向到本地 DNS。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。'**
+  String get rootTakeoverFooter;
+
+  /// No description provided for @rootTakeoverProbeTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'检测 Root 权限'**
+  String get rootTakeoverProbeTitle;
+
+  /// No description provided for @rootTakeoverProbeChecking.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在检测 Root…'**
+  String get rootTakeoverProbeChecking;
+
+  /// No description provided for @rootTakeoverProbeAvailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'已获得 Root 权限'**
+  String get rootTakeoverProbeAvailable;
+
+  /// No description provided for @rootTakeoverProbeUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'未获得 Root 权限：{message}'**
+  String rootTakeoverProbeUnavailable(String message);
+
+  /// No description provided for @rootTakeoverProbeUnavailableNoReason.
+  ///
+  /// In zh, this message translates to:
+  /// **'未获得 Root 权限'**
+  String get rootTakeoverProbeUnavailableNoReason;
+
+  /// No description provided for @rootTakeoverProbeUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前平台不支持 Root 接管'**
+  String get rootTakeoverProbeUnsupported;
+
+  /// No description provided for @rootTakeoverRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'Root DNS 接管运行中'**
+  String get rootTakeoverRunning;
+
   /// No description provided for @dayNightTitle.
   ///
   /// In zh, this message translates to:

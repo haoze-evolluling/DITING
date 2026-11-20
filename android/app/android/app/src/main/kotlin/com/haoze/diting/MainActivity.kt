@@ -18,6 +18,7 @@ import com.haoze.diting.platform.StorageMaintenanceBridge
 import com.haoze.diting.platform.TroubleshootingLogBridge
 import com.haoze.diting.platform.UpdateBridge
 import com.haoze.diting.proxy.OutboundProxyBridge
+import com.haoze.diting.root.RootDnsBridge
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
@@ -41,6 +42,7 @@ class MainActivity : FlutterActivity() {
         vpnBridge = VpnBridge(this, messenger)
         expressVpnBridge = ExpressVpnBridge(this, messenger)
         ServerBridge(applicationContext, messenger).register()
+        RootDnsBridge(applicationContext, messenger).register()
         RuleIndexBridge(applicationContext, messenger)
         RuleTestBridge(applicationContext, messenger)
         BlockPauseBridge(applicationContext, messenger)

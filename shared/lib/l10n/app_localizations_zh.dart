@@ -2753,6 +2753,45 @@ class AppL10nZh extends AppL10n {
   String get foregroundIgnoreBatterySubtitle => '请求把本应用加入系统白名单';
 
   @override
+  String get rootTakeoverSection => 'Root 免 VPN 接管';
+
+  @override
+  String get rootTakeoverTitle => 'Root DNS 接管';
+
+  @override
+  String get rootTakeoverSubtitle => '通过 Root 重定向本机 DNS，无需 VPN 权限';
+
+  @override
+  String get rootTakeoverNormalOnly => '仅普通模式可用';
+
+  @override
+  String get rootTakeoverFooter =>
+      '开启后，普通模式会通过 Root 将本机 53 端口查询重定向到本地 DNS。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。';
+
+  @override
+  String get rootTakeoverProbeTitle => '检测 Root 权限';
+
+  @override
+  String get rootTakeoverProbeChecking => '正在检测 Root…';
+
+  @override
+  String get rootTakeoverProbeAvailable => '已获得 Root 权限';
+
+  @override
+  String rootTakeoverProbeUnavailable(String message) {
+    return '未获得 Root 权限：$message';
+  }
+
+  @override
+  String get rootTakeoverProbeUnavailableNoReason => '未获得 Root 权限';
+
+  @override
+  String get rootTakeoverProbeUnsupported => '当前平台不支持 Root 接管';
+
+  @override
+  String get rootTakeoverRunning => 'Root DNS 接管运行中';
+
+  @override
   String get dayNightTitle => '日夜模式';
 
   @override

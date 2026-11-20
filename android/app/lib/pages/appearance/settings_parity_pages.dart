@@ -12,6 +12,8 @@ import 'package:diting_android/pages/appearance/appearance_inputs.dart';
 import 'package:diting_android/pages/appearance/notification_stats_section.dart';
 import 'package:diting_android/state/notification_stats_providers.dart';
 import 'package:diting_android/state/permission_providers.dart';
+import 'package:diting_android/state/root_dns_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -386,6 +388,8 @@ class SettingsBackgroundPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(foregroundBackgroundProvider);
     final notifier = ref.read(foregroundBackgroundProvider.notifier);
+    final normalMode = ref.watch(workModeProvider) == AppWorkMode.normal;
+    final rootTakeover = ref.watch(rootDnsTakeoverProvider);
     return CommonScaffold(
       title: context.l10n.foregroundTitle,
       body: PageBody(
@@ -401,6 +405,30 @@ class SettingsBackgroundPage extends ConsumerWidget {
                 value: state.hideFromRecents,
                 onChanged: notifier.setHideFromRecents,
               ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.rootTakeoverSection,
+            footer: context.l10n.rootTakeoverFooter,
+            items: [
+              ListItem.toggle(
+                title: Text(context.l10n.rootTakeoverTitle),
+                subtitle: Text(
+                  normalMode
+                      ? context.l10n.rootTakeoverSubtitle
+                      : context.l10n.rootTakeoverNormalOnly,
+                ),
+                leading: const GlyphIcon(AppGlyphs.shield),
+                value: rootTakeover,
+                onChanged: normalMode
+                    ? (value) =>
+                          ref.read(rootDnsTakeoverProvider.notifier).set(value)
+                    : null,
+              ),
+              if (normalMode && rootTakeover)
+                _RootTakeoverProbeRow(
+                  onRefresh: () => ref.invalidate(rootDnsProbeProvider),
+                ),
             ],
           ),
           generateSection(
@@ -456,6 +484,40 @@ class SettingsBackgroundPage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Root probe status plus a tap-to-retry action. The probe runs only while the takeover switch is
+/// on, so a normal settings visit never invokes `su`.
+class _RootTakeoverProbeRow extends ConsumerWidget {
+  const _RootTakeoverProbeRow({required this.onRefresh});
+
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final running =
+        ref.watch(powerProvider).isRunning &&
+        ref.watch(rootDnsTakeoverProvider);
+    final probe = ref.watch(rootDnsProbeProvider);
+    final subtitle = running
+        ? l10n.rootTakeoverRunning
+        : probe.when(
+            data: (value) => value.available
+                ? l10n.rootTakeoverProbeAvailable
+                : value.message.isEmpty
+                ? l10n.rootTakeoverProbeUnavailableNoReason
+                : l10n.rootTakeoverProbeUnavailable(value.message),
+            loading: () => l10n.rootTakeoverProbeChecking,
+            error: (_, _) => l10n.rootTakeoverProbeUnsupported,
+          );
+    return NavEntryRow(
+      glyph: AppGlyphs.refresh,
+      title: l10n.rootTakeoverProbeTitle,
+      subtitle: subtitle,
+      onPressed: onRefresh,
     );
   }
 }

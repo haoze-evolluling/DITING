@@ -161,9 +161,12 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
   }
 
   VpnController _controller() {
-    final express = ref.read(workModeProvider) == AppWorkMode.express;
-    return express
-        ? ref.read(expressVpnControllerProvider)
+    final mode = ref.read(workModeProvider);
+    if (mode == AppWorkMode.express) {
+      return ref.read(expressVpnControllerProvider);
+    }
+    return ref.read(rootDnsTakeoverProvider)
+        ? ref.read(rootDnsControllerProvider)
         : ref.read(vpnControllerProvider);
   }
 
@@ -171,9 +174,9 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
   /// not a missing channel.
   SpeedSource _speedSourceOf(VpnTrafficRates rates) {
     if (!rates.unsupported) return SpeedSource.available;
-    return ref.read(workModeProvider) == AppWorkMode.express
-        ? SpeedSource.expressMode
-        : SpeedSource.noNativeChannel;
+    final mode = ref.read(workModeProvider);
+    if (mode == AppWorkMode.express) return SpeedSource.expressMode;
+    return SpeedSource.noNativeChannel;
   }
 }
 

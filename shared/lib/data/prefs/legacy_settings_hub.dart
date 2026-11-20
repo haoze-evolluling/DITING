@@ -109,4 +109,23 @@ extension LegacyHubSettings on LegacySettings {
         for (final rule in rules)
           if (rule.trim().isNotEmpty) rule.trim(),
       });
+
+  /// Normal mode's root variant: redirect DNS through a root-owned iptables chain instead of a
+  /// VpnService tunnel. Global on purpose — it is a UI preference, not part of the DNS dataset.
+  bool get rootDnsTakeoverEnabled =>
+      _bool(LegacySettings.uiContainer, 'root_dns_takeover_enabled', false);
+
+  void setRootDnsTakeoverEnabled(bool value) => _store.putBool(
+    LegacySettings.uiContainer,
+    'root_dns_takeover_enabled',
+    value,
+  );
+
+  /// Kept separate from `vpn_running`: switching takeover method must not make the app believe a
+  /// tunnel is still up.
+  bool get rootDnsRunning =>
+      _bool(LegacySettings.uiContainer, 'root_dns_running', false);
+
+  void setRootDnsRunning(bool value) =>
+      _store.putBool(LegacySettings.uiContainer, 'root_dns_running', value);
 }

@@ -10,6 +10,7 @@ import 'package:diting_android/data/notifications/notification_status_text.dart'
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/data/vpn/power_state.dart';
+import 'package:diting_android/data/vpn/root_dns_bridge.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/outbound_proxy_providers.dart';
@@ -101,6 +102,39 @@ final vpnControllerProvider = Provider<VpnController>(
 final expressVpnControllerProvider = Provider<VpnController>(
   (ref) =>
       MethodChannelVpnController(channel: MethodChannel(expressVpnChannelName)),
+);
+
+/// Normal mode's no-VPN path; selected only while [rootDnsTakeoverProvider] is on.
+final rootDnsControllerProvider = Provider<VpnController>(
+  (ref) => MethodChannelRootDnsController(),
+);
+
+/// Whether normal mode should take DNS over through root instead of `VpnService`.
+class RootDnsTakeoverNotifier extends Notifier<bool> {
+  @override
+  bool build() => ref.read(legacySettingsProvider).rootDnsTakeoverEnabled;
+
+  /// Switching the transport while something runs would leave the old service up, so the running
+  /// data plane is stopped first. `PowerNotifier.stop` still sees the previous value and therefore
+  /// stops the backend that is actually running.
+  Future<void> set(bool value) async {
+    if (value == state) return;
+    if (ref.read(workModeProvider) == AppWorkMode.normal) {
+      final power = ref.read(powerProvider);
+      if (power.isRunning || power.isBusy) {
+        await ref.read(powerProvider.notifier).stop();
+      }
+    }
+    state = value;
+    ref.read(legacySettingsProvider).setRootDnsTakeoverEnabled(value);
+    ref.read(legacySettingsRevisionProvider.notifier).bump();
+  }
+
+  Future<void> toggle() => set(!state);
+}
+
+final rootDnsTakeoverProvider = NotifierProvider<RootDnsTakeoverNotifier, bool>(
+  RootDnsTakeoverNotifier.new,
 );
 
 /// Service statistics shared by the tunnel and the log page.

@@ -21,17 +21,29 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
   final primary = ref.watch(primaryProviderProvider);
   final subs = ref
       .watch(subscriptionEntriesProvider)
-      .maybeWhen(data: (value) => value, orElse: () => const <SubscriptionEntry>[]);
+      .maybeWhen(
+        data: (value) => value,
+        orElse: () => const <SubscriptionEntry>[],
+      );
 
-  var granted = _criticalPermissions.length;
+  // Root takeover never asks for the VPN consent; scoring it as missing would report a healthy
+  // setup as broken. Root availability is checked at start (and on the settings page) instead.
+  final rootTakeover =
+      ref.watch(workModeProvider) == AppWorkMode.normal &&
+      ref.watch(rootDnsTakeoverProvider);
+  final critical = rootTakeover
+      ? const [AppPermission.notification]
+      : _criticalPermissions;
+
+  var granted = critical.length;
   try {
     final perms = await ref.watch(permissionStatesProvider.future);
-    granted = _criticalPermissions
+    granted = critical
         .where((permission) => perms.states[permission] == true)
         .length;
   } catch (_) {
     // 权限渠道不可用：按已授予处理，宁可少报也不谎报缺权限。
-    granted = _criticalPermissions.length;
+    granted = critical.length;
   }
 
   var totalRules = 0;
@@ -48,7 +60,7 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
   return computeHealth(
     HealthInput(
       criticalPermissionsGranted: granted,
-      criticalPermissionsTotal: _criticalPermissions.length,
+      criticalPermissionsTotal: critical.length,
       running: core.isRunning,
       hasProvider: primary != null,
       totalRules: totalRules,

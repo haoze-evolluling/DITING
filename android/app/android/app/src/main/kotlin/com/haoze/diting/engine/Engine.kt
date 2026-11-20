@@ -50,6 +50,22 @@ class Engine : TunnelEngine, AutoCloseable {
 
     override fun isRunning(): Boolean = nativeIsRunning(handle)
 
+    // ---- standalone DNS server --------------------------------------------------------------
+
+    /// Starts the TUN-free DNS server on [port] (UDP + TCP, IPv4, plus IPv6 when available).
+    ///
+    /// Used by the root no-VPN takeover: the engine keeps running as the app UID and root only
+    /// redirects local port-53 traffic into this listener. Throws with the bind error text.
+    fun startStandalone(port: Int) {
+        val error = nativeStartStandalone(handle, port.toLong())
+        if (error != null) throw IllegalStateException(error)
+    }
+
+    fun stopStandalone() = nativeStopStandalone(handle)
+
+    /// The port the standalone server is listening on; 0 when it is not running.
+    fun standalonePort(): Int = nativeStandalonePort(handle).toInt()
+
     /// Releases the native engine. Idempotent: the second call is a no-op.
     override fun close() {
         if (released.compareAndSet(false, true)) {
@@ -263,6 +279,12 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeFlushLogs(handle: Long)
 
     private external fun nativeIsRunning(handle: Long): Boolean
+
+    private external fun nativeStartStandalone(handle: Long, port: Long): String?
+
+    private external fun nativeStopStandalone(handle: Long)
+
+    private external fun nativeStandalonePort(handle: Long): Long
 
     private external fun nativeApplyDnsConfig(handle: Long, json: String): String?
 

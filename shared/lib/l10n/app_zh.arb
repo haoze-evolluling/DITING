@@ -1472,6 +1472,25 @@
   "foregroundBatteryFooter": "关闭电池优化后，系统在后台更不容易回收服务进程。",
   "foregroundIgnoreBattery": "忽略电池优化",
   "foregroundIgnoreBatterySubtitle": "请求把本应用加入系统白名单",
+  "rootTakeoverSection": "Root 免 VPN 接管",
+  "rootTakeoverTitle": "Root DNS 接管",
+  "rootTakeoverSubtitle": "通过 Root 重定向本机 DNS，无需 VPN 权限",
+  "rootTakeoverNormalOnly": "仅普通模式可用",
+  "rootTakeoverFooter": "开启后，普通模式会通过 Root 将本机 53 端口查询重定向到本地 DNS。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。",
+  "rootTakeoverProbeTitle": "检测 Root 权限",
+  "rootTakeoverProbeChecking": "正在检测 Root…",
+  "rootTakeoverProbeAvailable": "已获得 Root 权限",
+  "rootTakeoverProbeUnavailable": "未获得 Root 权限：{message}",
+  "@rootTakeoverProbeUnavailable": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "rootTakeoverProbeUnavailableNoReason": "未获得 Root 权限",
+  "rootTakeoverProbeUnsupported": "当前平台不支持 Root 接管",
+  "rootTakeoverRunning": "Root DNS 接管运行中",
   "dayNightTitle": "日夜模式",
   "dayNightFollowSystemDescription": "系统切换深色时一起切换",
   "dayNightFooter": "纯黑只在深色模式下生效，开关在「外观设置」的界面显示组里。",

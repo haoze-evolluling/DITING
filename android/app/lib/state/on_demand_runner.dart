@@ -117,10 +117,15 @@ class OnDemandRunner {
         }
         await _ref.read(powerProvider.notifier).toggle();
         final after = _ref.read(powerProvider);
-        // `toggle` returns once the start is scheduled; `starting` means the system consent
-        // dialog is still open and the real answer arrives through `onPrepareResult`.
+        // `toggle` returns once the start is scheduled; for a tunnel, `starting` means the system
+        // consent dialog is still open and the real answer arrives through `onPrepareResult`.
+        // Root takeover has no dialog and settles on its own.
+        final rootStarting =
+            after == PowerState.starting &&
+            _ref.read(workModeProvider) == AppWorkMode.normal &&
+            _ref.read(rootDnsTakeoverProvider);
         return settle(
-          after.isRunning
+          after.isRunning || rootStarting
               ? OnDemandOutcome.started
               : OnDemandOutcome.needsConsent,
         );

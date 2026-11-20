@@ -3,6 +3,7 @@ package com.haoze.diting.control
 import android.content.Context
 import android.content.SharedPreferences
 import com.haoze.diting.automation.AutomationContract
+import com.haoze.diting.engine.TunnelEngine
 import com.haoze.diting.net.EngineAccess
 
 /// R4: push the pause deadline and allowlist-only flag from the shared automation prefs onto the
@@ -19,6 +20,12 @@ internal object BlockPauseLink {
 
     fun apply(context: Context) {
         val engine = EngineAccess.current() ?: return
+        applyTo(context, engine)
+    }
+
+    /// Root DNS starts its engine before the service publishes it through [EngineAccess], so it
+    /// replays the values directly.
+    fun applyTo(context: Context, engine: TunnelEngine) {
         val prefs = prefs(context)
         engine.setBlockPause(prefs.getLong(AutomationContract.KEY_PAUSED_UNTIL_MS, 0L))
         engine.setAllowlistOnly(prefs.getBoolean(AutomationContract.KEY_ALLOWLIST_ONLY, false))

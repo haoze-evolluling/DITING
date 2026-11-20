@@ -52,6 +52,10 @@
 全网络。服务器模式不建隧道，由独立的 `rust/diting-server` 进程复用桌面 DNS 栈，对外提供局域网 DNS、
 过滤、缓存与查询日志。
 
+普通模式另提供 **Root 免 VPN 接管**（可选，需已 Root）：通过 Root 安装 iptables 重定向，把本机
+UDP/TCP 53 查询导向内置 DNS 引擎，全程不申请也不使用 Android VPN 权限。它只接管 DNS；应用分流、
+HTTPS 检查与出站代理仍依赖 VPN 隧道。详见 `docs/development/android-root-dns.md`。
+
 ## 工程结构
 
 ```

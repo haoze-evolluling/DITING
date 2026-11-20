@@ -90,9 +90,13 @@ class _PermissionStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final mode = ref.watch(workModeProvider);
+    // In the root variant there is no VPN consent to request; the settings page reports whether
+    // root is actually available.
+    final rootTakeover =
+        mode == AppWorkMode.normal && ref.watch(rootDnsTakeoverProvider);
     final permissions = switch (mode) {
       AppWorkMode.normal => [
-        _vpnPermission(l10n, l10n.permVpnNormalBody),
+        if (!rootTakeover) _vpnPermission(l10n, l10n.permVpnNormalBody),
         _notificationPermission(l10n),
         _appListPermission(l10n),
         _batteryPermission(l10n, l10n.permBatteryBody),

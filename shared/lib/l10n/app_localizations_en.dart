@@ -2922,6 +2922,48 @@ class AppL10nEn extends AppL10n {
       'Ask to whitelist this app in the system';
 
   @override
+  String get rootTakeoverSection => 'Root takeover (no VPN)';
+
+  @override
+  String get rootTakeoverTitle => 'Root DNS takeover';
+
+  @override
+  String get rootTakeoverSubtitle =>
+      'Redirect device DNS through root without VPN permission';
+
+  @override
+  String get rootTakeoverNormalOnly => 'Normal mode only';
+
+  @override
+  String get rootTakeoverFooter =>
+      'When on, normal mode uses root to redirect device port-53 queries to the local DNS engine. App routing, HTTPS inspection and the outbound proxy need the VPN tunnel and are unavailable in this mode.';
+
+  @override
+  String get rootTakeoverProbeTitle => 'Check root permission';
+
+  @override
+  String get rootTakeoverProbeChecking => 'Checking root…';
+
+  @override
+  String get rootTakeoverProbeAvailable => 'Root permission granted';
+
+  @override
+  String rootTakeoverProbeUnavailable(String message) {
+    return 'Root permission not granted: $message';
+  }
+
+  @override
+  String get rootTakeoverProbeUnavailableNoReason =>
+      'Root permission not granted';
+
+  @override
+  String get rootTakeoverProbeUnsupported =>
+      'Root takeover is not supported on this platform';
+
+  @override
+  String get rootTakeoverRunning => 'Root DNS takeover is running';
+
+  @override
   String get dayNightTitle => 'Day/night mode';
 
   @override

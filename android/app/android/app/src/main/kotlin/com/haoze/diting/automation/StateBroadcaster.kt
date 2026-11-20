@@ -7,6 +7,7 @@ import android.util.Log
 import com.haoze.diting.control.DataPlaneControl
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.normal.DitingVpnService
+import com.haoze.diting.root.RootDnsService
 import com.haoze.diting.server.ServerDnsService
 
 /// 状态广播器（A5）：把当前数据面状态整理后交给 EventNative 生成冻结 JSON，再以签名权限广播。
@@ -25,10 +26,12 @@ object StateBroadcaster {
 
     private fun broadcastInternal(context: Context) {
         val workMode: String = DataPlaneControl.workMode(context)
-        // 三种数据面各自持有 status()，字段名一致（running/reclaiming/persisted/error/startedAt）。
-        val status: Map<String, Any?> = when (workMode) {
-            DataPlaneControl.WORK_MODE_SERVER -> ServerDnsService.status()
-            DataPlaneControl.WORK_MODE_EXPRESS -> ExpressVpnService.status(context)
+        // 各数据面（普通、极速、服务器、Root DNS）各自持有 status()，字段名一致
+        // （running/reclaiming/persisted/error/startedAt）。
+        val status: Map<String, Any?> = when {
+            workMode == DataPlaneControl.WORK_MODE_SERVER -> ServerDnsService.status()
+            workMode == DataPlaneControl.WORK_MODE_EXPRESS -> ExpressVpnService.status(context)
+            DataPlaneControl.usesRootTakeover(context) -> RootDnsService.status(context)
             else -> DitingVpnService.status(context)
         }
         val running: Boolean = status["running"] as? Boolean ?: false
