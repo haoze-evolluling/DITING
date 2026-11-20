@@ -131,6 +131,6 @@ class _HomePageState extends ConsumerState<HomePage>
   String _titleOf(AppWorkMode mode, AppL10n l10n) => switch (mode) {
     AppWorkMode.normal => l10n.homeTitleNormal,
     AppWorkMode.express => l10n.homeTitleExpress,
-    AppWorkMode.server => l10n.workModeServerTitle,
+    AppWorkMode.server => l10n.homeTitleServer,
   };
 }

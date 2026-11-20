@@ -118,62 +118,12 @@ class _TrafficFilterBar extends StatelessWidget {
   }
 }
 
-/// Attribution explainer entry (upstream AttributionBannerCard).
-class _AttributionBanner extends StatelessWidget {
-  const _AttributionBanner({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: CommonCard(
-        onPressed: onTap,
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 10,
-          children: [
-            GlyphIcon(AppGlyphs.info, size: 18, color: colorScheme.warning),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  Text(
-                    context.l10n.trafficWhyDaemonTitle,
-                    style: AppTextRole.rowTitle.of(context),
-                  ),
-                  Text(
-                    context.l10n.trafficWhyDaemonBody,
-                    style: AppTextRole.supportingText.of(context),
-                  ),
-                ],
-              ),
-            ),
-            GlyphIcon(
-              AppGlyphs.chevronForward,
-              size: 18,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// Live rate block: show the native rate when available, otherwise say so. The monitor only
 /// covers the current session, so the label must say "this session".
 class _LiveRateCard extends ConsumerWidget {
-  const _LiveRateCard({required this.windowLabel, required this.showNote});
+  const _LiveRateCard({required this.windowLabel});
 
   final String windowLabel;
-
-  /// Whether to show the note comparing the live rate with the window totals.
-  final bool showNote;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -216,11 +166,6 @@ class _LiveRateCard extends ConsumerWidget {
                           '↑ ${obsFormatBytes(last.up.round())} /s',
                 style: AppTextRole.rowTitle.of(context),
               ),
-              if (showNote)
-                Text(
-                  context.l10n.trafficLiveRateBody(windowLabel),
-                  style: AppTextRole.supportingText.of(context),
-                ),
             ],
           ],
         ),

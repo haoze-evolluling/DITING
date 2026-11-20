@@ -89,7 +89,7 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
     final snapshot = ref.watch(serverControllerProvider);
     final value = snapshot.value;
     return CommonScaffold(
-      title: context.l10n.workModeServerTitle,
+      title: context.l10n.homeTitleServer,
       actions: [
         IconButton(
           tooltip: context.l10n.homeSwitchWorkMode,

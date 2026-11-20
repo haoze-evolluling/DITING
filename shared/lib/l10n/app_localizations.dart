@@ -1220,6 +1220,12 @@ abstract class AppL10n {
   /// **'谛听 · 极速'**
   String get homeTitleExpress;
 
+  /// No description provided for @homeTitleServer.
+  ///
+  /// In zh, this message translates to:
+  /// **'谛听 · DNS 服务'**
+  String get homeTitleServer;
+
   /// No description provided for @logRequestsOverview.
   ///
   /// In zh, this message translates to:

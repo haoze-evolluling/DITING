@@ -208,6 +208,7 @@
   "homeSwitchWorkMode": "Switch work mode",
   "homeTitleNormal": "DITING · Normal",
   "homeTitleExpress": "DITING · Express",
+  "homeTitleServer": "DITING · DNS Service",
   "logRequestsOverview": "Request overview",
   "logTodayRequests": "Requests today",
   "logPassed": "Passed",

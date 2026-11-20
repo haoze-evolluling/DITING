@@ -267,6 +267,7 @@
   "homeSwitchWorkMode": "切换工作模式",
   "homeTitleNormal": "谛听 · 普通",
   "homeTitleExpress": "谛听 · 极速",
+  "homeTitleServer": "谛听 · DNS 服务",
   "logRequestsOverview": "请求概览",
   "logTodayRequests": "今日请求",
   "logPassed": "通过",

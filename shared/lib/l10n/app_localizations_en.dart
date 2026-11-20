@@ -626,6 +626,9 @@ class AppL10nEn extends AppL10n {
   String get homeTitleExpress => 'DITING · Express';
 
   @override
+  String get homeTitleServer => 'DITING · DNS Service';
+
+  @override
   String get logRequestsOverview => 'Request overview';
 
   @override

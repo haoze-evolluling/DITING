@@ -223,6 +223,7 @@ void main() {
     );
     await pumpServer(tester, ServerRoutes.root, client: client);
 
+    expect(find.text('谛听 · DNS 服务'), findsOneWidget);
     expect(find.text('运行状态'), findsOneWidget);
     expect(find.text('正在监听'), findsOneWidget);
     expect(find.text('快捷操作'), findsOneWidget);

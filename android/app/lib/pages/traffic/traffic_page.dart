@@ -3,7 +3,6 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/app_traffic_repository.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/observability/observability_common.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
@@ -35,14 +34,9 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
   SpeedSeriesNotifier? _speed;
   bool _polling = false;
 
-  /// Explanatory tips show on the first visit only; the app bar info button keeps the
-  /// attribution explainer reachable afterwards.
-  late final bool _showTips;
-
   @override
   void initState() {
     super.initState();
-    _showTips = consumeTrafficTips(ref.read(legacyPrefsStoreProvider));
     // Shares the same rate series as the home page; the provider ref-counts it.
     _speed = ref.read(speedSeriesProvider.notifier);
   }
@@ -189,14 +183,7 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
                   ),
                 ),
                 const SizedBox(height: 12),
-                _LiveRateCard(
-                  windowLabel: window.label(context.l10n),
-                  showNote: _showTips,
-                ),
-                if (_showTips) ...[
-                  const SizedBox(height: 10),
-                  _AttributionBanner(onTap: _openAttributionSheet),
-                ],
+                _LiveRateCard(windowLabel: window.label(context.l10n)),
                 const SizedBox(height: 12),
                 _TrafficFilterBar(
                   searchController: _search,

@@ -597,6 +597,9 @@ class AppL10nZh extends AppL10n {
   String get homeTitleExpress => '谛听 · 极速';
 
   @override
+  String get homeTitleServer => '谛听 · DNS 服务';
+
+  @override
   String get logRequestsOverview => '请求概览';
 
   @override
