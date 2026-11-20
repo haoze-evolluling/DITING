@@ -1,5 +1,6 @@
-// Guards the feature-hub taxonomy: six purpose-based sections, four cards each, a balanced total
-// and no card reachable from two places. Express mode keeps only the sections that still apply.
+// Guards the feature-hub taxonomy: six purpose-based sections of four cards plus the 应用流量统计
+// and 日志仪表盘 entries, and no card reachable from two places. Express mode keeps only the
+// sections that still apply.
 
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -10,7 +11,7 @@ void main() {
   final l10n = lookupAppL10n(const Locale('zh'));
   final categories = mockFeatureCategories(l10n);
 
-  test('6 个分类、每类 4 张、共 24 张且每类偶数', () {
+  test('6 个分类共 26 张，应用与网络、数据与维护各补一张入口', () {
     expect(categories.map((category) => category.title).toList(), [
       'DNS 解析',
       '规则与控制',
@@ -20,21 +21,36 @@ void main() {
       '界面与数据',
     ]);
     expect(categories.length, 6);
+    const fiveCardCategories = {'应用与网络', '数据与维护'};
     for (final category in categories) {
       expect(category.cards, isNotEmpty, reason: '${category.title} 不应为空分类');
-      expect(category.cards.length, 4, reason: '${category.title} 应为 4 张卡片');
-      expect(category.cards.length.isEven, isTrue);
+      expect(
+        category.cards.length,
+        fiveCardCategories.contains(category.title) ? 5 : 4,
+        reason: '${category.title} 卡片数量应符合布局约定',
+      );
     }
     final total = categories.fold<int>(
       0,
       (sum, category) => sum + category.cards.length,
     );
-    expect(total, 24);
+    expect(total, 26);
     final network = categories.firstWhere(
       (category) => category.title == '应用与网络',
     );
     expect(network.cards.map((card) => card.title), contains('连接限速'));
     expect(network.cards.map((card) => card.title), isNot(contains('局域网限速')));
+    expect(
+      network.cards.map((card) => card.route),
+      contains('/traffic'),
+      reason: '应用流量统计应可从功能中心进入',
+    );
+    final data = categories.firstWhere((category) => category.title == '数据与维护');
+    expect(
+      data.cards.map((card) => card.route),
+      contains('/logs'),
+      reason: '日志仪表盘应可从功能中心进入',
+    );
   });
 
   test('极速模式不提供连接限速', () {
@@ -60,6 +76,12 @@ void main() {
       cards.map((card) => card.featureKey),
       isNot(contains('connection_rate_limit')),
     );
+    // 极速模式没有隧道数据面，应用流量统计应隐藏；日志仪表盘记录的是 DNS 查询，仍然可见。
+    expect(
+      cards.map((card) => card.featureKey),
+      isNot(contains('traffic_stats')),
+    );
+    expect(cards.map((card) => card.featureKey), contains('logs'));
   });
 
   test('卡片路由与隐藏键都不重复', () {
@@ -89,11 +111,9 @@ void main() {
       'custom_resources',
       'timetable',
       'network_profile',
-      'traffic_stats',
       'blocked_apps',
       'excluded_apps',
       'request_logs',
-      'logs',
       'sponsor',
       'sponsor_list',
       'contributors',
