@@ -8,6 +8,7 @@ import 'package:diting_android/pages/system/unknown_route_page.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -20,7 +21,45 @@ void main() {
   group('全路由布局', _layoutRegression);
   group('首启须知', _initialAgreement);
   group('弹窗输入框生命周期', _dialogField);
+  group('卡片内弹出选项', _popupSelect);
   group('分段控件标签', _segmentedLabels);
+}
+
+/// The card title row is 24 high; the select must fit its full text line inside it.
+void _popupSelect() {
+  testWidgets('解析模式选项文字不被标题行裁切', (tester) async {
+    await tester.pumpWidget(
+      AppHost(
+        child: Scaffold(
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: DashboardCardHeader(
+              title: '解析模式',
+              trailing: [
+                PopupSelectButton<int>(
+                  value: 0,
+                  items: const [(0, '单服务商')],
+                  onChanged: (_) {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getSize(find.text('单服务商')).height,
+      AppTextStyle.callout.leading,
+      reason: '选项文字必须保留完整行高，不能被 24 高的标题行压扁',
+    );
+    expect(
+      tester.getSize(find.byType(PopupSelectButton<int>)).height,
+      DashboardCardHeader.height,
+    );
+  });
 }
 
 /// Long English labels used to be ellipsized to "Single re…" in the resolution card.
@@ -71,10 +110,7 @@ void _segmentedLabels() {
       (3, '主备'),
     ]);
     expect(tester.takeException(), isNull);
-    expect(
-      tester.getSize(find.byType(SegmentedControl<int>)).height,
-      44,
-    );
+    expect(tester.getSize(find.byType(SegmentedControl<int>)).height, 44);
     expect(tester.widget<Text>(find.text('单服务商')).maxLines, 1);
   });
 }

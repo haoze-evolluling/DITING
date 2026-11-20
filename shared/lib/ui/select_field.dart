@@ -47,18 +47,23 @@ class PopupSelectButton<T> extends StatelessWidget {
         child: InkWell(
           customBorder: AppShape.standard,
           onTap: open,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 4,
-              children: [
-                Text(
-                  _labelOf(items, value),
-                  style: AppTextStyle.callout.of(context).copyWith(color: color),
-                ),
-                GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
-              ],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 24),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 4,
+                children: [
+                  Text(
+                    _labelOf(items, value),
+                    style: AppTextStyle.callout
+                        .of(context)
+                        .copyWith(color: color),
+                  ),
+                  GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
+                ],
+              ),
             ),
           ),
         ),
