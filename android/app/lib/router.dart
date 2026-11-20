@@ -47,9 +47,11 @@ String? startupOnboardingRedirect(BuildContext context, GoRouterState state) {
   if (!container.read(onboardingProvider)) {
     return location == Routes.modeOnboarding ? null : Routes.modeOnboarding;
   }
-  if (container.read(workModeProvider) == AppWorkMode.server &&
-      _mainShellRoots.contains(location)) {
-    return Routes.server;
+  if (container.read(workModeProvider) == AppWorkMode.server) {
+    if (_mainShellRoots.contains(location)) return Routes.server;
+  } else if (location == Routes.server ||
+      location.startsWith('${Routes.server}/')) {
+    return Routes.home;
   }
   return null;
 }

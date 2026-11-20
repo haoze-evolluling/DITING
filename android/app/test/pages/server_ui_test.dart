@@ -1,7 +1,9 @@
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/server/server_client.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
+import 'package:diting_android/pages/home/home_page.dart';
 import 'package:diting_android/routes/server_routes.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +26,10 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: appTestOverrides(serverClient: client),
+        overrides: [
+          ...appTestOverrides(serverClient: client),
+          workModeProvider.overrideWith(_ServerMode.new),
+        ],
         child: DitingApp(initialLocation: route),
       ),
     );
@@ -228,6 +233,25 @@ void main() {
     expect(find.text('当前调度'), findsOneWidget);
   });
 
+  for (final (modeLabel, homeTitle) in [
+    ('普通模式', '谛听 · 普通'),
+    ('极速模式', '谛听 · 极速'),
+  ]) {
+    testWidgets('服务器模式切到$modeLabel后离开服务器路由', (tester) async {
+      await pumpServer(tester, ServerRoutes.root);
+
+      await tester.tap(find.byTooltip('切换工作模式'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(modeLabel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('继续'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.text(homeTitle), findsOneWidget);
+    });
+  }
+
   testWidgets('服务器首页展示流量、拦截、缓存与排行卡片', (tester) async {
     final client = FakeServerClient(
       status: const ServerStatus(
@@ -327,4 +351,9 @@ class _LogFake extends FakeServerClient {
     );
     return ServerQueryResult(total: 1, entries: [record]);
   }
+}
+
+class _ServerMode extends WorkModeNotifier {
+  @override
+  AppWorkMode build() => AppWorkMode.server;
 }
