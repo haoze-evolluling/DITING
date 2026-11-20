@@ -264,10 +264,27 @@ fn is_effective_root() -> bool {
 
 #[cfg(unix)]
 fn drop_privileges(uid: u32, gid: u32) -> Result<(), String> {
-    let groups = unsafe { libc::setgroups(0, std::ptr::null()) };
+    // Android grants socket creation to app UIDs through the supplementary `inet` group, not the
+    // UID alone. The public DNS listeners are bound before this call, but bootstrap and every
+    // upstream connection create sockets afterwards; clearing every group makes those calls fail
+    // with EACCES and leaves clients with SERVFAIL.
+    #[cfg(target_os = "android")]
+    let supplementary = [ANDROID_AID_INET];
+    #[cfg(not(target_os = "android"))]
+    let supplementary: [libc::gid_t; 0] = [];
+    let groups = unsafe {
+        libc::setgroups(
+            supplementary.len(),
+            if supplementary.is_empty() {
+                std::ptr::null()
+            } else {
+                supplementary.as_ptr()
+            },
+        )
+    };
     if groups != 0 {
         return Err(format!(
-            "清空附加组失败: {}",
+            "设置附加组失败: {}",
             std::io::Error::last_os_error()
         ));
     }
@@ -288,6 +305,9 @@ fn drop_privileges(uid: u32, gid: u32) -> Result<(), String> {
     }
     Ok(())
 }
+
+#[cfg(target_os = "android")]
+const ANDROID_AID_INET: libc::gid_t = 3003;
 
 #[cfg(not(unix))]
 fn drop_privileges(_uid: u32, _gid: u32) -> Result<(), String> {

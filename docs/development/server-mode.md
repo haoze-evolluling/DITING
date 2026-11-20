@@ -28,7 +28,9 @@ Root 启动顺序固定为：
 2. 读取、校验并规范化 `config.json`。
 3. 同步绑定 DNS UDP/TCP 套接字。
 4. 创建控制 Socket，并把数据目录与控制 Socket 交给应用 UID。
-5. 清空附加组并执行 `setgid` / `setuid`。
+5. 清空 Root 附加组，仅保留 Android 应用联网所需的 `AID_INET (3003)`，再执行 `setgid` /
+   `setuid`。若连该组也清空，已绑定的 53 端口仍能接收请求，但降权后无法创建出站套接字，
+   Bootstrap 与上游 DoT 会全部失败并返回 `SERVFAIL`。
 6. 确认已不是 Root 后创建 Tokio 运行时并启动 DNS 与控制循环。
 
 降权失败时进程退出，不允许以 Root 身份继续服务。
