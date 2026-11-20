@@ -40,8 +40,8 @@ class MockFeatureCategory {
 /// Information architecture — the hub is grouped by **what the feature does and when a user
 /// reaches for it**, not by where the code lives. Six purpose-based sections with four cards each,
 /// plus 应用流量统计 and 日志仪表盘, which also live in the bottom dock but now have a hub entry.
-/// Those two sections hold five cards, so the last card spans the row (the grid supports it) and
-/// no cell is left blank. The three work modes share one layout:
+/// Those two sections hold five cards; the last card keeps the half-width column so rows stay
+/// aligned. The three work modes share one layout:
 ///
 ///   1. DNS 解析       服务商 / 策略 / 缓存 / 服务显示
 ///   2. 规则与控制     拦截策略 / 规则订阅 / 应用规则 / 隐私套件

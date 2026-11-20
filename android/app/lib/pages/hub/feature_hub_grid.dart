@@ -25,18 +25,10 @@ class FeatureHubCardData {
 
 /// A titled group of cards; categories render in the order the caller supplies them.
 class FeatureHubCategoryData {
-  const FeatureHubCategoryData({
-    required this.title,
-    required this.cards,
-    this.reserveOddCardSlot = false,
-  });
+  const FeatureHubCategoryData({required this.title, required this.cards});
 
   final String title;
   final List<FeatureHubCardData> cards;
-
-  /// Keeps the final odd card at half width instead of stretching it across the row.
-  /// Server mode opts in; the normal hub keeps its existing full-width last card.
-  final bool reserveOddCardSlot;
 }
 
 /// One titled category: heading plus a two-column grid of cards.
@@ -55,10 +47,7 @@ class FeatureHubCategorySection extends StatelessWidget {
           ListHeader(title: category.title),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _CardGrid(
-              cards: category.cards,
-              reserveOddCardSlot: category.reserveOddCardSlot,
-            ),
+            child: _CardGrid(cards: category.cards),
           ),
         ],
       ),
@@ -67,10 +56,9 @@ class FeatureHubCategorySection extends StatelessWidget {
 }
 
 class _CardGrid extends StatelessWidget {
-  const _CardGrid({required this.cards, required this.reserveOddCardSlot});
+  const _CardGrid({required this.cards});
 
   final List<FeatureHubCardData> cards;
-  final bool reserveOddCardSlot;
 
   static const _gap = 10.0;
 
@@ -96,8 +84,11 @@ class _CardGrid extends StatelessWidget {
         spacing: _gap,
         children: [
           Expanded(child: _FeatureCard(card: left)),
-          if (right != null) Expanded(child: _FeatureCard(card: right)),
-          if (right == null && reserveOddCardSlot) const Spacer(),
+          if (right != null)
+            Expanded(child: _FeatureCard(card: right))
+          else
+            // Keep the lone card at column width instead of stretching it across the row.
+            const Spacer(),
         ],
       ),
     );

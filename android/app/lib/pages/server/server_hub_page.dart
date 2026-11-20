@@ -36,7 +36,6 @@ class ServerHubPage extends ConsumerWidget {
           FeatureHubCategorySection(
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubDataPlane,
-              reserveOddCardSlot: true,
               cards: [
                 FeatureHubCardData(
                   title: context.l10n.serverUpstreamTitle,
@@ -92,7 +91,6 @@ class ServerHubPage extends ConsumerWidget {
           FeatureHubCategorySection(
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubSystem,
-              reserveOddCardSlot: true,
               cards: [
                 FeatureHubCardData(
                   title: context.l10n.serverSettingsTitle,
