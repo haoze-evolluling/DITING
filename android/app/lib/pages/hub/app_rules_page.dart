@@ -264,8 +264,14 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                     ),
                   ],
                 ),
+                if (!snapshot.isLoading &&
+                    snapshot.value?.error == null &&
+                    visible.isNotEmpty)
+                  ListHeader(
+                    title: context.l10n.appRulesAppsCount(visible.length),
+                  ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   child: SearchField(
                     controller: _search,
                     onChanged: _onSearchChanged,
@@ -283,7 +289,6 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
           ),
           if (!snapshot.isLoading && snapshot.value?.error == null)
             ...lazySectionOrEmpty(
-              title: context.l10n.appRulesAppsCount(visible.length),
               itemCount: visible.length,
               empty: AppListEmptyState(
                 label: apps.isEmpty
