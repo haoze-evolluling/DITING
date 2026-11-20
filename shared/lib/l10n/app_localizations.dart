@@ -25853,6 +25853,12 @@ abstract class AppL10n {
   /// **'平均耗时'**
   String get serverAverageLatency;
 
+  /// No description provided for @serverAverageLatencyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'平均响应'**
+  String get serverAverageLatencyHint;
+
   /// No description provided for @serverFilter.
   ///
   /// In zh, this message translates to:

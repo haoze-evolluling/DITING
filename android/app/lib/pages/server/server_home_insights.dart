@@ -11,116 +11,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Query count, blocking, cache and latency at a glance.
-class ServerRequestOverview extends StatelessWidget {
-  const ServerRequestOverview({super.key, required this.stats});
-
-  final ServerStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    final l10n = context.l10n;
-    final tiles = [
-      ServerMetricTile(
-        glyph: AppGlyphs.dns,
-        label: l10n.serverQueries,
-        value: serverCount(stats.queries),
-        color: scheme.primary,
-      ),
-      ServerMetricTile(
-        glyph: AppGlyphs.block,
-        label: l10n.serverBlocked,
-        value: serverCount(stats.blocked),
-        color: ServerHomeColors.mutedInk(context),
-      ),
-      ServerMetricTile(
-        glyph: AppGlyphs.shield,
-        label: l10n.serverBlockRate,
-        value: serverPercent(stats.blockedRate),
-        color: scheme.primary,
-      ),
-      ServerMetricTile(
-        glyph: AppGlyphs.clock,
-        label: l10n.serverAverageLatency,
-        value: serverMs(stats.averageResponseMs),
-        color: ServerHomeColors.mutedInk(context),
-      ),
-    ];
-    final scale = MediaQuery.textScalerOf(context).scale(1);
-    return ServerSectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 12,
-        children: [
-          ServerCardHeader(
-            glyph: AppGlyphs.dataUsage,
-            title: l10n.serverOverviewTitle,
-            trailing: [_WindowChip(label: l10n.serverLast24Hours)],
-          ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (scale < 1.3 && constraints.maxWidth >= 328) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final (index, tile) in tiles.indexed) ...[
-                      if (index > 0)
-                        Container(
-                          width: 1,
-                          height: 54,
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          color: ServerHomeColors.divider(context),
-                        ),
-                      Expanded(child: tile),
-                    ],
-                  ],
-                );
-              }
-              if (scale >= 1.3) {
-                return Column(
-                  spacing: 10,
-                  children: [
-                    for (final (index, tile) in tiles.indexed) ...[
-                      if (index > 0)
-                        Divider(
-                          height: 1,
-                          color: ServerHomeColors.divider(context),
-                        ),
-                      tile,
-                    ],
-                  ],
-                );
-              }
-              return Column(
-                spacing: 14,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 20,
-                    children: [
-                      Expanded(child: tiles[0]),
-                      Expanded(child: tiles[1]),
-                    ],
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 20,
-                    children: [
-                      Expanded(child: tiles[2]),
-                      Expanded(child: tiles[3]),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Rolling 24-hour traffic chart with peak, average and legend figures.
 class ServerTrafficOverview extends StatelessWidget {
   const ServerTrafficOverview({
@@ -159,7 +49,7 @@ class ServerTrafficOverview extends StatelessWidget {
           ServerCardHeader(
             glyph: AppGlyphs.network,
             title: l10n.serverTrafficTitle,
-            trailing: [_WindowChip(label: l10n.serverLast24Hours)],
+            trailing: [ServerWindowChip(label: l10n.serverLast24Hours)],
           ),
           if (!hasTraffic)
             ServerEmptyPanel(
@@ -474,31 +364,6 @@ class ServerCacheOverview extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _WindowChip extends StatelessWidget {
-  const _WindowChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: ShapeDecoration(
-        color: ServerHomeColors.accentWash(context),
-        shape: AppShape.standard,
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        style: AppTextStyle.caption2
-            .of(context, emphasized: true)
-            .copyWith(color: scheme.primary),
       ),
     );
   }

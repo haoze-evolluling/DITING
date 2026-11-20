@@ -5,6 +5,7 @@ import 'package:diting_android/pages/home/widgets/home_power_button.dart';
 import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_home_insights.dart';
 import 'package:diting_android/pages/server/server_home_rankings.dart';
+import 'package:diting_android/pages/server/server_home_request_overview.dart';
 import 'package:diting_android/pages/server/server_home_status.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';

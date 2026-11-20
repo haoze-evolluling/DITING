@@ -14103,6 +14103,9 @@ class AppL10nZh extends AppL10n {
   String get serverAverageLatency => '平均耗时';
 
   @override
+  String get serverAverageLatencyHint => '平均响应';
+
+  @override
   String get serverFilter => '过滤';
 
   @override

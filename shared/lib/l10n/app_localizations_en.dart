@@ -14968,6 +14968,9 @@ class AppL10nEn extends AppL10n {
   String get serverAverageLatency => 'Avg latency';
 
   @override
+  String get serverAverageLatencyHint => 'Avg response';
+
+  @override
   String get serverFilter => 'Filtering';
 
   @override

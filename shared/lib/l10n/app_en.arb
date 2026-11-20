@@ -5363,6 +5363,7 @@
   "serverBlockRate": "Block rate",
   "serverCacheHit": "Cache hits",
   "serverAverageLatency": "Avg latency",
+  "serverAverageLatencyHint": "Avg response",
   "serverFilter": "Filtering",
   "serverFilterOn": "Enabled",
   "serverFilterOff": "Disabled",

@@ -33,9 +33,6 @@ abstract final class ServerHomeColors {
   static Color divider(BuildContext context) =>
       context.colorScheme.onSurfaceVariant.withValues(alpha: 0.12);
 
-  static Color mutedInk(BuildContext context) =>
-      context.colorScheme.onSurfaceVariant;
-
   static Color _overCard(BuildContext context, Color color, double alpha) =>
       Color.alphaBlend(
         color.withValues(alpha: alpha),

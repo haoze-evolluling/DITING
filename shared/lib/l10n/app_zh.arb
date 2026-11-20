@@ -8023,6 +8023,7 @@
   "serverBlockRate": "拦截率",
   "serverCacheHit": "缓存命中",
   "serverAverageLatency": "平均耗时",
+  "serverAverageLatencyHint": "平均响应",
   "serverFilter": "过滤",
   "serverFilterOn": "已启用",
   "serverFilterOff": "未启用",
