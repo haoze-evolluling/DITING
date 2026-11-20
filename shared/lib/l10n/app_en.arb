@@ -105,6 +105,7 @@
   "searchNoResults": "No matches",
   "searchGroupTools": "Commands",
   "flowTitle": "Connection monitor",
+  "flowLiveTab": "Live connections",
   "flowEntrySubtitle": "See live connections and remotes by app",
   "flowAppsSection": "Apps",
   "flowRefresh": "Refresh",

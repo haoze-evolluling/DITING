@@ -602,6 +602,12 @@ abstract class AppL10n {
   /// **'连接监控'**
   String get flowTitle;
 
+  /// No description provided for @flowLiveTab.
+  ///
+  /// In zh, this message translates to:
+  /// **'实时连接'**
+  String get flowLiveTab;
+
   /// No description provided for @flowEntrySubtitle.
   ///
   /// In zh, this message translates to:

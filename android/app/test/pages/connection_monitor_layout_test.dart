@@ -1,8 +1,7 @@
-// U9/N4: the real-time flow page splits into an app list + the selected app's connections on a
-// tablet, and keeps the grouped single column on a phone.
+// 连接监控：实时连接与应用洞察共用一页。两段视图都在平板宽度下双栏、手机宽度下单列。
 
 import 'package:diting_android/data/native/flow_bridge.dart';
-import 'package:diting_android/pages/network/flow_page.dart';
+import 'package:diting_android/pages/network/connection_monitor_page.dart';
 import 'package:diting_android/state/flow_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,9 +32,8 @@ class _FakeFlowNotifier extends FlowViewNotifier {
   final List<FlowRow> rows;
 
   @override
-  FlowViewState build() => FlowViewState(
-    rowsMap: {for (final row in rows) row.key: row},
-  );
+  FlowViewState build() =>
+      FlowViewState(rowsMap: {for (final row in rows) row.key: row});
 
   @override
   Future<void> refresh({bool full = false}) async {}
@@ -58,15 +56,25 @@ Future<void> _pump(WidgetTester tester, Size size) async {
       child: AppHost(
         size: size,
         isMobile: size.width < 720,
-        child: const FlowPage(),
+        child: const ConnectionMonitorPage(),
       ),
     ),
   );
   await tester.pump();
 }
 
+Future<void> _openInsights(WidgetTester tester) async {
+  await tester.tap(find.text('应用洞察'));
+  await tester.pump();
+}
+
+Future<void> _unmount(WidgetTester tester) async {
+  // Unmount so the page's refresh timer is cancelled before the test ends.
+  await tester.pumpWidget(const SizedBox());
+}
+
 void main() {
-  testWidgets('平板宽度：应用列表与所选应用连接并排', (tester) async {
+  testWidgets('平板宽度：实时连接为应用列表 + 所选应用连接', (tester) async {
     await _pump(tester, const Size(1200, 900));
 
     expect(find.text('Alpha'), findsWidgets);
@@ -81,17 +89,46 @@ void main() {
     expect(find.text('beta.example'), findsNothing);
     expect(tester.takeException(), isNull);
 
-    // Unmount so the page's refresh timer is cancelled before the test ends.
-    await tester.pumpWidget(const SizedBox());
+    await _unmount(tester);
   });
 
-  testWidgets('手机宽度：按应用分组单列', (tester) async {
+  testWidgets('手机宽度：实时连接按应用分组单列', (tester) async {
     await _pump(tester, const Size(400, 800));
 
     expect(find.text('alpha.example'), findsOneWidget);
     expect(find.text('beta.example'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.pumpWidget(const SizedBox());
+    await _unmount(tester);
+  });
+
+  testWidgets('平板宽度：应用洞察为报告卡 + 所选应用连接地图', (tester) async {
+    await _pump(tester, const Size(1200, 900));
+    await _openInsights(tester);
+
+    // Both report cards share the left pane; the right shows the first app's map.
+    expect(find.text('Alpha'), findsWidgets);
+    expect(find.text('Beta'), findsWidgets);
+    expect(find.text('alpha.example'), findsOneWidget);
+    expect(find.text('beta.example'), findsNothing);
+
+    await tester.tap(find.text('Beta').first);
+    await tester.pump();
+    expect(find.text('beta.example'), findsOneWidget);
+    expect(find.text('alpha.example'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    await _unmount(tester);
+  });
+
+  testWidgets('手机宽度：应用洞察单列展示全部连接地图', (tester) async {
+    await _pump(tester, const Size(400, 800));
+    await _openInsights(tester);
+
+    expect(find.text('alpha.example'), findsOneWidget);
+    expect(find.text('beta.example'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await _unmount(tester);
   });
 }

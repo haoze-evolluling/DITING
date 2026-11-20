@@ -1,45 +1,30 @@
-/// U5 / U6 应用洞察：应用报告卡与连接地图，数据来自实时连接快照。
+/// U5 / U6 应用洞察视图：应用报告卡与连接地图，数据来自实时连接快照。
+///
+/// 连接监控页的一段内容；不带自己的 Scaffold，滚动由外层 `PageBody` 负责。
 library;
 
 import 'package:diting_android/data/network/app_insights.dart';
-import 'package:diting_android/state/app_insights_providers.dart';
-import 'package:diting_android/state/flow_providers.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-class AppInsightsPage extends ConsumerStatefulWidget {
-  const AppInsightsPage({super.key});
+class AppInsightsView extends StatefulWidget {
+  const AppInsightsView({super.key, required this.reports, required this.map});
+
+  final List<AppReport> reports;
+  final List<AppConnectionGroup> map;
 
   @override
-  ConsumerState<AppInsightsPage> createState() => _AppInsightsPageState();
+  State<AppInsightsView> createState() => _AppInsightsViewState();
 }
 
-class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
+class _AppInsightsViewState extends State<AppInsightsView> {
   int? _selected;
 
   @override
   Widget build(BuildContext context) {
-    final reports = ref.watch(appReportsProvider);
-    final map = ref.watch(connectionMapProvider);
-    final l10n = context.l10n;
-    final actions = [
-      IconButton(
-        tooltip: l10n.flowRefresh,
-        onPressed: () =>
-            ref.read(flowViewProvider.notifier).refresh(full: true),
-        icon: const GlyphIcon(AppGlyphs.refresh),
-      ),
-    ];
-    if (reports.isEmpty) {
-      return CommonScaffold(
-        title: l10n.appInsightsTitle,
-        actions: actions,
-        body: const PageBody(children: []),
-      );
-    }
+    final reports = widget.reports;
+    if (reports.isEmpty) return const SizedBox.shrink();
 
     // U9: on a tablet the report cards become the left pane and the selected app's connection map
     // the right, instead of one long scroll where the map is far from the card that explains it.
@@ -49,50 +34,37 @@ class _AppInsightsPageState extends ConsumerState<AppInsightsPage> {
     final selectedIndex = (selected != null && selected < labels.length)
         ? selected
         : 0;
+    final l10n = context.l10n;
     if (!wide) {
-      return CommonScaffold(
-        title: l10n.appInsightsTitle,
-        actions: actions,
-        body: PageBody(
-          children: [
-            _reportsSection(reports, null, null),
-            for (final group in map) _groupSection(group, l10n),
-          ],
-        ),
+      return Column(
+        children: [
+          _reportsSection(reports, null, null),
+          for (final group in widget.map) _groupSection(group, l10n),
+        ],
       );
     }
 
     final selectedLabel = labels[selectedIndex];
     final groups = [
-      for (final group in map)
+      for (final group in widget.map)
         if (group.appLabel == selectedLabel) group,
     ];
-    return CommonScaffold(
-      title: l10n.appInsightsTitle,
-      actions: actions,
-      body: PageBody(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 320,
-                child: _reportsSection(reports, selectedIndex, (index) {
-                  setState(() => _selected = index);
-                }),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  children: [
-                    for (final group in groups) _groupSection(group, l10n),
-                  ],
-                ),
-              ),
-            ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 320,
+          child: _reportsSection(reports, selectedIndex, (index) {
+            setState(() => _selected = index);
+          }),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            children: [for (final group in groups) _groupSection(group, l10n)],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

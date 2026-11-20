@@ -105,6 +105,7 @@
   "searchNoResults": "没有找到匹配项",
   "searchGroupTools": "常用命令",
   "flowTitle": "连接监控",
+  "flowLiveTab": "实时连接",
   "flowEntrySubtitle": "按应用查看实时连接与远端",
   "flowAppsSection": "应用",
   "flowRefresh": "刷新",

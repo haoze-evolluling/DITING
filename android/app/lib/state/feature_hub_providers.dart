@@ -25,7 +25,6 @@ const hiddenFeatureKeysInFile = <String>[
   'app_rules',
   'privacy_suite',
   'flow_view',
-  'app_insights',
   'network_tools',
   'connection_rate_limit',
   'traffic_stats',

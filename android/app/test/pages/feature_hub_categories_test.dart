@@ -1,6 +1,6 @@
-// Guards the feature-hub taxonomy: six purpose-based sections of four cards plus the 应用流量统计
-// and 日志仪表盘 entries, and no card reachable from two places. Express mode keeps only the
-// sections that still apply.
+// Guards the feature-hub taxonomy: six purpose-based sections of four cards plus the 应用流量统计,
+// 日志仪表盘 and 前后台行为 entries, and no card reachable from two places. Express mode keeps
+// only the sections that still apply.
 
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -11,7 +11,7 @@ void main() {
   final l10n = lookupAppL10n(const Locale('zh'));
   final categories = mockFeatureCategories(l10n);
 
-  test('6 个分类共 27 张，应用与网络补一张、数据与维护补两张入口', () {
+  test('6 个分类共 26 张，数据与维护补两张入口', () {
     expect(categories.map((category) => category.title).toList(), [
       'DNS 解析',
       '规则与控制',
@@ -21,7 +21,7 @@ void main() {
       '界面与数据',
     ]);
     expect(categories.length, 6);
-    const cardCounts = {'应用与网络': 5, '数据与维护': 6};
+    const cardCounts = {'数据与维护': 6};
     for (final category in categories) {
       expect(category.cards, isNotEmpty, reason: '${category.title} 不应为空分类');
       expect(
@@ -34,7 +34,7 @@ void main() {
       0,
       (sum, category) => sum + category.cards.length,
     );
-    expect(total, 27);
+    expect(total, 26);
     final network = categories.firstWhere(
       (category) => category.title == '应用与网络',
     );

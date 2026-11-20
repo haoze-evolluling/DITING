@@ -291,6 +291,9 @@ class AppL10nEn extends AppL10n {
   String get flowTitle => 'Connection monitor';
 
   @override
+  String get flowLiveTab => 'Live connections';
+
+  @override
   String get flowEntrySubtitle => 'See live connections and remotes by app';
 
   @override

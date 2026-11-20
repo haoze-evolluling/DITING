@@ -270,6 +270,9 @@ class AppL10nZh extends AppL10n {
   String get flowTitle => '连接监控';
 
   @override
+  String get flowLiveTab => '实时连接';
+
+  @override
   String get flowEntrySubtitle => '按应用查看实时连接与远端';
 
   @override
