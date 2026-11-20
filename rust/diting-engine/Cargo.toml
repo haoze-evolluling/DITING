@@ -65,7 +65,7 @@ smoltcp = { version = "0.14", default-features = false, features = [
 ] }
 
 # The engine-side kernels are linked directly instead of being dlopen'd through a C ABI: one
-# `libditing_engine.so`, no payload codec, no runtime handle table.
+# the merged Android library, no payload codec, no runtime handle table.
 diting-config-core = { path = "../diting-config-core" }
 diting-dns-cache-core = { path = "../diting-dns-cache-core" }
 diting-dns-core = { path = "../diting-dns-core" }

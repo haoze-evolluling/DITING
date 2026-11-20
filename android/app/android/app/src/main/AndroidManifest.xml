@@ -142,7 +142,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-        <!-- Full tunnel: libditing_engine.so owns the data plane, MITM and DNS. -->
+        <!-- Full tunnel: libditing_native.so owns the data plane, MITM and DNS. -->
         <service
             android:name=".normal.DitingVpnService"
             android:exported="false"

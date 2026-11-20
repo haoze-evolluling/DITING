@@ -18,7 +18,7 @@ internal class OutboundProxyNative private constructor() {
     companion object {
         private val instance: OutboundProxyNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 OutboundProxyNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

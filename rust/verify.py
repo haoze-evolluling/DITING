@@ -5,7 +5,7 @@ Default: formatting, clippy (warnings are errors) and the Rust test suite of eve
 including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference writer.
 
     python rust/verify.py
-    python rust/verify.py --android   # also cross-compile the engine and the merged kernel library for arm64-v8a (2 .so files)
+    python rust/verify.py --android   # also cross-compile the merged native library and server launcher for arm64-v8a
     python rust/verify.py --desktop   # also run the desktop service suite (pure Rust, API through service)
     python rust/verify.py --engine    # also run the tunnel engine's own suite (DNS pipeline, transports, JNI contract)
     python rust/verify.py --smoke     # also load the log, rule-index, outbound-proxy, VPN-plan, VPN-watchdog, engine and notification kernels in a JVM
@@ -13,8 +13,9 @@ including the DTRI fixtures that are byte-compared with the Kotlin/JVM reference
     python rust/verify.py --bench     # also time the DTRI compile, the rule search and the walk
     python rust/verify.py --all
 
-The Android engine is `libditing_engine.so`: it links the engine-side kernels statically, so there
-is no Go side left to compare against and no `--go` step. `--desktop` exercises the pure-Rust
+The Android runtime is `libditing_native.so`: it links the engine, the UI-side kernels and the
+server runtime into one library, so there is no Go side left to compare against and no `--go` step.
+`--desktop` exercises the pure-Rust
 desktop backend end to end: config/DTOs, the engine facades, the DNS data plane (including the real
 DoT loopback round trip), the management HTTP/WebSocket API and the service binary. `--dart` runs
 the Dart side against the same libraries: the importer, the rules page, the AI
@@ -126,7 +127,7 @@ def smoke() -> bool:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Rust 内核验证")
-    parser.add_argument("--android", action="store_true", help="交叉编译 arm64-v8a 并拷入 jniLibs（2 个 .so：engine + 合并内核库）")
+    parser.add_argument("--android", action="store_true", help="交叉编译 arm64-v8a 并拷入 jniLibs（合并原生库 + 服务器启动器）")
     parser.add_argument("--desktop", action="store_true", help="跑桌面服务（Go）对七个 Rust 内核的用例")
     parser.add_argument("--engine", action="store_true", help="跑隧道引擎的全部用例（DNS 管道、四种上游传输、JNI 契约）")
     parser.add_argument("--smoke", action="store_true", help="在 JVM 里加载日志、规则索引、出站代理、VPN 路由/看门狗、引擎与通知内核并走一遍 JNI 入口")

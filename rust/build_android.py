@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust artifacts for Android and drop them into the Flutter app's jniLibs.
 
-Three artifacts are built: `libditing_engine.so` (the tunnel data plane),
-`libditing_server.so` (the standalone LAN DNS service, packaged as a `.so` so Android extracts
-it and the app can execute it from `nativeLibraryDir`), and
-`libditing_kernels.so` — the UI-side kernels Dart and Kotlin call directly, linked into one cdylib
-by the `diting-kernels` umbrella crate. The engine stays its own `.so` on purpose: it has no
-duplicated std/dependency bytes to share and is kept isolated from the UI-side kernels.
+Two files are built per ABI:
 
-* `libditing_engine.so` - the tunnel engine behind express and normal modes. Lifecycle and JNI
-  facade, the DNS pipeline with its four upstream transports, TUN + transparent netstack, the
-  direct / SOCKS5 / HTTP CONNECT egress and the MITM relay. It **links** the engine-side kernels
-  statically (policy, DNS cache and
-  messages, resolver scheduling, upstream transport, bootstrap, gate, connlog, proxy, cert, MITM
-  filter, cosmetic injection, sniffer, request rules, config, telemetry), so none of them ships as
-  its own `.so` any more - they are regular Rust dependencies instead of `dlopen`'d libraries.
+* `libditing_native.so` — one fat cdylib containing the tunnel engine's JNI facade, every
+  Flutter/Kotlin UI kernel and the LAN server runtime. Sharing one LTO unit removes the duplicate
+  DNS/TLS/HTTP stack that was previously linked into the engine and server artifacts separately.
+* `libditing_server.so` — a tiny executable launcher, packaged with a `.so` suffix so Android
+  extracts it to `nativeLibraryDir`. It loads `libditing_native.so` and calls the exported
+  `diting_server_main`, keeping server mode in its own process for root bind and privilege drop.
 
-The UI-side kernels below are the components of `libditing_kernels.so` (the `diting-kernels`
-umbrella cdylib links them into one library; the names below are their former per-kernel `.so`
-names). Each keeps its own C ABI / JNI entry points, and Dart/Kotlin now load every one of them from
-that single `.so`.
+The merged library also carries the tunnel engine behind express and normal modes: lifecycle and
+JNI facade, the DNS pipeline with its four upstream transports, TUN + transparent netstack, the
+direct / SOCKS5 / HTTP CONNECT egress and the MITM relay. It **links** the engine-side kernels
+statically (policy, DNS cache and
+messages, resolver scheduling, upstream transport, bootstrap, gate, connlog, proxy, cert, MITM
+filter, cosmetic injection, sniffer, request rules, config, telemetry), so none of them ships as
+its own `.so` any more - they are regular Rust dependencies instead of `dlopen`'d libraries.
+
+The UI-side kernels below are linked by the `diting-kernels` umbrella into the same
+`libditing_native.so` (the names below are their former per-kernel `.so` names). Each keeps its own
+C ABI / JNI entry points, and Dart/Kotlin load every one of them from that single merged library.
 
 * `diting-rule-core` - rule parsing, rule search, the DTRI writer and the
   `applyRuleSnapshot` document builder (Dart/Kotlin callers).
@@ -108,19 +109,26 @@ from pathlib import Path
 RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 JNI_LIBS_DIR = PROJECT_ROOT / "android" / "app" / "android" / "app" / "src" / "main" / "jniLibs"
-# Three artifacts ship per ABI: the engine (data plane), the merged UI-kernel library and the
-# standalone LAN DNS executable. Each is copied into `lib/<abi>/`. The engine-side kernels are
-# statically linked into `libditing_engine.so`; the sixteen UI kernels are statically linked into
-# `libditing_kernels.so`; `libditing_server.so` is an executable, not a shared library. The
-# desktop-only kernels are not part of the APK and are built by their own `cargo test`/desktop
+# One shared library plus one executable ship per ABI. The engine-side kernels are statically
+# linked into `libditing_native.so`; the UI kernels are also linked into it instead of keeping a
+# separate `libditing_kernels.so`. `libditing_server.so` is an executable, not a shared library.
+# The desktop-only kernels are not part of the APK and are built by their own `cargo test`/desktop
 # steps.
-LIB_NAMES = (
-    "libditing_engine.so",
-    "libditing_kernels.so",
-)
-SERVER_BINARY = "diting-server"
+NATIVE_LIBRARY = "libditing_native.so"
+LAUNCHER_BINARY = "diting-server-launcher"
 SERVER_LIBRARY = "libditing_server.so"
 ANDROID_API = 28
+# LTO keeps `#[no_mangle]` roots, but a future change to the dependency graph could silently drop
+# one object file. Check one entry point per boundary instead of trusting the link.
+REQUIRED_NATIVE_EXPORTS = (
+    "diting_native_abi_version",
+    "diting_server_main",
+    "Java_com_haoze_diting_engine_Engine_nativeNew",
+    "Java_com_haoze_diting_log_LogNative_bootstrapRow",
+    "diting_agent_core_abi_version",
+    "diting_dns_abi_version",
+    "diting_kernels_abi_version",
+)
 
 # Gradle ABI name -> Rust target triple.
 TARGETS = {
@@ -169,6 +177,40 @@ def host_tag() -> str | None:
     return None
 
 
+def verify_exports(artifact: Path, ndk: Path) -> bool:
+    host = host_tag()
+    if host is None:
+        return False
+    nm = ndk / "toolchains" / "llvm" / "prebuilt" / host / "bin" / "llvm-nm"
+    if sys.platform.startswith("win"):
+        nm = nm.with_suffix(".exe")
+    if not nm.is_file():
+        log(f"找不到 llvm-nm，跳过导出校验: {nm}")
+        return True
+    result = subprocess.run(
+        [str(nm), "-D", "--defined-only", str(artifact)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if result.returncode != 0:
+        log(f"llvm-nm 读取失败: {result.stderr.strip()}")
+        return False
+    exported = {
+        line.split()[-1]
+        for line in result.stdout.splitlines()
+        if len(line.split()) >= 3
+    }
+    missing = [symbol for symbol in REQUIRED_NATIVE_EXPORTS if symbol not in exported]
+    if missing:
+        log(f"合并库缺少导出符号: {', '.join(missing)}")
+        return False
+    log(f"导出校验通过（{len(exported)} 个动态符号）")
+    return True
+
+
 def ensure_target(triple: str) -> bool:
     installed = subprocess.run(
         ["rustup", "target", "list", "--installed"],
@@ -215,11 +257,9 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "cargo",
         "build",
         "-p",
-        "diting-engine",
+        "diting-native",
         "-p",
-        "diting-kernels",
-        "-p",
-        "diting-server",
+        "diting-server-launcher",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -235,23 +275,29 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
     destination = JNI_LIBS_DIR / abi_dir
     destination.mkdir(parents=True, exist_ok=True)
-    for library in LIB_NAMES:
-        artifact = RUST_DIR / "target" / triple / profile / library
-        if not artifact.is_file():
-            log(f"构建产物缺失: {artifact}")
-            return None
-        shutil.copy2(artifact, destination / library)
-        log(f"{artifact.name} -> {destination / library}")
-    server_artifact = RUST_DIR / "target" / triple / profile / SERVER_BINARY
-    if not server_artifact.is_file():
-        log(f"构建产物缺失: {server_artifact}")
+    native_artifact = RUST_DIR / "target" / triple / profile / NATIVE_LIBRARY
+    if not native_artifact.is_file():
+        log(f"构建产物缺失: {native_artifact}")
         return None
-    shutil.copy2(server_artifact, destination / SERVER_LIBRARY)
-    log(f"{server_artifact.name} -> {destination / SERVER_LIBRARY}")
-    # Libraries from an earlier (34-library) layout would otherwise linger in `jniLibs` and be
-    # packaged again, so the engine-side kernels are removed on the way out.
+    shutil.copy2(native_artifact, destination / NATIVE_LIBRARY)
+    log(f"{native_artifact.name} -> {destination / NATIVE_LIBRARY}")
+    if not verify_exports(destination / NATIVE_LIBRARY, ndk):
+        return None
+    launcher_artifact = RUST_DIR / "target" / triple / profile / LAUNCHER_BINARY
+    if not launcher_artifact.is_file():
+        log(f"构建产物缺失: {launcher_artifact}")
+        return None
+    shutil.copy2(launcher_artifact, destination / SERVER_LIBRARY)
+    log(f"{launcher_artifact.name} -> {destination / SERVER_LIBRARY}")
+    # Remove artifacts from the previous three-library layout and the older 34-library layout so a
+    # stale `jniLibs` directory does not package them again.
+    for stale_name in ("libditing_engine.so", "libditing_kernels.so"):
+        stale = destination / stale_name
+        if stale.exists():
+            stale.unlink()
+            log(f"删除过期库 {stale}")
     for stale in destination.glob("libditing_*_core.so"):
-        if stale.name not in LIB_NAMES:
+        if stale.name != NATIVE_LIBRARY:
             stale.unlink()
             log(f"删除过期库 {stale}")
     return destination
@@ -259,7 +305,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="为 Android 构建隧道引擎、UI 内核库与独立 DNS 服务（3 个 .so）"
+        description="为 Android 构建合并原生库与服务器模式启动器（2 个 .so）"
     )
     parser.add_argument(
         "--abi",

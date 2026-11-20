@@ -54,7 +54,7 @@ internal class VpnPlanNative private constructor() {
     companion object {
         private val instance: VpnPlanNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 VpnPlanNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

@@ -73,18 +73,24 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 
 ## Android 原生产物
 
-`rust/build_android.py` 为每个 ABI 输出三个文件，全部由 Gradle 的 `checkNativeLibs<Variant>`
+`rust/build_android.py` 为每个 ABI 输出两个文件，全部由 Gradle 的 `checkNativeLibs<Variant>`
 检查：
 
 | 文件 | 用途 |
 | --- | --- |
-| `libditing_engine.so` | 普通/极速模式的隧道引擎 |
-| `libditing_kernels.so` | Dart/Kotlin 调用的合并 UI 内核 |
-| `libditing_server.so` | 服务器模式的独立 DNS 可执行文件 |
+| `libditing_native.so` | 隧道引擎、Dart/Kotlin UI 内核与服务器运行时的单一 cdylib |
+| `libditing_server.so` | 服务器模式的极小启动器可执行文件 |
+
+合并后引擎与服务器原先各自静态链接的 DNS/TLS/HTTP 栈只保留一份，每个 ABI 的原生负载明显
+减小，APK 内也只打包这两个文件。
 
 `libditing_server.so` 实际是可执行文件，只是借用 `.so` 后缀让 Android 原生库打包流程解压到
-`nativeLibraryDir`。Manifest 因此显式保留 `android:extractNativeLibs="true"`；缺少该文件时
-Gradle 构建会直接失败，服务器设置会报告“可执行文件缺失”而不是静默降级。
+`nativeLibraryDir`。它通过同目录的 `libditing_native.so` 加载服务器入口，因此服务器进程不需要
+再静态链接一份 DNS/TLS/HTTP 栈。Manifest 因此显式保留 `android:extractNativeLibs="true"`；
+缺少任一文件时 Gradle 构建会直接失败，服务器设置会报告“可执行文件缺失”而不是静默降级。
+
+服务器模式在 Android 上不能依赖 `rustls-native-certs`（没有 `/etc/ssl/certs` 汇总文件），
+根证书由引擎读取 `/system/etc/security/cacerts` 与 Conscrypt APEX 目录，再附加内置 ISRG 根。
 
 ## 跑测试（native assets 与资源包）
 

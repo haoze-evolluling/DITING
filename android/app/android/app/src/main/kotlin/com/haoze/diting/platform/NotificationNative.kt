@@ -26,7 +26,7 @@ internal class NotificationNative private constructor() {
     companion object {
         private val instance: NotificationNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 NotificationNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

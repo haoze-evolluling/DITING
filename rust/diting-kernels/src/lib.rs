@@ -1,14 +1,14 @@
-//! Umbrella cdylib: one `libditing_kernels.so` for the Flutter/Kotlin UI-side kernels.
+//! Umbrella for the Flutter/Kotlin UI-side kernels.
 //!
 //! Each kernel crate is a normal Rust dependency here instead of its own `dlopen`'d `.so`. The
 //! kernels keep exposing their `#[no_mangle] pub extern "C"` C ABI (Dart `lookupFunction`) and
 //! `Java_...` JNI entry points. The `pub use` re-exports below force every dependency to be linked
-//! into the final cdylib; verifier keeps all of their `#[no_mangle]` roots, so `--gc-sections` does
-//! not drop any exported entry point (verified: the merged library exports exactly the symbols the
-//! original standalone libraries exported, with none missing).
+//! into the final artifact; the linker keeps all `#[no_mangle]` roots, so `--gc-sections` does not
+//! drop any exported entry point.
 //!
-//! `libditing_engine.so` stays a separate library on purpose: it is the data plane, has no
-//! duplicated std/dependency bytes to share, and is kept isolated from the UI-side kernels.
+//! On Android this crate is consumed as an rlib by `diting-native`, which adds the tunnel engine
+//! and server runtime to the same `libditing_native.so`; the standalone cdylib target remains for
+//! host-side work.
 
 #![allow(unused_imports)]
 

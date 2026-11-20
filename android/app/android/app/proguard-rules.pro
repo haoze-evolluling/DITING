@@ -12,7 +12,7 @@
     native <methods>;
 }
 
-# The Rust engine facade (`com.haoze.diting.engine`, libditing_engine.so). The class declares the
+# The Rust engine facade (`com.haoze.diting.engine`, libditing_native.so). The class declares the
 # natives, and its three callback interfaces are implemented by anonymous Kotlin objects whose method
 # names Rust resolves by signature — R8 cannot see those references, so the whole package is kept.
 # It is four small classes; the alternative is a NoSuchMethodError on a release build only.

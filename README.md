@@ -4,9 +4,9 @@
 除用户主动配置的远程订阅、更新检查与可选 LLM 助手外，不上传查询数据。支持 Android、Windows 与 Linux，
 并提供开发者维护工具箱。
 
-- 📱 **Android**：Flutter 客户端 + Rust 隧道引擎（`rust/diting-engine`），随包交付两个原生库
-  `libditing_engine.so`（隧道数据面与 DNS 管线）与 `libditing_kernels.so`（合并后的 UI 内核），
-  以及独立 DNS 可执行文件 `libditing_server.so`；提供极速、普通（用户态 TCP/IP 全隧道）与服务器
+- 📱 **Android**：Flutter 客户端 + Rust 隧道引擎（`rust/diting-engine`），随包交付一个合并原生库
+  `libditing_native.so`（隧道数据面、UI 内核与服务器运行时）与一个极小的服务器启动器
+  `libditing_server.so`；提供极速、普通（用户态 TCP/IP 全隧道）与服务器
   （局域网 DNS）三种模式，要求 Android 9.0+（API 28+）。
 - 💻 **Windows**：纯 Rust 特权服务 `diting-service.exe` + Flutter 桌面端 + 内嵌于服务的 Web 控制台，支持
   物理网卡双栈 DNS 接管与离线恢复脚本。
@@ -94,9 +94,8 @@ cd desktop/app && flutter test     # 桌面端套件
 `ANDROID_NDK_HOME` / `ANDROID_NDK_ROOT` 或 `android/local.properties` 的 `sdk.dir` 定位。
 Gradle/AGP/Kotlin 版本与国内 Maven 镜像配置见 [Android 构建环境](docs/development/android-build-environment.md)。
 
-首次构建前先用 `python rust/build_android.py` 生成三个 `.so`：隧道引擎 `libditing_engine.so`、
-合并后的 UI 内核 `libditing_kernels.so` 与服务器模式可执行文件 `libditing_server.so`
-（构建产物、不入库）。
+首次构建前先用 `python rust/build_android.py` 生成两个文件：合并原生库
+`libditing_native.so` 与服务器模式启动器 `libditing_server.so`（构建产物、不入库）。
 
 ```bash
 python rust/build_android.py              # arm64-v8a + x86_64，release
@@ -147,7 +146,7 @@ Android 客户端（`android/app/pubspec.yaml`）是独立产品线，加 `-g an
 
 - **客户端**：Flutter / Dart 3 / Riverpod / go_router / sqflite / Material 3
 - **Android 引擎**：Rust（tokio / rustls / hyper / quinn / smoltcp），经 JNI 由 Kotlin `VpnService` 驱动；
-  UI 侧内核合并为单个 `libditing_kernels.so`
+  隧道引擎、UI 侧内核与服务器运行时共享单个 `libditing_native.so`
 - **桌面服务端**：纯 Rust（tokio / rustls / hyper / quinn / rcgen），复用 Android 端的解析器、缓存与决策
   内核并静态链接为单一二进制；HTTP/WebSocket 管理 API 与 Flutter 桌面端、Web 控制台共用同一套契约
 - **Android 原生**：Kotlin 通道（VpnService、快捷磁贴、悬浮窗）

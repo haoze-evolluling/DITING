@@ -79,7 +79,7 @@ android {
 
     defaultConfig {
         applicationId = "com.haoze.diting"
-        // The Rust engine (libditing_engine.so, built for API 28 by
+        // The merged Rust library (libditing_native.so, built for API 28 by
         // rust/build_android.py) owns the data plane, so the app cannot run below
         // Android 9.0. Overrides the Flutter default (24) on purpose.
         minSdk = 28
@@ -174,15 +174,15 @@ androidComponents {
             variant.packaging.dex.useLegacyPackaging.set(compressDex)
         }
 
-        // Both `libditing_engine.so` (data plane) and `libditing_kernels.so`
-        // (UI-side kernels) are required: missing either breaks every mode at
+        // `libditing_native.so` carries the engine, UI kernels and server
+        // runtime; `libditing_server.so` is the launcher that starts server
+        // mode in its own process. Missing either breaks the matching mode at
         // runtime. Checked per variant at execution time, so `gradlew clean`
         // still works on a fresh clone.
         val capitalized = variant.name.replaceFirstChar { it.uppercase() }
         val expected = abisToShip - excludedJniAbis(variant.name).toSet()
         val requiredLibs = listOf(
-            "libditing_engine.so",
-            "libditing_kernels.so",
+            "libditing_native.so",
             "libditing_server.so",
         )
         val checkNativeLibs = tasks.register("checkNativeLibs${capitalized}") {
@@ -247,7 +247,7 @@ flutter {
 }
 
 dependencies {
-    // No AAR dependency: the tunnel engine ships as libditing_engine.so under
+    // No AAR dependency: the merged native library ships as libditing_native.so under
     // src/main/jniLibs/<abi>/ (no Go/gomobile step in the build).
     // 自动化定时（A7）：一次性兜底任务 + 周期心跳任务。
     implementation("androidx.work:work-runtime-ktx:2.10.1")

@@ -23,7 +23,7 @@ internal class RuleIndexNative private constructor() {
     companion object {
         private val instance: RuleIndexNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 RuleIndexNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

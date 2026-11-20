@@ -112,7 +112,7 @@ internal class LogNative private constructor() {
 
         internal val instance: LogNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 LogNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

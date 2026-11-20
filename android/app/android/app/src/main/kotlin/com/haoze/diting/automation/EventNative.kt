@@ -19,7 +19,7 @@ internal class EventNative private constructor() {
     companion object {
         private val instance: EventNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 EventNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

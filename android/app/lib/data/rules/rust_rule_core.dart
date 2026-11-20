@@ -247,7 +247,7 @@ class RustRuleCore {
   static String? _libraryName() {
     // Cargo turns `diting-rule-core` into `libditing_rule_core.so` / `.dylib` and
     // `diting_rule_core.dll`; see `[lib] name` in the crate manifest.
-    if (Platform.isAndroid) return 'libditing_kernels.so';
+    if (Platform.isAndroid) return 'libditing_native.so';
     if (Platform.isLinux) return 'libditing_rule_core.so';
     if (Platform.isWindows) return 'diting_rule_core.dll';
     if (Platform.isMacOS) return 'libditing_rule_core.dylib';

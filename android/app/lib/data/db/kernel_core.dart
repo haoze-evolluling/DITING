@@ -192,8 +192,8 @@ class KernelCore {
     // Cargo turns `diting-leak-core` into `libditing_leak_core.so` / `.dylib` and
     // `diting_leak_core.dll`.
     if (Platform.isAndroid) {
-      // 方案 B: all sixteen UI-side kernels share one Android library.
-      return 'libditing_kernels.so';
+      // All UI kernels and the tunnel engine share one Android library.
+      return 'libditing_native.so';
     }
     if (Platform.isLinux) return 'lib$symbolBase.so';
     if (Platform.isWindows) return '$symbolBase.dll';

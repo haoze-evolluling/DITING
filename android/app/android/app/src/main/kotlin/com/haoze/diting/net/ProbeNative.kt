@@ -25,7 +25,7 @@ internal class ProbeNative private constructor() {
     companion object {
         private val instance: ProbeNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 ProbeNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(

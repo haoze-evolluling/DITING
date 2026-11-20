@@ -67,6 +67,8 @@ members = [
     "diting-desktop-platform",
     "diting-desktop-service",
     "diting-server",
+    "diting-native",
+    "diting-server-launcher",
 ]
 resolver = "2"
 

@@ -3,6 +3,9 @@
 服务器模式是第三种工作模式，数据面与控制面分离：
 
 - `rust/diting-server` 是独立的长驻 Rust 进程，复用桌面 DNS 栈完成解析、规则过滤、缓存与查询日志。
+- 服务器运行时与隧道引擎、UI 内核一起链接进 `libditing_native.so`；APK 里只有一个极小的
+  `libditing_server.so` 启动器，由它加载合并库并调用 `diting_server_main`，避免重复打包 DNS/TLS
+  栈。
 - Flutter 管理端通过 MethodChannel `com.haoze.diting/server` 启停进程，并通过应用私有 Unix
   Domain Socket 读写运行中配置。
 - Android 前台服务 `ServerDnsService` 只负责 Root 探测、启动/监督/停止 Rust 进程，不参与 DNS
@@ -21,13 +24,18 @@ Root 授权不是必需项。Root 探测使用带 6 秒超时的 `su -c id -u`�
 
 Root 启动顺序固定为：
 
-1. 读取、校验并规范化 `config.json`。
-2. 同步绑定 DNS UDP/TCP 套接字。
-3. 创建控制 Socket，并把数据目录与控制 Socket 交给应用 UID。
-4. 清空附加组并执行 `setgid` / `setuid`。
-5. 确认已不是 Root 后创建 Tokio 运行时并启动 DNS 与控制循环。
+1. 启动器加载同目录的 `libditing_native.so`。
+2. 读取、校验并规范化 `config.json`。
+3. 同步绑定 DNS UDP/TCP 套接字。
+4. 创建控制 Socket，并把数据目录与控制 Socket 交给应用 UID。
+5. 清空附加组并执行 `setgid` / `setuid`。
+6. 确认已不是 Root 后创建 Tokio 运行时并启动 DNS 与控制循环。
 
 降权失败时进程退出，不允许以 Root 身份继续服务。
+
+Android 没有 `rustls-native-certs` 期望的 `/etc/ssl/certs` 汇总文件，服务器复用引擎的
+`UpstreamTrust::platform()`：读取 `/system/etc/security/cacerts` 与 Conscrypt APEX 目录，再附加
+内置 ISRG 根。否则 DoT/DoH 上游会以 `UnknownIssuer` 失败。
 
 ## 数据目录
 
@@ -87,7 +95,8 @@ su -c '/data/app/.../lib/arm64/libditing_server.so \
 ```
 
 进程就绪后 stdout 会输出一行 `SERVER_READY {...}`，其中包含端口、Root 状态、实际地址、控制
-Socket 路径与 PID。停止时可向控制 Socket 发送 `shutdown`，或向进程发送 `SIGTERM`。
+Socket 路径与 PID。启动器固定从自身目录加载 `libditing_native.so`；手工部署时必须让两个文件
+位于同一目录。停止时可向控制 Socket 发送 `shutdown`，或向进程发送 `SIGTERM`。
 
 ## 首版边界
 

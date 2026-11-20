@@ -18,7 +18,7 @@ internal class RustRuleIndexCompiler private constructor() {
     companion object {
         private val instance: RustRuleIndexCompiler by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 RustRuleIndexCompiler()
             } catch (error: Throwable) {
                 throw IllegalStateException(

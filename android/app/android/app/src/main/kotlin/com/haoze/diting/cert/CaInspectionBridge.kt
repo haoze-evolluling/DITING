@@ -84,7 +84,7 @@ class CaInspectionBridge(private val context: Context) :
 
         // Reading the cached `ca.crt` avoids spawning the engine on every page open: the engine
         // exists to mint the pair, not to serve it back. Only a missing file pays the cost (and
-        // only then can a missing/ABI-mismatched `libditing_engine.so` surface).
+        // only then can a missing/ABI-mismatched `libditing_native.so` surface).
         val cached = if (regenerate) null else readCachedPem()
         val text = when (val outcome = if (cached != null) Success(cached) else generate()) {
             is Failure -> return unavailable(outcome.message)
@@ -241,7 +241,7 @@ class CaInspectionBridge(private val context: Context) :
         }
     }.fold(
         onSuccess = { Success(it) },
-        // ABI mismatch (an arm64-only libditing_engine.so on x86_64) shows up here and is reported.
+        // ABI mismatch (an arm64-only libditing_native.so on x86_64) shows up here and is reported.
         onFailure = { Failure(describe(it)) },
     )
 

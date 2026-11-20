@@ -19,8 +19,10 @@ object ServerControlSocket {
     fun transact(context: Context, payload: String, timeoutMs: Int = 5_000): String {
         val path = ServerPaths.socketFile(context).absolutePath
         LocalSocket().use { socket ->
-            socket.soTimeout = timeoutMs
             socket.connect(LocalSocketAddress(path, LocalSocketAddress.Namespace.FILESYSTEM))
+            // Android's LocalSocket creates its OS fd during connect(); setting the timeout before
+            // that throws the misleading "socket not created" IOException.
+            socket.soTimeout = timeoutMs
             val writer = socket.outputStream.bufferedWriter(Charsets.UTF_8)
             writer.write(payload.trim())
             writer.newLine()

@@ -10,7 +10,7 @@ captures/
 *.apk
 *.ap_
 *.aab
-# Go 隧道引擎 AAR 已删除（阶段 5）：Android 端只有 Rust 的 libditing_engine.so 与 UI 侧内核。
+# Go 隧道引擎 AAR 已删除（阶段 5）：Android 端只有 Rust 的合并库 libditing_native.so。
 # 保留 *.aar 兜底，防止旧的构建产物被误提交。
 *.aar
 

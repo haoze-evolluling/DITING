@@ -68,7 +68,7 @@ internal class VpnWatchdogNative private constructor() {
     companion object {
         private val instance: VpnWatchdogNative by lazy {
             try {
-                System.loadLibrary("diting_kernels")
+                System.loadLibrary("diting_native")
                 VpnWatchdogNative()
             } catch (error: Throwable) {
                 throw IllegalStateException(
