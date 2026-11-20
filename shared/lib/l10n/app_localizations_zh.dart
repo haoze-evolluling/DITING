@@ -14203,13 +14203,13 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get serverUpstream => '上游与调度';
+  String get serverUpstream => '调度与缓存';
 
   @override
-  String get serverUpstreamTitle => '上游与调度';
+  String get serverUpstreamTitle => '调度与缓存';
 
   @override
-  String get serverUpstreamHubHint => '调整上游调度方式';
+  String get serverUpstreamHubHint => '调整调度方式与缓存策略';
 
   @override
   String get serverFilterTitle => '过滤规则';

@@ -26036,19 +26036,19 @@ abstract class AppL10n {
   /// No description provided for @serverUpstream.
   ///
   /// In zh, this message translates to:
-  /// **'上游与调度'**
+  /// **'调度与缓存'**
   String get serverUpstream;
 
   /// No description provided for @serverUpstreamTitle.
   ///
   /// In zh, this message translates to:
-  /// **'上游与调度'**
+  /// **'调度与缓存'**
   String get serverUpstreamTitle;
 
   /// No description provided for @serverUpstreamHubHint.
   ///
   /// In zh, this message translates to:
-  /// **'调整上游调度方式'**
+  /// **'调整调度方式与缓存策略'**
   String get serverUpstreamHubHint;
 
   /// No description provided for @serverFilterTitle.

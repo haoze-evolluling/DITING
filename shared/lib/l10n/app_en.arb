@@ -5440,9 +5440,9 @@
       }
     }
   },
-  "serverUpstream": "Upstreams",
-  "serverUpstreamTitle": "Upstreams and routing",
-  "serverUpstreamHubHint": "Adjust upstream scheduling",
+  "serverUpstream": "Scheduling and cache",
+  "serverUpstreamTitle": "Scheduling and cache",
+  "serverUpstreamHubHint": "Adjust scheduling and cache policy",
   "serverFilterTitle": "Filtering rules",
   "serverFilterHubHint": "Manage subscriptions and custom rules, or test a domain",
   "serverCacheTitle": "Cache",

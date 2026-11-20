@@ -8100,9 +8100,9 @@
       }
     }
   },
-  "serverUpstream": "上游与调度",
-  "serverUpstreamTitle": "上游与调度",
-  "serverUpstreamHubHint": "调整上游调度方式",
+  "serverUpstream": "调度与缓存",
+  "serverUpstreamTitle": "调度与缓存",
+  "serverUpstreamHubHint": "调整调度方式与缓存策略",
   "serverFilterTitle": "过滤规则",
   "serverFilterHubHint": "管理订阅、自定义规则并测试域名",
   "serverCacheTitle": "缓存",

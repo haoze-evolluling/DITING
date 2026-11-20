@@ -47,7 +47,7 @@ void main() {
     expect(find.text('配置中心'), findsOneWidget);
     expect(find.text('解析服务'), findsOneWidget);
     for (final title in [
-      '上游与调度',
+      '调度与缓存',
       '服务商',
       'Bootstrap 摘要',
       '过滤规则',
@@ -62,7 +62,7 @@ void main() {
     expect(find.text('3 个服务器'), findsOneWidget);
     expect(find.textContaining('保留 7 天'), findsOneWidget);
 
-    final upstream = tester.getTopLeft(card('上游与调度'));
+    final upstream = tester.getTopLeft(card('调度与缓存'));
     final providers = tester.getTopLeft(card('服务商'));
     final bootstrap = tester.getTopLeft(card('Bootstrap 摘要'));
     final filter = tester.getTopLeft(card('过滤规则'));
@@ -77,7 +77,7 @@ void main() {
     expect(log.dy, greaterThan(bootstrap.dy));
     expect(
       tester.getRect(card('日志记录')).width,
-      closeTo(tester.getRect(card('上游与调度')).width, 0.5),
+      closeTo(tester.getRect(card('调度与缓存')).width, 0.5),
     );
 
     final settings = tester.getRect(card('服务器设置'));
@@ -91,18 +91,22 @@ void main() {
     expect(about.width, lessThan(settings.width + appearance.width));
   });
 
-  testWidgets('缓存设置整合在上游页面', (tester) async {
+  testWidgets('调度与缓存页面按用途分组展示设置卡片', (tester) async {
     await pumpServer(tester, ServerRoutes.upstream);
 
-    expect(find.text('缓存状态'), findsOneWidget);
+    expect(find.text('调度方式'), findsOneWidget);
+    expect(find.text('缓存'), findsOneWidget);
     final scrollable = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(
-      find.text('TTL 下限'),
+      find.text('预取'),
       280,
       scrollable: scrollable,
     );
-    expect(find.text('TTL 下限'), findsOneWidget);
-    expect(find.text('高级选项'), findsNothing);
+    expect(find.text('高级选项'), findsOneWidget);
+    expect(find.text('最小 TTL 值'), findsOneWidget);
+    expect(find.text('缓存状态'), findsNothing);
+    expect(find.text('容量'), findsNothing);
+    expect(find.text('TTL 策略'), findsNothing);
   });
 
   testWidgets('日志域名搜索防抖 300ms，客户端筛选独立生效', (tester) async {
@@ -167,7 +171,7 @@ void main() {
     expect(find.text('过滤状态'), findsOneWidget);
   });
 
-  testWidgets('缓存高级选项整合在上游页面并可切换预取', (tester) async {
+  testWidgets('调度与缓存页面可切换预取', (tester) async {
     final client = _LogFake();
     await pumpServer(tester, ServerRoutes.upstream, client: client);
 
@@ -254,12 +258,12 @@ void main() {
     expect(find.text('快捷操作'), findsOneWidget);
     expect(find.text('请求概览'), findsOneWidget);
 
-    await tester.tap(find.text('上游与调度'));
+    await tester.tap(find.text('调度与缓存'));
     await tester.pumpAndSettle();
     expect(find.text('当前调度'), findsOneWidget);
   });
 
-  testWidgets('上游页面内联切换调度方式', (tester) async {
+  testWidgets('调度与缓存页面内联切换调度方式', (tester) async {
     final client = FakeServerClient();
     await pumpServer(tester, ServerRoutes.upstream, client: client);
 

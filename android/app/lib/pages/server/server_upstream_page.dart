@@ -46,11 +46,11 @@ class ServerUpstreamPage extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
-            title: context.l10n.serverUpstreamScheduling,
+            title: context.l10n.serverUpstreamMode,
             items: [
               ListItem<String>.options(
                 leading: GlyphIcon(serverModeGlyph(upstream.mode), size: 20),
-                title: Text(context.l10n.serverUpstreamMode),
+                title: Text(context.l10n.serverUpstreamScheduling),
                 subtitle: Text(serverModeDescription(context, upstream.mode)),
                 value: upstream.mode,
                 options: serverUpstreamModes,
@@ -65,7 +65,7 @@ class ServerUpstreamPage extends ConsumerWidget {
             footer: context.l10n.serverUpstreamModeNote,
           ),
           generateSection(
-            title: context.l10n.serverCacheState,
+            title: context.l10n.serverCacheTitle,
             items: [
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.database, size: 20),
@@ -74,12 +74,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                 value: cache.enabled,
                 onChanged: (value) => saveCache(cache.copyWith(enabled: value)),
               ),
-            ],
-          ),
-          if (cache.enabled) ...[
-            generateSection(
-              title: context.l10n.serverCacheCapacity,
-              items: [
+              if (cache.enabled) ...[
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.memory, size: 20),
                   title: Text(context.l10n.serverCacheEntries),
@@ -96,11 +91,6 @@ class ServerUpstreamPage extends ConsumerWidget {
                     }
                   },
                 ),
-              ],
-            ),
-            generateSection(
-              title: context.l10n.serverCacheTtl,
-              items: [
                 ListItem<String>.options(
                   leading: const GlyphIcon(AppGlyphs.sliders, size: 20),
                   title: Text(context.l10n.serverCacheMode),
@@ -137,9 +127,11 @@ class ServerUpstreamPage extends ConsumerWidget {
                   },
                 ),
               ],
-            ),
+            ],
+          ),
+          if (cache.enabled)
             generateSection(
-              title: context.l10n.serverCacheAdvancedTtl,
+              title: context.l10n.serverCacheAdvanced,
               items: [
                 ListItem.toggle(
                   leading: const GlyphIcon(AppGlyphs.speed, size: 20),
@@ -166,11 +158,6 @@ class ServerUpstreamPage extends ConsumerWidget {
                       }
                     },
                   ),
-              ],
-            ),
-            generateSection(
-              title: context.l10n.serverCacheFallback,
-              items: [
                 ListItem.toggle(
                   leading: const GlyphIcon(AppGlyphs.sync, size: 20),
                   title: Text(context.l10n.serverCacheStale),
@@ -186,11 +173,6 @@ class ServerUpstreamPage extends ConsumerWidget {
                   onChanged: (value) =>
                       saveCache(cache.copyWith(negativeTtlEnabled: value)),
                 ),
-              ],
-            ),
-            generateSection(
-              title: context.l10n.serverCachePerformance,
-              items: [
                 ListItem.toggle(
                   leading: const GlyphIcon(AppGlyphs.sparkle, size: 20),
                   title: Text(context.l10n.serverCacheOptimistic),
@@ -208,7 +190,6 @@ class ServerUpstreamPage extends ConsumerWidget {
               ],
               footer: context.l10n.serverCacheFooter,
             ),
-          ],
           const SizedBox(height: 24),
         ],
       ),

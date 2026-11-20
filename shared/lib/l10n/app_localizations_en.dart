@@ -15068,13 +15068,13 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get serverUpstream => 'Upstreams';
+  String get serverUpstream => 'Scheduling and cache';
 
   @override
-  String get serverUpstreamTitle => 'Upstreams and routing';
+  String get serverUpstreamTitle => 'Scheduling and cache';
 
   @override
-  String get serverUpstreamHubHint => 'Adjust upstream scheduling';
+  String get serverUpstreamHubHint => 'Adjust scheduling and cache policy';
 
   @override
   String get serverFilterTitle => 'Filtering rules';
