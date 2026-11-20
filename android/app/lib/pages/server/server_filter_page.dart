@@ -55,25 +55,32 @@ class ServerFilterPage extends ConsumerWidget {
                   filter.copyWith(filterResponse: value),
                 ),
               ),
-            ],
-          ),
-          ListHeader(title: context.l10n.serverFilterBlockMode),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SegmentedControl<String>(
-              segments: [
-                ('null_ip', context.l10n.serverBlockNullIp),
-                ('nxdomain', context.l10n.serverBlockNxdomain),
-                ('refused', context.l10n.serverBlockRefused),
-              ],
-              value: filter.blockMode,
-              onChanged: (value) => _save(
-                context,
-                ref,
-                config,
-                filter.copyWith(blockMode: value),
+              ServerOptionRow<String>(
+                glyph: AppGlyphs.shield,
+                title: context.l10n.serverFilterBlockMode,
+                value: filter.blockMode,
+                options: [
+                  ServerOption(
+                    value: 'null_ip',
+                    label: context.l10n.serverBlockNullIp,
+                  ),
+                  ServerOption(
+                    value: 'nxdomain',
+                    label: context.l10n.serverBlockNxdomain,
+                  ),
+                  ServerOption(
+                    value: 'refused',
+                    label: context.l10n.serverBlockRefused,
+                  ),
+                ],
+                onChanged: (value) => _save(
+                  context,
+                  ref,
+                  config,
+                  filter.copyWith(blockMode: value),
+                ),
               ),
-            ),
+            ],
           ),
           if (filter.blockMode == 'null_ip')
             generateSection(

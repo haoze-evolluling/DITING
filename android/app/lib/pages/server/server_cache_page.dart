@@ -78,21 +78,25 @@ class ServerCachePage extends ConsumerWidget {
                 ),
               ],
             ),
-            ListHeader(title: context.l10n.serverCacheMode),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SegmentedControl<String>(
-                segments: [
-                  ('limit_max_ttl', context.l10n.serverCacheLimit),
-                  ('fixed', context.l10n.serverCacheFixed),
-                ],
-                value: cache.mode,
-                onChanged: (value) => save(cache.copyWith(mode: value)),
-              ),
-            ),
             generateSection(
               title: context.l10n.serverCacheTtl,
               items: [
+                ServerOptionRow<String>(
+                  glyph: AppGlyphs.sliders,
+                  title: context.l10n.serverCacheMode,
+                  value: cache.mode,
+                  options: [
+                    ServerOption(
+                      value: 'limit_max_ttl',
+                      label: context.l10n.serverCacheLimit,
+                    ),
+                    ServerOption(
+                      value: 'fixed',
+                      label: context.l10n.serverCacheFixed,
+                    ),
+                  ],
+                  onChanged: (value) => save(cache.copyWith(mode: value)),
+                ),
                 ListItem(
                   leading: const GlyphIcon(AppGlyphs.clock, size: 20),
                   title: Text(

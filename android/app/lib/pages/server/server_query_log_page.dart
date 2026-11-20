@@ -67,23 +67,23 @@ class ServerQueryLogPage extends ConsumerWidget {
               ),
             ],
           ),
+          const ListSectionGap(),
           generateSection(
-            title: context.l10n.serverQueryLogRetention,
             items: [
-              for (final days in const [1, 7, 30, 90])
-                ListItem(
-                  leading: GlyphIcon(
-                    queryLog.retentionDays == days
-                        ? AppGlyphs.checkCircle
-                        : AppGlyphs.clock,
-                    size: 20,
-                  ),
-                  title: Text(context.l10n.serverLogDays(days)),
-                  trailing: queryLog.retentionDays == days
-                      ? const SelectionCheck()
-                      : null,
-                  onTap: () => save(queryLog.copyWith(retentionDays: days)),
-                ),
+              ServerOptionRow<int>(
+                glyph: AppGlyphs.clock,
+                title: context.l10n.serverQueryLogRetention,
+                value: queryLog.retentionDays,
+                options: [
+                  for (final days in const [1, 7, 30, 90])
+                    ServerOption(
+                      value: days,
+                      label: context.l10n.serverLogDays(days),
+                    ),
+                ],
+                onChanged: (days) =>
+                    save(queryLog.copyWith(retentionDays: days)),
+              ),
             ],
             footer: context.l10n.serverQueryLogRetentionNote,
           ),

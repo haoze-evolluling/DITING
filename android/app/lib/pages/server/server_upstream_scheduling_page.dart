@@ -1,4 +1,5 @@
 import 'package:diting_android/data/server/server_models.dart';
+import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_upstream_shared.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -29,25 +30,25 @@ class ServerUpstreamSchedulingPage extends ConsumerWidget {
           generateSection(
             title: context.l10n.serverUpstreamMode,
             items: [
-              for (final mode in serverUpstreamModes)
-                ListItem(
-                  leading: GlyphIcon(
-                    upstream.mode == mode
-                        ? AppGlyphs.checkCircle
-                        : serverModeGlyph(mode),
-                    size: 20,
-                  ),
-                  title: Text(serverModeLabel(context, mode)),
-                  subtitle: Text(serverModeDescription(context, mode)),
-                  trailing: upstream.mode == mode
-                      ? const SelectionCheck()
-                      : null,
-                  onTap: () => _save(
-                    context,
-                    ref,
-                    config.copyWith(upstream: upstream.copyWith(mode: mode)),
-                  ),
+              ServerOptionRow<String>(
+                glyph: serverModeGlyph(upstream.mode),
+                title: context.l10n.serverUpstreamScheduling,
+                value: upstream.mode,
+                options: [
+                  for (final mode in serverUpstreamModes)
+                    ServerOption(
+                      value: mode,
+                      label: serverModeLabel(context, mode),
+                      subtitle: serverModeDescription(context, mode),
+                      glyph: serverModeGlyph(mode),
+                    ),
+                ],
+                onChanged: (mode) => _save(
+                  context,
+                  ref,
+                  config.copyWith(upstream: upstream.copyWith(mode: mode)),
                 ),
+              ),
             ],
             footer: context.l10n.serverUpstreamModeNote,
           ),

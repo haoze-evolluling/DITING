@@ -158,6 +158,45 @@ void main() {
     expect(saved.cache.prefetchEnabled, isTrue);
   });
 
+  testWidgets('缓存 TTL 模式通过弹出菜单切换', (tester) async {
+    final client = _LogFake();
+    await pumpServer(tester, ServerRoutes.cache, client: client);
+
+    await tester.tap(find.text('限制最大 TTL'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('固定 TTL'));
+    await tester.pumpAndSettle();
+
+    final saved = await client.getConfig();
+    expect(saved.cache.mode, 'fixed');
+  });
+
+  testWidgets('过滤拦截方式通过弹出菜单切换', (tester) async {
+    final client = _LogFake();
+    await pumpServer(tester, ServerRoutes.filter, client: client);
+
+    await tester.tap(find.text('返回空地址'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('返回 NXDOMAIN'));
+    await tester.pumpAndSettle();
+
+    final saved = await client.getConfig();
+    expect(saved.filter.blockMode, 'nxdomain');
+  });
+
+  testWidgets('日志保留天数通过弹出菜单切换', (tester) async {
+    final client = _LogFake();
+    await pumpServer(tester, ServerRoutes.queryLog, client: client);
+
+    await tester.tap(find.text('7 天'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('30 天'));
+    await tester.pumpAndSettle();
+
+    final saved = await client.getConfig();
+    expect(saved.queryLog.retentionDays, 30);
+  });
+
   testWidgets('服务器首页展示运行状态与快捷入口', (tester) async {
     final client = FakeServerClient(
       status: ServerStatus(
