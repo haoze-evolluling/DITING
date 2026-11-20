@@ -93,7 +93,7 @@ class _SearchFieldState extends State<SearchField> {
           maxLines: 1,
           textAlignVertical: TextAlignVertical.center,
           textInputAction: TextInputAction.search,
-          style: AppTextStyle.body.of(context),
+          style: AppTextRole.body.of(context),
           inputFormatters: TextInputLimits.limit(TextInputLimits.search),
           onChanged: widget.onChanged,
           onSubmitted: (_) => widget.onSubmitted?.call(),

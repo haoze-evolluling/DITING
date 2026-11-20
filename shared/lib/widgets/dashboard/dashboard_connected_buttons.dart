@@ -129,7 +129,7 @@ class DashboardSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tone = DashboardColors.of(context).tone;
-    final style = AppTextStyle.footnote.of(context, emphasized: true);
+    final style = AppTextRole.sectionLabel.of(context);
     final scale = DashboardDensityScope.scaleOf(context);
     return DashboardConnectedGroup(
       children: [

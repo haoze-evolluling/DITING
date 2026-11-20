@@ -21,8 +21,8 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
 
   double get _iconSize => widget.dense ? _denseItemIconSize : _itemIconSize;
 
-  AppTextStyle get _labelStyle =>
-      widget.dense ? AppTextStyle.footnote : AppTextStyle.subheadline;
+  AppTextRole get _labelStyle =>
+      widget.dense ? AppTextRole.supportingText : AppTextRole.body;
 
   double get _minWidth => widget.dense ? _denseMenuMinWidth : _menuMinWidth;
 
@@ -98,8 +98,8 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
                         overflow: TextOverflow.ellipsis,
                         style:
                             (dense
-                                    ? AppTextStyle.caption1
-                                    : AppTextStyle.footnote)
+                                    ? AppTextRole.caption
+                                    : AppTextRole.supportingText)
                                 .of(context)
                                 .copyWith(
                                   color: enabled
@@ -170,7 +170,7 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
           title,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.footnote
+          style: AppTextRole.supportingText
               .of(context)
               .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),

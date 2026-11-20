@@ -50,7 +50,9 @@ class DashboardCard extends StatelessWidget {
                   const SizedBox(height: DashboardEditBar.gap),
                   // Dim the body only, so the edit bar keeps its colors. Editing wins over the
                   // card's own buttons: a tap mid-arrangement would read as a lost drag.
-                  IgnorePointer(child: DisabledMask(status: true, child: child)),
+                  IgnorePointer(
+                    child: DisabledMask(status: true, child: child),
+                  ),
                 ],
               ),
       ),
@@ -161,13 +163,17 @@ class DashboardCardHeader extends StatelessWidget {
           // badge that wrapped: the switch stays a switch, and its overflow box still has a
           // bounded box to center in.
           for (final child in trailing)
-            SizedBox(height: height, child: Center(child: child)),
+            SizedBox(
+              height: height,
+              child: Center(child: child),
+            ),
           if (chevron)
             GlyphIcon(
               AppGlyphs.chevronForward,
               size: 16,
               color: colorScheme.onSurfaceVariant,
-            ),        ],
+            ),
+        ],
       ),
     );
   }
@@ -229,10 +235,7 @@ class DashboardChip extends StatelessWidget {
         horizontal: large ? 10 : 8,
         vertical: large ? 5 : 3,
       ),
-      decoration: ShapeDecoration(
-        color: background,
-        shape: AppShape.standard,
-      ),
+      decoration: ShapeDecoration(color: background, shape: AppShape.standard),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         spacing: 5,
@@ -251,8 +254,8 @@ class DashboardChip extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: (large ? AppTextStyle.footnote : AppTextStyle.caption1)
-                  .of(context, emphasized: true)
+              style: (large ? AppTextRole.sectionLabel : AppTextRole.badge)
+                  .of(context)
                   .toTabular
                   .copyWith(color: foreground),
             ),
@@ -271,16 +274,16 @@ class DashboardMetric extends StatelessWidget {
     required this.label,
     required this.value,
     this.color,
-    this.style = AppTextStyle.headline,
+    this.style = AppTextRole.metricCompact,
   });
 
   final String label;
   final String value;
   final Color? color;
 
-  /// The figure's role: [AppTextStyle.title2] for a card's headline number, the default
-  /// headline for the figures of a grid.
-  final AppTextStyle style;
+  /// The figure's role: [AppTextRole.metricMedium] for a card's headline number,
+  /// [AppTextRole.metricCompact] for the figures of a grid.
+  final AppTextRole style;
 
   @override
   Widget build(BuildContext context) {

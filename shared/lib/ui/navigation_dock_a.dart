@@ -189,9 +189,10 @@ class NavigationDock extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   static double heightOf(BuildContext context) {
+    final labelSize = AppTextRole.dockLabel.sizeOf(context);
     return _barHeight +
-        MediaQuery.textScalerOf(context).scale(_labelSize) -
-        _labelSize;
+        MediaQuery.textScalerOf(context).scale(labelSize) -
+        labelSize;
   }
 
   static double _bottomMarginOf(BuildContext context) =>

@@ -1,101 +1,218 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
+import 'package:diting_shared/ui/font.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// Apple's iOS Dynamic Type scale at its default size, plus [display] and [pageTitle].
-enum AppTextStyle {
-  display(40, 44, emphasizedWeight: FontWeight.w700),
-  largeTitle(34, 41, emphasizedWeight: FontWeight.w700),
-  title1(28, 34, emphasizedWeight: FontWeight.w700),
-  pageTitle(24, 30, weight: FontWeight.w600, emphasizedWeight: FontWeight.w700),
-  title2(22, 28, emphasizedWeight: FontWeight.w700),
-  title3(20, 25),
-  headline(17, 22, weight: FontWeight.w600),
-  body(17, 22),
-  callout(16, 21),
-  subheadline(15, 20),
-  footnote(13, 18),
-  caption1(12, 16),
-  caption2(11, 13);
+/// The app's complete typographic role table.
+///
+/// Pages and components select a role instead of setting font sizes or line
+/// heights. Mobile and desktop deltas live only in this enum.
+enum AppTextRole {
+  pageTitle(24, 30, weight: FontWeight.w600),
+  sectionTitle(20, 26, weight: FontWeight.w600),
+  cardTitle(17, 22, weight: FontWeight.w600),
+  rowTitle(17, 22),
+  body(15, 22, desktopSize: 16, desktopLeading: 24),
+  bodyStrong(
+    15,
+    22,
+    weight: FontWeight.w600,
+    desktopSize: 16,
+    desktopLeading: 24,
+  ),
+  bodyReading(17, 26),
+  sectionLabel(13, 18, weight: FontWeight.w600, secondary: true),
+  supportingText(13, 18, secondary: true),
+  legalText(13, 22, secondary: true),
+  caption(12, 16, secondary: true),
+  micro(11, 14, secondary: true),
+  metricLarge(28, 34, weight: FontWeight.w700, metric: true),
+  metricMedium(22, 28, weight: FontWeight.w700, metric: true),
+  metricSmall(20, 26, weight: FontWeight.w700, metric: true),
+  metricCompact(17, 22, weight: FontWeight.w700, metric: true),
+  metricUnit(13, 18, weight: FontWeight.w600, secondary: true, tabular: true),
+  button(15, 20, weight: FontWeight.w600),
+  input(17, 22),
+  badge(12, 16, weight: FontWeight.w600, secondary: true, tabular: true),
+  numeric(13, 18, secondary: true, tabular: true),
+  code(13, 20, tabular: true),
+  dockLabel(10, 14.5, weight: FontWeight.w500, secondary: true);
 
-  const AppTextStyle(
+  const AppTextRole(
     this.size,
     this.leading, {
     this.weight = FontWeight.w400,
-    this.emphasizedWeight = FontWeight.w600,
+    this.secondary = false,
+    this.desktopSize,
+    this.desktopLeading,
+    this.tabular = false,
+    this.metric = false,
   });
 
   final double size;
   final double leading;
   final FontWeight weight;
-  final FontWeight emphasizedWeight;
+  final bool secondary;
+  final double? desktopSize;
+  final double? desktopLeading;
+  final bool tabular;
+  final bool metric;
 
-  TextStyle of(BuildContext context, {bool emphasized = false}) =>
-      _apply(_slotOf(Theme.of(context).textTheme)!, emphasized: emphasized);
+  double sizeOf(BuildContext context) =>
+      _desktop(context) ? desktopSize ?? size : size;
 
-  static TextStyle custom(
-    BuildContext context, {
-    required double size,
-    required double leading,
-    FontWeight weight = FontWeight.w400,
-  }) {
-    final textTheme = Theme.of(context).textTheme;
-    final base = size < title3.size
-        ? textTheme.bodyLarge
-        : textTheme.titleLarge;
-    return base!.copyWith(
-      fontSize: size,
-      height: leading / size,
-      fontWeight: weight,
-      letterSpacing: 0,
+  double leadingOf(BuildContext context) =>
+      _desktop(context) ? desktopLeading ?? leading : leading;
+
+  TextStyle of(BuildContext context) {
+    final theme = Theme.of(context);
+    return _style(
+      _slotOf(theme.textTheme)!,
+      theme.colorScheme,
+      desktop: _desktop(context),
     );
   }
 
+  TextStyle _style(
+    TextStyle base,
+    ColorScheme colors, {
+    required bool desktop,
+  }) {
+    final resolvedSize = desktop ? desktopSize ?? size : size;
+    final resolvedLeading = desktop ? desktopLeading ?? leading : leading;
+    return base.copyWith(
+      fontSize: resolvedSize,
+      height: resolvedLeading / resolvedSize,
+      fontWeight: weight,
+      letterSpacing: metric ? -0.02 * resolvedSize : 0,
+      fontFeatures: tabular || metric ? appTabularFigures : null,
+      color: secondary ? colors.onSurfaceVariant : colors.onSurface,
+    );
+  }
+
+  TextStyle? _on(
+    TextStyle? base,
+    ColorScheme colors, {
+    required bool desktop,
+  }) => base == null ? null : _style(base, colors, desktop: desktop);
+
   // Typography.blackCupertino draws these slots with SF Pro Display, the rest with SF Pro Text.
   TextStyle? _slotOf(TextTheme theme) => switch (this) {
-    display || largeTitle => theme.headlineLarge,
-    title1 => theme.headlineMedium,
-    pageTitle || title2 => theme.headlineSmall,
-    title3 => theme.titleLarge,
-    headline => theme.titleMedium,
-    body || callout => theme.bodyLarge,
-    subheadline => theme.bodyMedium,
-    footnote => theme.bodySmall,
-    caption1 => theme.labelMedium,
-    caption2 => theme.labelSmall,
+    pageTitle => theme.headlineLarge,
+    sectionTitle => theme.headlineMedium,
+    cardTitle || rowTitle || input => theme.titleLarge,
+    body || bodyStrong || bodyReading => theme.bodyLarge,
+    sectionLabel || supportingText || legalText => theme.bodyMedium,
+    caption || numeric || code => theme.bodySmall,
+    micro => theme.labelSmall,
+    metricLarge => theme.headlineLarge,
+    metricMedium => theme.headlineMedium,
+    metricSmall || metricCompact => theme.headlineSmall,
+    metricUnit => theme.labelMedium,
+    button => theme.labelLarge,
+    badge => theme.labelMedium,
+    dockLabel => theme.labelSmall,
   };
-
-  TextStyle _apply(TextStyle base, {required bool emphasized}) => base.copyWith(
-    fontSize: size,
-    height: leading / size,
-    fontWeight: emphasized ? emphasizedWeight : weight,
-    letterSpacing: 0,
-  );
-
-  TextStyle? _on(TextStyle? base, {bool emphasized = false}) =>
-      base == null ? null : _apply(base, emphasized: emphasized);
 }
+
+bool _desktop(BuildContext context) => switch (Theme.of(context).platform) {
+  TargetPlatform.windows ||
+  TargetPlatform.macOS ||
+  TargetPlatform.linux => true,
+  TargetPlatform.android ||
+  TargetPlatform.fuchsia ||
+  TargetPlatform.iOS => false,
+};
 
 extension AppTypographyThemeExt on ThemeData {
   ThemeData get withAppTypography => copyWith(
-    textTheme: _onAppScale(textTheme),
-    primaryTextTheme: _onAppScale(primaryTextTheme),
+    textTheme: _onAppScale(
+      textTheme,
+      colorScheme,
+      desktop: _desktopPlatform(platform),
+    ),
+    primaryTextTheme: _onAppScale(
+      primaryTextTheme,
+      colorScheme,
+      desktop: _desktopPlatform(platform),
+    ),
   );
 }
 
-TextTheme _onAppScale(TextTheme theme) => theme.copyWith(
-  displayLarge: AppTextStyle.largeTitle._on(theme.displayLarge),
-  displayMedium: AppTextStyle.largeTitle._on(theme.displayMedium),
-  displaySmall: AppTextStyle.largeTitle._on(theme.displaySmall),
-  headlineLarge: AppTextStyle.largeTitle._on(theme.headlineLarge),
-  headlineMedium: AppTextStyle.title1._on(theme.headlineMedium),
-  headlineSmall: AppTextStyle.title2._on(theme.headlineSmall),
-  titleLarge: AppTextStyle.title3._on(theme.titleLarge),
-  titleMedium: AppTextStyle.headline._on(theme.titleMedium),
-  titleSmall: AppTextStyle.subheadline._on(theme.titleSmall, emphasized: true),
-  bodyLarge: AppTextStyle.body._on(theme.bodyLarge),
-  bodyMedium: AppTextStyle.subheadline._on(theme.bodyMedium),
-  bodySmall: AppTextStyle.footnote._on(theme.bodySmall),
-  labelLarge: AppTextStyle.subheadline._on(theme.labelLarge, emphasized: true),
-  labelMedium: AppTextStyle.caption1._on(theme.labelMedium, emphasized: true),
-  labelSmall: AppTextStyle.caption2._on(theme.labelSmall, emphasized: true),
+bool _desktopPlatform(TargetPlatform platform) => switch (platform) {
+  TargetPlatform.windows ||
+  TargetPlatform.macOS ||
+  TargetPlatform.linux => true,
+  TargetPlatform.android ||
+  TargetPlatform.fuchsia ||
+  TargetPlatform.iOS => false,
+};
+
+TextTheme _onAppScale(
+  TextTheme theme,
+  ColorScheme colors, {
+  required bool desktop,
+}) => theme.copyWith(
+  displayLarge: AppTextRole.metricLarge._on(
+    theme.displayLarge,
+    colors,
+    desktop: desktop,
+  ),
+  displayMedium: AppTextRole.metricLarge._on(
+    theme.displayMedium,
+    colors,
+    desktop: desktop,
+  ),
+  displaySmall: AppTextRole.metricLarge._on(
+    theme.displaySmall,
+    colors,
+    desktop: desktop,
+  ),
+  headlineLarge: AppTextRole.pageTitle._on(
+    theme.headlineLarge,
+    colors,
+    desktop: desktop,
+  ),
+  headlineMedium: AppTextRole.sectionTitle._on(
+    theme.headlineMedium,
+    colors,
+    desktop: desktop,
+  ),
+  headlineSmall: AppTextRole.sectionTitle._on(
+    theme.headlineSmall,
+    colors,
+    desktop: desktop,
+  ),
+  titleLarge: AppTextRole.cardTitle._on(
+    theme.titleLarge,
+    colors,
+    desktop: desktop,
+  ),
+  titleMedium: AppTextRole.rowTitle._on(
+    theme.titleMedium,
+    colors,
+    desktop: desktop,
+  ),
+  titleSmall: AppTextRole.sectionLabel._on(
+    theme.titleSmall,
+    colors,
+    desktop: desktop,
+  ),
+  bodyLarge: AppTextRole.body._on(theme.bodyLarge, colors, desktop: desktop),
+  bodyMedium: AppTextRole.body._on(theme.bodyMedium, colors, desktop: desktop),
+  bodySmall: AppTextRole.supportingText._on(
+    theme.bodySmall,
+    colors,
+    desktop: desktop,
+  ),
+  labelLarge: AppTextRole.button._on(
+    theme.labelLarge,
+    colors,
+    desktop: desktop,
+  ),
+  labelMedium: AppTextRole.badge._on(
+    theme.labelMedium,
+    colors,
+    desktop: desktop,
+  ),
+  labelSmall: AppTextRole.micro._on(theme.labelSmall, colors, desktop: desktop),
 );

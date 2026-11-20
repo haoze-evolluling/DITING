@@ -36,8 +36,8 @@ class CommonChip extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.subheadline
-                    .of(context, emphasized: true)
+                style: AppTextRole.bodyStrong
+                    .of(context)
                     .copyWith(color: colorScheme.onSurface),
               ),
             ),
@@ -75,13 +75,13 @@ class TonalChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = AppTextStyle.caption1
-        .of(context, emphasized: true)
+    final style = AppTextRole.badge
+        .of(context)
         .copyWith(color: foregroundColor);
     final content = Padding(
       padding: _padding,
       child: _CapCentered(
-        fontSize: style.fontSize!,
+        capSize: style.fontSize!,
         child: Text(
           label,
           maxLines: 1,
@@ -105,12 +105,12 @@ class TonalChip extends StatelessWidget {
 class _CapCentered extends SingleChildRenderObjectWidget {
   static const _capHeightPerEm = 0.7;
 
-  final double fontSize;
+  final double capSize;
 
-  const _CapCentered({required this.fontSize, required super.child});
+  const _CapCentered({required this.capSize, required super.child});
 
   double _capHeight(BuildContext context) =>
-      MediaQuery.textScalerOf(context).scale(fontSize) * _capHeightPerEm;
+      MediaQuery.textScalerOf(context).scale(capSize) * _capHeightPerEm;
 
   @override
   _RenderCapCentered createRenderObject(BuildContext context) =>
@@ -184,12 +184,7 @@ class _RenderCapCentered extends RenderShiftedBox {
 
 double chipLabelWidth(BuildContext context, String label) =>
     MeasureScope.of(context)
-        .computeTextSize(
-          Text(
-            label,
-            style: AppTextStyle.caption1.of(context, emphasized: true),
-          ),
-        )
+        .computeTextSize(Text(label, style: AppTextRole.badge.of(context)))
         .width;
 
 class MetaChip extends StatelessWidget {
@@ -211,8 +206,8 @@ class MetaChip extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.caption2
-              .of(context, emphasized: true)
+          style: AppTextRole.badge
+              .of(context)
               .copyWith(color: colorScheme.onSurfaceVariant),
         ),
       ),

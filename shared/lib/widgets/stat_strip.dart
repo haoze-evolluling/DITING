@@ -78,8 +78,8 @@ class _StatCell extends StatelessWidget {
                 item.value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.title3
-                    .of(context, emphasized: true)
+                style: AppTextRole.sectionTitle
+                    .of(context)
                     .copyWith(color: valueColor),
               ),
             ),
@@ -88,7 +88,7 @@ class _StatCell extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 2),
                 child: Text(
                   unit,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -100,7 +100,7 @@ class _StatCell extends StatelessWidget {
           item.label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.caption1
+          style: AppTextRole.caption
               .of(context)
               .copyWith(color: colorScheme.onSurfaceVariant),
         ),
@@ -136,7 +136,7 @@ class KeyValueRow extends StatelessWidget {
             flex: 2,
             child: Text(
               label,
-              style: AppTextStyle.subheadline
+              style: AppTextRole.body
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),
@@ -147,7 +147,7 @@ class KeyValueRow extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              style: AppTextStyle.subheadline
+              style: AppTextRole.body
                   .of(context)
                   .copyWith(
                     color: colorScheme.onSurface,

@@ -90,49 +90,31 @@ abstract final class DashboardShadows {
 /// a card here reads as the same surface as everywhere else.
 /// Dashboard text roles. All figures use tabular digits so rows do not jitter.
 ///
-/// A desktop card is read from a distance: its title has to sit clearly above the note under it,
-/// which is why the desktop pair is 15/13 rather than the phone's 15/12. The phone keeps its own
-/// sizes so its cards do not lose five lines to a taller note.
 abstract final class DashboardText {
-  static bool _desktop(BuildContext context) =>
-      DashboardDensityScope.of(context).isDesktop;
-
   /// The card's own name. Full-strength ink: on a desktop card the title, the note under it and
   /// the figures all used to sit in the same grey, which left the card without a first line.
   static TextStyle cardTitle(BuildContext context) =>
-      AppTextStyle.subheadline.of(context, emphasized: true).copyWith(
-        color: context.colorScheme.onSurface,
-      );
+      AppTextRole.cardTitle.of(context);
 
-  static TextStyle label(BuildContext context, {Color? color}) =>
-      (_desktop(context) ? AppTextStyle.footnote : AppTextStyle.caption1)
-          .of(context)
-          .toTabular
-          .copyWith(
-            color: color ?? context.colorScheme.onSurfaceVariant,
-            // A desktop note often wraps to two lines; 13 px text needs more air between them
-            // than the phone's 12 px single-line captions do.
-            height: _desktop(context) ? 1.45 : null,
-          );
+  static TextStyle label(BuildContext context, {Color? color}) => AppTextRole
+      .supportingText
+      .of(context)
+      .toTabular
+      .copyWith(color: color ?? context.colorScheme.onSurfaceVariant);
 
   static TextStyle figure(
     BuildContext context,
-    AppTextStyle style, {
+    AppTextRole style, {
     Color? color,
-  }) => style
-      .of(context, emphasized: true)
-      .toTabular
-      .copyWith(color: color, letterSpacing: -0.02 * style.size);
+  }) => style.of(context).toTabular.copyWith(color: color);
 
   static TextStyle unit(
     BuildContext context, [
-    AppTextStyle style = AppTextStyle.subheadline,
-  ]) => style
-      .of(context, emphasized: true)
-      .copyWith(color: context.colorScheme.onSurfaceVariant);
+    AppTextRole style = AppTextRole.metricUnit,
+  ]) => style.of(context);
 
   static TextStyle rowTitle(BuildContext context) =>
-      AppTextStyle.subheadline.of(context, emphasized: true);
+      AppTextRole.rowTitle.of(context);
 }
 
 EdgeInsets dashboardCardPadding(DashboardDensity density) => switch (density) {

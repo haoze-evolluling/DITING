@@ -219,15 +219,13 @@ class _FallbackBar extends StatelessWidget {
         const IconThemeData(size: 24);
     final labelStyle =
         navigationBarTheme.labelTextStyle?.resolve(const <WidgetState>{}) ??
-        theme.textTheme.labelMedium;
+        AppTextRole.dockLabel.of(context);
     return NavigationBarTheme(
       data: navigationBarTheme.copyWith(
         indicatorColor: Colors.transparent,
-        iconTheme: WidgetStatePropertyAll(
-          iconTheme.copyWith(color: muted),
-        ),
+        iconTheme: WidgetStatePropertyAll(iconTheme.copyWith(color: muted)),
         labelTextStyle: WidgetStatePropertyAll(
-          labelStyle?.copyWith(color: muted),
+          labelStyle.copyWith(color: muted),
         ),
       ),
       child: bar,

@@ -213,7 +213,7 @@ class _NullStatusState extends State<NullStatus> {
                   child: Text(
                     label,
                     textAlign: TextAlign.center,
-                    style: AppTextStyle.headline
+                    style: AppTextRole.cardTitle
                         .of(context)
                         .copyWith(color: colorScheme.onSurface),
                   ),
@@ -226,7 +226,7 @@ class _NullStatusState extends State<NullStatus> {
                   child: Text(
                     description,
                     textAlign: TextAlign.center,
-                    style: AppTextStyle.subheadline
+                    style: AppTextRole.body
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),

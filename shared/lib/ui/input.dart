@@ -5,6 +5,7 @@ import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:diting_shared/ui/l10n.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
+import 'package:diting_shared/ui/typography.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -72,6 +73,7 @@ class _SecretTextFormFieldState extends State<SecretTextFormField> {
   Widget build(BuildContext context) {
     final localizations = UiLocalizations.of(context);
     return TextFormField(
+      style: AppTextRole.input.of(context),
       autofocus: widget.autofocus,
       focusNode: widget.focusNode,
       controller: widget.controller,
@@ -240,6 +242,7 @@ class _InputDialogState extends State<InputDialog> {
               )
             else
               TextFormField(
+                style: AppTextRole.input.of(context),
                 autofocus: widget.selectAll,
                 inputFormatters: _limited(
                   widget.inputFormatters,
@@ -404,7 +407,7 @@ class LabeledInputField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 6,
       children: [
-        Text(label, style: context.listTitleStyle),
+        Text(label, style: AppTextRole.rowTitle.of(context)),
         FilledInputTheme(
           borderRadius: AppRadius.standard,
           contentPadding: const EdgeInsets.symmetric(
@@ -412,6 +415,7 @@ class LabeledInputField extends StatelessWidget {
             vertical: 12,
           ),
           child: TextField(
+            style: AppTextRole.input.of(context),
             controller: controller,
             enabled: enabled,
             onChanged: onChanged,
@@ -429,7 +433,8 @@ class LabeledInputField extends StatelessWidget {
             ),
           ),
         ),
-        if (helperText != null) Text(helperText, style: context.listCaptionStyle),
+        if (helperText != null)
+          Text(helperText, style: AppTextRole.supportingText.of(context)),
       ],
     );
   }

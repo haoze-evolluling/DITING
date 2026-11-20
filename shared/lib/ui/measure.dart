@@ -77,16 +77,16 @@ class Measure {
     );
   }
 
-  final Map<AppTextStyle, double> _textHeights = {};
+  final Map<AppTextRole, double> _textHeights = {};
 
-  double textHeight(AppTextStyle style) => _textHeights[style] ??=
+  double textHeight(AppTextRole style) => _textHeights[style] ??=
       computeTextSize(Text('X', style: style.of(context))).height;
 
-  double get listTitleHeight => textHeight(AppTextStyle.body);
+  double get listTitleHeight => textHeight(AppTextRole.rowTitle);
 
-  double get listSubtitleHeight => textHeight(AppTextStyle.subheadline);
+  double get listSubtitleHeight => textHeight(AppTextRole.supportingText);
 
-  double get cardHeaderHeight => textHeight(AppTextStyle.headline);
+  double get cardHeaderHeight => textHeight(AppTextRole.cardTitle);
 
   double get listRowHeight =>
       max(listRowMinHeight, listTitleHeight + 2 * listRowVerticalPadding);

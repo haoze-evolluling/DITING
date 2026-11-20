@@ -83,8 +83,8 @@ class _DecorationListItemState extends State<DecorationListItem> {
                   const EdgeInsets.only(right: 16, left: 16),
               title: _ListRowSeparatorStart(child: widget.title),
               subtitle: widget.subtitle,
-              titleTextStyle: context.listTitleStyle,
-              subtitleTextStyle: context.listSubtitleStyle,
+              titleTextStyle: AppTextRole.rowTitle.of(context),
+              subtitleTextStyle: AppTextRole.supportingText.of(context),
               minVerticalPadding:
                   widget.minVerticalPadding ?? listRowVerticalPadding,
               minTileHeight: listRowMinHeight,

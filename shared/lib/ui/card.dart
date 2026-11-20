@@ -8,6 +8,7 @@ import 'package:diting_shared/ui/measure.dart';
 import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
+import 'package:diting_shared/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
@@ -74,7 +75,7 @@ class InfoHeader extends StatelessWidget {
                       info.label,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.cardHeaderStyle,
+                      style: AppTextRole.cardTitle.of(context),
                     ),
                   ),
                 ),

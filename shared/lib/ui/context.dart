@@ -1,11 +1,9 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 import 'dart:math' as math;
 
-import 'package:diting_shared/ui/color.dart';
 import 'package:diting_shared/ui/inherited.dart';
 import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/scaffold.dart';
-import 'package:diting_shared/ui/typography.dart';
 import 'package:diting_shared/ui/view_scope.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -54,19 +52,4 @@ extension BuildContextExtension on BuildContext {
 
   Duration motionDuration(Duration duration) =>
       disableAnimations ? Duration.zero : duration;
-
-  TextStyle get listTitleStyle =>
-      AppTextStyle.body.of(this).copyWith(color: colorScheme.onSurface);
-
-  TextStyle get listSubtitleStyle => AppTextStyle.subheadline
-      .of(this)
-      .copyWith(color: colorScheme.onSurfaceVariant);
-
-  TextStyle get listCaptionStyle => AppTextStyle.footnote
-      .of(this)
-      .copyWith(color: colorScheme.onSurfaceVariant);
-
-  TextStyle get cardHeaderStyle => AppTextStyle.headline
-      .of(this)
-      .copyWith(color: colorScheme.onSurfaceVariant.opacity80);
 }

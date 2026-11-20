@@ -286,7 +286,7 @@ class _SidebarPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = _SidebarColors(context.colorScheme);
-    final fontSize = AppTextStyle.subheadline.size;
+    final fontSize = AppTextRole.body.sizeOf(context);
     final labelOpacity = ((progress - 0.4) / 0.6).clamp(0.0, 1.0);
     final compactWidth = math.max(_compactWidth, windowControls.width);
     // The collapsed rail keeps the tight FlClash inset, but an open pane can afford a wider one:
@@ -298,7 +298,7 @@ class _SidebarPane extends StatelessWidget {
     final itemHeight =
         _itemSize + MediaQuery.textScalerOf(context).scale(fontSize) - fontSize;
     final rowWidth = _expandedWidth - _rowInset * 2;
-    final labelStyle = AppTextStyle.subheadline
+    final labelStyle = AppTextRole.body
         .of(context)
         .copyWith(color: colors.label);
     final labelWidth = rowWidth - iconInset - _iconSize - _labelGap * 2;

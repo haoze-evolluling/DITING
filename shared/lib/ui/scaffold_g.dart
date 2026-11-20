@@ -100,8 +100,8 @@ extension CommonScaffoldStateAppBar on CommonScaffoldState {
                 toolbarHeight: isCompact ? sheetToolbarHeight : null,
                 centerTitle: isCompact,
                 titleTextStyle: compactTitle
-                    ? AppTextStyle.headline.of(context)
-                    : AppTextStyle.pageTitle.of(context),
+                    ? AppTextRole.cardTitle.of(context)
+                    : AppTextRole.pageTitle.of(context),
                 leading: hidesBar
                     ? null
                     : underField(searchLeading, _leadingUnderSearch),
@@ -109,9 +109,7 @@ extension CommonScaffoldStateAppBar on CommonScaffoldState {
                 //
                 // A page without a leading button starts its title at the shell's content gutter,
                 // so the title and the cards underneath share one left edge.
-                titleSpacing: leading == null
-                    ? PageGutterScope.of(context)
-                    : 0,
+                titleSpacing: leading == null ? PageGutterScope.of(context) : 0,
                 title: hidesBar
                     ? null
                     : underField(

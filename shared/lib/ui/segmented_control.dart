@@ -43,10 +43,7 @@ class SegmentedControl<T> extends StatelessWidget {
       return false;
     }
     final painter = TextPainter(
-      text: TextSpan(
-        text: label,
-        style: AppTextStyle.subheadline.of(context, emphasized: true),
-      ),
+      text: TextSpan(text: label, style: AppTextRole.bodyStrong.of(context)),
       textDirection: Directionality.of(context),
       textScaler: MediaQuery.textScalerOf(context),
       maxLines: 1,
@@ -131,17 +128,17 @@ class SegmentedControl<T> extends StatelessWidget {
                                   child: AnimatedDefaultTextStyle(
                                     duration: const Duration(milliseconds: 200),
                                     textAlign: TextAlign.center,
-                                    style: AppTextStyle.subheadline
-                                        .of(
-                                          context,
-                                          emphasized: option == value,
-                                        )
-                                        .copyWith(
-                                          color: option == value
-                                              ? colorScheme.onPrimary
-                                              : colorScheme
-                                                    .onSurfaceVariant,
-                                        ),
+                                    style:
+                                        (option == value
+                                                ? AppTextRole.bodyStrong
+                                                : AppTextRole.body)
+                                            .of(context)
+                                            .copyWith(
+                                              color: option == value
+                                                  ? colorScheme.onPrimary
+                                                  : colorScheme
+                                                        .onSurfaceVariant,
+                                            ),
                                     child: Text(
                                       label,
                                       maxLines: wrapped ? 2 : 1,

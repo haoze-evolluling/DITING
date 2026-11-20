@@ -11,7 +11,7 @@ class _ScrollbarHintPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final style = AppTextStyle.caption1.of(context, emphasized: true);
+    final style = AppTextRole.badge.of(context);
     final rate = scrubRate;
     return DecoratedBox(
       key: const ValueKey('scrollbarHintPill'),

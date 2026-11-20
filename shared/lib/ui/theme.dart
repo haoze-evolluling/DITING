@@ -105,8 +105,8 @@ class SliderDefaultsM3 extends SliderThemeData {
       });
 
   @override
-  TextStyle? get valueIndicatorTextStyle => AppTextStyle.subheadline
-      .of(context, emphasized: true)
+  TextStyle? get valueIndicatorTextStyle => AppTextRole.bodyStrong
+      .of(context)
       .copyWith(color: _colors.onInverseSurface);
 
   @override

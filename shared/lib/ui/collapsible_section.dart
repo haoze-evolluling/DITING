@@ -140,7 +140,7 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyle.headline.of(context),
+                        style: AppTextRole.cardTitle.of(context),
                       ),
                     ),
                     RotationTransition(

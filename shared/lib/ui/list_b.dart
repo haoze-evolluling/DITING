@@ -13,7 +13,7 @@ class ListFooter extends StatelessWidget {
       alignment: Alignment.centerLeft,
       padding:
           const EdgeInsets.only(left: 16, right: 16, top: 8) * 1.mAp(context),
-      child: Text(text, style: context.listCaptionStyle),
+      child: Text(text, style: AppTextRole.supportingText.of(context)),
     );
   }
 }

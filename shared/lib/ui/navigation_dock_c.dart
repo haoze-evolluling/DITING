@@ -240,20 +240,11 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final labelStyle = AppTextStyle.custom(
-      context,
-      size: _labelSize,
-      leading: _labelLeading,
-      weight: FontWeight.w500,
-    );
+    final labelStyle = AppTextRole.dockLabel.of(context);
     final labels = [
       for (final destination in widget.destinations)
         _measureLabel(context, destination.label, labelStyle),
     ];
-    final widest = labels.fold(
-      0.0,
-      (width, label) => math.max(width, label.width),
-    );
     final lineHeight = labels.fold(
       0.0,
       (height, label) => math.max(height, label.height),
@@ -292,9 +283,6 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
                       widget.destinations.length,
                     );
                     final room = layout.pitch - _labelInset * 2;
-                    final labelScale = widest <= room
-                        ? 1.0
-                        : math.max(room / widest, _minLabelSize / _labelSize);
                     Rect lensRect() => _lensRect(
                       position: _lens.value,
                       stretch: _jelly.value,
@@ -321,12 +309,9 @@ class _FloatingNavigationBarState extends State<FloatingNavigationBar>
                                 jelly: _jelly,
                                 parallax: _parallax[index],
                                 lift: _lift,
-                                labelStyle: labelStyle.copyWith(
-                                  fontSize: _labelSize * labelScale,
-                                ),
+                                labelStyle: labelStyle,
                                 labelHeight: lineHeight,
-                                labelOverflows:
-                                    labels[index].width * labelScale > room,
+                                labelOverflows: labels[index].width > room,
                                 onActivate: () => widget.onSelected(index),
                               ),
                             ),

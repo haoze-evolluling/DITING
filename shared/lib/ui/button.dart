@@ -7,6 +7,7 @@ import 'package:diting_shared/ui/inherited.dart';
 import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
+import 'package:diting_shared/ui/typography.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
 import 'package:material_ui/material_ui.dart';
@@ -40,7 +41,7 @@ class MoreActionButton extends StatelessWidget {
         child: ListTile(
           minTileHeight: listRowMinHeight,
           minVerticalPadding: listRowVerticalPadding,
-          titleTextStyle: context.listTitleStyle,
+          titleTextStyle: AppTextRole.rowTitle.of(context),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           title: Text(label),
           trailing:

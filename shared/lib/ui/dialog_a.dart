@@ -158,9 +158,9 @@ class CommonDialog extends StatelessWidget {
           ? null
           : BoxConstraints(minWidth: resolvedWidth, maxWidth: resolvedWidth),
       titleTextStyle: hasFields
-          ? AppTextStyle.body.of(context)
-          : AppTextStyle.headline.of(context),
-      contentTextStyle: AppTextStyle.subheadline
+          ? AppTextRole.body.of(context)
+          : AppTextRole.cardTitle.of(context),
+      contentTextStyle: AppTextRole.body
           .of(context)
           .copyWith(
             color: colorScheme.onSurfaceVariant.withValues(
@@ -438,8 +438,8 @@ class _AlertAction extends StatelessWidget {
                 alpha: 0.38,
               ),
               textStyle: isDefault
-                  ? AppTextStyle.body.of(context, emphasized: true)
-                  : AppTextStyle.body
+                  ? AppTextRole.bodyStrong.of(context)
+                  : AppTextRole.body
                         .of(context)
                         .copyWith(fontWeight: FontWeight.w500),
               minimumSize: const Size(0, _actionHeight),

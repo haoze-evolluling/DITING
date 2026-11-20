@@ -27,7 +27,7 @@ class SettingTextCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Text(
           text,
-          style: AppTextStyle.subheadline
+          style: AppTextRole.body
               .of(context)
               .copyWith(
                 color: isSelected == true

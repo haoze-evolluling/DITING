@@ -286,8 +286,11 @@ class _FloatingBarItemState extends State<_FloatingBarItem> {
             ),
             const SizedBox(height: _labelGap),
             SizedBox(
+              width: double.infinity,
               height: widget.labelHeight,
-              child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
                 child: Text(
                   widget.destination.label,
                   maxLines: 1,

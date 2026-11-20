@@ -161,8 +161,8 @@ class ListItem<T> extends StatelessWidget {
     return ListTile(
       key: key,
       tileColor: color,
-      titleTextStyle: context.listTitleStyle,
-      subtitleTextStyle: context.listSubtitleStyle,
+      titleTextStyle: AppTextRole.rowTitle.of(context),
+      subtitleTextStyle: AppTextRole.supportingText.of(context),
       leading: leading ?? this.leading,
       horizontalTitleGap: horizontalTitleGap,
       title: title,
@@ -297,7 +297,7 @@ class _OptionsValueButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: context.colorScheme.onSurfaceVariant,
-        textStyle: context.listTitleStyle,
+        textStyle: AppTextRole.rowTitle.of(context),
         padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
       child: Row(
@@ -365,7 +365,7 @@ class ListHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = this.padding ?? listHeaderPaddingOf(context);
     final lineHeight = MeasureScope.of(context)
-        .textHeight(AppTextStyle.footnote);
+        .textHeight(AppTextRole.sectionLabel);
     final overhang = (_actionSize.button - lineHeight) / 2;
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -384,11 +384,7 @@ class ListHeader extends StatelessWidget {
                 title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                // Semibold at caption size: a section heading over a card of rows has to win
-                // against the row subtitles below it, which are two steps larger.
-                style: context.listCaptionStyle.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextRole.sectionLabel.of(context),
               ),
             ),
             ?trailing,
