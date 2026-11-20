@@ -97,7 +97,7 @@ class _TroubleshootingLogContentPageState
                   if (text == null || text.isEmpty) {
                     return Text(
                       l10n.troubleshootLogsEmptyContent,
-                      style: AppTextStyle.footnote
+                      style: AppTextRole.supportingText
                           .of(context)
                           .copyWith(color: colorScheme.onSurfaceVariant),
                     );
@@ -108,18 +108,14 @@ class _TroubleshootingLogContentPageState
                     children: [
                       SelectableText(
                         text,
-                        style: AppTextStyle.footnote
+                        style: AppTextRole.code
                             .of(context)
-                            .copyWith(
-                              color: colorScheme.onSurface,
-                              fontFeatures: appTabularFigures,
-                              height: 1.5,
-                            ),
+                            .copyWith(color: colorScheme.onSurface),
                       ),
                       if (result.truncated)
                         Text(
                           l10n.troubleshootLogsTruncated,
-                          style: AppTextStyle.caption2
+                          style: AppTextRole.micro
                               .of(context)
                               .copyWith(color: colorScheme.onSurfaceVariant),
                         ),

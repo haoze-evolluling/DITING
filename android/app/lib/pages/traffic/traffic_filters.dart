@@ -144,11 +144,11 @@ class _AttributionBanner extends StatelessWidget {
                 children: [
                   Text(
                     context.l10n.trafficWhyDaemonTitle,
-                    style: context.listTitleStyle,
+                    style: AppTextRole.rowTitle.of(context),
                   ),
                   Text(
                     context.l10n.trafficWhyDaemonBody,
-                    style: context.listCaptionStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                 ],
               ),
@@ -199,14 +199,14 @@ class _LiveRateCard extends ConsumerWidget {
                 ),
                 Text(
                   context.l10n.trafficLiveRateTitle,
-                  style: context.listTitleStyle,
+                  style: AppTextRole.rowTitle.of(context),
                 ),
               ],
             ),
             if (missing)
               Text(
                 context.l10n.trafficNoLiveRate(windowLabel),
-                style: context.listCaptionStyle,
+                style: AppTextRole.supportingText.of(context),
               )
             else ...[
               Text(
@@ -214,12 +214,12 @@ class _LiveRateCard extends ConsumerWidget {
                     ? '—'
                     : '↓ ${obsFormatBytes(last.down.round())} /s   '
                           '↑ ${obsFormatBytes(last.up.round())} /s',
-                style: context.listTitleStyle,
+                style: AppTextRole.rowTitle.of(context),
               ),
               if (showNote)
                 Text(
                   context.l10n.trafficLiveRateBody(windowLabel),
-                  style: context.listCaptionStyle,
+                  style: AppTextRole.supportingText.of(context),
                 ),
             ],
           ],

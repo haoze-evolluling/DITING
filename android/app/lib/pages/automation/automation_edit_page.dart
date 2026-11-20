@@ -350,7 +350,7 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
             Expanded(
               child: Text(
                 context.l10n.automationSwitchProfile,
-                style: context.listTitleStyle,
+                style: AppTextRole.rowTitle.of(context),
               ),
             ),
             PopupSelectButton<String?>(
@@ -426,10 +426,7 @@ class _Section extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                child: Text(title, style: AppTextRole.sectionLabel.of(context)),
               ),
               ?trailing,
             ],

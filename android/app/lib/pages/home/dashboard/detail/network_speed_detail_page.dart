@@ -1,4 +1,5 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:diting_android/data/dashboard_models.dart';
@@ -33,8 +34,12 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
         DashboardDetailHero(
           glyph: AppGlyphs.speed,
           label: context.l10n.speedCurrentDownload,
-          value: unsupported ? context.l10n.commonNoData : dashboardBinarySpeed(series.last.down),
-          chipLabel: unsupported ? context.l10n.speedSamplingPaused : context.l10n.speedLive,
+          value: unsupported
+              ? context.l10n.commonNoData
+              : dashboardBinarySpeed(series.last.down),
+          chipLabel: unsupported
+              ? context.l10n.speedSamplingPaused
+              : context.l10n.speedLive,
           chipColor: unsupported
               ? colorScheme.onSurfaceVariant
               : colorScheme.success,
@@ -86,7 +91,7 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
           child: totals == null
               ? Text(
                   context.l10n.speedNoTrafficToday,
-                  style: AppTextStyle.subheadline
+                  style: AppTextRole.body
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 )
@@ -162,18 +167,22 @@ class _TotalsBar extends StatelessWidget {
           children: [
             Text(
               context.l10n.speedTotalsDown(
-                dashboardPercent(totals.total <= 0 ? 0 : totals.down / totals.total),
+                dashboardPercent(
+                  totals.total <= 0 ? 0 : totals.down / totals.total,
+                ),
               ),
-              style: AppTextStyle.caption1
+              style: AppTextRole.caption
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),
             const Spacer(),
             Text(
               context.l10n.speedTotalsUp(
-                dashboardPercent(totals.total <= 0 ? 0 : totals.up / totals.total),
+                dashboardPercent(
+                  totals.total <= 0 ? 0 : totals.up / totals.total,
+                ),
               ),
-              style: AppTextStyle.caption1
+              style: AppTextRole.caption
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),
@@ -211,7 +220,9 @@ class _CurveCard extends StatelessWidget {
       capacity: speedSampleCapacity,
       // 8 KB/s floor, same as the card: idle noise stays a flat line.
       minScale: 8 * 1024,
-      emptyLabel: unsupported ? context.l10n.speedNoDataInMode : context.l10n.speedWaitingSample,
+      emptyLabel: unsupported
+          ? context.l10n.speedNoDataInMode
+          : context.l10n.speedWaitingSample,
       caption: unsupported
           ? null
           : context.l10n.speedPeakAverage(

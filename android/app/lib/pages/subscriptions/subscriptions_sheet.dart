@@ -366,9 +366,9 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                       autocorrect: false,
                       enableSuggestions: false,
                       textInputAction: TextInputAction.next,
-                      style: context.listTitleStyle.copyWith(
-                        fontFeatures: appTabularFigures,
-                      ),
+                      style: AppTextRole.rowTitle
+                          .of(context)
+                          .copyWith(fontFeatures: appTabularFigures),
                       decoration: const InputDecoration(
                         hintText: 'https://example.com/rules.txt',
                       ),
@@ -526,9 +526,9 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                     selected.template,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.listCaptionStyle.copyWith(
-                      fontFeatures: appTabularFigures,
-                    ),
+                    style: AppTextRole.supportingText
+                        .of(context)
+                        .copyWith(fontFeatures: appTabularFigures),
                   ),
             options: templates,
             value: selected ?? templates.first,

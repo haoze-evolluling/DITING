@@ -68,7 +68,7 @@ class ConfigFieldRow extends StatelessWidget {
             children: [
               SizedBox(
                 width: 76,
-                child: Text(label, style: context.listTitleStyle),
+                child: Text(label, style: AppTextRole.rowTitle.of(context)),
               ),
               Expanded(child: child),
             ],
@@ -76,7 +76,7 @@ class ConfigFieldRow extends StatelessWidget {
           if (hint != null)
             Padding(
               padding: const EdgeInsets.only(left: 88),
-              child: Text(hint, style: context.listCaptionStyle),
+              child: Text(hint, style: AppTextRole.supportingText.of(context)),
             ),
         ],
       ),

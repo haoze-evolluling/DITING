@@ -83,7 +83,7 @@ class ServerFilterPage extends ConsumerWidget {
                   title: Text(context.l10n.serverBlockingIPv4),
                   trailing: Text(
                     filter.blockingIPv4,
-                    style: context.listSubtitleStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                   onTap: () async {
                     final value = await editServerText(
@@ -105,7 +105,7 @@ class ServerFilterPage extends ConsumerWidget {
                   title: Text(context.l10n.serverBlockingIPv6),
                   trailing: Text(
                     filter.blockingIPv6,
-                    style: context.listSubtitleStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                   onTap: () async {
                     final value = await editServerText(

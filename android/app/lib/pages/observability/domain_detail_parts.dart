@@ -62,14 +62,17 @@ class DetailHeroCard extends StatelessWidget {
                     children: [
                       SelectableText(
                         title,
-                        style: AppTextStyle.headline
+                        style: AppTextRole.cardTitle
                             .of(context)
                             .copyWith(
                               color: colorScheme.onSurface,
                               fontFeatures: appTabularFigures,
                             ),
                       ),
-                      Text(subtitle, style: context.listCaptionStyle),
+                      Text(
+                        subtitle,
+                        style: AppTextRole.supportingText.of(context),
+                      ),
                     ],
                   ),
                 ),
@@ -235,8 +238,8 @@ class _QuickAction extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.subheadline
-                  .of(context, emphasized: true)
+              style: AppTextRole.bodyStrong
+                  .of(context)
                   .copyWith(color: context.colorScheme.onSurface),
             ),
           ],
@@ -314,11 +317,11 @@ class AgentAnalysisEntryCard extends StatelessWidget {
               children: [
                 Text(
                   title ?? context.l10n.obsAnalyzeRequest,
-                  style: context.listTitleStyle,
+                  style: AppTextRole.rowTitle.of(context),
                 ),
                 Text(
                   context.l10n.obsAnalyzeRequestBody,
-                  style: context.listCaptionStyle,
+                  style: AppTextRole.supportingText.of(context),
                 ),
               ],
             ),

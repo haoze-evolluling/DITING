@@ -118,7 +118,7 @@ class _Tile extends StatelessWidget {
                   tile.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -133,8 +133,8 @@ class _Tile extends StatelessWidget {
             child: Text(
               tile.value,
               maxLines: 1,
-              style: AppTextStyle.title2
-                  .of(context, emphasized: true)
+              style: AppTextRole.metricSmall
+                  .of(context)
                   .toTabular
                   .copyWith(color: tile.color ?? colorScheme.onSurface),
             ),
@@ -178,15 +178,15 @@ class _Ratio extends StatelessWidget {
                 ratio.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(color: colorScheme.onSurfaceVariant),
               ),
             ),
             Text(
               ratio.value,
-              style: AppTextStyle.footnote
-                  .of(context, emphasized: true)
+              style: AppTextRole.sectionLabel
+                  .of(context)
                   .toTabular
                   .copyWith(color: colorScheme.onSurface),
             ),
@@ -266,12 +266,12 @@ class LogsSectionEmpty extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: AppTextStyle.headline.of(context, emphasized: true),
+            style: AppTextRole.cardTitle.of(context),
           ),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: AppTextStyle.subheadline
+            style: AppTextRole.body
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),

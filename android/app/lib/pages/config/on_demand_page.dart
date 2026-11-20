@@ -207,7 +207,7 @@ class _DecisionCard extends StatelessWidget {
           leading: GlyphIcon(glyph, size: 20, color: tone),
           title: Text(
             title,
-            style: context.listTitleStyle.copyWith(color: tone),
+            style: AppTextRole.rowTitle.of(context).copyWith(color: tone),
           ),
           subtitle: Text(
             rule == null
@@ -253,9 +253,9 @@ class _NetworkSection extends ConsumerWidget {
             subtitle: Text(context.l10n.odPermissionBody),
             trailing: Text(
               context.l10n.odNotGranted,
-              style: context.listCaptionStyle.copyWith(
-                color: colorScheme.warning,
-              ),
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(color: colorScheme.warning),
             ),
           ),
       ],
@@ -302,7 +302,9 @@ class _BatterySection extends ConsumerWidget {
           subtitle: Text(subtitle),
           trailing: Text(
             label,
-            style: context.listCaptionStyle.copyWith(color: color),
+            style: AppTextRole.supportingText
+                .of(context)
+                .copyWith(color: color),
           ),
           onTap: state == BatteryOptimizationState.notIgnored
               ? () => _request(context, ref)

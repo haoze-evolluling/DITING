@@ -60,7 +60,7 @@ class StatusCard extends ConsumerWidget {
                 overflow: TextOverflow.ellipsis,
                 style: DashboardText.figure(
                   context,
-                  AppTextStyle.title1,
+                  AppTextRole.metricMedium,
                   color: colorScheme.onSurface,
                 ),
               ),
@@ -112,7 +112,7 @@ class _UptimePlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return SizedBox(
-      height: AppTextStyle.title1.leading * scale,
+      height: AppTextRole.metricMedium.leadingOf(context) * scale,
       child: Align(
         alignment: Alignment.centerLeft,
         child: Container(
@@ -156,7 +156,7 @@ class _StatusCell extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: DashboardText.figure(context, AppTextStyle.subheadline),
+          style: DashboardText.figure(context, AppTextRole.metricCompact),
         ),
         if (hint != null && hint.isNotEmpty)
           Text(

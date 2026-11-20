@@ -46,7 +46,7 @@ class AppTrafficRow extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             obsFormatBytes(highlighted),
-            style: AppTextStyle.footnote
+            style: AppTextRole.supportingText
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
@@ -197,7 +197,7 @@ class _AppTrafficDetailSheet extends StatelessWidget {
                 sort.label(context.l10n),
                 obsFormatBytes(highlighted),
               ),
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),
@@ -283,10 +283,10 @@ class _AttributionSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 10,
       children: [
-        Text(title, style: context.listTitleStyle),
+        Text(title, style: AppTextRole.rowTitle.of(context)),
         Text(
           body,
-          style: AppTextStyle.subheadline
+          style: AppTextRole.body
               .of(context)
               .copyWith(color: context.colorScheme.onSurfaceVariant),
         ),

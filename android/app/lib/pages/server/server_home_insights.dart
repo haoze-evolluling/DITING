@@ -71,7 +71,7 @@ class ServerTrafficOverview extends StatelessWidget {
               children: [
                 Text(
                   serverHourLabel(points.first.hour),
-                  style: AppTextStyle.caption2
+                  style: AppTextRole.micro
                       .of(context)
                       .copyWith(
                         color: scheme.onSurfaceVariant,
@@ -81,7 +81,7 @@ class ServerTrafficOverview extends StatelessWidget {
                 const Spacer(),
                 Text(
                   serverHourLabel(points.last.hour),
-                  style: AppTextStyle.caption2
+                  style: AppTextRole.micro
                       .of(context)
                       .copyWith(
                         color: scheme.onSurfaceVariant,
@@ -230,7 +230,7 @@ class ServerBlockingOverview extends StatelessWidget {
                       children: [
                         Text(
                           l10n.serverTopBlocked,
-                          style: AppTextStyle.caption1
+                          style: AppTextRole.caption
                               .of(context)
                               .copyWith(color: scheme.onSurfaceVariant),
                         ),
@@ -238,18 +238,15 @@ class ServerBlockingOverview extends StatelessWidget {
                           topBlocked.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyle.footnote.of(
-                            context,
-                            emphasized: true,
-                          ),
+                          style: AppTextRole.sectionLabel.of(context),
                         ),
                       ],
                     ),
                   ),
                   Text(
                     serverCount(topBlocked.count),
-                    style: AppTextStyle.footnote
-                        .of(context, emphasized: true)
+                    style: AppTextRole.sectionLabel
+                        .of(context)
                         .toTabular
                         .copyWith(color: scheme.primary),
                   ),
@@ -308,14 +305,14 @@ class ServerCacheOverview extends StatelessWidget {
                     children: [
                       Text(
                         serverPercent(stats.cacheHitRate),
-                        style: AppTextStyle.title2
-                            .of(context, emphasized: true)
+                        style: AppTextRole.metricSmall
+                            .of(context)
                             .toTabular
                             .copyWith(color: scheme.primary),
                       ),
                       Text(
                         l10n.serverCacheHit,
-                        style: AppTextStyle.caption1
+                        style: AppTextRole.caption
                             .of(context)
                             .copyWith(color: scheme.onSurfaceVariant),
                       ),
@@ -324,8 +321,8 @@ class ServerCacheOverview extends StatelessWidget {
                 ),
                 Text(
                   '${serverCount(stats.cached)} / ${serverCount(stats.queries)}',
-                  style: AppTextStyle.caption1
-                      .of(context, emphasized: true)
+                  style: AppTextRole.badge
+                      .of(context)
                       .toTabular
                       .copyWith(color: scheme.onSurfaceVariant),
                 ),

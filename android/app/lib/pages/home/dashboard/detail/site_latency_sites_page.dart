@@ -51,7 +51,7 @@ class SiteLatencySitesPage extends ConsumerWidget {
                       : context.l10n.dashboardSitesRemaining(
                           dashboardSiteCount - selectedIds.length,
                         ),
-                  style: AppTextStyle.caption2
+                  style: AppTextRole.micro
                       .of(context)
                       .copyWith(color: context.colorScheme.onSurfaceVariant),
                 ),
@@ -116,7 +116,7 @@ class _SelectedRow extends StatelessWidget {
         children: [
           Text(
             context.l10n.dashboardSitesPosition(index + 1),
-            style: AppTextStyle.caption2
+            style: AppTextRole.micro
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
@@ -196,13 +196,13 @@ class _Tile extends StatelessWidget {
                       target.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.subheadline.of(context),
+                      style: AppTextRole.body.of(context),
                     ),
                     Text(
                       target.host,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.caption2
+                      style: AppTextRole.micro
                           .of(context)
                           .copyWith(
                             color: colorScheme.onSurfaceVariant,

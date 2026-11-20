@@ -34,7 +34,7 @@ class LogStatsCard extends StatelessWidget {
           Text(
             l10n.logStatsTitle,
             textAlign: TextAlign.center,
-            style: AppTextStyle.title2.of(context, emphasized: true),
+            style: AppTextRole.sectionTitle.of(context),
           ),
           const SizedBox(height: 28),
           const _RequestsSection(),
@@ -171,7 +171,7 @@ class _Section extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.title3.of(context, emphasized: true),
+                style: AppTextRole.sectionTitle.of(context),
               ),
             ),
             _WindowPicker(section: section),
@@ -198,66 +198,48 @@ class _FigureRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = DashboardText.figure(context, AppTextStyle.title1);
-    final scaler = MediaQuery.textScalerOf(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cellWidth =
-            (constraints.maxWidth - _gap * (cells.length - 1)) / cells.length;
-        var widest = 0.0;
-        for (final cell in cells) {
-          final painter = TextPainter(
-            text: TextSpan(text: cell.value, style: base),
-            textDirection: Directionality.of(context),
-            textScaler: scaler,
-            maxLines: 1,
-          )..layout();
-          if (painter.width > widest) widest = painter.width;
-          painter.dispose();
-        }
-        final shrink = widest <= cellWidth || widest == 0
-            ? 1.0
-            : cellWidth / widest;
-        return Row(
-          spacing: _gap,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final (index, cell) in cells.indexed)
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 6,
-                  children: [
-                    Text(
+    final base = DashboardText.figure(context, AppTextRole.metricMedium);
+    return Row(
+      spacing: _gap,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (index, cell) in cells.indexed)
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 6,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
                       cell.value,
                       maxLines: 1,
                       softWrap: false,
                       overflow: TextOverflow.clip,
-                      style: base.copyWith(
-                        color: cell.color,
-                        fontSize: base.fontSize! * shrink,
-                        letterSpacing: (base.letterSpacing ?? 0) * shrink,
-                      ),
+                      style: base.copyWith(color: cell.color),
                     ),
-                    Text(
-                      cell.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyle.subheadline
-                          .of(context)
-                          .copyWith(
-                            color: index == cells.length - 1
-                                ? neutralLabel
-                                : cell.color,
-                          ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-          ],
-        );
-      },
+                Text(
+                  cell.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: AppTextRole.body
+                      .of(context)
+                      .copyWith(
+                        color: index == cells.length - 1
+                            ? neutralLabel
+                            : cell.color,
+                      ),
+                ),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
@@ -339,9 +321,7 @@ class _WindowPicker extends ConsumerWidget {
               children: [
                 Text(
                   labelOf(window),
-                  style: AppTextStyle.callout
-                      .of(context)
-                      .copyWith(color: color),
+                  style: AppTextRole.body.of(context).copyWith(color: color),
                 ),
                 GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
               ],
@@ -401,7 +381,7 @@ class _RecentActivityRow extends StatelessWidget {
                 context.l10n.logStatsRecentActivity,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.body.of(context),
+                style: AppTextRole.body.of(context),
               ),
             ),
             GlyphIcon(

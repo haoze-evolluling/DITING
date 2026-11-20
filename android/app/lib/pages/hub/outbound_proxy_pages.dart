@@ -226,7 +226,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
                 title: Text(context.l10n.outboundEnable),
                 subtitle: Text(
                   _statusLabel(context.l10n, config),
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: _statusColor(context, config)),
                 ),
@@ -326,7 +326,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
                 padding: const EdgeInsets.all(12),
                 child: Text(
                   validation,
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: colorScheme.error),
                 ),

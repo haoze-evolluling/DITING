@@ -288,13 +288,13 @@ class _DeveloperModeCard extends ConsumerWidget {
                     children: [
                       Text(
                         context.l10n.devWarningTitle,
-                        style: context.listTitleStyle,
+                        style: AppTextRole.rowTitle.of(context),
                       ),
                       Text(
                         enabled
                             ? context.l10n.devUnlocked
                             : context.l10n.devLocked,
-                        style: context.listCaptionStyle,
+                        style: AppTextRole.supportingText.of(context),
                       ),
                     ],
                   ),
@@ -346,7 +346,7 @@ class _StorageCard extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     context.l10n.devStorageTitle,
-                    style: context.listTitleStyle,
+                    style: AppTextRole.rowTitle.of(context),
                   ),
                 ),
               ],
@@ -355,21 +355,21 @@ class _StorageCard extends ConsumerWidget {
               state >= StorageContract.stateVerified
                   ? context.l10n.devStorageV2Ready
                   : context.l10n.devStorageV2Pending,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
             Text(
               context.l10n.devStorageV2Detail(
                 '$state',
                 _formatDate(settings.storageV2CompletedAt),
               ),
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
             if (error != null && state < StorageContract.stateVerified)
               Text(
                 context.l10n.devStorageV2Error(error),
-                style: context.listCaptionStyle.copyWith(
-                  color: colorScheme.error,
-                ),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: colorScheme.error),
               ),
             FutureBuilder<int>(
               key: ValueKey(revision),
@@ -379,7 +379,7 @@ class _StorageCard extends ConsumerWidget {
                 if (bytes <= 0) return const SizedBox.shrink();
                 return Text(
                   context.l10n.devStorageV2Files((bytes / 1024).round()),
-                  style: context.listCaptionStyle,
+                  style: AppTextRole.supportingText.of(context),
                 );
               },
             ),
@@ -438,7 +438,9 @@ class _ActionRow extends StatelessWidget {
       title: Text(
         action.title(context.l10n),
         style: action.destructive && enabled
-            ? context.listTitleStyle.copyWith(color: colorScheme.error)
+            ? AppTextRole.rowTitle
+                  .of(context)
+                  .copyWith(color: colorScheme.error)
             : null,
       ),
       subtitle: Text(

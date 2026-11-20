@@ -199,8 +199,8 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
                   ),
                   trailing: Text(
                     l10n.logTimes(countOf(ip.attempts)),
-                    style: AppTextStyle.subheadline
-                        .of(context, emphasized: true)
+                    style: AppTextRole.bodyStrong
+                        .of(context)
                         .toTabular
                         .copyWith(color: colorScheme.primary),
                   ),

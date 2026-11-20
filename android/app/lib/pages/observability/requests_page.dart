@@ -293,7 +293,9 @@ class _FeedFooter extends StatelessWidget {
         spacing: 8,
         children: [
           if (loading) const CommonCircleLoading(size: 14),
-          Expanded(child: Text(label, style: context.listCaptionStyle)),
+          Expanded(
+            child: Text(label, style: AppTextRole.supportingText.of(context)),
+          ),
         ],
       ),
     );

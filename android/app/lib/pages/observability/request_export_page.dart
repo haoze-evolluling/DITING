@@ -414,9 +414,10 @@ class _ExportField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 8,
         children: [
-          Text(label, style: context.listCaptionStyle),
+          Text(label, style: AppTextRole.supportingText.of(context)),
           child,
-          if (hint != null) Text(hint, style: context.listCaptionStyle),
+          if (hint != null)
+            Text(hint, style: AppTextRole.supportingText.of(context)),
         ],
       ),
     );

@@ -23,7 +23,7 @@ class ServerCardHeader extends StatelessWidget {
       spacing: 8,
       children: [
         GlyphIcon(glyph, size: 18, color: scheme.onSurfaceVariant),
-        Expanded(child: Text(title, style: context.listTitleStyle)),
+        Expanded(child: Text(title, style: AppTextRole.rowTitle.of(context))),
         for (final child in trailing) child,
       ],
     );
@@ -71,13 +71,10 @@ class ServerEmptyPanel extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 3,
               children: [
-                Text(
-                  title,
-                  style: AppTextStyle.subheadline.of(context, emphasized: true),
-                ),
+                Text(title, style: AppTextRole.bodyStrong.of(context)),
                 Text(
                   body,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: scheme.onSurfaceVariant),
                 ),
@@ -107,8 +104,8 @@ class ServerWindowChip extends StatelessWidget {
       child: Text(
         label,
         maxLines: 1,
-        style: AppTextStyle.caption2
-            .of(context, emphasized: true)
+        style: AppTextRole.badge
+            .of(context)
             .copyWith(color: context.colorScheme.primary),
       ),
     );
@@ -142,7 +139,7 @@ class ServerMiniMetric extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.caption1
+          style: AppTextRole.caption
               .of(context)
               .copyWith(color: scheme.onSurfaceVariant),
         ),
@@ -150,8 +147,8 @@ class ServerMiniMetric extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.subheadline
-              .of(context, emphasized: true)
+          style: AppTextRole.bodyStrong
+              .of(context)
               .toTabular
               .copyWith(color: color ?? scheme.onSurface),
         ),
@@ -160,7 +157,7 @@ class ServerMiniMetric extends StatelessWidget {
             hint,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.caption2
+            style: AppTextRole.micro
                 .of(context)
                 .copyWith(color: scheme.onSurfaceVariant),
           ),
@@ -198,7 +195,7 @@ class ServerLegend extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.caption1
+            style: AppTextRole.caption
                 .of(context)
                 .copyWith(color: scheme.onSurfaceVariant),
           ),
@@ -208,8 +205,8 @@ class ServerLegend extends StatelessWidget {
             trailing,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.caption1
-                .of(context, emphasized: true)
+            style: AppTextRole.badge
+                .of(context)
                 .toTabular
                 .copyWith(color: scheme.onSurface),
           ),

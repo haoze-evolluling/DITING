@@ -46,7 +46,10 @@ class TrafficMonitorCard extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   spacing: 2,
                   children: [
-                    Text(context.l10n.trafficMonitorToday, style: DashboardText.label(context)),
+                    Text(
+                      context.l10n.trafficMonitorToday,
+                      style: DashboardText.label(context),
+                    ),
                     // The figures refresh every second; only they rebuild, not the card.
                     Consumer(
                       builder: (context, ref, _) {
@@ -59,7 +62,7 @@ class TrafficMonitorCard extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                           style: DashboardText.figure(
                             context,
-                            AppTextStyle.title3,
+                            AppTextRole.metricSmall,
                             color: colorScheme.primary,
                           ),
                         );
@@ -74,7 +77,10 @@ class TrafficMonitorCard extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   spacing: 2,
                   children: [
-                    Text(context.l10n.trafficMonitorLiveRate, style: DashboardText.label(context)),
+                    Text(
+                      context.l10n.trafficMonitorLiveRate,
+                      style: DashboardText.label(context),
+                    ),
                     Consumer(
                       builder: (context, ref, _) => Text(
                         ref.watch(
@@ -87,7 +93,7 @@ class TrafficMonitorCard extends ConsumerWidget {
                         textAlign: TextAlign.end,
                         style: DashboardText.figure(
                           context,
-                          AppTextStyle.footnote,
+                          AppTextRole.metricCompact,
                         ),
                       ),
                     ),
@@ -141,7 +147,7 @@ class DashboardMetricCell extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: DashboardText.figure(
             context,
-            AppTextStyle.title2,
+            AppTextRole.metricSmall,
             color: color,
           ),
         ),

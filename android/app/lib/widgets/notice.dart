@@ -42,7 +42,7 @@ class InlineNotice extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: foreground),
             ),
@@ -85,7 +85,9 @@ class CardNoticeRow extends StatelessWidget {
             size: glyphSize,
             color: color ?? context.colorScheme.primary,
           ),
-          Expanded(child: Text(message, style: context.listSubtitleStyle)),
+          Expanded(
+            child: Text(message, style: AppTextRole.supportingText.of(context)),
+          ),
         ],
       ),
     );

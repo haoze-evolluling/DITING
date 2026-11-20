@@ -135,7 +135,7 @@ class _SubscriptionVersionPageState
               const SizedBox(height: 12),
               Text(
                 l10n.ruleVersionsAdded,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(fontWeight: FontWeight.w600),
               ),
@@ -145,7 +145,7 @@ class _SubscriptionVersionPageState
               const SizedBox(height: 12),
               Text(
                 l10n.ruleVersionsRemoved,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(fontWeight: FontWeight.w600),
               ),

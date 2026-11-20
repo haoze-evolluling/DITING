@@ -149,7 +149,7 @@ class _Header extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.subheadline.of(context, emphasized: true),
+            style: AppTextRole.bodyStrong.of(context),
           ),
         ),
         ...trailing,
@@ -233,7 +233,7 @@ class DashboardDetailHero extends StatelessWidget {
                             style:
                                 DashboardText.figure(
                                   context,
-                                  AppTextStyle.title1,
+                                  AppTextRole.metricMedium,
                                   color: figure,
                                 ).copyWith(
                                   fontFeatures: tabular
@@ -244,10 +244,7 @@ class DashboardDetailHero extends StatelessWidget {
                           if (unit case final unit?)
                             TextSpan(
                               text: '  $unit',
-                              style: DashboardText.unit(
-                                context,
-                                AppTextStyle.footnote,
-                              ),
+                              style: DashboardText.unit(context),
                             ),
                         ],
                       ),
@@ -275,6 +272,6 @@ class DashboardDetailHero extends StatelessWidget {
   }
 }
 
-TextStyle _captionStyle(BuildContext context) => AppTextStyle.caption1
+TextStyle _captionStyle(BuildContext context) => AppTextRole.caption
     .of(context)
     .copyWith(color: context.colorScheme.onSurfaceVariant);

@@ -59,7 +59,7 @@ class ServerStatusOverview extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.serverStatusTitle,
-                  style: context.listTitleStyle,
+                  style: AppTextRole.rowTitle.of(context),
                 ),
               ),
               MetaChip(
@@ -94,8 +94,8 @@ class ServerStatusOverview extends StatelessWidget {
                             state,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.title3
-                                .of(context, emphasized: true)
+                            style: AppTextRole.sectionLabel
+                                .of(context)
                                 .copyWith(
                                   color: running
                                       ? scheme.onSurface
@@ -109,7 +109,7 @@ class ServerStatusOverview extends StatelessWidget {
                       address,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.footnote
+                      style: AppTextRole.supportingText
                           .of(context)
                           .copyWith(
                             color: scheme.onSurfaceVariant,
@@ -128,14 +128,14 @@ class ServerStatusOverview extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
-                    style: AppTextStyle.title3
-                        .of(context, emphasized: true)
+                    style: AppTextRole.metricSmall
+                        .of(context)
                         .toTabular
                         .copyWith(color: scheme.onSurface),
                   ),
                   Text(
                     l10n.serverUptime,
-                    style: AppTextStyle.caption1
+                    style: AppTextRole.caption
                         .of(context)
                         .copyWith(color: scheme.onSurfaceVariant),
                   ),
@@ -185,7 +185,7 @@ class ServerStatusOverview extends StatelessWidget {
           ),
           Text(
             l10n.serverClientHint(status.port),
-            style: AppTextStyle.footnote
+            style: AppTextRole.supportingText
                 .of(context)
                 .copyWith(color: scheme.onSurfaceVariant),
           ),
@@ -269,7 +269,7 @@ class ServerQuickActions extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.serverQuickActions,
-                  style: context.listTitleStyle,
+                  style: AppTextRole.rowTitle.of(context),
                 ),
               ),
             ],
@@ -355,10 +355,7 @@ class _QuickActionTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: AppTextStyle.footnote.of(
-                        context,
-                        emphasized: true,
-                      ),
+                      style: AppTextRole.sectionLabel.of(context),
                     ),
                     const SizedBox(height: 1),
                     Text(
@@ -366,7 +363,7 @@ class _QuickActionTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
-                      style: AppTextStyle.caption2
+                      style: AppTextRole.micro
                           .of(context)
                           .copyWith(color: scheme.onSurfaceVariant),
                     ),
@@ -395,16 +392,13 @@ class _QuickActionTile extends StatelessWidget {
                             title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.footnote.of(
-                              context,
-                              emphasized: true,
-                            ),
+                            style: AppTextRole.sectionLabel.of(context),
                           ),
                           Text(
                             subtitle,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.caption2
+                            style: AppTextRole.micro
                                 .of(context)
                                 .copyWith(color: scheme.onSurfaceVariant),
                           ),

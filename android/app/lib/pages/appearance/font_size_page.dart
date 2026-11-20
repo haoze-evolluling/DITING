@@ -55,15 +55,17 @@ class FontSizePage extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           context.l10n.appearanceFontSizeLabel,
-                          style: context.listTitleStyle,
+                          style: AppTextRole.rowTitle.of(context),
                         ),
                       ),
                       Text(
                         '${(scale * 100).round()}%',
-                        style: context.listSubtitleStyle.copyWith(
-                          fontFeatures: appTabularFigures,
-                          color: context.colorScheme.primary,
-                        ),
+                        style: AppTextRole.supportingText
+                            .of(context)
+                            .copyWith(
+                              fontFeatures: appTabularFigures,
+                              color: context.colorScheme.primary,
+                            ),
                       ),
                     ],
                   ),
@@ -81,12 +83,12 @@ class FontSizePage extends ConsumerWidget {
                       children: [
                         Text(
                           '${(minTextScale * 100).round()}%',
-                          style: context.listCaptionStyle,
+                          style: AppTextRole.supportingText.of(context),
                         ),
                         const Spacer(),
                         Text(
                           '${(maxTextScale * 100).round()}%',
-                          style: context.listCaptionStyle,
+                          style: AppTextRole.supportingText.of(context),
                         ),
                       ],
                     ),
@@ -160,7 +162,7 @@ class _SizePreview extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.l10n.fontSizePreview,
-                  style: context.listCaptionStyle,
+                  style: AppTextRole.supportingText.of(context),
                 ),
               ),
               TonalChip(
@@ -175,17 +177,17 @@ class _SizePreview extends StatelessWidget {
             context.l10n.appearancePoem,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.title2.of(context, emphasized: true),
+            style: AppTextRole.sectionTitle.of(context),
           ),
           const SizedBox(height: 6),
           Text(
             context.l10n.appearancePoemBody,
-            style: AppTextStyle.body.of(context),
+            style: AppTextRole.body.of(context),
           ),
           const SizedBox(height: 6),
           Text(
             'The quick brown fox jumps over the lazy dog · 0123456789',
-            style: AppTextStyle.footnote
+            style: AppTextRole.supportingText
                 .of(context)
                 .copyWith(
                   color: colorScheme.onSurfaceVariant,

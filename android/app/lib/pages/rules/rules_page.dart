@@ -333,7 +333,7 @@ class _RulesPageState extends ConsumerState<RulesPage> {
                     // The counter always reports a number, even zero: the empty state already
                     // says there are no matching rules, and repeating it reads as double render.
                     l10n.ruleTally(tally.matched, tally.matchedEnabled),
-                    style: context.listCaptionStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                 ),
               ],

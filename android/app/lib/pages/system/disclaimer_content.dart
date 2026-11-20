@@ -31,19 +31,15 @@ class DisclaimerIntroCard extends StatelessWidget {
                 ),
                 Text(
                   context.l10n.disclaimerReadFirst,
-                  style: AppTextStyle.title2.of(context, emphasized: true),
+                  style: AppTextRole.sectionTitle.of(context),
                 ),
               ],
             ),
             Text(
               context.l10n.disclaimerIntro,
-              style: context.listSubtitleStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
-            InlineNotice(
-              message:
-                  context.l10n.disclaimerLawful,
-              glyphSize: 18,
-            ),
+            InlineNotice(message: context.l10n.disclaimerLawful, glyphSize: 18),
           ],
         ),
       ),
@@ -79,7 +75,7 @@ class InitialAgreementCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     context.l10n.disclaimerFirstRun,
-                    style: AppTextStyle.caption1
+                    style: AppTextRole.caption
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
@@ -89,9 +85,9 @@ class InitialAgreementCard extends StatelessWidget {
             ),
             Text(
               context.l10n.agreementMessage,
-              style: AppTextStyle.footnote
+              style: AppTextRole.legalText
                   .of(context)
-                  .copyWith(color: colorScheme.onSurfaceVariant, height: 1.7),
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -115,18 +111,12 @@ class DisclaimerTermCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 8,
           children: [
-            Text(
-              term.title,
-              style: AppTextStyle.subheadline.of(context, emphasized: true),
-            ),
+            Text(term.title, style: AppTextRole.bodyStrong.of(context)),
             Text(
               term.content,
-              style: AppTextStyle.footnote
+              style: AppTextRole.legalText
                   .of(context)
-                  .copyWith(
-                    color: context.colorScheme.onSurfaceVariant,
-                    height: 1.7,
-                  ),
+                  .copyWith(color: context.colorScheme.onSurfaceVariant),
             ),
           ],
         ),

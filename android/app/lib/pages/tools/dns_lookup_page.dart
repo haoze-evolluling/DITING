@@ -228,7 +228,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
                       leading: const GlyphIcon(AppGlyphs.dns, size: 20),
                       title: Text(
                         answer.value,
-                        style: AppTextStyle.subheadline
+                        style: AppTextRole.body
                             .of(context)
                             .copyWith(
                               fontFeatures: appTabularFigures,

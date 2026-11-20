@@ -199,8 +199,8 @@ class _SpeedResultRow extends StatelessWidget {
                   width: 20,
                   child: Text(
                     '$rank',
-                    style: AppTextStyle.subheadline
-                        .of(context, emphasized: true)
+                    style: AppTextRole.bodyStrong
+                        .of(context)
                         .copyWith(
                           fontFeatures: appTabularFigures,
                           color: isFastest
@@ -214,7 +214,7 @@ class _SpeedResultRow extends StatelessWidget {
                     sample.providerName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.listTitleStyle,
+                    style: AppTextRole.rowTitle.of(context),
                   ),
                 ),
                 TonalChip(
@@ -233,8 +233,8 @@ class _SpeedResultRow extends StatelessWidget {
             if (sample.success) ...[
               Text(
                 '${sample.elapsedMs} ms',
-                style: AppTextStyle.title3
-                    .of(context, emphasized: true)
+                style: AppTextRole.sectionTitle
+                    .of(context)
                     .copyWith(
                       fontFeatures: appTabularFigures,
                       color: colorScheme.primary,
@@ -273,21 +273,21 @@ class _SpeedResultRow extends StatelessWidget {
                         sample.samplesMs.map((ms) => '$ms ms').join(' / '),
                       )
                     : sample.successRateLabel,
-                style: context.listCaptionStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
             ] else ...[
               Text(
                 context.l10n.toolAllFailed('${sample.attempts}'),
-                style: context.listCaptionStyle.copyWith(
-                  color: colorScheme.error,
-                ),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: colorScheme.error),
               ),
               if (sample.message case final message?)
                 Text(
                   message,
-                  style: context.listCaptionStyle.copyWith(
-                    color: colorScheme.error,
-                  ),
+                  style: AppTextRole.supportingText
+                      .of(context)
+                      .copyWith(color: colorScheme.error),
                 ),
             ],
           ],

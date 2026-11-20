@@ -185,12 +185,12 @@ class IpQualitySheet extends StatelessWidget {
                         children: [
                           Text(
                             context.l10n.ipQualityEgress,
-                            style: context.listCaptionStyle,
+                            style: AppTextRole.supportingText.of(context),
                           ),
                           Text(
                             current.ip,
-                            style: AppTextStyle.title2
-                                .of(context, emphasized: true)
+                            style: AppTextRole.sectionTitle
+                                .of(context)
                                 .copyWith(fontFeatures: appTabularFigures),
                           ),
                         ],
@@ -207,7 +207,7 @@ class IpQualitySheet extends StatelessWidget {
                           horizontal: 10,
                           vertical: 4,
                         ),
-                        style: AppTextStyle.subheadline,
+                        style: AppTextRole.body,
                       ),
                   ],
                 ),
@@ -230,7 +230,7 @@ class IpQualitySheet extends StatelessWidget {
                         textAlign: TextAlign.end,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: context.listCaptionStyle,
+                        style: AppTextRole.supportingText.of(context),
                       ),
                     ),
                   ],
@@ -252,7 +252,7 @@ class IpQualitySheet extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: Text(
               context.l10n.ipQualityQuerying,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ),
         Padding(
@@ -316,15 +316,15 @@ class _EmptyReport extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 4,
                     children: [
-                      Text(title, style: context.listTitleStyle),
+                      Text(title, style: AppTextRole.rowTitle.of(context)),
                       Text(
                         error ??
                             (loading
                                 ? context.l10n.ipQualityDetectingBody
                                 : context.l10n.ipQualityStartBody),
-                        style: context.listCaptionStyle.copyWith(
-                          color: failed ? colorScheme.error : null,
-                        ),
+                        style: AppTextRole.supportingText
+                            .of(context)
+                            .copyWith(color: failed ? colorScheme.error : null),
                       ),
                     ],
                   ),
@@ -362,7 +362,6 @@ class _TypeBadge extends StatelessWidget {
       color: colorScheme.secondaryContainer,
       foregroundColor: colorScheme.onSecondaryContainer,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      emphasized: false,
       leading: type.glyph,
     );
   }
@@ -396,25 +395,27 @@ class _SourceRow extends StatelessWidget {
         children: [
           Text(
             status.label(context.l10n),
-            style: context.listCaptionStyle.copyWith(color: color),
+            style: AppTextRole.supportingText
+                .of(context)
+                .copyWith(color: color),
           ),
           if (ipType != null)
             Text(
               context.l10n.ipQualityJudgedAs(
                 _typeOf(ipType).label(context.l10n),
               ),
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           if (latency != null)
             Text(
               '${latency}ms',
-              style: context.listCaptionStyle.copyWith(
-                fontFeatures: appTabularFigures,
-              ),
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(fontFeatures: appTabularFigures),
             ),
           // The reason is shown: "failed" alone cannot tell rate limiting apart.
           if (detail != null && detail.isNotEmpty)
-            Text(detail, style: context.listCaptionStyle),
+            Text(detail, style: AppTextRole.supportingText.of(context)),
         ],
       ),
       trailing: TonalChip(

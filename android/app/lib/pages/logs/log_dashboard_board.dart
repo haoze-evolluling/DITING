@@ -83,7 +83,7 @@ class _EditingBoard extends ConsumerWidget {
           ),
           child: Text(
             context.l10n.logDashboardEditHint(mode.label(context.l10n)),
-            style: AppTextStyle.caption1
+            style: AppTextRole.caption
                 .of(context)
                 .copyWith(color: colorScheme.onPrimaryContainer),
           ),

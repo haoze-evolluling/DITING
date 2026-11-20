@@ -203,8 +203,8 @@ class ServerPercentRing extends StatelessWidget {
                 child: Text(
                   centerLabel,
                   maxLines: 1,
-                  style: AppTextStyle.title3
-                      .of(context, emphasized: true)
+                  style: AppTextRole.metricSmall
+                      .of(context)
                       .toTabular
                       .copyWith(color: scheme.onSurface),
                 ),

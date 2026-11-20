@@ -254,7 +254,7 @@ class _TemplateDialogState extends State<_TemplateDialog> {
                     '{pathAndQuery}',
                   )
                 : context.l10n.mirrorTplInvalid,
-            style: AppTextStyle.footnote
+            style: AppTextRole.supportingText
                 .of(context)
                 .copyWith(
                   color: _valid

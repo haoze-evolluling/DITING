@@ -1,7 +1,7 @@
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
-/// A short status label in a pill: tinted fill, emphasized caption, one line.
+/// A short status label in a pill: tinted fill, one typographic role, one line.
 ///
 /// Five page-local copies (`_StatusPill`, `_LatencyBadge`, `_Pill`, the IP-quality level badge and
 /// its type badge) drew this by hand and disagreed on the padding — 10/4, 10/5, 10/6, 12/4 — so the
@@ -16,8 +16,7 @@ class StatusPill extends StatelessWidget {
     this.foregroundColor,
     this.alpha,
     this.padding = const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    this.style = AppTextStyle.caption1,
-    this.emphasized = true,
+    this.style = AppTextRole.badge,
     this.tabular = false,
     this.leading,
     this.leadingSize = 14,
@@ -35,8 +34,7 @@ class StatusPill extends StatelessWidget {
   final double? alpha;
 
   final EdgeInsets padding;
-  final AppTextStyle style;
-  final bool emphasized;
+  final AppTextRole style;
 
   /// Lining digits, e.g. a latency figure.
   final bool tabular;
@@ -54,7 +52,7 @@ class StatusPill extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: style
-          .of(context, emphasized: emphasized)
+          .of(context)
           .copyWith(
             color: fore,
             fontFeatures: tabular ? appTabularFigures : null,

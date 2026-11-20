@@ -91,9 +91,7 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
       );
     }
     if (parsed.rejected.isNotEmpty) {
-      lines.add(
-        context.l10n.ruleBatchAllowRejected(parsed.rejected.length),
-      );
+      lines.add(context.l10n.ruleBatchAllowRejected(parsed.rejected.length));
     }
     return lines.join('\n');
   }
@@ -142,7 +140,7 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
                 minLines: null,
                 textAlignVertical: TextAlignVertical.top,
                 keyboardType: TextInputType.multiline,
-                style: AppTextStyle.subheadline
+                style: AppTextRole.body
                     .of(context)
                     .copyWith(fontFeatures: appTabularFigures),
                 decoration: InputDecoration(
@@ -203,7 +201,10 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
                             size: 16,
                             color: colorScheme.error,
                           ),
-                          Text(context.l10n.batchInvalidHeader, style: context.listTitleStyle),
+                          Text(
+                            context.l10n.batchInvalidHeader,
+                            style: AppTextRole.rowTitle.of(context),
+                          ),
                         ],
                       ),
                       for (final line in parsed.rejected.take(5))
@@ -211,15 +212,15 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
                           line,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: context.listCaptionStyle.copyWith(
-                            fontFeatures: appTabularFigures,
-                          ),
+                          style: AppTextRole.supportingText
+                              .of(context)
+                              .copyWith(fontFeatures: appTabularFigures),
                         ),
                       Text(
                         context.l10n.ruleAllowNeedsAllowlist,
-                        style: context.listCaptionStyle.copyWith(
-                          color: colorScheme.error,
-                        ),
+                        style: AppTextRole.supportingText
+                            .of(context)
+                            .copyWith(color: colorScheme.error),
                       ),
                     ],
                   ),
@@ -236,22 +237,25 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 4,
                     children: [
-                      Text(context.l10n.batchDuplicateHeader, style: context.listTitleStyle),
+                      Text(
+                        context.l10n.batchDuplicateHeader,
+                        style: AppTextRole.rowTitle.of(context),
+                      ),
                       for (final line in parsed.duplicated.take(3))
                         Text(
                           line,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: context.listCaptionStyle.copyWith(
-                            fontFeatures: appTabularFigures,
-                          ),
+                          style: AppTextRole.supportingText
+                              .of(context)
+                              .copyWith(fontFeatures: appTabularFigures),
                         ),
                       if (parsed.duplicated.length > 3)
                         Text(
                           context.l10n.ruleBatchMoreDuplicates(
                             parsed.duplicated.length,
                           ),
-                          style: context.listCaptionStyle,
+                          style: AppTextRole.supportingText.of(context),
                         ),
                     ],
                   ),

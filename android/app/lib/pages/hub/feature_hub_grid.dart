@@ -161,7 +161,7 @@ class _FeatureCardState extends State<_FeatureCard> {
                     if (card.hint != null)
                       Text(
                         card.hint!,
-                        style: AppTextStyle.caption2
+                        style: AppTextRole.micro
                             .of(context)
                             .copyWith(color: colorScheme.onSurfaceVariant),
                       ),
@@ -171,15 +171,15 @@ class _FeatureCardState extends State<_FeatureCard> {
                   card.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.subheadline
-                      .of(context, emphasized: true)
+                  style: AppTextRole.bodyStrong
+                      .of(context)
                       .copyWith(color: colorScheme.onSurface),
                 ),
                 Text(
                   card.description,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption2
+                  style: AppTextRole.micro
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),

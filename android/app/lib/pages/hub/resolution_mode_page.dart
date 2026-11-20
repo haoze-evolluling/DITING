@@ -98,7 +98,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
                       singleProvider,
                       raceIds.length,
                     ),
-                    style: AppTextStyle.footnote
+                    style: AppTextRole.supportingText
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
@@ -247,7 +247,7 @@ class _ResolutionModeConfigPageState
                       _single
                           ? context.l10n.resolutionSingleHint
                           : context.l10n.resolutionRaceHint(selectedCount),
-                      style: context.listSubtitleStyle,
+                      style: AppTextRole.supportingText.of(context),
                     ),
                   ),
                   TonalChip(

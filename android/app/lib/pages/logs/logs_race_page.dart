@@ -171,7 +171,7 @@ class LogsRacePage extends ConsumerWidget {
               subtitle: Text(_strategySubtitle(item, l10n), maxLines: 2),
               trailing: Text(
                 l10n.logTimes(countOf(item.requests)),
-                style: AppTextStyle.subheadline
+                style: AppTextRole.body
                     .of(context)
                     .copyWith(color: colorScheme.onSurfaceVariant),
               ),
@@ -201,9 +201,7 @@ class LogsRacePage extends ConsumerWidget {
             // The list is sorted by wins, so the first row is the yardstick for every bar.
             final topWins = snapshot.entries.first.wins;
             return ListItem(
-              leading: LeadingSlot(
-                child: LogsRankBadge(rank: index + 1),
-              ),
+              leading: LeadingSlot(child: LogsRankBadge(rank: index + 1)),
               title: Text(entry.name),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 6),
@@ -224,8 +222,8 @@ class LogsRacePage extends ConsumerWidget {
               ),
               trailing: Text(
                 l10n.logTimes(countOf(entry.wins)),
-                style: AppTextStyle.subheadline
-                    .of(context, emphasized: true)
+                style: AppTextRole.bodyStrong
+                    .of(context)
                     .toTabular
                     .copyWith(color: colorScheme.primary),
               ),
@@ -260,7 +258,7 @@ class LogsRacePage extends ConsumerWidget {
               ),
               trailing: Text(
                 l10n.logTimes(countOf(item.selectedCount)),
-                style: AppTextStyle.subheadline
+                style: AppTextRole.body
                     .of(context)
                     .copyWith(color: colorScheme.onSurfaceVariant),
               ),

@@ -53,7 +53,7 @@ class ResolutionCard extends ConsumerWidget {
               children: [
                 Text(
                   describeResolutionMode(resolution, context.l10n),
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),

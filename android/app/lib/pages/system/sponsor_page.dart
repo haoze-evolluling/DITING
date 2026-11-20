@@ -100,7 +100,7 @@ class _SponsorHero extends StatelessWidget {
                     children: [
                       Text(
                         context.l10n.sponsorSupportKicker,
-                        style: AppTextStyle.caption2
+                        style: AppTextRole.micro
                             .of(context)
                             .copyWith(
                               color: colorScheme.primary,
@@ -109,17 +109,17 @@ class _SponsorHero extends StatelessWidget {
                       ),
                       Text(
                         context.l10n.sponsorBuyDrink,
-                        style: AppTextStyle.title2.of(
-                          context,
-                          emphasized: true,
-                        ),
+                        style: AppTextRole.sectionTitle.of(context),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            Text(context.l10n.sponsorNote, style: context.listSubtitleStyle),
+            Text(
+              context.l10n.sponsorNote,
+              style: AppTextRole.supportingText.of(context),
+            ),
             Wrap(
               spacing: 6,
               runSpacing: 6,
@@ -215,7 +215,7 @@ class _PaymentCard extends StatelessWidget {
                   size: 16,
                   color: context.colorScheme.primary,
                 ),
-                Text(label, style: context.listSubtitleStyle),
+                Text(label, style: AppTextRole.supportingText.of(context)),
               ],
             ),
           ],
@@ -248,7 +248,7 @@ class _PaymentCard extends StatelessWidget {
             ),
             Text(
               context.l10n.sponsorNoteShort,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
               textAlign: TextAlign.center,
             ),
           ],
@@ -269,7 +269,7 @@ class _BulletRow extends StatelessWidget {
     return ListItem(
       leading: Text(
         '•',
-        style: AppTextStyle.body
+        style: AppTextRole.body
             .of(context)
             .copyWith(color: context.colorScheme.primary),
       ),

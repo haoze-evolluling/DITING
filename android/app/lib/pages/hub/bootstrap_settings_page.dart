@@ -205,10 +205,7 @@ class _BootstrapRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final failing = (stat?.failures ?? 0) > 0;
     return ListItem(
-      leading: GlyphIcon(
-        failing ? AppGlyphs.warning : AppGlyphs.dns,
-        size: 20,
-      ),
+      leading: GlyphIcon(failing ? AppGlyphs.warning : AppGlyphs.dns, size: 20),
       title: Text(entry.name),
       subtitle: Text(_subtitle),
       trailing: Row(
@@ -289,7 +286,7 @@ class _BootstrapEditorState extends State<_BootstrapEditor> {
           if (_error != null)
             Text(
               _error!,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: context.colorScheme.error),
             ),

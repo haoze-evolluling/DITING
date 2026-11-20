@@ -147,7 +147,7 @@ class _Value extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: AppTextStyle.footnote
+      style: AppTextRole.supportingText
           .of(context)
           .copyWith(
             color: context.colorScheme.onSurfaceVariant,

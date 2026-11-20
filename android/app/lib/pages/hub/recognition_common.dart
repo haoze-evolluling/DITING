@@ -122,7 +122,7 @@ class _SponsorCountBadge extends StatelessWidget {
       color: context.colorScheme.primary,
       alpha: 0.12,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      style: AppTextStyle.caption2,
+      style: AppTextRole.micro,
       tabular: true,
     );
   }

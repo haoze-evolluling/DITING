@@ -274,7 +274,7 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
                 visible.length,
                 obsFormatBytes(snapshot.totalBytes),
               ),
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ),
         ),

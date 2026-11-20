@@ -110,12 +110,13 @@ class _ScoreCard extends StatelessWidget {
             children: [
               Text(
                 '${report.score}',
-                style: Theme.of(context).textTheme.displaySmall
-                    ?.copyWith(color: color, fontWeight: FontWeight.w600),
+                style: AppTextRole.metricLarge
+                    .of(context)
+                    .copyWith(color: color),
               ),
               Text(
                 context.l10n.healthScoreLabel,
-                style: context.listCaptionStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
             ],
           ),
@@ -126,13 +127,13 @@ class _ScoreCard extends StatelessWidget {
               children: [
                 Text(
                   _levelLabel(context.l10n, report.level),
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(color: color),
+                  style: AppTextRole.rowTitle
+                      .of(context)
+                      .copyWith(color: color),
                 ),
                 Text(
                   context.l10n.healthIntroShort,
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                  style: AppTextRole.body.of(context),
                 ),
               ],
             ),
@@ -157,8 +158,8 @@ class _DimensionRow extends StatelessWidget {
       title: Text(_dimensionLabel(context.l10n, dimension.kind)),
       trailing: Text(
         '${dimension.score}',
-        style: AppTextStyle.subheadline
-            .of(context, emphasized: true)
+        style: AppTextRole.bodyStrong
+            .of(context)
             .toTabular
             .copyWith(color: color),
       ),

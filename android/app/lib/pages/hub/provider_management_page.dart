@@ -135,13 +135,13 @@ class _ProviderManagementPageState
                       children: [
                         Text(
                           context.l10n.providerMgmtCurrent,
-                          style: context.listTitleStyle,
+                          style: AppTextRole.rowTitle.of(context),
                         ),
                         Text(
                           selected == null
                               ? context.l10n.resolutionNotConfigured
                               : '(${selected.protocol.label}) ${selected.name}',
-                          style: context.listSubtitleStyle,
+                          style: AppTextRole.supportingText.of(context),
                         ),
                       ],
                     ),

@@ -83,7 +83,9 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
     }
   }
 
-  Future<void> _run(Future<BlockPauseState> Function(BlockPauseBridge) action) async {
+  Future<void> _run(
+    Future<BlockPauseState> Function(BlockPauseBridge) action,
+  ) async {
     setState(() {
       _busy = true;
       _error = null;
@@ -159,7 +161,8 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
                 value: state?.allowlistOnly ?? false,
                 onChanged: _busy
                     ? null
-                    : (value) => _run((bridge) => bridge.setAllowlistOnly(value)),
+                    : (value) =>
+                          _run((bridge) => bridge.setAllowlistOnly(value)),
               ),
             ],
           ),
@@ -168,9 +171,9 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
                 _error!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: context.colorScheme.error,
-                ),
+                style: AppTextRole.body
+                    .of(context)
+                    .copyWith(color: context.colorScheme.error),
               ),
             ),
         ],
@@ -223,12 +226,14 @@ class _StatusHero extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyle.headline.of(context).copyWith(
-                      color: scheme.onSurface,
-                      fontFeatures: appTabularFigures,
-                    ),
+                    style: AppTextRole.cardTitle
+                        .of(context)
+                        .copyWith(
+                          color: scheme.onSurface,
+                          fontFeatures: appTabularFigures,
+                        ),
                   ),
-                  Text(hint, style: context.listCaptionStyle),
+                  Text(hint, style: AppTextRole.supportingText.of(context)),
                 ],
               ),
             ),
@@ -275,7 +280,7 @@ class _PauseDurationRow extends StatelessWidget {
             onPressed: busy ? null : open,
             style: TextButton.styleFrom(
               foregroundColor: context.colorScheme.onSurfaceVariant,
-              textStyle: context.listTitleStyle,
+              textStyle: AppTextRole.rowTitle.of(context),
               padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
             child: Row(
@@ -349,10 +354,7 @@ class _CustomPauseDialogState extends State<_CustomPauseDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(context.l10n.uiCancel),
         ),
-        TextButton(
-          onPressed: _submit,
-          child: Text(context.l10n.commonSave),
-        ),
+        TextButton(onPressed: _submit, child: Text(context.l10n.commonSave)),
       ],
       child: TextField(
         controller: _controller,

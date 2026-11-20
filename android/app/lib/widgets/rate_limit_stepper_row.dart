@@ -49,12 +49,14 @@ class RateLimitStepperRow extends StatelessWidget {
           ),
           Text(
             '$value',
-            style: context.listTitleStyle.copyWith(
-              fontFeatures: appTabularFigures,
-              color: enabled
-                  ? colorScheme.onSurface
-                  : colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextRole.rowTitle
+                .of(context)
+                .copyWith(
+                  fontFeatures: appTabularFigures,
+                  color: enabled
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+                ),
           ),
           Semantics(
             button: true,

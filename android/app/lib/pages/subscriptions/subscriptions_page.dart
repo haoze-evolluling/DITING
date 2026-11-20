@@ -303,12 +303,12 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                           children: [
                             Text(
                               context.l10n.subsUpdating,
-                              style: context.listCaptionStyle,
+                              style: AppTextRole.supportingText.of(context),
                             ),
                             const Spacer(),
                             Text(
                               '${(update.progress * 100).round()}%',
-                              style: context.listCaptionStyle,
+                              style: AppTextRole.supportingText.of(context),
                             ),
                           ],
                         ),
@@ -345,7 +345,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                             _groupNameOf(groups, groupId),
                             selectedEntries.length,
                           ),
-                    style: context.listCaptionStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                 ),
               ],
@@ -522,7 +522,7 @@ class _GroupChips extends StatelessWidget {
             onPressed: onManage,
             style: TextButton.styleFrom(
               foregroundColor: colorScheme.onSurfaceVariant,
-              textStyle: AppTextStyle.caption1.of(context, emphasized: true),
+              textStyle: AppTextRole.badge.of(context),
               minimumSize: const Size(0, ChipRow.height),
               padding: const EdgeInsets.symmetric(horizontal: 8),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,

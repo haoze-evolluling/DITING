@@ -35,12 +35,12 @@ class UnknownRoutePage extends StatelessWidget {
                 Text(
                   context.l10n.unknownRouteBody,
                   textAlign: TextAlign.center,
-                  style: AppTextStyle.title3.of(context, emphasized: true),
+                  style: AppTextRole.sectionTitle.of(context),
                 ),
                 SelectableText(
                   location,
                   textAlign: TextAlign.center,
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),

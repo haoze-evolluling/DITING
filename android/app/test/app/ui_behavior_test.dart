@@ -52,7 +52,7 @@ void _popupSelect() {
     expect(tester.takeException(), isNull);
     expect(
       tester.getSize(find.text('单服务商')).height,
-      AppTextStyle.callout.leading,
+      AppTextRole.body.leadingOf(tester.element(find.text('单服务商'))),
       reason: '选项文字必须保留完整行高，不能被 24 高的标题行压扁',
     );
     expect(

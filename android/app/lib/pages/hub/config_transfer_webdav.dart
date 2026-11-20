@@ -241,9 +241,9 @@ class _DavImportDialog extends StatelessWidget {
           if (result.failed)
             Text(
               result.fatalError!,
-              style: context.listCaptionStyle.copyWith(
-                color: colorScheme.error,
-              ),
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(color: colorScheme.error),
             )
           else ...[
             Text(
@@ -252,7 +252,7 @@ class _DavImportDialog extends StatelessWidget {
                 result.updated,
                 result.skipped,
               ),
-              style: context.listTitleStyle,
+              style: AppTextRole.rowTitle.of(context),
             ),
             for (final outcome in result.changed)
               Text(
@@ -268,9 +268,9 @@ class _DavImportDialog extends StatelessWidget {
                   outcome.group.title(context.l10n),
                   outcome.error ?? '',
                 ),
-                style: context.listCaptionStyle.copyWith(
-                  color: colorScheme.error,
-                ),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: colorScheme.error),
               ),
             if (result.changed.isEmpty && result.failedGroups.isEmpty)
               Text(context.l10n.webdavNothingChanged),
@@ -321,11 +321,13 @@ class _DavStatusCard extends StatelessWidget {
               children: [
                 Text(
                   status.label(context.l10n),
-                  style: context.listTitleStyle.copyWith(color: color),
+                  style: AppTextRole.rowTitle
+                      .of(context)
+                      .copyWith(color: color),
                 ),
                 Text(
                   message ?? _hintOf(context.l10n, status),
-                  style: context.listCaptionStyle,
+                  style: AppTextRole.supportingText.of(context),
                 ),
               ],
             ),

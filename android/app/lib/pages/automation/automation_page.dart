@@ -178,7 +178,7 @@ class _AutomationOverview extends StatelessWidget {
                     empty
                         ? l10n.automationOverviewEmptyTitle
                         : l10n.automationOverviewSummary(total, enabled),
-                    style: AppTextStyle.headline
+                    style: AppTextRole.cardTitle
                         .of(context)
                         .copyWith(color: scheme.onSurface),
                   ),
@@ -186,7 +186,7 @@ class _AutomationOverview extends StatelessWidget {
                     empty
                         ? l10n.automationOverviewEmptyHint
                         : l10n.automationOverviewHint,
-                    style: context.listCaptionStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                 ],
               ),

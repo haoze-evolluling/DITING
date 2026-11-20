@@ -243,11 +243,9 @@ class _SiteCell extends StatelessWidget {
                 status,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: DashboardText.figure(
-                  context,
-                  AppTextStyle.caption1,
-                  color: statusColor,
-                ),
+                style: AppTextRole.sectionLabel
+                    .of(context)
+                    .copyWith(color: statusColor),
               ),
               Text(
                 target.host,

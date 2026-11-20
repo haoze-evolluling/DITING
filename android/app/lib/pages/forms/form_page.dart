@@ -115,7 +115,7 @@ class FormRow extends StatelessWidget {
       title,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: titleStyle ?? context.listTitleStyle,
+      style: titleStyle ?? AppTextRole.rowTitle.of(context),
     );
     return DecorationListItem(
       invalid: invalid,
@@ -132,7 +132,10 @@ class FormRow extends StatelessWidget {
                   spacing: 2,
                   children: [
                     titleText,
-                    Text(description, style: context.listCaptionStyle),
+                    Text(
+                      description,
+                      style: AppTextRole.supportingText.of(context),
+                    ),
                   ],
                 );
           final constrainedLabel = trailing == null

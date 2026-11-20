@@ -87,11 +87,11 @@ class _DeclinedNotice extends StatelessWidget {
             children: [
               Text(
                 context.l10n.agreementDeclinedTitle,
-                style: context.listTitleStyle,
+                style: AppTextRole.rowTitle.of(context),
               ),
               Text(
                 context.l10n.agreementDeclinedMessage,
-                style: context.listSubtitleStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
               FilledButton.tonal(
                 onPressed: onReopen,
@@ -146,7 +146,7 @@ class InitialAgreementDialog extends StatelessWidget {
         child: SingleChildScrollView(
           child: Text(
             context.l10n.agreementMessage,
-            style: context.listSubtitleStyle.copyWith(height: 1.6),
+            style: AppTextRole.legalText.of(context),
           ),
         ),
       ),

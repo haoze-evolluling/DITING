@@ -1,4 +1,5 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
 import 'package:diting_android/data/dashboard_models.dart';
@@ -97,8 +98,8 @@ class _SpeedFigure extends StatelessWidget {
 
   final String value;
   final String unit;
-  final AppTextStyle style;
-  final AppTextStyle unitStyle;
+  final AppTextRole style;
+  final AppTextRole unitStyle;
   final Color? color;
 
   @override
@@ -146,9 +147,9 @@ class _SpeedTile extends StatelessWidget {
     final textHeight =
         _padding.top +
         _titleGap +
-        (AppTextStyle.footnote.leading +
-                AppTextStyle.title1.leading +
-                AppTextStyle.caption1.leading) *
+        (AppTextRole.supportingText.leadingOf(context) +
+                AppTextRole.metricMedium.leadingOf(context) +
+                AppTextRole.caption.leadingOf(context)) *
             scale;
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -214,8 +215,8 @@ class _SpeedTile extends StatelessWidget {
                             direction.label(context.l10n),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.footnote
-                                .of(context, emphasized: true)
+                            style: AppTextRole.sectionLabel
+                                .of(context)
                                 .copyWith(
                                   color: context.colorScheme.onSurfaceVariant,
                                 ),
@@ -237,8 +238,8 @@ class _SpeedTile extends StatelessWidget {
                         return _SpeedFigure(
                           value: value,
                           unit: unit,
-                          style: AppTextStyle.title1,
-                          unitStyle: AppTextStyle.footnote,
+                          style: AppTextRole.metricMedium,
+                          unitStyle: AppTextRole.metricUnit,
                           color: context.colorScheme.onSurface,
                         );
                       },

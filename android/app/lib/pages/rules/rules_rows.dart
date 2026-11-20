@@ -51,9 +51,9 @@ class _RuleRow extends StatelessWidget {
           pattern,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: context.listTitleStyle.copyWith(
-            fontFeatures: appTabularFigures,
-          ),
+          style: AppTextRole.rowTitle
+              .of(context)
+              .copyWith(fontFeatures: appTabularFigures),
         ),
         // The subtitle holds four chips plus the source label, and ListTile leaves about 160px on
         // a 320-wide device, while chips cannot shrink. A Row used to overflow here.
@@ -75,7 +75,7 @@ class _RuleRow extends StatelessWidget {
               rule.source.label(context.l10n),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ],
         ),

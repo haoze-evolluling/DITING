@@ -232,9 +232,9 @@ class _ErrorNotice extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: context.listCaptionStyle.copyWith(
-                  color: colorScheme.error,
-                ),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: colorScheme.error),
               ),
             ),
           ],

@@ -185,7 +185,7 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
                         reply.ok
                             ? _msText(reply.elapsedMs)
                             : (reply.error ?? l10n.toolTimeout),
-                        style: AppTextStyle.subheadline
+                        style: AppTextRole.body
                             .of(context)
                             .copyWith(
                               fontFeatures: appTabularFigures,

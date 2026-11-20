@@ -149,7 +149,7 @@ class _RequestStatBlock extends StatelessWidget {
               maxLines: 1,
               style: DashboardText.figure(
                 context,
-                AppTextStyle.title2,
+                AppTextRole.metricSmall,
                 color: scheme.onSurface,
               ),
             ),
@@ -158,7 +158,7 @@ class _RequestStatBlock extends StatelessWidget {
             data.hint,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.caption2
+            style: AppTextRole.micro
                 .of(context)
                 .copyWith(color: scheme.onSurfaceVariant),
           ),

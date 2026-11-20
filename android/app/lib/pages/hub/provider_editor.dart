@@ -251,7 +251,9 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
         Expanded(
           child: Text(
             probe.text,
-            style: AppTextStyle.footnote.of(context).copyWith(color: color),
+            style: AppTextRole.supportingText
+                .of(context)
+                .copyWith(color: color),
           ),
         ),
       ],
@@ -332,7 +334,7 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
           if (_error != null)
             Text(
               _error!,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: context.colorScheme.error),
             ),

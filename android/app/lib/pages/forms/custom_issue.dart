@@ -71,9 +71,7 @@ class InfoBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: AppTextStyle.subheadline
-                    .of(context)
-                    .copyWith(color: foreground),
+                style: AppTextRole.body.of(context).copyWith(color: foreground),
               ),
             ),
             if (actions != null)
@@ -130,8 +128,8 @@ class CustomIssuesBanner extends StatelessWidget {
                 ),
                 Text(
                   title ?? context.l10n.formIssuesTitle,
-                  style: AppTextStyle.subheadline
-                      .of(context, emphasized: true)
+                  style: AppTextRole.bodyStrong
+                      .of(context)
                       .copyWith(color: colorScheme.onErrorContainer),
                 ),
               ],
@@ -141,7 +139,7 @@ class CustomIssuesBanner extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 28),
                 child: Text(
                   '· $issue',
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: colorScheme.onErrorContainer),
                 ),

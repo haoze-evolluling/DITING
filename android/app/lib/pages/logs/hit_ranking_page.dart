@@ -113,13 +113,15 @@ class HitRankingPage extends ConsumerWidget {
             for (final row in snapshot.domains)
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.block),
-                title: Text(row.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                title: Text(
+                  row.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text(l10n.hitRankingExplainHint),
                 trailing: Text(
                   countOf(row.count),
-                  style: AppTextStyle.subheadline
-                      .of(context, emphasized: true)
-                      .toTabular,
+                  style: AppTextRole.bodyStrong.of(context).toTabular,
                 ),
                 // 一键解释：把域名预填进规则测试，按当前规则复现判定。
                 onTap: () => context.push(
@@ -136,12 +138,14 @@ class HitRankingPage extends ConsumerWidget {
             for (final row in snapshot.reasons)
               ListItem(
                 leading: const GlyphIcon(AppGlyphs.rules),
-                title: Text(row.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+                title: Text(
+                  row.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 trailing: Text(
                   countOf(row.count),
-                  style: AppTextStyle.subheadline
-                      .of(context, emphasized: true)
-                      .toTabular,
+                  style: AppTextRole.bodyStrong.of(context).toTabular,
                 ),
               ),
           ],

@@ -277,7 +277,7 @@ class _ValueButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: context.colorScheme.onSurfaceVariant,
-        textStyle: context.listTitleStyle,
+        textStyle: AppTextRole.rowTitle.of(context),
         padding: const EdgeInsets.symmetric(horizontal: 8),
       ),
       child: Row(

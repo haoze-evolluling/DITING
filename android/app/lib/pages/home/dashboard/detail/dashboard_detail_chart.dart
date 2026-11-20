@@ -57,7 +57,7 @@ class DashboardDetailChart extends StatelessWidget {
               Center(
                 child: Text(
                   emptyLabel ?? context.l10n.homeChartEmptyLabel,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -159,14 +159,14 @@ class DashboardShareLegend extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.subheadline.of(context),
+              style: AppTextRole.body.of(context),
             ),
           ),
           Text(
             share == null ? value : '$value · ${(share * 100).round()}%',
             maxLines: 1,
-            style: AppTextStyle.subheadline
-                .of(context, emphasized: true)
+            style: AppTextRole.bodyStrong
+                .of(context)
                 .copyWith(
                   color: colorScheme.onSurface,
                   fontFeatures: appTabularFigures,

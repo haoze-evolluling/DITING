@@ -116,7 +116,7 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
                   children: [
                     Text(
                       context.l10n.toolRecordType,
-                      style: context.listTitleStyle,
+                      style: AppTextRole.rowTitle.of(context),
                     ),
                     const SizedBox(width: 8),
                     PopupSelectButton<int>(
@@ -140,8 +140,9 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _error!,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.error),
+                style: AppTextRole.body
+                    .of(context)
+                    .copyWith(color: context.colorScheme.error),
               ),
             ),
           if (_result != null)
@@ -151,8 +152,7 @@ class _RuleTestPageState extends ConsumerState<RuleTestPage> {
               context,
               Text(
                 context.l10n.ruleTestEmptyHint,
-                style: Theme.of(context).textTheme.bodyMedium
-                    ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                style: AppTextRole.body.of(context),
               ),
             ),
         ],
@@ -187,7 +187,7 @@ class _ResultCard extends StatelessWidget {
         children: [
           Text(
             context.l10n.ruleTestResultTitle,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: AppTextRole.rowTitle.of(context),
           ),
           Row(
             children: [
@@ -199,8 +199,7 @@ class _ResultCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(color: color),
+                style: AppTextRole.rowTitle.of(context).copyWith(color: color),
               ),
             ],
           ),
@@ -241,11 +240,9 @@ class _ResultRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 96,
-          child: Text(label, style: context.listCaptionStyle),
+          child: Text(label, style: AppTextRole.supportingText.of(context)),
         ),
-        Expanded(
-          child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-        ),
+        Expanded(child: Text(value, style: AppTextRole.body.of(context))),
       ],
     );
   }

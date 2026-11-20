@@ -176,11 +176,11 @@ class _TroubleshootingLogDetailSheetState
                       children: [
                         Text(
                           l10n.troubleshootLogsViewContent,
-                          style: context.listTitleStyle,
+                          style: AppTextRole.rowTitle.of(context),
                         ),
                         Text(
                           l10n.troubleshootLogsViewContentBody,
-                          style: AppTextStyle.caption1
+                          style: AppTextRole.caption
                               .of(context)
                               .copyWith(color: colorScheme.onSurfaceVariant),
                         ),
@@ -213,9 +213,9 @@ class _TroubleshootingLogDetailSheetState
                 ),
                 title: Text(
                   l10n.commonDelete,
-                  style: context.listTitleStyle.copyWith(
-                    color: colorScheme.error,
-                  ),
+                  style: AppTextRole.rowTitle
+                      .of(context)
+                      .copyWith(color: colorScheme.error),
                 ),
                 onTap: _busy ? null : _delete,
               ),

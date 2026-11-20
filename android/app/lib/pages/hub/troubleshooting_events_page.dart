@@ -266,7 +266,9 @@ class _FilterCaption extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: context.listCaptionStyle.copyWith(fontWeight: FontWeight.w600),
+      style: AppTextRole.supportingText
+          .of(context)
+          .copyWith(fontWeight: FontWeight.w600),
     );
   }
 }
@@ -292,7 +294,12 @@ class _NoMatch extends StatelessWidget {
               size: 18,
               color: context.colorScheme.onSurfaceVariant,
             ),
-            Flexible(child: Text(message, style: context.listSubtitleStyle)),
+            Flexible(
+              child: Text(
+                message,
+                style: AppTextRole.supportingText.of(context),
+              ),
+            ),
           ],
         ),
       ),
@@ -322,7 +329,7 @@ class _EventRow extends StatelessWidget {
       leading: GlyphIcon(glyph, size: 18, color: color),
       title: Text(
         '${event.levelName} · ${event.module}',
-        style: AppTextStyle.footnote
+        style: AppTextRole.supportingText
             .of(context)
             .copyWith(
               color: event.isWarnOrAbove ? color : colorScheme.onSurfaceVariant,
@@ -336,7 +343,7 @@ class _EventRow extends StatelessWidget {
       ),
       trailing: Text(
         timeText,
-        style: AppTextStyle.caption2
+        style: AppTextRole.micro
             .of(context)
             .copyWith(
               color: colorScheme.onSurfaceVariant,

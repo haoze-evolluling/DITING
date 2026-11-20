@@ -45,7 +45,7 @@ class ObservabilityLoading extends StatelessWidget {
           const CommonCircleLoading.page(),
           Text(
             label,
-            style: AppTextStyle.subheadline
+            style: AppTextRole.body
                 .of(context)
                 .copyWith(color: context.colorScheme.onSurfaceVariant),
           ),
@@ -94,11 +94,11 @@ class ObsFailure extends StatelessWidget {
           spacing: 10,
           children: [
             GlyphIcon(AppGlyphs.error, size: 30, color: colorScheme.error),
-            Text(label, style: context.listTitleStyle),
+            Text(label, style: AppTextRole.rowTitle.of(context)),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),

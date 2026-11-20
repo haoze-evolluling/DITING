@@ -29,7 +29,7 @@ class RuleControlPage extends ConsumerWidget {
     // `CaCertificateService.inspect()`, so an installed certificate is not reported as missing.
     final caReady = ref.watch(caReadyProvider);
     final inspectionApps = settings.httpInspectionPackages;
-    final footnote = AppTextStyle.footnote
+    final footnote = AppTextRole.supportingText
         .of(context)
         .copyWith(color: context.colorScheme.onSurfaceVariant);
     String urlSubtitle() {
@@ -350,7 +350,7 @@ class _DynamicParameterDialogState extends State<_DynamicParameterDialog> {
           if (_error != null)
             Text(
               _error!,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: context.colorScheme.error),
             ),

@@ -40,7 +40,7 @@ class AgentMarkdownView extends StatelessWidget {
     MarkdownColors colors,
   ) {
     final colorScheme = context.colorScheme;
-    final bodyStyle = AppTextStyle.body.of(context).copyWith(height: 1.45);
+    final bodyStyle = AppTextRole.bodyReading.of(context);
     switch (block) {
       case MarkdownHeading(:final level, :final text):
         return _Heading(level: level, text: text, colors: colors);
@@ -78,7 +78,7 @@ class AgentMarkdownView extends StatelessWidget {
           children: [
             Text(
               number,
-              style: AppTextStyle.body
+              style: AppTextRole.body
                   .of(context)
                   .copyWith(color: colors.primary, fontWeight: FontWeight.bold),
             ),
@@ -142,10 +142,10 @@ class _Heading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = switch (level) {
-      1 => AppTextStyle.title2.of(context, emphasized: true),
-      2 => AppTextStyle.title3.of(context, emphasized: true),
-      3 => AppTextStyle.headline.of(context),
-      _ => AppTextStyle.callout.of(context, emphasized: true),
+      1 => AppTextRole.sectionTitle.of(context),
+      2 => AppTextRole.sectionTitle.of(context),
+      3 => AppTextRole.cardTitle.of(context),
+      _ => AppTextRole.bodyStrong.of(context),
     }.copyWith(color: level <= 3 ? colors.primary : colors.base);
 
     final label = SelectableText.rich(
@@ -208,12 +208,9 @@ class _CodeBlock extends StatelessWidget {
                 Expanded(
                   child: Text(
                     language.isEmpty ? 'CODE' : language.toUpperCase(),
-                    style: AppTextStyle.caption2
+                    style: AppTextRole.micro
                         .of(context)
-                        .copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          letterSpacing: 0.6,
-                        ),
+                        .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                 ),
                 IconButton(
@@ -236,13 +233,9 @@ class _CodeBlock extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: SelectableText(
               code,
-              style: AppTextStyle.caption1
+              style: AppTextRole.code
                   .of(context)
-                  .copyWith(
-                    fontFeatures: appTabularFigures,
-                    height: 1.5,
-                    color: colorScheme.onSurface,
-                  ),
+                  .copyWith(color: colorScheme.onSurface),
             ),
           ),
         ],
@@ -267,7 +260,7 @@ class _Table extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final cellStyle = AppTextStyle.footnote.of(context).copyWith(height: 1.35);
+    final cellStyle = AppTextRole.legalText.of(context);
     final headerStyle = cellStyle.copyWith(
       fontWeight: FontWeight.w600,
       color: colorScheme.onPrimaryContainer,

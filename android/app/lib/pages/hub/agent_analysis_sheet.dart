@@ -243,7 +243,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
               ),
               child: SelectableText(
                 digest,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(
                       fontFeatures: appTabularFigures,
@@ -337,11 +337,11 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   target.title(context.l10n),
-                  style: AppTextStyle.headline.of(context, emphasized: true),
+                  style: AppTextRole.cardTitle.of(context),
                 ),
                 Text(
                   target.subtitle(context.l10n),
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -422,18 +422,15 @@ class _Notice extends StatelessWidget {
                 else
                   GlyphIcon(glyph, size: 22, color: accent),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: AppTextStyle.callout.of(context, emphasized: true),
-                  ),
+                  child: Text(title, style: AppTextRole.bodyStrong.of(context)),
                 ),
               ],
             ),
             SelectableText(
               description,
-              style: context.listSubtitleStyle.copyWith(
-                color: isError ? colorScheme.error : null,
-              ),
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(color: isError ? colorScheme.error : null),
             ),
             if (actionLabel != null)
               Row(

@@ -387,7 +387,7 @@ class _StatsOverview extends StatelessWidget {
                         .join('  ·  '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.caption1.of(context),
+                    style: AppTextRole.caption.of(context),
                   ),
                 ),
               ],
@@ -427,8 +427,8 @@ class _EmptyLogCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 4,
                 children: [
-                  Text(title, style: context.listTitleStyle),
-                  Text(body, style: context.listSubtitleStyle),
+                  Text(title, style: AppTextRole.rowTitle.of(context)),
+                  Text(body, style: AppTextRole.supportingText.of(context)),
                 ],
               ),
             ),
@@ -492,7 +492,7 @@ class _Rows extends StatelessWidget {
                 ),
                 trailing: Text(
                   serverMs(record.durationMs),
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(
                         color: scheme.onSurfaceVariant,
@@ -510,7 +510,7 @@ class _Rows extends StatelessWidget {
               Expanded(
                 child: Text(
                   context.l10n.serverLogPage(page + 1, pages.clamp(1, 1 << 30)),
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(color: scheme.onSurfaceVariant),
                 ),

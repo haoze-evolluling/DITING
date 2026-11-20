@@ -47,16 +47,16 @@ class AiInsightCard extends ConsumerWidget {
           if (headline == null)
             Text(
               context.l10n.logsAiInsightBody,
-              style: AppTextStyle.subheadline
+              style: AppTextRole.bodyReading
                   .of(context)
-                  .copyWith(color: colorScheme.onSurfaceVariant, height: 1.4),
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             )
           else ...[
             Text(
               headline,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyle.subheadline.of(context).copyWith(height: 1.4),
+              style: AppTextRole.bodyReading.of(context),
             ),
             SizedBox(height: 6 * scale),
             Text(

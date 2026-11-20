@@ -51,7 +51,7 @@ class AgentApiPage extends ConsumerWidget {
                           state.enabled
                               ? context.l10n.agentApiEnabled
                               : context.l10n.agentApiDisabled,
-                          style: context.listTitleStyle,
+                          style: AppTextRole.rowTitle.of(context),
                         ),
                       ),
                       CommonSwitch(
@@ -62,7 +62,7 @@ class AgentApiPage extends ConsumerWidget {
                   ),
                   Text(
                     _providerSummary(context, provider),
-                    style: context.listSubtitleStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                   Wrap(
                     spacing: 6,
@@ -86,7 +86,7 @@ class AgentApiPage extends ConsumerWidget {
                       state.enabled
                           ? context.l10n.agentApiReadyHintOn
                           : context.l10n.agentApiReadyHintOff,
-                      style: AppTextStyle.footnote
+                      style: AppTextRole.supportingText
                           .of(context)
                           .copyWith(color: colorScheme.onSurfaceVariant),
                     ),

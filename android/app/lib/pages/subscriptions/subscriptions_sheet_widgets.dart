@@ -53,9 +53,10 @@ class _SheetField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 6,
         children: [
-          Text(label, style: context.listCaptionStyle),
+          Text(label, style: AppTextRole.supportingText.of(context)),
           child,
-          if (hint != null) Text(hint, style: context.listCaptionStyle),
+          if (hint != null)
+            Text(hint, style: AppTextRole.supportingText.of(context)),
         ],
       ),
     );
@@ -84,14 +85,16 @@ class _PreviewBox extends StatelessWidget {
           children: [
             Text(
               context.l10n.subsEffectiveUrl,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
             Text(
               url,
-              style: context.listCaptionStyle.copyWith(
-                color: context.colorScheme.onSurface,
-                fontFeatures: appTabularFigures,
-              ),
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(
+                    color: context.colorScheme.onSurface,
+                    fontFeatures: appTabularFigures,
+                  ),
             ),
           ],
         ),

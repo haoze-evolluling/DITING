@@ -88,7 +88,7 @@ class _UserAgentDialogState extends State<_UserAgentDialog> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
-    final errorStyle = AppTextStyle.footnote
+    final errorStyle = AppTextRole.supportingText
         .of(context)
         .copyWith(color: colorScheme.error);
     return CommonDialog(

@@ -192,7 +192,7 @@ class _NetworkOverviewCard extends ConsumerWidget {
                                   info.privateDns,
                                 )
                               : context.l10n.toolPhysicalProbe,
-                          style: context.listCaptionStyle,
+                          style: AppTextRole.supportingText.of(context),
                         ),
                       ),
                     ],

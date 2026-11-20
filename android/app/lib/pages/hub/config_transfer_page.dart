@@ -131,7 +131,10 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
                 children: [
                   const CommonCircleLoading(size: 16),
                   Expanded(
-                    child: Text(_busy!, style: context.listCaptionStyle),
+                    child: Text(
+                      _busy!,
+                      style: AppTextRole.supportingText.of(context),
+                    ),
                   ),
                 ],
               ),
@@ -211,8 +214,8 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 2,
           children: [
-            Text(value, style: context.listTitleStyle),
-            Text(label, style: context.listCaptionStyle),
+            Text(value, style: AppTextRole.rowTitle.of(context)),
+            Text(label, style: AppTextRole.supportingText.of(context)),
           ],
         ),
       );
@@ -293,9 +296,9 @@ class _ImportResultDialog extends StatelessWidget {
           if (result.failed) ...[
             Text(
               result.fatalError!,
-              style: context.listCaptionStyle.copyWith(
-                color: colorScheme.error,
-              ),
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(color: colorScheme.error),
             ),
           ] else ...[
             Text(
@@ -304,17 +307,17 @@ class _ImportResultDialog extends StatelessWidget {
                 result.updated,
                 result.skipped,
               ),
-              style: context.listTitleStyle,
+              style: AppTextRole.rowTitle.of(context),
             ),
             if (result.sourceName != null)
               Text(
                 context.l10n.transferSourceFile(result.sourceName!),
-                style: context.listCaptionStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
             if (result.occurredAt != null)
               Text(
                 context.l10n.transferExportedAt(_dateText(result.occurredAt!)),
-                style: context.listCaptionStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
             for (final outcome in result.changed)
               Text(
@@ -329,9 +332,9 @@ class _ImportResultDialog extends StatelessWidget {
                   outcome.group.title(context.l10n),
                   outcome.error ?? '',
                 ),
-                style: context.listCaptionStyle.copyWith(
-                  color: colorScheme.error,
-                ),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: colorScheme.error),
               ),
             if (result.changed.isEmpty && result.failedGroups.isEmpty)
               Text(context.l10n.transferNothingChanged),

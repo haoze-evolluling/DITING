@@ -88,7 +88,7 @@ class _MetricTile extends StatelessWidget {
                     maxLines: 1,
                     style: DashboardText.figure(
                       context,
-                      AppTextStyle.headline,
+                      AppTextRole.metricCompact,
                       color: valueColor,
                     ),
                   ),
@@ -99,7 +99,7 @@ class _MetricTile extends StatelessWidget {
                   padding: const EdgeInsetsDirectional.only(start: 3),
                   child: Text(
                     unit,
-                    style: AppTextStyle.caption1
+                    style: AppTextRole.metricUnit
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
@@ -110,7 +110,7 @@ class _MetricTile extends StatelessWidget {
             item.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.caption1
+            style: AppTextRole.caption
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
@@ -163,7 +163,7 @@ class DashboardDetailRows extends StatelessWidget {
               children: [
                 Text(
                   row.label,
-                  style: AppTextStyle.subheadline
+                  style: AppTextRole.body
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -173,13 +173,11 @@ class DashboardDetailRows extends StatelessWidget {
                     textAlign: TextAlign.end,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.subheadline
+                    style: AppTextRole.body
                         .of(context)
                         .copyWith(
                           color: row.color ?? colorScheme.onSurface,
-                          fontFeatures: row.tabular
-                              ? appTabularFigures
-                              : null,
+                          fontFeatures: row.tabular ? appTabularFigures : null,
                         ),
                   ),
                 ),
@@ -204,7 +202,7 @@ class DashboardDetailNote extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
       child: Text(
         text,
-        style: AppTextStyle.caption1
+        style: AppTextRole.caption
             .of(context)
             .copyWith(color: context.colorScheme.onSurfaceVariant),
       ),

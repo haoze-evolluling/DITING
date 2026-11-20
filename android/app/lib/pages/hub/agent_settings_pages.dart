@@ -85,7 +85,7 @@ class AgentParamsPage extends ConsumerWidget {
                 subtitle: Text(temperatureLabel),
                 trailing: Text(
                   state.temperature.toStringAsFixed(1),
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: context.colorScheme.primary),
                 ),

@@ -75,10 +75,10 @@ class LogsDashboardHero extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         spacing: 6,
         children: [
-          Text(title, style: AppTextStyle.title2.of(context, emphasized: true)),
+          Text(title, style: AppTextRole.sectionTitle.of(context)),
           Text(
             description,
-            style: AppTextStyle.subheadline
+            style: AppTextRole.body
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
@@ -103,7 +103,7 @@ class LogsPageLoading extends StatelessWidget {
           const CommonCircleLoading.page(),
           Text(
             label,
-            style: AppTextStyle.subheadline
+            style: AppTextRole.body
                 .of(context)
                 .copyWith(color: context.colorScheme.onSurfaceVariant),
           ),

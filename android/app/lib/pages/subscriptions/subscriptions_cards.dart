@@ -53,14 +53,14 @@ class _SubscriptionCard extends StatelessWidget {
                 entry.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.listTitleStyle,
+                style: AppTextRole.rowTitle.of(context),
               ),
               subtitle: Text(
                 '${entry.groupKey} · ${entry.kind.displayName(context.l10n)}'
                 ' · ${entry.sourceType.label(context.l10n)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: context.listSubtitleStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -119,14 +119,17 @@ class _SubscriptionCard extends StatelessWidget {
                       MetaChip(label: _lineCountLabel(entry, context.l10n)),
                       MetaChip(label: _updatedLabel(entry, context.l10n)),
                       if (entry.health != SubscriptionHealth.ok)
-                        MetaChip(label: _healthLabel(context.l10n, entry.health)),
+                        MetaChip(
+                          label: _healthLabel(context.l10n, entry.health),
+                        ),
                       if (entry.consecutiveFailureCount > 0)
                         MetaChip(
                           label: context.l10n.subsConsecutiveFailures(
                             entry.consecutiveFailureCount,
                           ),
                         ),
-                      if (!entry.isRemote) MetaChip(label: context.l10n.subsLocalFileSubscription),
+                      if (!entry.isRemote)
+                        MetaChip(label: context.l10n.subsLocalFileSubscription),
                       if (mirror != null)
                         MetaChip(
                           label: entry.record.mirrorFallback
@@ -141,18 +144,18 @@ class _SubscriptionCard extends StatelessWidget {
                     entry.isRemote ? entry.url : _fileNameOf(entry.url),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: context.listCaptionStyle.copyWith(
-                      fontFeatures: appTabularFigures,
-                    ),
+                    style: AppTextRole.supportingText
+                        .of(context)
+                        .copyWith(fontFeatures: appTabularFigures),
                   ),
                   if (mirror != null)
                     Text(
                       context.l10n.subsMirrorName(mirror),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: context.listCaptionStyle.copyWith(
-                        fontFeatures: appTabularFigures,
-                      ),
+                      style: AppTextRole.supportingText
+                          .of(context)
+                          .copyWith(fontFeatures: appTabularFigures),
                     ),
                   if (hasError)
                     Row(
@@ -165,10 +168,11 @@ class _SubscriptionCard extends StatelessWidget {
                         ),
                         Expanded(
                           child: Text(
-                            entry.importError ?? context.l10n.subsLastUpdateFailed,
-                            style: context.listCaptionStyle.copyWith(
-                              color: colorScheme.error,
-                            ),
+                            entry.importError ??
+                                context.l10n.subsLastUpdateFailed,
+                            style: AppTextRole.supportingText
+                                .of(context)
+                                .copyWith(color: colorScheme.error),
                           ),
                         ),
                       ],
@@ -185,7 +189,7 @@ class _SubscriptionCard extends StatelessWidget {
                           ? context.l10n.subsActionRemote
                           : context.l10n.subsActionLocal,
                     ),
-                    style: context.listCaptionStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                 ],
               ),

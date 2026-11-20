@@ -273,14 +273,14 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
           if (_notice != null)
             Text(
               _notice!,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: colorScheme.success),
             ),
           if (_error != null)
             Text(
               _error!,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: colorScheme.error),
             ),

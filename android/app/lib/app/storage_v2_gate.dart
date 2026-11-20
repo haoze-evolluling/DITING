@@ -8,6 +8,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/data_plane_status.dart';
 import 'package:diting_shared/data/db/storage_v2_migration.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_shared/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 
 class StorageV2GateApp extends StatefulWidget {
@@ -206,21 +207,21 @@ class _GateBody extends StatelessWidget {
                   Text(
                     l10n.storageV2Title,
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextRole.cardTitle.of(context),
                   ),
                   if (running) const Center(child: CircularProgressIndicator()),
                   Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium,
+                    style: AppTextRole.body.of(context),
                   ),
                   if (needsStop) ...[
                     Text(
                       l10n.storageV2NeedStop,
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
+                      style: AppTextRole.body
+                          .of(context)
+                          .copyWith(color: theme.colorScheme.error),
                     ),
                     FilledButton(
                       onPressed: onStopAndRetry,
@@ -231,9 +232,9 @@ class _GateBody extends StatelessWidget {
                     Text(
                       l10n.storageV2Failed(error!),
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
+                      style: AppTextRole.body
+                          .of(context)
+                          .copyWith(color: theme.colorScheme.error),
                     ),
                     FilledButton(
                       onPressed: running ? null : onRetry,

@@ -162,7 +162,7 @@ class AppRuleAppRow extends StatelessWidget {
         context.l10n.appRulesAllowCount(app.packageName, domainCount),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: AppTextStyle.footnote.of(context),
+        style: AppTextRole.supportingText.of(context),
       ),
       // The real icon replaced the old "configured" tick, so the state moves to a chip.
       trailing: (configured || app.isSystem)

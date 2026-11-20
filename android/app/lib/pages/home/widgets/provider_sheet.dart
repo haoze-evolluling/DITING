@@ -187,14 +187,14 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
           if (!single && provider.latencyMs >= 0)
             Text(
               providerLatencyLabel(provider),
-              style: AppTextStyle.caption1.of(context).toTabular,
+              style: AppTextRole.caption.of(context).toTabular,
             ),
           if (single)
             selected
                 ? const SelectionCheck()
                 : Text(
                     providerLatencyLabel(provider),
-                    style: AppTextStyle.caption1.of(context).toTabular,
+                    style: AppTextRole.caption.of(context).toTabular,
                   )
           else
             CommonCheckBox(
@@ -235,7 +235,7 @@ class _RaceSummary extends StatelessWidget {
             Expanded(
               child: Text(
                 context.l10n.resolutionRaceHint(count),
-                style: context.listSubtitleStyle,
+                style: AppTextRole.supportingText.of(context),
               ),
             ),
             _RaceStatusChip(ready: ready),

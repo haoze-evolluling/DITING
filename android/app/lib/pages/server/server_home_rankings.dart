@@ -120,8 +120,8 @@ class _RankingRow extends StatelessWidget {
           ),
           child: Text(
             '$rank',
-            style: AppTextStyle.caption2
-                .of(context, emphasized: true)
+            style: AppTextRole.badge
+                .of(context)
                 .toTabular
                 .copyWith(
                   color: highlighted ? accent : scheme.onSurfaceVariant,
@@ -141,16 +141,17 @@ class _RankingRow extends StatelessWidget {
                       item.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.footnote.of(
-                        context,
-                        emphasized: rank == 1,
-                      ),
+                      style:
+                          (rank == 1
+                                  ? AppTextRole.bodyStrong
+                                  : AppTextRole.supportingText)
+                              .of(context),
                     ),
                   ),
                   Text(
                     serverCount(item.count),
-                    style: AppTextStyle.caption1
-                        .of(context, emphasized: true)
+                    style: AppTextRole.badge
+                        .of(context)
                         .toTabular
                         .copyWith(color: scheme.onSurfaceVariant),
                   ),
@@ -207,7 +208,7 @@ class ServerRecentQueries extends ConsumerWidget {
             trailing: [
               Text(
                 l10n.serverViewAll,
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(color: scheme.primary),
               ),
@@ -216,7 +217,10 @@ class ServerRecentQueries extends ConsumerWidget {
           ),
           recent.when(
             data: (result) => result.entries.isEmpty
-                ? Text(l10n.serverNoQueries, style: context.listSubtitleStyle)
+                ? Text(
+                    l10n.serverNoQueries,
+                    style: AppTextRole.supportingText.of(context),
+                  )
                 : Column(
                     spacing: 4,
                     children: [
@@ -225,8 +229,10 @@ class ServerRecentQueries extends ConsumerWidget {
                     ],
                   ),
             loading: () => const Center(child: CommonCircleLoading(size: 18)),
-            error: (error, _) =>
-                Text(error.toString(), style: context.listSubtitleStyle),
+            error: (error, _) => Text(
+              error.toString(),
+              style: AppTextRole.supportingText.of(context),
+            ),
           ),
         ],
       ),
@@ -280,14 +286,14 @@ class _RecentQueryRow extends StatelessWidget {
                   record.domain,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.footnote.of(context, emphasized: true),
+                  style: AppTextRole.sectionLabel.of(context),
                 ),
                 if (meta.isNotEmpty)
                   Text(
                     meta,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyle.caption2
+                    style: AppTextRole.micro
                         .of(context)
                         .copyWith(color: scheme.onSurfaceVariant),
                   ),
@@ -298,9 +304,7 @@ class _RecentQueryRow extends StatelessWidget {
             _statusLabel(context, record),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.caption1
-                .of(context, emphasized: true)
-                .copyWith(color: color),
+            style: AppTextRole.badge.of(context).copyWith(color: color),
           ),
         ],
       ),

@@ -158,7 +158,7 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
                         child: Text(
                           '${hop.hop}',
                           textAlign: TextAlign.center,
-                          style: AppTextStyle.caption1
+                          style: AppTextRole.caption
                               .of(context)
                               .copyWith(
                                 fontFeatures: appTabularFigures,
@@ -168,7 +168,7 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
                       ),
                       title: Text(
                         hop.address ?? '* * *',
-                        style: AppTextStyle.subheadline
+                        style: AppTextRole.body
                             .of(context)
                             .copyWith(
                               fontFeatures: appTabularFigures,
@@ -183,7 +183,7 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
                         hop.responded
                             ? _msText(hop.elapsedMs)
                             : l10n.toolNoResponse,
-                        style: AppTextStyle.caption1
+                        style: AppTextRole.caption
                             .of(context)
                             .copyWith(
                               color: hop.responded

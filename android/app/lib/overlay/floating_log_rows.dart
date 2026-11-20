@@ -82,8 +82,8 @@ class FloatingLogBall extends StatelessWidget {
                     ),
                     child: Text(
                       badge > 99 ? '99+' : '$badge',
-                      style: AppTextStyle.caption2
-                          .of(context, emphasized: true)
+                      style: AppTextRole.badge
+                          .of(context)
                           .copyWith(color: colorScheme.onError),
                     ),
                   ),
@@ -143,13 +143,16 @@ class FloatingLogFilterChip extends StatelessWidget {
                 ),
               Text(
                 label,
-                style: AppTextStyle.footnote
-                    .of(context, emphasized: selected)
-                    .copyWith(color: foreground),
+                style:
+                    (selected
+                            ? AppTextRole.sectionLabel
+                            : AppTextRole.supportingText)
+                        .of(context)
+                        .copyWith(color: foreground),
               ),
               Text(
                 '$count',
-                style: AppTextStyle.caption1
+                style: AppTextRole.caption
                     .of(context)
                     .copyWith(
                       color: foreground.withValues(alpha: 0.75),
@@ -190,7 +193,7 @@ class FloatingLogRow extends StatelessWidget {
       request.status,
     );
     final title = request.title.isEmpty ? '—' : request.title;
-    final caption = AppTextStyle.caption1
+    final caption = AppTextRole.caption
         .of(context)
         .copyWith(color: colorScheme.onSurfaceVariant);
     final meta = [
@@ -221,7 +224,7 @@ class FloatingLogRow extends StatelessWidget {
                       title,
                       maxLines: expanded ? 3 : 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.subheadline
+                      style: AppTextRole.body
                           .of(context)
                           .copyWith(color: colorScheme.onSurface),
                     ),
@@ -294,10 +297,10 @@ class _Details extends StatelessWidget {
       if (request.cached) (l10n.obsCachedChip, '✓'),
     ];
     final colorScheme = context.colorScheme;
-    final labelStyle = AppTextStyle.caption1
+    final labelStyle = AppTextRole.caption
         .of(context)
         .copyWith(color: colorScheme.onSurfaceVariant);
-    final valueStyle = AppTextStyle.caption1
+    final valueStyle = AppTextRole.caption
         .of(context)
         .copyWith(color: colorScheme.onSurface);
     return Padding(
@@ -364,7 +367,7 @@ class _SmallButton extends StatelessWidget {
       style: TextButton.styleFrom(
         visualDensity: VisualDensity.compact,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        textStyle: AppTextStyle.footnote.of(context, emphasized: true),
+        textStyle: AppTextRole.sectionLabel.of(context),
       ),
       icon: GlyphIcon(glyph, size: 16),
       label: Text(label),
@@ -421,8 +424,8 @@ class FloatingLogNewRowsPill extends StatelessWidget {
                   ),
                   Text(
                     context.l10n.floatingLogNewRows(count),
-                    style: AppTextStyle.caption1
-                        .of(context, emphasized: true)
+                    style: AppTextRole.badge
+                        .of(context)
                         .copyWith(color: colorScheme.onPrimary),
                   ),
                 ],
@@ -459,7 +462,7 @@ class FloatingLogToast extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               child: Text(
                 message,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(color: colorScheme.onInverseSurface),
               ),
@@ -495,14 +498,14 @@ class FloatingLogEmptyState extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyle.subheadline
-                  .of(context, emphasized: true)
+              style: AppTextRole.bodyStrong
+                  .of(context)
                   .copyWith(color: colorScheme.onSurface),
             ),
             Text(
               body,
               textAlign: TextAlign.center,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),

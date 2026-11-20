@@ -117,7 +117,9 @@ class _ToolNotice extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: context.listCaptionStyle.copyWith(color: color),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: color),
               ),
             ),
           ],
@@ -214,15 +216,15 @@ class _ToolEmptyCard extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyle.subheadline
-                  .of(context, emphasized: true)
+              style: AppTextRole.bodyStrong
+                  .of(context)
                   .copyWith(color: colorScheme.onSurface),
             ),
             const SizedBox(height: 4),
             Text(
               body,
               textAlign: TextAlign.center,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ],
         ),

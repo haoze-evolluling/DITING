@@ -192,8 +192,8 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
               // of repeating the same percentage inside the subtitle.
               trailing: Text(
                 percentOf(item.rate),
-                style: AppTextStyle.subheadline
-                    .of(context, emphasized: true)
+                style: AppTextRole.bodyStrong
+                    .of(context)
                     .toTabular
                     .copyWith(
                       color: dimmed

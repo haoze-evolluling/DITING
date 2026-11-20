@@ -54,8 +54,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
           chipColor: colorScheme.onSurfaceVariant,
           hint: hint,
         ),
-        if (dnsAddress != null)
-          _CopyCard(address: dnsAddress),
+        if (dnsAddress != null) _CopyCard(address: dnsAddress),
         DashboardDetailCard(
           glyph: AppGlyphs.connections,
           title: context.l10n.intranetNetworkOverview,
@@ -127,7 +126,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         context.l10n.intranetNoDnsServer,
-                        style: AppTextStyle.subheadline
+                        style: AppTextRole.body
                             .of(context)
                             .copyWith(color: colorScheme.onSurfaceVariant),
                       ),
@@ -206,13 +205,13 @@ class _CopyCard extends StatelessWidget {
               children: [
                 Text(
                   context.l10n.intranetCopyAddress,
-                  style: AppTextStyle.subheadline.of(context, emphasized: true),
+                  style: AppTextRole.bodyStrong.of(context),
                 ),
                 Text(
                   address,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyle.caption1
+                  style: AppTextRole.caption
                       .of(context)
                       .copyWith(
                         color: colorScheme.onSurfaceVariant,

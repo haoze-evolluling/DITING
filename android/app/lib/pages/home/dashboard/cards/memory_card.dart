@@ -95,15 +95,12 @@ class _MemoryFigures extends ConsumerWidget {
                 text: available ? dashboardBinaryBytes(memory.totalPss) : '—',
                 style: DashboardText.figure(
                   context,
-                  AppTextStyle.title2,
+                  AppTextRole.metricSmall,
                   color: colorScheme.onSurface,
                 ),
               ),
               if (available)
-                TextSpan(
-                  text: '  PSS',
-                  style: DashboardText.unit(context, AppTextStyle.caption1),
-                ),
+                TextSpan(text: '  PSS', style: DashboardText.unit(context)),
             ],
           ),
           maxLines: 1,
@@ -193,11 +190,7 @@ class _Legend extends StatelessWidget {
           decoration: ShapeDecoration(color: color, shape: AppShape.standard),
         ),
         Text(label, style: DashboardText.label(context)),
-        Text(
-          text,
-          maxLines: 1,
-          style: DashboardText.figure(context, AppTextStyle.caption1),
-        ),
+        Text(text, maxLines: 1, style: AppTextRole.numeric.of(context)),
       ],
     );
   }

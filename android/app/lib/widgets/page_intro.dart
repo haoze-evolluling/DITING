@@ -11,7 +11,7 @@ class PageIntroText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Text(text, style: context.listCaptionStyle),
+      child: Text(text, style: AppTextRole.supportingText.of(context)),
     );
   }
 }

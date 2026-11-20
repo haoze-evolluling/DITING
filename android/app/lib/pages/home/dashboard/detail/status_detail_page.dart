@@ -60,7 +60,7 @@ class StatusDetailPage extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Text(
                 context.l10n.healthEntrySubtitle,
-                style: AppTextStyle.subheadline
+                style: AppTextRole.body
                     .of(context)
                     .copyWith(color: colorScheme.primary),
               ),
@@ -80,7 +80,7 @@ class StatusDetailPage extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       health.summary,
-                      style: AppTextStyle.subheadline
+                      style: AppTextRole.body
                           .of(context)
                           .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
@@ -110,7 +110,7 @@ class StatusDetailPage extends ConsumerWidget {
           child: primary == null
               ? Text(
                   context.l10n.statusNoProviderHint,
-                  style: AppTextStyle.subheadline
+                  style: AppTextRole.body
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 )
@@ -127,15 +127,15 @@ class StatusDetailPage extends ConsumerWidget {
                             primary.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.body
-                                .of(context, emphasized: true)
+                            style: AppTextRole.bodyStrong
+                                .of(context)
                                 .copyWith(color: colorScheme.onSurface),
                           ),
                           Text(
                             '${primary.protocol.label} · ${primary.address}',
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTextStyle.caption1
+                            style: AppTextRole.caption
                                 .of(context)
                                 .copyWith(
                                   color: colorScheme.onSurfaceVariant,
@@ -194,7 +194,7 @@ class StatusDetailPage extends ConsumerWidget {
                     children: [
                       Text(
                         context.l10n.statusCacheHitRate,
-                        style: AppTextStyle.caption1
+                        style: AppTextRole.caption
                             .of(context)
                             .copyWith(color: colorScheme.onSurfaceVariant),
                       ),
@@ -203,7 +203,7 @@ class StatusDetailPage extends ConsumerWidget {
                         dashboardPercent(stats.cacheHitRate),
                         style: DashboardText.figure(
                           context,
-                          AppTextStyle.subheadline,
+                          AppTextRole.metricCompact,
                           color: stats.cacheHits > 0
                               ? colorScheme.primary
                               : colorScheme.onSurfaceVariant,

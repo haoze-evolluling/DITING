@@ -58,7 +58,7 @@ class RequestRow extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             _timeOfDay(request.timestamp),
-            style: AppTextStyle.footnote
+            style: AppTextRole.supportingText
                 .of(context)
                 .copyWith(
                   color: colorScheme.onSurfaceVariant,
@@ -76,7 +76,7 @@ class RequestRow extends StatelessWidget {
           children: [
             Text(
               request.source.label,
-              style: AppTextStyle.footnote
+              style: AppTextRole.supportingText
                   .of(context)
                   .copyWith(color: colorScheme.onSurfaceVariant),
             ),
@@ -86,7 +86,7 @@ class RequestRow extends StatelessWidget {
                 packageName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(color: colorScheme.onSurfaceVariant),
               ),
@@ -98,7 +98,7 @@ class RequestRow extends StatelessWidget {
             if (request.elapsedMs case final elapsed?)
               Text(
                 obsFormatLatency(elapsed, context.l10n),
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(
                       color: elapsed >= 600

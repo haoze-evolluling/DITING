@@ -156,7 +156,7 @@ class _FlowTile extends StatelessWidget {
       ),
       trailing: Text(
         _statusLabel(context.l10n, row.status),
-        style: AppTextStyle.caption1.of(context).copyWith(color: color),
+        style: AppTextRole.caption.of(context).copyWith(color: color),
       ),
     );
   }

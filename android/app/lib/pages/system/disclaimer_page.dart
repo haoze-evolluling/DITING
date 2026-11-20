@@ -40,7 +40,7 @@ class DisclaimerPage extends StatelessWidget {
                 Expanded(
                   child: Text(
                     context.l10n.disclaimerSource,
-                    style: context.listCaptionStyle,
+                    style: AppTextRole.supportingText.of(context),
                   ),
                 ),
               ],

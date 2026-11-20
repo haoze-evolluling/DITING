@@ -81,7 +81,9 @@ class FormRowTextField extends StatelessWidget {
     final hintText = this.hintText;
     final colorScheme = context.colorScheme;
     final style = machineText
-        ? context.listTitleStyle.copyWith(fontFeatures: appTabularFigures)
+        ? AppTextRole.rowTitle
+              .of(context)
+              .copyWith(fontFeatures: appTabularFigures)
         : null;
     return TextFormField(
       controller: controller,
@@ -111,7 +113,7 @@ class FormRowTextField extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.end,
-                  style: AppTextStyle.body
+                  style: AppTextRole.body
                       .of(context)
                       .copyWith(
                         color: colorScheme.onSurfaceVariant,
@@ -217,10 +219,12 @@ class FormRowValue extends StatelessWidget {
         value,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: context.listSubtitleStyle.copyWith(
-          color: colorScheme.onSurface,
-          fontFeatures: tabular ? appTabularFigures : null,
-        ),
+        style: AppTextRole.supportingText
+            .of(context)
+            .copyWith(
+              color: colorScheme.onSurface,
+              fontFeatures: tabular ? appTabularFigures : null,
+            ),
       ),
     );
   }

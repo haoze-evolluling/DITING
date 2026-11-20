@@ -1,7 +1,6 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/home/widgets/provider_sheet.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
@@ -56,11 +55,9 @@ class ProviderCard extends ConsumerWidget {
             subtitle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: DashboardText.figure(
-              context,
-              AppTextStyle.subheadline,
-              color: colorScheme.onSurface,
-            ).copyWith(letterSpacing: 0),
+            style: AppTextRole.body
+                .of(context)
+                .copyWith(color: colorScheme.onSurface),
           ),
         ],
       ),

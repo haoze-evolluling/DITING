@@ -50,7 +50,7 @@ class ServerSettingsPage extends ConsumerWidget {
                 subtitle: Text(context.l10n.serverPortFixed),
                 trailing: Text(
                   '$effectivePort',
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(
                         color: context.colorScheme.onSurfaceVariant,

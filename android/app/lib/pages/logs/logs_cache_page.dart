@@ -90,7 +90,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
             child: Text(
               context.l10n.logsCacheLoadFailed('${asyncEntries.error}'),
               textAlign: TextAlign.center,
-              style: context.listSubtitleStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ),
         );
@@ -105,7 +105,9 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
         slivers: [
           SliverToBoxAdapter(
             child: logsEmpty(
-              label: _query.isEmpty ? context.l10n.logsCacheEmpty : context.l10n.logsCacheNoMatch,
+              label: _query.isEmpty
+                  ? context.l10n.logsCacheEmpty
+                  : context.l10n.logsCacheNoMatch,
               description: _query.isEmpty
                   ? context.l10n.logsCacheEmptyBody
                   : context.l10n.logsCurrentSearch(_query),
@@ -122,7 +124,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
             title: context.l10n.logsLiveCache,
             trailing: Text(
               context.l10n.logsEntryCount(entries.length),
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ),
         ),
@@ -172,12 +174,10 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    context.l10n.logsLastHitAt(
-                      switch (lastHit) {
-                        null => context.l10n.logsNeverHit,
-                        final at => shortDateTimeOf(at),
-                      },
-                    ),
+                    context.l10n.logsLastHitAt(switch (lastHit) {
+                      null => context.l10n.logsNeverHit,
+                      final at => shortDateTimeOf(at),
+                    }),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -189,7 +189,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
                 children: [
                   Text(
                     '${context.l10n.logsRemainingTtl} ${remainingLabel(entry.remainingTtlSeconds, context.l10n)}',
-                    style: AppTextStyle.caption1
+                    style: AppTextRole.caption
                         .of(context)
                         .copyWith(
                           color:
@@ -207,8 +207,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
               ),
             );
           },
-          footer:
-              context.l10n.logsCacheFooterCount(entries.length),
+          footer: context.l10n.logsCacheFooterCount(entries.length),
         ),
       ],
     );

@@ -146,10 +146,7 @@ class _WorkModeCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             mode.title(context.l10n),
-                            style: AppTextStyle.headline.of(
-                              context,
-                              emphasized: true,
-                            ),
+                            style: AppTextRole.cardTitle.of(context),
                           ),
                         ),
                         MetaChip(label: mode.badge(context.l10n)),
@@ -157,7 +154,7 @@ class _WorkModeCard extends StatelessWidget {
                     ),
                     Text(
                       mode.summary(context.l10n),
-                      style: AppTextStyle.footnote
+                      style: AppTextRole.supportingText
                           .of(context)
                           .copyWith(color: colorScheme.onSurfaceVariant),
                     ),
@@ -225,26 +222,10 @@ class _ModeFeatureList extends StatelessWidget {
       ),
     ],
     AppWorkMode.server: [
-      (
-        AppGlyphs.dns,
-        l10n.modeServerFeature1,
-        l10n.modeServerFeature1Body,
-      ),
-      (
-        AppGlyphs.wifi,
-        l10n.modeServerFeature2,
-        l10n.modeServerFeature2Body,
-      ),
-      (
-        AppGlyphs.rules,
-        l10n.modeServerFeature3,
-        l10n.modeServerFeature3Body,
-      ),
-      (
-        AppGlyphs.logs,
-        l10n.modeServerFeature4,
-        l10n.modeServerFeature4Body,
-      ),
+      (AppGlyphs.dns, l10n.modeServerFeature1, l10n.modeServerFeature1Body),
+      (AppGlyphs.wifi, l10n.modeServerFeature2, l10n.modeServerFeature2Body),
+      (AppGlyphs.rules, l10n.modeServerFeature3, l10n.modeServerFeature3Body),
+      (AppGlyphs.logs, l10n.modeServerFeature4, l10n.modeServerFeature4Body),
     ],
   };
 
@@ -277,16 +258,10 @@ class _ModeFeatureList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 1,
                     children: [
-                      Text(
-                        title,
-                        style: AppTextStyle.subheadline.of(
-                          context,
-                          emphasized: true,
-                        ),
-                      ),
+                      Text(title, style: AppTextRole.bodyStrong.of(context)),
                       Text(
                         detail,
-                        style: AppTextStyle.caption1
+                        style: AppTextRole.caption
                             .of(context)
                             .copyWith(color: colorScheme.onSurfaceVariant),
                       ),

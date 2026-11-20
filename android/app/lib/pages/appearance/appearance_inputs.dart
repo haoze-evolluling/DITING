@@ -47,7 +47,7 @@ class LabeledTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 6,
       children: [
-        Text(label, style: context.listTitleStyle),
+        Text(label, style: AppTextRole.rowTitle.of(context)),
         FilledInputTheme(
           borderRadius: AppRadius.standard,
           contentPadding: const EdgeInsets.symmetric(
@@ -111,13 +111,17 @@ class SliderCardRow extends StatelessWidget {
                   size: 20,
                   color: colorScheme.onSurfaceVariant,
                 ),
-              Expanded(child: Text(label, style: context.listTitleStyle)),
+              Expanded(
+                child: Text(label, style: AppTextRole.rowTitle.of(context)),
+              ),
               Text(
                 percent,
-                style: context.listSubtitleStyle.copyWith(
-                  fontFeatures: appTabularFigures,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(
+                      fontFeatures: appTabularFigures,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),

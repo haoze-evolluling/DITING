@@ -23,10 +23,8 @@ class _FakeBridge extends TroubleshootingLogBridge {
   Future<TroubleshootLogRead> readByName({
     required TroubleshootLogKind kind,
     required String name,
-  }) async => const TroubleshootLogRead(
-    content: 'hello log content',
-    truncated: false,
-  );
+  }) async =>
+      const TroubleshootLogRead(content: 'hello log content', truncated: false);
 }
 
 void main() {
@@ -55,6 +53,8 @@ void main() {
     expect(find.text('日志信息'), findsOneWidget);
     expect(find.text('文件名'), findsOneWidget);
     expect(find.text('查看日志内容'), findsOneWidget);
+    await tester.dragFrom(const Offset(195, 700), const Offset(0, -400));
+    await tester.pumpAndSettle();
     expect(find.text('下载'), findsOneWidget);
 
     await tester.tap(find.text('查看日志内容'));

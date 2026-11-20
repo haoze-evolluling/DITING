@@ -53,7 +53,7 @@ class ServerErrorCard extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: AppTextStyle.footnote
+                style: AppTextRole.supportingText
                     .of(context)
                     .copyWith(color: scheme.onErrorContainer),
               ),

@@ -201,7 +201,7 @@ class _AboutHero extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             context.l10n.aboutAppName,
-            style: AppTextStyle.title2.of(context, emphasized: true),
+            style: AppTextRole.sectionTitle.of(context),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -227,9 +227,9 @@ class _AboutHero extends StatelessWidget {
             child: Text(
               context.l10n.aboutTagline,
               textAlign: TextAlign.center,
-              style: AppTextStyle.subheadline
+              style: AppTextRole.body
                   .of(context)
-                  .copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
+                  .copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ),
           const SizedBox(height: 20),
@@ -273,7 +273,9 @@ class _AboutHero extends StatelessWidget {
               child: Text(
                 caption.text,
                 textAlign: TextAlign.center,
-                style: context.listCaptionStyle.copyWith(color: caption.color),
+                style: AppTextRole.supportingText
+                    .of(context)
+                    .copyWith(color: caption.color),
               ),
             ),
         ],

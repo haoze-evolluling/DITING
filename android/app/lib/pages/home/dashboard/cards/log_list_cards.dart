@@ -340,7 +340,7 @@ class PrivacyModeCard extends StatelessWidget {
           SizedBox(height: 12 * scale),
           Text(
             context.l10n.logPrivacyModeBody,
-            style: AppTextStyle.subheadline
+            style: AppTextRole.body
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),

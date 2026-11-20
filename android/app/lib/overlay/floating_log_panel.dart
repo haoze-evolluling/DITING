@@ -289,7 +289,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
                 _paused ? l10n.floatingLogPaused : l10n.floatingLogTitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyle.headline
+                style: AppTextRole.cardTitle
                     .of(context)
                     .copyWith(color: colorScheme.onSurface),
               ),
@@ -509,7 +509,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
           parts.join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTextStyle.caption1
+          style: AppTextRole.caption
               .of(context)
               .copyWith(color: colorScheme.onSurfaceVariant),
         ),

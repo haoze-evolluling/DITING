@@ -76,10 +76,12 @@ class _IntegrationCard extends StatelessWidget {
             spacing: 10,
             children: [
               GlyphIcon(glyph, size: 20, color: colorScheme.primary),
-              Expanded(child: Text(title, style: context.listTitleStyle)),
+              Expanded(
+                child: Text(title, style: AppTextRole.rowTitle.of(context)),
+              ),
             ],
           ),
-          SelectableText(body, style: context.listCaptionStyle),
+          SelectableText(body, style: AppTextRole.supportingText.of(context)),
         ],
       ),
     );

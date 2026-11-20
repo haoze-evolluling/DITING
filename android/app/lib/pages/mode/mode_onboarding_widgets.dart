@@ -41,13 +41,13 @@ class _StepScaffold extends StatelessWidget {
                 Text(
                   title,
                   textAlign: TextAlign.center,
-                  style: AppTextStyle.pageTitle.of(context, emphasized: true),
+                  style: AppTextRole.pageTitle.of(context),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   description,
                   textAlign: TextAlign.center,
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: colorScheme.onSurfaceVariant),
                 ),
@@ -90,16 +90,10 @@ class _TipCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 3,
                 children: [
-                  Text(
-                    title,
-                    style: AppTextStyle.subheadline.of(
-                      context,
-                      emphasized: true,
-                    ),
-                  ),
+                  Text(title, style: AppTextRole.bodyStrong.of(context)),
                   Text(
                     detail,
-                    style: AppTextStyle.caption1
+                    style: AppTextRole.caption
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),
@@ -197,10 +191,7 @@ class _PermissionRow extends ConsumerWidget {
                       Flexible(
                         child: Text(
                           name,
-                          style: AppTextStyle.subheadline.of(
-                            context,
-                            emphasized: true,
-                          ),
+                          style: AppTextRole.bodyStrong.of(context),
                         ),
                       ),
                       TonalChip(
@@ -227,7 +218,7 @@ class _PermissionRow extends ConsumerWidget {
                   ),
                   Text(
                     detail,
-                    style: AppTextStyle.caption1
+                    style: AppTextRole.caption
                         .of(context)
                         .copyWith(color: colorScheme.onSurfaceVariant),
                   ),

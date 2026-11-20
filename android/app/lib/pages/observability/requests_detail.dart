@@ -24,7 +24,9 @@ String requestHandlingOf(ObservedRequest request, AppL10n l10n) {
 String requestRuleOf(ObservedRequest request, AppL10n l10n) {
   final rule = request.matchedRule?.trim();
   if (rule != null && rule.isNotEmpty) return rule;
-  return request.source == RequestSource.https ? l10n.obsNoRuleHttps : l10n.obsNone;
+  return request.source == RequestSource.https
+      ? l10n.obsNoRuleHttps
+      : l10n.obsNone;
 }
 
 /// Bare host of a record: drops the `TCP `/`UDP ` prefix of connection rows, the port and any
@@ -67,7 +69,10 @@ class RequestDetailSheet extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final host = requestHostOf(request);
     final parsed = DnsLogMessage.parse(request.message);
-    final (statusColor, statusGlyph) = requestStatusStyle(context, request.status);
+    final (statusColor, statusGlyph) = requestStatusStyle(
+      context,
+      request.status,
+    );
 
     return CommonScaffold(
       title: context.l10n.obsRequestDetailTitle,
@@ -85,7 +90,8 @@ class RequestDetailSheet extends StatelessWidget {
                 foregroundColor: statusColor,
               ),
               DetailMetaChip(label: request.source.label),
-              if (request.cached) DetailMetaChip(label: context.l10n.obsCachedChip),
+              if (request.cached)
+                DetailMetaChip(label: context.l10n.obsCachedChip),
               DetailMetaChip(label: _stampOf(request.timestamp)),
             ],
           ),
@@ -100,10 +106,17 @@ class RequestDetailSheet extends StatelessWidget {
                   value: _stampOf(request.timestamp),
                   tabular: true,
                 ),
-                KeyValueRow(label: context.l10n.obsSource, value: request.source.label),
+                KeyValueRow(
+                  label: context.l10n.obsSource,
+                  value: request.source.label,
+                ),
                 if (request.protocol case final protocol?
                     when protocol.isNotEmpty)
-                  KeyValueRow(label: context.l10n.obsProtocol, value: protocol, tabular: true),
+                  KeyValueRow(
+                    label: context.l10n.obsProtocol,
+                    value: protocol,
+                    tabular: true,
+                  ),
                 if (request.packageName case final packageName?
                     when packageName.isNotEmpty)
                   KeyValueRow(
@@ -127,7 +140,11 @@ class RequestDetailSheet extends StatelessWidget {
                     },
                   ),
                 if (parsed.resolved case final resolved?)
-                  KeyValueRow(label: context.l10n.obsResolved, value: resolved, tabular: true),
+                  KeyValueRow(
+                    label: context.l10n.obsResolved,
+                    value: resolved,
+                    tabular: true,
+                  ),
                 if (request.elapsedMs case final elapsed?)
                   KeyValueRow(
                     label: context.l10n.obsElapsed,
@@ -135,7 +152,11 @@ class RequestDetailSheet extends StatelessWidget {
                     tabular: true,
                   ),
                 if (request.blockSubscriptionId case final id?)
-                  KeyValueRow(label: context.l10n.obsBlockingSubscription, value: 'sub_$id', tabular: true),
+                  KeyValueRow(
+                    label: context.l10n.obsBlockingSubscription,
+                    value: 'sub_$id',
+                    tabular: true,
+                  ),
               ],
             ),
           ),
@@ -154,7 +175,11 @@ class RequestDetailSheet extends StatelessWidget {
                   value: requestHandlingOf(request, context.l10n),
                 ),
                 if (parsed.error case final error?)
-                  KeyValueRow(label: context.l10n.obsError, value: error, tabular: true),
+                  KeyValueRow(
+                    label: context.l10n.obsError,
+                    value: error,
+                    tabular: true,
+                  ),
               ],
             ),
           ),
@@ -169,13 +194,9 @@ class RequestDetailSheet extends StatelessWidget {
                 inert: true,
                 child: SelectableText(
                   message.split(',').map((part) => part.trim()).join('\n'),
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.code
                       .of(context)
-                      .copyWith(
-                        color: colorScheme.onSurface,
-                        fontFeatures: appTabularFigures,
-                        height: 1.5,
-                      ),
+                      .copyWith(color: colorScheme.onSurface),
                 ),
               ),
             ),

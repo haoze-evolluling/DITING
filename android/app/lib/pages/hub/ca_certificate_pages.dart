@@ -53,7 +53,7 @@ class CaCertificatePage extends ConsumerWidget {
                   state.ready
                       ? context.l10n.caCertVerified
                       : context.l10n.caCertUnverified,
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: context.colorScheme.onSurfaceVariant),
                 ),
@@ -88,7 +88,7 @@ class CaCertificatePage extends ConsumerWidget {
                   state.installed
                       ? context.l10n.caCertInstalled
                       : context.l10n.caCertNotInstalled,
-                  style: AppTextStyle.footnote
+                  style: AppTextRole.supportingText
                       .of(context)
                       .copyWith(color: context.colorScheme.onSurfaceVariant),
                 ),
@@ -130,9 +130,9 @@ class CaCertificatePage extends ConsumerWidget {
                 ),
                 title: Text(
                   context.l10n.caCertRegenerate,
-                  style: context.listTitleStyle.copyWith(
-                    color: context.colorScheme.error,
-                  ),
+                  style: AppTextRole.rowTitle
+                      .of(context)
+                      .copyWith(color: context.colorScheme.error),
                 ),
                 subtitle: Text(context.l10n.caCertRegenerateSubtitle),
                 onTap: () => _regenerate(context, ref),
@@ -264,7 +264,6 @@ class CaCertificatePage extends ConsumerWidget {
       title: context.l10n.caCertFingerprintTitle,
       text: fingerprint,
       copiedMessage: context.l10n.caCertFingerprintCopied,
-      lineHeight: 1.6,
     );
   }
 
@@ -284,15 +283,9 @@ class CaCertificatePage extends ConsumerWidget {
     required String title,
     required String text,
     required String copiedMessage,
-    double lineHeight = 1.5,
     bool scrollable = false,
   }) {
-    final content = SelectableText(
-      text,
-      style: AppTextStyle.footnote
-          .of(context)
-          .copyWith(fontFeatures: appTabularFigures, height: lineHeight),
-    );
+    final content = SelectableText(text, style: AppTextRole.code.of(context));
     return showFloatingDialog<void>(
       context: context,
       child: CommonDialog(
@@ -376,10 +369,7 @@ class _GuideItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: AppTextStyle.body.of(context).copyWith(height: 1.6),
-      ),
+      child: Text(text, style: AppTextRole.bodyReading.of(context)),
     );
   }
 }
@@ -397,9 +387,9 @@ class _GuideWarning extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Text(
           text,
-          style: AppTextStyle.footnote
+          style: AppTextRole.legalText
               .of(context)
-              .copyWith(color: context.colorScheme.error, height: 1.5),
+              .copyWith(color: context.colorScheme.error),
         ),
       ),
     );

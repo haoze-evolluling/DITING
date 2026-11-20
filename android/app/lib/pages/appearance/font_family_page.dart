@@ -103,7 +103,7 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               context.l10n.fontFamilyLocalOnly,
-              style: context.listCaptionStyle,
+              style: AppTextRole.supportingText.of(context),
             ),
           ),
           const SizedBox(height: 24),
@@ -204,14 +204,14 @@ class _PreviewHero extends StatelessWidget {
             context.l10n.appearancePoem,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyle.title2
-                .of(context, emphasized: true)
+            style: AppTextRole.sectionTitle
+                .of(context)
                 .copyWith(fontFamily: family),
           ),
           const SizedBox(height: 6),
           Text(
             'The quick brown fox jumps over the lazy dog · 0123456789',
-            style: AppTextStyle.footnote
+            style: AppTextRole.supportingText
                 .of(context)
                 .copyWith(
                   fontFamily: family,
@@ -261,8 +261,8 @@ class _FontRow extends StatelessWidget {
         ),
         child: Text(
           'Aa',
-          style: AppTextStyle.subheadline
-              .of(context, emphasized: true)
+          style: AppTextRole.bodyStrong
+              .of(context)
               .copyWith(
                 fontFamily: family,
                 color: colorScheme.onSurfaceVariant,
@@ -271,7 +271,7 @@ class _FontRow extends StatelessWidget {
       ),
       title: Text(
         label,
-        style: context.listTitleStyle.copyWith(fontFamily: family),
+        style: AppTextRole.rowTitle.of(context).copyWith(fontFamily: family),
       ),
       subtitle: Text(description),
       trailing: Row(
@@ -318,14 +318,14 @@ class _ImportCard extends StatelessWidget {
               children: [
                 Text(
                   context.l10n.fontFamilyImport,
-                  style: context.listTitleStyle,
+                  style: AppTextRole.rowTitle.of(context),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   isImporting
                       ? context.l10n.fontFamilyReading
                       : context.l10n.fontFamilyPickFile,
-                  style: context.listSubtitleStyle,
+                  style: AppTextRole.supportingText.of(context),
                 ),
               ],
             ),

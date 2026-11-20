@@ -38,7 +38,7 @@ List<Widget> buildHomeHeadline({
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: AppTextStyle.subheadline
+            style: AppTextRole.body
                 .of(context)
                 .copyWith(color: context.colorScheme.onSurfaceVariant),
           ),

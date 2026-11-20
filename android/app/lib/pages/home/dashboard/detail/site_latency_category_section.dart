@@ -174,16 +174,13 @@ class SiteLatencyRow extends StatelessWidget {
                       target.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.subheadline.of(
-                        context,
-                        emphasized: true,
-                      ),
+                      style: AppTextRole.bodyStrong.of(context),
                     ),
                     Text(
                       target.host,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyle.caption2
+                      style: AppTextRole.micro
                           .of(context)
                           .copyWith(
                             color: colorScheme.onSurfaceVariant,
@@ -195,11 +192,9 @@ class SiteLatencyRow extends StatelessWidget {
               ),
               Text(
                 status,
-                style: DashboardText.figure(
-                  context,
-                  AppTextStyle.footnote,
-                  color: statusColor,
-                ),
+                style: AppTextRole.sectionLabel
+                    .of(context)
+                    .copyWith(color: statusColor),
               ),
               GlyphIcon(
                 AppGlyphs.chevronForward,
