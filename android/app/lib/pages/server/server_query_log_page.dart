@@ -40,15 +40,14 @@ class ServerQueryLogPage extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
-            title: context.l10n.serverQueryLogTitle,
+            title: context.l10n.serverQueryLogContent,
             items: [
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.logs, size: 20),
                 title: Text(context.l10n.serverQueryLogEnabled),
                 subtitle: Text(context.l10n.serverQueryLogEnabledBody),
                 value: queryLog.enabled,
-                onChanged: (value) =>
-                    save(queryLog.copyWith(enabled: value)),
+                onChanged: (value) => save(queryLog.copyWith(enabled: value)),
               ),
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.export, size: 20),
@@ -83,8 +82,7 @@ class ServerQueryLogPage extends ConsumerWidget {
                   trailing: queryLog.retentionDays == days
                       ? const SelectionCheck()
                       : null,
-                  onTap: () =>
-                      save(queryLog.copyWith(retentionDays: days)),
+                  onTap: () => save(queryLog.copyWith(retentionDays: days)),
                 ),
             ],
             footer: context.l10n.serverQueryLogRetentionNote,
@@ -127,10 +125,12 @@ class _NumberValue extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: AppTextStyle.footnote.of(context).copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        fontFeatures: appTabularFigures,
-      ),
+      style: AppTextStyle.footnote
+          .of(context)
+          .copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+            fontFeatures: appTabularFigures,
+          ),
     );
   }
 }

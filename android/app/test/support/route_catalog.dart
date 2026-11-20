@@ -2,6 +2,7 @@
 // every hub card target and every page without path parameters.
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/routes.dart';
+import 'package:diting_android/routes/server_routes.dart';
 
 /// First-level pages, everything without path parameters.
 /// First-level pages, everything without path parameters; shared with `layout_regression_test.dart`
@@ -41,8 +42,19 @@ final Map<String, String> topLevelRoutes = {
   '隐私套件': PrivacySuitePaths.root,
   'DNS64': Dns64Paths.root,
   '服务器首页': Routes.server,
-  '服务器功能中心': Routes.serverHub,
+  '服务器配置中心': Routes.serverHub,
   '服务器查询日志': Routes.serverLogs,
+  '服务器上游调度': ServerRoutes.upstreamScheduling,
+  '服务器 Bootstrap': ServerRoutes.upstreamBootstrap,
+  '服务器上游管理': ServerRoutes.upstream,
+  '服务器过滤规则': ServerRoutes.filter,
+  '服务器自定义规则': ServerRoutes.filterRules,
+  '服务器规则订阅': ServerRoutes.filterSubscriptions,
+  '服务器规则测试': ServerRoutes.filterTest,
+  '服务器缓存': ServerRoutes.cache,
+  '服务器缓存高级': ServerRoutes.cacheAdvanced,
+  '服务器设置': ServerRoutes.settings,
+  '服务器日志记录': ServerRoutes.queryLog,
   '连接限速': ConnectionRateLimitPaths.root,
   '订阅版本回滚': SubscriptionVersionPaths.root,
   '网络诊断': NetworkDiagnosticsPaths.root,

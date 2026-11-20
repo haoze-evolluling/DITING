@@ -114,6 +114,34 @@ Future<int?> editServerNumber(
   );
 }
 
+Future<String?> editServerText(
+  BuildContext context, {
+  required String title,
+  required String initial,
+}) async {
+  final controller = TextEditingController(text: initial);
+  final value = await showFloatingDialog<String>(
+    context: context,
+    child: CommonDialog(
+      title: title,
+      hasFields: true,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.uiCancel),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+          child: Text(context.l10n.commonSave),
+        ),
+      ],
+      child: TextField(controller: controller, autofocus: true),
+    ),
+  );
+  controller.dispose();
+  return value == null || value.isEmpty ? null : value;
+}
+
 class _ServerNumberDialog extends StatefulWidget {
   const _ServerNumberDialog({
     required this.title,

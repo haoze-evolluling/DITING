@@ -1,8 +1,11 @@
 import 'package:diting_android/state/dashboard_providers.dart';
+import 'package:diting_android/data/server/server_client.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
+
 import 'fake_server_client.dart';
+
 // `Override` is only exported from `misc.dart`, not `flutter_riverpod.dart`.
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -15,8 +18,8 @@ void installGlobalTestHooks({bool skipInitialAgreement = true}) {
     debugDisableDashboardLiveUpdates = true;
     // The app follows the device language by default and the test platform reports en_US; pin
     // Chinese so every Chinese expectation in the suites keeps matching the shipped strings.
-    final dispatcher = TestWidgetsFlutterBinding.ensureInitialized()
-        .platformDispatcher;
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
     dispatcher.localesTestValue = const [Locale('zh', 'CN')];
     addTearDown(dispatcher.clearLocalesTestValue);
   });
@@ -29,6 +32,7 @@ void installGlobalTestHooks({bool skipInitialAgreement = true}) {
 List<Override> appTestOverrides({
   bool skipInitialAgreement = true,
   bool skipStartupOnboarding = true,
+  ServerClient? serverClient,
 }) => [
   if (skipInitialAgreement)
     initialAgreementProvider.overrideWith(InitialAgreementAccepted.new),
@@ -37,7 +41,7 @@ List<Override> appTestOverrides({
     workModeSelectedProvider.overrideWith(WorkModeSelected.new),
     onboardingProvider.overrideWith(OnboardingCompleted.new),
   ],
-  serverClientProvider.overrideWithValue(FakeServerClient()),
+  serverClientProvider.overrideWithValue(serverClient ?? FakeServerClient()),
 ];
 
 /// Always reports the agreement as accepted, injected by [appTestOverrides].

@@ -1,5 +1,7 @@
+import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/pages/hub/feature_hub_grid.dart';
 import 'package:diting_android/pages/server/server_common.dart';
+import 'package:diting_android/pages/server/server_upstream_shared.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/state/server_providers.dart';
@@ -17,6 +19,14 @@ class ServerHubPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = ref.watch(serverControllerProvider);
+    final config = snapshot.value?.config ?? const ServerConfig();
+    final upstream = config.upstream;
+    final filter = config.filter;
+    final cache = config.cache;
+    final queryLog = config.queryLog;
+    final cacheMode = cache.mode == 'fixed'
+        ? context.l10n.serverCacheFixed
+        : context.l10n.serverCacheLimit;
     return CommonScaffold(
       title: context.l10n.serverHubTitle,
       body: PageBody(
@@ -33,25 +43,43 @@ class ServerHubPage extends ConsumerWidget {
               cards: [
                 FeatureHubCardData(
                   title: context.l10n.serverUpstreamTitle,
-                  description: context.l10n.serverUpstreamHubHint,
+                  description: upstream.providers.isEmpty
+                      ? context.l10n.serverUpstreamRequired
+                      : context.l10n.serverHubUpstreamSummary(
+                          upstream.providers.length,
+                          serverModeLabel(context, upstream.mode),
+                        ),
                   glyph: AppGlyphs.upstream,
                   onTap: () => context.push(ServerRoutes.upstream),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverFilterTitle,
-                  description: context.l10n.serverFilterHubHint,
+                  description: context.l10n.serverHubFilterSummary(
+                    filter.enabled
+                        ? context.l10n.commonEnabled
+                        : context.l10n.commonDisabled,
+                    filter.lists.length,
+                  ),
                   glyph: AppGlyphs.rules,
                   onTap: () => context.push(ServerRoutes.filter),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverCacheTitle,
-                  description: context.l10n.serverCacheHubHint,
+                  description: context.l10n.serverHubCacheSummary(
+                    cache.maxEntries,
+                    cacheMode,
+                  ),
                   glyph: AppGlyphs.database,
                   onTap: () => context.push(ServerRoutes.cache),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverQueryLogTitle,
-                  description: context.l10n.serverQueryLogHubHint,
+                  description: context.l10n.serverHubLogSummary(
+                    queryLog.retentionDays,
+                    queryLog.fileEnabled
+                        ? context.l10n.serverHubLogFileOn
+                        : context.l10n.serverHubLogFileOff,
+                  ),
                   glyph: AppGlyphs.logs,
                   onTap: () => context.push(ServerRoutes.queryLog),
                 ),
@@ -61,10 +89,15 @@ class ServerHubPage extends ConsumerWidget {
           FeatureHubCategorySection(
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubSystem,
+              reserveOddCardSlot: true,
               cards: [
                 FeatureHubCardData(
                   title: context.l10n.serverSettingsTitle,
-                  description: context.l10n.serverSettingsHubHint,
+                  description: context.l10n.serverHubSettingsSummary(
+                    config.listen.root
+                        ? context.l10n.serverRootMode
+                        : context.l10n.serverNonRootMode,
+                  ),
                   glyph: AppGlyphs.settings,
                   onTap: () => context.push(ServerRoutes.settings),
                 ),
@@ -83,6 +116,7 @@ class ServerHubPage extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 12),
         ],
       ),
     );

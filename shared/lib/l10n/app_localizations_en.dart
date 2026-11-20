@@ -14983,22 +14983,56 @@ class AppL10nEn extends AppL10n {
   String get serverNoQueries => 'No queries yet';
 
   @override
+  String get serverViewAll => 'View all';
+
+  @override
   String get serverTabHome => 'Home';
 
   @override
-  String get serverTabHub => 'Features';
+  String get serverTabHub => 'Configure';
 
   @override
   String get serverTabLogs => 'Logs';
 
   @override
-  String get serverHubTitle => 'Feature center';
+  String get serverHubTitle => 'Configuration';
 
   @override
-  String get serverHubDataPlane => 'Data plane';
+  String get serverHubDataPlane => 'Resolution services';
 
   @override
   String get serverHubSystem => 'System';
+
+  @override
+  String serverHubUpstreamSummary(int count, String mode) {
+    return '$count providers · $mode';
+  }
+
+  @override
+  String serverHubFilterSummary(String state, int count) {
+    return '$state · $count subscriptions';
+  }
+
+  @override
+  String serverHubCacheSummary(int count, String mode) {
+    return '$count entries · $mode';
+  }
+
+  @override
+  String serverHubLogSummary(int days, String file) {
+    return 'Keep $days days · $file';
+  }
+
+  @override
+  String get serverHubLogFileOn => 'file output';
+
+  @override
+  String get serverHubLogFileOff => 'memory only';
+
+  @override
+  String serverHubSettingsSummary(String mode) {
+    return '$mode · data directory';
+  }
 
   @override
   String get serverUpstream => 'Upstreams';
@@ -15024,7 +15058,7 @@ class AppL10nEn extends AppL10n {
   String get serverCacheHubHint => 'Tune capacity, TTL and stale fallback';
 
   @override
-  String get serverQueryLogTitle => 'Query log';
+  String get serverQueryLogTitle => 'Query logging';
 
   @override
   String get serverQueryLogHubHint =>
@@ -15034,8 +15068,7 @@ class AppL10nEn extends AppL10n {
   String get serverSettingsTitle => 'Server settings';
 
   @override
-  String get serverSettingsHubHint =>
-      'Inspect listening state, root access and storage';
+  String get serverSettingsHubHint => 'Root, port and data directory';
 
   @override
   String get serverAppearance => 'Appearance';
@@ -15095,6 +15128,41 @@ class AppL10nEn extends AppL10n {
   String get serverLogEmpty => 'No queries yet';
 
   @override
+  String get serverLogEmptyBody =>
+      'Client queries will appear here once the server is running.';
+
+  @override
+  String get serverLogNoMatchTitle => 'No matching results';
+
+  @override
+  String get serverLogNoMatchBody =>
+      'Adjust the domain search or client filter.';
+
+  @override
+  String get serverLogStoppedTitle => 'Server not running';
+
+  @override
+  String get serverLogStoppedBody =>
+      'Start the server to see query records here.';
+
+  @override
+  String get serverLogResults => 'Query results';
+
+  @override
+  String get serverLogFilterClient => 'Filter by client';
+
+  @override
+  String get serverLogClientAll => 'All clients';
+
+  @override
+  String get serverLogClientEmpty => 'No client records yet';
+
+  @override
+  String serverLogClientFiltered(String client) {
+    return 'Client: $client';
+  }
+
+  @override
   String get serverLogTime => 'Time';
 
   @override
@@ -15145,6 +15213,9 @@ class AppL10nEn extends AppL10n {
   String get serverUpstreamMode => 'Scheduling';
 
   @override
+  String get serverUpstreamScheduling => 'Current scheduling';
+
+  @override
   String get serverUpstreamProviders => 'Providers';
 
   @override
@@ -15174,6 +15245,17 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverUpstreamBootstrap => 'Bootstrap';
+
+  @override
+  String get serverBootstrapSummary => 'Bootstrap summary';
+
+  @override
+  String get serverBootstrapServers => 'Servers';
+
+  @override
+  String serverBootstrapServerCount(int count) {
+    return '$count servers';
+  }
 
   @override
   String get serverBootstrapDefault => 'Using the system default bootstrap';
@@ -15225,7 +15307,30 @@ class AppL10nEn extends AppL10n {
       'Also inspect domains in upstream answers';
 
   @override
-  String get serverFilterBlockMode => 'Block response';
+  String get serverFilterState => 'Filter status';
+
+  @override
+  String get serverFilterBlockMode => 'Blocking method';
+
+  @override
+  String get serverFilterSource => 'Rule sources';
+
+  @override
+  String serverFilterCustomCount(int count) {
+    return '$count custom rules';
+  }
+
+  @override
+  String serverFilterSubscriptionCount(int count) {
+    return '$count subscriptions';
+  }
+
+  @override
+  String get serverFilterTestTitle => 'Rule test';
+
+  @override
+  String get serverFilterTestEntryBody =>
+      'Enter a domain to see its decision and matched rule';
 
   @override
   String get serverBlockNullIp => 'Null address';
@@ -15249,6 +15354,9 @@ class AppL10nEn extends AppL10n {
   String get serverCustomRules => 'Custom rules';
 
   @override
+  String get serverCustomRulesContent => 'Rule content';
+
+  @override
   String get serverCustomRulesHint => 'One AdGuard or hosts rule per line';
 
   @override
@@ -15257,6 +15365,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverSubscriptions => 'Subscriptions';
+
+  @override
+  String get serverSubscriptionList => 'Subscription sources';
 
   @override
   String get serverSubscriptionEmpty => 'No subscriptions';
@@ -15277,6 +15388,9 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverSubscriptionRefresh => 'Refresh subscriptions';
+
+  @override
+  String get serverSubscriptionError => 'Error';
 
   @override
   String get serverSubscriptionRefreshed => 'Subscriptions refreshed';
@@ -15312,6 +15426,12 @@ class AppL10nEn extends AppL10n {
   String get serverCheckAction => 'Test';
 
   @override
+  String get serverCheckChecking => 'Testing';
+
+  @override
+  String get serverCheckResult => 'Decision';
+
+  @override
   String get serverCheckBlocked => 'Will be blocked';
 
   @override
@@ -15328,10 +15448,16 @@ class AppL10nEn extends AppL10n {
       'Cache upstream responses and reuse their TTL';
 
   @override
+  String get serverCacheState => 'Cache status';
+
+  @override
+  String get serverCacheCapacity => 'Capacity';
+
+  @override
   String get serverCacheEntries => 'Maximum entries';
 
   @override
-  String get serverCacheMode => 'Cache mode';
+  String get serverCacheMode => 'TTL mode';
 
   @override
   String get serverCacheLimit => 'Limit max TTL';
@@ -15381,7 +15507,29 @@ class AppL10nEn extends AppL10n {
   String get serverCacheSaved => 'Cache settings saved';
 
   @override
+  String get serverCacheAdvanced => 'Advanced options';
+
+  @override
+  String get serverCacheBehavior => 'Cache behavior';
+
+  @override
+  String get serverCacheAdvancedSummary =>
+      'Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch';
+
+  @override
+  String get serverCacheAdvancedTtl => 'TTL floor';
+
+  @override
+  String get serverCacheFallback => 'Stale and negative cache';
+
+  @override
+  String get serverCachePerformance => 'Prefetch and optimization';
+
+  @override
   String get serverQueryLogEnabled => 'Record queries';
+
+  @override
+  String get serverQueryLogContent => 'Recorded data';
 
   @override
   String get serverQueryLogEnabledBody =>
@@ -15455,7 +15603,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverPortFixed =>
-      'Determined by root access and not configurable';
+      'The effective port depends on root access and runtime state';
 
   @override
   String get serverSettingsProbeRoot => 'Probe root';

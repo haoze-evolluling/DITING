@@ -14118,22 +14118,56 @@ class AppL10nZh extends AppL10n {
   String get serverNoQueries => '暂无查询记录';
 
   @override
+  String get serverViewAll => '查看全部';
+
+  @override
   String get serverTabHome => '首页';
 
   @override
-  String get serverTabHub => '功能';
+  String get serverTabHub => '配置';
 
   @override
   String get serverTabLogs => '日志';
 
   @override
-  String get serverHubTitle => '功能中心';
+  String get serverHubTitle => '配置中心';
 
   @override
-  String get serverHubDataPlane => '数据面';
+  String get serverHubDataPlane => '解析服务';
 
   @override
   String get serverHubSystem => '系统';
+
+  @override
+  String serverHubUpstreamSummary(int count, String mode) {
+    return '$count 个服务商 · $mode';
+  }
+
+  @override
+  String serverHubFilterSummary(String state, int count) {
+    return '$state · $count 个订阅';
+  }
+
+  @override
+  String serverHubCacheSummary(int count, String mode) {
+    return '$count 条 · $mode';
+  }
+
+  @override
+  String serverHubLogSummary(int days, String file) {
+    return '保留 $days 天 · $file';
+  }
+
+  @override
+  String get serverHubLogFileOn => '写入文件';
+
+  @override
+  String get serverHubLogFileOff => '仅内存';
+
+  @override
+  String serverHubSettingsSummary(String mode) {
+    return '$mode · 数据目录';
+  }
 
   @override
   String get serverUpstream => '上游与调度';
@@ -14157,7 +14191,7 @@ class AppL10nZh extends AppL10n {
   String get serverCacheHubHint => '调整容量、TTL 与过期回退策略';
 
   @override
-  String get serverQueryLogTitle => '查询日志';
+  String get serverQueryLogTitle => '日志记录';
 
   @override
   String get serverQueryLogHubHint => '设置记录内容、落盘与保留天数';
@@ -14166,7 +14200,7 @@ class AppL10nZh extends AppL10n {
   String get serverSettingsTitle => '服务器设置';
 
   @override
-  String get serverSettingsHubHint => '查看监听状态、Root 与数据目录';
+  String get serverSettingsHubHint => 'Root、端口与数据目录';
 
   @override
   String get serverAppearance => '外观';
@@ -14225,6 +14259,38 @@ class AppL10nZh extends AppL10n {
   String get serverLogEmpty => '暂无查询记录';
 
   @override
+  String get serverLogEmptyBody => '服务器运行后，客户端查询会显示在这里。';
+
+  @override
+  String get serverLogNoMatchTitle => '无匹配结果';
+
+  @override
+  String get serverLogNoMatchBody => '请调整域名搜索或客户端筛选。';
+
+  @override
+  String get serverLogStoppedTitle => '服务器未运行';
+
+  @override
+  String get serverLogStoppedBody => '启动服务器后，查询记录会显示在这里。';
+
+  @override
+  String get serverLogResults => '查询结果';
+
+  @override
+  String get serverLogFilterClient => '筛选客户端';
+
+  @override
+  String get serverLogClientAll => '全部客户端';
+
+  @override
+  String get serverLogClientEmpty => '暂无客户端记录';
+
+  @override
+  String serverLogClientFiltered(String client) {
+    return '当前客户端：$client';
+  }
+
+  @override
   String get serverLogTime => '时间';
 
   @override
@@ -14275,6 +14341,9 @@ class AppL10nZh extends AppL10n {
   String get serverUpstreamMode => '调度方式';
 
   @override
+  String get serverUpstreamScheduling => '当前调度';
+
+  @override
   String get serverUpstreamProviders => '服务商';
 
   @override
@@ -14302,6 +14371,17 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverUpstreamBootstrap => 'Bootstrap';
+
+  @override
+  String get serverBootstrapSummary => 'Bootstrap 摘要';
+
+  @override
+  String get serverBootstrapServers => '服务器列表';
+
+  @override
+  String serverBootstrapServerCount(int count) {
+    return '$count 个服务器';
+  }
 
   @override
   String get serverBootstrapDefault => '使用系统默认 Bootstrap';
@@ -14347,7 +14427,29 @@ class AppL10nZh extends AppL10n {
   String get serverFilterResponseBody => '同时检查上游应答中的域名';
 
   @override
-  String get serverFilterBlockMode => '拦截响应';
+  String get serverFilterState => '过滤状态';
+
+  @override
+  String get serverFilterBlockMode => '拦截方式';
+
+  @override
+  String get serverFilterSource => '规则来源';
+
+  @override
+  String serverFilterCustomCount(int count) {
+    return '$count 条自定义规则';
+  }
+
+  @override
+  String serverFilterSubscriptionCount(int count) {
+    return '$count 个订阅';
+  }
+
+  @override
+  String get serverFilterTestTitle => '规则测试';
+
+  @override
+  String get serverFilterTestEntryBody => '输入域名查看判定结果与命中规则';
 
   @override
   String get serverBlockNullIp => '返回空地址';
@@ -14371,6 +14473,9 @@ class AppL10nZh extends AppL10n {
   String get serverCustomRules => '自定义规则';
 
   @override
+  String get serverCustomRulesContent => '规则内容';
+
+  @override
   String get serverCustomRulesHint => '每行一条 AdGuard 或 hosts 规则';
 
   @override
@@ -14378,6 +14483,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverSubscriptions => '订阅列表';
+
+  @override
+  String get serverSubscriptionList => '订阅来源';
 
   @override
   String get serverSubscriptionEmpty => '暂无订阅';
@@ -14398,6 +14506,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverSubscriptionRefresh => '刷新订阅';
+
+  @override
+  String get serverSubscriptionError => '错误';
 
   @override
   String get serverSubscriptionRefreshed => '订阅已刷新';
@@ -14432,6 +14543,12 @@ class AppL10nZh extends AppL10n {
   String get serverCheckAction => '测试';
 
   @override
+  String get serverCheckChecking => '测试中';
+
+  @override
+  String get serverCheckResult => '判定结果';
+
+  @override
   String get serverCheckBlocked => '将被拦截';
 
   @override
@@ -14447,10 +14564,16 @@ class AppL10nZh extends AppL10n {
   String get serverCacheEnabledBody => '缓存上游响应并复用 TTL';
 
   @override
+  String get serverCacheState => '缓存状态';
+
+  @override
+  String get serverCacheCapacity => '容量';
+
+  @override
   String get serverCacheEntries => '最大条目';
 
   @override
-  String get serverCacheMode => '缓存模式';
+  String get serverCacheMode => 'TTL 模式';
 
   @override
   String get serverCacheLimit => '限制最大 TTL';
@@ -14498,7 +14621,28 @@ class AppL10nZh extends AppL10n {
   String get serverCacheSaved => '缓存设置已保存';
 
   @override
+  String get serverCacheAdvanced => '高级选项';
+
+  @override
+  String get serverCacheBehavior => '缓存行为';
+
+  @override
+  String get serverCacheAdvancedSummary => '最小 TTL、过期回退、否定缓存、乐观缓存与预取';
+
+  @override
+  String get serverCacheAdvancedTtl => 'TTL 下限';
+
+  @override
+  String get serverCacheFallback => '过期与否定缓存';
+
+  @override
+  String get serverCachePerformance => '预取与优化';
+
+  @override
   String get serverQueryLogEnabled => '记录查询';
+
+  @override
+  String get serverQueryLogContent => '记录内容';
 
   @override
   String get serverQueryLogEnabledBody => '保存最近查询供管理端查看';
@@ -14564,7 +14708,7 @@ class AppL10nZh extends AppL10n {
   String get serverPort => '监听端口';
 
   @override
-  String get serverPortFixed => '由 Root 状态决定，不能手动修改';
+  String get serverPortFixed => '实际端口由 Root 权限与运行状态决定';
 
   @override
   String get serverSettingsProbeRoot => '检测 Root';

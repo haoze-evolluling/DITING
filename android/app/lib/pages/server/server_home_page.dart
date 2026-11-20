@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/home/widgets/home_power_button.dart';
 import 'package:diting_android/pages/server/server_common.dart';
@@ -129,7 +128,6 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
             ),
             _ListenCard(status: value.status),
             _StatsCard(stats: value.stats),
-            _ConfigSummary(config: value.config),
             _RecentQueries(running: value.status.running),
             const SizedBox(height: 12),
           ],
@@ -246,79 +244,6 @@ class _StatsCard extends StatelessWidget {
   }
 }
 
-class _ConfigSummary extends StatelessWidget {
-  const _ConfigSummary({required this.config});
-
-  final ServerConfig config;
-
-  @override
-  Widget build(BuildContext context) {
-    final upstream = config.upstream.providers.isEmpty
-        ? '—'
-        : config.upstream.providers.map((item) => item.id).join(' · ');
-    return Column(
-      children: [
-        ServerSectionCard(
-          onPressed: () => context.push(ServerRoutes.upstream),
-          child: _SummaryRow(
-            glyph: AppGlyphs.upstream,
-            title: context.l10n.serverUpstream,
-            value: upstream,
-          ),
-        ),
-        ServerSectionCard(
-          onPressed: () => context.push(ServerRoutes.filter),
-          child: _SummaryRow(
-            glyph: AppGlyphs.rules,
-            title: context.l10n.serverFilter,
-            value: config.filter.enabled
-                ? context.l10n.serverFilterOn
-                : context.l10n.serverFilterOff,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.glyph,
-    required this.title,
-    required this.value,
-  });
-
-  final Glyph glyph;
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      spacing: 12,
-      children: [
-        GlyphIcon(glyph, size: 20, color: context.colorScheme.primary),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 2,
-            children: [
-              Text(title, style: context.listTitleStyle),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: context.listSubtitleStyle,
-              ),
-            ],
-          ),
-        ),
-        const GlyphIcon(AppGlyphs.chevronForward, size: 18),
-      ],
-    );
-  }
-}
-
 class _RecentQueries extends ConsumerWidget {
   const _RecentQueries({required this.running});
 
@@ -328,7 +253,7 @@ class _RecentQueries extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!running) return const SizedBox.shrink();
     final recent = ref.watch(
-      serverQueryLogProvider(const ServerLogQuery(limit: 5)),
+      serverQueryLogProvider(const ServerLogQuery(limit: 3)),
     );
     return ServerSectionCard(
       onPressed: () => context.go(ServerRoutes.logs),
@@ -344,6 +269,13 @@ class _RecentQueries extends ConsumerWidget {
                   style: context.listTitleStyle,
                 ),
               ),
+              Text(
+                context.l10n.serverViewAll,
+                style: AppTextStyle.caption1
+                    .of(context)
+                    .copyWith(color: context.colorScheme.primary),
+              ),
+              const SizedBox(width: 2),
               const GlyphIcon(AppGlyphs.chevronForward, size: 18),
             ],
           ),

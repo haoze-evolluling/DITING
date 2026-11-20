@@ -8028,12 +8028,67 @@
   "serverFilterOff": "未启用",
   "serverRecentQueries": "最近查询",
   "serverNoQueries": "暂无查询记录",
+  "serverViewAll": "查看全部",
   "serverTabHome": "首页",
-  "serverTabHub": "功能",
+  "serverTabHub": "配置",
   "serverTabLogs": "日志",
-  "serverHubTitle": "功能中心",
-  "serverHubDataPlane": "数据面",
+  "serverHubTitle": "配置中心",
+  "serverHubDataPlane": "解析服务",
   "serverHubSystem": "系统",
+  "serverHubUpstreamSummary": "{count} 个服务商 · {mode}",
+  "@serverHubUpstreamSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubFilterSummary": "{state} · {count} 个订阅",
+  "@serverHubFilterSummary": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverHubCacheSummary": "{count} 条 · {mode}",
+  "@serverHubCacheSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubLogSummary": "保留 {days} 天 · {file}",
+  "@serverHubLogSummary": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubLogFileOn": "写入文件",
+  "serverHubLogFileOff": "仅内存",
+  "serverHubSettingsSummary": "{mode} · 数据目录",
+  "@serverHubSettingsSummary": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "serverUpstream": "上游与调度",
   "serverUpstreamTitle": "上游与调度",
   "serverUpstreamHubHint": "配置服务商、调度方式与 Bootstrap",
@@ -8041,10 +8096,10 @@
   "serverFilterHubHint": "管理订阅、自定义规则并测试域名",
   "serverCacheTitle": "缓存",
   "serverCacheHubHint": "调整容量、TTL 与过期回退策略",
-  "serverQueryLogTitle": "查询日志",
+  "serverQueryLogTitle": "日志记录",
   "serverQueryLogHubHint": "设置记录内容、落盘与保留天数",
   "serverSettingsTitle": "服务器设置",
-  "serverSettingsHubHint": "查看监听状态、Root 与数据目录",
+  "serverSettingsHubHint": "Root、端口与数据目录",
   "serverAppearance": "外观",
   "serverAppearanceHint": "主题、强调色与界面样式",
   "serverAbout": "关于",
@@ -8073,6 +8128,23 @@
   "serverLogSearchClient": "搜索客户端",
   "serverLogSearch": "搜索",
   "serverLogEmpty": "暂无查询记录",
+  "serverLogEmptyBody": "服务器运行后，客户端查询会显示在这里。",
+  "serverLogNoMatchTitle": "无匹配结果",
+  "serverLogNoMatchBody": "请调整域名搜索或客户端筛选。",
+  "serverLogStoppedTitle": "服务器未运行",
+  "serverLogStoppedBody": "启动服务器后，查询记录会显示在这里。",
+  "serverLogResults": "查询结果",
+  "serverLogFilterClient": "筛选客户端",
+  "serverLogClientAll": "全部客户端",
+  "serverLogClientEmpty": "暂无客户端记录",
+  "serverLogClientFiltered": "当前客户端：{client}",
+  "@serverLogClientFiltered": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
   "serverLogTime": "时间",
   "serverLogStatus": "状态",
   "serverLogType": "类型",
@@ -8096,6 +8168,7 @@
   },
   "serverUpstreamAdd": "添加服务商",
   "serverUpstreamMode": "调度方式",
+  "serverUpstreamScheduling": "当前调度",
   "serverUpstreamProviders": "服务商",
   "serverUpstreamRequired": "尚未配置上游服务商",
   "serverUpstreamDelete": "删除服务商",
@@ -8112,6 +8185,16 @@
   "serverUpstreamProviderNote": "首版支持明文 DNS、DoT 与 DoH；修改会写入服务器独立配置。",
   "serverUpstreamModeNote": "主备切换优先使用首个可用服务商；并行竞速取最快响应；智能选择按历史表现调度。",
   "serverUpstreamBootstrap": "Bootstrap",
+  "serverBootstrapSummary": "Bootstrap 摘要",
+  "serverBootstrapServers": "服务器列表",
+  "serverBootstrapServerCount": "{count} 个服务器",
+  "@serverBootstrapServerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "serverBootstrapDefault": "使用系统默认 Bootstrap",
   "serverBootstrapNote": "当前自定义 Bootstrap 仅展示；首版由 Rust 内置解析器解析上游主机名。",
   "serverModeSingle": "单服务商",
@@ -8126,7 +8209,27 @@
   "serverFilterEnabledBody": "对内网 DNS 查询应用订阅与自定义规则",
   "serverFilterResponse": "过滤响应",
   "serverFilterResponseBody": "同时检查上游应答中的域名",
-  "serverFilterBlockMode": "拦截响应",
+  "serverFilterState": "过滤状态",
+  "serverFilterBlockMode": "拦截方式",
+  "serverFilterSource": "规则来源",
+  "serverFilterCustomCount": "{count} 条自定义规则",
+  "@serverFilterCustomCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverFilterSubscriptionCount": "{count} 个订阅",
+  "@serverFilterSubscriptionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverFilterTestTitle": "规则测试",
+  "serverFilterTestEntryBody": "输入域名查看判定结果与命中规则",
   "serverBlockNullIp": "返回空地址",
   "serverBlockNxdomain": "返回 NXDOMAIN",
   "serverBlockRefused": "拒绝查询",
@@ -8134,9 +8237,11 @@
   "serverBlockingIPv4": "IPv4 地址",
   "serverBlockingIPv6": "IPv6 地址",
   "serverCustomRules": "自定义规则",
+  "serverCustomRulesContent": "规则内容",
   "serverCustomRulesHint": "每行一条 AdGuard 或 hosts 规则",
   "serverCustomRulesNote": "规则保存在服务器独立配置中，不读取普通模式规则库。",
   "serverSubscriptions": "订阅列表",
+  "serverSubscriptionList": "订阅来源",
   "serverSubscriptionEmpty": "暂无订阅",
   "serverSubscriptionAdd": "添加订阅",
   "serverSubscriptionAddTitle": "添加规则订阅",
@@ -8150,6 +8255,7 @@
     }
   },
   "serverSubscriptionRefresh": "刷新订阅",
+  "serverSubscriptionError": "错误",
   "serverSubscriptionRefreshed": "订阅已刷新",
   "serverSubscriptionRules": "{count} 条规则",
   "@serverSubscriptionRules": {
@@ -8167,13 +8273,17 @@
   "serverCheckDomain": "域名",
   "serverCheckDomainRequired": "请输入域名",
   "serverCheckAction": "测试",
+  "serverCheckChecking": "测试中",
+  "serverCheckResult": "判定结果",
   "serverCheckBlocked": "将被拦截",
   "serverCheckAllowed": "将被放行",
   "serverFilterSaved": "过滤设置已保存",
   "serverCacheEnabled": "启用缓存",
   "serverCacheEnabledBody": "缓存上游响应并复用 TTL",
+  "serverCacheState": "缓存状态",
+  "serverCacheCapacity": "容量",
   "serverCacheEntries": "最大条目",
-  "serverCacheMode": "缓存模式",
+  "serverCacheMode": "TTL 模式",
   "serverCacheLimit": "限制最大 TTL",
   "serverCacheFixed": "固定 TTL",
   "serverCacheTtl": "TTL 策略",
@@ -8189,7 +8299,14 @@
   "serverCachePrefetch": "预取",
   "serverCacheFooter": "修改会立即应用；缓存内容在进程重启后清空。",
   "serverCacheSaved": "缓存设置已保存",
+  "serverCacheAdvanced": "高级选项",
+  "serverCacheBehavior": "缓存行为",
+  "serverCacheAdvancedSummary": "最小 TTL、过期回退、否定缓存、乐观缓存与预取",
+  "serverCacheAdvancedTtl": "TTL 下限",
+  "serverCacheFallback": "过期与否定缓存",
+  "serverCachePerformance": "预取与优化",
   "serverQueryLogEnabled": "记录查询",
+  "serverQueryLogContent": "记录内容",
   "serverQueryLogEnabledBody": "保存最近查询供管理端查看",
   "serverQueryLogFile": "写入文件",
   "serverQueryLogFileBody": "按日写入 JSONL 文件",
@@ -8211,7 +8328,7 @@
   "serverSettingsRootBody": "使用 su 绑定 53 端口后降权到应用 UID",
   "serverSettingsRootNote": "Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。",
   "serverPort": "监听端口",
-  "serverPortFixed": "由 Root 状态决定，不能手动修改",
+  "serverPortFixed": "实际端口由 Root 权限与运行状态决定",
   "serverSettingsProbeRoot": "检测 Root",
   "serverSettingsProbeRootBody": "通过 su 检测授权状态",
   "serverSettingsStorage": "数据与存储",

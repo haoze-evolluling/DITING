@@ -1,12 +1,15 @@
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/pages/hub/provider_editor.dart';
+import 'package:diting_android/pages/server/server_upstream_shared.dart';
+import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ServerUpstreamPage extends ConsumerWidget {
@@ -33,34 +36,15 @@ class ServerUpstreamPage extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
-            title: context.l10n.serverUpstreamMode,
+            title: context.l10n.serverUpstreamScheduling,
             items: [
-              for (final mode in const [
-                'primary_backup',
-                'single',
-                'parallel_race',
-                'smart_prediction',
-              ])
-                ListItem(
-                  leading: GlyphIcon(
-                    upstream.mode == mode
-                        ? AppGlyphs.checkCircle
-                        : _modeGlyph(mode),
-                    size: 20,
-                  ),
-                  title: Text(_modeLabel(context, mode)),
-                  subtitle: Text(_modeDescription(context, mode)),
-                  trailing: upstream.mode == mode
-                      ? const SelectionCheck()
-                      : null,
-                  onTap: () => _save(
-                    context,
-                    ref,
-                    config.copyWith(
-                      upstream: upstream.copyWith(mode: mode),
-                    ),
-                  ),
-                ),
+              ListItem(
+                leading: GlyphIcon(serverModeGlyph(upstream.mode), size: 20),
+                title: Text(serverModeLabel(context, upstream.mode)),
+                subtitle: Text(serverModeDescription(context, upstream.mode)),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                onTap: () => context.push(ServerRoutes.upstreamScheduling),
+              ),
             ],
             footer: context.l10n.serverUpstreamModeNote,
           ),
@@ -74,7 +58,10 @@ class ServerUpstreamPage extends ConsumerWidget {
                 ),
               for (final provider in upstream.providers)
                 ListItem(
-                  leading: GlyphIcon(_protocolGlyph(provider.protocol), size: 20),
+                  leading: GlyphIcon(
+                    _protocolGlyph(provider.protocol),
+                    size: 20,
+                  ),
                   title: Text(provider.id),
                   subtitle: Text('${provider.protocol} · ${provider.address}'),
                   trailing: IconButton(
@@ -89,32 +76,38 @@ class ServerUpstreamPage extends ConsumerWidget {
                           ),
                     icon: const GlyphIcon(AppGlyphs.delete, size: 18),
                   ),
-                  onTap: () => _editProvider(
-                    context,
-                    ref,
-                    config,
-                    provider: provider,
-                  ),
+                  onTap: () =>
+                      _editProvider(context, ref, config, provider: provider),
                 ),
             ],
             footer: context.l10n.serverUpstreamProviderNote,
           ),
           generateSection(
-            title: context.l10n.serverUpstreamBootstrap,
+            title: context.l10n.serverBootstrapSummary,
             items: [
-              for (final server in upstream.bootstrap)
-                ListItem(
-                  leading: const GlyphIcon(AppGlyphs.dns, size: 20),
-                  title: Text(server.name.isEmpty ? server.id : server.name),
-                  subtitle: Text(server.address),
+              ListItem(
+                leading: const GlyphIcon(AppGlyphs.dns, size: 20),
+                title: Text(
+                  upstream.bootstrap.isEmpty
+                      ? context.l10n.serverBootstrapDefault
+                      : context.l10n.serverBootstrapServerCount(
+                          upstream.bootstrap.length,
+                        ),
                 ),
-              if (upstream.bootstrap.isEmpty)
-                ListItem(
-                  leading: const GlyphIcon(AppGlyphs.info, size: 20),
-                  title: Text(context.l10n.serverBootstrapDefault),
+                subtitle: Text(
+                  upstream.bootstrap.isEmpty
+                      ? context.l10n.serverBootstrapNote
+                      : upstream.bootstrap
+                            .map(
+                              (server) =>
+                                  server.name.isEmpty ? server.id : server.name,
+                            )
+                            .join(' · '),
                 ),
+                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                onTap: () => context.push(ServerRoutes.upstreamBootstrap),
+              ),
             ],
-            footer: context.l10n.serverBootstrapNote,
           ),
           const SizedBox(height: 24),
         ],
@@ -157,8 +150,8 @@ class ServerUpstreamPage extends ConsumerWidget {
         if (provider == null || item.id != provider.id) item,
       next,
     ];
-    final duplicate = providers.map((item) => item.id).toSet().length !=
-        providers.length;
+    final duplicate =
+        providers.map((item) => item.id).toSet().length != providers.length;
     if (duplicate) {
       if (context.mounted) {
         showAppSnack(context, context.l10n.serverUpstreamDuplicate);
@@ -236,25 +229,4 @@ Glyph _protocolGlyph(String protocol) => switch (protocol) {
   'DOH' || 'DOH3' => AppGlyphs.lock,
   'DOT' => AppGlyphs.verified,
   _ => AppGlyphs.dns,
-};
-
-Glyph _modeGlyph(String mode) => switch (mode) {
-  'single' => AppGlyphs.upstream,
-  'parallel_race' => AppGlyphs.speed,
-  'smart_prediction' => AppGlyphs.sparkle,
-  _ => AppGlyphs.swap,
-};
-
-String _modeLabel(BuildContext context, String mode) => switch (mode) {
-  'single' => context.l10n.serverModeSingle,
-  'parallel_race' => context.l10n.serverModeParallel,
-  'smart_prediction' => context.l10n.serverModeSmart,
-  _ => context.l10n.serverModePrimaryBackup,
-};
-
-String _modeDescription(BuildContext context, String mode) => switch (mode) {
-  'single' => context.l10n.serverModeSingleDesc,
-  'parallel_race' => context.l10n.serverModeParallelDesc,
-  'smart_prediction' => context.l10n.serverModeSmartDesc,
-  _ => context.l10n.serverModePrimaryBackupDesc,
 };

@@ -5368,12 +5368,67 @@
   "serverFilterOff": "Disabled",
   "serverRecentQueries": "Recent queries",
   "serverNoQueries": "No queries yet",
+  "serverViewAll": "View all",
   "serverTabHome": "Home",
-  "serverTabHub": "Features",
+  "serverTabHub": "Configure",
   "serverTabLogs": "Logs",
-  "serverHubTitle": "Feature center",
-  "serverHubDataPlane": "Data plane",
+  "serverHubTitle": "Configuration",
+  "serverHubDataPlane": "Resolution services",
   "serverHubSystem": "System",
+  "serverHubUpstreamSummary": "{count} providers · {mode}",
+  "@serverHubUpstreamSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubFilterSummary": "{state} · {count} subscriptions",
+  "@serverHubFilterSummary": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverHubCacheSummary": "{count} entries · {mode}",
+  "@serverHubCacheSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubLogSummary": "Keep {days} days · {file}",
+  "@serverHubLogSummary": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubLogFileOn": "file output",
+  "serverHubLogFileOff": "memory only",
+  "serverHubSettingsSummary": "{mode} · data directory",
+  "@serverHubSettingsSummary": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
   "serverUpstream": "Upstreams",
   "serverUpstreamTitle": "Upstreams and routing",
   "serverUpstreamHubHint": "Configure providers, scheduling and bootstrap",
@@ -5381,10 +5436,10 @@
   "serverFilterHubHint": "Manage subscriptions and custom rules, or test a domain",
   "serverCacheTitle": "Cache",
   "serverCacheHubHint": "Tune capacity, TTL and stale fallback",
-  "serverQueryLogTitle": "Query log",
+  "serverQueryLogTitle": "Query logging",
   "serverQueryLogHubHint": "Choose what to record, file output and retention",
   "serverSettingsTitle": "Server settings",
-  "serverSettingsHubHint": "Inspect listening state, root access and storage",
+  "serverSettingsHubHint": "Root, port and data directory",
   "serverAppearance": "Appearance",
   "serverAppearanceHint": "Theme, accent color and interface style",
   "serverAbout": "About",
@@ -5413,6 +5468,23 @@
   "serverLogSearchClient": "Search client",
   "serverLogSearch": "Search",
   "serverLogEmpty": "No queries yet",
+  "serverLogEmptyBody": "Client queries will appear here once the server is running.",
+  "serverLogNoMatchTitle": "No matching results",
+  "serverLogNoMatchBody": "Adjust the domain search or client filter.",
+  "serverLogStoppedTitle": "Server not running",
+  "serverLogStoppedBody": "Start the server to see query records here.",
+  "serverLogResults": "Query results",
+  "serverLogFilterClient": "Filter by client",
+  "serverLogClientAll": "All clients",
+  "serverLogClientEmpty": "No client records yet",
+  "serverLogClientFiltered": "Client: {client}",
+  "@serverLogClientFiltered": {
+    "placeholders": {
+      "client": {
+        "type": "String"
+      }
+    }
+  },
   "serverLogTime": "Time",
   "serverLogStatus": "Status",
   "serverLogType": "Type",
@@ -5436,6 +5508,7 @@
   },
   "serverUpstreamAdd": "Add provider",
   "serverUpstreamMode": "Scheduling",
+  "serverUpstreamScheduling": "Current scheduling",
   "serverUpstreamProviders": "Providers",
   "serverUpstreamRequired": "No upstream provider configured",
   "serverUpstreamDelete": "Delete provider",
@@ -5452,6 +5525,16 @@
   "serverUpstreamProviderNote": "The first release supports plain DNS, DoT and DoH. Changes use server-specific configuration.",
   "serverUpstreamModeNote": "Primary + backup prefers the first healthy provider; parallel race takes the fastest; smart selection uses recent performance.",
   "serverUpstreamBootstrap": "Bootstrap",
+  "serverBootstrapSummary": "Bootstrap summary",
+  "serverBootstrapServers": "Servers",
+  "serverBootstrapServerCount": "{count} servers",
+  "@serverBootstrapServerCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "serverBootstrapDefault": "Using the system default bootstrap",
   "serverBootstrapNote": "Custom bootstrap entries are display-only for now; the built-in Rust resolver resolves upstream hostnames.",
   "serverModeSingle": "Single provider",
@@ -5466,7 +5549,27 @@
   "serverFilterEnabledBody": "Apply subscriptions and custom rules to LAN DNS queries",
   "serverFilterResponse": "Filter responses",
   "serverFilterResponseBody": "Also inspect domains in upstream answers",
-  "serverFilterBlockMode": "Block response",
+  "serverFilterState": "Filter status",
+  "serverFilterBlockMode": "Blocking method",
+  "serverFilterSource": "Rule sources",
+  "serverFilterCustomCount": "{count} custom rules",
+  "@serverFilterCustomCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverFilterSubscriptionCount": "{count} subscriptions",
+  "@serverFilterSubscriptionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverFilterTestTitle": "Rule test",
+  "serverFilterTestEntryBody": "Enter a domain to see its decision and matched rule",
   "serverBlockNullIp": "Null address",
   "serverBlockNxdomain": "NXDOMAIN",
   "serverBlockRefused": "Refused",
@@ -5474,9 +5577,11 @@
   "serverBlockingIPv4": "IPv4 address",
   "serverBlockingIPv6": "IPv6 address",
   "serverCustomRules": "Custom rules",
+  "serverCustomRulesContent": "Rule content",
   "serverCustomRulesHint": "One AdGuard or hosts rule per line",
   "serverCustomRulesNote": "Rules live in server-specific configuration and do not read the normal-mode rule database.",
   "serverSubscriptions": "Subscriptions",
+  "serverSubscriptionList": "Subscription sources",
   "serverSubscriptionEmpty": "No subscriptions",
   "serverSubscriptionAdd": "Add subscription",
   "serverSubscriptionAddTitle": "Add rule subscription",
@@ -5490,6 +5595,7 @@
     }
   },
   "serverSubscriptionRefresh": "Refresh subscriptions",
+  "serverSubscriptionError": "Error",
   "serverSubscriptionRefreshed": "Subscriptions refreshed",
   "serverSubscriptionRules": "{count} rules",
   "@serverSubscriptionRules": {
@@ -5507,13 +5613,17 @@
   "serverCheckDomain": "Domain",
   "serverCheckDomainRequired": "Enter a domain",
   "serverCheckAction": "Test",
+  "serverCheckChecking": "Testing",
+  "serverCheckResult": "Decision",
   "serverCheckBlocked": "Will be blocked",
   "serverCheckAllowed": "Will be allowed",
   "serverFilterSaved": "Filter settings saved",
   "serverCacheEnabled": "Enable cache",
   "serverCacheEnabledBody": "Cache upstream responses and reuse their TTL",
+  "serverCacheState": "Cache status",
+  "serverCacheCapacity": "Capacity",
   "serverCacheEntries": "Maximum entries",
-  "serverCacheMode": "Cache mode",
+  "serverCacheMode": "TTL mode",
   "serverCacheLimit": "Limit max TTL",
   "serverCacheFixed": "Fixed TTL",
   "serverCacheTtl": "TTL policy",
@@ -5529,7 +5639,14 @@
   "serverCachePrefetch": "Prefetch",
   "serverCacheFooter": "Changes apply immediately; cached entries are cleared when the process restarts.",
   "serverCacheSaved": "Cache settings saved",
+  "serverCacheAdvanced": "Advanced options",
+  "serverCacheBehavior": "Cache behavior",
+  "serverCacheAdvancedSummary": "Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch",
+  "serverCacheAdvancedTtl": "TTL floor",
+  "serverCacheFallback": "Stale and negative cache",
+  "serverCachePerformance": "Prefetch and optimization",
   "serverQueryLogEnabled": "Record queries",
+  "serverQueryLogContent": "Recorded data",
   "serverQueryLogEnabledBody": "Keep recent queries for the management UI",
   "serverQueryLogFile": "Write to file",
   "serverQueryLogFileBody": "Write daily JSONL files",
@@ -5551,7 +5668,7 @@
   "serverSettingsRootBody": "Bind port 53 through su, then drop to the app UID",
   "serverSettingsRootNote": "Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.",
   "serverPort": "Listening port",
-  "serverPortFixed": "Determined by root access and not configurable",
+  "serverPortFixed": "The effective port depends on root access and runtime state",
   "serverSettingsProbeRoot": "Probe root",
   "serverSettingsProbeRootBody": "Check authorization through su",
   "serverSettingsStorage": "Data and storage",

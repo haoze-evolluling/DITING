@@ -1,11 +1,13 @@
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/pages/server/server_common.dart';
+import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ServerCachePage extends ConsumerWidget {
@@ -35,45 +37,48 @@ class ServerCachePage extends ConsumerWidget {
       }
     }
 
+    final ttl = cache.mode == 'limit_max_ttl'
+        ? cache.maxTtlSeconds
+        : cache.fixedTtlSeconds;
     return CommonScaffold(
       title: context.l10n.serverCacheTitle,
       body: PageBody(
         children: [
           generateSection(
-            title: context.l10n.serverCacheTitle,
+            title: context.l10n.serverCacheState,
             items: [
               ListItem.toggle(
                 leading: const GlyphIcon(AppGlyphs.database, size: 20),
                 title: Text(context.l10n.serverCacheEnabled),
                 subtitle: Text(context.l10n.serverCacheEnabledBody),
                 value: cache.enabled,
-                onChanged: (value) =>
-                    save(cache.copyWith(enabled: value)),
-              ),
-              ListItem(
-                leading: const GlyphIcon(AppGlyphs.memory, size: 20),
-                title: Text(context.l10n.serverCacheEntries),
-                trailing: _Value(label: '${cache.maxEntries}'),
-                onTap: () async {
-                  final value = await editServerNumber(
-                    context,
-                    title: context.l10n.serverCacheEntries,
-                    initial: cache.maxEntries,
-                    max: 200000,
-                  );
-                  if (value != null) await save(cache.copyWith(maxEntries: value));
-                },
+                onChanged: (value) => save(cache.copyWith(enabled: value)),
               ),
             ],
           ),
           if (cache.enabled) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 6),
-              child: Text(
-                context.l10n.serverCacheMode,
-                style: context.listTitleStyle,
-              ),
+            generateSection(
+              title: context.l10n.serverCacheCapacity,
+              items: [
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.memory, size: 20),
+                  title: Text(context.l10n.serverCacheEntries),
+                  trailing: _Value(label: '${cache.maxEntries}'),
+                  onTap: () async {
+                    final value = await editServerNumber(
+                      context,
+                      title: context.l10n.serverCacheEntries,
+                      initial: cache.maxEntries,
+                      max: 200000,
+                    );
+                    if (value != null) {
+                      await save(cache.copyWith(maxEntries: value));
+                    }
+                  },
+                ),
+              ],
             ),
+            ListHeader(title: context.l10n.serverCacheMode),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SegmentedControl<String>(
@@ -88,96 +93,44 @@ class ServerCachePage extends ConsumerWidget {
             generateSection(
               title: context.l10n.serverCacheTtl,
               items: [
-                if (cache.mode == 'limit_max_ttl')
-                  ListItem(
-                    leading: const GlyphIcon(AppGlyphs.clock, size: 20),
-                    title: Text(context.l10n.serverCacheMaxTtl),
-                    trailing: _Value(label: '${cache.maxTtlSeconds}s'),
-                    onTap: () async {
-                      final value = await editServerNumber(
-                        context,
-                        title: context.l10n.serverCacheMaxTtl,
-                        initial: cache.maxTtlSeconds,
-                        suffix: 's',
-                      );
-                      if (value != null) {
-                        await save(cache.copyWith(maxTtlSeconds: value));
-                      }
-                    },
-                  )
-                else
-                  ListItem(
-                    leading: const GlyphIcon(AppGlyphs.clock, size: 20),
-                    title: Text(context.l10n.serverCacheFixedTtl),
-                    trailing: _Value(label: '${cache.fixedTtlSeconds}s'),
-                    onTap: () async {
-                      final value = await editServerNumber(
-                        context,
-                        title: context.l10n.serverCacheFixedTtl,
-                        initial: cache.fixedTtlSeconds,
-                        suffix: 's',
-                      );
-                      if (value != null) {
-                        await save(cache.copyWith(fixedTtlSeconds: value));
-                      }
-                    },
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.clock, size: 20),
+                  title: Text(
+                    cache.mode == 'limit_max_ttl'
+                        ? context.l10n.serverCacheMaxTtl
+                        : context.l10n.serverCacheFixedTtl,
                   ),
-                ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.speed, size: 20),
-                  title: Text(context.l10n.serverCacheMinTtl),
-                  subtitle: Text(context.l10n.serverCacheMinTtlBody),
-                  value: cache.minTtlEnabled,
-                  onChanged: (value) =>
-                      save(cache.copyWith(minTtlEnabled: value)),
-                ),
-                if (cache.minTtlEnabled)
-                  ListItem(
-                    leading: const GlyphIcon(AppGlyphs.arrowUp, size: 20),
-                    title: Text(context.l10n.serverCacheMinTtlValue),
-                    trailing: _Value(label: '${cache.minTtlSeconds}s'),
-                    onTap: () async {
-                      final value = await editServerNumber(
-                        context,
-                        title: context.l10n.serverCacheMinTtlValue,
-                        initial: cache.minTtlSeconds,
-                        suffix: 's',
-                      );
-                      if (value != null) {
-                        await save(cache.copyWith(minTtlSeconds: value));
-                      }
-                    },
-                  ),
-                ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.sync, size: 20),
-                  title: Text(context.l10n.serverCacheStale),
-                  subtitle: Text(context.l10n.serverCacheStaleBody),
-                  value: cache.staleFallbackEnabled,
-                  onChanged: (value) =>
-                      save(cache.copyWith(staleFallbackEnabled: value)),
-                ),
-                ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.warning, size: 20),
-                  title: Text(context.l10n.serverCacheNegative),
-                  value: cache.negativeTtlEnabled,
-                  onChanged: (value) =>
-                      save(cache.copyWith(negativeTtlEnabled: value)),
-                ),
-                ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.sparkle, size: 20),
-                  title: Text(context.l10n.serverCacheOptimistic),
-                  value: cache.optimistic,
-                  onChanged: (value) =>
-                      save(cache.copyWith(optimistic: value)),
-                ),
-                ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.bolt, size: 20),
-                  title: Text(context.l10n.serverCachePrefetch),
-                  value: cache.prefetchEnabled,
-                  onChanged: (value) =>
-                      save(cache.copyWith(prefetchEnabled: value)),
+                  trailing: _Value(label: '${ttl}s'),
+                  onTap: () async {
+                    final value = await editServerNumber(
+                      context,
+                      title: cache.mode == 'limit_max_ttl'
+                          ? context.l10n.serverCacheMaxTtl
+                          : context.l10n.serverCacheFixedTtl,
+                      initial: ttl,
+                      suffix: 's',
+                    );
+                    if (value == null) return;
+                    await save(
+                      cache.mode == 'limit_max_ttl'
+                          ? cache.copyWith(maxTtlSeconds: value)
+                          : cache.copyWith(fixedTtlSeconds: value),
+                    );
+                  },
                 ),
               ],
-              footer: context.l10n.serverCacheFooter,
+            ),
+            generateSection(
+              title: context.l10n.serverCacheBehavior,
+              items: [
+                ListItem(
+                  leading: const GlyphIcon(AppGlyphs.settings, size: 20),
+                  title: Text(context.l10n.serverCacheAdvanced),
+                  subtitle: Text(context.l10n.serverCacheAdvancedSummary),
+                  trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                  onTap: () => context.push(ServerRoutes.cacheAdvanced),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 24),
@@ -196,10 +149,12 @@ class _Value extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: AppTextStyle.footnote.of(context).copyWith(
-        color: context.colorScheme.onSurfaceVariant,
-        fontFeatures: appTabularFigures,
-      ),
+      style: AppTextStyle.footnote
+          .of(context)
+          .copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+            fontFeatures: appTabularFigures,
+          ),
     );
   }
 }

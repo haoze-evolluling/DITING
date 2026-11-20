@@ -25883,6 +25883,12 @@ abstract class AppL10n {
   /// **'暂无查询记录'**
   String get serverNoQueries;
 
+  /// No description provided for @serverViewAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看全部'**
+  String get serverViewAll;
+
   /// No description provided for @serverTabHome.
   ///
   /// In zh, this message translates to:
@@ -25892,7 +25898,7 @@ abstract class AppL10n {
   /// No description provided for @serverTabHub.
   ///
   /// In zh, this message translates to:
-  /// **'功能'**
+  /// **'配置'**
   String get serverTabHub;
 
   /// No description provided for @serverTabLogs.
@@ -25904,13 +25910,13 @@ abstract class AppL10n {
   /// No description provided for @serverHubTitle.
   ///
   /// In zh, this message translates to:
-  /// **'功能中心'**
+  /// **'配置中心'**
   String get serverHubTitle;
 
   /// No description provided for @serverHubDataPlane.
   ///
   /// In zh, this message translates to:
-  /// **'数据面'**
+  /// **'解析服务'**
   String get serverHubDataPlane;
 
   /// No description provided for @serverHubSystem.
@@ -25918,6 +25924,48 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'系统'**
   String get serverHubSystem;
+
+  /// No description provided for @serverHubUpstreamSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个服务商 · {mode}'**
+  String serverHubUpstreamSummary(int count, String mode);
+
+  /// No description provided for @serverHubFilterSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{state} · {count} 个订阅'**
+  String serverHubFilterSummary(String state, int count);
+
+  /// No description provided for @serverHubCacheSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条 · {mode}'**
+  String serverHubCacheSummary(int count, String mode);
+
+  /// No description provided for @serverHubLogSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'保留 {days} 天 · {file}'**
+  String serverHubLogSummary(int days, String file);
+
+  /// No description provided for @serverHubLogFileOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'写入文件'**
+  String get serverHubLogFileOn;
+
+  /// No description provided for @serverHubLogFileOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'仅内存'**
+  String get serverHubLogFileOff;
+
+  /// No description provided for @serverHubSettingsSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'{mode} · 数据目录'**
+  String serverHubSettingsSummary(String mode);
 
   /// No description provided for @serverUpstream.
   ///
@@ -25964,7 +26012,7 @@ abstract class AppL10n {
   /// No description provided for @serverQueryLogTitle.
   ///
   /// In zh, this message translates to:
-  /// **'查询日志'**
+  /// **'日志记录'**
   String get serverQueryLogTitle;
 
   /// No description provided for @serverQueryLogHubHint.
@@ -25982,7 +26030,7 @@ abstract class AppL10n {
   /// No description provided for @serverSettingsHubHint.
   ///
   /// In zh, this message translates to:
-  /// **'查看监听状态、Root 与数据目录'**
+  /// **'Root、端口与数据目录'**
   String get serverSettingsHubHint;
 
   /// No description provided for @serverAppearance.
@@ -26093,6 +26141,66 @@ abstract class AppL10n {
   /// **'暂无查询记录'**
   String get serverLogEmpty;
 
+  /// No description provided for @serverLogEmptyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器运行后，客户端查询会显示在这里。'**
+  String get serverLogEmptyBody;
+
+  /// No description provided for @serverLogNoMatchTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'无匹配结果'**
+  String get serverLogNoMatchTitle;
+
+  /// No description provided for @serverLogNoMatchBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'请调整域名搜索或客户端筛选。'**
+  String get serverLogNoMatchBody;
+
+  /// No description provided for @serverLogStoppedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器未运行'**
+  String get serverLogStoppedTitle;
+
+  /// No description provided for @serverLogStoppedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'启动服务器后，查询记录会显示在这里。'**
+  String get serverLogStoppedBody;
+
+  /// No description provided for @serverLogResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'查询结果'**
+  String get serverLogResults;
+
+  /// No description provided for @serverLogFilterClient.
+  ///
+  /// In zh, this message translates to:
+  /// **'筛选客户端'**
+  String get serverLogFilterClient;
+
+  /// No description provided for @serverLogClientAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部客户端'**
+  String get serverLogClientAll;
+
+  /// No description provided for @serverLogClientEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无客户端记录'**
+  String get serverLogClientEmpty;
+
+  /// No description provided for @serverLogClientFiltered.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前客户端：{client}'**
+  String serverLogClientFiltered(String client);
+
   /// No description provided for @serverLogTime.
   ///
   /// In zh, this message translates to:
@@ -26189,6 +26297,12 @@ abstract class AppL10n {
   /// **'调度方式'**
   String get serverUpstreamMode;
 
+  /// No description provided for @serverUpstreamScheduling.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前调度'**
+  String get serverUpstreamScheduling;
+
   /// No description provided for @serverUpstreamProviders.
   ///
   /// In zh, this message translates to:
@@ -26242,6 +26356,24 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'Bootstrap'**
   String get serverUpstreamBootstrap;
+
+  /// No description provided for @serverBootstrapSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'Bootstrap 摘要'**
+  String get serverBootstrapSummary;
+
+  /// No description provided for @serverBootstrapServers.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器列表'**
+  String get serverBootstrapServers;
+
+  /// No description provided for @serverBootstrapServerCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个服务器'**
+  String serverBootstrapServerCount(int count);
 
   /// No description provided for @serverBootstrapDefault.
   ///
@@ -26327,11 +26459,47 @@ abstract class AppL10n {
   /// **'同时检查上游应答中的域名'**
   String get serverFilterResponseBody;
 
+  /// No description provided for @serverFilterState.
+  ///
+  /// In zh, this message translates to:
+  /// **'过滤状态'**
+  String get serverFilterState;
+
   /// No description provided for @serverFilterBlockMode.
   ///
   /// In zh, this message translates to:
-  /// **'拦截响应'**
+  /// **'拦截方式'**
   String get serverFilterBlockMode;
+
+  /// No description provided for @serverFilterSource.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则来源'**
+  String get serverFilterSource;
+
+  /// No description provided for @serverFilterCustomCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 条自定义规则'**
+  String serverFilterCustomCount(int count);
+
+  /// No description provided for @serverFilterSubscriptionCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个订阅'**
+  String serverFilterSubscriptionCount(int count);
+
+  /// No description provided for @serverFilterTestTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则测试'**
+  String get serverFilterTestTitle;
+
+  /// No description provided for @serverFilterTestEntryBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'输入域名查看判定结果与命中规则'**
+  String get serverFilterTestEntryBody;
 
   /// No description provided for @serverBlockNullIp.
   ///
@@ -26375,6 +26543,12 @@ abstract class AppL10n {
   /// **'自定义规则'**
   String get serverCustomRules;
 
+  /// No description provided for @serverCustomRulesContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'规则内容'**
+  String get serverCustomRulesContent;
+
   /// No description provided for @serverCustomRulesHint.
   ///
   /// In zh, this message translates to:
@@ -26392,6 +26566,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'订阅列表'**
   String get serverSubscriptions;
+
+  /// No description provided for @serverSubscriptionList.
+  ///
+  /// In zh, this message translates to:
+  /// **'订阅来源'**
+  String get serverSubscriptionList;
 
   /// No description provided for @serverSubscriptionEmpty.
   ///
@@ -26428,6 +26608,12 @@ abstract class AppL10n {
   /// In zh, this message translates to:
   /// **'刷新订阅'**
   String get serverSubscriptionRefresh;
+
+  /// No description provided for @serverSubscriptionError.
+  ///
+  /// In zh, this message translates to:
+  /// **'错误'**
+  String get serverSubscriptionError;
 
   /// No description provided for @serverSubscriptionRefreshed.
   ///
@@ -26489,6 +26675,18 @@ abstract class AppL10n {
   /// **'测试'**
   String get serverCheckAction;
 
+  /// No description provided for @serverCheckChecking.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试中'**
+  String get serverCheckChecking;
+
+  /// No description provided for @serverCheckResult.
+  ///
+  /// In zh, this message translates to:
+  /// **'判定结果'**
+  String get serverCheckResult;
+
   /// No description provided for @serverCheckBlocked.
   ///
   /// In zh, this message translates to:
@@ -26519,6 +26717,18 @@ abstract class AppL10n {
   /// **'缓存上游响应并复用 TTL'**
   String get serverCacheEnabledBody;
 
+  /// No description provided for @serverCacheState.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存状态'**
+  String get serverCacheState;
+
+  /// No description provided for @serverCacheCapacity.
+  ///
+  /// In zh, this message translates to:
+  /// **'容量'**
+  String get serverCacheCapacity;
+
   /// No description provided for @serverCacheEntries.
   ///
   /// In zh, this message translates to:
@@ -26528,7 +26738,7 @@ abstract class AppL10n {
   /// No description provided for @serverCacheMode.
   ///
   /// In zh, this message translates to:
-  /// **'缓存模式'**
+  /// **'TTL 模式'**
   String get serverCacheMode;
 
   /// No description provided for @serverCacheLimit.
@@ -26621,11 +26831,53 @@ abstract class AppL10n {
   /// **'缓存设置已保存'**
   String get serverCacheSaved;
 
+  /// No description provided for @serverCacheAdvanced.
+  ///
+  /// In zh, this message translates to:
+  /// **'高级选项'**
+  String get serverCacheAdvanced;
+
+  /// No description provided for @serverCacheBehavior.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存行为'**
+  String get serverCacheBehavior;
+
+  /// No description provided for @serverCacheAdvancedSummary.
+  ///
+  /// In zh, this message translates to:
+  /// **'最小 TTL、过期回退、否定缓存、乐观缓存与预取'**
+  String get serverCacheAdvancedSummary;
+
+  /// No description provided for @serverCacheAdvancedTtl.
+  ///
+  /// In zh, this message translates to:
+  /// **'TTL 下限'**
+  String get serverCacheAdvancedTtl;
+
+  /// No description provided for @serverCacheFallback.
+  ///
+  /// In zh, this message translates to:
+  /// **'过期与否定缓存'**
+  String get serverCacheFallback;
+
+  /// No description provided for @serverCachePerformance.
+  ///
+  /// In zh, this message translates to:
+  /// **'预取与优化'**
+  String get serverCachePerformance;
+
   /// No description provided for @serverQueryLogEnabled.
   ///
   /// In zh, this message translates to:
   /// **'记录查询'**
   String get serverQueryLogEnabled;
+
+  /// No description provided for @serverQueryLogContent.
+  ///
+  /// In zh, this message translates to:
+  /// **'记录内容'**
+  String get serverQueryLogContent;
 
   /// No description provided for @serverQueryLogEnabledBody.
   ///
@@ -26756,7 +27008,7 @@ abstract class AppL10n {
   /// No description provided for @serverPortFixed.
   ///
   /// In zh, this message translates to:
-  /// **'由 Root 状态决定，不能手动修改'**
+  /// **'实际端口由 Root 权限与运行状态决定'**
   String get serverPortFixed;
 
   /// No description provided for @serverSettingsProbeRoot.
