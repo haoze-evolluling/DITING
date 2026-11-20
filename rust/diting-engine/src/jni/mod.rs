@@ -264,6 +264,30 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStandalone
     answer(&env, error)
 }
 
+/// `startStandaloneLoopback(port)`: same contract as `startStandalone`, bound to `127.0.0.1` and
+/// `::1` only (the root no-VPN takeover's redirect target).
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartStandaloneLoopback(
+    mut env: JNIEnv<'_>,
+    _class: JObject<'_>,
+    handle: jlong,
+    port: jlong,
+) -> jstring {
+    let error = with_engine(
+        &mut env,
+        handle,
+        Some("engine released".to_string()),
+        |engine| {
+            let port = u16::try_from(port).unwrap_or(0);
+            engine
+                .start_standalone_loopback(port)
+                .err()
+                .map(|error| error.to_string())
+        },
+    );
+    answer(&env, error)
+}
+
 /// `standalonePort()`: the port the server is listening on, 0 when it is not running.
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStandalonePort(

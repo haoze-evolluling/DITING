@@ -210,11 +210,15 @@ class RootDnsService : Service() {
     }
 
     /// Binds the standalone DNS server, trying the preferred ports in order.
+    ///
+    /// Loopback only: the redirect target is `127.0.0.1:<port>`, and a reply from any other local
+    /// address would fail the client's connected-socket source check before conntrack can undo
+    /// the redirect.
     private fun startServer(current: Engine): Int {
         var lastError = ""
         for (port in PORTS) {
             val error = runCatching {
-                current.startStandalone(port)
+                current.startStandaloneLoopback(port)
                 null
             }.getOrElse { it.message ?: it.javaClass.simpleName }
             if (error == null) return port

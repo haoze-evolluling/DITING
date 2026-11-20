@@ -11,10 +11,12 @@
 | `RootDnsService` | 前台服务：探测 Root、启停引擎、安装/移除重定向规则 |
 | `RootDnsBridge` | MethodChannel `com.haoze.diting/root_dns`，与 VPN 通道同形 |
 | `RootDnsRules` | 通过 `su -c` 管理 iptables / ip6tables 链与 Private DNS |
-| Rust `Engine::startStandalone` | 无 TUN 的 UDP/TCP DNS 服务，复用普通模式的解析、规则、缓存与日志 |
+| Rust `Engine::startStandaloneLoopback` | 无 TUN 的 UDP/TCP DNS 服务，复用普通模式的解析、规则、缓存与日志 |
 
 引擎以应用 UID 运行，监听 `15353–15356` 中的第一个空闲端口；Root 只负责把流量导向该端口，
-不用于运行 DNS 进程本身。
+不用于运行 DNS 进程本身。监听地址限定为回环（`127.0.0.1` / `::1`）：`REDIRECT` 只改写
+目的地址，回程源地址由 conntrack 还原；若绑定 `0.0.0.0`，应答会带着网卡地址返回，使用
+connected socket 的系统解析器会把它当成伪造包丢弃。
 
 ## 启动顺序
 

@@ -82,10 +82,41 @@ impl Drop for Standalone {
 /// Binds and starts the four servers. The IPv4 pair is mandatory; the IPv6 pair is reported and
 /// skipped when the device has no IPv6, exactly like the old `logf`-and-continue branch.
 pub fn start(engine: Arc<Engine>, port: u16) -> EngineResult<Standalone> {
-    let (udp4, tcp4, port) = bind_ipv4_pair(port)?;
+    start_on(
+        engine,
+        port,
+        IpAddr::V4(Ipv4Addr::UNSPECIFIED),
+        IpAddr::V6(Ipv6Addr::UNSPECIFIED),
+    )
+}
 
-    let udp6 = bind_udp(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port, true).ok();
-    let tcp6 = bind_tcp(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port, true).ok();
+/// Binds only to loopback (`127.0.0.1` / `::1`).
+///
+/// Android's `nat OUTPUT REDIRECT` rewrites the destination of a local DNS query to the
+/// redirect port but leaves the reply's source address rewriting to conntrack. A listener bound
+/// to `0.0.0.0` answers from the interface address instead of the original DNS server, so a
+/// connected socket (netd, bionic's `res_nsend`) drops the reply as spoofed. Binding loopback
+/// makes the reply source the redirect destination itself, and conntrack restores the DNS
+/// server's address before the client sees it.
+pub fn start_loopback(engine: Arc<Engine>, port: u16) -> EngineResult<Standalone> {
+    start_on(
+        engine,
+        port,
+        IpAddr::V4(Ipv4Addr::LOCALHOST),
+        IpAddr::V6(Ipv6Addr::LOCALHOST),
+    )
+}
+
+fn start_on(
+    engine: Arc<Engine>,
+    port: u16,
+    ipv4: IpAddr,
+    ipv6: IpAddr,
+) -> EngineResult<Standalone> {
+    let (udp4, tcp4, port) = bind_ipv4_pair(ipv4, port)?;
+
+    let udp6 = bind_udp(ipv6, port, true).ok();
+    let tcp6 = bind_tcp(ipv6, port, true).ok();
     if udp6.is_none() || tcp6.is_none() {
         engine.log_error(&format!("Standalone IPv6 not available on port {port}"));
     }
@@ -140,13 +171,13 @@ pub fn start(engine: Arc<Engine>, port: u16) -> EngineResult<Standalone> {
 /// takes the ephemeral port and TCP has to follow; on a busy host that TCP port can already be taken
 /// (Windows and Linux keep separate ephemeral ranges), so the pair is retried a few times before the
 /// start fails.
-fn bind_ipv4_pair(port: u16) -> EngineResult<(StdUdpSocket, StdTcpListener, u16)> {
+fn bind_ipv4_pair(address: IpAddr, port: u16) -> EngineResult<(StdUdpSocket, StdTcpListener, u16)> {
     let attempts = if port == 0 { 8 } else { 1 };
     let mut last_error = String::new();
     for _ in 0..attempts {
-        let udp = bind_udp(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port, false).map_err(|error| {
+        let udp = bind_udp(address, port, false).map_err(|error| {
             EngineError::bind(format!(
-                "IPv4 UDP Server failed to bind 0.0.0.0:{port}: {error}"
+                "IPv4 UDP Server failed to bind {address}:{port}: {error}"
             ))
         })?;
         let actual = if port == 0 {
@@ -158,10 +189,10 @@ fn bind_ipv4_pair(port: u16) -> EngineResult<(StdUdpSocket, StdTcpListener, u16)
         } else {
             port
         };
-        match bind_tcp(IpAddr::V4(Ipv4Addr::UNSPECIFIED), actual, false) {
+        match bind_tcp(address, actual, false) {
             Ok(tcp) => return Ok((udp, tcp, actual)),
             Err(error) => {
-                last_error = format!("IPv4 TCP Server failed to bind 0.0.0.0:{actual}: {error}");
+                last_error = format!("IPv4 TCP Server failed to bind {address}:{actual}: {error}");
                 if port != 0 {
                     break;
                 }

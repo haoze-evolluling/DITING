@@ -53,11 +53,19 @@ class Engine : TunnelEngine, AutoCloseable {
     // ---- standalone DNS server --------------------------------------------------------------
 
     /// Starts the TUN-free DNS server on [port] (UDP + TCP, IPv4, plus IPv6 when available).
-    ///
-    /// Used by the root no-VPN takeover: the engine keeps running as the app UID and root only
-    /// redirects local port-53 traffic into this listener. Throws with the bind error text.
+    /// Throws with the bind error text.
     fun startStandalone(port: Int) {
         val error = nativeStartStandalone(handle, port.toLong())
+        if (error != null) throw IllegalStateException(error)
+    }
+
+    /// Starts the TUN-free DNS server bound to loopback only.
+    ///
+    /// Used by the root no-VPN takeover: the engine keeps running as the app UID, root redirects
+    /// local port-53 traffic into this listener, and a loopback-bound socket is what lets
+    /// conntrack rewrite the reply source back to the DNS server the client sent to.
+    fun startStandaloneLoopback(port: Int) {
+        val error = nativeStartStandaloneLoopback(handle, port.toLong())
         if (error != null) throw IllegalStateException(error)
     }
 
@@ -281,6 +289,8 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeIsRunning(handle: Long): Boolean
 
     private external fun nativeStartStandalone(handle: Long, port: Long): String?
+
+    private external fun nativeStartStandaloneLoopback(handle: Long, port: Long): String?
 
     private external fun nativeStopStandalone(handle: Long)
 

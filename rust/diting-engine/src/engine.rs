@@ -640,6 +640,19 @@ impl Engine {
 
     /// Starts the standalone DNS server on `port` (UDP + TCP, IPv4 + IPv6 when available).
     pub fn start_standalone(self: &Arc<Self>, port: u16) -> EngineResult<()> {
+        self.start_standalone_on(port, false)
+    }
+
+    /// Starts the standalone DNS server bound to loopback only.
+    ///
+    /// Used by the root no-VPN takeover: iptables REDIRECT rewrites the destination to the
+    /// loopback listener, and only a loopback-bound socket answers with the address conntrack
+    /// expects, so the client's connected DNS socket accepts the reply.
+    pub fn start_standalone_loopback(self: &Arc<Self>, port: u16) -> EngineResult<()> {
+        self.start_standalone_on(port, true)
+    }
+
+    fn start_standalone_on(self: &Arc<Self>, port: u16, loopback: bool) -> EngineResult<()> {
         let mut server = self
             .server
             .lock()
@@ -647,7 +660,11 @@ impl Engine {
         if let Some(existing) = server.take() {
             existing.stop();
         }
-        let started = crate::standalone::start(Arc::clone(self), port)?;
+        let started = if loopback {
+            crate::standalone::start_loopback(Arc::clone(self), port)?
+        } else {
+            crate::standalone::start(Arc::clone(self), port)?
+        };
         *server = Some(started);
         self.running.store(true, Ordering::Release);
         Ok(())
