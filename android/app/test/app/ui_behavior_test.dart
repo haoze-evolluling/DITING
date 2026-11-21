@@ -233,9 +233,9 @@ void _initialAgreement() {
     expect(message, contains('运行机制与注意事项'));
     expect(message, contains('免责条款'));
 
-    expect(message, contains('两种工作模式'));
-    expect(message, contains('普通模式（全隧道深度管控）'));
-    expect(message, contains('极速模式（Rust 引擎 + DNS 窄路由）'));
+    expect(message, contains('三种工作模式'));
+    expect(message, contains('普通与极速模式都通过全隧道接管全部流量'));
+    expect(message, contains('两种模式功能相同'));
     expect(message, contains('无任何远程数据上传与隐私追踪'));
     expect(message, contains('本软件按现状提供'));
     expect(message, contains('由使用者自行承担'));

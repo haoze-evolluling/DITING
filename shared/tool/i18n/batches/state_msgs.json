@@ -15,10 +15,6 @@
     "未找到旧版数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。",
     "The legacy database was not found, so DNS and HTTPS logs cannot be read. Start the service once first."
   ],
-  "agentExpressNoHttps": [
-    "极速模式只做窄路由 DNS 加速，不产生 HTTPS 检查记录",
-    "Express mode only accelerates DNS on a narrow route and produces no HTTPS inspection records"
-  ],
   "autoUpdateDisabled": [
     "自动更新已关闭",
     "Automatic updates are off"

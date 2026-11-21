@@ -515,7 +515,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers two work modes: Normal (full-tunnel control) and Turbo (a DNS-only narrow route on the same Rust engine). Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and Turbo modes take over DNS resolution through the Android local VPN interface and never connect to a remote VPN server. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, express and server. Normal and express both take over all traffic through a full tunnel, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and express modes take over traffic through the Android local VPN interface and never connect to a remote VPN server. The two modes are functionally identical and each keeps its own rules, cache and logs. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -860,9 +860,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get speedDownload => 'Download';
-
-  @override
-  String get speedExpressNoStats => 'Not measured in express mode';
 
   @override
   String get speedNoChannel => 'No rate channel in this environment';
@@ -1280,10 +1277,6 @@ class AppL10nEn extends AppL10n {
       'Rates come from the core data plane\'s live counters and cover only tunneled traffic; this app\'s own probes and speed tests are excluded. Today\'s totals come from the app traffic statistics, the same data as the Traffic page.';
 
   @override
-  String get speedExpressSource =>
-      'Express mode bypasses the core data plane, so there is no per-second rate; switch back to normal mode to restore it.';
-
-  @override
   String get speedNoChannelSource =>
       'This environment has no rate channel (desktop or pure Dart tests), so no live rate can be read.';
 
@@ -1563,7 +1556,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get workModeExpressSummary =>
-      'DNS narrow route, acceleration and rule filtering, Android 9+ (64-bit)';
+      'Same full-tunnel feature set as normal mode, with its own rules and logs';
 
   @override
   String get workModeSettingTitle => 'Work mode';
@@ -1753,10 +1746,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get agentNoLegacyDatabase =>
       'The legacy database was not found, so DNS and HTTPS logs cannot be read. Start the service once first.';
-
-  @override
-  String get agentExpressNoHttps =>
-      'Express mode only accelerates DNS on a narrow route and produces no HTTPS inspection records';
 
   @override
   String get autoUpdateDisabled => 'Automatic updates are off';
@@ -2820,7 +2809,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get notificationStatsFooter =>
-      'Counts start when the service starts and do not depend on the log mode. Press and drag an enabled item to reorder it. Express mode has no live rate, so that item is left out there.';
+      'Counts start when the service starts and do not depend on the log mode. Press and drag an enabled item to reorder it.';
 
   @override
   String get notificationStatsHidden => 'Hidden items';
@@ -3930,7 +3919,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String trafficNoLiveRate(String window) {
-    return 'This mode does not measure a live rate: express mode\'s narrow route bypasses the engine\'s traffic counters and there is no cumulative table for it. The $window download/upload figures and the ranking below are still real numbers.';
+    return 'This mode does not measure a live rate: the current takeover path bypasses the engine\'s traffic counters. The $window download/upload figures and the ranking below are still real numbers.';
   }
 
   @override
@@ -5337,7 +5326,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      'Both modes keep their own rules, cache and logs; they differ in how they take over traffic: normal mode uses a full tunnel, while express mode narrows the route to DNS only.';
+      'Both modes are functionally identical; only their data is separate: each keeps its own rules, cache and logs.';
 
   @override
   String get modeNormalFeature1 => 'Full tunnel';
@@ -5368,32 +5357,32 @@ class AppL10nEn extends AppL10n {
       'Records upload, download and query counts per app';
 
   @override
-  String get modeExpressFeature1 => 'Rust engine, narrow route';
+  String get modeExpressFeature1 => 'Full tunnel';
 
   @override
   String get modeExpressFeature1Body =>
-      'Only DNS is captured; everything else goes direct';
+      'The Rust engine handles all traffic, with per-app routing';
 
   @override
-  String get modeExpressFeature2 => 'Four upstream strategies';
+  String get modeExpressFeature2 => 'All rule features';
 
   @override
   String get modeExpressFeature2Body =>
-      'Single provider / smart / race / primary-backup';
+      'Blocklists, allowlists, rewrites and HTTPS inspection are all available';
 
   @override
-  String get modeExpressFeature3 => '64-shard LRU cache';
+  String get modeExpressFeature3 => 'Optional HTTPS inspection';
 
   @override
   String get modeExpressFeature3Body =>
-      'A high hit rate with predictable memory use';
+      'Requires installing and trusting the local CA certificate';
 
   @override
-  String get modeExpressFeature4 => 'Lower power';
+  String get modeExpressFeature4 => 'Separate data';
 
   @override
   String get modeExpressFeature4Body =>
-      'DNS queries only, no full-tunnel forwarding';
+      'Rules, cache and logs are stored separately from normal mode';
 
   @override
   String get onboardingTitle => 'Setup';
@@ -5472,7 +5461,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get permVpnExpressBody =>
-      'Creates the narrow-route tunnel; denying it prevents startup';
+      'Creates the local tunnel that handles traffic; denying it prevents startup';
 
   @override
   String get permNeeded => 'These permissions are needed';
@@ -5500,14 +5489,14 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get onboardingTipExpress1 =>
-      'Express mode starts faster but is a subset of normal mode.';
+      'Express mode has the same features as normal mode, with its own rules, cache and logs.';
 
   @override
   String get onboardingTipExpress2 => 'Racing needs at least two providers.';
 
   @override
   String get onboardingTipExpress3 =>
-      'Switch back to normal mode when you need HTTPS inspection or app control.';
+      'The two modes keep separate data; switching stops the current service first.';
 
   @override
   String get onboardingReady => 'You are ready';
@@ -7032,7 +7021,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get autoUpdateIntervalFooter =>
-      'Settings are stored in the dataset of the current work mode (normal, speed and server each keep their own). Timed updates follow the phone\'s clock and time zone; if the chosen time has already passed today, counting starts from the next one. There is no background task queue: while the app is in the foreground the update runs on time, otherwise it catches up on the next launch or return to the foreground, and never runs while the process is closed.';
+      'Settings are stored in the dataset of the current work mode (normal, express and server each keep their own). Timed updates follow the phone\'s clock and time zone; if the chosen time has already passed today, counting starts from the next one. There is no background task queue: while the app is in the foreground the update runs on time, otherwise it catches up on the next launch or return to the foreground, and never runs while the process is closed.';
 
   @override
   String get autoUpdateStatusSection => 'Run status';
@@ -8654,7 +8643,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get resolutionConfigFooter =>
-      'The resolution mode and race providers are stored in the dataset of the current work mode (normal, speed and server each keep their own).';
+      'The resolution mode and race providers are stored in the dataset of the current work mode (normal, express and server each keep their own).';
 
   @override
   String get resolutionNotConfigured => 'Not configured';

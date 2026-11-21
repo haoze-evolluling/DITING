@@ -30,7 +30,7 @@
   "workModeServerSummary": ["纯 DNS 代理与解析加速、低功耗", "Pure DNS proxy with resolution acceleration, low power"],
   "workModeExpressTitle": ["极速模式", "Express mode"],
   "workModeExpressBadge": ["极速", "Express"],
-  "workModeExpressSummary": ["DNS 窄路由、加速与规则过滤、Android 9+（64 位）", "DNS narrow route, acceleration and rule filtering, Android 9+ (64-bit)"],
+  "workModeExpressSummary": ["与普通模式相同的全功能接管，规则与日志独立存放", "Same full-tunnel feature set as normal mode, with its own rules and logs"],
   "stateStopped": ["已停止", "Stopped"],
   "stateStarting": ["启动中", "Starting"],
   "stateRunning": ["运行中", "Running"],

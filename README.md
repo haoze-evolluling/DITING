@@ -16,7 +16,7 @@ Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 - 上游服务商：DoH、DoT 与传统 UDP/TCP DNS，可自定义服务商与上游节点。
 - 引导解析（Bootstrap）：用于首次解析加密上游域名。
 - 解析策略：单一服务、智能选择、最快响应、依次尝试。
-- 解析缓存：开关、容量、TTL 上下限、排除规则与落盘持久化；极速模式使用 64 分片 LRU。
+- 解析缓存：开关、容量、TTL 上下限、排除规则与落盘持久化（64 分片 LRU）。
 - 域名覆写：把域名指向指定 IPv4、IPv6、CNAME 或 TXT。
 - DNS64：在 IPv6-only 网络中用 `64:ff9b::/96` 前缀从 A 记录合成 AAAA。
 - DNS 隐私：阻断 HTTPS/SVCB 记录与 DNS 重绑定保护（Android）；协议加固与 ECS 子网隐私（桌面端）。
@@ -79,8 +79,8 @@ Android 客户端在首次启动时选择工作模式，之后可在设置中切
 
 | 模式 | 数据面 | 特点 |
 | --- | --- | --- |
-| 普通模式 | `VpnService` + TUN 全隧道，Rust 引擎接管全部流量 | 功能最完整：规则、HTTPS 检查、按应用分流、流量统计 |
-| 极速模式 | 窄路由，仅接管 DNS 端口，其余流量直连物理网络 | 功耗更低，四种上游调度，64 分片 LRU 缓存 |
+| 普通模式 | `VpnService` + TUN 全隧道，Rust 引擎接管全部流量 | 规则、HTTPS 检查、按应用分流、流量统计 |
+| 极速模式 | 与普通模式相同的全隧道数据面，规则与日志另存一套 | 功能与普通模式一致，数据完全独立 |
 | 服务器模式 | 独立 Rust 进程监听 53 或 1053 端口 | 为局域网设备提供 DNS 过滤、缓存与查询日志 |
 
 ### 普通模式
@@ -89,7 +89,7 @@ Rust 引擎接管全部流量，支持应用分流、按应用拦截、HTTPS 检
 
 ### 极速模式
 
-只把 DNS 端口收窄接管，其他流量直连物理网络。适合只需要 DNS 过滤、希望降低功耗的场景，要求 Android 9+ 的 64 位设备。
+与普通模式共用同一套全隧道数据面，路由、引擎能力、通知与统计行为完全一致，区别只在数据：规则库、日志库与偏好容器各自独立，两种模式互不影响。
 
 ### 服务器模式（Android）
 
@@ -115,7 +115,7 @@ Rust 引擎接管全部流量，支持应用分流、按应用拦截、HTTPS 检
 界面由 Flutter 构建，Kotlin 负责 Android 系统能力，Rust 负责数据面：
 
 - Flutter 通过 MethodChannel 与 Kotlin 通信，覆盖 VPN、Root DNS、服务器、自动化、通知、存储与诊断等通道。
-- Kotlin 实现 `DitingVpnService`（普通模式）、`ExpressVpnService`（极速模式）、`RootDnsService`、`ServerDnsService`，以及前台服务、唤起广播、快捷磁贴、桌面小组件与悬浮日志窗。
+- Kotlin 用 `FullTunnelVpnService` 承载普通与极速模式共用的全隧道逻辑，`DitingVpnService` / `ExpressVpnService` 只注入各自的模式参数与数据存储；另有 `RootDnsService`、`ServerDnsService`，以及前台服务、唤起广播、快捷磁贴、桌面小组件与悬浮日志窗。
 - `libditing_native.so` 是单一 cdylib，链接隧道引擎、全部 Flutter/Kotlin 侧内核和服务器运行时；`libditing_server.so` 是服务器模式的极小启动器，加载同一份原生库后调用 `diting_server_main`。
 - 数据存储使用 SQLite：三种模式各自的规则库与日志库，加上一个全局自动化库，共 7 个 V2 数据库。服务器模式另有独立的 `files/server/` 目录与 JSONL 查询日志。
 

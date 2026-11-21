@@ -491,7 +491,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供两种工作模式：普通模式（全隧道深度管控）与极速模式（Rust 引擎 + DNS 窄路由）。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通模式与极速模式依赖 Android 本地 VPN 接口接管 DNS 解析，不连接任何远程 VPN 服务器。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、极速模式与服务器模式；普通与极速模式都通过全隧道接管全部流量，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与极速模式依赖 Android 本地 VPN 接口接管流量，不连接任何远程 VPN 服务器。两种模式功能相同，各自保存独立的规则、缓存与日志。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -821,9 +821,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get speedDownload => '下载';
-
-  @override
-  String get speedExpressNoStats => '极速模式不统计';
 
   @override
   String get speedNoChannel => '当前环境无速率通道';
@@ -1221,9 +1218,6 @@ class AppL10nZh extends AppL10n {
       '速率来自内核数据面的实时计数，只包含经过隧道转发的流量；本应用自身的探测与测速不计入。今日累计来自应用流量统计，与「流量统计」页同一份数据。';
 
   @override
-  String get speedExpressSource => '极速模式不经过内核数据面，因此没有逐秒速率；切回普通模式后恢复。';
-
-  @override
   String get speedNoChannelSource => '当前环境没有速率通道（桌面环境或纯 Dart 测试），读不到实时速率。';
 
   @override
@@ -1495,7 +1489,7 @@ class AppL10nZh extends AppL10n {
   String get workModeExpressBadge => '极速';
 
   @override
-  String get workModeExpressSummary => 'DNS 窄路由、加速与规则过滤、Android 9+（64 位）';
+  String get workModeExpressSummary => '与普通模式相同的全功能接管，规则与日志独立存放';
 
   @override
   String get workModeSettingTitle => '运行模式';
@@ -1680,9 +1674,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agentNoLegacyDatabase => '未找到旧版数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。';
-
-  @override
-  String get agentExpressNoHttps => '极速模式只做窄路由 DNS 加速，不产生 HTTPS 检查记录';
 
   @override
   String get autoUpdateDisabled => '自动更新已关闭';
@@ -2666,7 +2657,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get notificationStatsFooter =>
-      '统计从本次服务启动开始累计，与日志记录模式无关；已开启的项目按住拖动可调整顺序。极速模式没有实时网速，该项会自动省略。';
+      '统计从本次服务启动开始累计，与日志记录模式无关；已开启的项目按住拖动可调整顺序。';
 
   @override
   String get notificationStatsHidden => '未显示的项目';
@@ -3728,7 +3719,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String trafficNoLiveRate(String window) {
-    return '本模式不统计实时速率：极速模式的窄路由不经过引擎的流量计数器，本仓也没有它的累计表。上面的 $window 下行 / 上行与下方排行都是真实数字。';
+    return '本模式不统计实时速率：当前接管方式不经过引擎的流量计数器。上面的 $window 下行 / 上行与下方排行都是真实数字。';
   }
 
   @override
@@ -5072,8 +5063,7 @@ class AppL10nZh extends AppL10n {
   String get modeSwitchNote => '随时可以在设置里重新选择；切换模式会先停止当前模式的服务，两个模式不会同时运行。';
 
   @override
-  String get modeSharedNote =>
-      '两种模式使用独立的规则、缓存与日志，区别在接管方式：普通模式走全隧道，极速模式把路由收窄到只接管 DNS。';
+  String get modeSharedNote => '两种模式功能完全相同，区别只在数据：各自的规则、缓存与日志独立保存。';
 
   @override
   String get modeNormalFeature1 => '全隧道接管';
@@ -5100,28 +5090,28 @@ class AppL10nZh extends AppL10n {
   String get modeNormalFeature4Body => '按应用记录上下行与查询数';
 
   @override
-  String get modeExpressFeature1 => 'Rust 引擎 + 窄路由';
+  String get modeExpressFeature1 => '全隧道接管';
 
   @override
-  String get modeExpressFeature1Body => '只接管 DNS 端口，其余流量直连物理网络';
+  String get modeExpressFeature1Body => 'Rust 引擎接管全部流量，可按应用分流';
 
   @override
-  String get modeExpressFeature2 => '四种上游调度';
+  String get modeExpressFeature2 => '全功能规则';
 
   @override
-  String get modeExpressFeature2Body => '单服务商 / 智能 / 竞速 / 主备';
+  String get modeExpressFeature2Body => '黑白名单、覆写、HTTPS 检查全部可用';
 
   @override
-  String get modeExpressFeature3 => '64 分片 LRU 缓存';
+  String get modeExpressFeature3 => '可选 HTTPS 检查';
 
   @override
-  String get modeExpressFeature3Body => '命中率高、内存占用可控';
+  String get modeExpressFeature3Body => '需要安装并信任本地 CA 证书';
 
   @override
-  String get modeExpressFeature4 => '更低功耗';
+  String get modeExpressFeature4 => '独立数据存储';
 
   @override
-  String get modeExpressFeature4Body => '只处理 DNS 查询，无全隧道转发';
+  String get modeExpressFeature4Body => '规则、缓存与日志单独保存，与普通模式互不影响';
 
   @override
   String get onboardingTitle => '引导';
@@ -5192,7 +5182,7 @@ class AppL10nZh extends AppL10n {
   String get permBatteryBody => '避免后台被杀；拒绝则长时间待机可能断开';
 
   @override
-  String get permVpnExpressBody => '建立窄路由隧道；拒绝则无法启动';
+  String get permVpnExpressBody => '建立本地隧道接管流量；拒绝则无法启动';
 
   @override
   String get permNeeded => '需要这些权限';
@@ -5215,13 +5205,13 @@ class AppL10nZh extends AppL10n {
   String get onboardingTipNormal3 => '首页句子和透明度都能在设置里改。';
 
   @override
-  String get onboardingTipExpress1 => '极速模式启动更快，但功能是普通模式的子集。';
+  String get onboardingTipExpress1 => '极速模式与普通模式功能相同，规则、缓存与日志各自独立。';
 
   @override
   String get onboardingTipExpress2 => '多路竞速至少要选 2 家服务商。';
 
   @override
-  String get onboardingTipExpress3 => '需要 HTTPS 检查或应用管控时请切回普通模式。';
+  String get onboardingTipExpress3 => '两种模式的数据不互通，切换会先停止当前服务。';
 
   @override
   String get onboardingReady => '可以开始了';

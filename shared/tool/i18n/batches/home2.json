@@ -103,10 +103,6 @@
     "下载",
     "Download"
   ],
-  "speedExpressNoStats": [
-    "极速模式不统计",
-    "Not measured in express mode"
-  ],
   "speedNoChannel": [
     "当前环境无速率通道",
     "No rate channel in this environment"
@@ -634,10 +630,6 @@
   "speedRateFooter": [
     "速率来自内核数据面的实时计数，只包含经过隧道转发的流量；本应用自身的探测与测速不计入。今日累计来自应用流量统计，与「流量统计」页同一份数据。",
     "Rates come from the core data plane's live counters and cover only tunneled traffic; this app's own probes and speed tests are excluded. Today's totals come from the app traffic statistics, the same data as the Traffic page."
-  ],
-  "speedExpressSource": [
-    "极速模式不经过内核数据面，因此没有逐秒速率；切回普通模式后恢复。",
-    "Express mode bypasses the core data plane, so there is no per-second rate; switch back to normal mode to restore it."
   ],
   "speedNoChannelSource": [
     "当前环境没有速率通道（桌面环境或纯 Dart 测试），读不到实时速率。",

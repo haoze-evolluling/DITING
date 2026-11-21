@@ -550,8 +550,6 @@ abstract class AppL10n {
 
   String get speedDownload;
 
-  String get speedExpressNoStats;
-
   String get speedNoChannel;
 
   String get resolutionModeTitle;
@@ -809,8 +807,6 @@ abstract class AppL10n {
   String get speedTotal;
 
   String get speedRateFooter;
-
-  String get speedExpressSource;
 
   String get speedNoChannelSource;
 
@@ -1073,8 +1069,6 @@ abstract class AppL10n {
   String get agentNoExtraInfo;
 
   String get agentNoLegacyDatabase;
-
-  String get agentExpressNoHttps;
 
   String get autoUpdateDisabled;
 
