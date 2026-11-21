@@ -30,9 +30,11 @@ impl Default for Limits {
     fn default() -> Self {
         Self {
             mtu: 1400,
-            max_tcp_flows: 4096,
+            // 收窗口翻倍以提升高 RTT 下的上行吞吐；同时把并发上限减半，
+            // 最坏内存占用仍与原先持平。
+            max_tcp_flows: 2048,
             max_udp_bindings: 2048,
-            tcp_rx_bytes: 32 * 1024,
+            tcp_rx_bytes: 64 * 1024,
             tcp_tx_bytes: 32 * 1024,
             udp_rx_bytes: 4096,
             udp_tx_bytes: 4096,
@@ -233,6 +235,27 @@ impl Netstack {
         }
     }
 
+    /// Relay 流的上行信用窗口；由会话线程在流打开时挂上。
+    pub(crate) fn set_upload_gate(&mut self, key: &TcpKey, gate: std::sync::Arc<tokio::sync::Semaphore>) {
+        if let Some(flow) = self.tcp.get_mut(key) {
+            flow.upload = Some(gate);
+        }
+    }
+
+    /// 内部通道一时腾不出位置时，把已取出的数据按原顺序放回队首，
+    /// 等下一次 poll 再投递；eof 标记同样延后。
+    pub fn tcp_requeue(&mut self, key: &TcpKey, data: Vec<u8>, eof: bool) {
+        let Some(flow) = self.tcp.get_mut(key) else {
+            return;
+        };
+        for byte in data.into_iter().rev() {
+            flow.recv.push_front(byte);
+        }
+        if eof {
+            flow.eof_reported = false;
+        }
+    }
+
     pub fn udp_take(&mut self) -> Option<UdpDatagram> {
         self.datagrams.pop_front()
     }
@@ -426,18 +449,38 @@ impl Netstack {
                     | tcp::State::Closed
             );
 
-            while socket.can_recv() {
-                let mut chunk = vec![0u8; 4096.min(limits.tcp_rx_bytes)];
+            // 只有拿到上行信用才继续从 smoltcp 搬数据；信用耗尽时收包缓冲
+            // 会自然填满并关小 TCP 窗口，把压力交还给发送端。
+            let mut budget = flow
+                .upload
+                .as_ref()
+                .map_or(usize::MAX, |gate| gate.available_permits());
+            let room = limits.flow_buffer_bytes.saturating_sub(flow.recv.len());
+            let mut drained = 0usize;
+            while socket.can_recv() && budget > 0 && drained < room {
+                let want = 4096.min(budget).min(room - drained);
+                let mut chunk = vec![0u8; want];
                 match socket.recv_slice(&mut chunk) {
+                    Ok(0) => break,
                     Ok(read) => {
                         flow.recv.extend(chunk[..read].iter().copied());
                         flow.rx_bytes += read as u64;
+                        drained += read;
+                        budget -= read;
                     }
                     Err(_) => break,
                 }
             }
+            if drained > 0 {
+                if let Some(gate) = &flow.upload {
+                    if let Ok(permit) = gate.clone().try_acquire_many_owned(drained as u32) {
+                        permit.forget();
+                    }
+                }
+            }
 
-            if flow.recv.len() > limits.flow_buffer_bytes {
+            // 没有信用窗口的流（拦截/DNS）保留溢出保护。
+            if flow.upload.is_none() && flow.recv.len() > limits.flow_buffer_bytes {
                 socket.abort();
                 flow.recv.clear();
                 flow.closed = true;

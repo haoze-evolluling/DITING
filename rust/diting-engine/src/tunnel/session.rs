@@ -488,6 +488,8 @@ fn open_tcp_flow(
             let task_events = Arc::clone(events);
             let task_counters = Arc::clone(counters);
             let credit = Arc::new(Semaphore::new(MAX_PENDING_WRITE));
+            let upload = Arc::new(Semaphore::new(relay::UPLOAD_WINDOW));
+            net.set_upload_gate(&key, Arc::clone(&upload));
             spawn_flow(
                 engine,
                 flow_tasks,
@@ -499,10 +501,10 @@ fn open_tcp_flow(
                     context.uid,
                     rx,
                     Arc::clone(&credit),
+                    Some(upload),
                 ),
             );
             flows.insert(key, Flow { tx, context });
-            let _ = net;
         }
         FlowAction::Blocked => {
             counters.blocked_flows.fetch_add(1, Ordering::Relaxed);
@@ -527,16 +529,26 @@ fn dispatch_tcp_output(
             continue;
         };
         if !output.data.is_empty() {
-            engine
-                .traffic()
-                .record(flow.context.uid, output.data.len() as i64, 0);
-            if flow.tx.try_send(Inbound::Data(output.data)).is_err() {
-                counters.short_writes.fetch_add(1, Ordering::Relaxed);
-                net.tcp_abort(&output.key, netstack::now());
-                net.tcp_remove(&output.key);
-                flows.remove(&output.key);
-                writes.forget(&output.key);
-                continue;
+            let len = output.data.len();
+            match flow.tx.try_send(Inbound::Data(output.data)) {
+                Ok(()) => engine.traffic().record(flow.context.uid, len as i64, 0),
+                // 流任务暂时落后：数据放回队首，下一轮再投递。
+                // 这里不再 abort，避免上游一时拥塞就把连接打断。
+                Err(mpsc::error::TrySendError::Full(Inbound::Data(data))) => {
+                    counters
+                        .upload_backpressure
+                        .fetch_add(1, Ordering::Relaxed);
+                    net.tcp_requeue(&output.key, data, output.eof);
+                    continue;
+                }
+                // 流任务已经结束（或通道关闭）：连接没有接收方，直接清理。
+                Err(_) => {
+                    net.tcp_abort(&output.key, netstack::now());
+                    net.tcp_remove(&output.key);
+                    flows.remove(&output.key);
+                    writes.forget(&output.key);
+                    continue;
+                }
             }
         }
         if output.eof {

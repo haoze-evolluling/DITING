@@ -1,9 +1,11 @@
 use std::collections::VecDeque;
+use std::sync::Arc;
 
 use smoltcp::iface::SocketHandle;
 use smoltcp::socket::tcp;
 use smoltcp::time::Instant;
 use smoltcp::wire::IpEndpoint;
+use tokio::sync::Semaphore;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TcpKey {
@@ -28,6 +30,9 @@ pub struct TcpFlow {
     pub(crate) eof_reported: bool,
     pub(crate) last_active: Instant,
     pub(crate) closed: bool,
+    /// 上行信用窗口：按字节记账，只有上游真正写走后才归还，
+    /// 让客户端 TCP 窗口随上游速度收缩，而不是在本地无限确认后 abort。
+    pub(crate) upload: Option<Arc<Semaphore>>,
     pub rx_bytes: u64,
     pub tx_bytes: u64,
 }
@@ -45,6 +50,7 @@ impl TcpFlow {
             eof_reported: false,
             last_active: now,
             closed: false,
+            upload: None,
             rx_bytes: 0,
             tx_bytes: 0,
         }

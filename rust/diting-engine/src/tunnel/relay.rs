@@ -16,6 +16,10 @@ pub const TCP_BUFFER: usize = 32 * 1024;
 pub const UDP_BUFFER: usize = 16 * 1024;
 pub const UDP_IDLE: Duration = Duration::from_secs(30);
 
+/// 每个上行连接允许“已从客户端收下、尚未写进上游”的最大字节数。
+/// 超过后 netstack 停止收包，让 TCP 窗口把压力传回发送端。
+pub const UPLOAD_WINDOW: usize = 256 * 1024;
+
 const HOST_PEEK_SIZE: usize = 4 * 1024;
 const HOST_PEEK_TIMEOUT: Duration = Duration::from_secs(3);
 
@@ -84,6 +88,8 @@ pub async fn relay_tcp(
     uid: i32,
     mut inbound: mpsc::Receiver<Inbound>,
     credit: Arc<Semaphore>,
+    // 上行信用窗口由 netstack 挂载；MITM 回退路径没有挂载，传 None。
+    upload: Option<Arc<Semaphore>>,
 ) {
     let (peeked, saw_eof) =
         if is_sniffable_port(key.local.port) && engine.policy().filtering_active() {
@@ -123,13 +129,21 @@ pub async fn relay_tcp(
     let (mut upstream_read, mut upstream_write) = stream.into_split();
 
     let client_to_upstream = tokio::spawn(async move {
-        if !peeked.is_empty() && upstream_write.write_all(&peeked).await.is_err() {
-            return false;
+        if !peeked.is_empty() {
+            if upstream_write.write_all(&peeked).await.is_err() {
+                return false;
+            }
+            if let Some(upload) = &upload {
+                upload.add_permits(peeked.len());
+            }
         }
         if !saw_eof {
             while let Some(Inbound::Data(data)) = inbound.recv().await {
                 if upstream_write.write_all(&data).await.is_err() {
                     return false;
+                }
+                if let Some(upload) = &upload {
+                    upload.add_permits(data.len());
                 }
             }
         }

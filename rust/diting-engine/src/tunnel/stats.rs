@@ -12,6 +12,7 @@ pub struct TunnelCounters {
     pub relay_unavailable: AtomicU64,
     pub malformed: AtomicU64,
     pub short_writes: AtomicU64,
+    pub upload_backpressure: AtomicU64,
     pub udp_replies_dropped: AtomicU64,
 }
 
@@ -42,6 +43,7 @@ impl TunnelCounters {
             "writeRetries": TunnelCounters::get(&self.write_retries),
             "writeFailures": TunnelCounters::get(&self.write_failures),
             "shortWrites": TunnelCounters::get(&self.short_writes),
+            "uploadBackpressure": TunnelCounters::get(&self.upload_backpressure),
             "udpRepliesDropped": TunnelCounters::get(&self.udp_replies_dropped),
             "stackTcpAccepted": stack.tcp_accepted,
             "stackTcpClosed": stack.tcp_closed,
