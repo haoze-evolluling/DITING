@@ -22,7 +22,11 @@ internal class UnderlyingNetworkMonitor(
     private val service: VpnService,
     private val onChanged: (State) -> Unit,
 ) {
-    data class State(val dnsServers: List<String>, val physicalIpv6: Boolean)
+    data class State(
+        val dnsServers: List<String>,
+        val physicalIpv6: Boolean,
+        val clat: Boolean,
+    )
 
     private val handler = Handler(Looper.getMainLooper())
     private val connectivity = context.applicationContext
@@ -80,6 +84,7 @@ internal class UnderlyingNetworkMonitor(
         val state = State(
             dnsServers = dnsServersOf(link),
             physicalIpv6 = hasGlobalIpv6(link),
+            clat = NetworkTopology.clatOnly(link),
         )
         if (state == lastState) return
         lastState = state

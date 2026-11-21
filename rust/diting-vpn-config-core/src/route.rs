@@ -129,7 +129,28 @@ fn excluded_packages(excluded: &[String], self_package: &str, proxy_package: &st
     all
 }
 
-fn normal_plan(enable_ipv6: bool, bypass_lan: bool) -> (Vec<Value>, Vec<&'static str>, Vec<Value>) {
+fn normal_plan(
+    enable_ipv6: bool,
+    bypass_lan: bool,
+    clat: bool,
+) -> (Vec<Value>, Vec<&'static str>, Vec<Value>) {
+    if clat {
+        // IPv6-only + CLAT：IPv4 交给系统 464XLAT 直连，隧道只接管 IPv6 与 DNS，
+        // 否则 VPN 的 0.0.0.0/0 会遮住 clat 接口，导致所有 IPv4 目标 ENETUNREACH。
+        let mut routes = Vec::new();
+        if bypass_lan {
+            routes.push(target("2000::", 3));
+            routes.push(target(DNS_SERVER_V6, 128));
+        } else {
+            routes.push(target("::", 0));
+        }
+        return (
+            vec![target(VPN_ADDRESS_V6, 64)],
+            vec![DNS_SERVER_V6],
+            routes,
+        );
+    }
+
     let mut addresses = vec![target(VPN_ADDRESS_V4, 30)];
     let mut dns_servers = vec![DNS_SERVER_V4];
     if enable_ipv6 {
@@ -158,7 +179,18 @@ fn normal_plan(enable_ipv6: bool, bypass_lan: bool) -> (Vec<Value>, Vec<&'static
     (addresses, dns_servers, routes)
 }
 
-fn express_plan(enable_ipv6: bool) -> (Vec<Value>, Vec<&'static str>, Vec<Value>) {
+fn express_plan(enable_ipv6: bool, clat: bool) -> (Vec<Value>, Vec<&'static str>, Vec<Value>) {
+    if clat {
+        // 同上：不声明任何 IPv4 地址、DNS 或劫持路由，避免遮住 CLAT。
+        let mut routes = vec![target(DNS_SERVER_V6, 128)];
+        routes.extend(IPV6_HIJACK_IPS.iter().map(|address| target(address, 128)));
+        return (
+            vec![target(VPN_ADDRESS_V6, 64)],
+            vec![DNS_SERVER_V6],
+            routes,
+        );
+    }
+
     let mut addresses = vec![target(VPN_ADDRESS_V4, 30)];
     let mut dns_servers = vec![DNS_SERVER_V4];
     let mut routes = vec![target("10.0.0.0", 30)];
@@ -176,15 +208,17 @@ pub fn route_plan(
     mode: &str,
     ipv6_mode: &str,
     physical_ipv6: bool,
+    clat: bool,
     bypass_lan: bool,
     excluded: &[String],
     self_package: &str,
     proxy_package: &str,
 ) -> Option<Value> {
-    let enable_ipv6 = ipv6_enabled(ipv6_mode, physical_ipv6);
+    // CLAT 网络必须保留 IPv6 接管，即使设置里关闭了 IPv6，否则隧道将无处可走。
+    let enable_ipv6 = clat || ipv6_enabled(ipv6_mode, physical_ipv6);
     let (addresses, dns_servers, routes) = match mode {
-        "normal" => normal_plan(enable_ipv6, bypass_lan),
-        "express" => express_plan(enable_ipv6),
+        "normal" => normal_plan(enable_ipv6, bypass_lan, clat),
+        "express" => express_plan(enable_ipv6, clat),
         _ => return None,
     };
     Some(json!({
@@ -234,7 +268,8 @@ mod tests {
 
     #[test]
     fn normal_full_tunnel_uses_the_default_route() {
-        let plan = route_plan("normal", "enabled", false, false, &[], "com.self", "").unwrap();
+        let plan = route_plan("normal", "enabled", false, false, false, &[], "com.self", "")
+            .unwrap();
         assert_eq!(plan["mtu"], 1400);
         assert_eq!(plan["blocking"], true);
         assert_eq!(plan["dnsServers"], json!(["10.0.0.1", "fd00:abcd::1"]));
@@ -251,6 +286,7 @@ mod tests {
             "normal",
             "disabled",
             true,
+            false,
             true,
             &["com.app".to_string()],
             "com.self",
@@ -272,7 +308,8 @@ mod tests {
 
     #[test]
     fn normal_bypass_lan_with_ipv6_adds_the_global_and_dns_routes() {
-        let plan = route_plan("normal", "enabled", false, true, &[], "com.self", "").unwrap();
+        let plan = route_plan("normal", "enabled", false, false, true, &[], "com.self", "")
+            .unwrap();
         let routes = routes(&plan);
         assert!(routes.contains(&("2000::".to_string(), 3)));
         assert!(routes.contains(&("fd00:abcd::1".to_string(), 128)));
@@ -282,7 +319,8 @@ mod tests {
 
     #[test]
     fn express_hijacks_public_v4_and_v6_resolvers() {
-        let plan = route_plan("express", "auto", true, false, &[], "com.self", "").unwrap();
+        let plan = route_plan("express", "auto", true, false, false, &[], "com.self", "")
+            .unwrap();
         assert_eq!(plan["enableIpv6"], true);
         let routes = routes(&plan);
         assert_eq!(routes.first().unwrap(), &("10.0.0.0".to_string(), 30));
@@ -297,7 +335,8 @@ mod tests {
 
     #[test]
     fn express_without_ipv6_keeps_only_the_v4_hijack_set() {
-        let plan = route_plan("express", "disabled", true, false, &[], "com.self", "").unwrap();
+        let plan = route_plan("express", "disabled", true, false, false, &[], "com.self", "")
+            .unwrap();
         assert_eq!(plan["enableIpv6"], false);
         assert_eq!(plan["addresses"].as_array().unwrap().len(), 1);
         assert_eq!(routes(&plan).len(), 1 + IPV4_HIJACK_IPS.len());
@@ -309,6 +348,7 @@ mod tests {
         let plan = route_plan(
             "normal",
             "disabled",
+            false,
             false,
             true,
             &[
@@ -326,6 +366,44 @@ mod tests {
 
     #[test]
     fn unknown_mode_is_rejected() {
-        assert!(route_plan("server", "auto", true, true, &[], "com.self", "").is_none());
+        assert!(route_plan("server", "auto", true, false, true, &[], "com.self", "").is_none());
+    }
+
+    #[test]
+    fn clat_normal_plan_leaves_ipv4_to_the_system() {
+        let plan = route_plan("normal", "auto", true, true, false, &[], "com.self", "").unwrap();
+        assert_eq!(plan["enableIpv6"], true);
+        assert_eq!(plan["addresses"], json!([{"address": VPN_ADDRESS_V6, "prefix": 64}]));
+        assert_eq!(plan["dnsServers"], json!([DNS_SERVER_V6]));
+        assert_eq!(routes(&plan), vec![("::".to_string(), 0)]);
+    }
+
+    #[test]
+    fn clat_normal_plan_still_honours_bypass_lan() {
+        let plan = route_plan("normal", "auto", true, true, true, &[], "com.self", "").unwrap();
+        let routes = routes(&plan);
+        assert_eq!(
+            routes,
+            vec![
+                ("2000::".to_string(), 3),
+                (DNS_SERVER_V6.to_string(), 128)
+            ]
+        );
+    }
+
+    #[test]
+    fn clat_express_plan_keeps_only_ipv6_hijacks() {
+        let plan = route_plan("express", "disabled", true, true, false, &[], "com.self", "").unwrap();
+        assert_eq!(plan["enableIpv6"], true);
+        assert_eq!(plan["dnsServers"], json!([DNS_SERVER_V6]));
+        let routes = routes(&plan);
+        assert_eq!(routes.len(), 1 + IPV6_HIJACK_IPS.len());
+        assert!(!routes.iter().any(|(address, _)| !address.contains(':')));
+    }
+
+    #[test]
+    fn clat_with_ipv6_disabled_still_enables_ipv6() {
+        let plan = route_plan("normal", "disabled", false, true, false, &[], "com.self", "").unwrap();
+        assert_eq!(plan["enableIpv6"], true);
     }
 }

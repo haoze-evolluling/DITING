@@ -377,11 +377,22 @@ impl Engine {
         self.system_dns.clear_degraded();
     }
 
-    /// 网络切换后清空上游健康度、Bootstrap 与 DoT 连接池，避免继续复用旧链路。
+    /// 网络切换后重建解析器：清空上游健康度、Bootstrap、DoT/DoQ 与 DoH 连接池，
+    /// 避免继续复用旧链路。新链路立即可用时，首轮查询短暂优先走系统 DNS。
     pub fn reset_resolver_health(&self) {
-        self.system_dns.clear_degraded();
         self.negative.clear();
+        let config = self
+            .config
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .clone();
+        // 重建解析器会一并丢弃 DoH 长连接池；仅重置统计无法断开旧连接。
+        if let Some(config) = config {
+            self.publish_resolver(&config);
+        }
+        // ProviderStats 是引擎级共享实例，重建后仍需显式清零熔断与 RTT。
         self.resolver().reset_health();
+        self.system_dns.mark_degraded(crate::resolver::now_ns());
     }
 
     pub fn negative_cache(&self) -> &crate::dns::negative::NegativeCache {

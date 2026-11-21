@@ -6,6 +6,7 @@ import android.net.VpnService
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.util.Log
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
@@ -41,6 +42,10 @@ class ExpressVpnService : VpnService() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var tunnelGeneration = 0
+    private var tunnelIpv6Enabled = false
+    private var tunnelClatOnly = false
+    private var pendingRebuild = false
+    private var lastRebuildAtMs = 0L
 
     private val statsTicker = SpeedTicker(
         context = this,
@@ -130,17 +135,21 @@ class ExpressVpnService : VpnService() {
         stopping = false
         lastError = null
 
-        val (pfd, ipv6Enabled) = ExpressRouteConfig.establish(
+        val established = ExpressRouteConfig.establish(
             service = this,
             excludedPackages = excludedPackages,
             proxyPackage = proxyAppPackage.ifBlank { null },
             ipv6Mode = ipv6Mode,
         )
+        val pfd = established.fd
+        val ipv6Enabled = established.ipv6Enabled
         if (pfd == null) {
             fail("无法建立极速模式接口")
             return
         }
         tun = pfd
+        tunnelIpv6Enabled = ipv6Enabled
+        tunnelClatOnly = established.clatOnly
 
         val rustEngine = try {
             Engine()
@@ -176,6 +185,7 @@ class ExpressVpnService : VpnService() {
 
         networkMonitor = UnderlyingNetworkMonitor(this, this) { state ->
             state.applyTo(rustEngine, ipv6Mode)
+            if (topologyChanged(state, ipv6Mode)) requestTunnelRebuild()
         }.also { it.start() }
 
         isRunning = true
@@ -246,9 +256,29 @@ class ExpressVpnService : VpnService() {
         }, "diting-rule-reload").start()
     }
 
+    private fun topologyChanged(
+        state: UnderlyingNetworkMonitor.State,
+        ipv6Mode: String,
+    ): Boolean {
+        val ipv6Changed =
+            VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && state.physicalIpv6 != tunnelIpv6Enabled
+        return ipv6Changed || state.clat != tunnelClatOnly
+    }
+
+    private fun requestTunnelRebuild() {
+        if (stopping || pendingRebuild || engine == null) return
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastRebuildAtMs < REBUILD_COOLDOWN_MS) return
+        lastRebuildAtMs = now
+        pendingRebuild = true
+        RuntimeEventLog.warn("express", "tunnel.rebuild", "reason" to "network-topology")
+        stopTunnel(rebuild = true)
+    }
+
     @Synchronized
-    private fun stopTunnel() {
+    private fun stopTunnel(rebuild: Boolean = false) {
         reclaimer.cancel()
+        if (!rebuild) pendingRebuild = false
         stopping = true
         val generation = tunnelGeneration
         val current = engine
@@ -267,6 +297,14 @@ class ExpressVpnService : VpnService() {
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 setPersistedRunning(this@ExpressVpnService, false)
+                if (pendingRebuild) {
+                    pendingRebuild = false
+                    val intent = ExpressStartConfig.restoreIntent(this@ExpressVpnService)
+                    if (intent != null && runCatching { startService(intent) }.isSuccess) {
+                        return@post
+                    }
+                    Log.w(TAG, "tunnel rebuild could not restart the service")
+                }
                 VpnServiceForeground.stop(this@ExpressVpnService)
                 stopSelf()
             }
@@ -312,6 +350,7 @@ class ExpressVpnService : VpnService() {
 
     private fun fail(message: String) {
         RuntimeEventLog.error("express", "tunnel.fail", "message" to message)
+        pendingRebuild = false
         lastError = message
         isRunning = false
         startedAt = 0L
@@ -385,6 +424,9 @@ class ExpressVpnService : VpnService() {
         internal const val KEY_LAST_DNS_CONFIG = "last_dns_config"
 
         private const val SESSION_POLL_MS = 200L
+
+        /** 网络拓扑快速抖动时避免反复重建 TUN。 */
+        private const val REBUILD_COOLDOWN_MS = 15_000L
 
         @Volatile
         var isRunning: Boolean = false

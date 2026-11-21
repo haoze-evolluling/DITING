@@ -2,16 +2,20 @@ package com.haoze.diting.normal
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.haoze.diting.vpn.NetworkTopology
 import com.haoze.diting.vpn.VpnPlanNative
 import com.haoze.diting.vpn.applyTo
-import java.net.Inet6Address
 
-object VpnRouteConfig {
+internal data class VpnEstablishResult(
+    val fd: ParcelFileDescriptor?,
+    val ipv6Enabled: Boolean,
+    val clatOnly: Boolean,
+)
+
+internal object VpnRouteConfig {
     private const val TAG = "VpnRouteConfig"
 
     fun establish(
@@ -20,17 +24,23 @@ object VpnRouteConfig {
         proxyPackage: String?,
         bypassLan: Boolean,
         ipv6Mode: String,
-    ): Pair<ParcelFileDescriptor?, Boolean> {
+    ): VpnEstablishResult {
+        val clat = clatDetected(service)
         val plan = VpnPlanNative.routePlan(
             mode = "normal",
             ipv6Mode = ipv6Mode,
-            ipv6Supported = ipv6SupportFor(service, ipv6Mode),
+            ipv6Supported = ipv6SupportFor(service, ipv6Mode, clat),
+            clat = clat,
             bypassLan = bypassLan,
             excludedPackages = excludedPackages,
             selfPackage = service.packageName,
             proxyPackage = proxyPackage.orEmpty(),
         )
-        Log.i(TAG, "establish: ipv6Mode=$ipv6Mode, enableIpv6=${plan.enableIpv6}, bypassLan=$bypassLan")
+        Log.i(
+            TAG,
+            "establish: ipv6Mode=$ipv6Mode, enableIpv6=${plan.enableIpv6}, " +
+                "clat=$clat, bypassLan=$bypassLan",
+        )
 
         val builder = service.Builder()
             .setSession(service.applicationInfo.loadLabel(service.packageManager).toString())
@@ -41,67 +51,23 @@ object VpnRouteConfig {
             Log.e(TAG, "Failed to establish VPN interface", e)
             null
         }
-        return fd to plan.enableIpv6
+        return VpnEstablishResult(fd, plan.enableIpv6, clat)
     }
 
-    fun ipv6SupportFor(service: VpnService, ipv6Mode: String): Boolean =
-        VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && hasPhysicalIpv6Support(service)
+    fun ipv6SupportFor(service: VpnService, ipv6Mode: String, clat: Boolean): Boolean =
+        clat ||
+            (VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && hasPhysicalIpv6Support(service))
 
-    @Suppress("DEPRECATION")
-    fun hasPhysicalIpv6Support(context: Context): Boolean {
-        return runCatching {
-            val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
-            val activeNetwork = cm.activeNetwork
-            val candidates = mutableListOf<Network>()
+    fun hasPhysicalIpv6Support(context: Context): Boolean = runCatching {
+        val manager = context.getSystemService(ConnectivityManager::class.java) ?: return false
+        NetworkTopology.physicalLinks(manager).any { link ->
+            NetworkTopology.hasGlobalIpv6(link) && NetworkTopology.hasIpv6DefaultRoute(link)
+        }
+    }.getOrDefault(false)
 
-            fun isPhysical(network: Network): Boolean {
-                val caps = cm.getNetworkCapabilities(network) ?: return false
-                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return false
-                return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                    caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                    caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-            }
-
-            if (activeNetwork != null && isPhysical(activeNetwork)) {
-                candidates.add(activeNetwork)
-            }
-            cm.allNetworks.forEach { network ->
-                if (network != activeNetwork && isPhysical(network)) {
-                    val caps = cm.getNetworkCapabilities(network)
-                    if (caps != null && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
-                        candidates.add(network)
-                    }
-                }
-            }
-            if (candidates.isEmpty()) {
-                cm.allNetworks.forEach { network -> if (isPhysical(network)) candidates.add(network) }
-            }
-
-            candidates.any { network ->
-                val lp = cm.getLinkProperties(network) ?: return@any false
-                val iface = lp.interfaceName.orEmpty().lowercase()
-                if (iface.startsWith("tun") || iface.startsWith("vpn")) return@any false
-
-                val hasGlobalIpv6 = lp.linkAddresses.any { linkAddr ->
-                    val addr = linkAddr.address
-                    if (addr !is Inet6Address) return@any false
-                    val firstByte = addr.address[0].toInt() and 0xff
-                    firstByte in 0x20..0x3f &&
-                        !addr.isAnyLocalAddress &&
-                        !addr.isLinkLocalAddress &&
-                        !addr.isLoopbackAddress &&
-                        !addr.isMulticastAddress
-                }
-                if (!hasGlobalIpv6) return@any false
-
-                lp.routes.any { route ->
-                    val destAddr = route.destination.address
-                    destAddr is Inet6Address &&
-                        (route.isDefaultRoute ||
-                            route.hasGateway() ||
-                            route.destination.prefixLength == 0)
-                }
-            }
-        }.getOrDefault(false)
-    }
+    /** 物理网络是否只能在 CLAT 之上提供 IPv4。 */
+    fun clatDetected(context: Context): Boolean = runCatching {
+        val manager = context.getSystemService(ConnectivityManager::class.java) ?: return false
+        NetworkTopology.physicalLinks(manager).any(NetworkTopology::clatOnly)
+    }.getOrDefault(false)
 }

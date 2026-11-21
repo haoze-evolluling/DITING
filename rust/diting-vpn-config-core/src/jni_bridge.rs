@@ -31,6 +31,7 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>
     mode: JString<'local>,
     ipv6_mode: JString<'local>,
     ipv6_supported: jboolean,
+    clat: jboolean,
     bypass_lan: jboolean,
     excluded: JString<'local>,
     self_package: JString<'local>,
@@ -51,6 +52,7 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>
             &mode,
             &ipv6_mode,
             ipv6_supported,
+            clat,
             bypass_lan,
             &packages,
             &self_package,
@@ -93,8 +95,8 @@ mod tests {
 
     #[test]
     fn route_plan_is_dispatched_by_mode() {
-        assert!(route_plan("express", "auto", true, false, &[], "a", "b").is_some());
-        assert!(route_plan("server", "auto", true, false, &[], "a", "b").is_none());
+        assert!(route_plan("express", "auto", true, false, false, &[], "a", "b").is_some());
+        assert!(route_plan("server", "auto", true, false, false, &[], "a", "b").is_none());
     }
 
     #[test]

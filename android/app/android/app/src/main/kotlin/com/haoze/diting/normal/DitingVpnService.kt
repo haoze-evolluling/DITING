@@ -6,6 +6,7 @@ import android.net.VpnService
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.util.Log
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.core.rule.RuleDataset
@@ -38,6 +39,10 @@ class DitingVpnService : VpnService() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var tunnelGeneration = 0
+    private var tunnelIpv6Enabled = false
+    private var tunnelClatOnly = false
+    private var pendingRebuild = false
+    private var lastRebuildAtMs = 0L
 
     private val speedTicker = SpeedTicker(
         context = this,
@@ -142,18 +147,22 @@ class DitingVpnService : VpnService() {
         stopping = false
         lastError = null
 
-        val (pfd, ipv6Enabled) = VpnRouteConfig.establish(
+        val established = VpnRouteConfig.establish(
             service = this,
             excludedPackages = excludedPackages,
             proxyPackage = proxyAppPackage.ifBlank { null },
             bypassLan = bypassLan,
             ipv6Mode = ipv6Mode,
         )
+        val pfd = established.fd
+        val ipv6Enabled = established.ipv6Enabled
         if (pfd == null) {
             fail("无法建立 VPN 接口")
             return
         }
         tun = pfd
+        tunnelIpv6Enabled = ipv6Enabled
+        tunnelClatOnly = established.clatOnly
 
         val rustEngine = try {
             Engine()
@@ -196,6 +205,7 @@ class DitingVpnService : VpnService() {
 
         networkMonitor = UnderlyingNetworkMonitor(this, this) { state ->
             state.applyTo(rustEngine, ipv6Mode)
+            if (topologyChanged(state, ipv6Mode)) requestTunnelRebuild()
         }.also { it.start() }
 
         isRunning = true
@@ -227,9 +237,29 @@ class DitingVpnService : VpnService() {
         NormalTunnelRunner.reload(this, current)
     }
 
+    private fun topologyChanged(
+        state: UnderlyingNetworkMonitor.State,
+        ipv6Mode: String,
+    ): Boolean {
+        val ipv6Changed =
+            VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && state.physicalIpv6 != tunnelIpv6Enabled
+        return ipv6Changed || state.clat != tunnelClatOnly
+    }
+
+    private fun requestTunnelRebuild() {
+        if (stopping || pendingRebuild || engine == null) return
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastRebuildAtMs < REBUILD_COOLDOWN_MS) return
+        lastRebuildAtMs = now
+        pendingRebuild = true
+        RuntimeEventLog.warn("vpn", "tunnel.rebuild", "reason" to "network-topology")
+        stopTunnel(rebuild = true)
+    }
+
     @Synchronized
-    private fun stopTunnel() {
+    private fun stopTunnel(rebuild: Boolean = false) {
         reclaimer.cancel()
+        if (!rebuild) pendingRebuild = false
         stopping = true
         val generation = tunnelGeneration
         val current = engine
@@ -249,6 +279,14 @@ class DitingVpnService : VpnService() {
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 setPersistedRunning(this@DitingVpnService, false)
+                if (pendingRebuild) {
+                    pendingRebuild = false
+                    val intent = VpnStartConfig.restoreIntent(this@DitingVpnService)
+                    if (intent != null && runCatching { startService(intent) }.isSuccess) {
+                        return@post
+                    }
+                    Log.w(TAG, "tunnel rebuild could not restart the service")
+                }
                 VpnServiceForeground.stop(this@DitingVpnService)
                 stopSelf()
             }
@@ -298,6 +336,7 @@ class DitingVpnService : VpnService() {
 
     private fun fail(message: String) {
         RuntimeEventLog.error("vpn", "tunnel.fail", "message" to message)
+        pendingRebuild = false
         lastError = message
         isRunning = false
         startedAt = 0L
@@ -370,6 +409,9 @@ class DitingVpnService : VpnService() {
 
         private const val CHANNEL_ID = "diting_vpn"
         private const val NOTIFICATION_ID = 1001
+
+        /** 网络拓扑快速抖动时避免反复重建 TUN。 */
+        private const val REBUILD_COOLDOWN_MS = 15_000L
 
         internal const val PREFS_NAME = NormalVpnRuntime.PREFS_NAME
         private const val KEY_LOG_MODE = "dns_log_mode"
