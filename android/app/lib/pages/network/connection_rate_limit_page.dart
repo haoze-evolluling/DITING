@@ -41,7 +41,7 @@ class ConnectionRateLimitPage extends ConsumerWidget {
             title: l10n.connectionRateLimitSectionSwitch,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.speed),
+                leading: const Icon(TablerIcons.gauge),
                 title: Text(l10n.connectionRateLimitEnable),
                 subtitle: Text(l10n.connectionRateLimitEnableDesc),
                 trailing: CommonSwitch(
@@ -59,7 +59,7 @@ class ConnectionRateLimitPage extends ConsumerWidget {
             footer: l10n.connectionRateLimitFooter,
             items: [
               RateLimitStepperRow(
-                glyph: AppGlyphs.speed,
+                glyph: TablerIcons.gauge,
                 label: l10n.connectionRateLimitRate,
                 value: state.rate,
                 min: ConnectionRateLimitSettings.minRate,
@@ -71,7 +71,7 @@ class ConnectionRateLimitPage extends ConsumerWidget {
                 ),
               ),
               RateLimitStepperRow(
-                glyph: AppGlyphs.connections,
+                glyph: TablerIcons.topology_star,
                 label: l10n.connectionRateLimitBurst,
                 value: state.burst,
                 min: ConnectionRateLimitSettings.minBurst,

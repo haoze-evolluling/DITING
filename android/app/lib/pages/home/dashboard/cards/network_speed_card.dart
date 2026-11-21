@@ -27,12 +27,12 @@ class NetworkSpeedCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.speed,
+            glyph: TablerIcons.gauge,
             title: context.l10n.speedTitle,
             trailing: [
               if (onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: onDetail,
                 ),
@@ -60,7 +60,7 @@ enum _SpeedDirection {
 
   double of(SpeedSample sample) => this == upload ? sample.up : sample.down;
 
-  Glyph get glyph => this == upload ? AppGlyphs.arrowUp : AppGlyphs.arrowDown;
+  IconData get glyph => this == upload ? TablerIcons.arrow_up : TablerIcons.arrow_down;
 
   String label(AppL10n l10n) =>
       this == upload ? l10n.speedUpload : l10n.speedDownload;
@@ -199,7 +199,7 @@ class _SpeedTile extends StatelessWidget {
                     Row(
                       spacing: 4,
                       children: [
-                        GlyphIcon(direction.glyph, size: 16, color: color),
+                        Icon(direction.glyph, size: 16, color: color),
                         Flexible(
                           child: Text(
                             direction.label(context.l10n),

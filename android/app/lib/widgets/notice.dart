@@ -5,7 +5,7 @@ class InlineNotice extends StatelessWidget {
   const InlineNotice({
     super.key,
     required this.message,
-    this.glyph = AppGlyphs.warning,
+    this.glyph = TablerIcons.alert_triangle,
     this.color,
     this.foregroundColor,
     this.glyphSize = 16,
@@ -13,7 +13,7 @@ class InlineNotice extends StatelessWidget {
   });
 
   final String message;
-  final Glyph glyph;
+  final IconData glyph;
 
   final Color? color;
   final Color? foregroundColor;
@@ -32,7 +32,7 @@ class InlineNotice extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
         children: [
-          GlyphIcon(glyph, size: glyphSize, color: foreground),
+          Icon(glyph, size: glyphSize, color: foreground),
           Expanded(
             child: Text(
               message,
@@ -51,13 +51,13 @@ class CardNoticeRow extends StatelessWidget {
   const CardNoticeRow({
     super.key,
     required this.message,
-    this.glyph = AppGlyphs.checkCircle,
+    this.glyph = TablerIcons.circle_check,
     this.color,
     this.glyphSize = 16,
   });
 
   final String message;
-  final Glyph glyph;
+  final IconData glyph;
 
   final Color? color;
   final double glyphSize;
@@ -69,7 +69,7 @@ class CardNoticeRow extends StatelessWidget {
       child: Row(
         spacing: 8,
         children: [
-          GlyphIcon(
+          Icon(
             glyph,
             size: glyphSize,
             color: color ?? context.colorScheme.primary,

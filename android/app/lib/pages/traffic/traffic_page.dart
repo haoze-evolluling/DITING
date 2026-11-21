@@ -68,17 +68,17 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
       title: context.l10n.trafficTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.broom,
+          glyph: TablerIcons.brush,
           tooltip: context.l10n.trafficClearHistory,
           onPressed: () => _confirmClear(context),
         ),
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: context.l10n.trafficRefresh,
           onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
         ),
         IconButtonData(
-          glyph: AppGlyphs.info,
+          glyph: TablerIcons.info_circle,
           tooltip: context.l10n.trafficAttribution,
           onPressed: _openAttributionSheet,
         ),

@@ -42,6 +42,13 @@ Future<void> loadHostFonts() async {
       break;
     }
   }
+  final tabler = await rootBundle.load(
+    'packages/flutter_tabler_icons/assets/fonts/tabler-icons.ttf',
+  );
+  final tablerLoader = FontLoader(
+    'packages/flutter_tabler_icons/tabler-icons',
+  )..addFont(Future.value(tabler));
+  await tablerLoader.load();
 }
 
 class ScreenshotSpec {

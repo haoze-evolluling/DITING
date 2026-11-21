@@ -24,7 +24,7 @@ class LogStatsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 8),
-          GlyphIcon(AppGlyphs.dataUsage, size: 40, color: colorScheme.primary),
+          Icon(TablerIcons.chart_pie, size: 40, color: colorScheme.primary),
           const SizedBox(height: 12),
           Text(
             l10n.logStatsTitle,
@@ -310,7 +310,7 @@ class _WindowPicker extends ConsumerWidget {
                   labelOf(window),
                   style: AppTextRole.body.of(context).copyWith(color: color),
                 ),
-                GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
+                Icon(TablerIcons.chevron_down, size: 16, color: color),
               ],
             ),
           ),
@@ -330,20 +330,7 @@ class _WindowPicker extends ConsumerWidget {
   }
 }
 
-const _activityGlyph = Glyph([
-  GlyphPolyline([
-    GlyphVertex(4, 6.5),
-    GlyphVertex(20, 6.5),
-  ], role: GlyphRole.line),
-  GlyphPolyline([
-    GlyphVertex(4, 12),
-    GlyphVertex(17, 12),
-  ], role: GlyphRole.line),
-  GlyphPolyline([
-    GlyphVertex(4, 17.5),
-    GlyphVertex(14, 17.5),
-  ], role: GlyphRole.line),
-], matchTextDirection: true);
+const _activityGlyph = TablerIcons.align_left;
 
 class _RecentActivityRow extends StatelessWidget {
   const _RecentActivityRow({this.onTap});
@@ -361,7 +348,7 @@ class _RecentActivityRow extends StatelessWidget {
         child: Row(
           spacing: 16,
           children: [
-            GlyphIcon(_activityGlyph, size: 24, color: colorScheme.primary),
+            Icon(_activityGlyph, size: 24, color: colorScheme.primary),
             Expanded(
               child: Text(
                 context.l10n.logStatsRecentActivity,
@@ -370,8 +357,8 @@ class _RecentActivityRow extends StatelessWidget {
                 style: AppTextRole.body.of(context),
               ),
             ),
-            GlyphIcon(
-              AppGlyphs.chevronForward,
+            Icon(
+              TablerIcons.chevron_right,
               size: 18,
               color: colorScheme.onSurfaceVariant,
             ),

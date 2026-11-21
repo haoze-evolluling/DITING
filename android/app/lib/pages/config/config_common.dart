@@ -85,12 +85,12 @@ class ConfigRemoveButton extends StatelessWidget {
     super.key,
     required this.tooltip,
     required this.onPressed,
-    this.glyph = AppGlyphs.removeCircle,
+    this.glyph = TablerIcons.circle_minus,
   });
 
   final String tooltip;
   final VoidCallback? onPressed;
-  final Glyph glyph;
+  final IconData glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +98,7 @@ class ConfigRemoveButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
-        icon: GlyphIcon(
+        icon: Icon(
           glyph,
           size: 18,
           color: onPressed == null

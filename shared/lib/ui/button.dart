@@ -45,7 +45,7 @@ class MoreActionButton extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           title: Text(label),
           trailing:
-              trailing ?? const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+              trailing ?? const Icon(TablerIcons.chevron_right, size: 18),
         ),
       ),
     );
@@ -154,7 +154,7 @@ class TonalButton extends StatelessWidget {
   });
 
   final TonalButtonSize size;
-  final Glyph? glyph;
+  final IconData? glyph;
   final String label;
   final VoidCallback? onPressed;
 
@@ -176,7 +176,7 @@ class TonalButton extends StatelessWidget {
               ? FilledButton(onPressed: onPressed, child: label)
               : FilledButton.icon(
                   onPressed: onPressed,
-                  icon: GlyphIcon(glyph, fill: 1),
+                  icon: Icon(glyph),
                   label: label,
                 ),
         ),
@@ -293,10 +293,7 @@ class TonalButtonTheme extends StatelessWidget {
             ),
           ),
         ),
-        child: IconTheme.merge(
-          data: const IconThemeData(fill: 1),
-          child: child,
-        ),
+        child: child,
       ),
     );
     return _GlassButtons(glass: paned, child: themed);

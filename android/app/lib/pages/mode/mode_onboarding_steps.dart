@@ -13,17 +13,17 @@ class _ChooseModeStep extends StatelessWidget {
       description: mode.summary(context.l10n),
       children: [
         _TipCard(
-          glyph: AppGlyphs.info,
+          glyph: TablerIcons.info_circle,
           title: context.l10n.onboardingChangeable,
           detail: context.l10n.onboardingChangeableBody,
         ),
         _TipCard(
-          glyph: AppGlyphs.layers,
+          glyph: TablerIcons.stack_2,
           title: context.l10n.onboardingSharedRules,
           detail: context.l10n.onboardingSharedRulesBody,
         ),
         _TipCard(
-          glyph: AppGlyphs.swap,
+          glyph: TablerIcons.arrows_exchange,
           title: context.l10n.onboardingExclusive,
           detail: context.l10n.onboardingExclusiveBody,
         ),
@@ -31,16 +31,16 @@ class _ChooseModeStep extends StatelessWidget {
     );
   }
 
-  static Glyph _glyphOf(AppWorkMode mode) => switch (mode) {
-    AppWorkMode.normal => AppGlyphs.layers,
-    AppWorkMode.express => AppGlyphs.bolt,
-    AppWorkMode.server => AppGlyphs.dns,
+  static IconData _glyphOf(AppWorkMode mode) => switch (mode) {
+    AppWorkMode.normal => TablerIcons.stack_2,
+    AppWorkMode.express => TablerIcons.bolt,
+    AppWorkMode.server => TablerIcons.server_2,
   };
 }
 
 typedef _PermissionSpec = ({
   AppPermission permission,
-  Glyph glyph,
+  IconData glyph,
   String name,
   String level,
   String detail,
@@ -48,7 +48,7 @@ typedef _PermissionSpec = ({
 
 _PermissionSpec _vpnPermission(AppL10n l10n, String detail) => (
   permission: AppPermission.vpn,
-  glyph: AppGlyphs.vpn,
+  glyph: TablerIcons.shield_lock,
   name: l10n.permVpn,
   level: l10n.permRequired,
   detail: detail,
@@ -56,7 +56,7 @@ _PermissionSpec _vpnPermission(AppL10n l10n, String detail) => (
 
 _PermissionSpec _notificationPermission(AppL10n l10n) => (
   permission: AppPermission.notification,
-  glyph: AppGlyphs.info,
+  glyph: TablerIcons.info_circle,
   name: l10n.permNotification,
   level: l10n.permRequired,
   detail: l10n.permNotificationBody,
@@ -64,7 +64,7 @@ _PermissionSpec _notificationPermission(AppL10n l10n) => (
 
 _PermissionSpec _appListPermission(AppL10n l10n) => (
   permission: AppPermission.appList,
-  glyph: AppGlyphs.appsList,
+  glyph: TablerIcons.list,
   name: l10n.permAppList,
   level: l10n.permOptional,
   detail: l10n.permAppListBody,
@@ -72,7 +72,7 @@ _PermissionSpec _appListPermission(AppL10n l10n) => (
 
 _PermissionSpec _batteryPermission(AppL10n l10n, String detail) => (
   permission: AppPermission.batteryOptimization,
-  glyph: AppGlyphs.bolt,
+  glyph: TablerIcons.bolt,
   name: l10n.permBattery,
   level: l10n.permOptional,
   detail: detail,
@@ -109,7 +109,7 @@ class _PermissionStep extends ConsumerWidget {
         .where((spec) => snapshot?.of(spec.permission) == true)
         .length;
     return _StepScaffold(
-      glyph: AppGlyphs.lock,
+      glyph: TablerIcons.lock,
       title: l10n.permNeeded,
       description: snapshot == null
           ? l10n.permAllLocal
@@ -153,13 +153,13 @@ class _FinishStep extends StatelessWidget {
       ],
     };
     return _StepScaffold(
-      glyph: AppGlyphs.checkCircle,
+      glyph: TablerIcons.circle_check,
       title: context.l10n.onboardingReady,
       description: context.l10n.onboardingReadyBody,
       children: [
         for (final (index, tip) in tips.indexed)
           _TipCard(
-            glyph: AppGlyphs.check,
+            glyph: TablerIcons.check,
             title: context.l10n.onboardingTipIndex('${index + 1}'),
             detail: tip,
           ),

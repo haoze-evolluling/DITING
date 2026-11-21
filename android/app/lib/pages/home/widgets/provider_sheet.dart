@@ -111,10 +111,10 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
             items: [
               ListItem(
                 leading: const LeadingSlot(
-                  child: GlyphIcon(AppGlyphs.settings, size: 20),
+                  child: Icon(TablerIcons.settings, size: 20),
                 ),
                 title: Text(context.l10n.providerSheetManage),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push(HubPaths.providerManagement);
@@ -122,10 +122,10 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
               ),
               ListItem(
                 leading: const LeadingSlot(
-                  child: GlyphIcon(AppGlyphs.eye, size: 20),
+                  child: Icon(TablerIcons.eye, size: 20),
                 ),
                 title: Text(context.l10n.providerSheetVisibility),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push(HubPaths.providerVisibility);
@@ -142,7 +142,7 @@ class _ProviderSheetState extends ConsumerState<ProviderSheet> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: TonalButton(
               label: context.l10n.providerSheetDone,
-              glyph: AppGlyphs.check,
+              glyph: TablerIcons.check,
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),
@@ -218,7 +218,7 @@ class _RaceSummary extends StatelessWidget {
         child: Row(
           spacing: 12,
           children: [
-            GlyphIcon(AppGlyphs.speed, size: 22, color: colorScheme.primary),
+            Icon(TablerIcons.gauge, size: 22, color: colorScheme.primary),
             Expanded(
               child: Text(
                 context.l10n.resolutionRaceHint(count),
@@ -247,8 +247,8 @@ class _ProviderMark extends StatelessWidget {
         shape: AppShape.standard,
       ),
       child: Center(
-        child: GlyphIcon(
-          AppGlyphs.upstream,
+        child: Icon(
+          TablerIcons.cloud_upload,
           size: 18,
           color: colorScheme.onSurfaceVariant,
         ),

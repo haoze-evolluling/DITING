@@ -75,7 +75,7 @@ class _HomePageState extends ConsumerState<HomePage>
             ? context.l10n.homeEditDashboard
             : _titleOf(mode, context.l10n),
         primaryAction: IconButtonData(
-          glyph: editing ? AppGlyphs.check : AppGlyphs.customize,
+          glyph: editing ? TablerIcons.check : TablerIcons.layout_grid_add,
           tooltip: editing
               ? context.l10n.homeDone
               : context.l10n.homeEditDashboard,
@@ -86,7 +86,7 @@ class _HomePageState extends ConsumerState<HomePage>
             IconButton(
               tooltip: context.l10n.homeSwitchWorkMode,
               onPressed: () => context.push(Routes.modeSelect),
-              icon: const GlyphIcon(AppGlyphs.swap),
+              icon: const Icon(TablerIcons.arrows_exchange),
             ),
         ],
         body: PageBody(

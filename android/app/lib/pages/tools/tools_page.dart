@@ -20,14 +20,14 @@ part 'dns_lookup_page.dart';
 part 'traceroute_page.dart';
 
 enum NetworkTool {
-  speedTest(AppGlyphs.speed, ToolPaths.speedTest),
-  ping(AppGlyphs.connections, ToolPaths.ping),
-  dnsLookup(AppGlyphs.dns, ToolPaths.dnsLookup),
-  traceroute(AppGlyphs.split, ToolPaths.traceroute);
+  speedTest(TablerIcons.gauge, ToolPaths.speedTest),
+  ping(TablerIcons.topology_star, ToolPaths.ping),
+  dnsLookup(TablerIcons.server_2, ToolPaths.dnsLookup),
+  traceroute(TablerIcons.arrows_split, ToolPaths.traceroute);
 
   const NetworkTool(this.glyph, this.path);
 
-  final Glyph glyph;
+  final IconData glyph;
   final String path;
 
   String label(AppL10n l10n) => switch (this) {
@@ -55,7 +55,7 @@ class ToolsPage extends ConsumerWidget {
       title: l10n.toolDiagnostics,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: l10n.toolRefreshInfo,
           onPressed: () => ref.invalidate(networkInfoProvider),
         ),
@@ -88,7 +88,7 @@ class _ToolEntry extends StatelessWidget {
       leading: _ToolBadge(glyph: tool.glyph),
       title: Text(tool.label(l10n)),
       subtitle: Text(tool.description(l10n)),
-      trailing: const GlyphIcon(AppGlyphs.chevronForward),
+      trailing: const Icon(TablerIcons.chevron_right),
       onTap: () => context.push(tool.path),
     );
   }
@@ -97,7 +97,7 @@ class _ToolEntry extends StatelessWidget {
 class _ToolBadge extends StatelessWidget {
   const _ToolBadge({required this.glyph});
 
-  final Glyph glyph;
+  final IconData glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +110,7 @@ class _ToolBadge extends StatelessWidget {
         shape: AppShape.standard,
         color: context.raisedSurfaceLevel.colorOf(colorScheme),
       ),
-      child: GlyphIcon(glyph, size: 20, color: colorScheme.primary),
+      child: Icon(glyph, size: 20, color: colorScheme.primary),
     );
   }
 }
@@ -168,8 +168,8 @@ class _NetworkOverviewCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 6,
                     children: [
-                      GlyphIcon(
-                        AppGlyphs.info,
+                      Icon(
+                        TablerIcons.info_circle,
                         size: 14,
                         color: colorScheme.onSurfaceVariant,
                       ),

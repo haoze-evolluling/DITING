@@ -88,14 +88,14 @@ class _AppInsightsViewState extends State<AppInsightsView> {
       items: [
         if (group.domains.isEmpty)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.appsList),
+            leading: const Icon(TablerIcons.list),
             title: Text(l10n.appInsightsNoDomains),
           )
         else
           for (final domain in group.domains)
             ListItem(
-              leading: GlyphIcon(
-                domain.blocked ? AppGlyphs.block : AppGlyphs.checkCircle,
+              leading: Icon(
+                domain.blocked ? TablerIcons.ban : TablerIcons.circle_check,
                 color: domain.blocked
                     ? context.colorScheme.error
                     : context.colorScheme.success,
@@ -138,7 +138,7 @@ class _ReportTile extends StatelessWidget {
         ? context.colorScheme.error
         : context.colorScheme.success;
     return ListItem(
-      leading: GlyphIcon(AppGlyphs.appsList, color: color),
+      leading: Icon(TablerIcons.list, color: color),
       title: Text(
         report.appLabel,
         maxLines: 1,
@@ -152,9 +152,9 @@ class _ReportTile extends StatelessWidget {
         ),
       ),
       trailing: selected
-          ? const GlyphIcon(AppGlyphs.checkCircle)
+          ? const Icon(TablerIcons.circle_check)
           : (report.hasBlocked
-                ? GlyphIcon(AppGlyphs.block, color: color)
+                ? Icon(TablerIcons.ban, color: color)
                 : null),
       onTap: onTap,
     );

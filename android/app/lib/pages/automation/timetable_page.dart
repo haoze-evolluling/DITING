@@ -23,7 +23,7 @@ class TimetablePage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.timetableAdd,
           onPressed: () => context.push(AutomationPaths.edit('new')),
-          icon: const GlyphIcon(AppGlyphs.add),
+          icon: const Icon(TablerIcons.plus),
         ),
       ],
       body: PageBody(
@@ -72,7 +72,7 @@ class _ErrorNotice extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InlineNotice(
         message: text,
-        glyph: AppGlyphs.error,
+        glyph: TablerIcons.alert_circle,
         color: colorScheme.errorContainer,
         foregroundColor: colorScheme.onErrorContainer,
       ),
@@ -93,13 +93,13 @@ class _DaySection extends StatelessWidget {
       items: [
         if (rules.isEmpty)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.calendar),
+            leading: const Icon(TablerIcons.calendar),
             title: Text('—'),
           )
         else
           for (final rule in rules)
             ListItem(
-              leading: const GlyphIcon(AppGlyphs.block),
+              leading: const Icon(TablerIcons.ban),
               title: Text(
                 rule.name.isEmpty
                     ? context.l10n.automationRuleFallbackName

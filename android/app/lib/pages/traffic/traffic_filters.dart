@@ -93,7 +93,7 @@ class _TrafficFilterBar extends StatelessWidget {
           child: CommonCard(
             child: ListItem.toggle(
               padding: const EdgeInsets.fromLTRB(28, 4, 20, 4),
-              leading: const GlyphIcon(AppGlyphs.appsList, size: 20),
+              leading: const Icon(TablerIcons.list, size: 20),
               title: Text(context.l10n.trafficHideSystemApps),
               subtitle: Text(context.l10n.trafficHideSystemAppsSubtitle),
               value: hideSystemApps,
@@ -128,8 +128,8 @@ class _LiveRateCard extends ConsumerWidget {
             Row(
               spacing: 8,
               children: [
-                GlyphIcon(
-                  AppGlyphs.speed,
+                Icon(
+                  TablerIcons.gauge,
                   size: 18,
                   color: colorScheme.onSurfaceVariant,
                 ),

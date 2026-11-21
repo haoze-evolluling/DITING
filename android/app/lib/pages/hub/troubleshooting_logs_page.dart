@@ -150,14 +150,14 @@ class _TroubleshootingLogsPageState
   Widget _row(TroubleshootLogEntry entry) {
     final colorScheme = context.colorScheme;
     return ListItem(
-      leading: GlyphIcon(
-        entry.isRuntime ? AppGlyphs.logs : AppGlyphs.bug,
+      leading: Icon(
+        entry.isRuntime ? TablerIcons.logs : TablerIcons.bug,
         size: 20,
         color: entry.isRuntime ? null : colorScheme.warning,
       ),
       title: Text(entry.timeLabel),
       subtitle: Text('${_kindLabel(entry.kind)} · ${entry.sizeLabel}'),
-      trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+      trailing: const Icon(TablerIcons.chevron_right, size: 18),
       onTap: _busy ? null : () => _open(entry),
     );
   }
@@ -174,22 +174,22 @@ class _TroubleshootingLogsPageState
       menuItems: [
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsRefresh,
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           onPressed: _refresh,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsShareAll,
-          glyph: AppGlyphs.send,
+          glyph: TablerIcons.send,
           onPressed: canAct ? _shareAll : null,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsDownloadAll,
-          glyph: AppGlyphs.cloudDownload,
+          glyph: TablerIcons.cloud_download,
           onPressed: canAct ? _downloadAll : null,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsClearAll,
-          glyph: AppGlyphs.delete,
+          glyph: TablerIcons.trash,
           danger: true,
           onPressed: canAct ? _clearAll : null,
         ),

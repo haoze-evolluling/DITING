@@ -79,7 +79,7 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
               ListItem.toggle(
                 title: Text(context.l10n.notificationPersistent),
                 subtitle: Text(context.l10n.notificationPersistentSubtitle),
-                leading: const GlyphIcon(AppGlyphs.notification),
+                leading: const Icon(TablerIcons.bell),
                 value: settings.persistent,
                 onChanged: (value) {
                   notifier.setPersistent(value);
@@ -125,7 +125,7 @@ class _ThemeNotificationPageState extends ConsumerState<ThemeNotificationPage> {
             title: context.l10n.notificationPermissions,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.lock,
+                glyph: TablerIcons.lock,
                 title: context.l10n.notificationSystemPermission,
                 subtitle: context.l10n.notificationSystemPermissionSubtitle,
                 onPressed: () => ref
@@ -162,12 +162,12 @@ class ThemeBackgroundPage extends ConsumerWidget {
                       ? context.l10n.backgroundPickFirst
                       : context.l10n.backgroundBehindPages,
                 ),
-                leading: const GlyphIcon(AppGlyphs.photos),
+                leading: const Icon(TablerIcons.photo),
                 value: background.enabled,
                 onChanged: background.uris.isEmpty ? null : notifier.setEnabled,
               ),
               NavEntryRow(
-                glyph: AppGlyphs.add,
+                glyph: TablerIcons.plus,
                 title: context.l10n.backgroundAddImage,
                 subtitle: context.l10n.backgroundAddImageSubtitle,
                 onPressed: () async {
@@ -350,8 +350,8 @@ class _WallpaperThumbnailState extends State<_WallpaperThumbnail> {
                       shape: AppShape.standard,
                       color: colorScheme.primary,
                     ),
-                    child: GlyphIcon(
-                      AppGlyphs.check,
+                    child: Icon(
+                      TablerIcons.check,
                       size: 14,
                       color: colorScheme.onPrimary,
                     ),
@@ -386,7 +386,7 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.foregroundHide),
                 subtitle: Text(context.l10n.foregroundHideSubtitle),
-                leading: const GlyphIcon(AppGlyphs.eyeOff),
+                leading: const Icon(TablerIcons.eye_off),
                 value: state.hideFromRecents,
                 onChanged: notifier.setHideFromRecents,
               ),
@@ -403,7 +403,7 @@ class SettingsBackgroundPage extends ConsumerWidget {
                       ? context.l10n.rootTakeoverSubtitle
                       : context.l10n.rootTakeoverNormalOnly,
                 ),
-                leading: const GlyphIcon(AppGlyphs.shield),
+                leading: const Icon(TablerIcons.shield),
                 value: rootTakeover,
                 onChanged: normalMode
                     ? (value) =>
@@ -422,14 +422,14 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.foregroundBypassLan),
                 subtitle: Text(context.l10n.foregroundBypassLanSubtitle),
-                leading: const GlyphIcon(AppGlyphs.devices),
+                leading: const Icon(TablerIcons.devices),
                 value: state.bypassLan,
                 onChanged: notifier.setBypassLan,
               ),
               ListItem<LegacyIpv6Mode>.options(
                 title: const Text('IPv6'),
                 subtitle: Text(state.ipv6Mode.description(context.l10n)),
-                leading: const GlyphIcon(AppGlyphs.link),
+                leading: const Icon(TablerIcons.link),
                 options: LegacyIpv6Mode.values,
                 value: state.ipv6Mode,
                 textBuilder: (mode) => mode.label(context.l10n),
@@ -444,19 +444,19 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.settingsAutoStartTitle),
                 subtitle: Text(context.l10n.settingsAutoStartSubtitle),
-                leading: const GlyphIcon(AppGlyphs.sync),
+                leading: const Icon(TablerIcons.rotate_clockwise),
                 value: ref.watch(autoStartOnLaunchProvider),
                 onChanged: ref.read(autoStartOnLaunchProvider.notifier).toggle,
               ),
               ListItem.toggle(
                 title: Text(context.l10n.settingsVpnWatchdogTitle),
                 subtitle: Text(context.l10n.settingsVpnWatchdogSubtitle),
-                leading: const GlyphIcon(AppGlyphs.vpn),
+                leading: const Icon(TablerIcons.shield_lock),
                 value: ref.watch(vpnWatchdogProvider),
                 onChanged: ref.read(vpnWatchdogProvider.notifier).toggle,
               ),
               NavEntryRow(
-                glyph: AppGlyphs.battery,
+                glyph: TablerIcons.battery,
                 title: context.l10n.foregroundIgnoreBattery,
                 subtitle: context.l10n.foregroundIgnoreBatterySubtitle,
                 onPressed: () => ref
@@ -495,7 +495,7 @@ class _RootTakeoverProbeRow extends ConsumerWidget {
             error: (_, _) => l10n.rootTakeoverProbeUnsupported,
           );
     return NavEntryRow(
-      glyph: AppGlyphs.refresh,
+      glyph: TablerIcons.refresh,
       title: l10n.rootTakeoverProbeTitle,
       subtitle: subtitle,
       onPressed: onRefresh,
@@ -519,7 +519,7 @@ class SettingsLanguagePage extends ConsumerWidget {
             items: [
               ListItem<AppLanguageMode>.options(
                 title: Text(context.l10n.languageTitle),
-                leading: const GlyphIcon(AppGlyphs.language),
+                leading: const Icon(TablerIcons.language),
                 value: mode,
                 options: AppLanguageMode.values,
                 textBuilder: (option) => option.label(context.l10n),

@@ -181,7 +181,7 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
       title: l10n.obsExportTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.reset,
+          glyph: TablerIcons.restore,
           tooltip: l10n.commonReset,
           onPressed: _busy ? null : _reset,
         ),
@@ -209,15 +209,15 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
               if (_range == RequestLogExportRange.custom) ...[
                 _divider(context),
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.clock, size: 20),
+                  leading: const Icon(TablerIcons.clock, size: 20),
                   title: Text(l10n.obsExportCustomRange),
                   subtitle: Text(
                     _customRange == null
                         ? l10n.obsExportPickRange
                         : _rangeText(_customRange!),
                   ),
-                  trailing: GlyphIcon(
-                    AppGlyphs.chevronForward,
+                  trailing: Icon(
+                    TablerIcons.chevron_right,
                     size: 18,
                     color: context.colorScheme.onSurfaceVariant,
                   ),
@@ -263,14 +263,14 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
               ),
               _divider(context),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.appsList, size: 20),
+                leading: const Icon(TablerIcons.list, size: 20),
                 title: Text(
                   _packages.isEmpty
                       ? l10n.obsExportAllApps
                       : l10n.obsExportSelectedApps(_packages.length),
                 ),
-                trailing: GlyphIcon(
-                  AppGlyphs.chevronForward,
+                trailing: Icon(
+                  TablerIcons.chevron_right,
                   size: 18,
                   color: context.colorScheme.onSurfaceVariant,
                 ),
@@ -322,7 +322,7 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: TonalButton(
               label: _busy ? l10n.obsExportBusy : l10n.obsExportAction,
-              glyph: _busy ? null : AppGlyphs.export,
+              glyph: _busy ? null : TablerIcons.file_export,
               onPressed: _busy || error != null ? null : () => _export(l10n),
             ),
           ),

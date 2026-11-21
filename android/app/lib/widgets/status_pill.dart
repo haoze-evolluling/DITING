@@ -28,7 +28,7 @@ class StatusPill extends StatelessWidget {
 
   final bool tabular;
 
-  final Glyph? leading;
+  final IconData? leading;
   final double leadingSize;
 
   @override
@@ -59,7 +59,7 @@ class StatusPill extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
-                GlyphIcon(leading, size: leadingSize, color: fore),
+                Icon(leading, size: leadingSize, color: fore),
                 label,
               ],
             ),

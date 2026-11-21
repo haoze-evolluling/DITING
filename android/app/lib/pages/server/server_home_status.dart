@@ -50,8 +50,8 @@ class ServerStatusOverview extends StatelessWidget {
           Row(
             spacing: 8,
             children: [
-              GlyphIcon(
-                AppGlyphs.status,
+              Icon(
+                TablerIcons.activity,
                 size: 18,
                 color: scheme.onSurfaceVariant,
               ),
@@ -66,7 +66,7 @@ class ServerStatusOverview extends StatelessWidget {
                     ? l10n.serverRootMode
                     : l10n.serverNonRootMode,
               ),
-              const GlyphIcon(AppGlyphs.chevronForward, size: 17),
+              const Icon(TablerIcons.chevron_right, size: 17),
             ],
           ),
           Row(
@@ -153,7 +153,7 @@ class ServerStatusOverview extends StatelessWidget {
                 color: scheme.primary,
                 alpha: 0.11,
                 foregroundColor: scheme.primary,
-                leading: AppGlyphs.upstream,
+                leading: TablerIcons.cloud_upload,
                 leadingSize: 13,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               ),
@@ -168,7 +168,7 @@ class ServerStatusOverview extends StatelessWidget {
                 foregroundColor: config.filter.enabled
                     ? scheme.primary
                     : scheme.onSurfaceVariant,
-                leading: AppGlyphs.shield,
+                leading: TablerIcons.shield,
                 leadingSize: 13,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               ),
@@ -176,7 +176,7 @@ class ServerStatusOverview extends StatelessWidget {
                 label: l10n.serverCacheEntriesShort(config.cache.maxEntries),
                 color: scheme.onSurfaceVariant,
                 alpha: 0.10,
-                leading: AppGlyphs.database,
+                leading: TablerIcons.database,
                 leadingSize: 13,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
               ),
@@ -226,7 +226,7 @@ class ServerQuickActions extends StatelessWidget {
     final l10n = context.l10n;
     final actions = [
       (
-        glyph: AppGlyphs.upstream,
+        glyph: TablerIcons.cloud_upload,
         title: l10n.serverUpstream,
         subtitle: config.upstream.providers.isEmpty
             ? l10n.serverUpstreamRequired
@@ -234,7 +234,7 @@ class ServerQuickActions extends StatelessWidget {
         path: ServerRoutes.upstream,
       ),
       (
-        glyph: AppGlyphs.filter,
+        glyph: TablerIcons.filter,
         title: l10n.serverFilterTitle,
         subtitle: config.filter.enabled
             ? l10n.serverFilterOn
@@ -242,7 +242,7 @@ class ServerQuickActions extends StatelessWidget {
         path: ServerRoutes.filter,
       ),
       (
-        glyph: AppGlyphs.logs,
+        glyph: TablerIcons.logs,
         title: l10n.serverLogsTitle,
         subtitle: l10n.serverLogDays(config.queryLog.retentionDays),
         path: ServerRoutes.queryLog,
@@ -257,7 +257,7 @@ class ServerQuickActions extends StatelessWidget {
           Row(
             spacing: 8,
             children: [
-              const GlyphIcon(AppGlyphs.puzzle, size: 18),
+              const Icon(TablerIcons.puzzle, size: 18),
               Expanded(
                 child: Text(
                   l10n.serverQuickActions,
@@ -312,7 +312,7 @@ class _QuickActionTile extends StatelessWidget {
     required this.stacked,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -397,7 +397,7 @@ class _QuickActionTile extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const GlyphIcon(AppGlyphs.chevronForward, size: 16),
+                    const Icon(TablerIcons.chevron_right, size: 16),
                   ],
                 ),
               ),

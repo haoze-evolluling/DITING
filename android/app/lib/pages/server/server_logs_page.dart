@@ -136,7 +136,7 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
         IconButton(
           tooltip: context.l10n.serverLogClear,
           onPressed: _clear,
-          icon: const GlyphIcon(AppGlyphs.broom),
+          icon: const Icon(TablerIcons.brush),
         ),
       ],
       body: PageBody(
@@ -174,7 +174,7 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
                         ? context.colorScheme.onSurfaceVariant
                         : context.colorScheme.onPrimaryContainer,
                   ),
-                  icon: const GlyphIcon(AppGlyphs.filter),
+                  icon: const Icon(TablerIcons.filter),
                 ),
               ],
             ),
@@ -378,7 +378,7 @@ class _StatsOverview extends StatelessWidget {
             child: Row(
               spacing: 8,
               children: [
-                const GlyphIcon(AppGlyphs.block, size: 16),
+                const Icon(TablerIcons.ban, size: 16),
                 Expanded(
                   child: Text(
                     stats.topBlockedDomains
@@ -416,7 +416,7 @@ class _EmptyLogCard extends StatelessWidget {
           spacing: 12,
           children: [
             IconBadge(
-              glyph: AppGlyphs.logs,
+              glyph: TablerIcons.logs,
               size: 38,
               glyphSize: 19,
               color: context.raisedSurfaceLevel.colorOf(scheme),
@@ -465,12 +465,12 @@ class _Rows extends StatelessWidget {
           items: [
             for (final record in result.entries)
               ListItem(
-                leading: GlyphIcon(
+                leading: Icon(
                   record.blocked
-                      ? AppGlyphs.block
+                      ? TablerIcons.ban
                       : record.cached
-                      ? AppGlyphs.database
-                      : AppGlyphs.checkCircle,
+                      ? TablerIcons.database
+                      : TablerIcons.circle_check,
                   size: 18,
                   color: record.blocked
                       ? scheme.error
@@ -517,11 +517,11 @@ class _Rows extends StatelessWidget {
               ),
               IconButton(
                 onPressed: page > 0 ? () => onPage(page - 1) : null,
-                icon: const GlyphIcon(AppGlyphs.chevronBack, size: 18),
+                icon: const Icon(TablerIcons.chevron_left, size: 18),
               ),
               IconButton(
                 onPressed: page + 1 < pages ? () => onPage(page + 1) : null,
-                icon: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                icon: const Icon(TablerIcons.chevron_right, size: 18),
               ),
             ],
           ),
@@ -548,14 +548,14 @@ class _ClientFilterSheet extends StatelessWidget {
             title: context.l10n.serverLogClient,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.devices, size: 20),
+                leading: const Icon(TablerIcons.devices, size: 20),
                 title: Text(context.l10n.serverLogClientAll),
                 trailing: selected.isEmpty ? const SelectionCheck() : null,
                 onTap: () => Navigator.of(context).pop(''),
               ),
               for (final client in clients)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.devices, size: 20),
+                  leading: const Icon(TablerIcons.devices, size: 20),
                   title: Text(
                     client,
                     maxLines: 1,

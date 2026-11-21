@@ -147,13 +147,13 @@ class _ServerFilterSubscriptionsPageState
     return CommonScaffold(
       title: context.l10n.serverSubscriptions,
       primaryAction: IconButtonData(
-        glyph: AppGlyphs.add,
+        glyph: TablerIcons.plus,
         tooltip: context.l10n.serverSubscriptionAdd,
         onPressed: () => _add(config, filter),
       ),
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: context.l10n.serverSubscriptionRefresh,
           onPressed: _refreshing ? null : _refresh,
         ),
@@ -165,13 +165,13 @@ class _ServerFilterSubscriptionsPageState
             items: [
               if (filter.lists.isEmpty)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.info, size: 20),
+                  leading: const Icon(TablerIcons.info_circle, size: 20),
                   title: Text(context.l10n.serverSubscriptionEmpty),
                 ),
               for (final list in filter.lists)
                 ListItem(
-                  leading: GlyphIcon(
-                    list.enabled ? AppGlyphs.checkCircle : AppGlyphs.close,
+                  leading: Icon(
+                    list.enabled ? TablerIcons.circle_check : TablerIcons.x,
                     size: 20,
                   ),
                   title: Row(
@@ -213,7 +213,7 @@ class _ServerFilterSubscriptionsPageState
                       IconButton(
                         tooltip: context.l10n.serverSubscriptionDelete,
                         onPressed: () => _delete(config, filter, list),
-                        icon: const GlyphIcon(AppGlyphs.delete, size: 18),
+                        icon: const Icon(TablerIcons.trash, size: 18),
                       ),
                     ],
                   ),

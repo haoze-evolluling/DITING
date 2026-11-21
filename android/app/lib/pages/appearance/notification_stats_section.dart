@@ -38,7 +38,7 @@ class NotificationStatsSection extends ConsumerWidget {
           generateSection(
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.info),
+                leading: const Icon(TablerIcons.info_circle),
                 title: Text(context.l10n.notificationStatsEmpty),
               ),
             ],
@@ -84,7 +84,7 @@ class NotificationStatsSection extends ConsumerWidget {
                 ListItem.toggle(
                   title: Text(item.label(context.l10n)),
                   subtitle: Text(item.description(context.l10n)),
-                  leading: GlyphIcon(item.glyph),
+                  leading: Icon(item.glyph),
                   value: false,
                   onChanged: enabled ? (_) => toggle(item) : null,
                 ),
@@ -113,7 +113,7 @@ class _EnabledRow extends StatelessWidget {
     return ListItem(
       title: Text(item.label(context.l10n)),
       subtitle: Text(item.description(context.l10n)),
-      leading: GlyphIcon(item.glyph),
+      leading: Icon(item.glyph),
       padding: const EdgeInsets.only(left: 16, right: 4),
       onTap: enabled ? onToggle : null,
       trailing: Row(
@@ -130,7 +130,7 @@ class _EnabledRow extends StatelessWidget {
               cursor: SystemMouseCursors.grab,
               child: SizedBox.square(
                 dimension: kMinInteractiveDimension,
-                child: Center(child: GlyphIcon(AppGlyphs.dragHandle)),
+                child: Center(child: Icon(TablerIcons.grip_vertical)),
               ),
             ),
           ),

@@ -117,7 +117,7 @@ class DashboardSegmentedControl<T> extends StatelessWidget {
     this.height = 52,
   });
 
-  final List<(T value, Glyph glyph, String label)> segments;
+  final List<(T value, IconData glyph, String label)> segments;
   final T value;
   final ValueChanged<T> onChanged;
   final double outer;
@@ -148,7 +148,7 @@ class DashboardSegmentedControl<T> extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   spacing: 2,
                   children: [
-                    GlyphIcon(segment.$2, size: 18, color: foreground),
+                    Icon(segment.$2, size: 18, color: foreground),
                     Text(
                       segment.$3,
                       maxLines: 1,

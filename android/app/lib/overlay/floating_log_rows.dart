@@ -209,7 +209,7 @@ class FloatingLogRow extends StatelessWidget {
               Row(
                 spacing: 8,
                 children: [
-                  GlyphIcon(statusGlyph, size: 16, color: statusColor),
+                  Icon(statusGlyph, size: 16, color: statusColor),
                   Expanded(
                     child: Text(
                       title,
@@ -313,12 +313,12 @@ class _Details extends StatelessWidget {
             children: [
               if (host != null)
                 _SmallButton(
-                  glyph: AppGlyphs.copy,
+                  glyph: TablerIcons.copy,
                   label: l10n.floatingLogCopyDomain,
                   onPressed: () => onCopy(host),
                 ),
               _SmallButton(
-                glyph: AppGlyphs.textShort,
+                glyph: TablerIcons.align_left,
                 label: l10n.floatingLogCopyRecord,
                 onPressed: () => onCopy(_recordText(request, lines)),
               ),
@@ -347,7 +347,7 @@ class _SmallButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String label;
   final VoidCallback onPressed;
 
@@ -360,7 +360,7 @@ class _SmallButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         textStyle: AppTextRole.sectionLabel.of(context),
       ),
-      icon: GlyphIcon(glyph, size: 16),
+      icon: Icon(glyph, size: 16),
       label: Text(label),
     );
   }
@@ -406,8 +406,8 @@ class FloatingLogNewRowsPill extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 spacing: 4,
                 children: [
-                  GlyphIcon(
-                    AppGlyphs.arrowUp,
+                  Icon(
+                    TablerIcons.arrow_up,
                     size: 14,
                     color: colorScheme.onPrimary,
                   ),
@@ -482,7 +482,7 @@ class FloatingLogEmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: 6,
           children: [
-            GlyphIcon(AppGlyphs.requests, size: 28, color: colorScheme.outline),
+            Icon(TablerIcons.clock, size: 28, color: colorScheme.outline),
             Text(
               title,
               textAlign: TextAlign.center,

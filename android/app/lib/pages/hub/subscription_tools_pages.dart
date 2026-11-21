@@ -36,7 +36,7 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
             title: context.l10n.autoUpdateSection,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.refresh),
+                leading: const Icon(TablerIcons.refresh),
                 title: Text(context.l10n.autoUpdateRulesSwitch),
                 subtitle: Text(context.l10n.autoUpdateRulesSwitchSubtitle),
                 value: enabled,
@@ -48,7 +48,7 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
             title: context.l10n.autoUpdateIntervalSection,
             items: [
               ListItem<int>.options(
-                leading: const GlyphIcon(AppGlyphs.clock),
+                leading: const Icon(TablerIcons.clock),
                 title: Text(context.l10n.autoUpdateIntervalSection),
                 value: interval && !settings.isCustom
                     ? settings.intervalHours
@@ -60,10 +60,10 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
                 onChanged: enabled ? actions.setIntervalHours : (_) {},
               ),
               ListItem(
-                leading: GlyphIcon(
+                leading: Icon(
                   interval && settings.isCustom
-                      ? AppGlyphs.checkCircle
-                      : AppGlyphs.sliders,
+                      ? TablerIcons.circle_check
+                      : TablerIcons.adjustments,
                   size: 20,
                 ),
                 title: Text(context.l10n.autoUpdateCustomInterval),
@@ -91,10 +91,10 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
                 AutoUpdateSchedule.everyOtherDay,
               ])
                 ListItem(
-                  leading: GlyphIcon(
+                  leading: Icon(
                     settings.schedule == schedule
-                        ? AppGlyphs.checkCircle
-                        : AppGlyphs.clock,
+                        ? TablerIcons.circle_check
+                        : TablerIcons.clock,
                     size: 20,
                   ),
                   title: Text(
@@ -125,15 +125,15 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
             title: context.l10n.autoUpdateStatusSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.clock),
+                leading: const Icon(TablerIcons.clock),
                 title: Text(context.l10n.autoUpdateNext),
                 subtitle: Text(
                   _nextUpdateText(context.l10n, enabled, settings, candidates),
                 ),
               ),
               ListItem(
-                leading: GlyphIcon(
-                  lastRun == null ? AppGlyphs.info : AppGlyphs.checkCircle,
+                leading: Icon(
+                  lastRun == null ? TablerIcons.info_circle : TablerIcons.circle_check,
                   size: 20,
                 ),
                 title: Text(context.l10n.autoUpdateLast),
@@ -152,19 +152,19 @@ class AutoUpdateSettingsPage extends ConsumerWidget {
             items: [
               if (groups == null)
                 ListItem(
-                  leading: GlyphIcon(AppGlyphs.folder),
+                  leading: Icon(TablerIcons.folder),
                   title: Text(context.l10n.autoUpdateReadingGroups),
                 )
               else if (groups.isEmpty)
                 ListItem(
-                  leading: GlyphIcon(AppGlyphs.folder),
+                  leading: Icon(TablerIcons.folder),
                   title: Text(context.l10n.autoUpdateNoGroups),
                   subtitle: Text(context.l10n.autoUpdateNoGroupsSubtitle),
                 )
               else
                 for (final group in groups)
                   ListItem.toggle(
-                    leading: const GlyphIcon(AppGlyphs.folder),
+                    leading: const Icon(TablerIcons.folder),
                     title: Text(group.name),
                     value: group.autoUpdateEnabled,
                     onChanged: enabled

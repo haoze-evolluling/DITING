@@ -75,7 +75,7 @@ class _ModeSelectPageState extends ConsumerState<ModeSelectPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TonalButton(
               size: TonalButtonSize.bar,
-              glyph: AppGlyphs.chevronForward,
+              glyph: TablerIcons.chevron_right,
               label: context.l10n.modeContinue,
               onPressed: () => _confirm(expanded),
             ),
@@ -167,10 +167,10 @@ class _WorkModeCard extends StatelessWidget {
     );
   }
 
-  static Glyph _glyphOf(AppWorkMode mode) => switch (mode) {
-    AppWorkMode.normal => AppGlyphs.layers,
-    AppWorkMode.express => AppGlyphs.bolt,
-    AppWorkMode.server => AppGlyphs.dns,
+  static IconData _glyphOf(AppWorkMode mode) => switch (mode) {
+    AppWorkMode.normal => TablerIcons.stack_2,
+    AppWorkMode.express => TablerIcons.bolt,
+    AppWorkMode.server => TablerIcons.server_2,
   };
 }
 
@@ -179,42 +179,42 @@ class _ModeFeatureList extends StatelessWidget {
 
   final AppWorkMode mode;
 
-  static Map<AppWorkMode, List<(Glyph, String, String)>> _features(
+  static Map<AppWorkMode, List<(IconData, String, String)>> _features(
     AppL10n l10n,
-  ) => <AppWorkMode, List<(Glyph, String, String)>>{
+  ) => <AppWorkMode, List<(IconData, String, String)>>{
     AppWorkMode.normal: [
-      (AppGlyphs.vpn, l10n.modeNormalFeature1, l10n.modeNormalFeature1Body),
-      (AppGlyphs.rules, l10n.modeNormalFeature2, l10n.modeNormalFeature2Body),
+      (TablerIcons.shield_lock, l10n.modeNormalFeature1, l10n.modeNormalFeature1Body),
+      (TablerIcons.list_details, l10n.modeNormalFeature2, l10n.modeNormalFeature2Body),
       (
-        AppGlyphs.verified,
+        TablerIcons.rosette_discount_check,
         l10n.modeNormalFeature3,
         l10n.modeNormalFeature3Body,
       ),
       (
-        AppGlyphs.dataUsage,
+        TablerIcons.chart_pie,
         l10n.modeNormalFeature4,
         l10n.modeNormalFeature4Body,
       ),
     ],
     AppWorkMode.express: [
-      (AppGlyphs.bolt, l10n.modeExpressFeature1, l10n.modeExpressFeature1Body),
-      (AppGlyphs.split, l10n.modeExpressFeature2, l10n.modeExpressFeature2Body),
+      (TablerIcons.bolt, l10n.modeExpressFeature1, l10n.modeExpressFeature1Body),
+      (TablerIcons.arrows_split, l10n.modeExpressFeature2, l10n.modeExpressFeature2Body),
       (
-        AppGlyphs.memory,
+        TablerIcons.cpu_2,
         l10n.modeExpressFeature3,
         l10n.modeExpressFeature3Body,
       ),
       (
-        AppGlyphs.devices,
+        TablerIcons.devices,
         l10n.modeExpressFeature4,
         l10n.modeExpressFeature4Body,
       ),
     ],
     AppWorkMode.server: [
-      (AppGlyphs.dns, l10n.modeServerFeature1, l10n.modeServerFeature1Body),
-      (AppGlyphs.wifi, l10n.modeServerFeature2, l10n.modeServerFeature2Body),
-      (AppGlyphs.rules, l10n.modeServerFeature3, l10n.modeServerFeature3Body),
-      (AppGlyphs.logs, l10n.modeServerFeature4, l10n.modeServerFeature4Body),
+      (TablerIcons.server_2, l10n.modeServerFeature1, l10n.modeServerFeature1Body),
+      (TablerIcons.wifi, l10n.modeServerFeature2, l10n.modeServerFeature2Body),
+      (TablerIcons.list_details, l10n.modeServerFeature3, l10n.modeServerFeature3Body),
+      (TablerIcons.logs, l10n.modeServerFeature4, l10n.modeServerFeature4Body),
     ],
   };
 
@@ -240,7 +240,7 @@ class _ModeFeatureList extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 1),
-                  child: GlyphIcon(glyph, size: 18, color: colorScheme.primary),
+                  child: Icon(glyph, size: 18, color: colorScheme.primary),
                 ),
                 Expanded(
                   child: Column(

@@ -11,10 +11,9 @@ class SelectionCheck extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlyphIcon(
-      AppGlyphs.check,
+    return Icon(
+      TablerIcons.check,
       size: size,
-      fill: 1,
       color: context.colorScheme.primary,
     );
   }
@@ -22,18 +21,18 @@ class SelectionCheck extends StatelessWidget {
 
 class SelectionBadge extends StatelessWidget {
   const SelectionBadge({super.key, this.size = 22})
-    : glyph = AppGlyphs.check,
+    : glyph = TablerIcons.check,
       tonal = false;
 
   const SelectionBadge.preferred({
     super.key,
     this.size = 22,
     bool inUse = false,
-  }) : glyph = AppGlyphs.pin,
+  }) : glyph = TablerIcons.pin,
        tonal = !inUse;
 
   final double size;
-  final Glyph glyph;
+  final IconData glyph;
   final bool tonal;
 
   @override
@@ -49,10 +48,9 @@ class SelectionBadge extends StatelessWidget {
               : colorScheme.primary,
         ),
         child: Center(
-          child: GlyphIcon(
+          child: Icon(
             glyph,
             size: size - 6,
-            fill: 1,
             color: tonal ? colorScheme.primary : colorScheme.onPrimary,
           ),
         ),

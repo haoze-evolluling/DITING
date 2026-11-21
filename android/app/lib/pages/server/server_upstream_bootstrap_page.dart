@@ -34,7 +34,7 @@ class ServerUpstreamBootstrapPage extends ConsumerWidget {
     return CommonScaffold(
       title: context.l10n.serverBootstrapSummary,
       primaryAction: IconButtonData(
-        glyph: AppGlyphs.add,
+        glyph: TablerIcons.plus,
         tooltip: context.l10n.bootstrapAdd,
         onPressed: () => _addCustom(context, ref, config),
       ),
@@ -44,7 +44,7 @@ class ServerUpstreamBootstrapPage extends ConsumerWidget {
             title: context.l10n.bootstrapGlobal,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.language, size: 20),
+                leading: const Icon(TablerIcons.language, size: 20),
                 title: Text(context.l10n.bootstrapEnable),
                 subtitle: Text(context.l10n.bootstrapEnableBody),
                 value: upstream.bootstrapEnabled,
@@ -64,7 +64,7 @@ class ServerUpstreamBootstrapPage extends ConsumerWidget {
             items: [
               for (final preset in presets)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.dns, size: 20),
+                  leading: const Icon(TablerIcons.server_2, size: 20),
                   title: Text(preset.name),
                   subtitle: Text(preset.ip),
                   trailing: CommonCheckBox(
@@ -100,12 +100,12 @@ class ServerUpstreamBootstrapPage extends ConsumerWidget {
             items: [
               if (custom.isEmpty)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.info, size: 20),
+                  leading: const Icon(TablerIcons.info_circle, size: 20),
                   title: Text(context.l10n.bootstrapNoCustom),
                 ),
               for (final entry in custom)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.upstream, size: 20),
+                  leading: const Icon(TablerIcons.cloud_upload, size: 20),
                   title: Text(entry.name.isEmpty ? entry.id : entry.name),
                   subtitle: Text(entry.address),
                   trailing: IconButton(
@@ -113,7 +113,7 @@ class ServerUpstreamBootstrapPage extends ConsumerWidget {
                     onPressed: upstream.bootstrapEnabled
                         ? () => _deleteCustom(context, ref, config, entry)
                         : null,
-                    icon: const GlyphIcon(AppGlyphs.delete, size: 18),
+                    icon: const Icon(TablerIcons.trash, size: 18),
                   ),
                 ),
             ],

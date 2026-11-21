@@ -11,7 +11,7 @@ class ServerCardHeader extends StatelessWidget {
     this.trailing = const [],
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final List<Widget> trailing;
 
@@ -21,7 +21,7 @@ class ServerCardHeader extends StatelessWidget {
     return Row(
       spacing: 8,
       children: [
-        GlyphIcon(glyph, size: 18, color: scheme.onSurfaceVariant),
+        Icon(glyph, size: 18, color: scheme.onSurfaceVariant),
         Expanded(child: Text(title, style: AppTextRole.rowTitle.of(context))),
         for (final child in trailing) child,
       ],
@@ -37,7 +37,7 @@ class ServerEmptyPanel extends StatelessWidget {
     required this.body,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String body;
 
@@ -61,7 +61,7 @@ class ServerEmptyPanel extends StatelessWidget {
               color: scheme.onSurfaceVariant.withValues(alpha: 0.08),
               shape: AppShape.standard,
             ),
-            child: GlyphIcon(glyph, size: 18, color: scheme.onSurfaceVariant),
+            child: Icon(glyph, size: 18, color: scheme.onSurfaceVariant),
           ),
           Expanded(
             child: Column(

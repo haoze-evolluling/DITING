@@ -76,7 +76,7 @@ class _SubscriptionVersionPageState
                 title: l10n.ruleVersionsPick,
                 items: [
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.link),
+                    leading: const Icon(TablerIcons.link),
                     title: Text(l10n.ruleVersionsPick),
                     trailing: PopupSelectButton<int>(
                       value: selectedId,
@@ -227,7 +227,7 @@ class _ErrorNotice extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InlineNotice(
         message: text,
-        glyph: AppGlyphs.error,
+        glyph: TablerIcons.alert_circle,
         color: colorScheme.errorContainer,
         foregroundColor: colorScheme.onErrorContainer,
       ),
@@ -254,7 +254,7 @@ class _SubscriptionPicker extends StatelessWidget {
       items: [
         for (final entry in entries)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.link),
+            leading: const Icon(TablerIcons.link),
             title: Text(entry.name),
             trailing: entry.id == selectedId ? const SelectionCheck() : null,
             onTap: () => onSelect(entry.id),
@@ -323,8 +323,8 @@ class _VersionHistory extends ConsumerWidget {
     final title =
         '${version.hash} · ${l10n.ruleVersionsRuleCount(version.ruleCount)}';
     return ListItem(
-      leading: GlyphIcon(
-        isCurrent ? AppGlyphs.checkCircle : AppGlyphs.clock,
+      leading: Icon(
+        isCurrent ? TablerIcons.circle_check : TablerIcons.clock,
         size: 20,
       ),
       title: Text(title),

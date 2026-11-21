@@ -54,7 +54,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
             title: context.l10n.resolutionCurrentSection,
             items: [
               ListItem<ResolutionMode>.options(
-                leading: const GlyphIcon(AppGlyphs.shuffle),
+                leading: const Icon(TablerIcons.arrows_shuffle),
                 title: Text(context.l10n.resolutionModeTitle),
                 subtitle: Text(_descriptionOf(mode, context.l10n)),
                 value: mode,
@@ -70,7 +70,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
             title: context.l10n.resolutionBuiltinSection,
             items: [
               ListItem<ProviderProtocol>.options(
-                leading: const GlyphIcon(AppGlyphs.dns),
+                leading: const Icon(TablerIcons.server_2),
                 title: Text(context.l10n.resolutionBuiltinProtocol),
                 subtitle: Text(context.l10n.resolutionBuiltinNote),
                 value: presetProtocol,
@@ -86,7 +86,7 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
             items: [
               for (final option in ResolutionMode.values)
                 ListItem(
-                  leading: GlyphIcon(_glyphOf(option), size: 20),
+                  leading: Icon(_glyphOf(option), size: 20),
                   title: Text(option.label(context.l10n)),
                   subtitle: Text(_descriptionOf(option, context.l10n)),
                   trailing: Text(
@@ -110,11 +110,11 @@ class _ResolutionModePageState extends ConsumerState<ResolutionModePage> {
     );
   }
 
-  static Glyph _glyphOf(ResolutionMode mode) => switch (mode) {
-    ResolutionMode.single => AppGlyphs.upstream,
-    ResolutionMode.smart => AppGlyphs.sparkle,
-    ResolutionMode.parallel => AppGlyphs.speed,
-    ResolutionMode.primaryBackup => AppGlyphs.swap,
+  static IconData _glyphOf(ResolutionMode mode) => switch (mode) {
+    ResolutionMode.single => TablerIcons.cloud_upload,
+    ResolutionMode.smart => TablerIcons.sparkles,
+    ResolutionMode.parallel => TablerIcons.gauge,
+    ResolutionMode.primaryBackup => TablerIcons.arrows_exchange,
   };
 
   static String _summaryOf(
@@ -227,8 +227,8 @@ class _ResolutionModeConfigPageState
               child: Row(
                 spacing: 12,
                 children: [
-                  GlyphIcon(
-                    _single ? AppGlyphs.upstream : AppGlyphs.speed,
+                  Icon(
+                    _single ? TablerIcons.cloud_upload : TablerIcons.gauge,
                     size: 22,
                     color: context.colorScheme.primary,
                   ),
@@ -262,7 +262,7 @@ class _ResolutionModeConfigPageState
             title: context.l10n.resolutionBuiltinSection,
             items: [
               ListItem<ProviderProtocol>.options(
-                leading: const GlyphIcon(AppGlyphs.dns),
+                leading: const Icon(TablerIcons.server_2),
                 title: Text(context.l10n.resolutionBuiltinProtocol),
                 value: protocol,
                 options: ProviderProtocol.values,
@@ -282,17 +282,17 @@ class _ResolutionModeConfigPageState
             items: [
               if (providers.isEmpty)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.info),
+                  leading: const Icon(TablerIcons.info_circle),
                   title: Text(context.l10n.resolutionNoProviders),
                 ),
               for (final provider in [...ordered, ...rest])
                 ListItem(
-                  leading: GlyphIcon(
+                  leading: Icon(
                     (_single
                             ? provider.id == selectedId
                             : raceIds.contains(provider.id))
-                        ? AppGlyphs.checkCircle
-                        : AppGlyphs.upstream,
+                        ? TablerIcons.circle_check
+                        : TablerIcons.cloud_upload,
                     size: 20,
                   ),
                   title: Text(provider.name),
@@ -313,7 +313,7 @@ class _ResolutionModeConfigPageState
             title: context.l10n.hubModuleMore,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.link),
+                leading: const Icon(TablerIcons.link),
                 title: Text(context.l10n.dns64Title),
                 subtitle: Text(context.l10n.dns64Intro),
                 onTap: () => context.push(Dns64Paths.root),
@@ -341,12 +341,12 @@ class _OrderButtons extends StatelessWidget {
         IconButton(
           tooltip: context.l10n.resolutionMoveUp,
           onPressed: onUp,
-          icon: const GlyphIcon(AppGlyphs.arrowUp, size: 18),
+          icon: const Icon(TablerIcons.arrow_up, size: 18),
         ),
         IconButton(
           tooltip: context.l10n.resolutionMoveDown,
           onPressed: onDown,
-          icon: const GlyphIcon(AppGlyphs.arrowDown, size: 18),
+          icon: const Icon(TablerIcons.arrow_down, size: 18),
         ),
       ],
     );

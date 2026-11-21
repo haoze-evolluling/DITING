@@ -12,7 +12,7 @@ class IconBadge extends StatelessWidget {
     this.shape = AppShape.standard,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
 
   final Color color;
 
@@ -29,7 +29,7 @@ class IconBadge extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: ShapeDecoration(color: color, shape: shape),
-      child: GlyphIcon(glyph, size: glyphSize, color: foregroundColor),
+      child: Icon(glyph, size: glyphSize, color: foregroundColor),
     );
   }
 }

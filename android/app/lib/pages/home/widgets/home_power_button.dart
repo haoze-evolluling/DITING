@@ -165,10 +165,11 @@ class _PowerVisualState extends State<_PowerVisual>
       },
       child: widget.busy
           ? CommonCircleLoading(size: 42, color: widget.foreground)
-          : GlyphIcon(
-              widget.running ? AppGlyphs.bolt : AppGlyphs.playPause(0),
+          : Icon(
+              widget.running
+                  ? TablerIcons.bolt_filled
+                  : TablerIcons.player_play_filled,
               size: 42,
-              fill: 1,
               color: widget.foreground,
             ),
     );

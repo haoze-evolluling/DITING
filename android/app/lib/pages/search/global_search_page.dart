@@ -30,7 +30,7 @@ class GlobalSearchPage extends ConsumerWidget {
               child: SearchField(
                 autofocus: true,
                 hintText: context.l10n.searchHint,
-                glyph: AppGlyphs.search,
+                glyph: TablerIcons.search,
                 onChanged: (value) =>
                     ref.read(globalSearchQueryProvider.notifier).set(value),
               ),

@@ -24,7 +24,7 @@ class SiteLatencySitesPage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.dashboardRestoreDefaults,
           onPressed: () => notifier.reset(),
-          icon: const GlyphIcon(AppGlyphs.reset),
+          icon: const Icon(TablerIcons.restore),
         ),
       ],
       body: ListView(
@@ -118,7 +118,7 @@ class _SelectedRow extends StatelessWidget {
                 .of(context)
                 .copyWith(color: colorScheme.onSurfaceVariant),
           ),
-          const GlyphIcon(AppGlyphs.removeCircle, size: 18),
+          const Icon(TablerIcons.circle_minus, size: 18),
         ],
       ),
       onTap: onTap,
@@ -143,12 +143,12 @@ class _CandidateRow extends StatelessWidget {
     return _Tile(
       target: target,
       trailing: selected
-          ? GlyphIcon(
-              AppGlyphs.checkCircle,
+          ? Icon(
+              TablerIcons.circle_check,
               size: 18,
               color: colorScheme.primary,
             )
-          : const GlyphIcon(AppGlyphs.addCircle, size: 18),
+          : const Icon(TablerIcons.circle_plus, size: 18),
       onTap: onTap,
     );
   }
@@ -179,8 +179,8 @@ class _Tile extends StatelessWidget {
           child: Row(
             spacing: 10,
             children: [
-              GlyphIcon(
-                target.glyph,
+              SiteIconView(
+                target.icon,
                 size: 20,
                 color: colorScheme.onSurfaceVariant,
               ),

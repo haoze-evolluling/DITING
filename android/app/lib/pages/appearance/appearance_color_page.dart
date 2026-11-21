@@ -22,7 +22,7 @@ class ThemeColorPage extends ConsumerWidget {
             title: context.l10n.appearancePaletteInfoLabel,
             items: [
               ListItem<AppPalette>.options(
-                leading: const GlyphIcon(AppGlyphs.palette),
+                leading: const Icon(TablerIcons.palette),
                 title: Text(context.l10n.appearancePaletteTitle),
                 value: palette,
                 options: AppPalette.values,

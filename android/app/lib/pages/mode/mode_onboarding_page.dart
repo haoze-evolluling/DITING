@@ -57,7 +57,7 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
       title: context.l10n.onboardingTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.close,
+          glyph: TablerIcons.x,
           tooltip: context.l10n.onboardingSkip,
           onPressed: () {
             ref.read(onboardingProvider.notifier).complete();
@@ -90,7 +90,7 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
                     Expanded(
                       child: TonalButton(
                         size: TonalButtonSize.bar,
-                        glyph: AppGlyphs.chevronBack,
+                        glyph: TablerIcons.chevron_left,
                         label: context.l10n.onboardingPrev,
                         onPressed: () => _goTo(_index - 1),
                       ),
@@ -99,7 +99,7 @@ class _ModeOnboardingPageState extends ConsumerState<ModeOnboardingPage> {
                     flex: 2,
                     child: TonalButton(
                       size: TonalButtonSize.bar,
-                      glyph: last ? AppGlyphs.check : AppGlyphs.chevronForward,
+                      glyph: last ? TablerIcons.check : TablerIcons.chevron_right,
                       label: last
                           ? context.l10n.onboardingStart
                           : context.l10n.onboardingNext,

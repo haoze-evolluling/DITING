@@ -18,7 +18,7 @@ class SettingsPage extends StatelessWidget {
       title: context.l10n.hubOtherSettings,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.wrench,
+          glyph: TablerIcons.tool,
           tooltip: context.l10n.devOptions,
           onPressed: () => context.push(SystemPaths.developer),
         ),
@@ -29,7 +29,7 @@ class SettingsPage extends StatelessWidget {
             title: context.l10n.settingsRunSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.layers,
+                glyph: TablerIcons.stack_2,
                 title: context.l10n.workModeSettingTitle,
                 subtitle: context.l10n.settingsModeSubtitle,
                 onPressed: () => context.push(Routes.modeSelect),
@@ -40,7 +40,7 @@ class SettingsPage extends StatelessWidget {
             title: context.l10n.settingsSystemSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.language,
+                glyph: TablerIcons.language,
                 title: context.l10n.languageTitle,
                 subtitle: context.l10n.settingsLanguageSubtitle,
                 onPressed: () => context.push(SystemPaths.language),
@@ -51,7 +51,7 @@ class SettingsPage extends StatelessWidget {
             title: context.l10n.settingsGuideSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.info,
+                glyph: TablerIcons.info_circle,
                 title: context.l10n.workModeGuideTitle,
                 subtitle: context.l10n.settingsWizardSubtitle,
                 onPressed: () => context.push(Routes.modeOnboarding),

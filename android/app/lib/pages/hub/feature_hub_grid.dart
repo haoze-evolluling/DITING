@@ -13,7 +13,7 @@ class FeatureHubCardData {
 
   final String title;
   final String description;
-  final Glyph glyph;
+  final IconData glyph;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
@@ -135,7 +135,7 @@ class _FeatureCardState extends State<_FeatureCard> {
               children: [
                 Row(
                   children: [
-                    GlyphIcon(card.glyph, size: 20, color: colorScheme.primary),
+                    Icon(card.glyph, size: 20, color: colorScheme.primary),
                     const Spacer(),
                     if (card.hint != null)
                       Text(

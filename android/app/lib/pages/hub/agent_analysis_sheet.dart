@@ -138,7 +138,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
   }) {
     if (!api.enabled) {
       return _Notice(
-        glyph: AppGlyphs.lock,
+        glyph: TablerIcons.lock,
         title: context.l10n.agentSheetDisabledTitle,
         description: context.l10n.agentSheetDisabledBody,
         actionLabel: context.l10n.agentSheetEnableAndStart,
@@ -147,7 +147,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     }
     if (!api.ready) {
       return _Notice(
-        glyph: AppGlyphs.key,
+        glyph: TablerIcons.key,
         title: context.l10n.agentSheetNoKeyTitle,
         description: context.l10n.agentSheetNoKeyBody,
         actionLabel: context.l10n.agentSheetGoConfigure,
@@ -156,7 +156,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     }
     if (mine && state.running) {
       return _Notice(
-        glyph: AppGlyphs.sparkle,
+        glyph: TablerIcons.sparkles,
         title: context.l10n.agentSheetRunning,
         description: context.l10n.agentSheetModel(
           api.activeProvider?.model ?? context.l10n.agentSheetUnknown,
@@ -171,7 +171,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
     }
     if (mine && state.failed) {
       return _Notice(
-        glyph: AppGlyphs.error,
+        glyph: TablerIcons.alert_circle,
         title: context.l10n.agentSheetFailed,
         description: state.error ?? context.l10n.agentSheetUnknownError,
         isError: true,
@@ -185,7 +185,7 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
       return null;
     }
     return _Notice(
-      glyph: AppGlyphs.sparkle,
+      glyph: TablerIcons.sparkles,
       title: _sessionId == 0
           ? context.l10n.agentSheetNotStarted
           : context.l10n.agentSheetSuperseded,
@@ -255,14 +255,14 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
               children: [
                 Expanded(
                   child: TonalButton(
-                    glyph: AppGlyphs.checkCircle,
+                    glyph: TablerIcons.circle_check,
                     label: context.l10n.agentSheetAddAllowlist,
                     onPressed: () => _addRule(RuleKind.allow),
                   ),
                 ),
                 Expanded(
                   child: TonalButton(
-                    glyph: AppGlyphs.block,
+                    glyph: TablerIcons.ban,
                     label: context.l10n.agentSheetAddBlock,
                     onPressed: () => _addRule(RuleKind.block),
                   ),
@@ -274,14 +274,14 @@ class _AgentAnalysisSheetState extends ConsumerState<AgentAnalysisSheet> {
             children: [
               Expanded(
                 child: TonalButton(
-                  glyph: AppGlyphs.copy,
+                  glyph: TablerIcons.copy,
                   label: context.l10n.agentSheetCopyResult,
                   onPressed: () => _copyResult(content),
                 ),
               ),
               Expanded(
                 child: TonalButton(
-                  glyph: AppGlyphs.refresh,
+                  glyph: TablerIcons.refresh,
                   label: context.l10n.agentSheetReanalyze,
                   onPressed: _start,
                 ),
@@ -308,7 +308,7 @@ class _Header extends StatelessWidget {
         spacing: 12,
         children: [
           IconBadge(
-            glyph: AppGlyphs.sparkle,
+            glyph: TablerIcons.sparkles,
             size: 38,
             glyphSize: 20,
             color: colorScheme.primaryContainer,
@@ -375,7 +375,7 @@ class _Notice extends StatelessWidget {
     this.isError = false,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String description;
   final String? actionLabel;
@@ -404,7 +404,7 @@ class _Notice extends StatelessWidget {
                 if (loading)
                   const CommonCircleLoading(size: 20)
                 else
-                  GlyphIcon(glyph, size: 22, color: accent),
+                  Icon(glyph, size: 22, color: accent),
                 Expanded(
                   child: Text(title, style: AppTextRole.bodyStrong.of(context)),
                 ),
@@ -429,7 +429,7 @@ class _Notice extends StatelessWidget {
                     ),
                   Expanded(
                     child: TonalButton(
-                      glyph: isError ? AppGlyphs.refresh : null,
+                      glyph: isError ? TablerIcons.refresh : null,
                       label: actionLabel!,
                       onPressed: onPressed,
                     ),

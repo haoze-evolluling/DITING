@@ -422,7 +422,7 @@ class CommonPopupMenuItem {
 
   final String label;
   final String? subtitle;
-  final Glyph? glyph;
+  final IconData? glyph;
   final VoidCallback? onPressed;
   final bool danger;
   final bool? checked;

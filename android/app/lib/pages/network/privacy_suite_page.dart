@@ -23,7 +23,7 @@ class PrivacySuitePage extends ConsumerWidget {
             title: l10n.privacyDnsSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.eyeOff),
+                leading: const Icon(TablerIcons.eye_off),
                 title: Text(l10n.privacyBlockHttpsSvcb),
                 subtitle: Text(l10n.privacyBlockHttpsSvcbDesc),
                 trailing: CommonSwitch(
@@ -33,7 +33,7 @@ class PrivacySuitePage extends ConsumerWidget {
                 ),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.lock),
+                leading: const Icon(TablerIcons.lock),
                 title: Text(l10n.privacyRebinding),
                 subtitle: Text(l10n.privacyRebindingDesc),
                 trailing: CommonSwitch(

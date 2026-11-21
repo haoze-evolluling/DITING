@@ -21,7 +21,7 @@ class ServerTopDomainsOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return _RankingCard(
-      glyph: AppGlyphs.target,
+      glyph: TablerIcons.target,
       title: l10n.serverTopDomainsTitle,
       items: stats.topDomains.take(5).toList(),
       emptyText: l10n.serverNoRanking,
@@ -38,7 +38,7 @@ class ServerTopClientsOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return _RankingCard(
-      glyph: AppGlyphs.devices,
+      glyph: TablerIcons.devices,
       title: l10n.serverTopClientsTitle,
       items: stats.topClients.take(5).toList(),
       emptyText: l10n.serverNoRanking,
@@ -54,7 +54,7 @@ class _RankingCard extends StatelessWidget {
     required this.emptyText,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final List<ServerNameCount> items;
   final String emptyText;
@@ -202,7 +202,7 @@ class ServerRecentQueries extends ConsumerWidget {
         spacing: 12,
         children: [
           ServerCardHeader(
-            glyph: AppGlyphs.logs,
+            glyph: TablerIcons.logs,
             title: l10n.serverRecentQueries,
             trailing: [
               Text(
@@ -211,7 +211,7 @@ class ServerRecentQueries extends ConsumerWidget {
                     .of(context)
                     .copyWith(color: scheme.primary),
               ),
-              const GlyphIcon(AppGlyphs.chevronForward, size: 17),
+              const Icon(TablerIcons.chevron_right, size: 17),
             ],
           ),
           recent.when(

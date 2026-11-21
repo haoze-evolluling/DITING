@@ -13,7 +13,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
       title: context.l10n.mirrorTplTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.mirrorTplAdd,
           onPressed: () => _add(context, ref),
         ),
@@ -25,7 +25,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
             title: context.l10n.mirrorTplActions,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.info),
+                leading: const Icon(TablerIcons.info_circle),
                 title: Text(context.l10n.mirrorTplFormatExample),
                 subtitle: Text(context.l10n.mirrorTplFormatExampleSubtitle),
                 onTap: () => _showFormatGuide(context),
@@ -37,7 +37,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
               title: context.l10n.mirrorTplSaved,
               items: [
                 ListItem(
-                  leading: GlyphIcon(AppGlyphs.error),
+                  leading: Icon(TablerIcons.alert_circle),
                   title: Text(context.l10n.mirrorTplReadFailed),
                   subtitle: Text(context.l10n.mirrorTplReadFailedSubtitle),
                 ),
@@ -49,18 +49,18 @@ class MirrorTemplatesPage extends ConsumerWidget {
               items: [
                 if (rows == null)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.info),
+                    leading: const Icon(TablerIcons.info_circle),
                     title: Text(context.l10n.mirrorTplReading),
                   )
                 else if (rows.isEmpty)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.info),
+                    leading: const Icon(TablerIcons.info_circle),
                     title: Text(context.l10n.mirrorTplEmpty),
                   )
                 else
                   for (final row in rows)
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.mirror, size: 20),
+                      leading: const Icon(TablerIcons.flip_horizontal, size: 20),
                       title: Text(row.name),
                       subtitle: Text(row.template),
                       trailing: Row(
@@ -69,7 +69,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
                           IconButton(
                             tooltip: context.l10n.commonEdit,
                             onPressed: () => _edit(context, ref, row),
-                            icon: const GlyphIcon(AppGlyphs.edit, size: 20),
+                            icon: const Icon(TablerIcons.pencil, size: 20),
                           ),
                           IconButton(
                             tooltip: context.l10n.commonDelete,
@@ -81,7 +81,7 @@ class MirrorTemplatesPage extends ConsumerWidget {
                                   .read(globalMirrorProvider.notifier)
                                   .templateRemoved(row.template);
                             },
-                            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+                            icon: const Icon(TablerIcons.trash, size: 20),
                           ),
                         ],
                       ),

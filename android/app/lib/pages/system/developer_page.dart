@@ -255,8 +255,8 @@ class _DeveloperModeCard extends ConsumerWidget {
             Row(
               spacing: 10,
               children: [
-                GlyphIcon(
-                  AppGlyphs.wrench,
+                Icon(
+                  TablerIcons.tool,
                   size: 22,
                   color: enabled
                       ? colorScheme.primary
@@ -316,8 +316,8 @@ class _StorageCard extends ConsumerWidget {
             Row(
               spacing: 10,
               children: [
-                GlyphIcon(
-                  AppGlyphs.database,
+                Icon(
+                  TablerIcons.database,
                   size: 22,
                   color: colorScheme.primary,
                 ),
@@ -426,10 +426,10 @@ class _ActionRow extends StatelessWidget {
       ),
       leading: running
           ? const CommonCircleLoading(size: 20)
-          : GlyphIcon(glyphByName(action.glyphName), color: glyphColor),
+          : Icon(glyphByName(action.glyphName), color: glyphColor),
       trailing: running
           ? null
-          : const GlyphIcon(AppGlyphs.chevronForward, size: 20),
+          : const Icon(TablerIcons.chevron_right, size: 20),
       onTap: onTap,
     );
   }

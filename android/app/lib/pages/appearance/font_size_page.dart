@@ -23,7 +23,7 @@ class FontSizePage extends ConsumerWidget {
       title: context.l10n.appearanceFontSizeLabel,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.reset,
+          glyph: TablerIcons.restore,
           tooltip: context.l10n.fontSizeRestoreDefaults,
           onPressed: isDefault ? null : () => set(1),
         ),
@@ -44,8 +44,8 @@ class FontSizePage extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      GlyphIcon(
-                        AppGlyphs.textSize,
+                      Icon(
+                        TablerIcons.text_size,
                         size: 20,
                         color: context.colorScheme.onSurfaceVariant,
                       ),
@@ -100,7 +100,7 @@ class FontSizePage extends ConsumerWidget {
             title: context.l10n.fontSizePresets,
             items: [
               ListItem<double>.options(
-                leading: const GlyphIcon(AppGlyphs.textSize),
+                leading: const Icon(TablerIcons.text_size),
                 title: Text(context.l10n.appearanceFontSizeLabel),
                 value: _nearestPreset(scale),
                 options: _presets,

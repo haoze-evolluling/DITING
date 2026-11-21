@@ -49,7 +49,7 @@ class ServerUpstreamPage extends ConsumerWidget {
             title: context.l10n.serverUpstreamMode,
             items: [
               ListItem<String>.options(
-                leading: GlyphIcon(serverModeGlyph(upstream.mode), size: 20),
+                leading: Icon(serverModeGlyph(upstream.mode), size: 20),
                 title: Text(context.l10n.serverUpstreamScheduling),
                 subtitle: Text(serverModeDescription(context, upstream.mode)),
                 value: upstream.mode,
@@ -68,7 +68,7 @@ class ServerUpstreamPage extends ConsumerWidget {
             title: context.l10n.serverCacheTitle,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.database, size: 20),
+                leading: const Icon(TablerIcons.database, size: 20),
                 title: Text(context.l10n.serverCacheEnabled),
                 subtitle: Text(context.l10n.serverCacheEnabledBody),
                 value: cache.enabled,
@@ -76,7 +76,7 @@ class ServerUpstreamPage extends ConsumerWidget {
               ),
               if (cache.enabled) ...[
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.memory, size: 20),
+                  leading: const Icon(TablerIcons.cpu_2, size: 20),
                   title: Text(context.l10n.serverCacheEntries),
                   trailing: _CacheValue(label: '${cache.maxEntries}'),
                   onTap: () async {
@@ -92,7 +92,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                   },
                 ),
                 ListItem<String>.options(
-                  leading: const GlyphIcon(AppGlyphs.sliders, size: 20),
+                  leading: const Icon(TablerIcons.adjustments, size: 20),
                   title: Text(context.l10n.serverCacheMode),
                   value: cache.mode,
                   options: const ['limit_max_ttl', 'fixed'],
@@ -102,7 +102,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                   onChanged: (value) => saveCache(cache.copyWith(mode: value)),
                 ),
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.clock, size: 20),
+                  leading: const Icon(TablerIcons.clock, size: 20),
                   title: Text(
                     cache.mode == 'limit_max_ttl'
                         ? context.l10n.serverCacheMaxTtl
@@ -134,7 +134,7 @@ class ServerUpstreamPage extends ConsumerWidget {
               title: context.l10n.serverCacheAdvanced,
               items: [
                 ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.speed, size: 20),
+                  leading: const Icon(TablerIcons.gauge, size: 20),
                   title: Text(context.l10n.serverCacheMinTtl),
                   subtitle: Text(context.l10n.serverCacheMinTtlBody),
                   value: cache.minTtlEnabled,
@@ -143,7 +143,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                 ),
                 if (cache.minTtlEnabled)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.arrowUp, size: 20),
+                    leading: const Icon(TablerIcons.arrow_up, size: 20),
                     title: Text(context.l10n.serverCacheMinTtlValue),
                     trailing: _CacheValue(label: '${cache.minTtlSeconds}s'),
                     onTap: () async {
@@ -159,7 +159,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                     },
                   ),
                 ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.sync, size: 20),
+                  leading: const Icon(TablerIcons.rotate_clockwise, size: 20),
                   title: Text(context.l10n.serverCacheStale),
                   subtitle: Text(context.l10n.serverCacheStaleBody),
                   value: cache.staleFallbackEnabled,
@@ -167,21 +167,21 @@ class ServerUpstreamPage extends ConsumerWidget {
                       saveCache(cache.copyWith(staleFallbackEnabled: value)),
                 ),
                 ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.warning, size: 20),
+                  leading: const Icon(TablerIcons.alert_triangle, size: 20),
                   title: Text(context.l10n.serverCacheNegative),
                   value: cache.negativeTtlEnabled,
                   onChanged: (value) =>
                       saveCache(cache.copyWith(negativeTtlEnabled: value)),
                 ),
                 ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.sparkle, size: 20),
+                  leading: const Icon(TablerIcons.sparkles, size: 20),
                   title: Text(context.l10n.serverCacheOptimistic),
                   value: cache.optimistic,
                   onChanged: (value) =>
                       saveCache(cache.copyWith(optimistic: value)),
                 ),
                 ListItem.toggle(
-                  leading: const GlyphIcon(AppGlyphs.bolt, size: 20),
+                  leading: const Icon(TablerIcons.bolt, size: 20),
                   title: Text(context.l10n.serverCachePrefetch),
                   value: cache.prefetchEnabled,
                   onChanged: (value) =>

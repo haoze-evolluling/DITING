@@ -25,7 +25,7 @@ class ThemeDayNightPage extends ConsumerWidget {
             title: context.l10n.dayNightInfoLabel,
             items: [
               ListItem<AppThemeMode>.options(
-                leading: const GlyphIcon(AppGlyphs.sun),
+                leading: const Icon(TablerIcons.sun),
                 title: Text(context.l10n.dayNightTitle),
                 value: mode,
                 options: AppThemeMode.values,
@@ -169,7 +169,7 @@ class ThemeBottomBarPage extends ConsumerWidget {
                   subtitle: Text(
                     _destinationSubtitle(context.l10n, destination),
                   ),
-                  leading: GlyphIcon(destination.glyph),
+                  leading: Icon(destination.icon),
                   value: false,
                   onChanged: (_) => toggle(destination),
                 ),
@@ -198,7 +198,7 @@ class _DockDestinationRow extends StatelessWidget {
     return ListItem(
       title: Text(destination.label(context.l10n)),
       subtitle: Text(_destinationSubtitle(context.l10n, destination)),
-      leading: GlyphIcon(destination.glyph),
+      leading: Icon(destination.icon),
       padding: const EdgeInsets.only(left: 16, right: 4),
       onTap: onToggle,
       trailing: Row(
@@ -211,7 +211,7 @@ class _DockDestinationRow extends StatelessWidget {
               cursor: SystemMouseCursors.grab,
               child: SizedBox.square(
                 dimension: kMinInteractiveDimension,
-                child: Center(child: GlyphIcon(AppGlyphs.dragHandle)),
+                child: Center(child: Icon(TablerIcons.grip_vertical)),
               ),
             ),
           ),

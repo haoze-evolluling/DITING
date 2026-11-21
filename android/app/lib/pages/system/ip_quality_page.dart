@@ -11,14 +11,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum IpType {
-  residential(AppGlyphs.account),
-  mobile(AppGlyphs.devices),
-  business(AppGlyphs.profiles),
-  hosting(AppGlyphs.cpu);
+  residential(TablerIcons.user),
+  mobile(TablerIcons.devices),
+  business(TablerIcons.file_text),
+  hosting(TablerIcons.cpu);
 
   const IpType(this.glyph);
 
-  final Glyph glyph;
+  final IconData glyph;
 
   String label(AppL10n l10n) => switch (this) {
     residential => l10n.ipTypeResidential,
@@ -105,7 +105,7 @@ class _IpQualityPageState extends ConsumerState<IpQualityPage> {
       title: context.l10n.devIpQuality,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: context.l10n.ipQualityRedetect,
           isLoading: state.stage == IpQualityStage.loading,
           onPressed: () => ref.read(ipQualityProvider.notifier).detect(),
@@ -247,7 +247,7 @@ class IpQualitySheet extends StatelessWidget {
             label: stage == IpQualityStage.loading
                 ? context.l10n.ipQualityChecking
                 : context.l10n.ipQualityRedetect,
-            glyph: AppGlyphs.refresh,
+            glyph: TablerIcons.refresh,
             size: TonalButtonSize.section,
             onPressed: stage == IpQualityStage.loading ? null : onRetry,
           ),
@@ -289,8 +289,8 @@ class _EmptyReport extends StatelessWidget {
                 if (loading)
                   const CommonCircleLoading()
                 else
-                  GlyphIcon(
-                    failed ? AppGlyphs.error : AppGlyphs.cloudSync,
+                  Icon(
+                    failed ? TablerIcons.alert_circle : TablerIcons.cloud_network,
                     size: 22,
                     color: failed
                         ? colorScheme.error
@@ -324,7 +324,7 @@ class _EmptyReport extends StatelessWidget {
             label: loading
                 ? context.l10n.ipQualityChecking
                 : context.l10n.ipQualityStart,
-            glyph: AppGlyphs.refresh,
+            glyph: TablerIcons.refresh,
             size: TonalButtonSize.section,
             onPressed: loading ? null : onRetry,
           ),
@@ -367,8 +367,8 @@ class _SourceRow extends StatelessWidget {
     final latency = source.latencyMs;
     final detail = source.detail;
     return ListItem(
-      leading: GlyphIcon(
-        used ? AppGlyphs.checkCircle : AppGlyphs.warning,
+      leading: Icon(
+        used ? TablerIcons.circle_check : TablerIcons.alert_triangle,
         color: color,
       ),
       title: Text(source.name),

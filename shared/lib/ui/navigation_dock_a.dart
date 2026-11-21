@@ -163,9 +163,14 @@ class _DockSurface extends StatelessWidget {
 }
 
 class NavigationDockDestination {
-  const NavigationDockDestination({required this.glyph, required this.label});
+  const NavigationDockDestination({
+    required this.icon,
+    this.filledIcon,
+    required this.label,
+  });
 
-  final Glyph glyph;
+  final IconData icon;
+  final IconData? filledIcon;
   final String label;
 }
 

@@ -12,7 +12,7 @@ class _ToolField extends StatelessWidget {
 
   final TextEditingController controller;
   final String hintText;
-  final Glyph glyph;
+  final IconData glyph;
   final ValueChanged<String>? onSubmitted;
 
   final ValueChanged<String>? onChanged;
@@ -30,7 +30,7 @@ class _ToolField extends StatelessWidget {
         onChanged: onChanged,
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: GlyphIcon(glyph),
+          prefixIcon: Icon(glyph),
         ),
       ),
     );
@@ -69,7 +69,7 @@ class _ViaTunnelRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListItem.toggle(
-      leading: const GlyphIcon(AppGlyphs.link, size: 20),
+      leading: const Icon(TablerIcons.link, size: 20),
       title: Text(title),
       subtitle: Text(subtitle),
       value: value,
@@ -84,12 +84,12 @@ class _ToolNotice extends StatelessWidget {
   const _ToolNotice({
     required this.text,
     this.isError = false,
-    this.glyph = AppGlyphs.info,
+    this.glyph = TablerIcons.info_circle,
   });
 
   final String text;
   final bool isError;
-  final Glyph glyph;
+  final IconData glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +104,7 @@ class _ToolNotice extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 8,
           children: [
-            GlyphIcon(glyph, size: 18, color: color),
+            Icon(glyph, size: 18, color: color),
             Expanded(
               child: Text(
                 text,
@@ -158,7 +158,7 @@ class _RunButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String label;
   final String runningLabel;
   final bool running;
@@ -185,7 +185,7 @@ class _ToolEmptyCard extends StatelessWidget {
     required this.body,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String body;
 
@@ -198,7 +198,7 @@ class _ToolEmptyCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Column(
           children: [
-            GlyphIcon(glyph, size: 28, color: colorScheme.primary),
+            Icon(glyph, size: 28, color: colorScheme.primary),
             const SizedBox(height: 10),
             Text(
               title,

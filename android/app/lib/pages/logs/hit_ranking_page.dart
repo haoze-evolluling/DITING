@@ -25,7 +25,7 @@ class HitRankingPage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.logsRefresh,
           onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
-          icon: const GlyphIcon(AppGlyphs.refresh),
+          icon: const Icon(TablerIcons.refresh),
         ),
       ],
       body: SliverPageBody(
@@ -65,7 +65,7 @@ class HitRankingPage extends ConsumerWidget {
               title: context.l10n.hitRankingTitle,
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.error),
+                  leading: const Icon(TablerIcons.alert_circle),
                   title: Text(context.l10n.hitRankingLoadFailed),
                   subtitle: Text('${asyncSnapshot.error}'),
                 ),
@@ -93,7 +93,7 @@ class HitRankingPage extends ConsumerWidget {
             title: l10n.hitRankingTitle,
             items: [
               LogsSectionEmpty(
-                glyph: AppGlyphs.block,
+                glyph: TablerIcons.ban,
                 title: l10n.hitRankingEmpty,
                 description: l10n.hitRankingEmptyBody,
               ),
@@ -111,7 +111,7 @@ class HitRankingPage extends ConsumerWidget {
           items: [
             for (final row in snapshot.domains)
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.block),
+                leading: const Icon(TablerIcons.ban),
                 title: Text(
                   row.label,
                   maxLines: 1,
@@ -135,7 +135,7 @@ class HitRankingPage extends ConsumerWidget {
           items: [
             for (final row in snapshot.reasons)
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.rules),
+                leading: const Icon(TablerIcons.list_details),
                 title: Text(
                   row.label,
                   maxLines: 1,

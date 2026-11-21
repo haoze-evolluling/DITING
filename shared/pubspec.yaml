@@ -17,9 +17,9 @@ dependencies:
   material_color_utilities: ^0.13.0      # HCT / DynamicColor (Flutter SDK pins 0.13.0)
   material_new_shapes: ^1.0.0            # Morph / toPath (material_ui 1.8 does not export them)
   animations: ^3.0.0                     # FadeThrough / OpenContainer
-  path_parsing: ^1.1.0                   # Parses Glyph SVG paths
+  path_parsing: ^1.1.0                   # Parses the few brand SVGs Tabler does not ship
   collection: ^1.19.1
-  cupertino_icons: ^2.0.0
+  flutter_tabler_icons: ^1.43.0            # The one icon set used across the app
 
   # Lazily-built list that keeps a far jump (scrollbar drag) at O(1) per row by
   # estimating unlaid rows, as FlClash's vendored prism_ui list does.

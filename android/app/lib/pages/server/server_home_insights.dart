@@ -46,13 +46,13 @@ class ServerTrafficOverview extends StatelessWidget {
         spacing: 12,
         children: [
           ServerCardHeader(
-            glyph: AppGlyphs.network,
+            glyph: TablerIcons.broadcast,
             title: l10n.serverTrafficTitle,
             trailing: [ServerWindowChip(label: l10n.serverLast24Hours)],
           ),
           if (!hasTraffic)
             ServerEmptyPanel(
-              glyph: AppGlyphs.network,
+              glyph: TablerIcons.broadcast,
               title: l10n.serverNoTraffic,
               body: running
                   ? l10n.serverNoStatistics
@@ -164,7 +164,7 @@ class ServerBlockingOverview extends StatelessWidget {
         spacing: 14,
         children: [
           ServerCardHeader(
-            glyph: AppGlyphs.shield,
+            glyph: TablerIcons.shield,
             title: l10n.serverBlockingTitle,
             trailing: [
               StatusPill(
@@ -178,7 +178,7 @@ class ServerBlockingOverview extends StatelessWidget {
           ),
           if (stats.queries == 0)
             ServerEmptyPanel(
-              glyph: AppGlyphs.shield,
+              glyph: TablerIcons.shield,
               title: l10n.serverNoStatistics,
               body: l10n.serverLogEmptyBody,
             )
@@ -220,7 +220,7 @@ class ServerBlockingOverview extends StatelessWidget {
               Row(
                 spacing: 10,
                 children: [
-                  const GlyphIcon(AppGlyphs.block, size: 16),
+                  const Icon(TablerIcons.ban, size: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +273,7 @@ class ServerCacheOverview extends StatelessWidget {
         spacing: 14,
         children: [
           ServerCardHeader(
-            glyph: AppGlyphs.database,
+            glyph: TablerIcons.database,
             title: l10n.serverCacheEfficiency,
             trailing: [
               StatusPill(
@@ -287,7 +287,7 @@ class ServerCacheOverview extends StatelessWidget {
           ),
           if (stats.queries == 0)
             ServerEmptyPanel(
-              glyph: AppGlyphs.database,
+              glyph: TablerIcons.database,
               title: l10n.serverNoStatistics,
               body: l10n.serverLogEmptyBody,
             )

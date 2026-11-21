@@ -62,7 +62,7 @@ class _LogsPageState extends ConsumerState<LogsPage>
             ? context.l10n.homeEditDashboard
             : context.l10n.logsDashboardTitle,
         primaryAction: IconButtonData(
-          glyph: editing ? AppGlyphs.check : AppGlyphs.customize,
+          glyph: editing ? TablerIcons.check : TablerIcons.layout_grid_add,
           tooltip: editing
               ? context.l10n.homeDone
               : context.l10n.homeEditDashboard,
@@ -74,12 +74,12 @@ class _LogsPageState extends ConsumerState<LogsPage>
             IconButton(
               tooltip: context.l10n.logsModeTooltip,
               onPressed: () => context.push(HubPaths.logRetention),
-              icon: const GlyphIcon(AppGlyphs.sliders),
+              icon: const Icon(TablerIcons.adjustments),
             ),
             IconButton(
               tooltip: context.l10n.logsRefresh,
               onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
-              icon: const GlyphIcon(AppGlyphs.refresh),
+              icon: const Icon(TablerIcons.refresh),
             ),
           ],
         ],

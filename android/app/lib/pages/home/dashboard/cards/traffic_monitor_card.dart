@@ -23,12 +23,12 @@ class TrafficMonitorCard extends ConsumerWidget {
         spacing: 12,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.dataUsage,
+            glyph: TablerIcons.chart_pie,
             title: context.l10n.trafficMonitorTitle,
             trailing: [
               if (onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: onDetail,
                 ),
@@ -162,7 +162,7 @@ class DashboardMetricQuadCard extends StatelessWidget {
     this.trailing,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
 
   final List<({String label, String value, Color color})> cells;
@@ -207,7 +207,7 @@ class DashboardMetricQuadCard extends StatelessWidget {
               ?trailing,
               if (onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: onDetail,
                 ),

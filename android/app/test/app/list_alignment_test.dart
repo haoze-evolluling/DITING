@@ -75,7 +75,7 @@ void main() {
                 items: [
                   ListItem(
                     leading: const LeadingSlot(
-                      child: GlyphIcon(AppGlyphs.heart, size: 20),
+                      child: Icon(TablerIcons.heart, size: 20),
                     ),
                     title: const Text('窄图标'),
                   ),

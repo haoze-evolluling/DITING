@@ -37,8 +37,8 @@ class _SubscriptionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ListItem(
-              leading: GlyphIcon(
-                entry.isRemote ? AppGlyphs.cloudSync : AppGlyphs.importFile,
+              leading: Icon(
+                entry.isRemote ? TablerIcons.cloud_network : TablerIcons.file_import,
                 size: 20,
                 color: hasError ? colorScheme.error : colorScheme.primary,
               ),
@@ -64,7 +64,7 @@ class _SubscriptionCard extends StatelessWidget {
                     targetBuilder: (open) => IconButton(
                       tooltip: UiLocalizations.of(context).more,
                       onPressed: open,
-                      icon: const GlyphIcon(AppGlyphs.more),
+                      icon: const Icon(TablerIcons.dots),
                     ),
                     popupBuilder: (_) => CommonPopupMenu(
                       items: [
@@ -72,22 +72,22 @@ class _SubscriptionCard extends StatelessWidget {
                           label: entry.isRemote
                               ? context.l10n.subsUpdateNow
                               : context.l10n.subsReimport,
-                          glyph: AppGlyphs.refresh,
+                          glyph: TablerIcons.refresh,
                           onPressed: busy ? null : onUpdate,
                         ),
                         CommonPopupMenuItem(
                           label: context.l10n.subsEdit,
-                          glyph: AppGlyphs.sliders,
+                          glyph: TablerIcons.adjustments,
                           onPressed: busy ? null : onConfigure,
                         ),
                         CommonPopupMenuItem(
                           label: context.l10n.subsRename,
-                          glyph: AppGlyphs.edit,
+                          glyph: TablerIcons.pencil,
                           onPressed: onEdit,
                         ),
                         CommonPopupMenuItem(
                           label: context.l10n.subsDeleteTitle,
-                          glyph: AppGlyphs.delete,
+                          glyph: TablerIcons.trash,
                           danger: true,
                           onPressed: onDelete,
                         ),
@@ -150,8 +150,8 @@ class _SubscriptionCard extends StatelessWidget {
                     Row(
                       spacing: 6,
                       children: [
-                        GlyphIcon(
-                          AppGlyphs.error,
+                        Icon(
+                          TablerIcons.alert_circle,
                           size: 16,
                           color: colorScheme.error,
                         ),

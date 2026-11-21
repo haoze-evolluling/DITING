@@ -63,7 +63,7 @@ class _GroupManageSheet extends ConsumerWidget {
       title: context.l10n.subsManageGroupsTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.subsNewGroupTitle,
           onPressed: () => _create(context, ref),
         ),
@@ -81,14 +81,14 @@ class _GroupManageSheet extends ConsumerWidget {
               items: [
                 if (groups.isEmpty)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.folder, size: 20),
+                    leading: const Icon(TablerIcons.folder, size: 20),
                     title: Text(context.l10n.subsGroupsEmpty),
                     subtitle: Text(context.l10n.subsGroupsEmptyHint),
                   )
                 else
                   for (final group in groups)
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.folder, size: 20),
+                      leading: const Icon(TablerIcons.folder, size: 20),
                       title: Text(group.name),
                       subtitle: Text(
                         context.l10n.subsGroupSubCount(
@@ -105,12 +105,12 @@ class _GroupManageSheet extends ConsumerWidget {
                           IconButton(
                             tooltip: context.l10n.commonEdit,
                             onPressed: () => _rename(context, ref, group),
-                            icon: const GlyphIcon(AppGlyphs.edit, size: 20),
+                            icon: const Icon(TablerIcons.pencil, size: 20),
                           ),
                           IconButton(
                             tooltip: context.l10n.commonDelete,
                             onPressed: () => _delete(context, ref, group),
-                            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+                            icon: const Icon(TablerIcons.trash, size: 20),
                           ),
                         ],
                       ),

@@ -18,7 +18,7 @@ void main() {
                   FeatureHubCardData(
                     title: '卡片 $i',
                     description: '说明',
-                    glyph: AppGlyphs.info,
+                    glyph: TablerIcons.info_circle,
                     onTap: () {},
                   ),
               ],

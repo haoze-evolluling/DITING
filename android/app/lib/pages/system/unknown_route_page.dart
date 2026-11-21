@@ -22,8 +22,8 @@ class UnknownRoutePage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 12,
               children: [
-                GlyphIcon(
-                  AppGlyphs.search,
+                Icon(
+                  TablerIcons.search,
                   size: 40,
                   color: colorScheme.onSurfaceVariant,
                 ),

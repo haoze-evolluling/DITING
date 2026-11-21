@@ -43,14 +43,14 @@ class ServerQueryLogPage extends ConsumerWidget {
             title: context.l10n.serverQueryLogContent,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.logs, size: 20),
+                leading: const Icon(TablerIcons.logs, size: 20),
                 title: Text(context.l10n.serverQueryLogEnabled),
                 subtitle: Text(context.l10n.serverQueryLogEnabledBody),
                 value: queryLog.enabled,
                 onChanged: (value) => save(queryLog.copyWith(enabled: value)),
               ),
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.export, size: 20),
+                leading: const Icon(TablerIcons.file_export, size: 20),
                 title: Text(context.l10n.serverQueryLogFile),
                 subtitle: Text(context.l10n.serverQueryLogFileBody),
                 value: queryLog.fileEnabled,
@@ -58,7 +58,7 @@ class ServerQueryLogPage extends ConsumerWidget {
                     save(queryLog.copyWith(fileEnabled: value)),
               ),
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.devices, size: 20),
+                leading: const Icon(TablerIcons.devices, size: 20),
                 title: Text(context.l10n.serverQueryLogClients),
                 subtitle: Text(context.l10n.serverQueryLogClientsBody),
                 value: queryLog.logClients,
@@ -72,7 +72,7 @@ class ServerQueryLogPage extends ConsumerWidget {
             title: context.l10n.serverQueryLogRetention,
             items: [
               ListItem<int>.options(
-                leading: const GlyphIcon(AppGlyphs.clock, size: 20),
+                leading: const Icon(TablerIcons.clock, size: 20),
                 title: Text(context.l10n.serverQueryLogRetention),
                 value: queryLog.retentionDays,
                 options: const [1, 7, 30, 90],
@@ -87,7 +87,7 @@ class ServerQueryLogPage extends ConsumerWidget {
             title: context.l10n.serverQueryLogMemory,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.memory, size: 20),
+                leading: const Icon(TablerIcons.cpu_2, size: 20),
                 title: Text(context.l10n.serverQueryLogMemoryEntries),
                 trailing: _NumberValue(label: '${queryLog.maxEntries}'),
                 onTap: () async {

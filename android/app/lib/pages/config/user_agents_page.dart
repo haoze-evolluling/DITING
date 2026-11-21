@@ -53,7 +53,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
       title: context.l10n.customResourcesTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.uaAdd,
           onPressed: () => showUserAgentDialog(context, ref),
         ),
@@ -64,10 +64,10 @@ class UserAgentsConfigPage extends ConsumerWidget {
             title: context.l10n.uaCurrent,
             items: [
               ListItem(
-                leading: GlyphIcon(
+                leading: Icon(
                   selectedAgent == null
-                      ? AppGlyphs.account
-                      : AppGlyphs.checkCircle,
+                      ? TablerIcons.user
+                      : TablerIcons.circle_check,
                 ),
                 title: Text(
                   selectedAgent?.displayName ?? context.l10n.uaNoOverride,
@@ -82,7 +82,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
             title: context.l10n.uaAll,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.checkCircle),
+                leading: const Icon(TablerIcons.circle_check),
                 title: Text(context.l10n.uaNoOverride),
                 subtitle: Text(context.l10n.uaNoOverrideBody),
                 trailing: selected == null ? const SelectionCheck() : null,
@@ -90,7 +90,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
               ),
               for (final agent in agents)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.account),
+                  leading: const Icon(TablerIcons.user),
                   title: Text(
                     agent.displayName,
                     maxLines: 1,
@@ -109,7 +109,7 @@ class UserAgentsConfigPage extends ConsumerWidget {
                       if (!agent.isDefault) ...[
                         ConfigRemoveButton(
                           tooltip: context.l10n.uaEdit,
-                          glyph: AppGlyphs.edit,
+                          glyph: TablerIcons.pencil,
                           onPressed: () => showUserAgentDialog(
                             context,
                             ref,

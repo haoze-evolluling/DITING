@@ -41,8 +41,8 @@ class DataCleanupPage extends ConsumerWidget {
               items: [
                 for (final action in group.value)
                   ListItem(
-                    leading: GlyphIcon(
-                      AppGlyphs.delete,
+                    leading: Icon(
+                      TablerIcons.trash,
                       size: 20,
                       color: context.colorScheme.error,
                     ),

@@ -180,8 +180,8 @@ class _BatchEditorPageState extends ConsumerState<BatchEditorPage> {
                       Row(
                         spacing: 6,
                         children: [
-                          GlyphIcon(
-                            AppGlyphs.warning,
+                          Icon(
+                            TablerIcons.alert_triangle,
                             size: 16,
                             color: colorScheme.error,
                           ),

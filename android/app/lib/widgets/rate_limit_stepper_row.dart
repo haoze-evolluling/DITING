@@ -16,7 +16,7 @@ class RateLimitStepperRow extends StatelessWidget {
     this.enabled = true,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String label;
   final int value;
   final int min;
@@ -31,7 +31,7 @@ class RateLimitStepperRow extends StatelessWidget {
     final canDecrease = enabled && value > min;
     final canIncrease = enabled && value < max;
     return ListItem(
-      leading: GlyphIcon(glyph, size: 20),
+      leading: Icon(glyph, size: 20),
       title: Text(label),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -40,7 +40,7 @@ class RateLimitStepperRow extends StatelessWidget {
             button: true,
             label: '$label −',
             child: IconButton(
-              icon: const GlyphIcon(AppGlyphs.remove),
+              icon: const Icon(TablerIcons.minus),
               onPressed: canDecrease
                   ? () => onChanged((value - step).clamp(min, max))
                   : null,
@@ -61,7 +61,7 @@ class RateLimitStepperRow extends StatelessWidget {
             button: true,
             label: '$label +',
             child: IconButton(
-              icon: const GlyphIcon(AppGlyphs.add),
+              icon: const Icon(TablerIcons.plus),
               onPressed: canIncrease
                   ? () => onChanged((value + step).clamp(min, max))
                   : null,

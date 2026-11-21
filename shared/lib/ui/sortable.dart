@@ -73,7 +73,7 @@ class DisclosureIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     return const SizedBox.square(
       dimension: kMinInteractiveDimension,
-      child: Center(child: GlyphIcon(AppGlyphs.chevronForward)),
+      child: Center(child: Icon(TablerIcons.chevron_right)),
     );
   }
 }
@@ -86,7 +86,7 @@ class DetailButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String tooltip;
   final VoidCallback? onPressed;
 
@@ -98,7 +98,7 @@ class DetailButton extends StatelessWidget {
         child: IconButton(
           tooltip: tooltip,
           onPressed: onPressed,
-          icon: GlyphIcon(glyph),
+          icon: Icon(glyph),
         ),
       ),
     );
@@ -213,8 +213,8 @@ class _SortHandleState extends State<SortHandle> {
                     ),
                   ),
                   child: Center(
-                    child: GlyphIcon(
-                      AppGlyphs.dragHandle,
+                    child: Icon(
+                      TablerIcons.grip_vertical,
                       color: _lifted ? colorScheme.primary : null,
                     ),
                   ),

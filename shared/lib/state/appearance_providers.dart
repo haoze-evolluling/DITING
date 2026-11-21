@@ -143,14 +143,14 @@ final homeSentenceProvider =
     );
 
 enum BottomBarDestination {
-  home('home', AppGlyphs.dashboard),
-  featureHub('feature_hub', AppGlyphs.puzzle),
-  logDashboard('log_dashboard', AppGlyphs.logs),
-  appTraffic('app_traffic_stats', AppGlyphs.dataUsage),
-  networkTools('network_tools', AppGlyphs.tools),
-  settings('settings', AppGlyphs.settings);
+  home('home', TablerIcons.layout_dashboard, TablerIcons.layout_dashboard_filled),
+  featureHub('feature_hub', TablerIcons.puzzle, TablerIcons.puzzle_filled),
+  logDashboard('log_dashboard', TablerIcons.logs),
+  appTraffic('app_traffic_stats', TablerIcons.chart_pie, TablerIcons.chart_pie_filled),
+  networkTools('network_tools', TablerIcons.tools),
+  settings('settings', TablerIcons.settings, TablerIcons.settings_filled);
 
-  const BottomBarDestination(this.storageValue, this.glyph);
+  const BottomBarDestination(this.storageValue, this.icon, [this.filledIcon]);
 
   String label(AppL10n l10n) => switch (this) {
     BottomBarDestination.home => l10n.bottomBarHome,
@@ -163,7 +163,8 @@ enum BottomBarDestination {
 
   final String storageValue;
 
-  final Glyph glyph;
+  final IconData icon;
+  final IconData? filledIcon;
 
   static BottomBarDestination? fromStorageValue(String value) {
     for (final destination in values) {

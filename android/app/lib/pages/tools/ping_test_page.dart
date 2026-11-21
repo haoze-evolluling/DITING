@@ -61,7 +61,7 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
             child: _ToolField(
               controller: _target,
               hintText: l10n.toolInputHostOrIp,
-              glyph: AppGlyphs.target,
+              glyph: TablerIcons.target,
               enabled: !_running,
               onSubmitted: (_) => _run(),
             ),
@@ -71,7 +71,7 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
             title: l10n.toolPing,
             items: [
               ListItem<int>.options(
-                leading: const GlyphIcon(AppGlyphs.send),
+                leading: const Icon(TablerIcons.send),
                 title: Text(l10n.toolPing),
                 value: _count,
                 options: const [4, 10],
@@ -98,28 +98,28 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
             ],
           ),
           _RunButton(
-            glyph: AppGlyphs.send,
+            glyph: TablerIcons.send,
             label: l10n.toolStartPing,
             runningLabel: l10n.toolPinging,
             running: _running,
             onPressed: _run,
           ),
           if (_hostError case final error?)
-            _ToolNotice(text: error, isError: true, glyph: AppGlyphs.error),
+            _ToolNotice(text: error, isError: true, glyph: TablerIcons.alert_circle),
           if (showEmpty)
             _ToolEmptyCard(
-              glyph: AppGlyphs.connections,
+              glyph: TablerIcons.topology_star,
               title: l10n.toolNotRunTitle,
               body: l10n.toolPingEmpty,
             ),
           if (result != null) ...[
             if (result.measuredWithFallback)
-              _ToolNotice(text: l10n.toolTcpFallback, glyph: AppGlyphs.warning),
+              _ToolNotice(text: l10n.toolTcpFallback, glyph: TablerIcons.alert_triangle),
             if (!result.success)
               _ToolNotice(
                 text: result.message ?? l10n.toolPingFailed,
                 isError: true,
-                glyph: AppGlyphs.error,
+                glyph: TablerIcons.alert_circle,
               ),
             _ToolSection(
               title: l10n.toolPingResults,
@@ -169,8 +169,8 @@ class _PingTestPageState extends ConsumerState<PingTestPage> {
                 items: [
                   for (final reply in result.replies)
                     ListItem(
-                      leading: GlyphIcon(
-                        reply.ok ? AppGlyphs.checkCircle : AppGlyphs.error,
+                      leading: Icon(
+                        reply.ok ? TablerIcons.circle_check : TablerIcons.alert_circle,
                         size: 20,
                         color: reply.ok
                             ? colorScheme.success

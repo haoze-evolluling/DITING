@@ -31,8 +31,8 @@ class DisclaimerPage extends StatelessWidget {
             child: Row(
               spacing: 8,
               children: [
-                GlyphIcon(
-                  AppGlyphs.gavel,
+                Icon(
+                  TablerIcons.gavel,
                   size: 16,
                   color: colorScheme.onSurfaceVariant,
                 ),

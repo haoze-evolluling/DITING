@@ -27,12 +27,12 @@ class OnDemandConfigPage extends ConsumerWidget {
       title: context.l10n.odTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: context.l10n.odApplyNow,
           onPressed: () => _applyAndHint(context, ref),
         ),
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.ssidAdd,
           onPressed: () => showSsidForm(context, ref),
         ),
@@ -43,7 +43,7 @@ class OnDemandConfigPage extends ConsumerWidget {
             title: context.l10n.odTitle,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.wifi),
+                leading: const Icon(TablerIcons.wifi),
                 title: Text(context.l10n.odEnable),
                 subtitle: Text(
                   resources.onDemand
@@ -62,7 +62,7 @@ class OnDemandConfigPage extends ConsumerWidget {
               title: context.l10n.odAllowlist,
               actions: [
                 IconButtonData(
-                  glyph: AppGlyphs.add,
+                  glyph: TablerIcons.plus,
                   tooltip: context.l10n.ssidAdd,
                   onPressed: () => showSsidForm(context, ref),
                 ),
@@ -70,7 +70,7 @@ class OnDemandConfigPage extends ConsumerWidget {
               items: [
                 if (rules.isEmpty)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.wifiOff),
+                    leading: const Icon(TablerIcons.wifi_off),
                     title: Text(context.l10n.odNoSsid),
                     subtitle: Text(context.l10n.odNoSsidBody),
                     onTap: () => showSsidForm(context, ref),
@@ -78,8 +78,8 @@ class OnDemandConfigPage extends ConsumerWidget {
                 else
                   for (final rule in rules)
                     ListItem(
-                      leading: GlyphIcon(
-                        rule.enabled ? AppGlyphs.wifi : AppGlyphs.wifiOff,
+                      leading: Icon(
+                        rule.enabled ? TablerIcons.wifi : TablerIcons.wifi_off,
                         size: 20,
                       ),
                       title: Text(rule.ssid),
@@ -90,7 +90,7 @@ class OnDemandConfigPage extends ConsumerWidget {
                         children: [
                           ConfigRemoveButton(
                             tooltip: context.l10n.odEditSsidTooltip(rule.ssid),
-                            glyph: AppGlyphs.edit,
+                            glyph: TablerIcons.pencil,
                             onPressed: () =>
                                 showSsidForm(context, ref, existing: rule.ssid),
                           ),
@@ -166,27 +166,27 @@ class _DecisionCard extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final (glyph, title, tone) = switch (decision.state) {
       SsidMatchState.disabled => (
-        AppGlyphs.wifiOff,
+        TablerIcons.wifi_off,
         context.l10n.odPillDisabled,
         colorScheme.onSurfaceVariant,
       ),
       SsidMatchState.unknown => (
-        AppGlyphs.locate,
+        TablerIcons.crosshair,
         context.l10n.odPillUnknown,
         colorScheme.warning,
       ),
       SsidMatchState.noWifi => (
-        AppGlyphs.wifiOff,
+        TablerIcons.wifi_off,
         context.l10n.odPillNoWifi,
         colorScheme.onSurfaceVariant,
       ),
       SsidMatchState.matched => (
-        AppGlyphs.check,
+        TablerIcons.check,
         context.l10n.odPillWillStart,
         colorScheme.primary,
       ),
       SsidMatchState.unmatched => (
-        AppGlyphs.wifi,
+        TablerIcons.wifi,
         context.l10n.odPillWillNotStart,
         colorScheme.warning,
       ),
@@ -196,7 +196,7 @@ class _DecisionCard extends StatelessWidget {
       title: context.l10n.odDecision,
       items: [
         ListItem(
-          leading: GlyphIcon(glyph, size: 20, color: tone),
+          leading: Icon(glyph, size: 20, color: tone),
           title: Text(
             title,
             style: AppTextRole.rowTitle.of(context).copyWith(color: tone),
@@ -226,19 +226,19 @@ class _NetworkSection extends ConsumerWidget {
       title: context.l10n.odCurrentNetwork,
       items: [
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.wifi, size: 20),
+          leading: const Icon(TablerIcons.wifi, size: 20),
           title: Text(context.l10n.odWifiName),
           subtitle: Text(describeSsid(ssid, context.l10n)),
           trailing: ConfigRemoveButton(
             tooltip: context.l10n.odReadAgain,
-            glyph: AppGlyphs.refresh,
+            glyph: TablerIcons.refresh,
             onPressed: () => ref.invalidate(currentSsidProvider),
           ),
           onTap: () => ref.invalidate(currentSsidProvider),
         ),
         if (unknown)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.locate, size: 20),
+            leading: const Icon(TablerIcons.crosshair, size: 20),
             title: Text(context.l10n.odPermission),
             subtitle: Text(context.l10n.odPermissionBody),
             trailing: Text(
@@ -286,7 +286,7 @@ class _BatterySection extends ConsumerWidget {
       title: context.l10n.odPrerequisites,
       items: [
         ListItem(
-          leading: const GlyphIcon(AppGlyphs.battery, size: 20),
+          leading: const Icon(TablerIcons.battery, size: 20),
           title: Text(context.l10n.odIgnoreBattery),
           subtitle: Text(subtitle),
           trailing: Text(

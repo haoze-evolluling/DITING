@@ -23,7 +23,7 @@ class HiddenFeaturesPage extends ConsumerWidget {
       title: context.l10n.hiddenFeaturesTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.reset,
+          glyph: TablerIcons.restore,
           tooltip: context.l10n.hiddenFeaturesReset,
           onPressed: hidden.isEmpty
               ? null
@@ -38,7 +38,7 @@ class HiddenFeaturesPage extends ConsumerWidget {
               items: [
                 for (final feature in entry.value)
                   ListItem(
-                    leading: GlyphIcon(
+                    leading: Icon(
                       glyphByName(feature.glyphName),
                       size: 20,
                     ),

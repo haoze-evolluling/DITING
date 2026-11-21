@@ -8,7 +8,7 @@ class _StepScaffold extends StatelessWidget {
     required this.children,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String description;
   final List<Widget> children;
@@ -68,7 +68,7 @@ class _TipCard extends StatelessWidget {
     required this.detail,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String detail;
 
@@ -83,7 +83,7 @@ class _TipCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 12,
           children: [
-            GlyphIcon(glyph, size: 20, color: colorScheme.primary),
+            Icon(glyph, size: 20, color: colorScheme.primary),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,7 +116,7 @@ class _PermissionRow extends ConsumerWidget {
   });
 
   final AppPermission permission;
-  final Glyph glyph;
+  final IconData glyph;
   final String name;
   final String level;
   final String detail;
@@ -163,7 +163,7 @@ class _PermissionRow extends ConsumerWidget {
           spacing: 12,
           children: [
             IconBadge(
-              glyph: granted ? AppGlyphs.checkCircle : glyph,
+              glyph: granted ? TablerIcons.circle_check : glyph,
               size: 44,
               glyphSize: 22,
               color: granted

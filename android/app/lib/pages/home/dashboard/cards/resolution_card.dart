@@ -24,7 +24,7 @@ class ResolutionCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.shuffle,
+            glyph: TablerIcons.arrows_shuffle,
             title: context.l10n.resolutionModeTitle,
             trailing: [
               IgnorePointer(
@@ -69,8 +69,8 @@ class ResolutionCard extends ConsumerWidget {
               children: [
                 Padding(
                   padding: EdgeInsets.only(top: 1 * scale),
-                  child: GlyphIcon(
-                    AppGlyphs.dns,
+                  child: Icon(
+                    TablerIcons.server_2,
                     size: 16,
                     color: colorScheme.onSurfaceVariant,
                   ),

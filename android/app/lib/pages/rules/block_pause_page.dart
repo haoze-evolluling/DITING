@@ -137,7 +137,7 @@ class _BlockPausePageState extends ConsumerState<BlockPausePage> {
                 onCustom: _pickCustomMinutes,
               ),
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.verified, size: 22),
+                leading: const Icon(TablerIcons.rosette_discount_check, size: 22),
                 title: Text(l10n.blockPauseAllowlistTitle),
                 subtitle: Text(l10n.blockPauseAllowlistSubtitle),
                 value: state?.allowlistOnly ?? false,
@@ -195,7 +195,7 @@ class _StatusHero extends StatelessWidget {
           spacing: 12,
           children: [
             IconBadge(
-              glyph: paused ? AppGlyphs.pause : AppGlyphs.checkCircle,
+              glyph: paused ? TablerIcons.player_pause : TablerIcons.circle_check,
               color: color.withValues(alpha: 0.14),
               foregroundColor: color,
             ),
@@ -247,7 +247,7 @@ class _PauseDurationRow extends StatelessWidget {
     final l10n = context.l10n;
     PopupOpen? openMenu;
     return ListItem(
-      leading: const GlyphIcon(AppGlyphs.clock, size: 22),
+      leading: const Icon(TablerIcons.clock, size: 22),
       title: Text(l10n.blockPauseDurationTitle),
       subtitle: Text(l10n.blockPauseDurationSubtitle),
       onTap: busy ? null : () => openMenu?.call(),
@@ -266,7 +266,7 @@ class _PauseDurationRow extends StatelessWidget {
               spacing: 4,
               children: [
                 Text(l10n.blockPauseMinutesValue(selectedMinutes)),
-                const GlyphIcon(AppGlyphs.picker),
+                const Icon(TablerIcons.selector),
               ],
             ),
           );
@@ -276,12 +276,12 @@ class _PauseDurationRow extends StatelessWidget {
             for (final minutes in _presetMinutes)
               CommonPopupMenuItem(
                 label: l10n.blockPausePresetOption(minutes),
-                glyph: AppGlyphs.clock,
+                glyph: TablerIcons.clock,
                 onPressed: busy ? null : () => onPause(minutes),
               ),
             CommonPopupMenuItem(
               label: l10n.blockPauseCustomOption,
-              glyph: AppGlyphs.edit,
+              glyph: TablerIcons.pencil,
               section: const CommonPopupMenuSection(),
               onPressed: busy ? null : onCustom,
             ),

@@ -52,7 +52,7 @@ class PopupSelectButton<T> extends StatelessWidget {
                     _labelOf(items, value),
                     style: AppTextRole.body.of(context).copyWith(color: color),
                   ),
-                  GlyphIcon(AppGlyphs.chevronDown, size: 16, color: color),
+                  Icon(TablerIcons.chevron_down, size: 16, color: color),
                 ],
               ),
             ),

@@ -66,7 +66,7 @@ class _TroubleshootingLogContentPageState
       menuItems: [
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsShare,
-          glyph: AppGlyphs.send,
+          glyph: TablerIcons.send,
           onPressed: _busy ? null : _share,
         ),
       ],

@@ -256,7 +256,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       title: isEdit ? context.l10n.subsEdit : context.l10n.subsAdd,
       isLoading: _submitting,
       confirmationAction: IconButtonData(
-        glyph: AppGlyphs.check,
+        glyph: TablerIcons.check,
         tooltip: context.l10n.subsSaveTooltip,
         onPressed: _submitting ? null : _submit,
       ),
@@ -299,7 +299,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    leading: const GlyphIcon(AppGlyphs.importFile, size: 20),
+                    leading: const Icon(TablerIcons.file_import, size: 20),
                     title: Text(_localName ?? context.l10n.subsLocalRuleFile),
                     subtitle: Text(context.l10n.subsLocalFileSubscription),
                   )
@@ -309,7 +309,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    leading: const GlyphIcon(AppGlyphs.importFile, size: 20),
+                    leading: const Icon(TablerIcons.file_import, size: 20),
                     title: Text(_localName ?? context.l10n.subsPickFile),
                     subtitle: Text(
                       _localName == null
@@ -366,7 +366,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
                   ),
                   child: InlineNotice(
                     message: message,
-                    glyph: AppGlyphs.error,
+                    glyph: TablerIcons.alert_circle,
                     color: context.colorScheme.errorContainer,
                     foregroundColor: context.colorScheme.onErrorContainer,
                   ),
@@ -464,10 +464,10 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
         children: [
           ListItem(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: const GlyphIcon(AppGlyphs.mirror, size: 20),
+            leading: const Icon(TablerIcons.flip_horizontal, size: 20),
             title: Text(context.l10n.subsAddMirrorTemplate),
             subtitle: Text(context.l10n.subsAddMirrorTemplateSubtitle),
-            trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+            trailing: const Icon(TablerIcons.chevron_right, size: 18),
             onTap: () => context.push(HubPaths.mirrorTemplates),
           ),
         ],
@@ -479,7 +479,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
       children: [
         ListItem.toggle(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: const GlyphIcon(AppGlyphs.mirror, size: 20),
+          leading: const Icon(TablerIcons.flip_horizontal, size: 20),
           title: Text(context.l10n.subsUseMirrorTemplate),
           subtitle: Text(context.l10n.subsUseMirrorTemplateSubtitle),
           value: _useMirror,
@@ -512,7 +512,7 @@ class _AddSubscriptionSheetState extends ConsumerState<_AddSubscriptionSheet> {
           if (preview != null) _PreviewBox(url: preview),
           ListItem.toggle(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            leading: const GlyphIcon(AppGlyphs.swap, size: 20),
+            leading: const Icon(TablerIcons.arrows_exchange, size: 20),
             title: Text(context.l10n.subsMirrorFallback),
             subtitle: Text(context.l10n.subsMirrorFallbackSubtitle),
             value: _mirrorFallback,

@@ -44,13 +44,13 @@ class ServerHubPage extends ConsumerWidget {
                       : context.l10n.serverUpstreamShort(
                           upstream.providers.length,
                         ),
-                  glyph: AppGlyphs.dns,
+                  glyph: TablerIcons.server_2,
                   onTap: () => context.push(ServerRoutes.upstreamProviders),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverUpstreamTitle,
                   description: serverModeLabel(context, upstream.mode),
-                  glyph: AppGlyphs.upstream,
+                  glyph: TablerIcons.cloud_upload,
                   onTap: () => context.push(ServerRoutes.upstream),
                 ),
                 FeatureHubCardData(
@@ -60,7 +60,7 @@ class ServerHubPage extends ConsumerWidget {
                       : context.l10n.serverBootstrapServerCount(
                           upstream.bootstrap.length,
                         ),
-                  glyph: AppGlyphs.language,
+                  glyph: TablerIcons.language,
                   onTap: () => context.push(ServerRoutes.upstreamBootstrap),
                 ),
                 FeatureHubCardData(
@@ -71,7 +71,7 @@ class ServerHubPage extends ConsumerWidget {
                         : context.l10n.commonDisabled,
                     filter.lists.length,
                   ),
-                  glyph: AppGlyphs.rules,
+                  glyph: TablerIcons.list_details,
                   onTap: () => context.push(ServerRoutes.filter),
                 ),
                 FeatureHubCardData(
@@ -82,7 +82,7 @@ class ServerHubPage extends ConsumerWidget {
                         ? context.l10n.serverHubLogFileOn
                         : context.l10n.serverHubLogFileOff,
                   ),
-                  glyph: AppGlyphs.logs,
+                  glyph: TablerIcons.logs,
                   onTap: () => context.push(ServerRoutes.queryLog),
                 ),
               ],
@@ -99,19 +99,19 @@ class ServerHubPage extends ConsumerWidget {
                         ? context.l10n.serverRootMode
                         : context.l10n.serverNonRootMode,
                   ),
-                  glyph: AppGlyphs.settings,
+                  glyph: TablerIcons.settings,
                   onTap: () => context.push(ServerRoutes.settings),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverAppearance,
                   description: context.l10n.serverAppearanceHint,
-                  glyph: AppGlyphs.palette,
+                  glyph: TablerIcons.palette,
                   onTap: () => context.push(SystemPaths.theme),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverAbout,
                   description: context.l10n.serverAboutHint,
-                  glyph: AppGlyphs.info,
+                  glyph: TablerIcons.info_circle,
                   onTap: () => context.push(Routes.about),
                 ),
               ],

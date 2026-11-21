@@ -15,7 +15,7 @@ class NavEntryRow extends StatelessWidget {
     this.subtitleMaxLines,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String? subtitle;
 
@@ -34,7 +34,7 @@ class NavEntryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     return ListItem(
-      leading: GlyphIcon(
+      leading: Icon(
         glyph,
         size: leadingSize,
         color: enabled ? null : colorScheme.onSurface.withValues(alpha: 0.3),
@@ -51,8 +51,8 @@ class NavEntryRow extends StatelessWidget {
             ),
       trailing: busy
           ? const CommonCircleLoading(size: 18)
-          : GlyphIcon(
-              AppGlyphs.chevronForward,
+          : Icon(
+              TablerIcons.chevron_right,
               size: chevronSize,
               color: enabled ? null : colorScheme.onSurfaceVariant,
             ),

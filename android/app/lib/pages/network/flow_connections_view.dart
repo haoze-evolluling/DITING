@@ -49,14 +49,14 @@ class _FlowConnectionsViewState extends State<FlowConnectionsView> {
             items: [
               for (final app in apps)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.appsList),
+                  leading: const Icon(TablerIcons.list),
                   title: Text(
                     app,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   trailing: app == selected
-                      ? const GlyphIcon(AppGlyphs.checkCircle)
+                      ? const Icon(TablerIcons.circle_check)
                       : null,
                   onTap: () => setState(() => _selectedApp = app),
                 ),
@@ -89,8 +89,8 @@ class _FlowTile extends StatelessWidget {
         ? context.colorScheme.error
         : context.colorScheme.success;
     return ListItem(
-      leading: GlyphIcon(
-        blocked ? AppGlyphs.block : AppGlyphs.checkCircle,
+      leading: Icon(
+        blocked ? TablerIcons.ban : TablerIcons.circle_check,
         color: color,
       ),
       title: Text(row.hostLabel, maxLines: 1, overflow: TextOverflow.ellipsis),

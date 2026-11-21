@@ -105,7 +105,8 @@ class _Dock extends StatelessWidget {
         destinations: [
           for (final destination in destinations)
             NavigationDockDestination(
-              glyph: destination.glyph,
+              icon: destination.icon,
+              filledIcon: destination.filledIcon,
               label: destination.label(context.l10n),
             ),
         ],
@@ -166,9 +167,10 @@ class _FallbackBar extends StatelessWidget {
       destinations: [
         for (final (index, destination) in destinations.indexed)
           NavigationDestination(
-            icon: AnimatedGlyph(
-              glyph: destination.glyph,
-              filled: index == selectedIndex,
+            icon: SelectedIcon(
+              icon: destination.icon,
+              filledIcon: destination.filledIcon,
+              selected: index == selectedIndex,
             ),
             label: destination.label(context.l10n),
           ),

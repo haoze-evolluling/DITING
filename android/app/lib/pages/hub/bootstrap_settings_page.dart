@@ -31,7 +31,7 @@ class BootstrapSettingsPage extends ConsumerWidget {
       title: context.l10n.bootstrapTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.bootstrapAdd,
           onPressed: () => _add(context, ref, custom),
         ),
@@ -42,7 +42,7 @@ class BootstrapSettingsPage extends ConsumerWidget {
             title: context.l10n.bootstrapGlobal,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.language),
+                leading: const Icon(TablerIcons.language),
                 title: Text(context.l10n.bootstrapEnable),
                 subtitle: Text(context.l10n.bootstrapEnableBody),
                 value: enabled,
@@ -81,7 +81,7 @@ class BootstrapSettingsPage extends ConsumerWidget {
             items: [
               if (custom.isEmpty)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.info),
+                  leading: const Icon(TablerIcons.info_circle),
                   title: Text(context.l10n.bootstrapNoCustom),
                 ),
               for (final entry in custom)
@@ -199,7 +199,7 @@ class _BootstrapRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final failing = (stat?.failures ?? 0) > 0;
     return ListItem(
-      leading: GlyphIcon(failing ? AppGlyphs.warning : AppGlyphs.dns, size: 20),
+      leading: Icon(failing ? TablerIcons.alert_triangle : TablerIcons.server_2, size: 20),
       title: Text(entry.name),
       subtitle: Text(_subtitle),
       trailing: Row(
@@ -213,7 +213,7 @@ class _BootstrapRow extends StatelessWidget {
             IconButton(
               tooltip: context.l10n.appRulesDelete,
               onPressed: enabled ? onDelete : null,
-              icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+              icon: const Icon(TablerIcons.trash, size: 20),
             ),
         ],
       ),

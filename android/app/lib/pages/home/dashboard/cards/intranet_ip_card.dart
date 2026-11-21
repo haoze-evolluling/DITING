@@ -34,11 +34,11 @@ class IntranetIpCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.devices,
+            glyph: TablerIcons.devices,
             title: context.l10n.intranetIpTitle,
             trailing: [
               DashboardIconButton(
-                glyph: AppGlyphs.copy,
+                glyph: TablerIcons.copy,
                 tooltip: context.l10n.intranetCopyAddress,
                 onPressed: address == null
                     ? null
@@ -46,7 +46,7 @@ class IntranetIpCard extends ConsumerWidget {
               ),
               if (onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: onDetail,
                 ),
@@ -74,8 +74,8 @@ class IntranetIpCard extends ConsumerWidget {
             child: Row(
               spacing: 10,
               children: [
-                GlyphIcon(
-                  localIp.isEmpty ? AppGlyphs.wifiOff : AppGlyphs.wifi,
+                Icon(
+                  localIp.isEmpty ? TablerIcons.wifi_off : TablerIcons.wifi,
                   size: 18,
                   color: colorScheme.onSurfaceVariant,
                 ),

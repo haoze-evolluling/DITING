@@ -11,7 +11,16 @@ class ServerDockShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final glyphs = [AppGlyphs.dashboard, AppGlyphs.puzzle, AppGlyphs.logs];
+    const icons = [
+      TablerIcons.layout_dashboard,
+      TablerIcons.puzzle,
+      TablerIcons.logs,
+    ];
+    const filledIcons = [
+      TablerIcons.layout_dashboard_filled,
+      TablerIcons.puzzle_filled,
+      null,
+    ];
     final labels = [
       context.l10n.serverTabHome,
       context.l10n.serverTabHub,
@@ -25,9 +34,10 @@ class ServerDockShell extends ConsumerWidget {
       ),
       bottomNavigationBar: NavigationDock(
         destinations: [
-          for (var index = 0; index < glyphs.length; index++)
+          for (var index = 0; index < icons.length; index++)
             NavigationDockDestination(
-              glyph: glyphs[index],
+              icon: icons[index],
+              filledIcon: filledIcons[index],
               label: labels[index],
             ),
         ],

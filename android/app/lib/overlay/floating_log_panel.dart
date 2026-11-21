@@ -288,19 +288,19 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
               ),
             ),
             _iconButton(
-              glyph: AppGlyphs.search,
+              glyph: TablerIcons.search,
               tooltip: l10n.floatingLogSearch,
               selected: _searching,
               onPressed: _toggleSearch,
             ),
             _iconButton(
-              glyph: AppGlyphs.playPause(_paused ? 0 : 1),
+              glyph: (_paused ? TablerIcons.player_play : TablerIcons.player_pause),
               tooltip: _paused ? l10n.floatingLogResume : l10n.floatingLogPause,
               onPressed: _togglePause,
             ),
             CommonPopupBox(
               targetBuilder: (open) => _iconButton(
-                glyph: AppGlyphs.more,
+                glyph: TablerIcons.dots,
                 tooltip: UiLocalizations.of(context).more,
                 onPressed: open,
               ),
@@ -308,7 +308,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
                   CommonPopupMenu(dense: true, items: _menuItems(context)),
             ),
             _iconButton(
-              glyph: AppGlyphs.remove,
+              glyph: TablerIcons.minus,
               tooltip: l10n.floatingLogMinimize,
               onPressed: widget.onCollapse,
             ),
@@ -328,7 +328,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
     return [
       CommonPopupMenuItem(
         label: l10n.obsSource,
-        glyph: AppGlyphs.filter,
+        glyph: TablerIcons.filter,
         subItems: [
           for (final source in RequestSource.values)
             CommonPopupMenuItem(
@@ -340,7 +340,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
       ),
       CommonPopupMenuItem(
         label: l10n.floatingLogPanelSize,
-        glyph: AppGlyphs.resize,
+        glyph: TablerIcons.resize,
         subItems: [
           for (var i = 0; i < sizeLabels.length; i++)
             CommonPopupMenuItem(
@@ -352,19 +352,19 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
       ),
       CommonPopupMenuItem(
         label: l10n.floatingLogClear,
-        glyph: AppGlyphs.clearAll,
+        glyph: TablerIcons.trash,
         onPressed: _clear,
       ),
       CommonPopupMenuItem(
         label: l10n.floatingLogOpenApp,
-        glyph: AppGlyphs.openExternal,
+        glyph: TablerIcons.external_link,
         section: const CommonPopupMenuSection(),
         onPressed: widget.window.openApp,
       ),
       CommonPopupMenuItem(
         label: l10n.floatingLogHide,
         subtitle: l10n.floatingLogHideHint,
-        glyph: AppGlyphs.eyeOff,
+        glyph: TablerIcons.eye_off,
         danger: true,
         onPressed: widget.window.dismiss,
       ),
@@ -372,7 +372,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
   }
 
   Widget _iconButton({
-    required Glyph glyph,
+    required IconData glyph,
     required String tooltip,
     required VoidCallback onPressed,
     bool selected = false,
@@ -388,7 +388,7 @@ class _FloatingLogPanelState extends State<FloatingLogPanel> {
             ? colorScheme.onSecondaryContainer
             : colorScheme.onSurfaceVariant,
       ),
-      icon: GlyphIcon(glyph, size: 20),
+      icon: Icon(glyph, size: 20),
     );
   }
 

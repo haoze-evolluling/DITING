@@ -6,15 +6,15 @@ import 'package:diting_shared/ui/icons/icons.dart';
 const dashboardSiteCount = 4;
 
 enum SiteCategory {
-  search(AppGlyphs.search),
-  shopping(AppGlyphs.shoppingBag),
-  video(AppGlyphs.video),
-  music(AppGlyphs.music),
-  social(AppGlyphs.account),
-  developer(AppGlyphs.code),
-  game(AppGlyphs.gamepad);
+  search(TablerIcons.search),
+  shopping(TablerIcons.shopping_bag),
+  video(TablerIcons.video),
+  music(TablerIcons.music),
+  social(TablerIcons.user),
+  developer(TablerIcons.code),
+  game(TablerIcons.device_gamepad);
 
-  const SiteCategory(this.glyph);
+  const SiteCategory(this.icon);
 
   String label(AppL10n l10n) => switch (this) {
     SiteCategory.search => l10n.uiSearch,
@@ -26,5 +26,5 @@ enum SiteCategory {
     SiteCategory.game => l10n.siteCategoryGame,
   };
 
-  final Glyph glyph;
+  final IconData icon;
 }

@@ -238,12 +238,12 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       title: kindTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: l10n.ruleAddForKind(kindTitle),
           onPressed: _addRule,
         ),
         IconButtonData(
-          glyph: AppGlyphs.listAdd,
+          glyph: TablerIcons.playlist_add,
           tooltip: l10n.batchAddTitle,
           onPressed: () => context.push(Routes.batchEditor),
         ),
@@ -251,14 +251,14 @@ class _RulesPageState extends ConsumerState<RulesPage> {
       menuItems: [
         CommonPopupMenuItem(
           label: l10n.ruleClearCustomForKind(kindTitle),
-          glyph: AppGlyphs.broom,
+          glyph: TablerIcons.brush,
           danger: true,
           onPressed: tally.custom == 0 ? null : _clearCustom,
         ),
         if (kind == RuleKind.allow)
           CommonPopupMenuItem(
             label: l10n.ruleResetDefault,
-            glyph: AppGlyphs.reset,
+            glyph: TablerIcons.restore,
             onPressed: _resetPreset,
           ),
       ],

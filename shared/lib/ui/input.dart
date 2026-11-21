@@ -87,7 +87,7 @@ class _SecretTextFormFieldState extends State<SecretTextFormField> {
           tooltip: _obscure
               ? localizations.showPassword
               : localizations.hidePassword,
-          icon: GlyphIcon(_obscure ? AppGlyphs.eye : AppGlyphs.eyeOff),
+          icon: Icon(_obscure ? TablerIcons.eye : TablerIcons.eye_off),
           onPressed: () {
             setState(() {
               _obscure = !_obscure;

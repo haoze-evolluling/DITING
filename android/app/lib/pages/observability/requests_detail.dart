@@ -121,8 +121,8 @@ class RequestDetailSheet extends StatelessWidget {
                     when showAppLink && packageName.isNotEmpty)
                   ListItem(
                     title: Text(context.l10n.obsViewAppRequests),
-                    trailing: GlyphIcon(
-                      AppGlyphs.chevronForward,
+                    trailing: Icon(
+                      TablerIcons.chevron_right,
                       size: 18,
                       color: colorScheme.onSurfaceVariant,
                     ),

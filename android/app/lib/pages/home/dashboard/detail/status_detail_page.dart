@@ -31,7 +31,7 @@ class StatusDetailPage extends ConsumerWidget {
       title: context.l10n.statusDetailTitle,
       children: [
         DashboardDetailHero(
-          glyph: AppGlyphs.clock,
+          glyph: TablerIcons.clock,
           label: context.l10n.statusUptime,
           value: core.isRunning
               ? stats.uptimeLabel
@@ -47,7 +47,7 @@ class StatusDetailPage extends ConsumerWidget {
                 ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.checkCircle,
+          glyph: TablerIcons.circle_check,
           title: context.l10n.healthTitle,
           child: InkWell(
             onTap: () => context.push('/health'),
@@ -63,7 +63,7 @@ class StatusDetailPage extends ConsumerWidget {
           ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.status,
+          glyph: TablerIcons.activity,
           title: context.l10n.statusCoreSection,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -71,7 +71,7 @@ class StatusDetailPage extends ConsumerWidget {
               Row(
                 spacing: 10,
                 children: [
-                  GlyphIcon(health.glyph, size: 20, color: health.color),
+                  Icon(health.glyph, size: 20, color: health.color),
                   Expanded(
                     child: Text(
                       health.summary,
@@ -99,7 +99,7 @@ class StatusDetailPage extends ConsumerWidget {
           ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.upstream,
+          glyph: TablerIcons.cloud_upload,
           title: context.l10n.statusActiveProvider,
           footer: primary == null ? null : context.l10n.statusProviderFooter,
           child: primary == null
@@ -145,7 +145,7 @@ class StatusDetailPage extends ConsumerWidget {
                 ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.requests,
+          glyph: TablerIcons.clock,
           title: context.l10n.statusTodayCounts,
           footer: context.l10n.statusCountsFooter,
           child: Column(
@@ -232,14 +232,14 @@ class StatusDetailPage extends ConsumerWidget {
     );
   }
 
-  static ({Glyph glyph, Color color, String summary}) _healthOf(
+  static ({IconData glyph, Color color, String summary}) _healthOf(
     CoreState core,
     ColorScheme colorScheme,
   ) {
     final glyph = switch (core) {
-      CoreState.running => AppGlyphs.checkCircle,
-      CoreState.failed => AppGlyphs.error,
-      CoreState.starting || CoreState.stopped => AppGlyphs.info,
+      CoreState.running => TablerIcons.circle_check,
+      CoreState.failed => TablerIcons.alert_circle,
+      CoreState.starting || CoreState.stopped => TablerIcons.info_circle,
     };
     final color = switch (core) {
       CoreState.running => colorScheme.success,

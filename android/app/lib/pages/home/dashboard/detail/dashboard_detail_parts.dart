@@ -64,7 +64,7 @@ class DashboardDetailCard extends StatelessWidget {
     required this.child,
   });
 
-  final Glyph? glyph;
+  final IconData? glyph;
   final String? title;
   final List<Widget> trailing;
   final String? footer;
@@ -121,7 +121,7 @@ class DashboardDetailCard extends StatelessWidget {
 class _Header extends StatelessWidget {
   const _Header({this.glyph, required this.title, required this.trailing});
 
-  final Glyph? glyph;
+  final IconData? glyph;
   final String title;
   final List<Widget> trailing;
 
@@ -132,7 +132,7 @@ class _Header extends StatelessWidget {
       spacing: 8,
       children: [
         if (glyph case final glyph?)
-          GlyphIcon(glyph, size: 18, color: colorScheme.onSurfaceVariant),
+          Icon(glyph, size: 18, color: colorScheme.onSurfaceVariant),
         Expanded(
           child: Text(
             title,
@@ -161,7 +161,7 @@ class DashboardDetailHero extends StatelessWidget {
     this.tabular = false,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String label;
   final String value;
   final String? unit;

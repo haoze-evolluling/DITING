@@ -110,11 +110,11 @@ class CachePresetCard extends StatelessWidget {
     );
   }
 
-  static Glyph _glyphOf(DnsCacheTier tier) => switch (tier) {
-    DnsCacheTier.conservative => AppGlyphs.clock,
-    DnsCacheTier.standard => AppGlyphs.database,
-    DnsCacheTier.aggressive => AppGlyphs.bolt,
-    DnsCacheTier.custom => AppGlyphs.sliders,
+  static IconData _glyphOf(DnsCacheTier tier) => switch (tier) {
+    DnsCacheTier.conservative => TablerIcons.clock,
+    DnsCacheTier.standard => TablerIcons.database,
+    DnsCacheTier.aggressive => TablerIcons.bolt,
+    DnsCacheTier.custom => TablerIcons.adjustments,
   };
 }
 

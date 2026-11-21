@@ -98,10 +98,10 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             title: context.l10n.troubleshootLogsTitle,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.logs, size: 20),
+                leading: const Icon(TablerIcons.logs, size: 20),
                 title: Text(context.l10n.troubleshootLogsViewLogs),
                 subtitle: Text(context.l10n.troubleshootLogsViewLogsBody),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () => context.push(HubPaths.troubleshootingLogs),
               ),
             ],
@@ -110,8 +110,8 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             title: context.l10n.troubleshootRuntimeLogs,
             items: [
               ListItem.toggle(
-                leading: GlyphIcon(
-                  capturing ? AppGlyphs.checkCircle : AppGlyphs.record,
+                leading: Icon(
+                  capturing ? TablerIcons.circle_check : TablerIcons.player_record,
                   size: 20,
                 ),
                 title: Text(context.l10n.troubleshootRecordLogs),
@@ -120,7 +120,7 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
                 onChanged: _busy ? null : (value) => _onToggle(value),
               ),
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.sliders, size: 20),
+                leading: const Icon(TablerIcons.adjustments, size: 20),
                 title: Text(context.l10n.troubleshootDetailMode),
                 subtitle: Text(context.l10n.troubleshootDetailModeNote),
                 value: detailed,
@@ -133,14 +133,14 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             title: context.l10n.troubleshootEventsTitle,
             items: [
               ListItem(
-                leading: GlyphIcon(
-                  eventSummary.hasAnomaly ? AppGlyphs.warning : AppGlyphs.clock,
+                leading: Icon(
+                  eventSummary.hasAnomaly ? TablerIcons.alert_triangle : TablerIcons.clock,
                   size: 20,
                   color: eventSummary.hasAnomaly ? error : null,
                 ),
                 title: Text(context.l10n.troubleshootEventsOpen),
                 subtitle: Text(_eventsSubtitle(eventSummary)),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () => context.push(HubPaths.troubleshootingEvents),
               ),
             ],
@@ -150,10 +150,10 @@ class _TroubleshootingPageState extends ConsumerState<TroubleshootingPage>
             title: context.l10n.troubleshootLocalDb,
             items: [
               ListItem(
-                leading: GlyphIcon(
+                leading: Icon(
                   (dbHealth?.healthy ?? true)
-                      ? AppGlyphs.checkCircle
-                      : AppGlyphs.warning,
+                      ? TablerIcons.circle_check
+                      : TablerIcons.alert_triangle,
                   color: (dbHealth?.healthy ?? true) ? null : error,
                   size: 20,
                 ),

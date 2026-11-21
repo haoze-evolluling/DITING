@@ -42,8 +42,8 @@ class CommonChip extends StatelessWidget {
               ),
             ),
             if (deletable)
-              GlyphIcon(
-                AppGlyphs.close,
+              Icon(
+                TablerIcons.x,
                 size: 16,
                 color: colorScheme.onSurfaceVariant,
               ),

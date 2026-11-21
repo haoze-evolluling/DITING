@@ -38,12 +38,12 @@ class IntranetIpDetailPage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.intranetRefresh,
           onPressed: () => ref.invalidate(networkInfoProvider),
-          icon: const GlyphIcon(AppGlyphs.refresh),
+          icon: const Icon(TablerIcons.refresh),
         ),
       ],
       children: [
         DashboardDetailHero(
-          glyph: AppGlyphs.wifi,
+          glyph: TablerIcons.wifi,
           label: context.l10n.intranetLocalAddress,
           value: dnsAddress ?? placeholder,
           tabular: dnsAddress != null,
@@ -53,7 +53,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
         ),
         if (dnsAddress != null) _CopyCard(address: dnsAddress),
         DashboardDetailCard(
-          glyph: AppGlyphs.connections,
+          glyph: TablerIcons.topology_star,
           title: context.l10n.intranetNetworkOverview,
           child: DashboardStatGrid(
             stats: [
@@ -73,7 +73,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
           ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.wifi,
+          glyph: TablerIcons.wifi,
           title: context.l10n.intranetInterfaces,
           footer: info == null || info.interfaceName.isEmpty
               ? context.l10n.intranetNoInterface
@@ -106,7 +106,7 @@ class IntranetIpDetailPage extends ConsumerWidget {
           ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.dns,
+          glyph: TablerIcons.server_2,
           title: 'DNS',
           footer: info != null && info.privateDns != 'off'
               ? context.l10n.intranetPrivateDnsOn(info.privateDns)
@@ -115,8 +115,8 @@ class IntranetIpDetailPage extends ConsumerWidget {
               ? Row(
                   spacing: 10,
                   children: [
-                    GlyphIcon(
-                      AppGlyphs.info,
+                    Icon(
+                      TablerIcons.info_circle,
                       size: 20,
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -183,8 +183,8 @@ class _CopyCard extends StatelessWidget {
               shape: AppShape.standard,
             ),
             child: Center(
-              child: GlyphIcon(
-                AppGlyphs.copy,
+              child: Icon(
+                TablerIcons.copy,
                 size: 18,
                 color: colorScheme.primary,
               ),
@@ -214,8 +214,8 @@ class _CopyCard extends StatelessWidget {
               ],
             ),
           ),
-          GlyphIcon(
-            AppGlyphs.chevronForward,
+          Icon(
+            TablerIcons.chevron_right,
             size: 18,
             color: colorScheme.onSurfaceVariant,
           ),

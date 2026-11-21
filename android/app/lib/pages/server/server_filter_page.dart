@@ -32,7 +32,7 @@ class ServerFilterPage extends ConsumerWidget {
             title: context.l10n.serverFilterState,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.rules, size: 20),
+                leading: const Icon(TablerIcons.list_details, size: 20),
                 title: Text(context.l10n.serverFilterEnabled),
                 subtitle: Text(context.l10n.serverFilterEnabledBody),
                 value: filter.enabled,
@@ -44,7 +44,7 @@ class ServerFilterPage extends ConsumerWidget {
                 ),
               ),
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.shield, size: 20),
+                leading: const Icon(TablerIcons.shield, size: 20),
                 title: Text(context.l10n.serverFilterResponse),
                 subtitle: Text(context.l10n.serverFilterResponseBody),
                 value: filter.filterResponse,
@@ -56,7 +56,7 @@ class ServerFilterPage extends ConsumerWidget {
                 ),
               ),
               ListItem<String>.options(
-                leading: const GlyphIcon(AppGlyphs.shield, size: 20),
+                leading: const Icon(TablerIcons.shield, size: 20),
                 title: Text(context.l10n.serverFilterBlockMode),
                 value: filter.blockMode,
                 options: const ['null_ip', 'nxdomain', 'refused'],
@@ -79,7 +79,7 @@ class ServerFilterPage extends ConsumerWidget {
               title: context.l10n.serverBlockAddresses,
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.network, size: 20),
+                  leading: const Icon(TablerIcons.broadcast, size: 20),
                   title: Text(context.l10n.serverBlockingIPv4),
                   trailing: Text(
                     filter.blockingIPv4,
@@ -101,7 +101,7 @@ class ServerFilterPage extends ConsumerWidget {
                   },
                 ),
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.network, size: 20),
+                  leading: const Icon(TablerIcons.broadcast, size: 20),
                   title: Text(context.l10n.serverBlockingIPv6),
                   trailing: Text(
                     filter.blockingIPv6,
@@ -128,32 +128,32 @@ class ServerFilterPage extends ConsumerWidget {
             title: context.l10n.serverFilterSource,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.listAdd, size: 20),
+                leading: const Icon(TablerIcons.playlist_add, size: 20),
                 title: Text(context.l10n.serverCustomRules),
                 subtitle: Text(
                   context.l10n.serverFilterCustomCount(
                     filter.customRules.length,
                   ),
                 ),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () => context.push(ServerRoutes.filterRules),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.cloudSync, size: 20),
+                leading: const Icon(TablerIcons.cloud_network, size: 20),
                 title: Text(context.l10n.serverSubscriptions),
                 subtitle: Text(
                   context.l10n.serverFilterSubscriptionCount(
                     filter.lists.length,
                   ),
                 ),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () => context.push(ServerRoutes.filterSubscriptions),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.target, size: 20),
+                leading: const Icon(TablerIcons.target, size: 20),
                 title: Text(context.l10n.serverFilterTestTitle),
                 subtitle: Text(context.l10n.serverFilterTestEntryBody),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () => context.push(ServerRoutes.filterTest),
               ),
             ],

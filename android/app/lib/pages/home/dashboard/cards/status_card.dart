@@ -34,13 +34,13 @@ class StatusCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.status,
+            glyph: TablerIcons.activity,
             title: context.l10n.statusTitle,
             leading: [DashboardChip(label: label, tone: tone, dot: true)],
             trailing: [
               if (onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: onDetail,
                 ),

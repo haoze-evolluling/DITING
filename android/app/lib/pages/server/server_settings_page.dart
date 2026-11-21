@@ -32,7 +32,7 @@ class ServerSettingsPage extends ConsumerWidget {
             title: context.l10n.serverSettingsListen,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.lock, size: 20),
+                leading: const Icon(TablerIcons.lock, size: 20),
                 title: Text(context.l10n.serverSettingsRoot),
                 subtitle: Text(
                   status.running
@@ -45,7 +45,7 @@ class ServerSettingsPage extends ConsumerWidget {
                     : (value) => _saveRoot(context, ref, config, value),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.status, size: 20),
+                leading: const Icon(TablerIcons.activity, size: 20),
                 title: Text(context.l10n.serverPort),
                 subtitle: Text(context.l10n.serverPortFixed),
                 trailing: Text(
@@ -59,10 +59,10 @@ class ServerSettingsPage extends ConsumerWidget {
                 ),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.target, size: 20),
+                leading: const Icon(TablerIcons.target, size: 20),
                 title: Text(context.l10n.serverSettingsProbeRoot),
                 subtitle: Text(context.l10n.serverSettingsProbeRootBody),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: () => _probeRoot(context, ref),
               ),
             ],
@@ -72,7 +72,7 @@ class ServerSettingsPage extends ConsumerWidget {
             title: context.l10n.serverSettingsStorage,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.folder, size: 20),
+                leading: const Icon(TablerIcons.folder, size: 20),
                 title: Text(context.l10n.serverSettingsDataDir),
                 subtitle: Text(context.l10n.serverSettingsDataDirBody),
               ),

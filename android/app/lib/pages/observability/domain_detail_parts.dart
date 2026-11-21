@@ -25,7 +25,7 @@ class DetailHeroCard extends StatelessWidget {
     this.chips = const [],
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final Color color;
   final String title;
   final String subtitle;
@@ -150,7 +150,7 @@ class DomainActionRow extends ConsumerWidget {
             children: [
               Expanded(
                 child: _QuickAction(
-                  glyph: AppGlyphs.copy,
+                  glyph: TablerIcons.copy,
                   label: host != null && domain == null
                       ? context.l10n.obsCopyAddress
                       : context.l10n.obsCopyDomain,
@@ -160,7 +160,7 @@ class DomainActionRow extends ConsumerWidget {
               ),
               Expanded(
                 child: _QuickAction(
-                  glyph: AppGlyphs.block,
+                  glyph: TablerIcons.ban,
                   label: inBlock
                       ? context.l10n.obsInBlocklist
                       : context.l10n.obsAddToBlocklist,
@@ -172,7 +172,7 @@ class DomainActionRow extends ConsumerWidget {
               ),
               Expanded(
                 child: _QuickAction(
-                  glyph: AppGlyphs.checkCircle,
+                  glyph: TablerIcons.circle_check,
                   label: inAllow
                       ? context.l10n.obsInAllowlist
                       : context.l10n.obsAddToAllowlist,
@@ -200,7 +200,7 @@ class _QuickAction extends StatelessWidget {
     required this.onPressed,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String label;
   final Color color;
   final VoidCallback? onPressed;
@@ -292,7 +292,7 @@ class AgentAnalysisEntryCard extends StatelessWidget {
         spacing: 12,
         children: [
           IconBadge(
-            glyph: AppGlyphs.sparkle,
+            glyph: TablerIcons.sparkles,
             size: 38,
             glyphSize: 20,
             color: colorScheme.primaryContainer,
@@ -315,8 +315,8 @@ class AgentAnalysisEntryCard extends StatelessWidget {
               ],
             ),
           ),
-          GlyphIcon(
-            AppGlyphs.chevronForward,
+          Icon(
+            TablerIcons.chevron_right,
             size: 18,
             color: colorScheme.onSurfaceVariant,
           ),

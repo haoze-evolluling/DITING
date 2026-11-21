@@ -211,3 +211,19 @@ TextTheme _onAppScale(
   ),
   labelSmall: AppTextRole.micro._on(theme.labelSmall, colors, desktop: desktop),
 );
+
+/// A one-line text style that paints an [IconData] glyph at [size].
+///
+/// Used where an icon has to be drawn into a canvas (for example the empty-state
+/// illustration) instead of through an [Icon] widget.
+TextStyle iconGlyphStyle(
+  IconData icon, {
+  required double size,
+  required Color color,
+}) => TextStyle(
+  fontSize: size,
+  fontFamily: icon.fontFamily,
+  package: icon.fontPackage,
+  color: color,
+  height: 1,
+);

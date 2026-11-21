@@ -42,13 +42,13 @@ class AboutPage extends ConsumerWidget {
             title: context.l10n.aboutMore,
             items: [
               _LinkRow(
-                glyph: AppGlyphs.code,
+                glyph: TablerIcons.code,
                 title: context.l10n.aboutProject,
                 label: projectRepositoryUrl.replaceFirst('https://', ''),
                 url: projectRepositoryUrl,
               ),
               _LinkRow(
-                glyph: AppGlyphs.send,
+                glyph: TablerIcons.send,
                 title: context.l10n.aboutJoinQq,
                 label: context.l10n.aboutQqGroup(qqGroupNumber),
                 url: qqGroupUri,
@@ -59,13 +59,13 @@ class AboutPage extends ConsumerWidget {
             title: context.l10n.aboutSupport,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.heart,
+                glyph: TablerIcons.heart,
                 title: context.l10n.hubSponsor,
                 subtitle: context.l10n.hubSponsorDescription,
                 onPressed: () => context.push(SystemPaths.sponsor),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.star,
+                glyph: TablerIcons.star,
                 title: context.l10n.aboutSponsorList,
                 subtitle: context.l10n.aboutSponsorListBody,
                 onPressed: () => context.push(HubPaths.sponsorList),
@@ -76,7 +76,7 @@ class AboutPage extends ConsumerWidget {
             title: context.l10n.aboutSettings,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.clock),
+                leading: const Icon(TablerIcons.clock),
                 title: Text(context.l10n.aboutStartupCheck),
                 subtitle: Text(
                   disableStartupCheck
@@ -93,13 +93,13 @@ class AboutPage extends ConsumerWidget {
             title: context.l10n.aboutCredits,
             items: [
               _LinkRow(
-                glyph: AppGlyphs.palette,
+                glyph: TablerIcons.palette,
                 title: '',
                 label: context.l10n.aboutCreditsUi,
                 url: flClashRepositoryUrl,
               ),
               _LinkRow(
-                glyph: AppGlyphs.vpn,
+                glyph: TablerIcons.shield_lock,
                 title: 'blockads-android',
                 label: context.l10n.aboutCreditsCore,
                 url: blockAdsRepositoryUrl,
@@ -111,7 +111,7 @@ class AboutPage extends ConsumerWidget {
             title: context.l10n.aboutLegal,
             items: [
               ListItem.next(
-                leading: const GlyphIcon(AppGlyphs.gavel),
+                leading: const Icon(TablerIcons.gavel),
                 title: Text(context.l10n.aboutDisclaimerEntry),
                 subtitle: Text(context.l10n.aboutDisclaimerEntryBody),
                 widget: const DisclaimerPage(),
@@ -219,7 +219,7 @@ class _AboutHero extends StatelessWidget {
           const SizedBox(height: 20),
           TonalButton(
             size: TonalButtonSize.bar,
-            glyph: AppGlyphs.sync,
+            glyph: TablerIcons.rotate_clockwise,
             label: stage == UpdateStage.checking
                 ? context.l10n.aboutChecking
                 : context.l10n.aboutCheckUpdate,
@@ -239,8 +239,8 @@ class _AboutHero extends StatelessWidget {
               child: TonalButton(
                 size: TonalButtonSize.section,
                 glyph: stage == UpdateStage.downloaded
-                    ? AppGlyphs.check
-                    : AppGlyphs.cloudDownload,
+                    ? TablerIcons.check
+                    : TablerIcons.cloud_download,
                 label: switch (stage) {
                   UpdateStage.downloading => context.l10n.aboutDownloading,
                   UpdateStage.downloaded => context.l10n.aboutInstall,
@@ -334,7 +334,7 @@ class _LinkRow extends StatelessWidget {
     required this.url,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String label;
   final String url;
@@ -342,10 +342,10 @@ class _LinkRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: GlyphIcon(glyph),
+      leading: Icon(glyph),
       title: Text(title),
       subtitle: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: const GlyphIcon(AppGlyphs.openExternal, size: 20),
+      trailing: const Icon(TablerIcons.external_link, size: 20),
       onTap: () =>
           openLinkOrCopy(context, url, context.l10n.aboutLinkCopyFallback(url)),
     );

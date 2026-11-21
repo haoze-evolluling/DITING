@@ -216,7 +216,7 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
       onPressed: _testing ? null : _test,
       icon: _testing
           ? const CommonCircleLoading(size: 18)
-          : const GlyphIcon(AppGlyphs.target, size: 20),
+          : const Icon(TablerIcons.target, size: 20),
     );
   }
 
@@ -229,8 +229,8 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
     return Row(
       spacing: 6,
       children: [
-        GlyphIcon(
-          probe.ok ? AppGlyphs.checkCircle : AppGlyphs.error,
+        Icon(
+          probe.ok ? TablerIcons.circle_check : TablerIcons.alert_circle,
           size: 16,
           color: color,
         ),
@@ -261,7 +261,7 @@ class ProviderEditorState extends ConsumerState<ProviderEditor> {
         spacing: 10,
         children: [
           ListItem<ProviderProtocol>.options(
-            leading: const GlyphIcon(AppGlyphs.dns),
+            leading: const Icon(TablerIcons.server_2),
             title: Text(context.l10n.obsProtocol),
             value: _protocol,
             options: ProviderProtocol.values,

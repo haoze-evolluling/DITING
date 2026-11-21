@@ -53,12 +53,12 @@ class _MemoryCardState extends ConsumerState<MemoryCard>
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.memory,
+            glyph: TablerIcons.cpu_2,
             title: context.l10n.memoryTitle,
             trailing: [
               if (widget.onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: widget.onDetail,
                 ),

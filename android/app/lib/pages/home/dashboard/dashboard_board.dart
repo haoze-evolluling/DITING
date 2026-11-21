@@ -126,7 +126,7 @@ class _EditingBoard extends ConsumerWidget {
         children: [
           InlineNotice(
             message: context.l10n.dashboardEditHint,
-            glyph: AppGlyphs.info,
+            glyph: TablerIcons.info_circle,
             color: colorScheme.primaryContainer,
             foregroundColor: colorScheme.onPrimaryContainer,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -208,8 +208,8 @@ class DashboardRemoveBadge extends StatelessWidget {
         child: SizedBox(
           width: 28,
           height: 28,
-          child: GlyphIcon(
-            AppGlyphs.close,
+          child: Icon(
+            TablerIcons.x,
             size: 16,
             color: colorScheme.onErrorContainer,
           ),
@@ -232,8 +232,8 @@ class DashboardDragBadge extends StatelessWidget {
       child: SizedBox(
         width: 28,
         height: 28,
-        child: GlyphIcon(
-          AppGlyphs.dragHandle,
+        child: Icon(
+          TablerIcons.grip_vertical,
           size: 16,
           color: colorScheme.onSurfaceVariant,
         ),
@@ -253,7 +253,7 @@ class _AddCardRow extends ConsumerWidget {
         context: context,
         builder: (_) => const DashboardEditSheet(),
       ),
-      icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
+      icon: Icon(TablerIcons.plus, size: 18, color: colorScheme.primary),
       label: Text(context.l10n.dashboardAddCard),
       style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
     );

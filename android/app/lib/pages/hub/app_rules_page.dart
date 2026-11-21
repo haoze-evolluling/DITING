@@ -162,7 +162,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
       title: context.l10n.hubAppRules,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.broom,
+          glyph: TablerIcons.brush,
           tooltip: context.l10n.appRulesClearAllTooltip,
           onPressed: hasAllowlist ? () => _clearAll(draft) : null,
         ),
@@ -170,7 +170,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
       menuItems: [
         CommonPopupMenuItem(
           label: context.l10n.commonFilter,
-          glyph: AppGlyphs.filter,
+          glyph: TablerIcons.filter,
           subItems: [
             for (final option in AppListFilter.values)
               CommonPopupMenuItem(
@@ -185,7 +185,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
         ),
         CommonPopupMenuItem(
           label: context.l10n.uiSort,
-          glyph: AppGlyphs.sort,
+          glyph: TablerIcons.sort_ascending,
           subItems: [
             for (final option in AppListSort.values)
               CommonPopupMenuItem(
@@ -200,7 +200,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
         ),
         CommonPopupMenuItem(
           label: context.l10n.commonSave,
-          glyph: AppGlyphs.checkCircle,
+          glyph: TablerIcons.circle_check,
           onPressed: draft.dirty ? _save : null,
         ),
       ],
@@ -214,7 +214,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   items: [
                     ListItem.toggle(
                       leading: const LeadingSlot(
-                        child: GlyphIcon(AppGlyphs.verified),
+                        child: Icon(TablerIcons.rosette_discount_check),
                       ),
                       title: Text(context.l10n.appRulesMasterToggle),
                       subtitle: Text(
@@ -237,7 +237,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   items: [
                     ListItem(
                       leading: const LeadingSlot(
-                        child: GlyphIcon(AppGlyphs.wifiOff),
+                        child: Icon(TablerIcons.wifi_off),
                       ),
                       title: Text(context.l10n.hubBlockedApps),
                       subtitle: Text(context.l10n.hubBlockedAppsDescription),
@@ -245,7 +245,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                     ),
                     ListItem(
                       leading: const LeadingSlot(
-                        child: GlyphIcon(AppGlyphs.appsList),
+                        child: Icon(TablerIcons.list),
                       ),
                       title: Text(context.l10n.hubExcludedApps),
                       subtitle: Text(context.l10n.hubExcludedAppsDescription),
@@ -330,7 +330,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
       title: app.label,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.appRulesAddAllowDomain,
           onPressed: () => _addDomain(draft, app.packageName),
         ),
@@ -345,7 +345,7 @@ class _AppRulesPageState extends ConsumerState<AppRulesPage> {
                   items: [
                     ListItem(
                       leading: const LeadingSlot(
-                        child: GlyphIcon(AppGlyphs.arrowBack, size: 20),
+                        child: Icon(TablerIcons.arrow_left, size: 20),
                       ),
                       title: Text(context.l10n.appRulesBackToList),
                       subtitle: Text(app.packageName),

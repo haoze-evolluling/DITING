@@ -23,7 +23,7 @@ class ProfilesPage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.profilesAdd,
           onPressed: () => _create(context, ref),
-          icon: const GlyphIcon(AppGlyphs.add),
+          icon: const Icon(TablerIcons.plus),
         ),
       ],
       body: PageBody(
@@ -42,7 +42,7 @@ class ProfilesPage extends ConsumerWidget {
                 items: [
                   for (final profile in configs)
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.profiles),
+                      leading: const Icon(TablerIcons.file_text),
                       title: Text(
                         profile.name,
                         maxLines: 1,
@@ -65,7 +65,7 @@ class ProfilesPage extends ConsumerWidget {
                             onPressed: () => ref
                                 .read(automationControllerProvider)
                                 .deleteProfile(profile.id),
-                            icon: const GlyphIcon(AppGlyphs.remove),
+                            icon: const Icon(TablerIcons.minus),
                           ),
                         ],
                       ),
@@ -141,7 +141,7 @@ class _ErrorNotice extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InlineNotice(
         message: text,
-        glyph: AppGlyphs.error,
+        glyph: TablerIcons.alert_circle,
         color: colorScheme.errorContainer,
         foregroundColor: colorScheme.onErrorContainer,
       ),
@@ -208,7 +208,7 @@ class _ProfileDialogState extends State<_ProfileDialog> {
             decoration: InputDecoration(labelText: context.l10n.profilesName),
           ),
           ListItem<String>.options(
-            leading: const GlyphIcon(AppGlyphs.bolt),
+            leading: const Icon(TablerIcons.bolt),
             title: Text(context.l10n.workModeSettingTitle),
             value: _mode,
             options: ProfilesPage._modes,

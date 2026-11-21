@@ -68,65 +68,65 @@ class _EmptyIllustrationState extends State<EmptyIllustration>
     );
   }
 
-  static (RoundedPolygon, Glyph) _artOf(
+  static (RoundedPolygon, IconData) _artOf(
     NullStatusIllustration type,
   ) => switch (type) {
     NullStatusIllustration.data => (
       MaterialShapes.cookie12Sided,
-      AppGlyphs.resources,
+      TablerIcons.server,
     ),
     NullStatusIllustration.logs => (
       MaterialShapes.cookie9Sided,
-      AppGlyphs.logs,
+      TablerIcons.logs,
     ),
-    NullStatusIllustration.proxies => (MaterialShapes.sunny, AppGlyphs.proxies),
+    NullStatusIllustration.proxies => (MaterialShapes.sunny, TablerIcons.world),
     NullStatusIllustration.profile => (
       MaterialShapes.cookie7Sided,
-      AppGlyphs.profiles,
+      TablerIcons.file_text,
     ),
     NullStatusIllustration.scripts => (
       MaterialShapes.cookie6Sided,
-      AppGlyphs.code,
+      TablerIcons.code,
     ),
     NullStatusIllustration.rules => (
       MaterialShapes.clover8Leaf,
-      AppGlyphs.rules,
+      TablerIcons.list_details,
     ),
     NullStatusIllustration.connections => (
       MaterialShapes.cookie4Sided,
-      AppGlyphs.connections,
+      TablerIcons.topology_star,
     ),
     NullStatusIllustration.requests => (
       MaterialShapes.softBurst,
-      AppGlyphs.requests,
+      TablerIcons.clock,
     ),
-    NullStatusIllustration.dns => (MaterialShapes.puffy, AppGlyphs.dns),
-    NullStatusIllustration.ntp => (MaterialShapes.pentagon, AppGlyphs.clock),
-    NullStatusIllustration.sniffer => (MaterialShapes.gem, AppGlyphs.eye),
-    NullStatusIllustration.tun => (MaterialShapes.clamShell, AppGlyphs.vpn),
+    NullStatusIllustration.dns => (MaterialShapes.puffy, TablerIcons.server_2),
+    NullStatusIllustration.ntp => (MaterialShapes.pentagon, TablerIcons.clock),
+    NullStatusIllustration.sniffer => (MaterialShapes.gem, TablerIcons.eye),
+    NullStatusIllustration.tun => (MaterialShapes.clamShell, TablerIcons.shield_lock),
     NullStatusIllustration.wifi => (
       MaterialShapes.cookie7Sided,
-      AppGlyphs.wifi,
+      TablerIcons.wifi,
     ),
     NullStatusIllustration.apps => (
       MaterialShapes.clover4Leaf,
-      AppGlyphs.appsList,
+      TablerIcons.list,
     ),
     NullStatusIllustration.icons => (
       MaterialShapes.verySunny,
-      AppGlyphs.iconTile,
+      TablerIcons.photo,
     ),
     NullStatusIllustration.fonts => (
       MaterialShapes.puffyDiamond,
-      AppGlyphs.font,
+      TablerIcons.typography,
     ),
-    NullStatusIllustration.permission => (MaterialShapes.sunny, AppGlyphs.lock),
+    NullStatusIllustration.permission => (MaterialShapes.sunny, TablerIcons.lock),
     NullStatusIllustration.camera => (
       MaterialShapes.cookie6Sided,
-      AppGlyphs.camera,
+      TablerIcons.camera,
     ),
-    NullStatusIllustration.error => (MaterialShapes.softBurst, AppGlyphs.error),
-    NullStatusIllustration.search => (MaterialShapes.flower, AppGlyphs.search),
+    NullStatusIllustration.error => (MaterialShapes.softBurst, TablerIcons.alert_circle),
+    NullStatusIllustration.search => (MaterialShapes.flower, TablerIcons.search),
   };
 }
 
@@ -186,7 +186,7 @@ class _IllustrationPainter extends CustomPainter {
   static final _morphs = Expando<Morph>();
 
   final RoundedPolygon shape;
-  final Glyph glyph;
+  final IconData glyph;
   final _IllustrationPalette palette;
   final _Entrance entrance;
   final Animation<double> progress;
@@ -414,20 +414,23 @@ class _IllustrationPainter extends CustomPainter {
 
   void _paintGlyph(
     Canvas canvas,
-    Glyph glyph,
+    IconData glyph,
     Offset center,
     double extent,
     double fill,
     Color color,
   ) {
-    canvas.save();
-    canvas.translate(center.dx - extent / 2, center.dy - extent / 2);
-    GlyphPainter(
-      glyph: glyph,
-      fill: fill,
-      color: color,
-    ).paint(canvas, Size.square(extent));
-    canvas.restore();
+    final painter = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(glyph.codePoint),
+        style: iconGlyphStyle(glyph, size: extent, color: color),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(
+      canvas,
+      center - Offset(painter.width / 2, painter.height / 2),
+    );
   }
 
   @override

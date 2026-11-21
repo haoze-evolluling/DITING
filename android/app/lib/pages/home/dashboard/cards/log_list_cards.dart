@@ -25,7 +25,7 @@ class RequestOverviewCard extends ConsumerWidget {
     final colorScheme = context.colorScheme;
     final l10n = context.l10n;
     return DashboardMetricQuadCard(
-      glyph: AppGlyphs.requests,
+      glyph: TablerIcons.clock,
       title: title ?? l10n.logRequestsOverview,
       onDetail: onDetail,
       cells: [
@@ -66,7 +66,7 @@ class FilteredHighlightCard extends ConsumerWidget {
     final colorScheme = context.colorScheme;
     final l10n = context.l10n;
     return DashboardMetricQuadCard(
-      glyph: AppGlyphs.rules,
+      glyph: TablerIcons.list_details,
       title: title ?? l10n.logHighlights,
       onDetail: onDetail,
       cells: [
@@ -105,7 +105,7 @@ class OffModeMetricCard extends ConsumerWidget {
     final stats = ref.watch(logOverviewOffModeProvider);
     final colorScheme = context.colorScheme;
     return DashboardMetricQuadCard(
-      glyph: AppGlyphs.eyeOff,
+      glyph: TablerIcons.eye_off,
       title: context.l10n.logOffModeTitle,
       onDetail: onDetail,
       cells: [
@@ -144,7 +144,7 @@ class RecentRequestsLogCard extends ConsumerWidget {
     final rows = ref.watch(logOverviewRecentRequestsProvider);
     final colorScheme = context.colorScheme;
     return DashboardLogListCard(
-      glyph: AppGlyphs.requests,
+      glyph: TablerIcons.clock,
       title: context.l10n.logRecentRequests,
       emptyText: context.l10n.logRecentRequestsEmpty,
       onDetail: onDetail,
@@ -177,7 +177,7 @@ class FilteredRecentLogCard extends ConsumerWidget {
           row,
     ];
     return DashboardLogListCard(
-      glyph: AppGlyphs.block,
+      glyph: TablerIcons.ban,
       title: context.l10n.logRecentBlocked,
       emptyText: context.l10n.logRecentBlockedEmpty,
       onDetail: onDetail,
@@ -204,7 +204,7 @@ class CacheHotspotsCard extends ConsumerWidget {
     final rows = ref.watch(logOverviewCacheHotspotsProvider);
     final colorScheme = context.colorScheme;
     return DashboardLogListCard(
-      glyph: AppGlyphs.database,
+      glyph: TablerIcons.database,
       title: context.l10n.logCacheHotspots,
       emptyText: context.l10n.logCacheHotspotsEmpty,
       onDetail: onDetail,
@@ -234,7 +234,7 @@ class RaceWinnersCard extends ConsumerWidget {
     final rows = ref.watch(logOverviewRaceWinnersProvider);
     final colorScheme = context.colorScheme;
     return DashboardLogListCard(
-      glyph: AppGlyphs.shuffle,
+      glyph: TablerIcons.arrows_shuffle,
       title: context.l10n.logRaceWinners,
       emptyText: context.l10n.logRaceWinnersEmpty,
       onDetail: onDetail,
@@ -263,7 +263,7 @@ class BootstrapDnsCard extends ConsumerWidget {
     final rows = ref.watch(logOverviewBootstrapIpsProvider);
     final colorScheme = context.colorScheme;
     return DashboardLogListCard(
-      glyph: AppGlyphs.dns,
+      glyph: TablerIcons.server_2,
       title: 'Bootstrap DNS',
       emptyText: context.l10n.logBootstrapDnsEmpty,
       onDetail: onDetail,
@@ -294,7 +294,7 @@ class RuleBlocksCard extends ConsumerWidget {
     final rows = ref.watch(logOverviewSubscriptionBlocksProvider);
     final colorScheme = context.colorScheme;
     return DashboardLogListCard(
-      glyph: AppGlyphs.rules,
+      glyph: TablerIcons.list_details,
       title: context.l10n.logRuleBlocks,
       emptyText: context.l10n.logRuleBlocksEmpty,
       onDetail: onDetail,
@@ -327,7 +327,7 @@ class PrivacyModeCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.lock,
+            glyph: TablerIcons.lock,
             title: context.l10n.logPrivacyMode,
             trailing: [DashboardChip(label: context.l10n.logLoggingOff)],
           ),
@@ -371,7 +371,7 @@ class ResolutionPerfCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.speed,
+            glyph: TablerIcons.gauge,
             title: context.l10n.logPerfTitle,
             trailing: [DashboardChip(label: context.l10n.logTodayStats)],
           ),

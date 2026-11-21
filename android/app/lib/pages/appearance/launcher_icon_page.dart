@@ -24,7 +24,7 @@ class LauncherIconPage extends ConsumerWidget {
             title: l10n.launcherIconInfoLabel,
             items: [
               ListItem<LauncherIconStyle>.options(
-                leading: const GlyphIcon(AppGlyphs.iconTile),
+                leading: const Icon(TablerIcons.photo),
                 title: Text(l10n.launcherIconTitle),
                 value: selected,
                 options: LauncherIconStyle.values,

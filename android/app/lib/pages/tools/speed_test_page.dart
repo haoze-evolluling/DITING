@@ -49,13 +49,13 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
             _ToolNotice(
               text: l10n.toolSpeedUnsupported,
               isError: true,
-              glyph: AppGlyphs.warning,
+              glyph: TablerIcons.alert_triangle,
             ),
           _ToolInputCard(
             child: _ToolField(
               controller: _domain,
               hintText: l10n.toolSpeedDomainHint,
-              glyph: AppGlyphs.language,
+              glyph: TablerIcons.language,
               enabled: !state.running && !unavailable,
               onChanged: (value) =>
                   ref.read(latencyDomainProvider.notifier).setDomain(value),
@@ -67,7 +67,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
             title: l10n.obsProtocol,
             items: [
               ListItem<DnsLatencyProtocol>.options(
-                leading: const GlyphIcon(AppGlyphs.speed),
+                leading: const Icon(TablerIcons.gauge),
                 title: Text(l10n.obsProtocol),
                 value: protocol,
                 options: protocols,
@@ -85,7 +85,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
             items: [
               if (providers.isEmpty)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.info, size: 20),
+                  leading: const Icon(TablerIcons.info_circle, size: 20),
                   title: Text(l10n.toolNoProviders(protocol.label)),
                   subtitle: Text(l10n.toolNoProvidersBody),
                 )
@@ -93,7 +93,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
                 for (final spec in providers)
                   ListItem.checkbox(
                     value: selected.contains(spec.id),
-                    leading: const GlyphIcon(AppGlyphs.upstream, size: 20),
+                    leading: const Icon(TablerIcons.cloud_upload, size: 20),
                     title: Text(spec.name),
                     subtitle: Text(latencyEndpointLabel(spec)),
                     onChanged: state.running
@@ -106,9 +106,9 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
             footer: l10n.toolSpeedSelectionNote,
           ),
           if (state.error case final error?)
-            _ToolNotice(text: error, isError: true, glyph: AppGlyphs.error),
+            _ToolNotice(text: error, isError: true, glyph: TablerIcons.alert_circle),
           _RunButton(
-            glyph: AppGlyphs.speed,
+            glyph: TablerIcons.gauge,
             label: l10n.toolTestQueryTime,
             runningLabel: l10n.toolSpeedRunning,
             running: state.running,
@@ -116,7 +116,7 @@ class _SpeedTestPageState extends ConsumerState<SpeedTestPage> {
           ),
           if (showEmpty)
             _ToolEmptyCard(
-              glyph: AppGlyphs.speed,
+              glyph: TablerIcons.gauge,
               title: l10n.toolSpeedEmptyTitle,
               body: l10n.toolSpeedEmpty,
             ),

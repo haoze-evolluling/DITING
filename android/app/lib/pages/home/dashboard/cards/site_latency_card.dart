@@ -75,18 +75,18 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.target,
+            glyph: TablerIcons.target,
             title: context.l10n.siteLatencyTitle,
             leading: [DashboardChip(label: verdict, tone: tone, dot: true)],
             trailing: [
               if (widget.onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: context.l10n.dashboardDetailTooltip,
                   onPressed: widget.onDetail,
                 ),
               DashboardIconButton(
-                glyph: AppGlyphs.refresh,
+                glyph: TablerIcons.refresh,
                 tooltip: context.l10n.siteLatencyRetest,
                 onPressed: _probing ? null : _probe,
               ),
@@ -217,7 +217,7 @@ class _SiteCell extends StatelessWidget {
               Row(
                 spacing: 6,
                 children: [
-                  _Badge(glyph: target.glyph, dot: dotColor),
+                  _Badge(icon: target.icon, dot: dotColor),
                   Expanded(
                     child: Text(
                       target.name,
@@ -259,9 +259,9 @@ class _SiteCell extends StatelessWidget {
 }
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.glyph, required this.dot});
+  const _Badge({required this.icon, required this.dot});
 
-  final Glyph glyph;
+  final SiteIcon icon;
   final Color dot;
 
   @override
@@ -283,8 +283,8 @@ class _Badge extends StatelessWidget {
               shape: AppShape.standard,
             ),
             child: Center(
-              child: GlyphIcon(
-                glyph,
+              child: SiteIconView(
+                icon,
                 size: size * 0.6,
                 color: colorScheme.onSurfaceVariant,
               ),

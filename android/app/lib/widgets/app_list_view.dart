@@ -45,24 +45,24 @@ List<CommonPopupMenuItem> appListMenuItems({
     if (onSelectAll != null)
       CommonPopupMenuItem(
         label: l10n.commonSelectAll,
-        glyph: AppGlyphs.checkDouble,
+        glyph: TablerIcons.checks,
         onPressed: onSelectAll,
       ),
     if (onClear != null)
       CommonPopupMenuItem(
         label: l10n.commonClear,
-        glyph: AppGlyphs.clearAll,
+        glyph: TablerIcons.trash,
         onPressed: onClear,
       ),
     if (onInvert != null)
       CommonPopupMenuItem(
         label: l10n.commonInvertSelection,
-        glyph: AppGlyphs.sync,
+        glyph: TablerIcons.rotate_clockwise,
         onPressed: onInvert,
       ),
     CommonPopupMenuItem(
       label: l10n.commonFilter,
-      glyph: AppGlyphs.filter,
+      glyph: TablerIcons.filter,
       subItems: [
         for (final option in AppListFilter.values)
           CommonPopupMenuItem(
@@ -74,7 +74,7 @@ List<CommonPopupMenuItem> appListMenuItems({
     ),
     CommonPopupMenuItem(
       label: l10n.commonSort,
-      glyph: AppGlyphs.sort,
+      glyph: TablerIcons.sort_ascending,
       subItems: [
         for (final option in AppListSort.values)
           CommonPopupMenuItem(

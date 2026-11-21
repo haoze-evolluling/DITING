@@ -181,13 +181,13 @@ class AppAllowDomainRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: const GlyphIcon(AppGlyphs.verified, size: 20),
+      leading: const Icon(TablerIcons.rosette_discount_check, size: 20),
       title: Text(domain, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(context.l10n.appRulesIncludeSub),
       trailing: IconButton(
         tooltip: context.l10n.appRulesDelete,
         onPressed: onDelete,
-        icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+        icon: const Icon(TablerIcons.trash, size: 20),
       ),
     );
   }
@@ -267,8 +267,8 @@ class AppScopedRuleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isAllow = rule.kind == RuleKind.allow;
     return ListItem(
-      leading: GlyphIcon(
-        isAllow ? AppGlyphs.verified : AppGlyphs.shield,
+      leading: Icon(
+        isAllow ? TablerIcons.rosette_discount_check : TablerIcons.shield,
         size: 20,
         color: isAllow
             ? context.colorScheme.primary
@@ -289,15 +289,15 @@ class AppScopedRuleRow extends StatelessWidget {
                 ? context.l10n.appRulesDisable
                 : context.l10n.appRulesEnable,
             onPressed: () => onToggle(!rule.enabled),
-            icon: GlyphIcon(
-              rule.enabled ? AppGlyphs.check : AppGlyphs.close,
+            icon: Icon(
+              rule.enabled ? TablerIcons.check : TablerIcons.x,
               size: 20,
             ),
           ),
           IconButton(
             tooltip: context.l10n.appRulesDelete,
             onPressed: onDelete,
-            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+            icon: const Icon(TablerIcons.trash, size: 20),
           ),
         ],
       ),

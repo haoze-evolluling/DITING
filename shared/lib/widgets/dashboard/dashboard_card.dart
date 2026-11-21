@@ -104,7 +104,7 @@ class DashboardCardHeader extends StatelessWidget {
   static const height = 24.0;
   static const glyphSize = 18.0;
 
-  final Glyph? glyph;
+  final IconData? glyph;
   final String title;
 
   final List<Widget> leading;
@@ -121,7 +121,7 @@ class DashboardCardHeader extends StatelessWidget {
         spacing: 8,
         children: [
           if (glyph case final glyph?)
-            GlyphIcon(
+            Icon(
               glyph,
               size: glyphSize,
               color: colorScheme.onSurfaceVariant,
@@ -148,8 +148,8 @@ class DashboardCardHeader extends StatelessWidget {
               child: Center(child: child),
             ),
           if (chevron)
-            GlyphIcon(
-              AppGlyphs.chevronForward,
+            Icon(
+              TablerIcons.chevron_right,
               size: 16,
               color: colorScheme.onSurfaceVariant,
             ),
@@ -361,7 +361,7 @@ class DashboardIconButton extends StatelessWidget {
     this.glyphSize = 18,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String tooltip;
   final VoidCallback? onPressed;
   final double size;
@@ -385,7 +385,7 @@ class DashboardIconButton extends StatelessWidget {
             foregroundColor: context.colorScheme.onSurfaceVariant,
           ),
           onPressed: onPressed,
-          icon: GlyphIcon(glyph, size: glyphSize),
+          icon: Icon(glyph, size: glyphSize),
         ),
       ),
     );

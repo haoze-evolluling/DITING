@@ -99,7 +99,7 @@ class _ServerFilterRulesPageState extends ConsumerState<ServerFilterRulesPage> {
             }
           },
           primaryAction: IconButtonData(
-            glyph: AppGlyphs.check,
+            glyph: TablerIcons.check,
             tooltip: context.l10n.commonSave,
             onPressed: () => _save(config, filter),
           ),

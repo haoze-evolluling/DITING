@@ -152,7 +152,7 @@ class _DimensionRow extends StatelessWidget {
     final severity = _severityForScore(dimension.score);
     final color = _severityColor(context, severity);
     return ListItem(
-      leading: GlyphIcon(AppGlyphs.checkCircle, color: color),
+      leading: Icon(TablerIcons.circle_check, color: color),
       title: Text(_dimensionLabel(context.l10n, dimension.kind)),
       trailing: Text(
         '${dimension.score}',
@@ -173,12 +173,12 @@ class _AdviceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = switch (advice.severity) {
-      HealthSeverity.ok => AppGlyphs.checkCircle,
-      HealthSeverity.warning => AppGlyphs.warning,
-      HealthSeverity.critical => AppGlyphs.error,
+      HealthSeverity.ok => TablerIcons.circle_check,
+      HealthSeverity.warning => TablerIcons.alert_triangle,
+      HealthSeverity.critical => TablerIcons.alert_circle,
     };
     return ListItem(
-      leading: GlyphIcon(icon, color: _severityColor(context, advice.severity)),
+      leading: Icon(icon, color: _severityColor(context, advice.severity)),
       title: Text(_adviceText(context.l10n, advice.id)),
     );
   }

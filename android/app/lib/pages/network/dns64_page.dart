@@ -23,7 +23,7 @@ class Dns64Page extends ConsumerWidget {
             title: l10n.dns64Title,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.link),
+                leading: const Icon(TablerIcons.link),
                 title: Text(l10n.dns64Enable),
                 subtitle: Text(l10n.dns64EnableDesc),
                 trailing: CommonSwitch(

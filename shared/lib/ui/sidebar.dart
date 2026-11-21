@@ -30,9 +30,14 @@ const _indicatorDuration = Duration(milliseconds: 320);
 final _itemShape = AppShape.standard;
 
 class SidebarDestination {
-  const SidebarDestination({required this.glyph, required this.label});
+  const SidebarDestination({
+    required this.icon,
+    this.filledIcon,
+    required this.label,
+  });
 
-  final Glyph glyph;
+  final IconData icon;
+  final IconData? filledIcon;
   final String label;
 }
 
@@ -316,7 +321,7 @@ class _SidebarPane extends StatelessWidget {
               onTap: onToggle,
               child: SizedBox(
                 width: itemWidth,
-                child: Center(child: GlyphIcon(AppGlyphs.sidebar(progress))),
+                child: Center(child: Icon(TablerIcons.layout_sidebar)),
               ),
             ),
           ),
@@ -478,7 +483,11 @@ class _DestinationRow extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(width: iconInset),
-            AnimatedGlyph(glyph: destination.glyph, filled: selected),
+            SelectedIcon(
+              icon: destination.icon,
+              filledIcon: destination.filledIcon,
+              selected: selected,
+            ),
             const SizedBox(width: _labelGap),
             Expanded(
               child: Opacity(

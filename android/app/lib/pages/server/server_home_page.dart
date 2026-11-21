@@ -94,7 +94,7 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
         IconButton(
           tooltip: context.l10n.homeSwitchWorkMode,
           onPressed: () => context.push(Routes.modeSelect),
-          icon: const GlyphIcon(AppGlyphs.swap),
+          icon: const Icon(TablerIcons.arrows_exchange),
         ),
       ],
       body: PageBody(

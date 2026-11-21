@@ -23,7 +23,7 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
         size: TonalButtonSize.docked,
         child: _barButton(
           IconButtonData(
-            glyph: AppGlyphs.close,
+            glyph: TablerIcons.x,
             tooltip: UiLocalizations.of(context).cancel,
             onPressed: _handleCancelDockedSearch,
           ),
@@ -116,12 +116,16 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
     return AppBarActionButton(
       data: useCloseIcon
           ? IconButtonData(
-              glyph: AppGlyphs.close,
+              glyph: TablerIcons.x,
               onPressed: _closeSheet,
               tooltip: localizations.close,
             )
           : IconButtonData(
-              glyph: AppGlyphs.backFor(Theme.of(context).platform),
+              glyph: switch (Theme.of(context).platform) {
+                TargetPlatform.iOS || TargetPlatform.macOS =>
+                  TablerIcons.chevron_left,
+                _ => TablerIcons.arrow_left,
+              },
               onPressed: backAction ?? () => Navigator.of(context).pop(),
               tooltip: localizations.back,
             ),
@@ -217,7 +221,7 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
     }
     final lead = hasSearch && !form.hasDockedSearch
         ? IconButtonData(
-            glyph: AppGlyphs.search,
+            glyph: TablerIcons.search,
             tooltip: UiLocalizations.of(context).search,
             onPressed: _handleToSearch,
           )
@@ -259,7 +263,7 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
           icon: identical(data, lead)
               ? _SearchGlyph(
                   motion: _searchMotion,
-                  child: GlyphIcon(data.glyph),
+                  child: Icon(data.glyph),
                 )
               : null,
         ),
@@ -313,7 +317,7 @@ extension CommonScaffoldStateBuild on CommonScaffoldState {
       cancel: fills
           ? _barButton(
               IconButtonData(
-                glyph: AppGlyphs.close,
+                glyph: TablerIcons.x,
                 tooltip: UiLocalizations.of(context).cancel,
                 onPressed: _popAppBarLayer,
               ),

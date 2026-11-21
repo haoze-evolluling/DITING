@@ -30,32 +30,32 @@ class SiteLatencyTargetSheet extends StatelessWidget {
         children: [
           ListHeader(title: context.l10n.siteLatencySheetLatency),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.link, size: 20),
+            leading: const Icon(TablerIcons.link, size: 20),
             title: Text(context.l10n.siteLatencySheetCategory),
             trailing: Text(target.category.label(context.l10n)),
           ),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.link, size: 20),
+            leading: const Icon(TablerIcons.link, size: 20),
             title: Text(context.l10n.siteLatencySheetTarget),
             subtitle: Text(target.host),
           ),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.speed, size: 20),
+            leading: const Icon(TablerIcons.gauge, size: 20),
             title: Text(context.l10n.siteLatencySheetAverage),
             trailing: Text(ms(summary?.avgMs)),
           ),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.arrowDown, size: 20),
+            leading: const Icon(TablerIcons.arrow_down, size: 20),
             title: Text(context.l10n.siteLatencySheetMinMax),
             trailing: Text('${ms(summary?.minMs)} / ${ms(summary?.maxMs)}'),
           ),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.motion, size: 20),
+            leading: const Icon(TablerIcons.wind, size: 20),
             title: Text(context.l10n.siteLatencySheetJitter),
             trailing: Text(ms(summary?.jitterMs)),
           ),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.warning, size: 20),
+            leading: const Icon(TablerIcons.alert_triangle, size: 20),
             title: Text(context.l10n.siteLatencySheetLoss),
             trailing: Text(
               summary == null
@@ -67,12 +67,12 @@ class SiteLatencyTargetSheet extends StatelessWidget {
           if (summary?.resolvedAddress case final address?
               when address.isNotEmpty)
             ListItem(
-              leading: const GlyphIcon(AppGlyphs.dns, size: 20),
+              leading: const Icon(TablerIcons.server_2, size: 20),
               title: Text(context.l10n.siteLatencySheetDns),
               subtitle: Text('${summary!.addressFamily ?? ''} $address'.trim()),
             ),
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.clock, size: 20),
+            leading: const Icon(TablerIcons.clock, size: 20),
             title: Text(context.l10n.siteLatencySheetLastRun),
             trailing: Text(elapsedAgoLabel(lastRunAt)),
           ),

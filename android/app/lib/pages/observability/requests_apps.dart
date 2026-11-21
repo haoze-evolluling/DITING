@@ -33,7 +33,7 @@ class _RequestAppsPageState extends ConsumerState<RequestAppsPage> {
       menuItems: [
         CommonPopupMenuItem(
           label: context.l10n.obsRefresh,
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           onPressed: _refresh,
         ),
       ],
@@ -119,8 +119,8 @@ class _RequestAppRow extends ConsumerWidget {
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: GlyphIcon(
-        AppGlyphs.chevronForward,
+      trailing: Icon(
+        TablerIcons.chevron_right,
         size: 18,
         color: colorScheme.onSurfaceVariant,
       ),

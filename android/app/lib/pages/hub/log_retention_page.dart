@@ -27,7 +27,7 @@ class LogRetentionPage extends ConsumerWidget {
             title: context.l10n.logRetentionDnsLogs,
             items: [
               ListItem<LegacyLogMode>.options(
-                leading: const GlyphIcon(AppGlyphs.logs),
+                leading: const Icon(TablerIcons.logs),
                 title: Text(context.l10n.logRetentionDnsLogs),
                 subtitle: Text(mode.description(context.l10n)),
                 value: mode,
@@ -45,7 +45,7 @@ class LogRetentionPage extends ConsumerWidget {
               title: context.l10n.logRetentionCleanup,
               items: [
                 ListItem<int>.options(
-                  leading: const GlyphIcon(AppGlyphs.clock),
+                  leading: const Icon(TablerIcons.clock),
                   title: Text(context.l10n.logRetentionCleanup),
                   value: retentionDays,
                   options: _retentionOptions,
@@ -118,7 +118,7 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
           title: l10n.logRetentionOverlay,
           items: [
             ListItem.toggle(
-              leading: const GlyphIcon(AppGlyphs.eye),
+              leading: const Icon(TablerIcons.eye),
               title: Text(l10n.logRetentionOverlayLogs),
               subtitle: Text(l10n.logRetentionOverlayBody),
               value: enabled,
@@ -126,8 +126,8 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
             ),
             if (enabled && granted != null)
               ListItem(
-                leading: GlyphIcon(
-                  granted ? AppGlyphs.checkCircle : AppGlyphs.warning,
+                leading: Icon(
+                  granted ? TablerIcons.circle_check : TablerIcons.alert_triangle,
                   size: 20,
                   color: granted ? colorScheme.success : colorScheme.warning,
                 ),
@@ -139,7 +139,7 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
                 ),
                 trailing: granted
                     ? null
-                    : const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                    : const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: granted ? null : _requestPermission,
               ),
           ],
@@ -151,7 +151,7 @@ class _FloatingLogSectionState extends ConsumerState<_FloatingLogSection> {
             title: l10n.floatingLogSizeTitle,
             items: [
               ListItem<int>.options(
-                leading: const GlyphIcon(AppGlyphs.eye),
+                leading: const Icon(TablerIcons.eye),
                 title: Text(l10n.floatingLogSizeTitle),
                 value: ref.watch(floatingLogPanelSizeProvider),
                 options: const [0, 1, 2],

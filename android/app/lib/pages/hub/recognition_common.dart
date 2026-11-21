@@ -52,8 +52,8 @@ class RecognitionAvatar extends ConsumerWidget {
     builder: (context, constraints) {
       final dimension = constraints.biggest.shortestSide;
       return Center(
-        child: GlyphIcon(
-          AppGlyphs.account,
+        child: Icon(
+          TablerIcons.user,
           size: dimension * 0.55,
           color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
         ),
@@ -192,14 +192,14 @@ class _RecognitionListPageState extends ConsumerState<RecognitionListPage> {
       title: widget.title,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: context.l10n.recognitionRefresh,
           isLoading: state.isRefreshing,
           onPressed: _refresh,
         ),
         if (widget.sortable)
           IconButtonData(
-            glyph: AppGlyphs.sort,
+            glyph: TablerIcons.sort_ascending,
             tooltip: _newestFirst
                 ? context.l10n.recognitionSortAsc
                 : context.l10n.recognitionSortDesc,

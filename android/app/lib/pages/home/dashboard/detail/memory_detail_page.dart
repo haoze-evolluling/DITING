@@ -79,12 +79,12 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
         IconButton(
           tooltip: context.l10n.memoryResample,
           onPressed: _memory == null ? null : () => _memory!.tick(),
-          icon: const GlyphIcon(AppGlyphs.refresh),
+          icon: const Icon(TablerIcons.refresh),
         ),
       ],
       children: [
         DashboardDetailHero(
-          glyph: AppGlyphs.memory,
+          glyph: TablerIcons.cpu_2,
           label: context.l10n.memoryProcessPss,
           value: available
               ? dashboardBinaryBytes(memory.totalPss)
@@ -127,7 +127,7 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
           ],
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.layers,
+          glyph: TablerIcons.stack_2,
           title: context.l10n.memoryComposition,
           footer: available ? context.l10n.memoryCompositionFooter : null,
           child: Column(
@@ -166,7 +166,7 @@ class _MemoryDetailPageState extends ConsumerState<MemoryDetailPage>
           ),
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.cpu,
+          glyph: TablerIcons.cpu,
           title: context.l10n.memorySystemSection,
           footer: available && memory.systemTotal > 0
               ? context.l10n.memorySystemFooter

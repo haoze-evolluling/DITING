@@ -339,7 +339,7 @@ class DashboardLogListCard extends StatelessWidget {
     this.detailTooltip,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String emptyText;
   final List<Widget> rows;
@@ -361,7 +361,7 @@ class DashboardLogListCard extends StatelessWidget {
             trailing: [
               if (onDetail != null)
                 DashboardIconButton(
-                  glyph: AppGlyphs.chevronForward,
+                  glyph: TablerIcons.chevron_right,
                   tooltip: detailTooltip ?? context.l10n.dashboardDetailTooltip,
                   onPressed: onDetail,
                 ),

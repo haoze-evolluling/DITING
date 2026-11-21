@@ -18,7 +18,7 @@ class AppIconAvatar extends ConsumerStatefulWidget {
   final String packageName;
   final double size;
 
-  final Glyph? glyph;
+  final IconData? glyph;
 
   @override
   ConsumerState<AppIconAvatar> createState() => _AppIconAvatarState();
@@ -58,8 +58,8 @@ class _AppIconAvatarState extends ConsumerState<AppIconAvatar> {
             color: colors.surfaceContainerHighest,
             child: bytes == null
                 ? Center(
-                    child: GlyphIcon(
-                      widget.glyph ?? AppGlyphs.appsList,
+                    child: Icon(
+                      widget.glyph ?? TablerIcons.list,
                       size: size * 0.6,
                       color: colors.onSurfaceVariant,
                     ),
@@ -90,8 +90,8 @@ class _AppIconImage extends StatelessWidget {
       filterQuality: FilterQuality.low,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stack) => Center(
-        child: GlyphIcon(
-          AppGlyphs.appsList,
+        child: Icon(
+          TablerIcons.list,
           size: size * 0.6,
           color: context.colorScheme.onSurfaceVariant,
         ),

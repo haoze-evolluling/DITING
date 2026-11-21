@@ -71,7 +71,7 @@ class _SsidFormSheetState extends ConsumerState<_SsidFormSheet> {
           ? context.l10n.ssidAdd
           : context.l10n.ssidEdit,
       confirmationAction: IconButtonData(
-        glyph: AppGlyphs.check,
+        glyph: TablerIcons.check,
         tooltip: context.l10n.ssidSave,
         onPressed: _submit,
       ),

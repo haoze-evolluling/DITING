@@ -37,8 +37,8 @@ class AgentApiPage extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      GlyphIcon(
-                        AppGlyphs.sparkle,
+                      Icon(
+                        TablerIcons.sparkles,
                         size: 24,
                         color: colorScheme.primary,
                       ),
@@ -95,7 +95,7 @@ class AgentApiPage extends ConsumerWidget {
             title: context.l10n.agentApiSectionProvider,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.devices),
+                leading: const Icon(TablerIcons.devices),
                 title: Text(context.l10n.agentProvidersTitle),
                 subtitle: Text(
                   context.l10n.agentApiProvidersSubtitle(
@@ -105,7 +105,7 @@ class AgentApiPage extends ConsumerWidget {
                 onTap: () => context.push(HubPaths.agentProviders),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.sliders),
+                leading: const Icon(TablerIcons.adjustments),
                 title: Text(context.l10n.agentParamsTitle),
                 subtitle: Text(context.l10n.agentParamsSubtitle),
                 onTap: () => context.push(HubPaths.agentParams),
@@ -116,7 +116,7 @@ class AgentApiPage extends ConsumerWidget {
             title: context.l10n.agentApiSectionTest,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.dns),
+                leading: const Icon(TablerIcons.server_2),
                 title: Text(context.l10n.agentApiTestDomain),
                 subtitle: Text(context.l10n.agentApiTestDomainSubtitle),
                 onTap: () => openAgentAnalysis(
@@ -125,7 +125,7 @@ class AgentApiPage extends ConsumerWidget {
                 ),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.dataUsage),
+                leading: const Icon(TablerIcons.chart_pie),
                 title: Text(context.l10n.agentApiTestTraffic),
                 subtitle: Text(context.l10n.agentApiTestTrafficSubtitle),
                 onTap: () =>
@@ -140,19 +140,19 @@ class AgentApiPage extends ConsumerWidget {
             title: context.l10n.agentApiSectionEntries,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.database),
+                leading: const Icon(TablerIcons.database),
                 title: Text(context.l10n.agentApiCacheTable),
                 subtitle: Text(context.l10n.agentApiCacheTableSubtitle),
                 onTap: () => context.push('/logs/cache'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.requests),
+                leading: const Icon(TablerIcons.clock),
                 title: Text(context.l10n.agentApiRequests),
                 subtitle: Text(context.l10n.agentApiRequestsSubtitle),
                 onTap: () => context.push('/requests'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.dashboard),
+                leading: const Icon(TablerIcons.layout_dashboard),
                 title: Text(context.l10n.agentApiDashboard),
                 subtitle: Text(context.l10n.agentApiDashboardSubtitle),
                 onTap: () {
@@ -168,7 +168,7 @@ class AgentApiPage extends ConsumerWidget {
             title: context.l10n.agentApiSectionReset,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.reset),
+                leading: const Icon(TablerIcons.restore),
                 title: Text(context.l10n.agentApiResetItem),
                 subtitle: Text(context.l10n.agentApiResetSubtitle),
                 onTap: () => _reset(context, notifier),

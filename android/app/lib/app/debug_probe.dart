@@ -31,7 +31,7 @@ const List<String> _structureTypes = <String>[
   'NullStatus',
   'Button',
   'CustomPaint',
-  'GlyphIcon',
+  'Icon',
   'Screen',
   'Frame',
 ];

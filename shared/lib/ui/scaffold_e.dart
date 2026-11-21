@@ -149,9 +149,8 @@ class _BarSearch extends StatelessWidget {
     final inset = appBarActionInset(cancel != null);
     final rtl = Directionality.of(context) == TextDirection.rtl;
     final height = TonalButtonSize.bar.button;
-    final glyph = GlyphIcon(
-      AppGlyphs.search,
-      fill: 1,
+    final glyph = Icon(
+      TablerIcons.search,
       size: TonalButtonSize.bar.icon,
       color: context.colorScheme.onSurface,
     );

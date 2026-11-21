@@ -89,7 +89,7 @@ class _RequestLogExportAppPickerState
               items: [
                 ListItem(
                   leading: const LeadingSlot(
-                    child: GlyphIcon(AppGlyphs.clearAll, size: 20),
+                    child: Icon(TablerIcons.trash, size: 20),
                   ),
                   title: Text(l10n.obsExportAllApps),
                   trailing: _selected.isEmpty ? const SelectionCheck() : null,
@@ -122,7 +122,7 @@ class _RequestLogExportAppPickerState
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: TonalButton(
                 label: l10n.obsExportAppPickerDone,
-                glyph: AppGlyphs.check,
+                glyph: TablerIcons.check,
                 onPressed: () => Navigator.of(context).pop(_selected),
               ),
             ),

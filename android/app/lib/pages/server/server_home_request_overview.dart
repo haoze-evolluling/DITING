@@ -20,28 +20,28 @@ class ServerRequestOverview extends StatelessWidget {
     final allowed = (stats.queries - stats.blocked).clamp(0, stats.queries);
     final tiles = [
       _RequestStat(
-        glyph: AppGlyphs.dns,
+        glyph: TablerIcons.server_2,
         label: l10n.serverQueries,
         value: serverCount(stats.queries),
         hint: '${l10n.serverCacheHit} ${serverPercent(stats.cacheHitRate)}',
         color: scheme.primary,
       ),
       _RequestStat(
-        glyph: AppGlyphs.block,
+        glyph: TablerIcons.ban,
         label: l10n.serverBlocked,
         value: serverCount(stats.blocked),
         hint: '${l10n.serverAllowed} ${serverCount(allowed)}',
         color: scheme.onSurfaceVariant,
       ),
       _RequestStat(
-        glyph: AppGlyphs.shield,
+        glyph: TablerIcons.shield,
         label: l10n.serverBlockRate,
         value: serverPercent(stats.blockedRate),
         hint: '${serverCount(stats.blocked)} / ${serverCount(stats.queries)}',
         color: scheme.primary,
       ),
       _RequestStat(
-        glyph: AppGlyphs.clock,
+        glyph: TablerIcons.clock,
         label: l10n.serverAverageLatency,
         value: serverMs(stats.averageResponseMs),
         hint: l10n.serverAverageLatencyHint,
@@ -55,7 +55,7 @@ class ServerRequestOverview extends StatelessWidget {
         spacing: 12,
         children: [
           ServerCardHeader(
-            glyph: AppGlyphs.dataUsage,
+            glyph: TablerIcons.chart_pie,
             title: l10n.serverOverviewTitle,
             trailing: [ServerWindowChip(label: l10n.serverLast24Hours)],
           ),
@@ -103,7 +103,7 @@ class _RequestStat {
     required this.color,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String label;
   final String value;
   final String hint;
@@ -129,7 +129,7 @@ class _RequestStatBlock extends StatelessWidget {
           Row(
             spacing: 6,
             children: [
-              GlyphIcon(data.glyph, size: 15, color: data.color),
+              Icon(data.glyph, size: 15, color: data.color),
               Expanded(
                 child: Text(
                   data.label,

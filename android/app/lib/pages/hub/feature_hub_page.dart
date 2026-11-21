@@ -26,7 +26,7 @@ class FeatureHubPage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.searchTitle,
           onPressed: () => context.push('/search'),
-          icon: const GlyphIcon(AppGlyphs.search),
+          icon: const Icon(TablerIcons.search),
         ),
       ],
       body: CustomScrollView(

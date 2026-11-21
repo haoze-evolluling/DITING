@@ -27,7 +27,7 @@ class BlockedAppsPage extends ConsumerWidget {
       enableToggleTitle: context.l10n.appBlockToggle,
       enableToggleEmptyHint: context.l10n.appBlockToggleEmpty,
       selectionTitle: context.l10n.appBlockSelection,
-      icon: AppGlyphs.wifiOff,
+      icon: TablerIcons.wifi_off,
       selected: settings.blockedAppPackages,
       enabled: settings.blockedAppsEnabled,
       filter: AppListFilter.fromStorageValue(settings.blockedAppsFilterRaw),
@@ -62,7 +62,7 @@ class ExcludedAppsPage extends ConsumerWidget {
       title: context.l10n.appExcludeTitle,
       info: context.l10n.appExcludeInfo,
       selectionTitle: context.l10n.appExcludeSelection,
-      icon: AppGlyphs.appsList,
+      icon: TablerIcons.list,
       selected: settings.excludedPackages,
       enabled: true,
       showToggle: false,
@@ -141,7 +141,7 @@ class _AppSelectionScaffold extends ConsumerStatefulWidget {
   final String title;
   final String info;
   final String selectionTitle;
-  final Glyph icon;
+  final IconData icon;
 
   final Set<String> selected;
   final bool enabled;
@@ -276,7 +276,7 @@ class _AppSelectionScaffoldState extends ConsumerState<_AppSelectionScaffold> {
                       items: [
                         ListItem.toggle(
                           leading: const LeadingSlot(
-                            child: GlyphIcon(AppGlyphs.wifiOff),
+                            child: Icon(TablerIcons.wifi_off),
                           ),
                           title: Text(widget.enableToggleTitle!),
                           subtitle: Text(

@@ -30,7 +30,7 @@ class AiInsightCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.sparkle,
+            glyph: TablerIcons.sparkles,
             title: context.l10n.logsAiInsight,
             trailing: [
               DashboardChip(
@@ -73,7 +73,7 @@ class AiInsightCard extends ConsumerWidget {
             alignment: Alignment.centerLeft,
             child: TonalButton(
               size: TonalButtonSize.compact,
-              glyph: hasReport ? AppGlyphs.chevronForward : AppGlyphs.sparkle,
+              glyph: hasReport ? TablerIcons.chevron_right : TablerIcons.sparkles,
               label: hasReport
                   ? context.l10n.logsViewFullReport
                   : context.l10n.logsAnalyseTraffic,

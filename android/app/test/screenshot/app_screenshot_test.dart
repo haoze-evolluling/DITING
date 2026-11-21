@@ -5,7 +5,6 @@ import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/routes/branches.dart';
-import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -74,14 +73,7 @@ void main() {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                GlyphIcon(glyphByName(name), size: 40),
-                                const SizedBox(width: 10),
-                                GlyphIcon(glyphByName(name), size: 40, fill: 1),
-                              ],
-                            ),
+                            Icon(glyphByName(name), size: 40),
                             const SizedBox(height: 8),
                             Text(name, style: const TextStyle(fontSize: 11)),
                           ],

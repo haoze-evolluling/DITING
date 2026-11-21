@@ -61,7 +61,7 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
             child: _ToolField(
               controller: _target,
               hintText: l10n.toolInputHostOrIp,
-              glyph: AppGlyphs.target,
+              glyph: TablerIcons.target,
               enabled: !_running,
               onSubmitted: (_) => _run(),
             ),
@@ -71,7 +71,7 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
             title: l10n.toolTraceHops,
             items: [
               ListItem<int>.options(
-                leading: const GlyphIcon(AppGlyphs.connections),
+                leading: const Icon(TablerIcons.topology_star),
                 title: Text(l10n.toolTraceHops),
                 value: _maxHops,
                 options: const [15, 30],
@@ -98,17 +98,17 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
             ],
           ),
           _RunButton(
-            glyph: AppGlyphs.split,
+            glyph: TablerIcons.arrows_split,
             label: l10n.toolStartTrace,
             runningLabel: l10n.toolTracing,
             running: _running,
             onPressed: _run,
           ),
           if (_hostError case final error?)
-            _ToolNotice(text: error, isError: true, glyph: AppGlyphs.error),
+            _ToolNotice(text: error, isError: true, glyph: TablerIcons.alert_circle),
           if (showEmpty)
             _ToolEmptyCard(
-              glyph: AppGlyphs.split,
+              glyph: TablerIcons.arrows_split,
               title: l10n.toolNotRunTitle,
               body: l10n.toolTraceEmpty,
             ),
@@ -117,10 +117,10 @@ class _TraceroutePageState extends ConsumerState<TraceroutePage> {
               _ToolNotice(
                 text: result.message ?? l10n.toolTraceFailed,
                 isError: true,
-                glyph: AppGlyphs.error,
+                glyph: TablerIcons.alert_circle,
               ),
             if (result.cancelled)
-              _ToolNotice(text: l10n.toolTraceCancelled, glyph: AppGlyphs.info),
+              _ToolNotice(text: l10n.toolTraceCancelled, glyph: TablerIcons.info_circle),
             _ToolSection(
               title: l10n.toolTraceResults,
               rows: [

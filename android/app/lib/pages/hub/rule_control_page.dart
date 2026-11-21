@@ -50,7 +50,7 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlFilterSection,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.rules),
+                leading: const Icon(TablerIcons.list_details),
                 title: Text(context.l10n.ruleControlDomainRules),
                 subtitle: Text(
                   domainRules
@@ -65,7 +65,7 @@ class RuleControlPage extends ConsumerWidget {
               ),
               if (isNormal)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.target),
+                  leading: const Icon(TablerIcons.target),
                   title: Text(context.l10n.ruleControlUrlRules),
                   subtitle: Text(urlSubtitle()),
                   trailing: Text(
@@ -84,13 +84,13 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlDiagnosticsSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.search),
+                leading: const Icon(TablerIcons.search),
                 title: Text(context.l10n.ruleTestTitle),
                 subtitle: Text(context.l10n.ruleTestEnterSubtitle),
                 onTap: () => context.push('/hub/rules/test'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.trophy),
+                leading: const Icon(TablerIcons.trophy),
                 title: Text(context.l10n.hitRankingTitle),
                 subtitle: Text(context.l10n.hitRankingEntrySubtitle),
                 onTap: () => context.push('/logs/hit-ranking'),
@@ -101,13 +101,13 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlControlSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.pause),
+                leading: const Icon(TablerIcons.player_pause),
                 title: Text(context.l10n.blockPauseTitle),
                 subtitle: Text(context.l10n.blockPauseEntrySubtitle),
                 onTap: () => context.push('/hub/rules/pause'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.block),
+                leading: const Icon(TablerIcons.ban),
                 title: Text(context.l10n.ruleControlBlockResponse),
                 subtitle: Text(
                   settings.dynamicBlockEnabled
@@ -124,19 +124,19 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.ruleControlDomainSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.shield),
+                leading: const Icon(TablerIcons.shield),
                 title: Text(context.l10n.hubBlocklist),
                 subtitle: Text(context.l10n.hubBlocklistDescription),
                 onTap: () => context.push('/rules/block'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.verified),
+                leading: const Icon(TablerIcons.rosette_discount_check),
                 title: Text(context.l10n.hubAllowlist),
                 subtitle: Text(context.l10n.hubAllowlistDescription),
                 onTap: () => context.push('/rules/allow'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.swap),
+                leading: const Icon(TablerIcons.arrows_exchange),
                 title: Text(context.l10n.hubRewrite),
                 subtitle: Text(context.l10n.hubRewriteDescription),
                 onTap: () => context.push('/rules/rewrite'),
@@ -147,7 +147,7 @@ class RuleControlPage extends ConsumerWidget {
             title: context.l10n.hubModuleMore,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.automation),
+                leading: const Icon(TablerIcons.automation),
                 title: Text(context.l10n.automationTitle),
                 subtitle: Text(context.l10n.automationSubtitle),
                 onTap: () => context.push('/automation'),
@@ -177,7 +177,7 @@ class BlockResponsePage extends ConsumerWidget {
             title: context.l10n.blockResponseFixedSection,
             items: [
               ListItem<BlockResponseMode>.options(
-                leading: const GlyphIcon(AppGlyphs.block),
+                leading: const Icon(TablerIcons.ban),
                 title: Text(context.l10n.blockResponseFixedSection),
                 subtitle: Text(mode.description(context.l10n)),
                 value: mode,
@@ -195,7 +195,7 @@ class BlockResponsePage extends ConsumerWidget {
             title: context.l10n.blockResponseDynamicSection,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.shieldBolt),
+                leading: const Icon(TablerIcons.shield_bolt),
                 title: Text(context.l10n.blockResponseEnableDynamic),
                 subtitle: Text(context.l10n.blockResponseEnableDynamicSubtitle),
                 value: policy.enabled,
@@ -205,7 +205,7 @@ class BlockResponsePage extends ConsumerWidget {
                 },
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.sliders),
+                leading: const Icon(TablerIcons.adjustments),
                 title: Text(context.l10n.blockResponseParameters),
                 subtitle: Text(
                   context.l10n.blockResponseParamsSummary(

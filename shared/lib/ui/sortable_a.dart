@@ -360,7 +360,7 @@ IconButtonData sortModeAction(
 }) {
   final localizations = UiLocalizations.of(context);
   return IconButtonData(
-    glyph: AppGlyphs.sort,
+    glyph: TablerIcons.sort_ascending,
     onPressed: onPressed,
     tooltip: localizations.sort,
     isSelected: sorting,

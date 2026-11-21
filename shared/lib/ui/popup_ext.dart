@@ -42,8 +42,8 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
     final dense = widget.dense;
     Widget? arrow;
     if (item.subItems.isNotEmpty) {
-      arrow = GlyphIcon(
-        AppGlyphs.chevronForward,
+      arrow = Icon(
+        TablerIcons.chevron_right,
         size: _submenuArrowSize,
         color: foregroundColor,
       );
@@ -51,8 +51,8 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
         arrow = RotationTransition(turns: arrowTurns, child: arrow);
       }
     } else if (item.checked == true) {
-      arrow = GlyphIcon(
-        AppGlyphs.check,
+      arrow = Icon(
+        TablerIcons.check,
         size: _submenuArrowSize,
         color: foregroundColor,
       );
@@ -73,7 +73,7 @@ extension _CommonPopupMenuStateBuild on _CommonPopupMenuState {
           child: Row(
             children: [
               if (item.glyph case final glyph?) ...[
-                GlyphIcon(glyph, size: _iconSize, color: foregroundColor),
+                Icon(glyph, size: _iconSize, color: foregroundColor),
                 SizedBox(width: dense ? 10 : 12),
               ],
               Expanded(

@@ -216,13 +216,13 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
       isLoading: update.updatingAll,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           tooltip: context.l10n.subsUpdateAll,
           isLoading: update.updatingAll,
           onPressed: update.updatingAll ? null : _updateAll,
         ),
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.subsAdd,
           onPressed: () => showSheet<void>(
             context: context,
@@ -230,7 +230,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
           ),
         ),
         IconButtonData(
-          glyph: AppGlyphs.clock,
+          glyph: TablerIcons.clock,
           tooltip: context.l10n.ruleVersionsTitle,
           onPressed: () => context.push(SubscriptionVersionPaths.root),
         ),
@@ -399,19 +399,19 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
               title: context.l10n.hubModuleMore,
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.refresh),
+                  leading: const Icon(TablerIcons.refresh),
                   title: Text(context.l10n.autoUpdateTitle),
                   subtitle: Text(context.l10n.hubAutoUpdateDescription),
                   onTap: () => context.push('/hub/rules/auto-update'),
                 ),
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.mirror),
+                  leading: const Icon(TablerIcons.flip_horizontal),
                   title: Text(context.l10n.mirrorTplTitle),
                   subtitle: Text(context.l10n.ruleControlMirrorSubtitle),
                   onTap: () => context.push('/hub/rules/mirrors'),
                 ),
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.account),
+                  leading: const Icon(TablerIcons.user),
                   title: Text(context.l10n.customResourcesTitle),
                   subtitle: Text(context.l10n.devUserAgentBody),
                   onTap: () => context.push('/config/user-agents'),
@@ -510,7 +510,7 @@ class _GroupChips extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               spacing: 4,
               children: [
-                const GlyphIcon(AppGlyphs.edit, size: 16),
+                const Icon(TablerIcons.pencil, size: 16),
                 Text(context.l10n.subsManageGroupsShort),
               ],
             ),

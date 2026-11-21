@@ -80,12 +80,12 @@ class _TroubleshootingEventsPageState
       menuItems: [
         CommonPopupMenuItem(
           label: l10n.troubleshootLogsRefresh,
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           onPressed: _refresh,
         ),
         CommonPopupMenuItem(
           label: l10n.troubleshootEventsExport,
-          glyph: AppGlyphs.send,
+          glyph: TablerIcons.send,
           onPressed: filtered.isEmpty || _busy ? null : () => _export(filtered),
         ),
       ],
@@ -131,7 +131,7 @@ class _TroubleshootingEventsPageState
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: InlineNotice(
                   message: l10n.troubleshootEventsAnomaly(summary.anomalyCount),
-                  glyph: AppGlyphs.warning,
+                  glyph: TablerIcons.alert_triangle,
                   color: colorScheme.errorContainer,
                   foregroundColor: colorScheme.onErrorContainer,
                 ),
@@ -282,8 +282,8 @@ class _NoMatch extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 8,
           children: [
-            GlyphIcon(
-              AppGlyphs.filter,
+            Icon(
+              TablerIcons.filter,
               size: 18,
               color: context.colorScheme.onSurfaceVariant,
             ),
@@ -309,15 +309,15 @@ class _EventRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final (glyph, color) = event.isError
-        ? (AppGlyphs.error, colorScheme.error)
+        ? (TablerIcons.alert_circle, colorScheme.error)
         : event.isWarnOrAbove
-        ? (AppGlyphs.warning, colorScheme.warning)
-        : (AppGlyphs.info, colorScheme.onSurfaceVariant);
+        ? (TablerIcons.alert_triangle, colorScheme.warning)
+        : (TablerIcons.info_circle, colorScheme.onSurfaceVariant);
     final timeText = event.timeText.length >= 19
         ? event.timeText.substring(11, 19)
         : event.timeText;
     return ListItem(
-      leading: GlyphIcon(glyph, size: 18, color: color),
+      leading: Icon(glyph, size: 18, color: color),
       title: Text(
         '${event.levelName} · ${event.module}',
         style: AppTextRole.supportingText

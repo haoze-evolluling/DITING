@@ -8,18 +8,18 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum NotificationStatItem {
-  total('total', AppGlyphs.requests),
-  passed('passed', AppGlyphs.checkCircle),
-  filtered('filtered', AppGlyphs.filter),
-  failed('failed', AppGlyphs.error),
-  cached('cached', AppGlyphs.database),
-  rewritten('rewritten', AppGlyphs.sliders),
-  speed('speed', AppGlyphs.speed);
+  total('total', TablerIcons.clock),
+  passed('passed', TablerIcons.circle_check),
+  filtered('filtered', TablerIcons.filter),
+  failed('failed', TablerIcons.alert_circle),
+  cached('cached', TablerIcons.database),
+  rewritten('rewritten', TablerIcons.adjustments),
+  speed('speed', TablerIcons.gauge);
 
   const NotificationStatItem(this.id, this.glyph);
 
   final String id;
-  final Glyph glyph;
+  final IconData glyph;
 
   static NotificationStatItem? fromId(String id) =>
       values.where((item) => item.id == id).firstOrNull;

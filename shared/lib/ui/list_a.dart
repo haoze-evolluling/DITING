@@ -177,7 +177,7 @@ class ListItem<T> extends StatelessWidget {
   }
 
   Widget get _pageTrailing =>
-      trailing ?? const GlyphIcon(AppGlyphs.chevronForward);
+      trailing ?? const Icon(TablerIcons.chevron_right);
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +310,7 @@ class _OptionsValueButton extends StatelessWidget {
               alignment: AlignmentDirectional.centerEnd,
             ),
           ),
-          const GlyphIcon(AppGlyphs.picker),
+          const Icon(TablerIcons.selector),
         ],
       ),
     );

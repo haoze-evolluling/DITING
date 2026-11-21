@@ -39,7 +39,7 @@ class _FontFamilyPageState extends ConsumerState<FontFamilyPage> {
             child: CommonCard(
               padding: EdgeInsets.zero,
               child: NavEntryRow(
-                glyph: AppGlyphs.textSize,
+                glyph: TablerIcons.text_size,
                 title: context.l10n.appearanceFontSizeLabel,
                 subtitle: context.l10n.appearanceFontSizeCurrent(
                   (scale * 100).round(),
@@ -266,7 +266,7 @@ class _FontRow extends StatelessWidget {
             IconButton(
               tooltip: context.l10n.commonDelete,
               onPressed: onDelete,
-              icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+              icon: const Icon(TablerIcons.trash, size: 20),
             ),
           if (selected) const SelectionCheck() else const SizedBox(width: 24),
         ],
@@ -290,8 +290,8 @@ class _ImportCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          GlyphIcon(
-            AppGlyphs.importFile,
+          Icon(
+            TablerIcons.file_import,
             size: commonCardIconSize,
             color: colorScheme.primary,
           ),
@@ -317,7 +317,7 @@ class _ImportCard extends StatelessWidget {
           if (isImporting)
             const CommonCircleLoading(size: 20)
           else
-            const GlyphIcon(AppGlyphs.chevronForward, size: 20),
+            const Icon(TablerIcons.chevron_right, size: 20),
         ],
       ),
     );

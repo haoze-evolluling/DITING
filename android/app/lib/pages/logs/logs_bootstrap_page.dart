@@ -54,7 +54,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
         IconButton(
           tooltip: context.l10n.logsRefresh,
           onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
-          icon: const GlyphIcon(AppGlyphs.refresh),
+          icon: const Icon(TablerIcons.refresh),
         ),
       ],
       body: PageBody(
@@ -90,7 +90,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
           title: context.l10n.logsOverview,
           items: [
             ListItem(
-              leading: const GlyphIcon(AppGlyphs.error),
+              leading: const Icon(TablerIcons.alert_circle),
               title: Text(context.l10n.logsBootstrapLoadFailed),
               subtitle: Text('${asyncStats.error}'),
             ),
@@ -124,13 +124,13 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
                 LogsOverviewTile(
                   label: l10n.logsAttempts,
                   value: countOf(snapshot.attempts),
-                  glyph: AppGlyphs.dns,
+                  glyph: TablerIcons.server_2,
                   color: colorScheme.primary,
                 ),
                 LogsOverviewTile(
                   label: l10n.logsSuccess,
                   value: hasData ? countOf(snapshot.successes) : '—',
-                  glyph: AppGlyphs.check,
+                  glyph: TablerIcons.check,
                   color: hasData
                       ? colorScheme.success
                       : colorScheme.onSurfaceVariant,
@@ -138,7 +138,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
                 LogsOverviewTile(
                   label: l10n.commonFailed,
                   value: hasData ? countOf(snapshot.failures) : '—',
-                  glyph: AppGlyphs.close,
+                  glyph: TablerIcons.x,
                   color: hasData && snapshot.failures > 0
                       ? colorScheme.error
                       : colorScheme.onSurfaceVariant,
@@ -146,7 +146,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
                 LogsOverviewTile(
                   label: l10n.logsAverageElapsed,
                   value: hasData ? millisOf(snapshot.averageElapsedMs) : '—',
-                  glyph: AppGlyphs.speed,
+                  glyph: TablerIcons.gauge,
                 ),
               ],
               ratio: hasData
@@ -167,7 +167,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
             title: l10n.logsNodes,
             items: [
               LogsSectionEmpty(
-                glyph: AppGlyphs.dns,
+                glyph: TablerIcons.server_2,
                 title: l10n.logsNoProbes,
                 description: l10n.logsNoProbesBody,
               ),
@@ -180,7 +180,7 @@ class _LogsBootstrapPageState extends ConsumerState<LogsBootstrapPage>
             items: [
               for (final ip in snapshot.ips)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.dns),
+                  leading: const Icon(TablerIcons.server_2),
                   title: Text(ip.name.isEmpty ? ip.id : ip.name),
                   subtitle: Text(
                     l10n.logsBootstrapRow(

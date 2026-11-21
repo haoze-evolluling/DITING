@@ -190,7 +190,7 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
           IconButton(
             tooltip: context.l10n.automationDelete,
             onPressed: _delete,
-            icon: const GlyphIcon(AppGlyphs.remove),
+            icon: const Icon(TablerIcons.minus),
           ),
         TextButton(
           onPressed: _loaded ? _save : null,
@@ -280,7 +280,7 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
 
   Widget _matchSection(BuildContext context) => ListItem<String>.options(
     padding: EdgeInsets.zero,
-    leading: const GlyphIcon(AppGlyphs.rules),
+    leading: const Icon(TablerIcons.list_details),
     title: Text(context.l10n.automationMatch),
     value: _match,
     options: const ['all', 'any'],

@@ -33,19 +33,19 @@ class ThemePage extends ConsumerWidget {
             title: l10n.appearanceThemeSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.sun,
+                glyph: TablerIcons.sun,
                 title: l10n.dayNightTitle,
                 subtitle: ref.watch(themeModeProvider).label(l10n),
                 onPressed: () => context.push(SystemPaths.dayNight),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.palette,
+                glyph: TablerIcons.palette,
                 title: l10n.appearancePaletteTitle,
                 subtitle: ref.watch(paletteProvider).label(l10n),
                 onPressed: () => context.push(SystemPaths.colorStyle),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.iconTile,
+                glyph: TablerIcons.photo,
                 title: l10n.launcherIconTitle,
                 subtitle: ref.watch(launcherIconProvider).label(l10n),
                 onPressed: () => context.push(SystemPaths.launcherIcon),
@@ -56,7 +56,7 @@ class ThemePage extends ConsumerWidget {
             title: l10n.appearanceLayoutSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.font,
+                glyph: TablerIcons.typography,
                 title: l10n.appearanceFontSection,
                 subtitle: fontLabelOf(
                   ref.watch(importedFontsProvider),
@@ -65,13 +65,13 @@ class ThemePage extends ConsumerWidget {
                 onPressed: () => context.push(SystemPaths.fontFamily),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.blur,
+                glyph: TablerIcons.blur,
                 title: l10n.homeOpacityTitle,
                 subtitle: l10n.appearanceHomeOpacitySubtitle,
                 onPressed: () => context.push(SystemPaths.homeOpacity),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.dashboard,
+                glyph: TablerIcons.layout_dashboard,
                 title: l10n.bottomBarCustomTitle,
                 subtitle: l10n.appearanceBottomBarSelected(
                   ref.watch(bottomBarProvider).length,
@@ -85,7 +85,7 @@ class ThemePage extends ConsumerWidget {
                       ? l10n.appearanceBottomBarStyleFloating
                       : l10n.appearanceBottomBarStyleDocked,
                 ),
-                leading: const GlyphIcon(AppGlyphs.sliders),
+                leading: const Icon(TablerIcons.adjustments),
                 options: BottomBarStyle.values,
                 value: barStyle,
                 textBuilder: (value) => value.label(l10n),
@@ -98,7 +98,7 @@ class ThemePage extends ConsumerWidget {
             title: l10n.appearanceBackgroundSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.photos,
+                glyph: TablerIcons.photo,
                 title: l10n.backgroundTitle,
                 subtitle: ref.watch(customBackgroundProvider).enabled
                     ? l10n.commonEnabled
@@ -106,7 +106,7 @@ class ThemePage extends ConsumerWidget {
                 onPressed: () => context.push(SystemPaths.background),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.motion,
+                glyph: TablerIcons.wind,
                 title: l10n.appearanceFeedbackMotionTitle,
                 subtitle: l10n.appearanceFeedbackMotionSubtitle,
                 onPressed: () => context.push(SystemPaths.feedbackMotion),
@@ -117,13 +117,13 @@ class ThemePage extends ConsumerWidget {
             title: l10n.appearanceHomeNotificationSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.textShort,
+                glyph: TablerIcons.align_left,
                 title: l10n.homeSentenceTitle,
                 subtitle: l10n.appearanceHomeSentenceSubtitle,
                 onPressed: () => context.push(SystemPaths.homeSentence),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.notification,
+                glyph: TablerIcons.bell,
                 title: l10n.appearanceNotification,
                 subtitle: l10n.appearanceNotificationSubtitle,
                 onPressed: () => context.push(SystemPaths.notification),

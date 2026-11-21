@@ -22,14 +22,14 @@ class SponsorPage extends StatelessWidget {
             title: context.l10n.sponsorGithub,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.link),
+                leading: const Icon(TablerIcons.link),
                 title: Text(context.l10n.sponsorReadme),
                 subtitle: Text(
                   sponsorReadmeUrl.replaceFirst('https://', ''),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                trailing: const GlyphIcon(AppGlyphs.openExternal, size: 20),
+                trailing: const Icon(TablerIcons.external_link, size: 20),
                 onTap: () => openLinkOrCopy(
                   context,
                   sponsorReadmeUrl,
@@ -81,7 +81,7 @@ class _SponsorHero extends StatelessWidget {
               spacing: 12,
               children: [
                 IconBadge(
-                  glyph: AppGlyphs.heart,
+                  glyph: TablerIcons.heart,
                   size: 52,
                   glyphSize: 28,
                   color: colorScheme.primaryContainer,
@@ -191,7 +191,7 @@ class _PaymentCard extends StatelessWidget {
                     asset,
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) => const Center(
-                      child: GlyphIcon(AppGlyphs.qrCode, size: 32),
+                      child: Icon(TablerIcons.qrcode, size: 32),
                     ),
                   ),
                 ),
@@ -201,8 +201,8 @@ class _PaymentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               spacing: 6,
               children: [
-                GlyphIcon(
-                  AppGlyphs.qrCode,
+                Icon(
+                  TablerIcons.qrcode,
                   size: 16,
                   color: context.colorScheme.primary,
                 ),

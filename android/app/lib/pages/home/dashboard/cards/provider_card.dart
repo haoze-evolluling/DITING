@@ -34,13 +34,13 @@ class ProviderCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.upstream,
+            glyph: TablerIcons.cloud_upload,
             title: single
                 ? context.l10n.homeProviderSingleLabel
                 : context.l10n.homeProviderRaceLabel,
             trailing: [
-              GlyphIcon(
-                AppGlyphs.chevronForward,
+              Icon(
+                TablerIcons.chevron_right,
                 size: 16,
                 color: colorScheme.onSurfaceVariant,
               ),

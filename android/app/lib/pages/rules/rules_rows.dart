@@ -37,7 +37,7 @@ class _RuleRow extends StatelessWidget {
     return Opacity(
       opacity: opacity,
       child: ListItem(
-        leading: GlyphIcon(
+        leading: Icon(
           glyphByName(kind.glyphName),
           size: 20,
           color: protected ? colorScheme.onSurfaceVariant : colorScheme.primary,
@@ -84,18 +84,18 @@ class _RuleRow extends StatelessWidget {
               targetBuilder: (open) => IconButton(
                 tooltip: UiLocalizations.of(context).more,
                 onPressed: protected ? onProtected : open,
-                icon: const GlyphIcon(AppGlyphs.more),
+                icon: const Icon(TablerIcons.dots),
               ),
               popupBuilder: (_) => CommonPopupMenu(
                 items: [
                   CommonPopupMenuItem(
                     label: context.l10n.ruleEdit,
-                    glyph: AppGlyphs.edit,
+                    glyph: TablerIcons.pencil,
                     onPressed: onEdit,
                   ),
                   CommonPopupMenuItem(
                     label: context.l10n.ruleDelete,
-                    glyph: AppGlyphs.delete,
+                    glyph: TablerIcons.trash,
                     danger: true,
                     onPressed: onDelete,
                   ),

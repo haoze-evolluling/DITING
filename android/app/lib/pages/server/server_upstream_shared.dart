@@ -9,11 +9,11 @@ const serverUpstreamModes = <String>[
   'smart_prediction',
 ];
 
-Glyph serverModeGlyph(String mode) => switch (mode) {
-  'single' => AppGlyphs.upstream,
-  'parallel_race' => AppGlyphs.speed,
-  'smart_prediction' => AppGlyphs.sparkle,
-  _ => AppGlyphs.swap,
+IconData serverModeGlyph(String mode) => switch (mode) {
+  'single' => TablerIcons.cloud_upload,
+  'parallel_race' => TablerIcons.gauge,
+  'smart_prediction' => TablerIcons.sparkles,
+  _ => TablerIcons.arrows_exchange,
 };
 
 String serverModeLabel(BuildContext context, String mode) => switch (mode) {

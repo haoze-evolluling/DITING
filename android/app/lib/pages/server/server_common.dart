@@ -49,7 +49,7 @@ class ServerErrorCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            const GlyphIcon(AppGlyphs.error, size: 20),
+            const Icon(TablerIcons.alert_circle, size: 20),
             Expanded(
               child: Text(
                 message,
@@ -65,7 +65,7 @@ class ServerErrorCard extends StatelessWidget {
                 IconButton(
                   tooltip: context.l10n.serverRetry,
                   onPressed: onRetry,
-                  icon: const GlyphIcon(AppGlyphs.refresh, size: 18),
+                  icon: const Icon(TablerIcons.refresh, size: 18),
                 ),
           ],
         ),

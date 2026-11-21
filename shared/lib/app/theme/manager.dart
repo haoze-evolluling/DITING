@@ -83,8 +83,8 @@ ThemeData buildAppTheme(
   return ThemeData(
     useMaterial3: true,
     actionIconTheme: ActionIconThemeData(
-      backButtonIconBuilder: (_) => const GlyphIcon(AppGlyphs.chevronBack),
-      closeButtonIconBuilder: (_) => const GlyphIcon(AppGlyphs.close),
+      backButtonIconBuilder: (_) => const Icon(TablerIcons.chevron_left),
+      closeButtonIconBuilder: (_) => const Icon(TablerIcons.x),
     ),
     colorScheme: scheme,
     fontFamily: spec.useSystemFonts ? null : spec.fontFamily,

@@ -30,7 +30,7 @@ class AutomationPage extends ConsumerWidget {
         IconButton(
           tooltip: l10n.automationAdd,
           onPressed: () => context.push(AutomationPaths.edit('new')),
-          icon: const GlyphIcon(AppGlyphs.add),
+          icon: const Icon(TablerIcons.plus),
         ),
       ],
       body: PageBody(
@@ -62,7 +62,7 @@ class AutomationPage extends ConsumerWidget {
             title: l10n.automationSettingsSection,
             items: [
               _NavRow(
-                glyph: AppGlyphs.wifi,
+                glyph: TablerIcons.wifi,
                 title: l10n.odTitle,
                 subtitle: resources.onDemand
                     ? '${l10n.odAllowlist} · '
@@ -71,19 +71,19 @@ class AutomationPage extends ConsumerWidget {
                 onTap: () => context.push(AutomationPaths.onDemand),
               ),
               _NavRow(
-                glyph: AppGlyphs.profiles,
+                glyph: TablerIcons.file_text,
                 title: l10n.profilesTitle,
                 subtitle: l10n.profilesSubtitle,
                 onTap: () => context.push(AutomationPaths.profiles),
               ),
               _NavRow(
-                glyph: AppGlyphs.calendar,
+                glyph: TablerIcons.calendar,
                 title: l10n.timetableTitle,
                 subtitle: l10n.timetableSubtitle,
                 onTap: () => context.push(AutomationPaths.timetable),
               ),
               _NavRow(
-                glyph: AppGlyphs.network,
+                glyph: TablerIcons.broadcast,
                 title: l10n.netProfileTitle,
                 subtitle: l10n.netProfileSubtitle,
                 onTap: () => context.push(NetworkProfilePaths.root),
@@ -96,7 +96,7 @@ class AutomationPage extends ConsumerWidget {
               items: [
                 if (list.isEmpty)
                   ListItem(
-                    leading: const GlyphIcon(AppGlyphs.clock),
+                    leading: const Icon(TablerIcons.clock),
                     title: Text(l10n.automationHistoryEmpty),
                   )
                 else
@@ -144,7 +144,7 @@ class _AutomationOverview extends StatelessWidget {
           spacing: 12,
           children: [
             IconBadge(
-              glyph: empty ? AppGlyphs.automation : AppGlyphs.rules,
+              glyph: empty ? TablerIcons.automation : TablerIcons.list_details,
               color: accent.withValues(alpha: 0.14),
               foregroundColor: accent,
             ),
@@ -187,7 +187,7 @@ class _NavRow extends StatelessWidget {
     required this.onTap,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -195,10 +195,10 @@ class _NavRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: GlyphIcon(glyph),
+      leading: Icon(glyph),
       title: Text(title),
       subtitle: Text(subtitle),
-      trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+      trailing: const Icon(TablerIcons.chevron_right, size: 18),
       onTap: onTap,
     );
   }
@@ -218,10 +218,10 @@ class _RuleTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: GlyphIcon(
+      leading: Icon(
         rule.triggerType == AutomationSpec.triggerSchedule
-            ? AppGlyphs.clock
-            : AppGlyphs.automation,
+            ? TablerIcons.clock
+            : TablerIcons.automation,
       ),
       title: Text(
         rule.name.isEmpty ? context.l10n.automationRuleFallbackName : rule.name,
@@ -262,7 +262,7 @@ class _EventTile extends StatelessWidget {
     final stamp =
         '${two(when.month)}-${two(when.day)} ${two(when.hour)}:${two(when.minute)}';
     return ListItem(
-      leading: const GlyphIcon(AppGlyphs.checkCircle),
+      leading: const Icon(TablerIcons.circle_check),
       title: Text('$stamp · ${event.event}'),
       subtitle: Text(
         event.outcome.isEmpty ? event.ruleId : event.outcome,

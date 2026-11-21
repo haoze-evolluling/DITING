@@ -23,7 +23,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.logsRefresh,
           onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
-          icon: const GlyphIcon(AppGlyphs.refresh),
+          icon: const Icon(TablerIcons.refresh),
         ),
       ],
       body: SliverPageBody(
@@ -62,7 +62,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
           title: context.l10n.logsOverview,
           itemCount: 1,
           itemBuilder: (context, _) => ListItem(
-            leading: const GlyphIcon(AppGlyphs.error),
+            leading: const Icon(TablerIcons.alert_circle),
             title: Text(context.l10n.logsSubStatsLoadFailed),
             subtitle: Text('${asyncStats.error}'),
           ),
@@ -86,7 +86,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
         title: l10n.logsBlockingSubs,
         itemCount: 1,
         itemBuilder: (context, _) => ListItem(
-          leading: GlyphIcon(AppGlyphs.warning, color: colorScheme.warning),
+          leading: Icon(TablerIcons.alert_triangle, color: colorScheme.warning),
           title: Text(l10n.logsMissingSubColumn),
           subtitle: Text(l10n.logsMissingSubColumnBody),
         ),
@@ -107,13 +107,13 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
                 LogsOverviewTile(
                   label: l10n.logsAllRecordedRequests,
                   value: countOf(snapshot.totalRequests),
-                  glyph: AppGlyphs.requests,
+                  glyph: TablerIcons.clock,
                   color: colorScheme.primary,
                 ),
                 LogsOverviewTile(
                   label: l10n.logsBlockedRequests,
                   value: countOf(blocked),
-                  glyph: AppGlyphs.block,
+                  glyph: TablerIcons.ban,
                   color: hasData && blocked > 0
                       ? colorScheme.error
                       : colorScheme.onSurfaceVariant,
@@ -145,7 +145,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
             title: l10n.logsBlockingSubs,
             items: [
               LogsSectionEmpty(
-                glyph: AppGlyphs.rules,
+                glyph: TablerIcons.list_details,
                 title: l10n.logsNoBlockingSubs,
                 description: l10n.logsNoBlockingSubsBody,
               ),
@@ -163,7 +163,7 @@ class LogsSubscriptionStatsPage extends ConsumerWidget {
             return ListItem(
               leading: LeadingSlot(
                 child: IconBadge(
-                  glyph: item.deleted ? AppGlyphs.warning : AppGlyphs.rules,
+                  glyph: item.deleted ? TablerIcons.alert_triangle : TablerIcons.list_details,
                   color: SurfaceLevel.block.colorOf(colorScheme),
                   foregroundColor: item.deleted
                       ? colorScheme.onSurfaceVariant

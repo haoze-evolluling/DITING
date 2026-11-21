@@ -107,7 +107,7 @@ class _ProviderManagementPageState
       title: context.l10n.providerMgmtTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.providerMgmtAdd,
           onPressed: _add,
         ),
@@ -121,8 +121,8 @@ class _ProviderManagementPageState
               child: Row(
                 spacing: 12,
                 children: [
-                  GlyphIcon(
-                    AppGlyphs.upstream,
+                  Icon(
+                    TablerIcons.cloud_upload,
                     size: 22,
                     color: colorScheme.primary,
                   ),
@@ -180,7 +180,7 @@ class _ProviderManagementPageState
                 ListItem(
                   title: Text(context.l10n.providerMgmtEmptyCustom),
                   subtitle: Text(context.l10n.providerMgmtEmptyCustomSubtitle),
-                  leading: GlyphIcon(AppGlyphs.addCircle),
+                  leading: Icon(TablerIcons.circle_plus),
                 ),
               ],
             ),
@@ -200,7 +200,7 @@ class _ProviderManagementPageState
             title: context.l10n.hubModuleMore,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.language),
+                leading: const Icon(TablerIcons.language),
                 title: Text(context.l10n.hubBootstrap),
                 subtitle: Text(context.l10n.hubBootstrapDescription),
                 onTap: () => context.push(HubPaths.bootstrap),
@@ -233,10 +233,10 @@ class _ProviderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: GlyphIcon(
+      leading: Icon(
         provider.protocol == ProviderProtocol.doh
-            ? AppGlyphs.lock
-            : AppGlyphs.upstream,
+            ? TablerIcons.lock
+            : TablerIcons.cloud_upload,
         size: 20,
       ),
       title: Text(provider.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -253,13 +253,13 @@ class _ProviderRow extends StatelessWidget {
             IconButton(
               tooltip: context.l10n.commonEdit,
               onPressed: onEdit,
-              icon: const GlyphIcon(AppGlyphs.edit, size: 20),
+              icon: const Icon(TablerIcons.pencil, size: 20),
             ),
           if (onDelete != null)
             IconButton(
               tooltip: context.l10n.commonDelete,
               onPressed: onDelete,
-              icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+              icon: const Icon(TablerIcons.trash, size: 20),
             ),
         ],
       ),

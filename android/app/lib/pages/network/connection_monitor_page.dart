@@ -55,7 +55,7 @@ class _ConnectionMonitorPageState extends ConsumerState<ConnectionMonitorPage> {
       IconButton(
         tooltip: l10n.flowRefresh,
         onPressed: () => _refresh(full: true),
-        icon: const GlyphIcon(AppGlyphs.refresh),
+        icon: const Icon(TablerIcons.refresh),
       ),
     ];
     return CommonScaffold(

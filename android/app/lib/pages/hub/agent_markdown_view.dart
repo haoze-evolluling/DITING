@@ -215,7 +215,7 @@ class _CodeBlock extends StatelessWidget {
                       SnackBar(content: Text(context.l10n.markdownCodeCopied)),
                     );
                   },
-                  icon: const GlyphIcon(AppGlyphs.copy, size: 16),
+                  icon: const Icon(TablerIcons.copy, size: 16),
                 ),
               ],
             ),

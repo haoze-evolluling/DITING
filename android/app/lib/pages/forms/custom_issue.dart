@@ -15,17 +15,17 @@ class InfoBanner extends StatelessWidget {
   });
 
   const InfoBanner.error({super.key, required this.message, this.actions})
-    : glyph = AppGlyphs.error,
+    : glyph = TablerIcons.alert_circle,
       color = null,
       foregroundColor = null;
 
   const InfoBanner.warning({super.key, required this.message, this.actions})
-    : glyph = AppGlyphs.warning,
+    : glyph = TablerIcons.alert_triangle,
       color = null,
       foregroundColor = null;
 
   final String message;
-  final Glyph? glyph;
+  final IconData? glyph;
 
   final Color? color;
   final Color? foregroundColor;
@@ -35,8 +35,8 @@ class InfoBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final (resolvedColor, resolvedForeground) = switch (glyph) {
-      AppGlyphs.error => (colorScheme.error, colorScheme.onError),
-      AppGlyphs.warning => (
+      TablerIcons.alert_circle => (colorScheme.error, colorScheme.onError),
+      TablerIcons.alert_triangle => (
         colorScheme.warningContainer,
         colorScheme.onWarningContainer,
       ),
@@ -64,7 +64,7 @@ class InfoBanner extends StatelessWidget {
           spacing: 10,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GlyphIcon(glyph ?? AppGlyphs.info, size: 20, color: foreground),
+            Icon(glyph ?? TablerIcons.info_circle, size: 20, color: foreground),
             Expanded(
               child: Text(
                 message,
@@ -116,8 +116,8 @@ class CustomIssuesBanner extends StatelessWidget {
             Row(
               spacing: 8,
               children: [
-                GlyphIcon(
-                  AppGlyphs.warning,
+                Icon(
+                  TablerIcons.alert_triangle,
                   size: 20,
                   color: colorScheme.onErrorContainer,
                 ),

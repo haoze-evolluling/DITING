@@ -1,14 +1,14 @@
 part of 'requests_page.dart';
 
-(Color, Glyph) requestStatusStyle(BuildContext context, RequestStatus status) {
+(Color, IconData) requestStatusStyle(BuildContext context, RequestStatus status) {
   final colorScheme = context.colorScheme;
   return switch (status) {
-    RequestStatus.passed => (colorScheme.success, AppGlyphs.checkCircle),
-    RequestStatus.rewritten => (colorScheme.primary, AppGlyphs.edit),
-    RequestStatus.blocked => (colorScheme.warning, AppGlyphs.block),
-    RequestStatus.error => (colorScheme.error, AppGlyphs.error),
-    RequestStatus.bypassed => (colorScheme.onSurfaceVariant, AppGlyphs.shuffle),
-    RequestStatus.all => (colorScheme.onSurfaceVariant, AppGlyphs.info),
+    RequestStatus.passed => (colorScheme.success, TablerIcons.circle_check),
+    RequestStatus.rewritten => (colorScheme.primary, TablerIcons.pencil),
+    RequestStatus.blocked => (colorScheme.warning, TablerIcons.ban),
+    RequestStatus.error => (colorScheme.error, TablerIcons.alert_circle),
+    RequestStatus.bypassed => (colorScheme.onSurfaceVariant, TablerIcons.arrows_shuffle),
+    RequestStatus.all => (colorScheme.onSurfaceVariant, TablerIcons.info_circle),
   };
 }
 
@@ -43,7 +43,7 @@ class RequestRow extends StatelessWidget {
     final title = request.title.isEmpty ? '—' : request.title;
 
     return ListItem(
-      leading: GlyphIcon(statusGlyph, size: 20, color: statusColor),
+      leading: Icon(statusGlyph, size: 20, color: statusColor),
       title: Row(
         children: [
           Expanded(
@@ -104,8 +104,8 @@ class RequestRow extends StatelessWidget {
           ],
         ),
       ),
-      trailing: GlyphIcon(
-        AppGlyphs.chevronForward,
+      trailing: Icon(
+        TablerIcons.chevron_right,
         size: 18,
         color: colorScheme.onSurfaceVariant,
       ),

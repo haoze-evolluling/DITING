@@ -33,7 +33,7 @@ class CacheSettingsPage extends ConsumerWidget {
             title: l10n.cacheSection,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.database),
+                leading: const Icon(TablerIcons.database),
                 title: Text(l10n.cacheLocalDns),
                 subtitle: Text(
                   enabled

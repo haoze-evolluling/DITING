@@ -82,7 +82,7 @@ class _OverflowMenuButton extends StatelessWidget {
       targetBuilder: (open) => IconButton(
         tooltip: UiLocalizations.of(context).more,
         onPressed: open,
-        icon: const GlyphIcon(AppGlyphs.more),
+        icon: const Icon(TablerIcons.dots),
       ),
       popupBuilder: (_) => CommonPopupMenu(items: items),
     );
@@ -113,7 +113,7 @@ class AppBarActionButton extends StatelessWidget {
       onPressed: data.isLoading ? null : data.onPressed,
       icon: data.isLoading
           ? CommonCircleLoading(size: TonalButtonSize.bar.icon)
-          : icon ?? GlyphIcon(data.glyph),
+          : icon ?? Icon(data.glyph),
     );
   }
 }
@@ -292,8 +292,8 @@ class _TitleMenuButton extends StatelessWidget {
         spacing: compact ? 2 : 4,
         children: [
           Flexible(child: Text(title)),
-          GlyphIcon(
-            AppGlyphs.chevronDown,
+          Icon(
+            TablerIcons.chevron_down,
             size: compact ? 16 : 20,
             color: context.colorScheme.onSurfaceVariant,
           ),

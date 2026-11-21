@@ -271,11 +271,10 @@ class _FloatingBarItemState extends State<_FloatingBarItem> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            GlyphIcon(
-              widget.destination.glyph,
+            Icon(
+              widget.destination.filledIcon ?? widget.destination.icon,
               size: _iconSize,
               color: color,
-              fill: 1,
             ),
             const SizedBox(height: _labelGap),
             SizedBox(

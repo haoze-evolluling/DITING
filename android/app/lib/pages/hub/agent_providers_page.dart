@@ -23,7 +23,7 @@ class AgentProvidersPage extends ConsumerWidget {
       title: context.l10n.agentProvidersTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.add,
+          glyph: TablerIcons.plus,
           tooltip: context.l10n.agentProvidersAdd,
           onPressed: () => _edit(context, ref),
         ),
@@ -37,7 +37,7 @@ class AgentProvidersPage extends ConsumerWidget {
                 ListItem(
                   title: Text(context.l10n.agentProvidersEmpty),
                   subtitle: Text(context.l10n.agentProvidersEmptySubtitle),
-                  leading: GlyphIcon(AppGlyphs.info),
+                  leading: Icon(TablerIcons.info_circle),
                 ),
               for (final provider in state.providers)
                 _providerRow(
@@ -79,8 +79,8 @@ class AgentProvidersPage extends ConsumerWidget {
     required bool active,
   }) {
     return ListItem(
-      leading: GlyphIcon(
-        active ? AppGlyphs.checkCircle : AppGlyphs.devices,
+      leading: Icon(
+        active ? TablerIcons.circle_check : TablerIcons.devices,
         size: 20,
         color: active ? context.colorScheme.primary : null,
       ),
@@ -102,12 +102,12 @@ class AgentProvidersPage extends ConsumerWidget {
           IconButton(
             tooltip: context.l10n.commonEdit,
             onPressed: () => _edit(context, ref, existing: provider),
-            icon: const GlyphIcon(AppGlyphs.edit, size: 20),
+            icon: const Icon(TablerIcons.pencil, size: 20),
           ),
           IconButton(
             tooltip: context.l10n.commonDelete,
             onPressed: () => _delete(context, notifier, provider),
-            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+            icon: const Icon(TablerIcons.trash, size: 20),
           ),
         ],
       ),
@@ -123,8 +123,8 @@ class AgentProvidersPage extends ConsumerWidget {
   }) {
     final colorScheme = context.colorScheme;
     return ListItem(
-      leading: GlyphIcon(
-        added ? AppGlyphs.checkCircle : AppGlyphs.addCircle,
+      leading: Icon(
+        added ? TablerIcons.circle_check : TablerIcons.circle_plus,
         size: 20,
       ),
       title: Text(preset.name),

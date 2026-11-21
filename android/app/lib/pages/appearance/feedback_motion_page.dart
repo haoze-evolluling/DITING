@@ -31,7 +31,7 @@ class ThemeFeedbackMotionPage extends ConsumerWidget {
                       ? context.l10n.appearancePureBlackOn
                       : context.l10n.appearancePureBlackOff,
                 ),
-                leading: const GlyphIcon(AppGlyphs.pureBlack),
+                leading: const Icon(TablerIcons.device_desktop),
                 value: pureBlack,
                 onChanged: dark
                     ? (value) =>
@@ -41,7 +41,7 @@ class ThemeFeedbackMotionPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.appearanceHaptic),
                 subtitle: Text(context.l10n.appearanceHapticSubtitle),
-                leading: const GlyphIcon(AppGlyphs.vibrate),
+                leading: const Icon(TablerIcons.device_mobile_vibration),
                 value: ref.watch(hapticProvider),
                 onChanged: (value) =>
                     ref.read(hapticProvider.notifier).toggle(value),
@@ -55,7 +55,7 @@ class ThemeFeedbackMotionPage extends ConsumerWidget {
               ListItem<TabTransition>.options(
                 title: Text(context.l10n.appearanceTabTransition),
                 subtitle: Text(context.l10n.appearanceTabTransitionSubtitle),
-                leading: const GlyphIcon(AppGlyphs.motion),
+                leading: const Icon(TablerIcons.wind),
                 options: TabTransition.values,
                 value: transition,
                 textBuilder: (value) => value.label(context.l10n),
@@ -65,7 +65,7 @@ class ThemeFeedbackMotionPage extends ConsumerWidget {
               ListItem<LiquidGlassMode>.options(
                 title: Text(context.l10n.appearanceLiquidGlass),
                 subtitle: Text(glass.label(context.l10n)),
-                leading: const GlyphIcon(AppGlyphs.liquidGlass),
+                leading: const Icon(TablerIcons.droplet),
                 options: LiquidGlassMode.values,
                 value: glass,
                 textBuilder: (value) => value.label(context.l10n),

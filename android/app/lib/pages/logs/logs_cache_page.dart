@@ -65,7 +65,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
         IconButton(
           tooltip: context.l10n.logsRefresh,
           onPressed: () => ref.read(dnsLogRevisionProvider.notifier).bump(),
-          icon: const GlyphIcon(AppGlyphs.refresh),
+          icon: const Icon(TablerIcons.refresh),
         ),
       ],
       body: _buildBody(asyncEntries),
@@ -124,7 +124,7 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
             final entry = entries[index];
             final lastHit = lastHits['${entry.domain}|${entry.queryType}'];
             return ListItem(
-              leading: const GlyphIcon(AppGlyphs.database),
+              leading: const Icon(TablerIcons.database),
               onTap: () => showSheet<void>(
                 context: context,
                 builder: (_) =>
@@ -188,8 +188,8 @@ class _LogsCachePageState extends ConsumerState<LogsCachePage>
                               : context.colorScheme.success,
                         ),
                   ),
-                  GlyphIcon(
-                    AppGlyphs.chevronForward,
+                  Icon(
+                    TablerIcons.chevron_right,
                     size: 18,
                     color: context.colorScheme.onSurfaceVariant,
                   ),

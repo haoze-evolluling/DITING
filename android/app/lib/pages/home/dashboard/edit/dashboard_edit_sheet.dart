@@ -46,10 +46,10 @@ class DashboardEditSheet extends ConsumerWidget {
                 ListHeader(title: context.l10n.dashboardAvailableCards),
                 for (final widget in available)
                   ListItem(
-                    leading: GlyphIcon(_glyphOf(widget)),
+                    leading: Icon(_glyphOf(widget)),
                     title: Text(widget.label(context.l10n)),
                     subtitle: Text(_descriptionOf(widget, context.l10n)),
-                    trailing: const GlyphIcon(AppGlyphs.addCircle, size: 20),
+                    trailing: const Icon(TablerIcons.circle_plus, size: 20),
                     onTap: () {
                       notifier.add(widget);
                       Navigator.of(context).maybePop();
@@ -61,14 +61,14 @@ class DashboardEditSheet extends ConsumerWidget {
     );
   }
 
-  static Glyph _glyphOf(DashboardWidget widget) => switch (widget) {
-    DashboardWidget.provider => AppGlyphs.upstream,
-    DashboardWidget.resolution => AppGlyphs.shuffle,
-    DashboardWidget.status => AppGlyphs.status,
-    DashboardWidget.networkSpeed => AppGlyphs.speed,
-    DashboardWidget.siteLatency => AppGlyphs.target,
-    DashboardWidget.memoryInfo => AppGlyphs.memory,
-    DashboardWidget.intranetIp => AppGlyphs.devices,
+  static IconData _glyphOf(DashboardWidget widget) => switch (widget) {
+    DashboardWidget.provider => TablerIcons.cloud_upload,
+    DashboardWidget.resolution => TablerIcons.arrows_shuffle,
+    DashboardWidget.status => TablerIcons.activity,
+    DashboardWidget.networkSpeed => TablerIcons.gauge,
+    DashboardWidget.siteLatency => TablerIcons.target,
+    DashboardWidget.memoryInfo => TablerIcons.cpu_2,
+    DashboardWidget.intranetIp => TablerIcons.devices,
   };
 
   static String _descriptionOf(DashboardWidget widget, AppL10n l10n) =>

@@ -183,8 +183,8 @@ class _ResultCard extends StatelessWidget {
           ),
           Row(
             children: [
-              GlyphIcon(
-                result.blocked ? AppGlyphs.block : AppGlyphs.checkCircle,
+              Icon(
+                result.blocked ? TablerIcons.ban : TablerIcons.circle_check,
                 size: 20,
                 color: color,
               ),

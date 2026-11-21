@@ -13,7 +13,7 @@ class LogsOverviewTile {
   final String label;
   final String value;
 
-  final Glyph? glyph;
+  final IconData? glyph;
 
   final Color? color;
 }
@@ -97,7 +97,7 @@ class _Tile extends StatelessWidget {
             spacing: 5,
             children: [
               if (tile.glyph case final glyph?)
-                GlyphIcon(glyph, size: 13, color: accent),
+                Icon(glyph, size: 13, color: accent),
               Expanded(
                 child: Text(
                   tile.label,
@@ -213,7 +213,7 @@ class LogsSectionEmpty extends StatelessWidget {
     required this.description,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final String title;
   final String description;
 

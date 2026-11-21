@@ -113,10 +113,10 @@ class _ServerProviderPickerSheetState
             title: context.l10n.providerMgmtCustom,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.addCircle, size: 20),
+                leading: const Icon(TablerIcons.circle_plus, size: 20),
                 title: Text(context.l10n.providerMgmtAdd),
                 subtitle: Text(context.l10n.providerMgmtEmptyCustomSubtitle),
-                trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                trailing: const Icon(TablerIcons.chevron_right, size: 18),
                 onTap: _addCustom,
               ),
             ],
@@ -134,15 +134,15 @@ class _ServerProviderPickerSheetState
           existing.address.toLowerCase() == preset.address.toLowerCase(),
     );
     return ListItem(
-      leading: GlyphIcon(_protocolGlyph(provider.protocol), size: 20),
+      leading: Icon(_protocolGlyph(provider.protocol), size: 20),
       title: Text(provider.name),
       subtitle: Text(
         '${_protocolLabel(provider.protocol)} · ${provider.address}',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
-      trailing: GlyphIcon(
-        added ? AppGlyphs.check : AppGlyphs.addCircle,
+      trailing: Icon(
+        added ? TablerIcons.check : TablerIcons.circle_plus,
         size: 18,
       ),
       onTap: added ? null : () => Navigator.of(context).pop(preset),
@@ -155,9 +155,9 @@ class _ServerProviderPickerSheetState
     DnsProtocol.dot => ProviderProtocol.dot.label,
   };
 
-  Glyph _protocolGlyph(DnsProtocol protocol) => switch (protocol) {
-    DnsProtocol.doh => AppGlyphs.lock,
-    DnsProtocol.dot => AppGlyphs.verified,
-    DnsProtocol.dns => AppGlyphs.dns,
+  IconData _protocolGlyph(DnsProtocol protocol) => switch (protocol) {
+    DnsProtocol.doh => TablerIcons.lock,
+    DnsProtocol.dot => TablerIcons.rosette_discount_check,
+    DnsProtocol.dns => TablerIcons.server_2,
   };
 }

@@ -50,7 +50,7 @@ class SiteLatencyCategorySection extends StatelessWidget {
       verdictColor = colorScheme.warning;
     }
     return DashboardDetailCard(
-      glyph: category.glyph,
+      glyph: category.icon,
       title: category.label(context.l10n),
       trailing: [
         Text(verdict, style: DashboardText.label(context, color: verdictColor)),
@@ -59,7 +59,7 @@ class SiteLatencyCategorySection extends StatelessWidget {
             category.label(context.l10n),
           ),
           onPressed: probing ? null : onProbe,
-          icon: const GlyphIcon(AppGlyphs.target, size: 18),
+          icon: const Icon(TablerIcons.target, size: 18),
           style: IconButton.styleFrom(
             padding: EdgeInsets.zero,
             minimumSize: const Size.square(32),
@@ -155,7 +155,7 @@ class SiteLatencyRow extends StatelessWidget {
                   shape: AppShape.standard,
                 ),
                 child: Center(
-                  child: GlyphIcon(target.glyph, size: 17, color: statusColor),
+                  child: SiteIconView(target.icon, size: 17, color: statusColor),
                 ),
               ),
               Expanded(
@@ -190,8 +190,8 @@ class SiteLatencyRow extends StatelessWidget {
                     .of(context)
                     .copyWith(color: statusColor),
               ),
-              GlyphIcon(
-                AppGlyphs.chevronForward,
+              Icon(
+                TablerIcons.chevron_right,
                 size: 14,
                 color: colorScheme.onSurfaceVariant,
               ),

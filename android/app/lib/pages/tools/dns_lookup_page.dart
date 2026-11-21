@@ -93,7 +93,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
             child: _ToolField(
               controller: _domain,
               hintText: l10n.toolInputDomain,
-              glyph: AppGlyphs.language,
+              glyph: TablerIcons.language,
               enabled: !_running,
               onSubmitted: (_) => _run(),
             ),
@@ -103,7 +103,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
             title: l10n.toolRecordType,
             items: [
               ListItem<bool>.options(
-                leading: const GlyphIcon(AppGlyphs.dns),
+                leading: const Icon(TablerIcons.server_2),
                 title: Text(l10n.toolRecordType),
                 value: _ipv4,
                 options: const [true, false],
@@ -122,7 +122,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
               title: l10n.toolDnsServers,
               items: [
                 ListItem<_DnsServerMode>.options(
-                  leading: const GlyphIcon(AppGlyphs.dns),
+                  leading: const Icon(TablerIcons.server_2),
                   title: Text(l10n.toolDnsServers),
                   value: _serverMode,
                   options: _DnsServerMode.values,
@@ -140,7 +140,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
                 child: _ToolField(
                   controller: _server,
                   hintText: l10n.toolCustomDnsHint,
-                  glyph: AppGlyphs.dns,
+                  glyph: TablerIcons.server_2,
                   enabled: !_running,
                   onSubmitted: (_) => _run(),
                 ),
@@ -159,23 +159,23 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
             ],
           ),
           _RunButton(
-            glyph: AppGlyphs.search,
+            glyph: TablerIcons.search,
             label: l10n.toolStartQuery,
             runningLabel: l10n.toolQuerying,
             running: _running,
             onPressed: _run,
           ),
           if (_hostError case final error?)
-            _ToolNotice(text: error, isError: true, glyph: AppGlyphs.error),
+            _ToolNotice(text: error, isError: true, glyph: TablerIcons.alert_circle),
           if (showEmpty)
             _ToolEmptyCard(
-              glyph: AppGlyphs.dns,
+              glyph: TablerIcons.server_2,
               title: l10n.toolNotRunTitle,
               body: l10n.toolDnsEmpty,
             ),
           if (result != null) ...[
             if (result.error case final error?)
-              _ToolNotice(text: error, isError: true, glyph: AppGlyphs.error),
+              _ToolNotice(text: error, isError: true, glyph: TablerIcons.alert_circle),
             _ToolSection(
               title: l10n.toolDnsResults,
               rows: [
@@ -218,7 +218,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
                 items: [
                   for (final answer in result.answers)
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.dns, size: 20),
+                      leading: const Icon(TablerIcons.server_2, size: 20),
                       title: Text(
                         answer.value,
                         style: AppTextRole.body
@@ -237,7 +237,7 @@ class _DnsLookupPageState extends ConsumerState<DnsLookupPage> {
             else if (result.error == null)
               _ToolNotice(
                 text: l10n.toolDnsNoAnswers,
-                glyph: AppGlyphs.warning,
+                glyph: TablerIcons.alert_triangle,
               ),
           ],
           ListFooter(text: l10n.toolDnsFooter),

@@ -24,8 +24,8 @@ class DisclaimerIntroCard extends StatelessWidget {
             Row(
               spacing: 10,
               children: [
-                GlyphIcon(
-                  AppGlyphs.gavel,
+                Icon(
+                  TablerIcons.gavel,
                   size: 26,
                   color: colorScheme.primary,
                 ),
@@ -64,8 +64,8 @@ class InitialAgreementCard extends StatelessWidget {
             Row(
               spacing: 8,
               children: [
-                GlyphIcon(
-                  AppGlyphs.checkCircle,
+                Icon(
+                  TablerIcons.circle_check,
                   size: 18,
                   color: colorScheme.success,
                 ),

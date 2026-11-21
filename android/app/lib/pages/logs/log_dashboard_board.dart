@@ -151,7 +151,7 @@ class _EditingBoard extends ConsumerWidget {
             context: context,
             builder: (_) => LogDashboardAddSheet(mode: mode),
           ),
-          icon: GlyphIcon(AppGlyphs.add, size: 18, color: colorScheme.primary),
+          icon: Icon(TablerIcons.plus, size: 18, color: colorScheme.primary),
           label: Text(context.l10n.dashboardAddCard),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(48),
@@ -207,7 +207,7 @@ class LogDashboardAddSheet extends ConsumerWidget {
                   ListItem(
                     title: Text(widget.label(context.l10n)),
                     subtitle: Text(widget.description(context.l10n)),
-                    trailing: const GlyphIcon(AppGlyphs.addCircle, size: 20),
+                    trailing: const Icon(TablerIcons.circle_plus, size: 20),
                     onTap: () {
                       notifier.add(widget);
                       Navigator.of(context).maybePop();

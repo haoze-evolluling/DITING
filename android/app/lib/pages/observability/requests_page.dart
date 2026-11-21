@@ -35,12 +35,12 @@ class RequestsPage extends ConsumerWidget {
       leadingMenuItems: [
         CommonPopupMenuItem(
           label: context.l10n.obsByApp,
-          glyph: AppGlyphs.appsList,
+          glyph: TablerIcons.list,
           onPressed: () => context.push(ObservabilityPaths.requestApps),
         ),
         CommonPopupMenuItem(
           label: context.l10n.obsExportLogs,
-          glyph: AppGlyphs.export,
+          glyph: TablerIcons.file_export,
           onPressed: () => context.push(ObservabilityPaths.requestExport),
         ),
       ],
@@ -126,7 +126,7 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
         ...widget.leadingMenuItems,
         CommonPopupMenuItem(
           label: context.l10n.obsSource,
-          glyph: AppGlyphs.filter,
+          glyph: TablerIcons.filter,
           subItems: [
             for (final source in RequestSource.values)
               CommonPopupMenuItem(
@@ -139,7 +139,7 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
         ),
         CommonPopupMenuItem(
           label: context.l10n.obsStatus,
-          glyph: AppGlyphs.status,
+          glyph: TablerIcons.activity,
           subItems: [
             for (final status in RequestStatus.values)
               CommonPopupMenuItem(
@@ -152,14 +152,14 @@ class _RequestFeedViewState extends ConsumerState<RequestFeedView> {
         ),
         CommonPopupMenuItem(
           label: context.l10n.obsRefresh,
-          glyph: AppGlyphs.refresh,
+          glyph: TablerIcons.refresh,
           onPressed: _refresh,
         ),
         if (query.source != RequestSource.all ||
             query.status != RequestStatus.all)
           CommonPopupMenuItem(
             label: context.l10n.obsClearFilter,
-            glyph: AppGlyphs.reset,
+            glyph: TablerIcons.restore,
             onPressed: _resetFilters,
           ),
       ],

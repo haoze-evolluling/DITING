@@ -62,7 +62,7 @@ class FormPage extends StatelessWidget {
               label: saving
                   ? context.l10n.formProcessing
                   : saveLabel ?? context.l10n.formSave,
-              glyph: saving ? null : AppGlyphs.check,
+              glyph: saving ? null : TablerIcons.check,
               size: TonalButtonSize.section,
               onPressed: saving ? null : onSave,
             ),
@@ -185,8 +185,8 @@ class EntryButton extends StatelessWidget {
       child: IconButton(
         tooltip: _add ? context.l10n.formAdd : context.l10n.formDelete,
         onPressed: onPressed,
-        icon: GlyphIcon(
-          _add ? AppGlyphs.addCircle : AppGlyphs.removeCircle,
+        icon: Icon(
+          _add ? TablerIcons.circle_plus : TablerIcons.circle_minus,
           size: 24,
         ),
       ),
@@ -205,9 +205,8 @@ class InfoMessageButton extends StatelessWidget {
       child: IconButton(
         tooltip: context.l10n.formHelp,
         onPressed: () => showMessageDialog(context, message),
-        icon: GlyphIcon(
-          AppGlyphs.info,
-          fill: 1,
+        icon: Icon(
+          TablerIcons.info_circle_filled,
           size: 20,
           color: context.colorScheme.error,
         ),

@@ -37,7 +37,7 @@ class AgentParamsPage extends ConsumerWidget {
             title: context.l10n.agentParamsPromptSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.compose),
+                leading: const Icon(TablerIcons.pencil),
                 title: Text(context.l10n.agentParamsPromptItem),
                 subtitle: Text(
                   state.systemPrompt.isEmpty
@@ -76,7 +76,7 @@ class AgentParamsPage extends ConsumerWidget {
             title: context.l10n.agentParamsTemperatureSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.temperature),
+                leading: const Icon(TablerIcons.temperature),
                 title: Text(context.l10n.agentParamsTemperatureItem),
                 subtitle: Text(temperatureLabel),
                 trailing: Text(

@@ -195,7 +195,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
       menuItems: [
         CommonPopupMenuItem(
           label: context.l10n.outboundResetMenu,
-          glyph: AppGlyphs.reset,
+          glyph: TablerIcons.restore,
           danger: true,
           onPressed: _saving ? null : _reset,
         ),
@@ -206,7 +206,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
             title: context.l10n.outboundSectionProxy,
             items: [
               ListItem.toggle(
-                leading: const GlyphIcon(AppGlyphs.link),
+                leading: const Icon(TablerIcons.link),
                 title: Text(context.l10n.outboundEnable),
                 subtitle: Text(
                   _statusLabel(context.l10n, config),
@@ -223,7 +223,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
                       ),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.appsList),
+                leading: const Icon(TablerIcons.list),
                 title: Text(context.l10n.outboundApp),
                 subtitle: Text(
                   config.proxyAppPackage.isEmpty
@@ -241,7 +241,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
             title: context.l10n.outboundProxyServerSection,
             items: [
               ListItem<OutboundProxyProtocol>.options(
-                leading: const GlyphIcon(AppGlyphs.link),
+                leading: const Icon(TablerIcons.link),
                 title: Text(context.l10n.obsProtocol),
                 value: config.protocol,
                 options: OutboundProxyProtocol.values,
@@ -335,7 +335,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
       title: l10n.outboundScopeTitle,
       items: [
         ListItem<OutboundProxyScope>.options(
-          leading: const GlyphIcon(AppGlyphs.appsList),
+          leading: const Icon(TablerIcons.list),
           title: Text(l10n.outboundScopeTitle),
           value: config.scope,
           options: OutboundProxyScope.values,
@@ -348,7 +348,7 @@ class _OutboundProxyPageState extends ConsumerState<OutboundProxyPage> {
         ),
         if (perApp)
           ListItem(
-            leading: const GlyphIcon(AppGlyphs.appsList),
+            leading: const Icon(TablerIcons.list),
             title: Text(l10n.outboundTargets),
             subtitle: Text(
               count == 0

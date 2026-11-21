@@ -63,7 +63,7 @@ class _CommonExpandIconState extends State<CommonExpandIcon>
       builder: (_, child) {
         return RotationTransition(turns: _iconTurns, child: child!);
       },
-      child: const GlyphIcon(AppGlyphs.caretDown, fill: 1),
+      child: const Icon(TablerIcons.caret_down_filled),
     );
   }
 }

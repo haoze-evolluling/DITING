@@ -28,7 +28,7 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
     return CommonScaffold(
       title: context.l10n.serverUpstreamProviders,
       primaryAction: IconButtonData(
-        glyph: AppGlyphs.add,
+        glyph: TablerIcons.plus,
         tooltip: context.l10n.serverUpstreamAdd,
         onPressed: () => _add(context, ref, config),
       ),
@@ -39,12 +39,12 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
             items: [
               if (providers.isEmpty)
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.warning),
+                  leading: const Icon(TablerIcons.alert_triangle),
                   title: Text(context.l10n.serverUpstreamRequired),
                 ),
               for (final provider in providers)
                 ListItem(
-                  leading: GlyphIcon(
+                  leading: Icon(
                     _protocolGlyph(provider.protocol),
                     size: 20,
                   ),
@@ -60,7 +60,7 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
                     onPressed: providers.length <= 1
                         ? null
                         : () => _delete(context, ref, config, provider.id),
-                    icon: const GlyphIcon(AppGlyphs.delete, size: 18),
+                    icon: const Icon(TablerIcons.trash, size: 18),
                   ),
                   onTap: () => _edit(context, ref, config, provider: provider),
                 ),
@@ -193,8 +193,8 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
   }
 }
 
-Glyph _protocolGlyph(String protocol) => switch (protocol) {
-  'DOH' => AppGlyphs.lock,
-  'DOT' => AppGlyphs.verified,
-  _ => AppGlyphs.dns,
+IconData _protocolGlyph(String protocol) => switch (protocol) {
+  'DOH' => TablerIcons.lock,
+  'DOT' => TablerIcons.rosette_discount_check,
+  _ => TablerIcons.server_2,
 };

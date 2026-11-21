@@ -80,14 +80,14 @@ class _HttpInspectionAppsPageState
       title: context.l10n.httpInspAppsTitle,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.selectAll,
+          glyph: TablerIcons.select_all,
           tooltip: context.l10n.httpInspSelectVisible,
           onPressed: visible.isEmpty
               ? null
               : () => _write({...selected, ...visiblePackages}),
         ),
         IconButtonData(
-          glyph: AppGlyphs.deselect,
+          glyph: TablerIcons.deselect,
           tooltip: context.l10n.httpInspDeselectVisible,
           onPressed: visible.isEmpty
               ? null

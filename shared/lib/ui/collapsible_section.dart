@@ -144,8 +144,8 @@ class _SliverCollapsibleSectionState extends State<SliverCollapsibleSection>
                     ),
                     RotationTransition(
                       turns: _turns,
-                      child: GlyphIcon(
-                        AppGlyphs.chevronDown,
+                      child: Icon(
+                        TablerIcons.chevron_down,
                         size: 20,
                         color: colorScheme.onSurfaceVariant,
                       ),

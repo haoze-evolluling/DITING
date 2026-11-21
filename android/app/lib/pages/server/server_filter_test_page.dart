@@ -69,7 +69,7 @@ class _ServerFilterTestPageState extends ConsumerState<ServerFilterTestPage> {
                     label: _checking
                         ? context.l10n.serverCheckChecking
                         : context.l10n.serverCheckAction,
-                    glyph: AppGlyphs.target,
+                    glyph: TablerIcons.target,
                     onPressed: _checking ? null : _check,
                   ),
                 ],
@@ -81,8 +81,8 @@ class _ServerFilterTestPageState extends ConsumerState<ServerFilterTestPage> {
               title: context.l10n.serverCheckResult,
               items: [
                 ListItem(
-                  leading: GlyphIcon(
-                    result.blocked ? AppGlyphs.block : AppGlyphs.checkCircle,
+                  leading: Icon(
+                    result.blocked ? TablerIcons.ban : TablerIcons.circle_check,
                     size: 20,
                   ),
                   title: Text(

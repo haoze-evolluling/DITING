@@ -24,7 +24,7 @@ class SearchField extends StatefulWidget {
   final bool autofocus;
   final double? height;
   final Color? fill;
-  final Glyph glyph;
+  final IconData glyph;
   final String? hintText;
   final VoidCallback? onSubmitted;
   final Widget? trailing;
@@ -37,7 +37,7 @@ class SearchField extends StatefulWidget {
     this.autofocus = false,
     this.height,
     this.fill,
-    this.glyph = AppGlyphs.search,
+    this.glyph = TablerIcons.search,
     this.hintText,
     this.onSubmitted,
     this.trailing,
@@ -110,7 +110,7 @@ class _SearchFieldState extends State<SearchField> {
             ),
             prefixIcon: Padding(
               padding: const EdgeInsetsDirectional.only(start: _glyphInset),
-              child: GlyphIcon(widget.glyph, size: 20),
+              child: Icon(widget.glyph, size: 20),
             ),
             prefixIconConstraints: const BoxConstraints.tightFor(
               width: _textInset,
@@ -132,10 +132,9 @@ class _SearchFieldState extends State<SearchField> {
                               overlayColor: Colors.transparent,
                               splashFactory: NoSplash.splashFactory,
                             ),
-                            icon: const GlyphIcon(
-                              AppGlyphs.clearField,
+                            icon: const Icon(
+                              TablerIcons.circle_x_filled,
                               size: _clearSize,
-                              fill: 1,
                             ),
                           ),
                         )

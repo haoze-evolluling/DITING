@@ -25,7 +25,7 @@ class NetProfilePage extends ConsumerWidget {
         IconButton(
           tooltip: context.l10n.netProfileAdd,
           onPressed: () => _create(context, ref),
-          icon: const GlyphIcon(AppGlyphs.add),
+          icon: const Icon(TablerIcons.plus),
         ),
       ],
       body: PageBody(
@@ -36,7 +36,7 @@ class NetProfilePage extends ConsumerWidget {
               title: context.l10n.netProfileCurrentNet,
               items: [
                 ListItem(
-                  leading: const GlyphIcon(AppGlyphs.network),
+                  leading: const Icon(TablerIcons.broadcast),
                   title: Text('${network['type'] ?? 'unknown'}'),
                   subtitle: Text(_contextDetail(network)),
                 ),
@@ -49,10 +49,10 @@ class NetProfilePage extends ConsumerWidget {
               title: context.l10n.netProfileResolved,
               items: [
                 ListItem(
-                  leading: GlyphIcon(
+                  leading: Icon(
                     answer['matched'] == true
-                        ? AppGlyphs.checkCircle
-                        : AppGlyphs.info,
+                        ? TablerIcons.circle_check
+                        : TablerIcons.info_circle,
                   ),
                   title: Text(
                     answer['matched'] == true
@@ -73,7 +73,7 @@ class NetProfilePage extends ConsumerWidget {
                     items: [
                       for (final profile in list)
                         ListItem(
-                          leading: const GlyphIcon(AppGlyphs.profiles),
+                          leading: const Icon(TablerIcons.file_text),
                           title: Text(profile.name),
                           subtitle: Text(
                             '${(profile.payload['networkMatch'] as Map?)?['types'] ?? const []} · '
@@ -86,7 +86,7 @@ class NetProfilePage extends ConsumerWidget {
                             onPressed: () => ref
                                 .read(automationControllerProvider)
                                 .deleteProfile(profile.id),
-                            icon: const GlyphIcon(AppGlyphs.remove),
+                            icon: const Icon(TablerIcons.minus),
                           ),
                         ),
                     ],
@@ -156,7 +156,7 @@ class _ErrorNotice extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: InlineNotice(
         message: text,
-        glyph: AppGlyphs.error,
+        glyph: TablerIcons.alert_circle,
         color: colorScheme.errorContainer,
         foregroundColor: colorScheme.onErrorContainer,
       ),

@@ -33,7 +33,7 @@ class _ConfigTransferWebdavPageState
       title: context.l10n.transferWebdav,
       iconActions: [
         IconButtonData(
-          glyph: AppGlyphs.reset,
+          glyph: TablerIcons.restore,
           tooltip: context.l10n.webdavClearConfig,
           onPressed: dav.status == DavStatus.connecting
               ? null
@@ -101,7 +101,7 @@ class _ConfigTransferWebdavPageState
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: TonalButton(
               label: context.l10n.webdavTest,
-              glyph: AppGlyphs.sync,
+              glyph: TablerIcons.rotate_clockwise,
               size: TonalButtonSize.section,
               onPressed: _busy || !dav.isConfigured
                   ? null
@@ -116,7 +116,7 @@ class _ConfigTransferWebdavPageState
                 Expanded(
                   child: TonalButton(
                     label: context.l10n.webdavUpload,
-                    glyph: AppGlyphs.export,
+                    glyph: TablerIcons.file_export,
                     size: TonalButtonSize.section,
                     onPressed: canTransfer ? _upload : null,
                   ),
@@ -124,7 +124,7 @@ class _ConfigTransferWebdavPageState
                 Expanded(
                   child: TonalButton(
                     label: context.l10n.webdavDownload,
-                    glyph: AppGlyphs.importFile,
+                    glyph: TablerIcons.file_import,
                     size: TonalButtonSize.section,
                     onPressed: canTransfer ? _download : null,
                   ),
@@ -291,10 +291,10 @@ class _DavStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = context.colorScheme;
     final (color, glyph) = switch (status) {
-      DavStatus.idle => (colorScheme.onSurfaceVariant, AppGlyphs.cloudSync),
-      DavStatus.connecting => (colorScheme.warning, AppGlyphs.sync),
-      DavStatus.connected => (colorScheme.success, AppGlyphs.checkCircle),
-      DavStatus.failed => (colorScheme.error, AppGlyphs.error),
+      DavStatus.idle => (colorScheme.onSurfaceVariant, TablerIcons.cloud_network),
+      DavStatus.connecting => (colorScheme.warning, TablerIcons.rotate_clockwise),
+      DavStatus.connected => (colorScheme.success, TablerIcons.circle_check),
+      DavStatus.failed => (colorScheme.error, TablerIcons.alert_circle),
     };
     return CommonCard(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -305,7 +305,7 @@ class _DavStatusCard extends StatelessWidget {
           if (status == DavStatus.connecting)
             CommonCircleLoading(color: color)
           else
-            GlyphIcon(glyph, size: 20, color: color),
+            Icon(glyph, size: 20, color: color),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

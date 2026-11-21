@@ -18,7 +18,7 @@ import 'text.dart';
 
 class Info {
   final String label;
-  final Glyph? glyph;
+  final IconData? glyph;
 
   const Info({required this.label, this.glyph});
 }
@@ -49,7 +49,7 @@ class InfoHeader extends StatelessWidget {
     final lineHeight = MeasureScope.of(context).cardHeaderHeight;
     final rowHeight = info.glyph == null
         ? lineHeight
-        : math.max(lineHeight, IconTheme.of(context).size ?? Glyph.size);
+        : math.max(lineHeight, IconTheme.of(context).size ?? appIconSize);
     return Padding(
       padding: nextPadding,
       child: Row(
@@ -62,7 +62,7 @@ class InfoHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 if (info.glyph case final glyph?) ...[
-                  GlyphIcon(
+                  Icon(
                     glyph,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

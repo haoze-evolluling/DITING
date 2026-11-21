@@ -67,7 +67,7 @@ class TrafficStructureCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DashboardCardHeader(
-            glyph: AppGlyphs.dataUsage,
+            glyph: TablerIcons.chart_pie,
             title: title,
             trailing: [
               DashboardChip(

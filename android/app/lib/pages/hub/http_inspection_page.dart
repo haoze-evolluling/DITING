@@ -47,7 +47,7 @@ class HttpInspectionPage extends ConsumerWidget {
                   title: context.l10n.httpInspScopeSection,
                   items: [
                     ListItem.toggle(
-                      leading: const GlyphIcon(AppGlyphs.lock),
+                      leading: const Icon(TablerIcons.lock),
                       title: Text(context.l10n.httpInspEnable),
                       subtitle: Text(caHint),
                       value: enabled,
@@ -57,7 +57,7 @@ class HttpInspectionPage extends ConsumerWidget {
                           : (_) => _explainCaMissing(context, ca),
                     ),
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.appsList),
+                      leading: const Icon(TablerIcons.list),
                       title: Text(context.l10n.httpInspTargetApps),
                       subtitle: Text(
                         _appsHint(context, caReady, caHint, apps.length),
@@ -67,7 +67,7 @@ class HttpInspectionPage extends ConsumerWidget {
                           : () => _explainCaMissing(context, ca),
                     ),
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.verified),
+                      leading: const Icon(TablerIcons.rosette_discount_check),
                       title: Text(context.l10n.httpInspCaCert),
                       subtitle: Text(_caCertHint(context, ca, caReady)),
                       onTap: () => context.push('/hub/https-inspection/ca'),
@@ -78,7 +78,7 @@ class HttpInspectionPage extends ConsumerWidget {
                   title: context.l10n.httpInspContentSection,
                   items: [
                     ListItem.toggle(
-                      leading: const GlyphIcon(AppGlyphs.target),
+                      leading: const Icon(TablerIcons.target),
                       title: Text(context.l10n.httpInspUrlRules),
                       subtitle: Text(
                         _urlRulesHint(
@@ -101,7 +101,7 @@ class HttpInspectionPage extends ConsumerWidget {
                   title: context.l10n.httpInspProtocolSection,
                   items: [
                     ListItem.toggle(
-                      leading: const GlyphIcon(AppGlyphs.block),
+                      leading: const Icon(TablerIcons.ban),
                       title: Text(context.l10n.httpInspBlockHttp3),
                       subtitle: Text(
                         !enabled
@@ -114,7 +114,7 @@ class HttpInspectionPage extends ConsumerWidget {
                           : null,
                     ),
                     ListItem.toggle(
-                      leading: const GlyphIcon(AppGlyphs.lock),
+                      leading: const Icon(TablerIcons.lock),
                       title: Text(context.l10n.httpInspBlockDot),
                       subtitle: Text(
                         !enabled
@@ -128,7 +128,7 @@ class HttpInspectionPage extends ConsumerWidget {
                           : null,
                     ),
                     ListItem(
-                      leading: const GlyphIcon(AppGlyphs.logs),
+                      leading: const Icon(TablerIcons.logs),
                       title: Text(context.l10n.httpInspRequestLogs),
                       subtitle: Text(context.l10n.httpInspRequestLogsSubtitle),
                       onTap: () {
@@ -157,7 +157,7 @@ class HttpInspectionPage extends ConsumerWidget {
   ) {
     final actions = [
       IconButtonData(
-        glyph: AppGlyphs.add,
+        glyph: TablerIcons.plus,
         tooltip: context.l10n.bypassAddTitle,
         onPressed: () => _addBypass(context, ref, settings, bypass),
       ),
@@ -171,7 +171,7 @@ class HttpInspectionPage extends ConsumerWidget {
             actions: actions,
             items: [
               ListItem(
-                leading: GlyphIcon(AppGlyphs.info),
+                leading: Icon(TablerIcons.info_circle),
                 title: Text(context.l10n.httpInspBypassEmpty),
                 subtitle: Text(context.l10n.httpInspBypassEmptySubtitle),
               ),
@@ -189,7 +189,7 @@ class HttpInspectionPage extends ConsumerWidget {
       itemBuilder: (context, index) {
         final rule = sorted[index];
         return ListItem(
-          leading: const GlyphIcon(AppGlyphs.split, size: 20),
+          leading: const Icon(TablerIcons.arrows_split, size: 20),
           title: Text(rule, maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Text(context.l10n.httpInspBypassRowSubtitle),
           trailing: IconButton(
@@ -198,7 +198,7 @@ class HttpInspectionPage extends ConsumerWidget {
               settings.setHttpsBypassRules({...bypass}..remove(rule));
               _bump(ref);
             },
-            icon: const GlyphIcon(AppGlyphs.delete, size: 20),
+            icon: const Icon(TablerIcons.trash, size: 20),
           ),
         );
       },

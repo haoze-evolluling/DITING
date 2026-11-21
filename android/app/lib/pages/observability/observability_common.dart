@@ -83,7 +83,7 @@ class ObsFailure extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           spacing: 10,
           children: [
-            GlyphIcon(AppGlyphs.error, size: 30, color: colorScheme.error),
+            Icon(TablerIcons.alert_circle, size: 30, color: colorScheme.error),
             Text(label, style: AppTextRole.rowTitle.of(context)),
             Text(
               description,

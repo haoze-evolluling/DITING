@@ -38,8 +38,8 @@ class CaCertificatePage extends ConsumerWidget {
             title: context.l10n.caCertSectionStatus,
             items: [
               ListItem(
-                leading: GlyphIcon(
-                  state.ready ? AppGlyphs.verified : AppGlyphs.warning,
+                leading: Icon(
+                  state.ready ? TablerIcons.rosette_discount_check : TablerIcons.alert_triangle,
                   size: 20,
                 ),
                 title: Text(context.l10n.caCertRootStatus),
@@ -55,8 +55,8 @@ class CaCertificatePage extends ConsumerWidget {
               ),
               if (state.error case final error?)
                 ListItem(
-                  leading: GlyphIcon(
-                    AppGlyphs.warning,
+                  leading: Icon(
+                    TablerIcons.alert_triangle,
                     size: 20,
                     color: context.colorScheme.error,
                   ),
@@ -70,13 +70,13 @@ class CaCertificatePage extends ConsumerWidget {
             title: context.l10n.caCertSectionActions,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.info),
+                leading: const Icon(TablerIcons.info_circle),
                 title: Text(context.l10n.caCertGuide),
                 subtitle: Text(context.l10n.caCertGuideSubtitle),
                 onTap: () => context.push('/hub/https-inspection/ca/guide'),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.upload),
+                leading: const Icon(TablerIcons.upload),
                 title: Text(context.l10n.caCertInstall),
                 subtitle: Text(context.l10n.caCertInstallSubtitle),
                 trailing: Text(
@@ -90,13 +90,13 @@ class CaCertificatePage extends ConsumerWidget {
                 onTap: () => _install(context, ref, state),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.export),
+                leading: const Icon(TablerIcons.file_export),
                 title: Text(context.l10n.caCertSaveToDownloads),
                 subtitle: Text(context.l10n.caCertSaveToDownloadsSubtitle),
                 onTap: () => _saveToDownloads(context, ref),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.key),
+                leading: const Icon(TablerIcons.key),
                 title: Text(context.l10n.caCertFingerprint),
                 subtitle: Text(
                   fingerprint == null
@@ -108,7 +108,7 @@ class CaCertificatePage extends ConsumerWidget {
                     : () => _showFingerprint(context, fingerprint),
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.copy),
+                leading: const Icon(TablerIcons.copy),
                 title: Text(context.l10n.caCertViewPem),
                 subtitle: Text(context.l10n.caCertViewPemSubtitle),
                 onTap: pem == null ? null : () => _showPem(context, pem),
@@ -119,8 +119,8 @@ class CaCertificatePage extends ConsumerWidget {
             title: context.l10n.caCertSectionManage,
             items: [
               ListItem(
-                leading: GlyphIcon(
-                  AppGlyphs.refresh,
+                leading: Icon(
+                  TablerIcons.refresh,
                   color: context.colorScheme.error,
                 ),
                 title: Text(

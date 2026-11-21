@@ -48,8 +48,8 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
                   ? [
                       IconButtonData(
                         glyph: _allSelected
-                            ? AppGlyphs.deselect
-                            : AppGlyphs.selectAll,
+                            ? TablerIcons.deselect
+                            : TablerIcons.select_all,
                         tooltip: _allSelected
                             ? context.l10n.transferDeselectAll
                             : context.l10n.commonSelectAll,
@@ -60,10 +60,10 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
               items: [
                 for (final item in group.groups)
                   ListItem(
-                    leading: GlyphIcon(
+                    leading: Icon(
                       _selected.contains(item)
-                          ? AppGlyphs.checkCircle
-                          : AppGlyphs.rules,
+                          ? TablerIcons.circle_check
+                          : TablerIcons.list_details,
                       size: 20,
                     ),
                     title: Text(item.title(context.l10n)),
@@ -81,7 +81,7 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
             title: context.l10n.transferImportExportSection,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.export),
+                leading: const Icon(TablerIcons.file_export),
                 title: Text(context.l10n.transferExportJson),
                 subtitle: Text(
                   _noneSelected
@@ -91,7 +91,7 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
                 onTap: _noneSelected || _busy != null ? null : _export,
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.importFile),
+                leading: const Icon(TablerIcons.file_import),
                 title: Text(context.l10n.transferImportJson),
                 subtitle: Text(context.l10n.transferImportSubtitle),
                 onTap: _busy != null ? null : _import,
@@ -103,7 +103,7 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
             title: context.l10n.transferCloudSection,
             items: [
               NavEntryRow(
-                glyph: AppGlyphs.cloudSync,
+                glyph: TablerIcons.cloud_network,
                 title: context.l10n.transferWebdav,
                 subtitle: context.l10n.transferWebdavSubtitle,
                 onPressed: () => context.push(HubPaths.configTransferWebdav),

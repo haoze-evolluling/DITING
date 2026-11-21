@@ -4,7 +4,7 @@ extension _AppRulesDetail on _AppRulesPageState {
   List<Widget> _scopedRuleSlivers(InstalledApp app) {
     final actions = [
       IconButtonData(
-        glyph: AppGlyphs.add,
+        glyph: TablerIcons.plus,
         tooltip: context.l10n.appRulesAddDnsRule,
         onPressed: () => _addScopedRule(app),
       ),
@@ -62,7 +62,7 @@ extension _AppRulesDetail on _AppRulesPageState {
           actions: actions,
           items: [
             ListItem(
-              leading: const GlyphIcon(AppGlyphs.info),
+              leading: const Icon(TablerIcons.info_circle),
               title: Text(title),
               subtitle: Text(subtitle),
             ),
@@ -79,7 +79,7 @@ extension _AppRulesDetail on _AppRulesPageState {
   ) {
     final actions = [
       IconButtonData(
-        glyph: AppGlyphs.add,
+        glyph: TablerIcons.plus,
         tooltip: context.l10n.appRulesAddAllowDomain,
         onPressed: () => _addDomain(draft, app.packageName),
       ),
@@ -94,7 +94,7 @@ extension _AppRulesDetail on _AppRulesPageState {
               ListItem(
                 title: Text(context.l10n.appRulesNoAllowDomains),
                 subtitle: Text(context.l10n.appRulesNoAllowDomainsSubtitle),
-                leading: GlyphIcon(AppGlyphs.info),
+                leading: Icon(TablerIcons.info_circle),
               ),
             ],
           ),
@@ -125,7 +125,7 @@ extension _AppRulesDetail on _AppRulesPageState {
           title: context.l10n.appRulesIsolationSection,
           items: [
             ListItem.toggle(
-              leading: const GlyphIcon(AppGlyphs.wifiOff),
+              leading: const Icon(TablerIcons.wifi_off),
               title: Text(context.l10n.appRulesFullBlockToggle),
               subtitle: Text(context.l10n.appRulesFullBlockToggleSubtitle),
               value: fullBlock,
@@ -133,7 +133,7 @@ extension _AppRulesDetail on _AppRulesPageState {
             ),
             if (fullBlock)
               ListItem(
-                leading: GlyphIcon(AppGlyphs.info),
+                leading: Icon(TablerIcons.info_circle),
                 title: Text(context.l10n.appRulesFullBlockOnTitle),
                 subtitle: Text(context.l10n.appRulesFullBlockOnBody),
               ),

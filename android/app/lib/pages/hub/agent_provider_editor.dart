@@ -195,7 +195,7 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: _busy ? null : _pasteFromClipboard,
-              icon: const GlyphIcon(AppGlyphs.paste, size: 16),
+              icon: const Icon(TablerIcons.clipboard, size: 16),
               label: Text(context.l10n.agentEditorPaste),
             ),
           ),
@@ -256,13 +256,13 @@ class _AgentProviderEditorState extends ConsumerState<AgentProviderEditor> {
                 label: _busy
                     ? context.l10n.agentEditorFetching
                     : context.l10n.agentEditorFetch,
-                glyph: AppGlyphs.cloudDownload,
+                glyph: TablerIcons.cloud_download,
                 size: TonalButtonSize.section,
                 onPressed: _busy ? null : _fetchModels,
               ),
               TonalButton(
                 label: context.l10n.agentEditorTest,
-                glyph: AppGlyphs.checkCircle,
+                glyph: TablerIcons.circle_check,
                 size: TonalButtonSize.section,
                 onPressed: _busy ? null : _testConnection,
               ),

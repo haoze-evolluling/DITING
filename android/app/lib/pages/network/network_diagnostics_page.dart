@@ -34,8 +34,8 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
               if (leak != null)
                 _VerdictItem(
                   icon: leak.status == 'leak'
-                      ? AppGlyphs.block
-                      : AppGlyphs.checkCircle,
+                      ? TablerIcons.ban
+                      : TablerIcons.circle_check,
                   error: leak.status == 'leak',
                   title: _leakLabel(context, leak.status),
                   detail: _leakReason(context, leak.reason),
@@ -43,7 +43,7 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
             ],
             action: _ActionButton(
               label: l10n.dnsLeakRun,
-              glyph: AppGlyphs.speed,
+              glyph: TablerIcons.gauge,
               busy: state.leakBusy,
               onPressed: notifier.runLeakCheck,
             ),
@@ -54,8 +54,8 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
               if (captive != null)
                 _VerdictItem(
                   icon: captive.state == 'portal'
-                      ? AppGlyphs.wifiOff
-                      : AppGlyphs.checkCircle,
+                      ? TablerIcons.wifi_off
+                      : TablerIcons.circle_check,
                   error: captive.state == 'portal',
                   title: _captiveLabel(context, captive.state),
                   detail: captive.portalUrl ?? '',
@@ -63,7 +63,7 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
             ],
             action: _ActionButton(
               label: l10n.captiveRun,
-              glyph: AppGlyphs.wifi,
+              glyph: TablerIcons.wifi,
               busy: state.captiveBusy,
               onPressed: notifier.runCaptiveCheck,
             ),
@@ -71,7 +71,7 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
           if (portalUrl != null)
             _ActionButton(
               label: l10n.captiveOpenPortal,
-              glyph: AppGlyphs.openExternal,
+              glyph: TablerIcons.external_link,
               busy: false,
               onPressed: () => launchUrl(
                 Uri.parse(portalUrl),
@@ -82,7 +82,7 @@ class NetworkDiagnosticsPage extends ConsumerWidget {
             title: l10n.hubModuleMore,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.target),
+                leading: const Icon(TablerIcons.target),
                 title: Text(l10n.devIpQuality),
                 subtitle: Text(l10n.devIpQualityBody),
                 onTap: () => context.push(SystemPaths.ipQuality),
@@ -154,7 +154,7 @@ class _VerdictItem extends StatelessWidget {
     required this.detail,
   });
 
-  final Glyph icon;
+  final IconData icon;
   final bool error;
   final String title;
   final String detail;
@@ -165,7 +165,7 @@ class _VerdictItem extends StatelessWidget {
         ? context.colorScheme.error
         : context.colorScheme.success;
     return ListItem(
-      leading: GlyphIcon(icon, color: color),
+      leading: Icon(icon, color: color),
       title: Text(title),
       subtitle: detail.isEmpty ? null : Text(detail),
     );
@@ -181,7 +181,7 @@ class _ActionButton extends StatelessWidget {
   });
 
   final String label;
-  final Glyph glyph;
+  final IconData glyph;
   final bool busy;
   final VoidCallback onPressed;
 
@@ -216,7 +216,7 @@ class _ErrorNotice extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 8,
           children: [
-            GlyphIcon(AppGlyphs.error, size: 18, color: colorScheme.error),
+            Icon(TablerIcons.alert_circle, size: 18, color: colorScheme.error),
             Expanded(
               child: Text(
                 text,

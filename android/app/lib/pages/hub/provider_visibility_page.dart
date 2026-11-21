@@ -132,8 +132,8 @@ class _ProviderVisibilityPageState
       _protocolKey(protocol),
     );
     final allRow = ListItem(
-      leading: GlyphIcon(
-        protocolVisible ? AppGlyphs.checkCircle : AppGlyphs.removeCircle,
+      leading: Icon(
+        protocolVisible ? TablerIcons.circle_check : TablerIcons.circle_minus,
         size: 20,
       ),
       title: Text(context.l10n.providerVisibilityAll(protocol.label)),
@@ -208,8 +208,8 @@ class _ProviderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListItem(
-      leading: GlyphIcon(
-        visible ? AppGlyphs.checkCircle : AppGlyphs.removeCircle,
+      leading: Icon(
+        visible ? TablerIcons.circle_check : TablerIcons.circle_minus,
         size: 20,
       ),
       title: Text(provider.name),
@@ -226,7 +226,7 @@ class _ProviderRow extends StatelessWidget {
               cursor: SystemMouseCursors.grab,
               child: SizedBox.square(
                 dimension: kMinInteractiveDimension,
-                child: Center(child: GlyphIcon(AppGlyphs.dragHandle)),
+                child: Center(child: Icon(TablerIcons.grip_vertical)),
               ),
             ),
           ),

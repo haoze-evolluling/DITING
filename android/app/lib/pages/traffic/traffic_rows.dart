@@ -62,7 +62,7 @@ class AppTrafficRow extends StatelessWidget {
           ],
         ),
       ),
-      trailing: const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+      trailing: const Icon(TablerIcons.chevron_right, size: 18),
       onTap: onTap,
     );
   }

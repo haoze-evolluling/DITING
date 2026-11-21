@@ -142,7 +142,7 @@ void _order() {
     final handle = find.descendant(
       of: find.descendant(of: dohList(), matching: find.byType(ListItem)).last,
       matching: find.byWidgetPredicate(
-        (widget) => widget is GlyphIcon && widget.glyph == AppGlyphs.dragHandle,
+        (widget) => widget is Icon && widget.icon == TablerIcons.grip_vertical,
       ),
     );
 

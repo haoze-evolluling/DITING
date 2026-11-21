@@ -84,17 +84,17 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
         IconButton(
           tooltip: context.l10n.siteLatencyTestAll,
           onPressed: _anyProbing ? null : () => _probe(null),
-          icon: const GlyphIcon(AppGlyphs.speed),
+          icon: const Icon(TablerIcons.gauge),
         ),
         IconButton(
           tooltip: context.l10n.siteLatencyCustomSites,
           onPressed: () => context.push(HomeDetailPaths.latencySites),
-          icon: const GlyphIcon(AppGlyphs.customize),
+          icon: const Icon(TablerIcons.layout_grid_add),
         ),
       ],
       children: [
         DashboardDetailHero(
-          glyph: AppGlyphs.target,
+          glyph: TablerIcons.target,
           label: context.l10n.siteLatencyConnectivity,
           value: connectivityValue,
           chipLabel: chipLabel,
@@ -102,7 +102,7 @@ class _SiteLatencyDetailPageState extends ConsumerState<SiteLatencyDetailPage> {
           hint: hint,
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.speed,
+          glyph: TablerIcons.gauge,
           title: context.l10n.siteLatencyThisRun,
           child: DashboardStatGrid(
             stats: [

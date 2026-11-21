@@ -83,7 +83,7 @@ class SliderCardRow extends StatelessWidget {
   final double min;
   final double max;
   final int? divisions;
-  final Glyph? glyph;
+  final IconData? glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +101,7 @@ class SliderCardRow extends StatelessWidget {
             spacing: 10,
             children: [
               if (glyph != null)
-                GlyphIcon(
+                Icon(
                   glyph!,
                   size: 20,
                   color: colorScheme.onSurfaceVariant,

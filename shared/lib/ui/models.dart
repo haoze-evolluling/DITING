@@ -1,6 +1,4 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-import 'package:diting_shared/ui/icons/icons.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 const _keep = Object();
@@ -15,7 +13,7 @@ class IconButtonData {
     this.isSelected,
   });
 
-  final Glyph glyph;
+  final IconData glyph;
   final VoidCallback? onPressed;
   final String? tooltip;
   final bool isLoading;
@@ -23,7 +21,7 @@ class IconButtonData {
   final bool? isSelected;
 
   IconButtonData copyWith({
-    Glyph? glyph,
+    IconData? glyph,
     Object? onPressed = _keep,
     Object? tooltip = _keep,
     bool? isLoading,

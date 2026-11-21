@@ -46,7 +46,7 @@ class _CommonCircleLoadingState extends State<CommonCircleLoading>
 
   @override
   Widget build(BuildContext context) {
-    final side = widget.size ?? IconTheme.of(context).size ?? Glyph.size;
+    final side = widget.size ?? IconTheme.of(context).size ?? appIconSize;
     return Semantics(
       label: widget.semanticLabel,
       child: RepaintBoundary(

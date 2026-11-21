@@ -161,7 +161,7 @@ class _TroubleshootingLogDetailSheetState
               child: Row(
                 spacing: 12,
                 children: [
-                  const GlyphIcon(AppGlyphs.textShort, size: 22),
+                  const Icon(TablerIcons.align_left, size: 22),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +180,7 @@ class _TroubleshootingLogDetailSheetState
                       ],
                     ),
                   ),
-                  const GlyphIcon(AppGlyphs.chevronForward, size: 18),
+                  const Icon(TablerIcons.chevron_right, size: 18),
                 ],
               ),
             ),
@@ -189,18 +189,18 @@ class _TroubleshootingLogDetailSheetState
             title: l10n.troubleshootLogsActions,
             items: [
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.send, size: 20),
+                leading: const Icon(TablerIcons.send, size: 20),
                 title: Text(l10n.troubleshootLogsShare),
                 onTap: _busy ? null : _share,
               ),
               ListItem(
-                leading: const GlyphIcon(AppGlyphs.cloudDownload, size: 20),
+                leading: const Icon(TablerIcons.cloud_download, size: 20),
                 title: Text(l10n.troubleshootLogsDownload),
                 onTap: _busy ? null : _download,
               ),
               ListItem(
-                leading: GlyphIcon(
-                  AppGlyphs.delete,
+                leading: Icon(
+                  TablerIcons.trash,
                   size: 20,
                   color: colorScheme.error,
                 ),

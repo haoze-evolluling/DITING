@@ -29,7 +29,7 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
       title: context.l10n.speedDetailTitle,
       children: [
         DashboardDetailHero(
-          glyph: AppGlyphs.speed,
+          glyph: TablerIcons.gauge,
           label: context.l10n.speedCurrentDownload,
           value: unsupported
               ? context.l10n.commonNoData
@@ -83,7 +83,7 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
           series: series,
         ),
         DashboardDetailCard(
-          glyph: AppGlyphs.dataUsage,
+          glyph: TablerIcons.chart_pie,
           title: context.l10n.speedTodayTotal,
           child: totals == null
               ? Text(
