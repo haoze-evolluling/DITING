@@ -1,0 +1,60 @@
+use std::sync::Arc;
+
+use diting_connlog_core::ConnLogDedup;
+use diting_flow_core::{FlowEvent, FlowKey, FlowStatus};
+use smoltcp::wire::IpEndpoint;
+
+use super::{now_ms, Engine};
+
+impl Engine {
+    pub fn attribution(&self) -> &crate::attribution::Attribution {
+        &self.attribution
+    }
+
+    pub fn mitm_state(&self) -> &Arc<crate::mitm::MitmState> {
+        &self.mitm
+    }
+
+    pub fn connlog(&self) -> &ConnLogDedup {
+        &self.connlog
+    }
+
+    pub fn record_flow(&self, key: FlowKey, app: &str, domain: &str, status: FlowStatus) {
+        if let Ok(mut table) = self.flows.lock() {
+            table.record(FlowEvent {
+                key,
+                domain: domain.to_string(),
+                package: app.to_string(),
+                up_delta: 0,
+                down_delta: 0,
+                status,
+                at_ms: now_ms(),
+            });
+        }
+    }
+
+    pub fn flow_snapshot_json(&self, since_seq: u64, limit: usize) -> String {
+        match self.flows.lock() {
+            Ok(table) => table.snapshot(since_seq, limit).to_json(),
+            Err(_) => concat!(
+                "{\"baseSeq\":0,\"nextSeq\":0,\"total\":0,",
+                "\"truncated\":false,\"sessions\":[]}"
+            )
+            .to_string(),
+        }
+    }
+
+    pub fn flow_uid(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint) -> i32 {
+        self.attribution
+            .uid_for(protocol, app, server, crate::resolver::now_ns())
+    }
+
+    pub fn app_name(&self, uid: i32) -> String {
+        self.attribution.package_for(uid, crate::resolver::now_ns())
+    }
+
+    pub fn display_name(&self, uid: i32) -> String {
+        self.attribution
+            .display_name(uid, crate::resolver::now_ns())
+    }
+}
