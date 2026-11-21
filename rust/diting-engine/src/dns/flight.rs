@@ -32,6 +32,9 @@ impl Flight {
     async fn wait(&self) -> Result<Vec<u8>, String> {
         loop {
             let notified = self.notify.notified();
+            tokio::pin!(notified);
+            // 先注册再检查，避免 finish() 恰好落在检查与 await 之间导致永久挂起。
+            notified.as_mut().enable();
             if let Ok(slot) = self.result.lock() {
                 if let Some(result) = slot.as_ref() {
                     return result.clone();
