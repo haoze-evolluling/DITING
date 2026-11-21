@@ -2781,7 +2781,6 @@ abstract class AppL10n {
 
   String get aboutCreditsCore;
 
-  /// **'上述两个项目均以 GPL-3.0 协议开源，相关代码与设计的版权归各自作者所有。谛听的界面层大量借鉴了前述界面项目的实现思路，隧道内核也源自 blockads-android 的早期改造；在此向它们的作者与所有贡献者致以诚挚谢意。'**
   String get aboutCreditsBody;
 
   String get aboutSettings;
@@ -5264,7 +5263,6 @@ abstract class AppL10n {
 
   String get disclaimerTerm4Title;
 
-  /// **'本软件的界面组件层移植自 DITING（GPL-3.0-or-later），并使用了 material_ui、material_color_utilities 等开源组件。各组件的许可条款见仓库 NOTICE.md，使用本软件即表示同时接受这些条款。'**
   String get disclaimerTerm4Content;
 
   String get disclaimerTerm5Title;
@@ -5281,7 +5279,6 @@ abstract class AppL10n {
 
   String get disclaimerTerm8Title;
 
-  /// **'本软件以 GPL-3.0-or-later 发布。你可以自由使用、修改与再分发，但衍生作品必须沿用同一许可并保留原始版权声明。'**
   String get disclaimerTerm8Content;
 
   String get disclaimerTerm9Title;

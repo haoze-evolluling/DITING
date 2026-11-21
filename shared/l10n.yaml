@@ -1,5 +1,8 @@
-# Flutter gen-l10n configuration for the shared package. Run `flutter gen-l10n`
-# in shared to regenerate lib/l10n/app_localizations*.dart.
+# Flutter gen-l10n configuration for the shared package. Run
+# `python tool/i18n/gen_l10n.py` in shared to regenerate lib/l10n/app_localizations*.dart:
+# it also strips the `///` comments gen-l10n emits for every message, which would otherwise
+# add tens of thousands of lines of churn to the checked-in generated files. test/l10n/
+# guards against running `flutter gen-l10n` directly.
 #
 # Adding a language: create lib/l10n/app_<code>.arb and add its Locale to AppLanguageMode
 # (lib/state/settings_providers.dart). `AppL10n.supportedLocales` is generated from the ARB

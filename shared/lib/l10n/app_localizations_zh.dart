@@ -11744,8 +11744,7 @@ class AppL10nZh extends AppL10n {
   String get desktopEncryptedListenersTitle => '加密 DNS 服务';
 
   @override
-  String get desktopEncryptedListenersBody =>
-      '在局域网内以 DoT / DoH 提供解析，终端无需明文查询';
+  String get desktopEncryptedListenersBody => '在局域网内以 DoT / DoH 提供解析，终端无需明文查询';
 
   @override
   String get desktopEncryptedEnabled => '已启用';
