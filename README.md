@@ -281,15 +281,6 @@ flutter config --enable-native-assets
 - 应用更新检查访问 GitHub Releases；Android 下载更新包后交给系统安装器处理。
 - 桌面端配置文件、规则、缓存、证书与查询日志保存在上述数据目录，可通过 `DITING_DATA_DIR` 迁移。
 
-## 开发文档
-
-- `docs/development/android-build-environment.md`：Android 构建工具链、Maven 镜像与原生库打包。
-- `docs/development/android-root-dns.md`：Root 免 VPN DNS 接管的运行时组成与控制协议。
-- `docs/development/server-mode.md`：Android 服务器模式、Root 降权与数据目录。
-- `docs/development/desktop-rust-migration.md`：桌面端从 Go 迁移到 Rust 的布局、构建与兼容性。
-- `docs/development/storage-v2-migration.md`：Android 三模式存储 V2 的数据库划分与迁移状态机。
-- `docs/development/recognition-members.md`：赞助者名单的字段格式与头像规范。
-
 ## 参与与反馈
 
 项目仓库：<https://github.com/haoze-evolluling/DITING>
