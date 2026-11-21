@@ -132,6 +132,10 @@ impl ProviderStats {
         }
     }
 
+    pub fn reset(&self) {
+        *self.write() = State::cold();
+    }
+
     pub fn record_success(&self, rtt_ns: i64, now_ns: i64) {
         let mut state = self.write();
         state.last_success_ns = now_ns;

@@ -8,7 +8,7 @@ use diting_upstream_core::tuning::TUNING;
 use socket2::{Domain, Protocol, Socket, Type};
 use tokio::net::lookup_host;
 use tokio::net::{TcpSocket, TcpStream};
-use tokio::time::timeout;
+use tokio::time::{sleep, timeout};
 
 use crate::outbound::udp::UdpTransport;
 use crate::outbound::{Outbound, Route};
@@ -17,6 +17,19 @@ use crate::resolver::bootstrap::Bootstrap;
 
 pub fn connect_timeout() -> Duration {
     Duration::from_nanos(TUNING.connect_timeout_ns.max(1) as u64)
+}
+
+/// 网络交接瞬间（Wi-Fi ↔ 蜂窝）会短暂出现无路由，稍等后重试即可恢复。
+const TRANSIENT_RETRIES: u32 = 2;
+const TRANSIENT_DELAY: Duration = Duration::from_millis(150);
+
+fn transient_network_error(message: &str) -> bool {
+    message.contains("Network is unreachable")
+        || message.contains("Network is down")
+        || message.contains("Operation not permitted")
+        || message.contains("os error 101")
+        || message.contains("os error 100")
+        || message.contains("os error 1)")
 }
 
 #[derive(Clone)]
@@ -102,15 +115,21 @@ impl Dialer {
         let addresses = self.addresses(host, port).await?;
         let route = self.resolver_route();
         let mut last_error = String::new();
-        for address in addresses {
-            let attempt = match &route {
-                Some(outbound) => outbound.dial_tcp(Route::Proxy, address).await,
-                None => self.tcp(address).await.map_err(|error| error.to_string()),
-            };
-            match attempt {
-                Ok(stream) => return Ok(stream),
-                Err(error) => last_error = error,
+        for round in 0..=TRANSIENT_RETRIES {
+            for &address in &addresses {
+                let attempt = match &route {
+                    Some(outbound) => outbound.dial_tcp(Route::Proxy, address).await,
+                    None => self.tcp(address).await.map_err(|error| error.to_string()),
+                };
+                match attempt {
+                    Ok(stream) => return Ok(stream),
+                    Err(error) => last_error = error,
+                }
             }
+            if round == TRANSIENT_RETRIES || !transient_network_error(&last_error) {
+                break;
+            }
+            sleep(TRANSIENT_DELAY * (1 << round)).await;
         }
         Err(last_error)
     }
@@ -129,7 +148,23 @@ impl Dialer {
     pub async fn udp_transport(&self, target: SocketAddr) -> Result<UdpTransport, String> {
         match self.resolver_route() {
             Some(outbound) => outbound.dial_udp(Route::Proxy, target).await,
-            None => UdpTransport::direct(target, &self.protector).await,
+            None => {
+                let mut last_error = String::new();
+                for round in 0..=TRANSIENT_RETRIES {
+                    match UdpTransport::direct(target, &self.protector).await {
+                        Ok(transport) => return Ok(transport),
+                        Err(error)
+                            if round < TRANSIENT_RETRIES
+                                && transient_network_error(&error) =>
+                        {
+                            last_error = error;
+                        }
+                        Err(error) => return Err(error),
+                    }
+                    sleep(TRANSIENT_DELAY * (1 << round)).await;
+                }
+                Err(last_error)
+            }
         }
     }
 }

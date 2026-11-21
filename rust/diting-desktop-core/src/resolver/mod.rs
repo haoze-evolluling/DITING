@@ -158,6 +158,7 @@ impl DesktopResolver {
                     stats: Arc::new(StatsStore::default()),
                     protector: protector.clone(),
                     outbound: None,
+                    system_dns: Default::default(),
                 }),
                 fallback: None,
                 routes: Vec::new(),
@@ -294,6 +295,7 @@ impl DesktopResolver {
             stats: Arc::clone(&self.stats),
             protector: self.protector.clone(),
             outbound: None,
+            system_dns: Default::default(),
         }
     }
 }

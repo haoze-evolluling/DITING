@@ -149,6 +149,34 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockIpv6<'l
 }
 
 #[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetSystemDns<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
+    handle: jlong,
+    servers: JString<'local>,
+) {
+    resolve(&mut env, |env| {
+        let servers = text(env, &servers);
+        with_engine(env, handle, (), |engine| {
+            engine.set_system_dns(&servers)
+        });
+        Ok(())
+    })
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeResetResolverHealth<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
+    handle: jlong,
+) {
+    resolve(&mut env, |env| {
+        with_engine(env, handle, (), |engine| engine.reset_resolver_health());
+        Ok(())
+    })
+}
+
+#[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetTickIntervalMs<'local>(
     mut env: EnvUnowned<'local>,
     _class: JObject<'local>,

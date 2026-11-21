@@ -8,6 +8,7 @@ pub mod pin;
 pub mod plain;
 pub mod schedule;
 mod session;
+mod system;
 pub mod trust;
 
 use std::collections::HashMap;
@@ -26,6 +27,7 @@ use crate::protect::ProtectorHandle;
 
 pub use bootstrap::Bootstrap;
 use dial::Dialer;
+pub use system::SystemDns;
 pub use trust::UpstreamTrust;
 
 pub const NO_PROVIDER: &str = "no usable DNS provider";
@@ -55,6 +57,7 @@ pub struct ResolverDeps {
     pub stats: Arc<StatsStore>,
     pub protector: ProtectorHandle,
     pub outbound: Option<Arc<std::sync::RwLock<crate::outbound::Outbound>>>,
+    pub system_dns: SystemDns,
 }
 
 pub(crate) struct Provider {
@@ -84,6 +87,7 @@ pub(crate) struct Inner {
     pub doh3: Option<doh3::Doh3Client>,
     pub dot: Option<dot::DotClient>,
     pub doq: Option<doq::DoqClient>,
+    pub system_dns: SystemDns,
 }
 
 #[derive(Clone)]
@@ -104,6 +108,7 @@ impl Resolver {
                 doh3: None,
                 dot: None,
                 doq: None,
+                system_dns: deps.system_dns,
             }),
         }
     }
@@ -174,6 +179,7 @@ impl Resolver {
                 doh3,
                 dot,
                 doq,
+                system_dns: deps.system_dns,
             }),
         }
     }
@@ -243,6 +249,21 @@ impl Resolver {
         }
         if let Some(doq) = &self.inner.doq {
             doq.detach();
+        }
+    }
+
+    /// 网络切换后丢弃旧链路上的连接与健康度，让下一轮查询重新探测。
+    pub fn reset_health(&self) {
+        self.inner.system_dns.clear_degraded();
+        self.inner.dial.bootstrap().reset();
+        if let Some(dot) = &self.inner.dot {
+            dot.close_all();
+        }
+        if let Some(doq) = &self.inner.doq {
+            doq.detach();
+        }
+        for provider in &self.inner.providers {
+            provider.stats.reset();
         }
     }
 }

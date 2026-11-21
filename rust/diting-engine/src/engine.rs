@@ -24,7 +24,7 @@ use crate::logs::{BootstrapSink, EventSink, Logs};
 use crate::outbound::{Outbound, StatusDispatcher, StatusSink};
 use crate::policy::{rewrites_from_json, Policy, Rewrites};
 use crate::protect::ProtectorHandle;
-use crate::resolver::{Bootstrap, Resolver, ResolverDeps, StatsStore, UpstreamTrust};
+use crate::resolver::{Bootstrap, Resolver, ResolverDeps, StatsStore, SystemDns, UpstreamTrust};
 use crate::standalone::Standalone;
 use crate::tunnel::{PacketLink, Session, TunFd};
 
@@ -82,6 +82,8 @@ pub struct Engine {
     resolver: RwLock<Arc<Resolver>>,
     stats: Arc<StatsStore>,
     bootstrap: Arc<Bootstrap>,
+    system_dns: SystemDns,
+    negative: crate::dns::negative::NegativeCache,
     trust: RwLock<Arc<UpstreamTrust>>,
     protector: ProtectorHandle,
     outbound: Arc<RwLock<Outbound>>,
@@ -115,6 +117,7 @@ impl Engine {
         let bootstrap = Arc::new(Bootstrap::with_protector(sink, protector.clone()));
         let trust = Arc::new(UpstreamTrust::platform());
         let stats = Arc::new(StatsStore::default());
+        let system_dns = SystemDns::default();
         let outbound = Arc::new(RwLock::new(Outbound::new(
             crate::outbound::Config::default(),
             protector.clone(),
@@ -150,9 +153,12 @@ impl Engine {
                 stats: Arc::clone(&stats),
                 protector: protector.clone(),
                 outbound: Some(Arc::clone(&outbound)),
+                system_dns: system_dns.clone(),
             }))),
             stats,
             bootstrap,
+            system_dns,
+            negative: crate::dns::negative::NegativeCache::default(),
             protector: protector.clone(),
             outbound,
             outbound_status,
@@ -317,6 +323,7 @@ impl Engine {
             stats: Arc::clone(&self.stats),
             protector: self.protector.clone(),
             outbound: Some(Arc::clone(&self.outbound)),
+            system_dns: self.system_dns.clone(),
         };
         let resolver = Arc::new(Resolver::configured(config, deps));
         for reason in resolver.skipped() {
@@ -362,6 +369,23 @@ impl Engine {
 
     pub fn block_ipv6(&self) -> bool {
         self.block_ipv6.load(Ordering::Acquire)
+    }
+
+    /// 由 Android 侧在启动和网络切换时写入当前物理网络下发的 DNS。
+    pub fn set_system_dns(&self, raw: &str) {
+        self.system_dns.set(raw);
+        self.system_dns.clear_degraded();
+    }
+
+    /// 网络切换后清空上游健康度、Bootstrap 与 DoT 连接池，避免继续复用旧链路。
+    pub fn reset_resolver_health(&self) {
+        self.system_dns.clear_degraded();
+        self.negative.clear();
+        self.resolver().reset_health();
+    }
+
+    pub fn negative_cache(&self) -> &crate::dns::negative::NegativeCache {
+        &self.negative
     }
 
     pub fn records_blocked(&self, qtype: u16) -> bool {

@@ -170,6 +170,14 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeSetBlockIpv6(handle, enabled)
     }
 
+    fun setSystemDns(serversCsv: String) {
+        nativeSetSystemDns(handle, serversCsv)
+    }
+
+    fun resetResolverHealth() {
+        nativeResetResolverHealth(handle)
+    }
+
     fun setTickIntervalMs(millis: Long) {
         nativeSetTickIntervalMs(handle, millis)
     }
@@ -277,6 +285,10 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeSetBlockEncryptedDns(handle: Long, enabled: Boolean)
 
     private external fun nativeSetBlockIpv6(handle: Long, enabled: Boolean)
+
+    private external fun nativeSetSystemDns(handle: Long, serversCsv: String)
+
+    private external fun nativeResetResolverHealth(handle: Long)
 
     private external fun nativeSetTickIntervalMs(handle: Long, millis: Long)
 

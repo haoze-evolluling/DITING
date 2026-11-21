@@ -15,6 +15,9 @@ use tokio::time::Instant as TokioInstant;
 use super::{elapsed_ns, now_ns, plain, Inner, RaceEvent, NO_PROVIDER};
 
 const DOH3_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(2);
+/// 系统 DNS 兜底单台超时与整体预算。本地网关通常几毫秒内响应。
+const SYSTEM_ATTEMPT_TIMEOUT: Duration = Duration::from_millis(700);
+const SYSTEM_TOTAL_TIMEOUT: Duration = Duration::from_millis(1500);
 
 fn h3_attempt_timeout(budget: Option<Duration>) -> Duration {
     match budget {
@@ -35,7 +38,24 @@ pub(crate) async fn resolve(
     inner: &Arc<Inner>,
     query: &[u8],
 ) -> (Result<Vec<u8>, String>, Option<RaceEvent>) {
+    // 上一轮上游全部失败后，优先走当前网络下发的 DNS，避免每条查询都等满 5 秒。
+    let mut system_tried = false;
+    if inner.system_dns.is_degraded(now_ns()) {
+        system_tried = true;
+        if let Some(answer) = system_lookup(inner, query).await {
+            inner.system_dns.clear_degraded();
+            return (Ok(answer), None);
+        }
+    }
+
     if inner.providers.is_empty() {
+        if !system_tried {
+            if let Some(answer) = system_lookup(inner, query).await {
+                inner.system_dns.clear_degraded();
+                return (Ok(answer), None);
+            }
+        }
+        inner.system_dns.mark_degraded(now_ns());
         return (Err(NO_PROVIDER.to_string()), None);
     }
 
@@ -47,7 +67,7 @@ pub(crate) async fn resolve(
         );
     };
 
-    match schedule.strategy() {
+    let result = match schedule.strategy() {
         Strategy::Single | Strategy::PrimaryBackup => {
             sequential(inner, &mut schedule, query, started).await
         }
@@ -64,7 +84,51 @@ pub(crate) async fn resolve(
                 Err(_) => (Err("context deadline exceeded".to_string()), None),
             }
         }
+    };
+
+    if result.0.is_ok() {
+        inner.system_dns.clear_degraded();
+        return result;
     }
+    if !system_tried {
+        if let Some(answer) = system_lookup(inner, query).await {
+            let (_, mut race) = result;
+            if let Some(event) = race.as_mut() {
+                event.fallback_used = true;
+                event.fallback_success = true;
+            }
+            inner.system_dns.clear_degraded();
+            return (Ok(answer), race);
+        }
+    }
+    inner.system_dns.mark_degraded(now_ns());
+    result
+}
+
+async fn system_lookup(inner: &Arc<Inner>, query: &[u8]) -> Option<Vec<u8>> {
+    let servers = inner.system_dns.servers();
+    if servers.is_empty() {
+        return None;
+    }
+    let attempt = async {
+        for server in servers {
+            let host = server.ip().to_string();
+            let port = server.port().to_string();
+            let outcome = tokio::time::timeout(
+                SYSTEM_ATTEMPT_TIMEOUT,
+                plain::query(&inner.dial, &host, &port, query, 0),
+            )
+            .await;
+            if let Ok(Ok(answer)) = outcome {
+                return Some(answer);
+            }
+        }
+        None
+    };
+    tokio::time::timeout(SYSTEM_TOTAL_TIMEOUT, attempt)
+        .await
+        .ok()
+        .flatten()
 }
 
 fn plan_input(inner: &Inner, now_ns: i64) -> PlanInput {

@@ -499,6 +499,7 @@ pub fn resolver(config: &str, ca_pem: Option<&str>, sink: Arc<dyn BootstrapSink>
             bootstrap: Arc::new(Bootstrap::new(sink)),
             stats: Arc::new(StatsStore::default()),
             protector: diting_engine::protect::ProtectorHandle::new(),
+            system_dns: Default::default(),
         },
     )
 }

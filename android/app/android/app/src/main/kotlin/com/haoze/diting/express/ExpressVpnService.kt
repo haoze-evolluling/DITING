@@ -20,14 +20,17 @@ import com.haoze.diting.log.LogRetention
 import com.haoze.diting.normal.SpeedTicker
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.tile.QuickSettingsTileUpdater
+import com.haoze.diting.vpn.UnderlyingNetworkMonitor
 import com.haoze.diting.vpn.VpnPlanNative
 import com.haoze.diting.vpn.VpnServiceForeground
+import com.haoze.diting.vpn.applyTo
 import com.haoze.diting.watchdog.VpnReclaimer
 
 class ExpressVpnService : VpnService() {
     private var tun: ParcelFileDescriptor? = null
     private var engine: Engine? = null
     private var dataPlane: EngineDataPlane? = null
+    private var networkMonitor: UnderlyingNetworkMonitor? = null
 
     @Volatile
     private var worker: Thread? = null
@@ -171,6 +174,10 @@ class ExpressVpnService : VpnService() {
             return
         }
 
+        networkMonitor = UnderlyingNetworkMonitor(this, this) { state ->
+            state.applyTo(rustEngine, ipv6Mode)
+        }.also { it.start() }
+
         isRunning = true
         startedAt = System.currentTimeMillis()
         setPersistedRunning(this, true)
@@ -294,6 +301,8 @@ class ExpressVpnService : VpnService() {
     }
 
     private fun releaseResources() {
+        networkMonitor?.stop()
+        networkMonitor = null
         runCatching { tun?.close() }
         tun = null
         worker = null

@@ -70,9 +70,17 @@ pub async fn forward(
         }
     }
 
+    if let Some(error) = engine
+        .negative_cache()
+        .get(query, crate::resolver::now_ns())
+    {
+        return servfail(engine, query, domain, qtype, started, &error, app_name);
+    }
+
     let resolved = super::flight::resolve(engine, query).await;
     match resolved {
         Ok((response, shared)) => {
+            engine.negative_cache().remove(query);
             let extracted = match extract(&response) {
                 Some(extracted) => extracted,
                 None => {
@@ -138,6 +146,9 @@ pub async fn forward(
         }
         Err(error) => {
             engine.log_error(&format!("DNS resolve failed standalone {domain}: {error}"));
+            engine
+                .negative_cache()
+                .put(query, &error, crate::resolver::now_ns());
             servfail(engine, query, domain, qtype, started, &error, app_name)
         }
     }

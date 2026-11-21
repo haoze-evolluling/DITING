@@ -1,6 +1,7 @@
 pub mod dns64;
 pub mod flight;
 pub mod forward;
+pub mod negative;
 
 use std::sync::Arc;
 use std::time::Instant;
