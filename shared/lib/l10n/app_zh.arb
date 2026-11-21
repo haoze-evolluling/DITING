@@ -4231,7 +4231,7 @@
   "cleanupDescMirrorTemplates": "清除自定义订阅镜像模板与全局镜像设置，订阅回退到默认线路",
   "cleanupDescRecognitionMembers": "清除本机缓存的识别成员名单与头像，下次进入相关页面会重新拉取",
   "cleanupDescSettingsGuides": "让所有首次进入说明再次显示，需要重新同意使用协议",
-  "cleanupDescAllData": "深度清空所有日志、运行日志、流量统计、崩溃记录、DNS 缓存、权重样本、域名与地址规则、规则订阅、规则版本快照、镜像模板、应用名单、出站代理、CA 证书、临时缓存、自定义背景、识别成员缓存与自动化记录，并重置新手引导；应用将退出",
+  "cleanupDescAllData": "清空全部日志、缓存、规则、订阅、证书与自定义数据，并重置新手引导；应用将退出",
   "cleanupConfirmLogs": "确定要删除所有 DNS、HTTP 请求日志、竞速统计和 Bootstrap DNS 解析统计吗？",
   "cleanupConfirmTraffic": "确定要清除所有应用的历史流量统计记录与实时统计状态吗？",
   "cleanupConfirmCrash": "确定要删除所有本地崩溃日志和崩溃统计状态吗？",

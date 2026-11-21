@@ -20,7 +20,7 @@
   "cleanupDescDownloadCache": ["删除更新安装包、下载临时文件、应用临时与图片缓存", "Deletes update packages, downloaded temporary files, app temporary and image caches"],
   "cleanupDescCustomBackground": ["清除已配置的自定义壁纸图片缓存及路径记录，恢复默认背景", "Clears the custom wallpaper cache and its stored path, restoring the default background"],
   "cleanupDescSettingsGuides": ["让所有首次进入说明再次显示，需要重新同意使用协议", "Shows every first-run guide again and asks for the terms once more"],
-  "cleanupDescAllData": ["深度清空所有日志、运行日志、流量统计、崩溃记录、DNS 缓存、权重样本、域名与地址规则、规则订阅、规则版本快照、镜像模板、应用名单、出站代理、CA 证书、临时缓存、自定义背景、识别成员缓存与自动化记录，并重置新手引导；应用将退出", "Deep-clears every log, runtime log, traffic statistic, crash record, DNS cache, weight sample, domain and address rule, subscription, rule version snapshot, mirror template, app list, outbound proxy, CA certificate, temporary cache, custom background, recognition cache and automation record, and resets the guides; the app then exits"],
+  "cleanupDescAllData": ["清空全部日志、缓存、规则、订阅、证书与自定义数据，并重置新手引导；应用将退出", "Clears every log, cache, rule, subscription, certificate and custom setting, then exits"],
   "cleanupConfirmLogs": ["确定要删除所有 DNS、HTTP 请求日志、竞速统计和 Bootstrap DNS 解析统计吗？", "Delete all DNS and HTTP request logs, race statistics and bootstrap DNS statistics?"],
   "cleanupConfirmTraffic": ["确定要清除所有应用的历史流量统计记录与实时统计状态吗？", "Clear the traffic history and live counters of every app?"],
   "cleanupConfirmCrash": ["确定要删除所有本地崩溃日志和崩溃统计状态吗？", "Delete all local crash logs and crash statistics?"],

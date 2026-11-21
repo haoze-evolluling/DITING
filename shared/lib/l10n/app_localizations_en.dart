@@ -7666,7 +7666,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get cleanupDescAllData =>
-      'Deep-clears every log, runtime log, traffic statistic, crash record, DNS cache, weight sample, domain and address rule, subscription, rule version snapshot, mirror template, app list, outbound proxy, CA certificate, temporary cache, custom background, recognition cache and automation record, and resets the guides; the app then exits';
+      'Clears every log, cache, rule, subscription, certificate and custom setting, then exits';
 
   @override
   String get cleanupConfirmLogs =>

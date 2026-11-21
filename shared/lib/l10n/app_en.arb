@@ -2251,7 +2251,7 @@
   "cleanupDescMirrorTemplates": "Clears custom subscription mirror templates and global mirror settings, falling back to default routes",
   "cleanupDescRecognitionMembers": "Clears the cached recognition member list and avatars; they are fetched again when needed",
   "cleanupDescSettingsGuides": "Shows every first-run guide again and asks for the terms once more",
-  "cleanupDescAllData": "Deep-clears every log, runtime log, traffic statistic, crash record, DNS cache, weight sample, domain and address rule, subscription, rule version snapshot, mirror template, app list, outbound proxy, CA certificate, temporary cache, custom background, recognition cache and automation record, and resets the guides; the app then exits",
+  "cleanupDescAllData": "Clears every log, cache, rule, subscription, certificate and custom setting, then exits",
   "cleanupConfirmLogs": "Delete all DNS and HTTP request logs, race statistics and bootstrap DNS statistics?",
   "cleanupConfirmTraffic": "Clear the traffic history and live counters of every app?",
   "cleanupConfirmCrash": "Delete all local crash logs and crash statistics?",

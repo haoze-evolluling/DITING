@@ -7234,8 +7234,7 @@ class AppL10nZh extends AppL10n {
   String get cleanupDescSettingsGuides => '让所有首次进入说明再次显示，需要重新同意使用协议';
 
   @override
-  String get cleanupDescAllData =>
-      '深度清空所有日志、运行日志、流量统计、崩溃记录、DNS 缓存、权重样本、域名与地址规则、规则订阅、规则版本快照、镜像模板、应用名单、出站代理、CA 证书、临时缓存、自定义背景、识别成员缓存与自动化记录，并重置新手引导；应用将退出';
+  String get cleanupDescAllData => '清空全部日志、缓存、规则、订阅、证书与自定义数据，并重置新手引导；应用将退出';
 
   @override
   String get cleanupConfirmLogs =>
