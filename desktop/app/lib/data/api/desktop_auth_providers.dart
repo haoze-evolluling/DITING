@@ -2,6 +2,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_shared/data/errors.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_api_providers.dart';
@@ -281,6 +282,7 @@ class DesktopLoginBackgroundNotifier extends Notifier<DesktopLoginBackground?> {
           .loginBackground();
       if (ref.mounted) state = background;
     } on DesktopApiException {
+      ignoreError();
     }
   }
 

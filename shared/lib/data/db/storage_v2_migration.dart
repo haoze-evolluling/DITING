@@ -8,6 +8,7 @@ import 'package:diting_shared/data/db/legacy_storage_source.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/db/storage_v2_copy.dart';
 import 'package:diting_shared/data/db/storage_v2_verify.dart';
+import 'package:diting_shared/data/errors.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 import 'package:flutter/foundation.dart';
@@ -86,6 +87,7 @@ class MethodChannelStorageV2Native implements StorageV2Native {
     try {
       await channel.invokeMethod<void>('closeConnections');
     } on MissingPluginException {
+      ignoreError();
     }
   }
 
@@ -113,6 +115,7 @@ class MethodChannelStorageV2Native implements StorageV2Native {
     try {
       await channel.invokeMethod<void>('clearRuleIndexes');
     } on MissingPluginException {
+      ignoreError();
     }
   }
 }
@@ -441,5 +444,6 @@ Future<void> _removeStaleLock(LegacySettings settings) async {
     final directory = await getDatabasesPath();
     await _removeLock(directory);
   } on StateError {
+    ignoreError();
   }
 }

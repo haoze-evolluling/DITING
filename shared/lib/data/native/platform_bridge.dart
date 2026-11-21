@@ -1,6 +1,7 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/data/errors.dart';
 import 'package:diting_shared/data/native/process_memory.dart';
 import 'package:flutter/services.dart';
 
@@ -180,7 +181,9 @@ class PlatformBridge {
     try {
       await _channel.invokeMethod<bool>('abortExportDocument');
     } on MissingPluginException {
+      ignoreError();
     } on PlatformException {
+      ignoreError();
     }
   }
 
@@ -227,7 +230,9 @@ class PlatformBridge {
     try {
       await _channel.invokeMethod<void>('deleteFontFile', {'path': path});
     } on MissingPluginException {
+      ignoreError();
     } on PlatformException {
+      ignoreError();
     }
   }
 
@@ -250,7 +255,9 @@ class PlatformBridge {
     try {
       await _channel.invokeMethod<void>('releasePersistedText', {'uri': uri});
     } on MissingPluginException {
+      ignoreError();
     } on PlatformException {
+      ignoreError();
     }
   }
 

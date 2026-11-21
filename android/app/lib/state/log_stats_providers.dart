@@ -8,6 +8,7 @@ import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_shared/data/errors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -62,6 +63,7 @@ final logStatsRequestsProvider =
           try {
             http = await HttpRequestRepository(mainDb).dailyStats(since: since);
           } on DatabaseException {
+            ignoreError();
           }
         }
       }

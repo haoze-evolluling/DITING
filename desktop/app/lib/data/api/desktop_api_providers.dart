@@ -2,6 +2,7 @@ library;
 
 import 'dart:async';
 
+import 'package:diting_shared/data/errors.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_desktop/data/api/desktop_api_client.dart';
 import 'package:diting_desktop/data/api/desktop_api_models.dart';
@@ -218,6 +219,7 @@ class DesktopRecentQueriesNotifier extends Notifier<List<QueryLogEntry>> {
       final page = await client.recentQueries();
       if (ref.mounted) state = page.entries;
     } on DesktopApiException {
+      ignoreError();
     }
   }
 }

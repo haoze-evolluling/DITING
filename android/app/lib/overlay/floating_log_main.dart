@@ -8,6 +8,7 @@ import 'package:diting_shared/app/l10n/ui_strings.dart';
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/manager.dart';
 import 'package:diting_shared/data/db/datasets.dart';
+import 'package:diting_shared/data/errors.dart';
 import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
@@ -65,7 +66,9 @@ class FloatingLogWindowChannel {
     try {
       await _channel.invokeMethod<void>(method, arguments);
     } on PlatformException {
+      ignoreError();
     } on MissingPluginException {
+      ignoreError();
     }
   }
 }

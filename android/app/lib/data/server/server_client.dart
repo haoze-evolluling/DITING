@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
+import 'package:diting_shared/data/errors.dart';
 import 'package:flutter/services.dart';
 
 const serverChannelName = 'com.haoze.diting/server';
@@ -99,6 +100,7 @@ class MethodChannelServerClient implements ServerClient {
         return ServerConfig.fromJson(Map<String, Object?>.from(result));
       }
     } on ServerException {
+      ignoreError();
     }
     final raw = await readConfig();
     if (raw == null || raw.trim().isEmpty) return ServerConfig.defaults();

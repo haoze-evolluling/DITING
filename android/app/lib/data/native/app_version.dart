@@ -2,6 +2,7 @@ library;
 
 import 'dart:io';
 
+import 'package:diting_shared/data/errors.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -60,6 +61,7 @@ Future<AppVersion> loadAppVersion({
       return AppVersion(name: name, code: code);
     }
   } on MissingPluginException {
+    ignoreError();
   } on PlatformException catch (error) {
     debugPrint('versionInfo read failed: $error');
   }

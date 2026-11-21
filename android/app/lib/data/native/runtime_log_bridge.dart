@@ -1,5 +1,6 @@
 library;
 
+import 'package:diting_shared/data/errors.dart';
 import 'package:flutter/services.dart';
 
 const runtimeLogChannelName = 'com.haoze.diting/runtime_log';
@@ -152,7 +153,9 @@ class RuntimeLogBridge {
         'fields': fields,
       });
     } on MissingPluginException {
+      ignoreError();
     } on PlatformException {
+      ignoreError();
     }
   }
 

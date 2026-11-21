@@ -1,6 +1,7 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/data/errors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -57,7 +58,9 @@ class DesktopTray {
     try {
       await _channel.invokeMethod<void>('configure', labels.values);
     } on MissingPluginException {
+      ignoreError();
     } on PlatformException {
+      ignoreError();
     }
   }
 }
