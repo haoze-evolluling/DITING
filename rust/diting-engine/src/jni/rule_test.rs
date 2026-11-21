@@ -1,15 +1,16 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JObject, JString};
-use jni::sys::{jint, jstring};
-use jni::JNIEnv;
+use jni::strings::JNIString;
+use jni::sys::jint;
+use jni::EnvUnowned;
 use serde_json::{json, Value};
 
 use diting_dns_core::RewriteTable;
 use diting_policy_core::json::RuleSnapshot;
 use diting_policy_core::Snapshot;
 
-use super::{answer, text};
+use super::{answer, resolve, text};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct CheckOutcome {
@@ -73,41 +74,43 @@ fn outcome_json(outcome: &CheckOutcome) -> String {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_RuleTestNative_check(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
-    snapshot_json: JString<'_>,
-    rewrite_json: JString<'_>,
-    domain: JString<'_>,
-    app: JString<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_RuleTestNative_check<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
+    snapshot_json: JString<'local>,
+    rewrite_json: JString<'local>,
+    domain: JString<'local>,
+    app: JString<'local>,
     qtype: jint,
-) -> jstring {
-    let snapshot_json = text(&mut env, &snapshot_json);
-    let rewrite_json = text(&mut env, &rewrite_json);
-    let domain = text(&mut env, &domain);
-    let app = text(&mut env, &app);
-    let qtype = u16::try_from(qtype).unwrap_or(0);
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let snapshot_json = text(env, &snapshot_json);
+        let rewrite_json = text(env, &rewrite_json);
+        let domain = text(env, &domain);
+        let app = text(env, &app);
+        let qtype = u16::try_from(qtype).unwrap_or(0);
 
-    let result = catch_unwind(AssertUnwindSafe(|| {
-        evaluate_check(&snapshot_json, &rewrite_json, &domain, &app, qtype)
-    }));
-    match result {
-        Ok(Ok(outcome)) => answer(&env, Some(outcome_json(&outcome))),
-        Ok(Err(message)) => {
-            let _ = env.throw_new(
-                "java/lang/IllegalStateException",
-                format!("rule test: {message}"),
-            );
-            std::ptr::null_mut()
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            evaluate_check(&snapshot_json, &rewrite_json, &domain, &app, qtype)
+        }));
+        match result {
+            Ok(Ok(outcome)) => Ok(answer(env, Some(outcome_json(&outcome)))),
+            Ok(Err(message)) => {
+                let _ = env.throw_new(
+                    jni::jni_str!("java/lang/IllegalStateException"),
+                    JNIString::new(format!("rule test: {message}")),
+                );
+                Ok(JObject::null())
+            }
+            Err(_) => {
+                let _ = env.throw_new(
+                    jni::jni_str!("java/lang/IllegalStateException"),
+                    jni::jni_str!("rule test panicked; see logcat"),
+                );
+                Ok(JObject::null())
+            }
         }
-        Err(_) => {
-            let _ = env.throw_new(
-                "java/lang/IllegalStateException",
-                "rule test panicked; see logcat",
-            );
-            std::ptr::null_mut()
-        }
-    }
+    })
 }
 
 #[cfg(test)]

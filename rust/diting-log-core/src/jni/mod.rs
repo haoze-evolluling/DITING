@@ -1,8 +1,9 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
-use jni::objects::{JByteArray, JString};
-use jni::sys::{jbyteArray, jint, jlong};
-use jni::JNIEnv;
+use jni::errors::{Error, LogErrorAndDefault};
+use jni::objects::{JByteArray, JObject, JString};
+use jni::sys::jint;
+use jni::{Env, EnvUnowned};
 
 use crate::row::LogMode;
 
@@ -11,8 +12,15 @@ pub mod rows;
 pub mod runtime;
 pub mod state;
 
-fn with_bytes<R>(
-    env: &mut JNIEnv<'_>,
+pub(super) fn resolve<'local, T: Default>(
+    env: &mut EnvUnowned<'local>,
+    run: impl FnOnce(&mut Env<'local>) -> Result<T, Error>,
+) -> T {
+    env.with_env(run).resolve::<LogErrorAndDefault>()
+}
+
+pub(super) fn with_bytes<R>(
+    env: &Env<'_>,
     packed: &JByteArray<'_>,
     run: impl FnOnce(&[u8]) -> Option<R>,
 ) -> Option<R> {
@@ -20,7 +28,7 @@ fn with_bytes<R>(
     run(&payload)
 }
 
-pub(super) unsafe fn with_handle<T, R>(handle: jlong, run: impl FnOnce(&T) -> R) -> Option<R> {
+pub(super) unsafe fn with_handle<T, R>(handle: i64, run: impl FnOnce(&T) -> R) -> Option<R> {
     if handle == 0 {
         return None;
     }
@@ -28,7 +36,7 @@ pub(super) unsafe fn with_handle<T, R>(handle: jlong, run: impl FnOnce(&T) -> R)
 }
 
 pub(super) unsafe fn with_handle_mut<T, R>(
-    handle: jlong,
+    handle: i64,
     run: impl FnOnce(&mut T) -> R,
 ) -> Option<R> {
     if handle == 0 {
@@ -37,21 +45,24 @@ pub(super) unsafe fn with_handle_mut<T, R>(
     Some(run(&mut *(handle as *mut T)))
 }
 
-fn answer_bytes(env: &JNIEnv<'_>, value: Option<Vec<u8>>) -> jbyteArray {
+pub(super) fn answer_bytes<'local>(
+    env: &mut Env<'local>,
+    value: Option<Vec<u8>>,
+) -> JObject<'local> {
     match value.and_then(|bytes| env.byte_array_from_slice(&bytes).ok()) {
-        Some(array) => array.into_raw(),
-        None => std::ptr::null_mut(),
+        Some(array) => JObject::from(array),
+        None => JObject::null(),
     }
 }
 
-fn mode_from_tag(tag: jint) -> Option<LogMode> {
+pub(super) fn mode_from_tag(tag: jint) -> Option<LogMode> {
     LogMode::from_tag(u8::try_from(tag).ok()?)
 }
 
-fn read_text(env: &mut JNIEnv<'_>, value: &JString<'_>) -> Option<String> {
-    Some(env.get_string(value).ok()?.into())
+pub(super) fn read_text(env: &mut Env<'_>, value: &JString<'_>) -> Option<String> {
+    value.try_to_string(env).ok()
 }
 
-fn guarded<T>(value: impl FnOnce() -> Option<T>) -> Option<T> {
+pub(super) fn guarded<T>(value: impl FnOnce() -> Option<T>) -> Option<T> {
     catch_unwind(AssertUnwindSafe(value)).ok().flatten()
 }

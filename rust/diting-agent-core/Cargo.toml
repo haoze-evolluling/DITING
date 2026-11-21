@@ -10,7 +10,7 @@ crate-type = ["cdylib", "staticlib", "lib"]
 [dependencies]
 # Base64 for the legacy `KeyObfuscator` ciphertext: an upgrade install must decrypt keys the 1.4.3
 # build sealed, so the alphabet and padding rules are fixed.
-base64 = "0.22"
+base64 = "0.23"
 # OpenAI-compatible request/response bodies (`chat/completions`, `models`) and the pasted JSON
 # config: the shapes the app accepts are the parser's job, not the HTTP client's.
 serde = { version = "1", features = ["derive"] }

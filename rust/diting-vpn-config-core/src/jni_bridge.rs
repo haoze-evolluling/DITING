@@ -1,26 +1,32 @@
-use std::panic::{catch_unwind, AssertUnwindSafe};
-
+use jni::errors::{Error, LogErrorAndDefault};
 use jni::objects::{JObject, JString};
-use jni::sys::{jboolean, jstring, JNI_FALSE, JNI_TRUE};
-use jni::JNIEnv;
+use jni::sys::jboolean;
+use jni::{Env, EnvUnowned};
 
 use crate::route::{ipv6_probe_needed, route_plan};
 use crate::start::start_defaults;
 
-fn read(env: &mut JNIEnv<'_>, value: &JString<'_>) -> Option<String> {
-    Some(env.get_string(value).ok()?.into())
+fn resolve<'local, T: Default>(
+    env: &mut EnvUnowned<'local>,
+    run: impl FnOnce(&mut Env<'local>) -> Result<T, Error>,
+) -> T {
+    env.with_env(run).resolve::<LogErrorAndDefault>()
 }
 
-fn to_jstring(env: &JNIEnv<'_>, value: String) -> jstring {
+fn read(env: &mut Env<'_>, value: &JString<'_>) -> Option<String> {
+    value.try_to_string(env).ok()
+}
+
+fn answer_string<'local>(env: &mut Env<'local>, value: String) -> JObject<'local> {
     match env.new_string(value) {
-        Ok(text) => text.into_raw(),
-        Err(_) => std::ptr::null_mut(),
+        Ok(text) => JObject::from(text),
+        Err(_) => JObject::null(),
     }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     mode: JString<'local>,
     ipv6_mode: JString<'local>,
@@ -29,53 +35,55 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>
     excluded: JString<'local>,
     self_package: JString<'local>,
     proxy_package: JString<'local>,
-) -> jstring {
-    let answer = catch_unwind(AssertUnwindSafe(|| {
-        let mode = read(&mut env, &mode)?;
-        let ipv6_mode = read(&mut env, &ipv6_mode)?;
-        let excluded = read(&mut env, &excluded)?;
-        let self_package = read(&mut env, &self_package)?;
-        let proxy_package = read(&mut env, &proxy_package)?;
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let (Some(mode), Some(ipv6_mode), Some(excluded), Some(self_package), Some(proxy_package)) = (
+            read(env, &mode),
+            read(env, &ipv6_mode),
+            read(env, &excluded),
+            read(env, &self_package),
+            read(env, &proxy_package),
+        ) else {
+            return Ok(JObject::null());
+        };
         let packages: Vec<String> = excluded.split('\n').map(str::to_owned).collect();
-        let plan = route_plan(
+        match route_plan(
             &mode,
             &ipv6_mode,
-            ipv6_supported != JNI_FALSE,
-            bypass_lan != JNI_FALSE,
+            ipv6_supported,
+            bypass_lan,
             &packages,
             &self_package,
             &proxy_package,
-        )?;
-        Some(plan.to_string())
-    }));
-    match answer {
-        Ok(Some(value)) => to_jstring(&env, value),
-        _ => std::ptr::null_mut(),
-    }
+        ) {
+            Some(plan) => Ok(answer_string(env, plan.to_string())),
+            None => Ok(JObject::null()),
+        }
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_ipv6ProbeNeeded<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     ipv6_mode: JString<'local>,
 ) -> jboolean {
-    let answer = catch_unwind(AssertUnwindSafe(|| {
-        let ipv6_mode = read(&mut env, &ipv6_mode)?;
-        Some(ipv6_probe_needed(&ipv6_mode))
-    }));
-    match answer {
-        Ok(Some(true)) => JNI_TRUE,
-        _ => JNI_FALSE,
-    }
+    resolve(&mut env, |env| {
+        let Some(ipv6_mode) = read(env, &ipv6_mode) else {
+            return Ok(false);
+        };
+        Ok(ipv6_probe_needed(&ipv6_mode))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_startDefaults<'local>(
-    env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
-) -> jstring {
-    to_jstring(&env, start_defaults().to_string())
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        Ok(answer_string(env, start_defaults().to_string()))
+    })
 }
 
 #[cfg(test)]
@@ -100,18 +108,25 @@ mod tests {
     }
 }
 
-
 mod watchdog_jni {
     use std::panic::{catch_unwind, AssertUnwindSafe};
 
+    use jni::errors::{Error, LogErrorAndDefault};
     use jni::objects::{JObject, JString};
-    use jni::sys::{jboolean, jbyteArray, jint, jlong, JNI_FALSE, JNI_TRUE};
-    use jni::JNIEnv;
+    use jni::sys::{jboolean, jbyteArray, jint, jlong};
+    use jni::{Env, EnvUnowned};
 
     use crate::watchdog::{reclaim_allowed, reconnect_decision, should_follow, Watchdog};
 
-    fn read(env: &mut JNIEnv<'_>, value: &JString<'_>) -> Option<String> {
-        Some(env.get_string(value).ok()?.into())
+    fn resolve<'local, T: Default>(
+        env: &mut EnvUnowned<'local>,
+        run: impl FnOnce(&mut Env<'local>) -> Result<T, Error>,
+    ) -> T {
+        env.with_env(run).resolve::<LogErrorAndDefault>()
+    }
+
+    fn read(env: &mut Env<'_>, value: &JString<'_>) -> Option<String> {
+        value.try_to_string(env).ok()
     }
 
     unsafe fn with_handle<R>(handle: jlong, run: impl FnOnce(&mut Watchdog) -> R) -> Option<R> {
@@ -122,9 +137,9 @@ mod watchdog_jni {
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_newHandle(
-        _env: JNIEnv<'_>,
-        _this: JObject<'_>,
+    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_newHandle<'local>(
+        _env: EnvUnowned<'local>,
+        _this: JObject<'local>,
     ) -> jlong {
         catch_unwind(AssertUnwindSafe(|| {
             Box::into_raw(Box::new(Watchdog::new())) as jlong
@@ -133,9 +148,9 @@ mod watchdog_jni {
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_free(
-        _env: JNIEnv<'_>,
-        _this: JObject<'_>,
+    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_free<'local>(
+        _env: EnvUnowned<'local>,
+        _this: JObject<'local>,
         handle: jlong,
     ) {
         if handle == 0 {
@@ -147,9 +162,9 @@ mod watchdog_jni {
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_start(
-        _env: JNIEnv<'_>,
-        _this: JObject<'_>,
+    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_start<'local>(
+        _env: EnvUnowned<'local>,
+        _this: JObject<'local>,
         handle: jlong,
         now_ms: jlong,
     ) -> jlong {
@@ -161,33 +176,33 @@ mod watchdog_jni {
 
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_evaluate<'local>(
-        env: JNIEnv<'local>,
+        mut env: EnvUnowned<'local>,
         _this: JObject<'local>,
         handle: jlong,
         now_ms: jlong,
         occupied: jboolean,
     ) -> jbyteArray {
-        let answer = catch_unwind(AssertUnwindSafe(|| {
-            let step = unsafe {
-                with_handle(handle, |watchdog| {
-                    watchdog.evaluate(now_ms, occupied != JNI_FALSE)
-                })?
+        let mut array = std::ptr::null_mut();
+        resolve(&mut env, |env| {
+            let step = unsafe { with_handle(handle, |watchdog| watchdog.evaluate(now_ms, occupied)) };
+            let Some(step) = step else {
+                return Ok(());
             };
             let mut bytes = Vec::with_capacity(9);
             bytes.push(step.event as u8);
             bytes.extend_from_slice(&step.next_delay_ms.to_be_bytes());
-            env.byte_array_from_slice(&bytes).ok()
-        }));
-        match answer {
-            Ok(Some(value)) => value.into_raw(),
-            _ => std::ptr::null_mut(),
-        }
+            if let Ok(created) = env.byte_array_from_slice(&bytes) {
+                array = created.into_raw();
+            }
+            Ok(())
+        });
+        array
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_stop(
-        _env: JNIEnv<'_>,
-        _this: JObject<'_>,
+    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_stop<'local>(
+        _env: EnvUnowned<'local>,
+        _this: JObject<'local>,
         handle: jlong,
     ) {
         let _ = catch_unwind(AssertUnwindSafe(|| unsafe {
@@ -197,59 +212,51 @@ mod watchdog_jni {
 
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_shouldFollow<'local>(
-        mut env: JNIEnv<'local>,
+        mut env: EnvUnowned<'local>,
         _this: JObject<'local>,
         enabled: jboolean,
         current_mode: JString<'local>,
         expected_mode: JString<'local>,
         has_intent: jboolean,
     ) -> jboolean {
-        let answer = catch_unwind(AssertUnwindSafe(|| {
-            let current_mode = read(&mut env, &current_mode)?;
-            let expected_mode = read(&mut env, &expected_mode)?;
-            Some(should_follow(
-                enabled != JNI_FALSE,
+        resolve(&mut env, |env| {
+            let (Some(current_mode), Some(expected_mode)) =
+                (read(env, &current_mode), read(env, &expected_mode))
+            else {
+                return Ok(false);
+            };
+            Ok(should_follow(
+                enabled,
                 &current_mode,
                 &expected_mode,
-                has_intent != JNI_FALSE,
+                has_intent,
             ))
-        }));
-        match answer {
-            Ok(Some(true)) => JNI_TRUE,
-            _ => JNI_FALSE,
-        }
+        })
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reclaimAllowed<
-        'local,
-    >(
-        mut env: JNIEnv<'local>,
+    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reclaimAllowed<'local>(
+        mut env: EnvUnowned<'local>,
         _this: JObject<'local>,
         enabled: jboolean,
         current_mode: JString<'local>,
         expected_mode: JString<'local>,
     ) -> jboolean {
-        let answer = catch_unwind(AssertUnwindSafe(|| {
-            let current_mode = read(&mut env, &current_mode)?;
-            let expected_mode = read(&mut env, &expected_mode)?;
-            Some(reclaim_allowed(
-                enabled != JNI_FALSE,
-                &current_mode,
-                &expected_mode,
-            ))
-        }));
-        match answer {
-            Ok(Some(true)) => JNI_TRUE,
-            _ => JNI_FALSE,
-        }
+        resolve(&mut env, |env| {
+            let (Some(current_mode), Some(expected_mode)) =
+                (read(env, &current_mode), read(env, &expected_mode))
+            else {
+                return Ok(false);
+            };
+            Ok(reclaim_allowed(enabled, &current_mode, &expected_mode))
+        })
     }
 
     #[no_mangle]
     pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reconnectDecision<
         'local,
     >(
-        mut env: JNIEnv<'local>,
+        mut env: EnvUnowned<'local>,
         _this: JObject<'local>,
         enabled: jboolean,
         current_mode: JString<'local>,
@@ -257,22 +264,20 @@ mod watchdog_jni {
         consent_missing: jboolean,
         has_intent: jboolean,
     ) -> jint {
-        catch_unwind(AssertUnwindSafe(|| {
-            let Some(current_mode) = read(&mut env, &current_mode) else {
-                return -1;
+        resolve(&mut env, |env| {
+            let (Some(current_mode), Some(expected_mode)) =
+                (read(env, &current_mode), read(env, &expected_mode))
+            else {
+                return Ok(-1);
             };
-            let Some(expected_mode) = read(&mut env, &expected_mode) else {
-                return -1;
-            };
-            reconnect_decision(
-                enabled != JNI_FALSE,
+            Ok(reconnect_decision(
+                enabled,
                 &current_mode,
                 &expected_mode,
-                consent_missing != JNI_FALSE,
-                has_intent != JNI_FALSE,
+                consent_missing,
+                has_intent,
             )
-            .code()
-        }))
-        .unwrap_or(-1)
+            .code())
+        })
     }
 }

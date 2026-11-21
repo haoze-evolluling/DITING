@@ -40,9 +40,9 @@ async-compression = { version = "0.4", features = ["tokio", "gzip", "deflate", "
 
 # Decoding the upstream leaf's certificate-policies extension for the EV refusal, which Go got for
 # free from `crypto/x509`. Same crates `diting-cert-core` already links.
-const-oid = { version = "0.9", features = ["db"] }
-der = "0.7"
-x509-cert = { version = "0.2.5" }
+const-oid = { version = "0.10", features = ["db"] }
+der = "0.8"
+x509-cert = "0.3"
 
 # The kernels the engine already owns: leaf minting and the cosmetic scanner. Direct Rust calls,
 # no C ABI and no dlopen.

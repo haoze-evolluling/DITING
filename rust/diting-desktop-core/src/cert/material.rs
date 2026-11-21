@@ -161,15 +161,15 @@ fn summarize(chain: &[CertificateDer<'static>]) -> Result<Leaf, String> {
     let certificate = X509Certificate::from_der(der.as_ref())
         .map_err(|error| format!("解析证书链失败: {error}"))?;
 
-    let tbs = &certificate.tbs_certificate;
-    let not_before_unix = tbs.validity.not_before.to_unix_duration().as_secs() as i64;
-    let not_after_unix = tbs.validity.not_after.to_unix_duration().as_secs() as i64;
+    let tbs = certificate.tbs_certificate();
+    let not_before_unix = tbs.validity().not_before.to_unix_duration().as_secs() as i64;
+    let not_after_unix = tbs.validity().not_after.to_unix_duration().as_secs() as i64;
     let (dns_names, ip_addresses) = subject_alt_names(&certificate);
 
     Ok(Leaf {
-        subject: tbs.subject.to_string(),
-        issuer: tbs.issuer.to_string(),
-        serial_number: format_serial(tbs.serial_number.as_bytes()),
+        subject: tbs.subject().to_string(),
+        issuer: tbs.issuer().to_string(),
+        serial_number: format_serial(tbs.serial_number().as_bytes()),
         not_before: rfc3339(not_before_unix),
         not_after: rfc3339(not_after_unix),
         not_before_unix,
@@ -186,7 +186,7 @@ fn subject_alt_names(certificate: &X509Certificate) -> (Vec<String>, Vec<String>
     let mut dns_names = Vec::new();
     let mut ip_addresses = Vec::new();
 
-    let Some(extensions) = certificate.tbs_certificate.extensions.as_deref() else {
+    let Some(extensions) = certificate.tbs_certificate().extensions().map(|v| v.as_slice()) else {
         return (dns_names, ip_addresses);
     };
     for extension in extensions {
@@ -226,8 +226,8 @@ fn format_ip(bytes: &[u8]) -> Option<String> {
 
 fn is_self_signed(certificate: &X509Certificate) -> bool {
     match (
-        certificate.tbs_certificate.issuer.to_der(),
-        certificate.tbs_certificate.subject.to_der(),
+        certificate.tbs_certificate().issuer().to_der(),
+        certificate.tbs_certificate().subject().to_der(),
     ) {
         (Ok(issuer), Ok(subject)) => issuer == subject,
         _ => false,

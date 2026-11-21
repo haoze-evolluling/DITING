@@ -8,6 +8,6 @@ publish = false
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 diting-go-compat = { path = "../diting-go-compat" }
 idna = "1"

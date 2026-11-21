@@ -5,9 +5,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
-use jni::objects::{GlobalRef, JObject, JString, JValue};
-use jni::sys::{jboolean, jint, jlong, jstring};
-use jni::{JNIEnv, JavaVM};
+use jni::errors::{Error, LogErrorAndDefault};
+use jni::objects::{Global, JObject, JString, JValue};
+use jni::sys::{jboolean, jint, jlong};
+use jni::{Env, EnvUnowned, JavaVM};
 
 use crate::callback::{CallbackStats, Dispatcher};
 use crate::io::{LoopbackHandle, PacketSource};
@@ -17,16 +18,23 @@ use crate::stats::{stats_json, Counters};
 use crate::RawSocket;
 
 pub const SESSION_CLASS: &str = "com/haoze/diting/engine/TunSession";
-pub const CALLBACK_SIGNATURE: &str = "(Ljava/lang/String;)V";
-pub const PROTECT_SIGNATURE: &str = "(J)Z";
 pub const CALLBACK_THREAD: &str = "diting-tun-callback";
 pub const MTU: usize = 1500;
+
+type GlobalObject = Global<JObject<'static>>;
+
+fn resolve<'local, T: Default>(
+    env: &mut EnvUnowned<'local>,
+    run: impl FnOnce(&mut Env<'local>) -> Result<T, Error>,
+) -> T {
+    env.with_env(run).resolve::<LogErrorAndDefault>()
+}
 
 struct Session {
     vm: Option<Arc<JavaVM>>,
     source: LoopbackHandle,
     protector: Mutex<Arc<dyn Protector>>,
-    callback: Mutex<Option<GlobalRef>>,
+    callback: Mutex<Option<Arc<GlobalObject>>>,
     running: Mutex<Option<Running>>,
 }
 
@@ -76,7 +84,7 @@ fn remove(handle: jlong) -> Option<Arc<Session>> {
 }
 
 fn with_session<R>(
-    env: &mut JNIEnv<'_>,
+    env: &mut Env<'_>,
     handle: jlong,
     default: R,
     run: impl FnOnce(&Arc<Session>) -> R,
@@ -86,110 +94,111 @@ fn with_session<R>(
         Ok(None) => default,
         Err(_) => {
             let _ = env.throw_new(
-                "java/lang/IllegalStateException",
-                "diting tun session panicked; see logcat",
+                jni::jni_str!("java/lang/IllegalStateException"),
+                jni::jni_str!("diting tun session panicked; see logcat"),
             );
             default
         }
     }
 }
 
-fn text(env: &mut JNIEnv<'_>, value: &JString<'_>) -> String {
-    env.get_string(value)
-        .map(|text| text.into())
-        .unwrap_or_default()
+fn text(env: &mut Env<'_>, value: &JString<'_>) -> String {
+    value.try_to_string(env).unwrap_or_default()
 }
 
-fn answer(env: &JNIEnv<'_>, value: Option<String>) -> jstring {
+fn answer<'local>(env: &mut Env<'local>, value: Option<String>) -> JObject<'local> {
     match value.and_then(|value| env.new_string(value).ok()) {
-        Some(text) => text.into_raw(),
-        None => std::ptr::null_mut(),
+        Some(text) => JObject::from(text),
+        None => JObject::null(),
     }
 }
 
-
 struct JniProtector {
     vm: Arc<JavaVM>,
-    target: GlobalRef,
+    target: GlobalObject,
 }
 
 impl Protector for JniProtector {
     fn protect(&self, fd: RawSocket) -> bool {
-        let Ok(mut env) = self.vm.attach_current_thread_permanently() else {
-            return false;
-        };
-        let outcome = env.call_method(
-            self.target.as_obj(),
-            "protect",
-            PROTECT_SIGNATURE,
-            &[JValue::Long(fd as i64)],
-        );
-        let allowed = match outcome {
-            Ok(value) => value.z().unwrap_or(false),
-            Err(_) => false,
-        };
-        if env.exception_check().unwrap_or(false) {
-            let _ = env.exception_clear();
-            return false;
-        }
-        allowed
+        let target = &self.target;
+        self.vm
+            .attach_current_thread(|env| -> Result<bool, Error> {
+                let outcome = env.call_method(
+                    target.as_obj(),
+                    jni::jni_str!("protect"),
+                    jni::jni_sig!("(J)Z"),
+                    &[JValue::Long(fd as i64)],
+                );
+                let allowed = match outcome {
+                    Ok(value) => value.z().unwrap_or(false),
+                    Err(_) => false,
+                };
+                if env.exception_check() {
+                    let _ = env.exception_clear();
+                    return Ok(false);
+                }
+                Ok(allowed)
+            })
+            .unwrap_or(false)
     }
 }
 
-fn callback_factory(vm: Arc<JavaVM>, target: GlobalRef) -> impl FnMut(&str) + Send + 'static {
-    let _ = vm.attach_current_thread_permanently();
+fn callback_factory(vm: Arc<JavaVM>, target: Arc<GlobalObject>) -> impl FnMut(&str) + Send + 'static {
+    let _ = vm.attach_current_thread(|_env| -> Result<(), Error> { Ok(()) });
     move |payload: &str| {
-        let Ok(mut env) = vm.attach_current_thread_permanently() else {
-            return;
-        };
-        let Ok(text) = env.new_string(payload) else {
-            return;
-        };
-        let text = JObject::from(text);
-        let _ = env.call_method(
-            target.as_obj(),
-            "onPacket",
-            CALLBACK_SIGNATURE,
-            &[JValue::Object(&text)],
-        );
-        if env.exception_check().unwrap_or(false) {
-            let _ = env.exception_clear();
-        }
-    }
-}
-
-
-#[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeNew(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
-) -> jlong {
-    let result = catch_unwind(AssertUnwindSafe(|| {
-        let vm = env.get_java_vm().ok().map(Arc::new);
-        insert(Session {
-            vm,
-            source: LoopbackHandle::new(),
-            protector: Mutex::new(Arc::new(NoProtection)),
-            callback: Mutex::new(None),
-            running: Mutex::new(None),
-        })
-    }));
-    match result {
-        Ok(handle) => handle as jlong,
-        Err(_) => {
-            let _ = env.throw_new(
-                "java/lang/IllegalStateException",
-                "diting tun session failed to start",
+        let target = &target;
+        let _ = vm.attach_current_thread(|env| -> Result<(), Error> {
+            let Ok(text) = env.new_string(payload) else {
+                return Ok(());
+            };
+            let text = JObject::from(text);
+            let _ = env.call_method(
+                target.as_obj(),
+                jni::jni_str!("onPacket"),
+                jni::jni_sig!("(Ljava/lang/String;)V"),
+                &[JValue::Object(&text)],
             );
-            0
-        }
+            if env.exception_check() {
+                let _ = env.exception_clear();
+            }
+            Ok(())
+        });
     }
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFree(
-    _env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeNew<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
+) -> jlong {
+    resolve(&mut env, |env| {
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            let vm = env.get_java_vm().ok().map(Arc::new);
+            insert(Session {
+                vm,
+                source: LoopbackHandle::new(),
+                protector: Mutex::new(Arc::new(NoProtection)),
+                callback: Mutex::new(None),
+                running: Mutex::new(None),
+            })
+        }));
+        match result {
+            Ok(handle) => Ok(handle as jlong),
+            Err(_) => {
+                let _ = env.throw_new(
+                    jni::jni_str!("java/lang/IllegalStateException"),
+                    jni::jni_str!("diting tun session failed to start"),
+                );
+                Ok(0)
+            }
+        }
+    })
+}
+
+#[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFree<'local>(
+    _env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
 ) {
     let _ = catch_unwind(AssertUnwindSafe(|| {
@@ -207,73 +216,81 @@ pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFree(
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetProtector(
-    env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetProtector<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
-    protector: JObject<'_>,
+    protector: JObject<'local>,
 ) {
-    if let Some(session) = catch_unwind(AssertUnwindSafe(|| lookup(handle)))
-        .ok()
-        .flatten()
-    {
-        let replacement: Arc<dyn Protector> = if protector.is_null() {
-            Arc::new(NoProtection)
-        } else {
-            let target = match env.new_global_ref(&protector) {
-                Ok(reference) => reference,
-                Err(_) => return,
+    resolve(&mut env, |env| {
+        if let Some(session) = catch_unwind(AssertUnwindSafe(|| lookup(handle)))
+            .ok()
+            .flatten()
+        {
+            let replacement: Arc<dyn Protector> = if protector.is_null() {
+                Arc::new(NoProtection)
+            } else {
+                let target = match env.new_global_ref(&protector) {
+                    Ok(reference) => reference,
+                    Err(_) => return Ok(()),
+                };
+                match session.vm.clone() {
+                    Some(vm) => Arc::new(JniProtector { vm, target }),
+                    None => Arc::new(NoProtection),
+                }
             };
-            match session.vm.clone() {
-                Some(vm) => Arc::new(JniProtector { vm, target }),
-                None => Arc::new(NoProtection),
-            }
-        };
-        *session
-            .protector
-            .lock()
-            .unwrap_or_else(|err| err.into_inner()) = replacement;
-    }
+            *session
+                .protector
+                .lock()
+                .unwrap_or_else(|err| err.into_inner()) = replacement;
+        }
+        Ok(())
+    })
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetCallback(
-    env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeSetCallback<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
-    callback: JObject<'_>,
+    callback: JObject<'local>,
 ) {
-    if let Some(session) = catch_unwind(AssertUnwindSafe(|| lookup(handle)))
-        .ok()
-        .flatten()
-    {
-        let reference = if callback.is_null() {
-            None
-        } else {
-            env.new_global_ref(&callback).ok()
-        };
-        *session
-            .callback
-            .lock()
-            .unwrap_or_else(|err| err.into_inner()) = reference;
-    }
+    resolve(&mut env, |env| {
+        if let Some(session) = catch_unwind(AssertUnwindSafe(|| lookup(handle)))
+            .ok()
+            .flatten()
+        {
+            let reference = if callback.is_null() {
+                None
+            } else {
+                env.new_global_ref(&callback).ok().map(Arc::new)
+            };
+            *session
+                .callback
+                .lock()
+                .unwrap_or_else(|err| err.into_inner()) = reference;
+        }
+        Ok(())
+    })
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStart(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStart<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
-    target: JString<'_>,
-) -> jstring {
-    let target = text(&mut env, &target);
-    let error = with_session(
-        &mut env,
-        handle,
-        Some("session released".to_string()),
-        |session| start_session(session, &target).err(),
-    );
-    answer(&env, error)
+    target: JString<'local>,
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let target = text(env, &target);
+        let error = with_session(
+            env,
+            handle,
+            Some("session released".to_string()),
+            |session| start_session(session, &target).err(),
+        );
+        Ok(answer(env, error))
+    })
 }
 
 fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
@@ -318,110 +335,120 @@ fn start_session(session: &Arc<Session>, target: &str) -> Result<(), String> {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStop(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeStop<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
 ) {
-    with_session(&mut env, handle, (), |session| {
-        let running = session
-            .running
-            .lock()
-            .unwrap_or_else(|err| err.into_inner())
-            .take();
-        if let Some(running) = running {
-            running.stop();
-        }
-    });
+    resolve(&mut env, |env| {
+        with_session(env, handle, (), |session| {
+            let running = session
+                .running
+                .lock()
+                .unwrap_or_else(|err| err.into_inner())
+                .take();
+            if let Some(running) = running {
+                running.stop();
+            }
+        });
+        Ok(())
+    })
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFeed(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeFeed<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
     count: jint,
 ) {
-    with_session(&mut env, handle, (), |session| {
-        for sequence in 0..count.max(0) {
-            let mut packet = [0u8; 64];
-            packet[0] = (sequence & 0xff) as u8;
-            packet[1] = ((sequence >> 8) & 0xff) as u8;
-            if !session.source.push(packet) {
-                break;
+    resolve(&mut env, |env| {
+        with_session(env, handle, (), |session| {
+            for sequence in 0..count.max(0) {
+                let mut packet = [0u8; 64];
+                packet[0] = (sequence & 0xff) as u8;
+                packet[1] = ((sequence >> 8) & 0xff) as u8;
+                if !session.source.push(packet) {
+                    break;
+                }
             }
-        }
-    });
+        });
+        Ok(())
+    })
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeGetStats(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeGetStats<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
-) -> jstring {
-    let live = live_sessions();
-    let document = with_session(&mut env, handle, Some("{}".to_string()), |session| {
-        let running = session
-            .running
-            .lock()
-            .unwrap_or_else(|err| err.into_inner())
-            .as_ref()
-            .map(|running| {
-                (
-                    running.counters.clone(),
-                    running.evidence.clone(),
-                    running.callbacks().stats(),
-                    running.connection.get(),
-                    running.error(),
-                )
-            });
-        Some(match running {
-            Some((counters, evidence, callbacks, connected, error)) => stats_json(
-                live,
-                &counters,
-                &evidence,
-                &callbacks,
-                connected,
-                error.as_deref(),
-            ),
-            None => stats_json(
-                live,
-                &Counters::default(),
-                &Evidence::default(),
-                &CallbackStats::default(),
-                false,
-                None,
-            ),
-        })
-    });
-    answer(&env, document)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let live = live_sessions();
+        let document = with_session(env, handle, Some("{}".to_string()), |session| {
+            let running = session
+                .running
+                .lock()
+                .unwrap_or_else(|err| err.into_inner())
+                .as_ref()
+                .map(|running| {
+                    (
+                        running.counters.clone(),
+                        running.evidence.clone(),
+                        running.callbacks().stats(),
+                        running.connection.get(),
+                        running.error(),
+                    )
+                });
+            Some(match running {
+                Some((counters, evidence, callbacks, connected, error)) => stats_json(
+                    live,
+                    &counters,
+                    &evidence,
+                    &callbacks,
+                    connected,
+                    error.as_deref(),
+                ),
+                None => stats_json(
+                    live,
+                    &Counters::default(),
+                    &Evidence::default(),
+                    &CallbackStats::default(),
+                    false,
+                    None,
+                ),
+            })
+        });
+        Ok(answer(env, document))
+    })
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeWaitForCallbacks(
-    mut env: JNIEnv<'_>,
-    _class: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_engine_TunSession_nativeWaitForCallbacks<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
     handle: jlong,
     delivered: jlong,
     timeout_ms: jlong,
 ) -> jboolean {
-    let wanted = delivered.max(0) as u64;
-    let deadline = Instant::now() + Duration::from_millis(timeout_ms.max(0) as u64);
-    with_session(&mut env, handle, 0, |session| loop {
-        let arrived = session
-            .running
-            .lock()
-            .unwrap_or_else(|err| err.into_inner())
-            .as_ref()
-            .map(|running| running.callbacks().stats().delivered)
-            .unwrap_or(0);
-        if arrived >= wanted {
-            return 1;
-        }
-        if Instant::now() >= deadline {
-            return 0;
-        }
-        std::thread::sleep(Duration::from_millis(5));
+    resolve(&mut env, |env| {
+        let wanted = delivered.max(0) as u64;
+        let deadline = Instant::now() + Duration::from_millis(timeout_ms.max(0) as u64);
+        Ok(with_session(env, handle, false, |session| loop {
+            let arrived = session
+                .running
+                .lock()
+                .unwrap_or_else(|err| err.into_inner())
+                .as_ref()
+                .map(|running| running.callbacks().stats().delivered)
+                .unwrap_or(0);
+            if arrived >= wanted {
+                return true;
+            }
+            if Instant::now() >= deadline {
+                return false;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }))
     })
 }

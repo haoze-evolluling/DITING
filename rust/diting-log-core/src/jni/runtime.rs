@@ -1,57 +1,63 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JByteArray, JObject};
-use jni::sys::{jbyteArray, jint, jlong};
-use jni::JNIEnv;
+use jni::sys::{jint, jlong};
+use jni::EnvUnowned;
 
-use super::{answer_bytes, guarded, with_bytes, with_handle, with_handle_mut};
+use super::{answer_bytes, guarded, resolve, with_bytes, with_handle, with_handle_mut};
 use crate::api;
 use crate::capture::Session;
 use crate::runtime_event::{Gate, Level};
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_storeIndex<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     packed: JByteArray<'local>,
-) -> jbyteArray {
-    let answer = guarded(|| with_bytes(&mut env, &packed, api::store_index));
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| with_bytes(env, &packed, api::store_index));
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_storeDocument<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     packed: JByteArray<'local>,
-) -> jbyteArray {
-    let answer = guarded(|| with_bytes(&mut env, &packed, api::store_document));
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| with_bytes(env, &packed, api::store_document));
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_capturePlan<'local>(
-    env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     pid: jint,
     uid: jint,
     detailed: jint,
-) -> jbyteArray {
-    let answer = guarded(|| Some(api::capture_plan(pid, uid, detailed != 0)));
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| Some(api::capture_plan(pid, uid, detailed != 0)));
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionNew(
-    _env: JNIEnv<'_>,
-    _this: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionNew<'a>(
+    _env: EnvUnowned<'_>,
+    _this: JObject<'a>,
 ) -> jlong {
     guarded(|| Some(Box::into_raw(Box::new(Session::new())) as jlong)).unwrap_or(0)
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionFree(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) {
@@ -65,45 +71,51 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureSessionFree(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_captureLine<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     handle: jlong,
     packed: JByteArray<'local>,
-) -> jbyteArray {
-    let answer = guarded(|| {
-        with_bytes(&mut env, &packed, |payload| unsafe {
-            with_handle(handle, |session: &Session| {
-                api::capture_line(session, payload)
-            })
-        })?
-    });
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| {
+            with_bytes(env, &packed, |payload| unsafe {
+                with_handle(handle, |session: &Session| {
+                    api::capture_line(session, payload)
+                })
+            })?
+        });
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorLayout<'local>(
-    env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
-) -> jbyteArray {
-    let answer = guarded(|| Some(api::mirror_layout()));
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| Some(api::mirror_layout()));
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorRows<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     packed: JByteArray<'local>,
-) -> jbyteArray {
-    let answer = guarded(|| with_bytes(&mut env, &packed, api::mirror_rows));
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| with_bytes(env, &packed, api::mirror_rows));
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 
 #[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventNew(
-    _env: JNIEnv<'_>,
-    _this: JObject<'_>,
+pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventNew<'a>(
+    _env: EnvUnowned<'_>,
+    _this: JObject<'a>,
     min_level_tag: jint,
     dedup_window_ms: jlong,
 ) -> jlong {
@@ -117,7 +129,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventNew(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventFree(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) {
@@ -131,7 +143,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventFree(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventSetLevel(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
     min_level_tag: jint,
@@ -147,18 +159,20 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventSetLevel(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventLine<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     handle: jlong,
     packed: JByteArray<'local>,
     now_ms: jlong,
-) -> jbyteArray {
-    let answer = guarded(|| {
-        with_bytes(&mut env, &packed, |payload| unsafe {
-            with_handle_mut(handle, |gate: &mut Gate| {
-                api::runtime_event_line(gate, payload, now_ms)
-            })
-        })?
-    });
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| {
+            with_bytes(env, &packed, |payload| unsafe {
+                with_handle_mut(handle, |gate: &mut Gate| {
+                    api::runtime_event_line(gate, payload, now_ms)
+                })
+            })?
+        });
+        Ok(answer_bytes(env, answer))
+    })
 }

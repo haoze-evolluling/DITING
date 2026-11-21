@@ -11,7 +11,7 @@ crate-type = ["cdylib", "lib"]
 # The custom-resolver probe walks DNS answers with the same wire reader the cache and the DNS
 # message kernel use; a second answer parser in Kotlin is exactly what this migration removed.
 diting-dns-wire = { path = "../diting-dns-wire" }
-jni = "0.21"
+jni = "0.22"
 # `ping`/`traceroute` output parsing: the patterns are the Kotlin ones, with Java's character
 # classes spelled out (see `ping::PATTERNS`).
 regex = "1"

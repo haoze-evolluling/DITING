@@ -79,7 +79,7 @@ pub fn policy_identifiers(cert_der: &[u8]) -> Vec<String> {
     let Ok(cert) = Certificate::from_der(cert_der) else {
         return Vec::new();
     };
-    let Some(extensions) = cert.tbs_certificate.extensions else {
+    let Some(extensions) = cert.tbs_certificate().extensions() else {
         return Vec::new();
     };
     let mut identifiers = Vec::new();

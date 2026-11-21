@@ -7,22 +7,23 @@ use der::referenced::OwnedToRef;
 use der::{Any, Decode, Encode, Length, Writer};
 use ecdsa::der::Signature as DerSignature;
 use p256::ecdsa::SigningKey;
-use p256::elliptic_curve::sec1::ToEncodedPoint;
+use p256::elliptic_curve::sec1::ToSec1Point;
+use p256::elliptic_curve::Generate;
 use p256::pkcs8::DecodePrivateKey;
 use p256::{NistP256, SecretKey};
-use rand_core::{OsRng, RngCore};
 use sec1::{EcParameters, EcPrivateKey};
 use x509_cert::attr::AttributeTypeAndValue;
-use x509_cert::builder::{Builder, CertificateBuilder, Profile};
+use x509_cert::builder::profile::BuilderProfile;
+use x509_cert::builder::{Builder, CertificateBuilder};
 use x509_cert::ext::pkix::name::{GeneralName, GeneralNames};
 use x509_cert::ext::pkix::{
     AuthorityKeyIdentifier, BasicConstraints, ExtendedKeyUsage, KeyUsage, KeyUsages,
     SubjectAltName, SubjectKeyIdentifier,
 };
-use x509_cert::ext::{AsExtension, Extension};
+use x509_cert::ext::{Criticality, Extension};
 use x509_cert::name::{Name, RdnSequence, RelativeDistinguishedName};
 use x509_cert::serial_number::SerialNumber;
-use x509_cert::spki::SubjectPublicKeyInfoOwned;
+use x509_cert::SubjectPublicKeyInfo;
 use x509_cert::time::{Time, Validity};
 use x509_cert::Certificate;
 
@@ -40,7 +41,7 @@ pub struct CertAuthority {
     ca_cert_der: Vec<u8>,
     ca_cert_pem: String,
     ca_subject: Name,
-    ca_spki: SubjectPublicKeyInfoOwned,
+    ca_spki: SubjectPublicKeyInfo,
     ca_signing: SigningKey,
     leaf_secret: SecretKey,
 }
@@ -58,13 +59,14 @@ pub struct IssuedLeaf {
 
 impl CertAuthority {
     pub fn generate(now_unix: i64) -> Result<GeneratedCa, String> {
-        let ca_secret = SecretKey::random(&mut OsRng);
+        let ca_secret = SecretKey::try_generate()
+            .map_err(|err| format!("create CA cert: {err}"))?;
         let ca_signing = SigningKey::from(&ca_secret);
-        let ca_spki = SubjectPublicKeyInfoOwned::from_key(*ca_signing.verifying_key())
+        let ca_spki = SubjectPublicKeyInfo::from_key(ca_signing.verifying_key())
             .map_err(|err| format!("create CA cert: {err}"))?;
 
         let mut builder = CertificateBuilder::new(
-            Profile::Manual { issuer: None },
+            ManualProfile::self_signed(CA_COMMON_NAME)?,
             random_serial()?,
             validity(
                 now_unix,
@@ -72,9 +74,7 @@ impl CertAuthority {
                 CA_VALIDITY_AFTER_SECS,
                 "create CA cert",
             )?,
-            name(CA_COMMON_NAME)?,
             ca_spki.clone(),
-            &ca_signing,
         )
         .map_err(|err| format!("create CA cert: {err}"))?;
         let subject_key_id = SubjectKeyIdentifier::try_from(ca_spki.owned_to_ref())
@@ -92,12 +92,13 @@ impl CertAuthority {
             .add_extension(&KeyUsage(KeyUsages::KeyCertSign | KeyUsages::CRLSign))
             .map_err(|err| format!("create CA cert: {err}"))?;
         let ca_cert = builder
-            .build::<DerSignature<NistP256>>()
+            .build::<_, DerSignature<NistP256>>(&ca_signing)
             .map_err(|err| format!("create CA cert: {err}"))?;
 
         let ca_key_pem = sec1_pem(&ca_secret)?;
-        let authority =
-            CertAuthority::new(ca_cert, ca_signing, ca_spki, SecretKey::random(&mut OsRng))?;
+        let leaf_secret = SecretKey::try_generate()
+            .map_err(|err| format!("create CA cert: {err}"))?;
+        let authority = CertAuthority::new(ca_cert, ca_signing, ca_spki, leaf_secret)?;
         Ok(GeneratedCa {
             authority,
             ca_key_pem,
@@ -119,8 +120,9 @@ impl CertAuthority {
         {
             return Err("loaded certificate has an outdated subject".to_string());
         }
-        let not_before = time_to_unix(ca_cert.tbs_certificate.validity.not_before);
-        let not_after = time_to_unix(ca_cert.tbs_certificate.validity.not_after);
+        let validity = ca_cert.tbs_certificate().validity();
+        let not_before = time_to_unix(validity.not_before);
+        let not_after = time_to_unix(validity.not_after);
         if now_unix < not_before || now_unix > not_after {
             return Err(format!(
                 "CA certificate expired or not yet valid (NotBefore={}, NotAfter={})",
@@ -134,45 +136,37 @@ impl CertAuthority {
         let ca_secret = SecretKey::from_sec1_der(&key_block.der)
             .or_else(|_| SecretKey::from_pkcs8_der(&key_block.der))
             .map_err(|err| format!("parse CA key: {err}"))?;
-        if ca_cert
-            .tbs_certificate
-            .subject_public_key_info
-            .algorithm
-            .oid
-            != ID_EC_PUBLIC_KEY
-        {
+        let subject_public_key_info = ca_cert.tbs_certificate().subject_public_key_info();
+        if subject_public_key_info.algorithm.oid != ID_EC_PUBLIC_KEY {
             return Err("CA certificate public key is not ECDSA".to_string());
         }
-        let derived = ca_secret.public_key().to_encoded_point(false);
-        if ca_cert
-            .tbs_certificate
-            .subject_public_key_info
-            .subject_public_key
-            .raw_bytes()
-            != derived.as_bytes()
-        {
+        let derived = ca_secret.public_key().to_sec1_point(false);
+        if subject_public_key_info.subject_public_key.raw_bytes() != derived.as_bytes() {
             return Err("CA private key does not match certificate public key".to_string());
         }
 
         let ca_signing = SigningKey::from(&ca_secret);
-        let ca_spki = ca_cert.tbs_certificate.subject_public_key_info.clone();
-        CertAuthority::new(ca_cert, ca_signing, ca_spki, SecretKey::random(&mut OsRng))
+        let ca_spki = subject_public_key_info.clone();
+        let leaf_secret =
+            SecretKey::try_generate().map_err(|err| format!("parse CA key: {err}"))?;
+        CertAuthority::new(ca_cert, ca_signing, ca_spki, leaf_secret)
     }
 
     pub fn issue(&self, host: &str, now_unix: i64) -> Result<IssuedLeaf, String> {
         let not_after_unix = now_unix
             .checked_add(LEAF_VALIDITY_AFTER_SECS)
             .ok_or_else(|| format!("sign leaf cert for {host}: time overflows"))?;
-        let leaf_spki = SubjectPublicKeyInfoOwned::from_key(
-            *SigningKey::from(&self.leaf_secret).verifying_key(),
+        let leaf_spki = SubjectPublicKeyInfo::from_key(
+            SigningKey::from(&self.leaf_secret).verifying_key(),
         )
         .map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
         let dns_names =
             dns_names(host).map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
 
         let mut builder = CertificateBuilder::new(
-            Profile::Manual {
-                issuer: Some(self.ca_subject.clone()),
+            ManualProfile {
+                subject: name(host)?,
+                issuer: self.ca_subject.clone(),
             },
             random_serial().map_err(|err| format!("generate serial for {host}: {err}"))?,
             validity(
@@ -181,9 +175,7 @@ impl CertAuthority {
                 LEAF_VALIDITY_AFTER_SECS,
                 "sign leaf cert",
             )?,
-            name(host)?,
             leaf_spki,
-            &self.ca_signing,
         )
         .map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
 
@@ -214,7 +206,7 @@ impl CertAuthority {
             .map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
 
         let leaf = builder
-            .build::<DerSignature<NistP256>>()
+            .build::<_, DerSignature<NistP256>>(&self.ca_signing)
             .map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
         let leaf_der = leaf
             .to_der()
@@ -243,14 +235,14 @@ impl CertAuthority {
     fn new(
         ca_cert: Certificate,
         ca_signing: SigningKey,
-        ca_spki: SubjectPublicKeyInfoOwned,
+        ca_spki: SubjectPublicKeyInfo,
         leaf_secret: SecretKey,
     ) -> Result<Self, String> {
         let ca_cert_der = ca_cert
             .to_der()
             .map_err(|err| format!("encode CA cert: {err}"))?;
         let ca_cert_pem = pem::encode("CERTIFICATE", &ca_cert_der);
-        let ca_subject = ca_cert.tbs_certificate.subject.clone();
+        let ca_subject = ca_cert.tbs_certificate().subject().clone();
         Ok(CertAuthority {
             ca_cert,
             ca_cert_der,
@@ -285,8 +277,8 @@ impl AssociatedOid for NonCriticalExtendedKeyUsage {
     const OID: ObjectIdentifier = ExtendedKeyUsage::OID;
 }
 
-impl AsExtension for NonCriticalExtendedKeyUsage {
-    fn critical(&self, _subject: &Name, _extensions: &[Extension]) -> bool {
+impl Criticality for NonCriticalExtendedKeyUsage {
+    fn criticality(&self, _subject: &Name, _extensions: &[Extension]) -> bool {
         false
     }
 }
@@ -302,8 +294,7 @@ impl Encode for NonCriticalExtendedKeyUsage {
 }
 
 fn random_serial() -> Result<SerialNumber, String> {
-    let mut bytes = [0u8; 16];
-    OsRng.fill_bytes(&mut bytes);
+    let mut bytes = rand::random::<[u8; 16]>();
     bytes[0] = (bytes[0] & 0x7f) | 0x01;
     SerialNumber::new(&bytes).map_err(|err| format!("generate serial: {err}"))
 }
@@ -314,12 +305,10 @@ fn validity(
     after_secs: i64,
     context: &str,
 ) -> Result<Validity, String> {
-    Ok(Validity {
-        not_before: unix_to_time(now_unix - before_secs)
-            .map_err(|err| format!("{context}: {err}"))?,
-        not_after: unix_to_time(now_unix + after_secs)
-            .map_err(|err| format!("{context}: {err}"))?,
-    })
+    Ok(Validity::new(
+        unix_to_time(now_unix - before_secs).map_err(|err| format!("{context}: {err}"))?,
+        unix_to_time(now_unix + after_secs).map_err(|err| format!("{context}: {err}"))?,
+    ))
 }
 
 fn unix_to_time(unix: i64) -> Result<Time, String> {
@@ -329,10 +318,44 @@ fn unix_to_time(unix: i64) -> Result<Time, String> {
 }
 
 fn name(common_name: &str) -> Result<Name, String> {
-    Ok(RdnSequence(vec![
-        rdn(ORGANIZATION_NAME, CA_ORGANIZATION)?,
-        rdn(COMMON_NAME, common_name)?,
-    ]))
+    let mut sequence = RdnSequence::default();
+    sequence.push(rdn(ORGANIZATION_NAME, CA_ORGANIZATION)?);
+    sequence.push(rdn(COMMON_NAME, common_name)?);
+    Ok(Name::hazmat_from_rdn_sequence(sequence))
+}
+
+struct ManualProfile {
+    subject: Name,
+    issuer: Name,
+}
+
+impl ManualProfile {
+    fn self_signed(common_name: &str) -> Result<Self, String> {
+        let subject = name(common_name)?;
+        Ok(Self {
+            subject: subject.clone(),
+            issuer: subject,
+        })
+    }
+}
+
+impl BuilderProfile for ManualProfile {
+    fn get_issuer(&self, _subject: &Name) -> Name {
+        self.issuer.clone()
+    }
+
+    fn get_subject(&self) -> Name {
+        self.subject.clone()
+    }
+
+    fn build_extensions(
+        &self,
+        _spk: x509_cert::spki::SubjectPublicKeyInfoRef<'_>,
+        _issuer_spk: x509_cert::spki::SubjectPublicKeyInfoRef<'_>,
+        _tbs: &x509_cert::certificate::TbsCertificate,
+    ) -> x509_cert::builder::Result<Vec<Extension>> {
+        Ok(Vec::new())
+    }
 }
 
 fn rdn(oid: ObjectIdentifier, value: &str) -> Result<RelativeDistinguishedName, String> {
@@ -349,7 +372,7 @@ fn rdn(oid: ObjectIdentifier, value: &str) -> Result<RelativeDistinguishedName, 
 
 fn sec1_pem(secret: &SecretKey) -> Result<String, String> {
     let private_key = secret.to_bytes();
-    let public_key = secret.public_key().to_encoded_point(false);
+    let public_key = secret.public_key().to_sec1_point(false);
     let key = EcPrivateKey {
         private_key: &private_key,
         parameters: Some(EcParameters::NamedCurve(NistP256::OID)),
@@ -362,7 +385,7 @@ fn sec1_pem(secret: &SecretKey) -> Result<String, String> {
 }
 
 fn is_ca(cert: &Certificate) -> bool {
-    let Some(extensions) = &cert.tbs_certificate.extensions else {
+    let Some(extensions) = cert.tbs_certificate().extensions() else {
         return false;
     };
     extensions
@@ -376,8 +399,8 @@ fn is_ca(cert: &Certificate) -> bool {
 pub fn subject(cert: &Certificate) -> (Option<String>, Vec<String>) {
     let mut common_name = None;
     let mut organizations = Vec::new();
-    for rdn in &cert.tbs_certificate.subject.0 {
-        for attribute in rdn.0.iter() {
+    for rdn in cert.tbs_certificate().subject().iter_rdn() {
+        for attribute in rdn.iter() {
             let text = String::from_utf8_lossy(attribute.value.value()).into_owned();
             if attribute.oid == COMMON_NAME {
                 common_name = Some(text);

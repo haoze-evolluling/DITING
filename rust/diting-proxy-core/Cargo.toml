@@ -10,4 +10,4 @@ crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
 diting-go-compat = { path = "../diting-go-compat" }
-base64 = "0.22"
+base64 = "0.23"

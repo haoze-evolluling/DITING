@@ -9,12 +9,12 @@ publish = false
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
-base64 = "0.22"
-const-oid = { version = "0.9", features = ["db"] }
-der = { version = "0.7", features = ["pem", "std"] }
-ecdsa = { version = "0.16", features = ["der", "signing"] }
-p256 = { version = "0.13", features = ["ecdsa", "pkcs8", "pem", "std"] }
-rand_core = { version = "0.6", features = ["getrandom"] }
-sec1 = { version = "0.7", features = ["der"] }
-sha2 = { version = "0.10", features = ["oid"] }
-x509-cert = { version = "0.2.5", features = ["builder", "hazmat"] }
+base64 = "0.23"
+const-oid = { version = "0.10", features = ["db"] }
+der = { version = "0.8", features = ["pem", "std"] }
+ecdsa = { version = "0.17", features = ["der"] }
+p256 = { version = "0.14", features = ["ecdsa", "pkcs8", "pem", "std"] }
+rand = "0.10"
+sec1 = { version = "0.8", features = ["der"] }
+sha2 = { version = "0.11", features = ["oid"] }
+x509-cert = { version = "0.3", features = ["builder", "hazmat"] }

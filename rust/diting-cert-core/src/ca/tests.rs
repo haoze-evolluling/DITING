@@ -20,7 +20,7 @@ fn extension<'a, T>(cert: &'a Certificate) -> Option<T>
 where
     T: Decode<'a> + AssociatedOid,
 {
-    let extensions = cert.tbs_certificate.extensions.as_ref()?;
+    let extensions = cert.tbs_certificate().extensions()?;
     extensions
         .iter()
         .find(|extension| extension.extn_id == T::OID)
@@ -83,11 +83,11 @@ fn generated_ca_matches_the_old_template() {
     );
 
     assert_eq!(
-        time_to_unix(cert.tbs_certificate.validity.not_before),
+        time_to_unix(cert.tbs_certificate().validity().not_before),
         NOW - CA_VALIDITY_BEFORE_SECS
     );
     assert_eq!(
-        time_to_unix(cert.tbs_certificate.validity.not_after),
+        time_to_unix(cert.tbs_certificate().validity().not_after),
         NOW + CA_VALIDITY_AFTER_SECS
     );
 
@@ -110,8 +110,8 @@ fn issued_leaf_matches_the_old_template() {
     assert_eq!(common_name.as_deref(), Some("www.example.com"));
     assert_eq!(organizations, vec![CA_ORGANIZATION.to_string()]);
     assert_eq!(
-        cert.tbs_certificate.issuer,
-        authority.ca_certificate().tbs_certificate.subject
+        cert.tbs_certificate().issuer(),
+        authority.ca_certificate().tbs_certificate().subject()
     );
 
     let constraints: BasicConstraints = extension(&cert).expect("basic constraints");
@@ -126,9 +126,8 @@ fn issued_leaf_matches_the_old_template() {
     let eku: ExtendedKeyUsage = extension(&cert).expect("extended key usage");
     assert_eq!(eku.0, vec![ID_KP_SERVER_AUTH]);
     let eku_extension = cert
-        .tbs_certificate
-        .extensions
-        .as_ref()
+        .tbs_certificate()
+        .extensions()
         .unwrap()
         .iter()
         .find(|extension| extension.extn_id == ExtendedKeyUsage::OID)
@@ -146,11 +145,11 @@ fn issued_leaf_matches_the_old_template() {
     assert_eq!(aki.key_identifier, Some(ca_ski.0));
 
     assert_eq!(
-        time_to_unix(cert.tbs_certificate.validity.not_before),
+        time_to_unix(cert.tbs_certificate().validity().not_before),
         NOW - LEAF_VALIDITY_BEFORE_SECS
     );
     assert_eq!(
-        time_to_unix(cert.tbs_certificate.validity.not_after),
+        time_to_unix(cert.tbs_certificate().validity().not_after),
         NOW + LEAF_VALIDITY_AFTER_SECS
     );
     assert_eq!(issued.not_after_unix, NOW + LEAF_VALIDITY_AFTER_SECS);
@@ -186,11 +185,11 @@ fn the_leaf_key_is_shared_and_reloads() {
     let secret = SecretKey::from_sec1_der(&key_block.der).expect("SEC1 key");
     assert_eq!(
         first_cert
-            .tbs_certificate
-            .subject_public_key_info
+            .tbs_certificate()
+            .subject_public_key_info()
             .subject_public_key
             .raw_bytes(),
-        secret.public_key().to_encoded_point(false).as_bytes()
+        secret.public_key().to_sec1_point(false).as_bytes()
     );
 
     assert_eq!(
@@ -228,11 +227,23 @@ fn dns_names_follow_the_old_wildcard_rule() {
 fn load_rejects_a_foreign_subject() {
     let generated = CertAuthority::generate(NOW).expect("generate");
     let cert = generated.authority.ca_certificate();
-    let mut tampered = cert.clone();
-    let rdns = &mut tampered.tbs_certificate.subject.0;
-    rdns[1] = rdn(COMMON_NAME, "Someone Else").unwrap();
-    tampered.tbs_certificate.issuer = tampered.tbs_certificate.subject.clone();
-    let pem_text = pem::encode("CERTIFICATE", &tampered.to_der().unwrap());
+    // Same-length rewrite of the subject CN keeps the DER parseable while the
+    // issuer still names the original CA.
+    const FOREIGN_CN: &[u8] = b"DITING HTTPS Inspection Root CB";
+    let needle = CA_COMMON_NAME.as_bytes();
+    let mut der = cert.to_der().unwrap();
+    let issuer_at = der
+        .windows(needle.len())
+        .position(|window| window == needle)
+        .expect("issuer CN in the DER");
+    let subject_at = issuer_at
+        + 1
+        + der[issuer_at + 1..]
+            .windows(needle.len())
+            .position(|window| window == needle)
+            .expect("subject CN in the DER");
+    der[subject_at..subject_at + needle.len()].copy_from_slice(FOREIGN_CN);
+    let pem_text = pem::encode("CERTIFICATE", &der);
     let error = load_error(CertAuthority::load(&pem_text, &generated.ca_key_pem, NOW));
     assert_eq!(error, "loaded certificate has an outdated subject");
 }
@@ -241,7 +252,7 @@ fn load_rejects_a_foreign_subject() {
 fn load_checks_the_validity_window_with_injected_time() {
     let generated = CertAuthority::generate(NOW).expect("generate");
     let cert = generated.authority.ca_certificate();
-    let not_after = time_to_unix(cert.tbs_certificate.validity.not_after);
+    let not_after = time_to_unix(cert.tbs_certificate().validity().not_after);
 
     let error = load_error(CertAuthority::load(
         generated.authority.ca_pem(),
@@ -322,14 +333,13 @@ fn the_subject_key_identifier_is_the_sha1_of_the_public_key() {
     let generated = CertAuthority::generate(NOW).expect("generate");
     let cert = generated.authority.ca_certificate();
     let ski: SubjectKeyIdentifier = extension(cert).expect("SKI");
-    let spki = cert.tbs_certificate.subject_public_key_info.owned_to_ref();
+    let spki = cert.tbs_certificate().subject_public_key_info().owned_to_ref();
     let expected = SubjectKeyIdentifier::try_from(spki).unwrap();
     assert_eq!(ski, expected);
 
     let has_der_extension = cert
-        .tbs_certificate
-        .extensions
-        .as_ref()
+        .tbs_certificate()
+        .extensions()
         .unwrap()
         .iter()
         .any(|extension| extension.extn_id == ID_CE_SUBJECT_KEY_IDENTIFIER);

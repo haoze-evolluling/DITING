@@ -99,19 +99,14 @@ pub fn is_extended_validation(cert_der: &[u8]) -> bool {
     let Ok(certificate) = Certificate::from_der(cert_der) else {
         return false;
     };
-    let Some(policies) = certificate
-        .tbs_certificate
-        .extensions
-        .as_ref()
-        .and_then(|extensions| {
-            extensions
-                .iter()
-                .find(|extension| {
-                    extension.extn_id == const_oid::db::rfc5280::ID_CE_CERTIFICATE_POLICIES
-                })
-                .cloned()
-        })
-    else {
+    let Some(policies) = certificate.tbs_certificate().extensions().and_then(|extensions| {
+        extensions
+            .iter()
+            .find(|extension| {
+                extension.extn_id == const_oid::db::rfc5280::ID_CE_CERTIFICATE_POLICIES
+            })
+            .cloned()
+    }) else {
         return false;
     };
     let Ok(decoded) = CertificatePolicies::from_der(policies.extn_value.as_bytes()) else {

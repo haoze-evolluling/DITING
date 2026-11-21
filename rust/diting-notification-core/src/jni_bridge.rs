@@ -1,67 +1,69 @@
-use std::panic::{catch_unwind, AssertUnwindSafe};
-
+use jni::errors::{Error, LogErrorAndDefault};
 use jni::objects::{JObject, JString};
-use jni::sys::{jboolean, jlong, jstring};
-use jni::JNIEnv;
+use jni::sys::{jboolean, jlong};
+use jni::{Env, EnvUnowned};
 
 use crate::compose::Stats;
 
-fn read(env: &mut JNIEnv<'_>, value: &JString<'_>) -> Option<String> {
-    Some(env.get_string(value).ok()?.into())
+fn resolve<'local, T: Default>(
+    env: &mut EnvUnowned<'local>,
+    run: impl FnOnce(&mut Env<'local>) -> Result<T, Error>,
+) -> T {
+    env.with_env(run).resolve::<LogErrorAndDefault>()
 }
 
-fn to_jstring(env: &JNIEnv<'_>, value: String) -> jstring {
+fn read(env: &mut Env<'_>, value: &JString<'_>) -> Option<String> {
+    value.try_to_string(env).ok()
+}
+
+fn answer_string<'local>(env: &mut Env<'local>, value: String) -> JObject<'local> {
     match env.new_string(value) {
-        Ok(text) => text.into_raw(),
-        Err(_) => std::ptr::null_mut(),
+        Ok(text) => JObject::from(text),
+        Err(_) => JObject::null(),
     }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_statsItems<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     raw: JString<'local>,
     has_raw: jboolean,
     legacy_speed: jboolean,
-) -> jstring {
-    let answer = catch_unwind(AssertUnwindSafe(|| {
-        let raw = read(&mut env, &raw)?;
-        Some(crate::settings::stats_items(&raw, has_raw != 0, legacy_speed != 0).join("\n"))
-    }));
-    match answer {
-        Ok(Some(value)) => to_jstring(&env, value),
-        _ => std::ptr::null_mut(),
-    }
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let Some(raw) = read(env, &raw) else {
+            return Ok(JObject::null());
+        };
+        let items = crate::settings::stats_items(&raw, has_raw, legacy_speed);
+        Ok(answer_string(env, items.join("\n")))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_runningText<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     custom: JString<'local>,
     mode_default: JString<'local>,
     fallback: JString<'local>,
-) -> jstring {
-    let answer = catch_unwind(AssertUnwindSafe(|| {
-        let custom = read(&mut env, &custom)?;
-        let mode_default = read(&mut env, &mode_default)?;
-        let fallback = read(&mut env, &fallback)?;
-        Some(crate::settings::running_text(
-            &custom,
-            &mode_default,
-            &fallback,
-        ))
-    }));
-    match answer {
-        Ok(Some(value)) => to_jstring(&env, value),
-        _ => std::ptr::null_mut(),
-    }
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let (Some(custom), Some(mode_default), Some(fallback)) = (
+            read(env, &custom),
+            read(env, &mode_default),
+            read(env, &fallback),
+        ) else {
+            return Ok(JObject::null());
+        };
+        let text = crate::settings::running_text(&custom, &mode_default, &fallback);
+        Ok(answer_string(env, text))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_compose<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     items: JString<'local>,
     labels_json: JString<'local>,
@@ -74,10 +76,11 @@ pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_compose
     with_speed: jboolean,
     tx_bps: jlong,
     rx_bps: jlong,
-) -> jstring {
-    let answer = catch_unwind(AssertUnwindSafe(|| {
-        let items = read(&mut env, &items)?;
-        let labels_json = read(&mut env, &labels_json)?;
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let (Some(items), Some(labels_json)) = (read(env, &items), read(env, &labels_json)) else {
+            return Ok(JObject::null());
+        };
         let stats = Stats {
             total,
             passed,
@@ -86,17 +89,16 @@ pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_compose
             cached,
             rewritten,
         };
-        crate::compose::compose(
+        match crate::compose::compose(
             &items,
             &labels_json,
             &stats,
-            with_speed != 0,
+            with_speed,
             tx_bps,
             rx_bps,
-        )
-    }));
-    match answer {
-        Ok(Some(value)) => to_jstring(&env, value),
-        _ => std::ptr::null_mut(),
-    }
+        ) {
+            Some(text) => Ok(answer_string(env, text)),
+            None => Ok(JObject::null()),
+        }
+    })
 }

@@ -33,7 +33,7 @@ pub fn parse_pin(text: &str) -> Result<[u8; 32], String> {
 
 pub fn certificate_pin(cert_der: &[u8]) -> Option<[u8; 32]> {
     let certificate = Certificate::from_der(cert_der).ok()?;
-    let tbs = certificate.tbs_certificate.to_der().ok()?;
+    let tbs = certificate.tbs_certificate().to_der().ok()?;
     let digest = Sha256::digest(&tbs);
     let mut pin = [0u8; 32];
     pin.copy_from_slice(&digest);

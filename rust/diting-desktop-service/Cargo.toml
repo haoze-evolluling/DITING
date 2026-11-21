@@ -23,5 +23,5 @@ async-trait = "0.1"
 tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros", "signal", "process"] }
 
 [target.'cfg(windows)'.dependencies]
-windows-service = "0.7"
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Console"] }
+windows-service = "0.8"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Console"] }

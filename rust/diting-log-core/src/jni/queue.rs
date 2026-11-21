@@ -1,17 +1,17 @@
 use std::panic::{catch_unwind, AssertUnwindSafe};
 
 use jni::objects::{JByteArray, JObject};
-use jni::sys::{jboolean, jbyteArray, jint, jlong, JNI_FALSE, JNI_TRUE};
-use jni::JNIEnv;
+use jni::sys::{jboolean, jint, jlong};
+use jni::EnvUnowned;
 
-use super::{answer_bytes, guarded, with_bytes, with_handle};
+use super::{answer_bytes, guarded, resolve, with_bytes, with_handle};
 use crate::api;
 use crate::queue::Queue;
 
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueNew(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     settings_tag: jint,
 ) -> jlong {
@@ -27,7 +27,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueNew(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueFree(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) {
@@ -41,68 +41,77 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueFree(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmit<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     handle: jlong,
     packed: JByteArray<'local>,
     now_ms: jlong,
-) -> jbyteArray {
-    let answer = guarded(|| {
-        with_bytes(&mut env, &packed, |payload| unsafe {
-            with_handle(handle, |queue: &Queue| {
-                api::queue_submit(queue, payload, now_ms)
-            })
-        }?)
-    });
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| {
+            with_bytes(env, &packed, |payload| unsafe {
+                with_handle(handle, |queue: &Queue| {
+                    api::queue_submit(queue, payload, now_ms)
+                })
+            }?)
+        });
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueSubmitMany<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     handle: jlong,
     packed: JByteArray<'local>,
     now_ms: jlong,
-) -> jbyteArray {
-    let answer = guarded(|| {
-        with_bytes(&mut env, &packed, |payload| unsafe {
-            with_handle(handle, |queue: &Queue| {
-                api::queue_submit_many(queue, payload, now_ms)
-            })
-        }?)
-    });
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer = guarded(|| {
+            with_bytes(env, &packed, |payload| unsafe {
+                with_handle(handle, |queue: &Queue| {
+                    api::queue_submit_many(queue, payload, now_ms)
+                })
+            }?)
+        });
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueTake<'local>(
-    env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     handle: jlong,
-) -> jbyteArray {
-    let answer = guarded(|| unsafe { with_handle(handle, |queue: &Queue| api::queue_take(queue)) });
-    answer_bytes(&env, answer)
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let answer =
+            guarded(|| unsafe { with_handle(handle, |queue: &Queue| api::queue_take(queue)) });
+        Ok(answer_bytes(env, answer))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRequeue<'local>(
-    mut env: JNIEnv<'local>,
+    mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     handle: jlong,
     packed: JByteArray<'local>,
 ) -> jint {
-    let answer = guarded(|| {
-        with_bytes(&mut env, &packed, |payload| unsafe {
-            with_handle(handle, |queue: &Queue| api::queue_requeue(queue, payload))
-        }?)
-    });
-    answer.map(|overflow| overflow as jint).unwrap_or(-1)
+    resolve(&mut env, |env| {
+        let answer = guarded(|| {
+            with_bytes(env, &packed, |payload| unsafe {
+                with_handle(handle, |queue: &Queue| api::queue_requeue(queue, payload))
+            }?)
+        });
+        Ok(answer.map(|overflow| overflow as jint).unwrap_or(-1))
+    })
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueBackoff(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
     now_ms: jlong,
@@ -112,7 +121,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueBackoff(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueResetBackoff(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) {
@@ -123,7 +132,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueResetBackoff(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRetryWait(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
     now_ms: jlong,
@@ -134,34 +143,34 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueRetryWait(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueInBackoff(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
     now_ms: jlong,
 ) -> jboolean {
     match guarded(|| unsafe { with_handle(handle, |queue: &Queue| queue.in_backoff(now_ms)) }) {
-        Some(true) => JNI_TRUE,
-        _ => JNI_FALSE,
+        Some(true) => true,
+        _ => false,
     }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMissingLatched(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
     now_ms: jlong,
 ) -> jboolean {
     match guarded(|| unsafe { with_handle(handle, |queue: &Queue| queue.missing_latched(now_ms)) })
     {
-        Some(true) => JNI_TRUE,
-        _ => JNI_FALSE,
+        Some(true) => true,
+        _ => false,
     }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueLatchMissing(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
     now_ms: jlong,
@@ -173,7 +182,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueLatchMissing(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMarkClosed(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) {
@@ -184,19 +193,19 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueMarkClosed(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueIsClosed(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) -> jboolean {
     match guarded(|| unsafe { with_handle(handle, |queue: &Queue| queue.is_closed()) }) {
-        Some(true) => JNI_TRUE,
-        _ => JNI_FALSE,
+        Some(true) => true,
+        _ => false,
     }
 }
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueClose(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) -> jint {
@@ -205,7 +214,7 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueClose(
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queuePendingLen(
-    _env: JNIEnv<'_>,
+    _env: EnvUnowned<'_>,
     _this: JObject<'_>,
     handle: jlong,
 ) -> jint {

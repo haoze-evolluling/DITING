@@ -11,7 +11,8 @@ use rcgen::{
     ExtendedKeyUsagePurpose, IsCa, KeyPair, KeyUsagePurpose, SanType, SerialNumber,
     PKCS_ECDSA_P256_SHA256,
 };
-use x509_cert::builder::{Builder, CertificateBuilder, Profile};
+use x509_cert::builder::profile::BuilderProfile;
+use x509_cert::builder::{Builder, CertificateBuilder};
 use x509_cert::der::asn1::Ia5String as DerIa5String;
 use x509_cert::der::oid::ObjectIdentifier;
 use x509_cert::der::Encode;
@@ -22,12 +23,36 @@ use x509_cert::ext::pkix::{
 };
 use x509_cert::name::Name;
 use x509_cert::serial_number::SerialNumber as X509SerialNumber;
-use x509_cert::spki::SubjectPublicKeyInfoOwned;
 use x509_cert::time::{Time, Validity};
+use x509_cert::SubjectPublicKeyInfo;
 
 use super::material::pem_encode;
 
 const SERVER_AUTH_OID: &str = "1.3.6.1.5.5.7.3.1";
+
+struct ManualProfile {
+    subject: Name,
+    issuer: Name,
+}
+
+impl BuilderProfile for ManualProfile {
+    fn get_issuer(&self, _subject: &Name) -> Name {
+        self.issuer.clone()
+    }
+
+    fn get_subject(&self) -> Name {
+        self.subject.clone()
+    }
+
+    fn build_extensions(
+        &self,
+        _spk: x509_cert::spki::SubjectPublicKeyInfoRef<'_>,
+        _issuer_spk: x509_cert::spki::SubjectPublicKeyInfoRef<'_>,
+        _tbs: &x509_cert::certificate::TbsCertificate,
+    ) -> x509_cert::builder::Result<Vec<x509_cert::ext::Extension>> {
+        Ok(Vec::new())
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct SelfSignedCert {
@@ -97,23 +122,21 @@ fn generate_rsa_self_signed(
     config: &CertConfig,
     valid_days: i32,
 ) -> Result<SelfSignedCert, String> {
+    use rand::rngs::SysRng;
     use rsa::pkcs1v15::SigningKey;
     use rsa::pkcs8::{EncodePrivateKey, LineEnding};
-    use rsa::rand_core::OsRng;
     use rsa::signature::Keypair;
-    use rsa::RsaPrivateKey;
     use sha2::Sha256;
 
-    let private_key = RsaPrivateKey::new(&mut OsRng, 3072)
+    let signing_key = SigningKey::<Sha256>::random(&mut SysRng, 3072)
         .map_err(|error| format!("生成 RSA 私钥失败: {error}"))?;
-    let key_pem = private_key
+    let key_pem = signing_key
         .to_pkcs8_pem(LineEnding::LF)
         .map_err(|error| format!("编码 RSA 私钥失败: {error}"))?;
 
-    let signing_key = SigningKey::<Sha256>::new(private_key.clone());
     let subject = Name::from_str(&format!("O=DITING,CN={}", common_name(config)))
         .map_err(|error| format!("构建证书主题失败: {error}"))?;
-    let public_key = SubjectPublicKeyInfoOwned::from_key(signing_key.verifying_key())
+    let public_key = SubjectPublicKeyInfo::from_key(&signing_key.verifying_key())
         .map_err(|error| format!("编码 RSA 公钥失败: {error}"))?;
 
     let mut serial = rand::random::<[u8; 16]>();
@@ -124,20 +147,21 @@ fn generate_rsa_self_signed(
         X509SerialNumber::new(&serial).map_err(|error| format!("生成证书序列号失败: {error}"))?;
 
     let now = SystemTime::now();
-    let validity = Validity {
-        not_before: Time::try_from(now - Duration::from_secs(86_400))
+    let validity = Validity::new(
+        Time::try_from(now - Duration::from_secs(86_400))
             .map_err(|error| format!("设置证书生效时间失败: {error}"))?,
-        not_after: Time::try_from(now + Duration::from_secs(valid_days as u64 * 86_400))
+        Time::try_from(now + Duration::from_secs(valid_days as u64 * 86_400))
             .map_err(|error| format!("设置证书过期时间失败: {error}"))?,
-    };
+    );
 
     let mut builder = CertificateBuilder::new(
-        Profile::Manual { issuer: None },
+        ManualProfile {
+            subject: subject.clone(),
+            issuer: subject,
+        },
         serial,
         validity,
-        subject,
         public_key,
-        &signing_key,
     )
     .map_err(|error| format!("生成自签证书失败: {error}"))?;
     builder
@@ -161,7 +185,7 @@ fn generate_rsa_self_signed(
         .map_err(|error| format!("写入证书扩展失败: {error}"))?;
 
     let certificate = builder
-        .build::<rsa::pkcs1v15::Signature>()
+        .build::<_, rsa::pkcs1v15::Signature>(&signing_key)
         .map_err(|error| format!("生成自签证书失败: {error}"))?;
     let der = certificate
         .to_der()
@@ -265,9 +289,9 @@ mod tests {
         let mut dns = Vec::new();
         let mut ips = Vec::new();
         for extension in certificate
-            .tbs_certificate
-            .extensions
-            .as_deref()
+            .tbs_certificate()
+            .extensions()
+            .map(|extensions| extensions.as_slice())
             .unwrap_or(&[])
         {
             if extension.extn_id.to_string() != "2.5.29.17" {
@@ -314,11 +338,11 @@ mod tests {
         assert_eq!(dns, vec!["dns.lan", "alt.lan"]);
         assert_eq!(ips, vec!["127.0.0.1", "::1"]);
         assert_eq!(
-            certificate.tbs_certificate.subject.to_string(),
+            certificate.tbs_certificate().subject().to_string(),
             "O=DITING,CN=dns.lan"
         );
 
-        let validity = &certificate.tbs_certificate.validity;
+        let validity = certificate.tbs_certificate().validity();
         let not_before = validity.not_before.to_unix_duration().as_secs() as i64;
         let not_after = validity.not_after.to_unix_duration().as_secs() as i64;
         let now = chrono::Utc::now().timestamp();
@@ -336,7 +360,7 @@ mod tests {
         assert!(dns.is_empty());
         assert_eq!(ips, vec!["127.0.0.1", "::1"]);
         assert_eq!(
-            certificate.tbs_certificate.subject.to_string(),
+            certificate.tbs_certificate().subject().to_string(),
             format!("O=DITING,CN={DEFAULT_SERVER_NAME}")
         );
     }
@@ -362,8 +386,8 @@ mod tests {
             .starts_with("-----BEGIN CERTIFICATE-----"));
         assert!(generated.key_pem.starts_with("-----BEGIN PRIVATE KEY-----"));
 
-        let key = rsa::RsaPrivateKey::from_pkcs8_pem(&generated.key_pem).expect("PKCS#8 key");
-        assert_eq!(key.n().bits(), 3072);
+        let key = rsa::PrivateKey::from_pkcs8_pem(&generated.key_pem).expect("PKCS#8 key");
+        assert_eq!(key.n().bit_width(), 3072);
         super::super::material::parse_pair(
             generated.cert_pem.as_bytes(),
             generated.key_pem.as_bytes(),
@@ -372,7 +396,7 @@ mod tests {
 
         let certificate = parse_certificate(&generated.cert_pem);
         assert_eq!(
-            certificate.tbs_certificate.subject.to_string(),
+            certificate.tbs_certificate().subject().to_string(),
             "O=DITING,CN=dns.lan"
         );
         let (dns, ips) = sans(&certificate);
@@ -380,9 +404,9 @@ mod tests {
         assert_eq!(ips, vec!["127.0.0.1", "::1"]);
 
         let extensions = certificate
-            .tbs_certificate
-            .extensions
-            .as_deref()
+            .tbs_certificate()
+            .extensions()
+            .map(|extensions| extensions.as_slice())
             .unwrap_or(&[]);
         let key_usage = extensions
             .iter()

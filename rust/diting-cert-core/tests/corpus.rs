@@ -42,9 +42,8 @@ fn leaf_certificate(chain_pem: &str) -> Certificate {
 
 fn dns_of(cert: &Certificate) -> Vec<String> {
     let extensions = cert
-        .tbs_certificate
-        .extensions
-        .as_ref()
+        .tbs_certificate()
+        .extensions()
         .expect("extensions");
     let san = extensions
         .iter()
@@ -79,18 +78,18 @@ fn the_legacy_ca_still_loads() {
         .contains("DITING HTTPS Inspection Root CA"));
 
     assert_eq!(
-        time_to_unix(cert.tbs_certificate.validity.not_before),
+        time_to_unix(cert.tbs_certificate().validity().not_before),
         info["ca_not_before"].parse::<i64>().unwrap()
     );
     assert_eq!(
-        time_to_unix(cert.tbs_certificate.validity.not_after),
+        time_to_unix(cert.tbs_certificate().validity().not_after),
         not_after
     );
 
     assert_eq!(authority.ca_pem(), read("legacy_ca.crt"));
 
     let ski = {
-        let extensions = cert.tbs_certificate.extensions.as_ref().unwrap();
+        let extensions = cert.tbs_certificate().extensions().unwrap();
         let extension = extensions
             .iter()
             .find(|extension| extension.extn_id == x509_cert::ext::pkix::SubjectKeyIdentifier::OID)
@@ -101,7 +100,7 @@ fn the_legacy_ca_still_loads() {
     };
     assert_eq!(ski, info["ca_ski"]);
     assert_eq!(
-        hex(cert.tbs_certificate.serial_number.as_bytes()),
+        hex(cert.tbs_certificate().serial_number().as_bytes()),
         info["ca_serial"]
     );
 }

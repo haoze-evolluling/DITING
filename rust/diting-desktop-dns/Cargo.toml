@@ -24,6 +24,6 @@ quinn = { version = "0.11", default-features = false, features = ["runtime-tokio
 hyper = { version = "1", features = ["server", "http1", "http2"] }
 hyper-util = { version = "0.1", features = ["server", "server-auto", "tokio"] }
 http-body-util = "0.1"
-base64 = "0.22"
+base64 = "0.23"
 futures-util = "0.3"
 

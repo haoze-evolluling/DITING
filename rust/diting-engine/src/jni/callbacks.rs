@@ -3,21 +3,23 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use jni::objects::{GlobalRef, JObject, JValue};
-use jni::{JNIEnv, JavaVM};
+use jni::objects::{Global, JObject, JValue};
+use jni::signature::MethodSignature;
+use jni::strings::JNIStr;
+use jni::{Env, JavaVM};
 
 use crate::engine::Engine;
 use crate::logs::{
     bootstrap_batch_payload, race_batch_payload, BootstrapEvent, EventSink, RaceEvent,
 };
 
-pub const BATCH_SIGNATURE: &str = "([B)V";
-pub const RACE_BATCH_SIGNATURE: &str = "([B)V";
-pub const BOOTSTRAP_BATCH_SIGNATURE: &str = "([B)V";
-
 const EVENT_BATCH_SIZE: usize = 64;
 const EVENT_FLUSH_INTERVAL: Duration = Duration::from_millis(200);
 const EVENT_CHANNEL_CAPACITY: usize = 1_024;
+
+type GlobalObject = Global<JObject<'static>>;
+type SharedGlobal = Arc<GlobalObject>;
+type SlotRef = Arc<Mutex<Option<SharedGlobal>>>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Slot {
@@ -32,11 +34,34 @@ enum Pending {
     Flush(Sender<()>),
 }
 
-type SlotRef = Arc<Mutex<Option<GlobalRef>>>;
+#[derive(Clone, Copy)]
+enum CallbackMethod {
+    Batch,
+    Race,
+    Bootstrap,
+}
+
+impl CallbackMethod {
+    fn name(self) -> &'static JNIStr {
+        match self {
+            CallbackMethod::Batch => jni::jni_str!("onDNSQueryBatch"),
+            CallbackMethod::Race => jni::jni_str!("onRaceEvents"),
+            CallbackMethod::Bootstrap => jni::jni_str!("onBootstrapEvents"),
+        }
+    }
+
+    fn signature(self) -> MethodSignature<'static, 'static> {
+        match self {
+            CallbackMethod::Batch => jni::jni_sig!("([B)V"),
+            CallbackMethod::Race => jni::jni_sig!("([B)V"),
+            CallbackMethod::Bootstrap => jni::jni_sig!("([B)V"),
+        }
+    }
+}
 
 pub struct CallbackSink {
     vm: Option<Arc<JavaVM>>,
-    batch: Mutex<Option<GlobalRef>>,
+    batch: Mutex<Option<SharedGlobal>>,
     race: SlotRef,
     bootstrap: SlotRef,
     events: Option<SyncSender<Pending>>,
@@ -44,7 +69,7 @@ pub struct CallbackSink {
 }
 
 impl CallbackSink {
-    pub fn new(env: &mut JNIEnv<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>) -> Result<Self, jni::errors::Error> {
         let vm = Arc::new(env.get_java_vm()?);
         let race: SlotRef = Arc::new(Mutex::new(None));
         let bootstrap: SlotRef = Arc::new(Mutex::new(None));
@@ -79,7 +104,7 @@ impl CallbackSink {
         }
     }
 
-    pub fn set(&self, env: &mut JNIEnv<'_>, slot: Slot, callback: JObject<'_>) {
+    pub fn set(&self, env: &mut Env<'_>, slot: Slot, callback: JObject<'_>) {
         let mut current = match slot {
             Slot::Batch => self.batch.lock().unwrap_or_else(|error| error.into_inner()),
             Slot::Race => self.race.lock().unwrap_or_else(|error| error.into_inner()),
@@ -92,7 +117,7 @@ impl CallbackSink {
             *current = None;
             return;
         }
-        *current = env.new_global_ref(&callback).ok();
+        *current = env.new_global_ref(&callback).ok().map(Arc::new);
     }
 
     pub fn has_batch(&self) -> bool {
@@ -108,13 +133,13 @@ impl CallbackSink {
             || self.slot_ref(&self.bootstrap).is_some()
     }
 
-    fn slot_ref(&self, slot: &SlotRef) -> Option<GlobalRef> {
+    fn slot_ref(&self, slot: &SlotRef) -> Option<SharedGlobal> {
         slot.lock()
             .unwrap_or_else(|error| error.into_inner())
             .clone()
     }
 
-    fn call_bytes(&self, slot: Slot, method: &str, signature: &str, payload: &[u8]) {
+    fn call_bytes(&self, slot: Slot, method: CallbackMethod, payload: &[u8]) {
         let target = match slot {
             Slot::Batch => self
                 .batch
@@ -127,13 +152,13 @@ impl CallbackSink {
         let (Some(target), Some(vm)) = (target, self.vm.as_ref()) else {
             return;
         };
-        deliver_bytes(vm, &target, method, signature, payload);
+        deliver_bytes(vm, &target, method, payload);
     }
 }
 
 impl EventSink for CallbackSink {
     fn batch(&self, payload: &[u8]) {
-        self.call_bytes(Slot::Batch, "onDNSQueryBatch", BATCH_SIGNATURE, payload);
+        self.call_bytes(Slot::Batch, CallbackMethod::Batch, payload);
     }
 
     fn race(&self, event: RaceEvent) {
@@ -226,8 +251,7 @@ fn flush_events(
                 deliver_bytes(
                     vm,
                     &target,
-                    "onRaceEvents",
-                    RACE_BATCH_SIGNATURE,
+                    CallbackMethod::Race,
                     &race_batch_payload(&races),
                 );
             }
@@ -238,8 +262,7 @@ fn flush_events(
                 deliver_bytes(
                     vm,
                     &target,
-                    "onBootstrapEvents",
-                    BOOTSTRAP_BATCH_SIGNATURE,
+                    CallbackMethod::Bootstrap,
                     &bootstrap_batch_payload(&bootstraps),
                 );
             }
@@ -259,30 +282,31 @@ fn push_pending(event: Pending, races: &mut Vec<RaceEvent>, bootstraps: &mut Vec
     }
 }
 
-fn reference(slot: &SlotRef) -> Option<GlobalRef> {
+fn reference(slot: &SlotRef) -> Option<SharedGlobal> {
     slot.lock()
         .unwrap_or_else(|error| error.into_inner())
         .clone()
 }
 
-fn deliver_bytes(vm: &JavaVM, target: &GlobalRef, method: &str, signature: &str, payload: &[u8]) {
-    let Ok(mut env) = vm.attach_current_thread_permanently() else {
-        return;
-    };
-    {
-        let rows = env.byte_array_from_slice(payload);
-        if let Ok(rows) = rows {
-            let rows = JObject::from(rows);
-            let _ = env.call_method(target.as_obj(), method, signature, &[JValue::Object(&rows)]);
+fn deliver_bytes(vm: &JavaVM, target: &GlobalObject, method: CallbackMethod, payload: &[u8]) {
+    let _ = vm.attach_current_thread(|env| -> Result<(), jni::errors::Error> {
+        let rows = env.byte_array_from_slice(payload)?;
+        let rows = JObject::from(rows);
+        let _ = env.call_method(
+            target.as_obj(),
+            method.name(),
+            method.signature(),
+            &[JValue::Object(&rows)],
+        );
+        if env.exception_check() {
+            let _ = env.exception_clear();
         }
-    }
-    if env.exception_check().unwrap_or(false) {
-        let _ = env.exception_clear();
-    }
+        Ok(())
+    });
 }
 
 pub fn set_sink(
-    env: &mut JNIEnv<'_>,
+    env: &mut Env<'_>,
     engine: &Arc<Engine>,
     sink: &Arc<CallbackSink>,
     slot: Slot,

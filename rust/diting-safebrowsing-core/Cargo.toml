@@ -10,4 +10,4 @@ crate-type = ["cdylib", "staticlib", "lib"]
 [dependencies]
 diting-go-compat = { path = "../diting-go-compat" }
 psl = "2"
-sha2 = "0.10"
+sha2 = "0.11"

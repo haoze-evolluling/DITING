@@ -8,4 +8,4 @@ publish = false
 crate-type = ["cdylib", "staticlib", "lib"]
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"

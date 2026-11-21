@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use jni::objects::{GlobalRef, JObject, JValue};
-use jni::{JNIEnv, JavaVM};
+use jni::objects::{Global, JObject, JString, JValue};
+use jni::{Env, JavaVM};
 
 use crate::attribution::{AppUidResolver, UidResolver};
 use crate::engine::TrafficSink;
@@ -15,32 +15,36 @@ pub const UID_SIGNATURE: &str = "(J[BJ[BJ)J";
 pub const APP_SIGNATURE: &str = "(J)Ljava/lang/String;";
 pub const TRAFFIC_SIGNATURE: &str = "([B)V";
 
+type GlobalObject = Global<JObject<'static>>;
+
 fn capture(
-    env: &mut JNIEnv<'_>,
+    env: &mut Env<'_>,
     callback: &JObject<'_>,
-) -> Result<(JavaVM, GlobalRef), jni::errors::Error> {
+) -> Result<(JavaVM, GlobalObject), jni::errors::Error> {
     Ok((env.get_java_vm()?, env.new_global_ref(callback)?))
 }
 
-fn with_env<R>(vm: &JavaVM, call: impl FnOnce(&mut JNIEnv<'_>) -> Option<R>, default: R) -> R {
-    let mut env = match vm.attach_current_thread_permanently() {
-        Ok(env) => env,
-        Err(_) => return default,
-    };
-    let result = call(&mut env).unwrap_or(default);
-    if env.exception_check().unwrap_or(false) {
-        let _ = env.exception_clear();
+fn with_env<R>(vm: &JavaVM, call: impl FnOnce(&mut Env<'_>) -> Option<R>, default: R) -> R {
+    let result = vm.attach_current_thread(|env| {
+        let value = call(env);
+        if env.exception_check() {
+            let _ = env.exception_clear();
+        }
+        Ok::<Option<R>, jni::errors::Error>(value)
+    });
+    match result {
+        Ok(Some(value)) => value,
+        _ => default,
     }
-    result
 }
 
 pub struct JniProtector {
     vm: JavaVM,
-    target: GlobalRef,
+    target: GlobalObject,
 }
 
 impl JniProtector {
-    pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
         Ok(Self { vm, target })
     }
@@ -53,8 +57,8 @@ impl Protector for JniProtector {
             |env| {
                 env.call_method(
                     self.target.as_obj(),
-                    "protect",
-                    PROTECT_SIGNATURE,
+                    jni::jni_str!("protect"),
+                    jni::jni_sig!("(J)Z"),
                     &[JValue::Long(fd)],
                 )
                 .ok()?
@@ -68,11 +72,11 @@ impl Protector for JniProtector {
 
 pub struct JniUidResolver {
     vm: JavaVM,
-    target: GlobalRef,
+    target: GlobalObject,
 }
 
 impl JniUidResolver {
-    pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
         Ok(Self { vm, target })
     }
@@ -95,8 +99,8 @@ impl UidResolver for JniUidResolver {
                 let uid = env
                     .call_method(
                         self.target.as_obj(),
-                        "resolveUID",
-                        UID_SIGNATURE,
+                        jni::jni_str!("resolveUID"),
+                        jni::jni_sig!("(J[BJ[BJ)J"),
                         &[
                             JValue::Long(i64::from(protocol)),
                             JValue::Object(&app),
@@ -117,11 +121,11 @@ impl UidResolver for JniUidResolver {
 
 pub struct JniAppUidResolver {
     vm: JavaVM,
-    target: GlobalRef,
+    target: GlobalObject,
 }
 
 impl JniAppUidResolver {
-    pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
         Ok(Self { vm, target })
     }
@@ -135,8 +139,8 @@ impl AppUidResolver for JniAppUidResolver {
                 let value = env
                     .call_method(
                         self.target.as_obj(),
-                        "packageForUid",
-                        APP_SIGNATURE,
+                        jni::jni_str!("packageForUid"),
+                        jni::jni_sig!("(J)Ljava/lang/String;"),
                         &[JValue::Long(i64::from(uid))],
                     )
                     .ok()?
@@ -145,7 +149,8 @@ impl AppUidResolver for JniAppUidResolver {
                 if value.is_null() {
                     return Some(String::new());
                 }
-                env.get_string(&value.into()).ok().map(Into::into)
+                let text = env.new_cast_local_ref::<JString>(&value).ok()?;
+                text.try_to_string(env).ok()
             },
             String::new(),
         )
@@ -154,11 +159,11 @@ impl AppUidResolver for JniAppUidResolver {
 
 pub struct JniTrafficSink {
     vm: JavaVM,
-    target: GlobalRef,
+    target: GlobalObject,
 }
 
 impl JniTrafficSink {
-    pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
         Ok(Self { vm, target })
     }
@@ -172,8 +177,8 @@ impl TrafficSink for JniTrafficSink {
                 let rows = JObject::from(env.byte_array_from_slice(payload).ok()?);
                 env.call_method(
                     self.target.as_obj(),
-                    "onTrafficStatsTick",
-                    TRAFFIC_SIGNATURE,
+                    jni::jni_str!("onTrafficStatsTick"),
+                    jni::jni_sig!("([B)V"),
                     &[JValue::Object(&rows)],
                 )
                 .ok()?;
@@ -184,7 +189,7 @@ impl TrafficSink for JniTrafficSink {
     }
 }
 
-pub fn protector(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Option<Arc<dyn Protector>> {
+pub fn protector(env: &mut Env<'_>, callback: &JObject<'_>) -> Option<Arc<dyn Protector>> {
     JniProtector::new(env, callback)
         .ok()
         .map(|protector| Arc::new(protector) as Arc<dyn Protector>)
@@ -194,11 +199,11 @@ pub const OUTBOUND_SIGNATURE: &str = "(Ljava/lang/String;Ljava/lang/String;)V";
 
 pub struct JniOutboundStatus {
     vm: JavaVM,
-    target: GlobalRef,
+    target: GlobalObject,
 }
 
 impl JniOutboundStatus {
-    pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
         Ok(Self { vm, target })
     }
@@ -213,8 +218,8 @@ impl crate::outbound::StatusSink for JniOutboundStatus {
                 let message = JObject::from(env.new_string(message).ok()?);
                 env.call_method(
                     self.target.as_obj(),
-                    "onOutboundProxyStatus",
-                    OUTBOUND_SIGNATURE,
+                    jni::jni_str!("onOutboundProxyStatus"),
+                    jni::jni_sig!("(Ljava/lang/String;Ljava/lang/String;)V"),
                     &[JValue::Object(&state), JValue::Object(&message)],
                 )
                 .ok()?;
@@ -246,7 +251,7 @@ pub struct JniHttpLog {
 }
 
 impl JniHttpLog {
-    pub fn new(env: &mut JNIEnv<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
+    pub fn new(env: &mut Env<'_>, callback: &JObject<'_>) -> Result<Self, jni::errors::Error> {
         let (vm, target) = capture(env, callback)?;
         let vm = Arc::new(vm);
         let (sender, receiver) = mpsc::sync_channel(HTTP_CHANNEL_CAPACITY);
@@ -290,7 +295,7 @@ impl Drop for JniHttpLog {
     }
 }
 
-fn flush_http_events(vm: &Arc<JavaVM>, target: &GlobalRef, receiver: Receiver<HttpEvent>) {
+fn flush_http_events(vm: &Arc<JavaVM>, target: &GlobalObject, receiver: Receiver<HttpEvent>) {
     let mut batch = Vec::with_capacity(HTTP_BATCH_SIZE);
     while let Ok(event) = receiver.recv() {
         batch.push(event);
@@ -310,7 +315,7 @@ fn flush_http_events(vm: &Arc<JavaVM>, target: &GlobalRef, receiver: Receiver<Ht
     }
 }
 
-fn deliver_http_events(vm: &JavaVM, target: &GlobalRef, batch: &[HttpEvent]) {
+fn deliver_http_events(vm: &JavaVM, target: &GlobalObject, batch: &[HttpEvent]) {
     let mut payload = Vec::with_capacity(4 + batch.len() * HTTP_FIELDS * 16);
     payload.extend_from_slice(&(batch.len() as u32).to_be_bytes());
     for event in batch {
@@ -332,8 +337,8 @@ fn deliver_http_events(vm: &JavaVM, target: &GlobalRef, batch: &[HttpEvent]) {
             let rows = JObject::from(rows);
             env.call_method(
                 target.as_obj(),
-                "onHttpEvents",
-                HTTP_LOG_SIGNATURE,
+                jni::jni_str!("onHttpEvents"),
+                jni::jni_sig!("([B)V"),
                 &[JValue::Object(&rows)],
             )
             .ok()?;
