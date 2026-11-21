@@ -46,6 +46,13 @@ class RootDnsService : Service() {
     @Volatile
     private var lastError: String? = null
 
+    /**
+     * 本次接管使用的数据集：普通模式与简洁模式的规则、日志、偏好各自独立，
+     * Root 接管跟随当前工作模式，避免简洁模式读到普通模式的数据。
+     */
+    @Volatile
+    private var dataset: RuleDataset = RuleDataset.NORMAL
+
     override fun onCreate() {
         super.onCreate()
         VpnServiceForeground.createChannel(
@@ -104,6 +111,7 @@ class RootDnsService : Service() {
 
     private fun launch(dnsConfig: String) {
         RuntimeEventLog.info("root_dns", "service.start")
+        dataset = RuleDataset.active(this)
         RootDnsRuntime.starting = true
         publishState()
         if (stopRequested) {
@@ -150,8 +158,8 @@ class RootDnsService : Service() {
             setPersistedRunning(this, true)
             LogRetention.start(
                 context = this,
-                databaseName = RuleDataset.NORMAL.logsDatabase(),
-                prefsName = RuleDataset.NORMAL.prefsName(),
+                databaseName = dataset.logsDatabase(),
+                prefsName = dataset.prefsName(),
                 includeHttpAndTraffic = false,
             )
             publishState()
@@ -169,10 +177,10 @@ class RootDnsService : Service() {
 
     private fun configureEngine(current: Engine, dnsConfig: String) {
         current.applyDNSConfig(dnsConfig)
-        val logMode = getSharedPreferences(RuleDataset.NORMAL.prefsName(), MODE_PRIVATE)
+        val logMode = getSharedPreferences(dataset.prefsName(), MODE_PRIVATE)
             .getString(KEY_LOG_MODE, DnsLogWriter.MODE_ALL)
             ?: DnsLogWriter.MODE_ALL
-        val database = RuleDataset.NORMAL.logsDatabase()
+        val database = dataset.logsDatabase()
         EngineLogCallbacks.attach(current, applicationContext, database, logMode)
 
         val plane = EngineDataPlane(applicationContext, logMode, database)
@@ -184,7 +192,7 @@ class RootDnsService : Service() {
         current.setFilterDNS(true)
         current.setBlockIpv6(false)
         BlockPauseLink.applyTo(this, current)
-        EngineRuleLoader.apply(this, current, RuleDataset.NORMAL, TAG)
+        EngineRuleLoader.apply(this, current, dataset, TAG)
     }
 
     private fun startServer(current: Engine): Int {
@@ -204,7 +212,7 @@ class RootDnsService : Service() {
         val current = engine ?: return
         if (!RootDnsRuntime.running) return
         runCatching {
-            EngineRuleLoader.apply(this, current, RuleDataset.NORMAL, TAG)
+            EngineRuleLoader.apply(this, current, dataset, TAG)
             Log.i(TAG, "rule snapshot hot-reloaded")
         }.onFailure {
             Log.w(TAG, "rule hot-reload failed; keeping previous rules", it)

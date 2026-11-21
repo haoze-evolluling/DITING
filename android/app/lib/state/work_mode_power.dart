@@ -17,12 +17,15 @@ class PowerNotifier extends Notifier<PowerState> {
 
   bool get _isExpress => ref.read(workModeProvider) == AppWorkMode.express;
 
-  bool get _isRoot => !_isExpress && ref.read(rootDnsTakeoverProvider);
+  /// Root 免 VPN 接管优先于 VPN 隧道：普通与简洁模式都可用。
+  bool get _isRoot =>
+      ref.read(workModeProvider).hasTunnelFeatures &&
+      ref.read(rootDnsTakeoverProvider);
 
-  VpnController get _controller => _isExpress
-      ? ref.read(expressVpnControllerProvider)
-      : _isRoot
+  VpnController get _controller => _isRoot
       ? ref.read(rootDnsControllerProvider)
+      : _isExpress
+      ? ref.read(expressVpnControllerProvider)
       : ref.read(vpnControllerProvider);
 
   @override
@@ -36,10 +39,10 @@ class PowerNotifier extends Notifier<PowerState> {
     ref.read(vpnControllerProvider).onPrepareResult = _onPrepareResult;
     ref.read(expressVpnControllerProvider).onPrepareResult = _onPrepareResult;
     final settings = ref.read(legacySettingsProvider);
-    final persisted = _isExpress
-        ? settings.expressVpnRunning
-        : _isRoot
+    final persisted = _isRoot
         ? settings.rootDnsRunning
+        : _isExpress
+        ? settings.expressVpnRunning
         : settings.vpnRunning;
     if (persisted) {
       _restoreOnLaunch =
@@ -54,12 +57,12 @@ class PowerNotifier extends Notifier<PowerState> {
 
   Future<void> syncStatus() async {
     final mode = ref.read(workModeProvider);
-    final express = mode == AppWorkMode.express;
-    final root = !express && ref.read(rootDnsTakeoverProvider);
-    final controller = express
-        ? ref.read(expressVpnControllerProvider)
-        : root
+    final root = mode.hasTunnelFeatures && ref.read(rootDnsTakeoverProvider);
+    final express = mode == AppWorkMode.express && !root;
+    final controller = root
         ? ref.read(rootDnsControllerProvider)
+        : express
+        ? ref.read(expressVpnControllerProvider)
         : ref.read(vpnControllerProvider);
     final settings = ref.read(legacySettingsProvider);
     final restore = _restoreOnLaunch;
@@ -78,10 +81,10 @@ class PowerNotifier extends Notifier<PowerState> {
       }
       final starting = status.starting && !status.running;
       final wanted = status.running || status.reclaiming || starting;
-      if (express) {
-        settings.setExpressVpnRunning(wanted);
-      } else if (root) {
+      if (root) {
         settings.setRootDnsRunning(wanted);
+      } else if (express) {
+        settings.setExpressVpnRunning(wanted);
       } else {
         settings.setVpnRunning(wanted);
       }
@@ -191,8 +194,8 @@ class PowerNotifier extends Notifier<PowerState> {
       state = PowerState.stopped;
       return;
     }
+    final root = mode.hasTunnelFeatures && ref.read(rootDnsTakeoverProvider);
     final express = mode == AppWorkMode.express;
-    final root = !express && ref.read(rootDnsTakeoverProvider);
     final settings = ref.read(legacySettingsProvider);
 
     final config = buildDnsConfig(settings);
@@ -202,10 +205,10 @@ class PowerNotifier extends Notifier<PowerState> {
     } else {
       settings.setNotificationDefaultRunningText(statusText);
     }
-    final controller = express
-        ? ref.read(expressVpnControllerProvider)
-        : root
+    final controller = root
         ? ref.read(rootDnsControllerProvider)
+        : express
+        ? ref.read(expressVpnControllerProvider)
         : ref.read(vpnControllerProvider);
     if (root) {
       final result = await controller.start(
@@ -288,10 +291,10 @@ class PowerNotifier extends Notifier<PowerState> {
     }
     if (_disposed) return;
     final settings = ref.read(legacySettingsProvider);
-    if (express) {
-      settings.setExpressVpnRunning(false);
-    } else if (root) {
+    if (root) {
       settings.setRootDnsRunning(false);
+    } else if (express) {
+      settings.setExpressVpnRunning(false);
     } else {
       settings.setVpnRunning(false);
     }

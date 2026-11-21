@@ -23,8 +23,8 @@ object StateBroadcaster {
         val workMode: String = DataPlaneControl.workMode(context)
         val status: Map<String, Any?> = when {
             workMode == DataPlaneControl.WORK_MODE_SERVER -> ServerDnsService.status()
-            workMode == DataPlaneControl.WORK_MODE_EXPRESS -> ExpressVpnService.status(context)
             DataPlaneControl.usesRootTakeover(context) -> RootDnsService.status(context)
+            workMode == DataPlaneControl.WORK_MODE_EXPRESS -> ExpressVpnService.status(context)
             else -> DitingVpnService.status(context)
         }
         val running: Boolean = status["running"] as? Boolean ?: false

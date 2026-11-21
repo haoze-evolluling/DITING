@@ -2798,7 +2798,7 @@ class AppL10nZh extends AppL10n {
   String get rootTakeoverSubtitle => '通过 Root 重定向本机 DNS，无需 VPN 权限';
 
   @override
-  String get rootTakeoverNormalOnly => '仅普通模式可用';
+  String get rootTakeoverTunnelModesOnly => '仅普通与简洁模式可用';
 
   @override
   String get rootTakeoverFooter =>

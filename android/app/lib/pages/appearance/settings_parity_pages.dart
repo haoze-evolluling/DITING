@@ -373,7 +373,7 @@ class SettingsBackgroundPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(foregroundBackgroundProvider);
     final notifier = ref.read(foregroundBackgroundProvider.notifier);
-    final normalMode = ref.watch(workModeProvider) == AppWorkMode.normal;
+    final tunnelMode = ref.watch(workModeProvider).hasTunnelFeatures;
     final rootTakeover = ref.watch(rootDnsTakeoverProvider);
     return CommonScaffold(
       title: context.l10n.foregroundTitle,
@@ -399,18 +399,18 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.rootTakeoverTitle),
                 subtitle: Text(
-                  normalMode
+                  tunnelMode
                       ? context.l10n.rootTakeoverSubtitle
-                      : context.l10n.rootTakeoverNormalOnly,
+                      : context.l10n.rootTakeoverTunnelModesOnly,
                 ),
                 leading: const Icon(TablerIcons.shield),
                 value: rootTakeover,
-                onChanged: normalMode
+                onChanged: tunnelMode
                     ? (value) =>
                           ref.read(rootDnsTakeoverProvider.notifier).set(value)
                     : null,
               ),
-              if (normalMode && rootTakeover)
+              if (tunnelMode && rootTakeover)
                 _RootTakeoverProbeRow(
                   onRefresh: () => ref.invalidate(rootDnsProbeProvider),
                 ),

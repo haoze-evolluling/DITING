@@ -92,7 +92,7 @@ class OnDemandRunner {
         final after = _ref.read(powerProvider);
         final rootStarting =
             after == PowerState.starting &&
-            _ref.read(workModeProvider) == AppWorkMode.normal &&
+            _ref.read(workModeProvider).hasTunnelFeatures &&
             _ref.read(rootDnsTakeoverProvider);
         return settle(
           after.isRunning || rootStarting

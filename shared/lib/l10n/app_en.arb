@@ -889,7 +889,7 @@
   "rootTakeoverSection": "Root takeover (no VPN)",
   "rootTakeoverTitle": "Root DNS takeover",
   "rootTakeoverSubtitle": "Redirect device DNS through root without VPN permission",
-  "rootTakeoverNormalOnly": "Normal mode only",
+  "rootTakeoverTunnelModesOnly": "Available in normal and simple modes",
   "rootTakeoverFooter": "When on, normal mode uses root to redirect device port-53 queries to the local DNS engine. App routing, HTTPS inspection and the outbound proxy need the VPN tunnel and are unavailable in this mode.",
   "rootTakeoverProbeTitle": "Check root permission",
   "rootTakeoverProbeChecking": "Checking root…",

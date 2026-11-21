@@ -1776,7 +1776,7 @@ abstract class AppL10n {
 
   String get rootTakeoverSubtitle;
 
-  String get rootTakeoverNormalOnly;
+  String get rootTakeoverTunnelModesOnly;
 
   String get rootTakeoverFooter;
 

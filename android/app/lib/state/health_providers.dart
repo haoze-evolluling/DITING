@@ -24,7 +24,7 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
       );
 
   final rootTakeover =
-      ref.watch(workModeProvider) == AppWorkMode.normal &&
+      ref.watch(workModeProvider).hasTunnelFeatures &&
       ref.watch(rootDnsTakeoverProvider);
   final critical = rootTakeover
       ? const [AppPermission.notification]
@@ -46,8 +46,7 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
     totalRules += entry.ruleCount;
     try {
       if (entry.health == SubscriptionHealth.failed) failedSubs++;
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   return computeHealth(

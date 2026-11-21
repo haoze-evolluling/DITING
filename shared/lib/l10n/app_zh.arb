@@ -1504,7 +1504,7 @@
   "rootTakeoverSection": "Root 免 VPN 接管",
   "rootTakeoverTitle": "Root DNS 接管",
   "rootTakeoverSubtitle": "通过 Root 重定向本机 DNS，无需 VPN 权限",
-  "rootTakeoverNormalOnly": "仅普通模式可用",
+  "rootTakeoverTunnelModesOnly": "仅普通与简洁模式可用",
   "rootTakeoverFooter": "开启后，普通模式会通过 Root 将本机 53 端口查询重定向到本地 DNS。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。",
   "rootTakeoverProbeTitle": "检测 Root 权限",
   "rootTakeoverProbeChecking": "正在检测 Root…",

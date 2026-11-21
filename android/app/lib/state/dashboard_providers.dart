@@ -122,12 +122,13 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
 
   VpnController _controller() {
     final mode = ref.read(workModeProvider);
+    if (mode.hasTunnelFeatures && ref.read(rootDnsTakeoverProvider)) {
+      return ref.read(rootDnsControllerProvider);
+    }
     if (mode == AppWorkMode.express) {
       return ref.read(expressVpnControllerProvider);
     }
-    return ref.read(rootDnsTakeoverProvider)
-        ? ref.read(rootDnsControllerProvider)
-        : ref.read(vpnControllerProvider);
+    return ref.read(vpnControllerProvider);
   }
 
   SpeedSource _speedSourceOf(VpnTrafficRates rates) {

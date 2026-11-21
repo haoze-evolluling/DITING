@@ -2965,7 +2965,8 @@ class AppL10nEn extends AppL10n {
       'Redirect device DNS through root without VPN permission';
 
   @override
-  String get rootTakeoverNormalOnly => 'Normal mode only';
+  String get rootTakeoverTunnelModesOnly =>
+      'Available in normal and simple modes';
 
   @override
   String get rootTakeoverFooter =>

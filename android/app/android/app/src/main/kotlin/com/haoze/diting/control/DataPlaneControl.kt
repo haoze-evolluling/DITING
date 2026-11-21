@@ -40,16 +40,22 @@ object DataPlaneControl {
         context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_INITIAL_AGREEMENT_ACCEPTED, false)
 
+    /**
+     * Root 免 VPN 接管是否生效。
+     *
+     * 普通与简洁模式都走本地 DNS 接管，因此两者都可以打开它；服务器模式另有
+     * 自己的数据面，不参与这里。
+     */
     fun usesRootTakeover(context: Context): Boolean =
-        workMode(context) == WORK_MODE_NORMAL &&
+        workMode(context).let { it == WORK_MODE_NORMAL || it == WORK_MODE_EXPRESS } &&
             context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(KEY_ROOT_TAKEOVER, false)
 
     fun isRunning(context: Context): Boolean = when {
         workMode(context) == WORK_MODE_SERVER -> ServerDnsService.isRunning()
         workMode(context) == RETIRED_WORK_MODE_SERVER -> false
-        workMode(context) == WORK_MODE_EXPRESS -> ExpressVpnService.isRunning
         usesRootTakeover(context) -> RootDnsService.isRunning
+        workMode(context) == WORK_MODE_EXPRESS -> ExpressVpnService.isRunning
         else -> DitingVpnService.isRunning
     }
 
