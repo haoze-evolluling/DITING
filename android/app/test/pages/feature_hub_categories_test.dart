@@ -54,7 +54,32 @@ void main() {
     );
   });
 
-  test('极速模式与普通模式提供同样的功能卡片', () {
+  test('简洁模式默认隐藏的分类就是应用与网络、高级与诊断、数据与维护', () {
+    final hidden = hiddenKeysOfCategories(simpleModeHiddenCategoryIds, l10n: l10n);
+    expect(simpleModeHiddenCategoryIds, {
+      FeatureCategoryId.network,
+      FeatureCategoryId.advanced,
+      FeatureCategoryId.data,
+    });
+    final visible = visibleFeatureCategories(hiddenKeys: hidden, l10n: l10n);
+    expect(visible.map((category) => category.id), [
+      FeatureCategoryId.dns,
+      FeatureCategoryId.rules,
+      FeatureCategoryId.interface_,
+    ]);
+    for (final category in categories) {
+      if (!simpleModeHiddenCategoryIds.contains(category.id)) continue;
+      for (final card in category.cards) {
+        expect(
+          hidden,
+          contains(card.featureKey),
+          reason: '${category.title} 的「${card.title}」应默认隐藏',
+        );
+      }
+    }
+  });
+
+  test('简洁模式与普通模式提供同样的功能卡片', () {
     final visible = visibleFeatureCategories(hiddenKeys: const {}, l10n: l10n);
     expect(visible.map((category) => category.title), [
       for (final category in categories) category.title,

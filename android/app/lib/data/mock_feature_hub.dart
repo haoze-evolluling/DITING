@@ -22,9 +22,20 @@ class MockFeatureCard {
   bool get isFixed => featureKey == null;
 }
 
-class MockFeatureCategory {
-  const MockFeatureCategory({required this.title, required this.cards});
+/// 功能中心分类的稳定标识。
+///
+/// 卡片与分类标题随语言变化，按标题判断分类并不可靠；简洁模式的默认隐藏
+/// 规则与升级迁移一律用这里的 [id] 判断。
+enum FeatureCategoryId { dns, rules, network, advanced, data, interface_ }
 
+class MockFeatureCategory {
+  const MockFeatureCategory({
+    required this.id,
+    required this.title,
+    required this.cards,
+  });
+
+  final FeatureCategoryId id;
   final String title;
   final List<MockFeatureCard> cards;
 }
@@ -32,6 +43,7 @@ class MockFeatureCategory {
 List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
     <MockFeatureCategory>[
       MockFeatureCategory(
+        id: FeatureCategoryId.dns,
         title: l10n.hubCategoryDns,
         cards: [
           MockFeatureCard(
@@ -65,6 +77,7 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         ],
       ),
       MockFeatureCategory(
+        id: FeatureCategoryId.rules,
         title: l10n.hubCategoryRules,
         cards: [
           MockFeatureCard(
@@ -98,6 +111,7 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         ],
       ),
       MockFeatureCategory(
+        id: FeatureCategoryId.network,
         title: l10n.hubCategoryNetwork,
         cards: [
           MockFeatureCard(
@@ -131,6 +145,7 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         ],
       ),
       MockFeatureCategory(
+        id: FeatureCategoryId.advanced,
         title: l10n.hubCategoryAdvanced,
         cards: [
           MockFeatureCard(
@@ -164,6 +179,7 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         ],
       ),
       MockFeatureCategory(
+        id: FeatureCategoryId.data,
         title: l10n.hubCategoryData,
         cards: [
           MockFeatureCard(
@@ -211,6 +227,7 @@ List<MockFeatureCategory> mockFeatureCategories(AppL10n l10n) =>
         ],
       ),
       MockFeatureCategory(
+        id: FeatureCategoryId.interface_,
         title: l10n.hubCategoryInterface,
         cards: [
           MockFeatureCard(
@@ -297,8 +314,34 @@ List<MockFeatureCategory> visibleFeatureCategories({
         if (card.isFixed || !hiddenKeys.contains(card.featureKey)) card,
     ];
     if (cards.isNotEmpty) {
-      result.add(MockFeatureCategory(title: category.title, cards: cards));
+      result.add(
+        MockFeatureCategory(
+          id: category.id,
+          title: category.title,
+          cards: cards,
+        ),
+      );
     }
   }
   return result;
 }
+
+/// 简洁模式默认收进「隐藏功能」的分类：应用与网络、高级与诊断、数据与维护。
+const simpleModeHiddenCategoryIds = <FeatureCategoryId>{
+  FeatureCategoryId.network,
+  FeatureCategoryId.advanced,
+  FeatureCategoryId.data,
+};
+
+/// 给定分类下所有卡片的隐藏键。
+///
+/// 隐藏键与语言无关，因此这里只借用 [l10n] 构造分类清单：任何语言的同一分类
+/// 得到的键集合都相同。
+Set<String> hiddenKeysOfCategories(
+  Set<FeatureCategoryId> categoryIds, {
+  required AppL10n l10n,
+}) => {
+  for (final category in mockFeatureCategories(l10n))
+    if (categoryIds.contains(category.id))
+      for (final card in category.cards) ?card.featureKey,
+};
