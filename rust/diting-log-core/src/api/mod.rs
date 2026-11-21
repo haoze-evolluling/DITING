@@ -24,7 +24,6 @@ use crate::row::{
 };
 use crate::stats::Stats;
 
-
 pub(crate) fn write_optional(writer: &mut Writer, value: Option<&str>) {
     match value {
         Some(text) => {
@@ -53,7 +52,6 @@ pub(crate) fn write_optional_i64(writer: &mut Writer, value: Option<i64>) {
         None => writer.u8(0),
     }
 }
-
 
 pub fn http_event(stats: &Stats, mode: LogMode, payload: &[u8], now_ms: i64) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);

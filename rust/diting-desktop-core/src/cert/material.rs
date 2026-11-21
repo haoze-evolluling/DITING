@@ -186,7 +186,11 @@ fn subject_alt_names(certificate: &X509Certificate) -> (Vec<String>, Vec<String>
     let mut dns_names = Vec::new();
     let mut ip_addresses = Vec::new();
 
-    let Some(extensions) = certificate.tbs_certificate().extensions().map(|v| v.as_slice()) else {
+    let Some(extensions) = certificate
+        .tbs_certificate()
+        .extensions()
+        .map(|v| v.as_slice())
+    else {
         return (dns_names, ip_addresses);
     };
     for extension in extensions {
@@ -325,8 +329,7 @@ fn set_dir_mode_private(path: &Path) {
 }
 
 #[cfg(not(unix))]
-fn set_dir_mode_private(_path: &Path) {
-}
+fn set_dir_mode_private(_path: &Path) {}
 
 #[cfg(unix)]
 fn set_file_mode_private(path: &Path) {
@@ -335,5 +338,4 @@ fn set_file_mode_private(path: &Path) {
 }
 
 #[cfg(not(unix))]
-fn set_file_mode_private(_path: &Path) {
-}
+fn set_file_mode_private(_path: &Path) {}

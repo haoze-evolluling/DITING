@@ -186,7 +186,8 @@ mod watchdog_jni {
     ) -> jbyteArray {
         let mut array = std::ptr::null_mut();
         resolve(&mut env, |env| {
-            let step = unsafe { with_handle(handle, |watchdog| watchdog.evaluate(now_ms, occupied)) };
+            let step =
+                unsafe { with_handle(handle, |watchdog| watchdog.evaluate(now_ms, occupied)) };
             let Some(step) = step else {
                 return Ok(());
             };
@@ -237,7 +238,9 @@ mod watchdog_jni {
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reclaimAllowed<'local>(
+    pub extern "system" fn Java_com_haoze_diting_watchdog_VpnWatchdogNative_reclaimAllowed<
+        'local,
+    >(
         mut env: EnvUnowned<'local>,
         _this: JObject<'local>,
         enabled: jboolean,

@@ -170,8 +170,7 @@ impl Server {
             if tokio::time::timeout(std::time::Duration::from_secs(3), handle)
                 .await
                 .is_err()
-            {
-            }
+            {}
         }
         self.started.store(false, Ordering::SeqCst);
     }

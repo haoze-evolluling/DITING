@@ -41,9 +41,7 @@ impl Standalone {
             task.abort();
         }
         let deadline = std::time::Instant::now() + Duration::from_millis(250);
-        while tasks.iter().any(|task| !task.is_finished())
-            && std::time::Instant::now() < deadline
-        {
+        while tasks.iter().any(|task| !task.is_finished()) && std::time::Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(1));
         }
     }

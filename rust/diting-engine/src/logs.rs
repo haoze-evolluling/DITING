@@ -238,7 +238,6 @@ fn emit(
     rows.len()
 }
 
-
 fn push_u8(out: &mut Vec<u8>, value: u8) {
     out.push(value);
 }

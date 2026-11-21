@@ -3,7 +3,6 @@ use crate::crash;
 use crate::payload::Reader;
 use crate::retention::{self, StoredDays};
 
-
 pub fn retention_plan(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let log_days = read_stored_days(&mut reader)?;
@@ -41,7 +40,6 @@ fn read_stored_days(reader: &mut Reader<'_>) -> Option<StoredDays> {
         StoredDays::absent()
     })
 }
-
 
 pub fn crash_select(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);

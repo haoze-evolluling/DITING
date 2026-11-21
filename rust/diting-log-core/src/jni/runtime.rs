@@ -111,7 +111,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_mirrorRows<'local>(
     })
 }
 
-
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_runtimeEventNew<'a>(
     _env: EnvUnowned<'_>,

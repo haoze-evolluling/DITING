@@ -143,7 +143,10 @@ impl Protector for JniProtector {
     }
 }
 
-fn callback_factory(vm: Arc<JavaVM>, target: Arc<GlobalObject>) -> impl FnMut(&str) + Send + 'static {
+fn callback_factory(
+    vm: Arc<JavaVM>,
+    target: Arc<GlobalObject>,
+) -> impl FnMut(&str) + Send + 'static {
     let _ = vm.attach_current_thread(|_env| -> Result<(), Error> { Ok(()) });
     move |payload: &str| {
         let target = &target;

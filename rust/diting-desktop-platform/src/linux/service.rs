@@ -75,7 +75,10 @@ impl LinuxServiceManager {
     async fn executable_from_unit(&self) -> Option<String> {
         let output = self
             .executor
-            .run("systemctl", &["show", UNIT_NAME, "-p", "ExecStart", "--value"])
+            .run(
+                "systemctl",
+                &["show", UNIT_NAME, "-p", "ExecStart", "--value"],
+            )
             .await
             .ok()?;
         if !output.success {

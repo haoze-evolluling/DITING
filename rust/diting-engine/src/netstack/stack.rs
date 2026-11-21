@@ -236,7 +236,11 @@ impl Netstack {
     }
 
     /// Relay 流的上行信用窗口；由会话线程在流打开时挂上。
-    pub(crate) fn set_upload_gate(&mut self, key: &TcpKey, gate: std::sync::Arc<tokio::sync::Semaphore>) {
+    pub(crate) fn set_upload_gate(
+        &mut self,
+        key: &TcpKey,
+        gate: std::sync::Arc<tokio::sync::Semaphore>,
+    ) {
         if let Some(flow) = self.tcp.get_mut(key) {
             flow.upload = Some(gate);
         }

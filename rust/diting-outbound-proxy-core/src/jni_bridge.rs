@@ -97,8 +97,8 @@ pub extern "system" fn Java_com_haoze_diting_proxy_OutboundProxyNative_applyUids
         else {
             return Ok(JObject::null());
         };
-        let value = crate::config::apply_uids(&proxy_json, &uids_csv)
-            .unwrap_or_else(|| proxy_json.clone());
+        let value =
+            crate::config::apply_uids(&proxy_json, &uids_csv).unwrap_or_else(|| proxy_json.clone());
         Ok(answer_string(env, value))
     })
 }

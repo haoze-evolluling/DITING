@@ -23,9 +23,9 @@ use x509_cert::ext::pkix::{
 use x509_cert::ext::{Criticality, Extension};
 use x509_cert::name::{Name, RdnSequence, RelativeDistinguishedName};
 use x509_cert::serial_number::SerialNumber;
-use x509_cert::SubjectPublicKeyInfo;
 use x509_cert::time::{Time, Validity};
 use x509_cert::Certificate;
+use x509_cert::SubjectPublicKeyInfo;
 
 use crate::pem;
 
@@ -59,8 +59,8 @@ pub struct IssuedLeaf {
 
 impl CertAuthority {
     pub fn generate(now_unix: i64) -> Result<GeneratedCa, String> {
-        let ca_secret = SecretKey::try_generate()
-            .map_err(|err| format!("create CA cert: {err}"))?;
+        let ca_secret =
+            SecretKey::try_generate().map_err(|err| format!("create CA cert: {err}"))?;
         let ca_signing = SigningKey::from(&ca_secret);
         let ca_spki = SubjectPublicKeyInfo::from_key(ca_signing.verifying_key())
             .map_err(|err| format!("create CA cert: {err}"))?;
@@ -96,8 +96,8 @@ impl CertAuthority {
             .map_err(|err| format!("create CA cert: {err}"))?;
 
         let ca_key_pem = sec1_pem(&ca_secret)?;
-        let leaf_secret = SecretKey::try_generate()
-            .map_err(|err| format!("create CA cert: {err}"))?;
+        let leaf_secret =
+            SecretKey::try_generate().map_err(|err| format!("create CA cert: {err}"))?;
         let authority = CertAuthority::new(ca_cert, ca_signing, ca_spki, leaf_secret)?;
         Ok(GeneratedCa {
             authority,
@@ -156,10 +156,9 @@ impl CertAuthority {
         let not_after_unix = now_unix
             .checked_add(LEAF_VALIDITY_AFTER_SECS)
             .ok_or_else(|| format!("sign leaf cert for {host}: time overflows"))?;
-        let leaf_spki = SubjectPublicKeyInfo::from_key(
-            SigningKey::from(&self.leaf_secret).verifying_key(),
-        )
-        .map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
+        let leaf_spki =
+            SubjectPublicKeyInfo::from_key(SigningKey::from(&self.leaf_secret).verifying_key())
+                .map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
         let dns_names =
             dns_names(host).map_err(|err| format!("sign leaf cert for {host}: {err}"))?;
 

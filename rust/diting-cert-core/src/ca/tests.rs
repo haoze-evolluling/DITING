@@ -333,7 +333,10 @@ fn the_subject_key_identifier_is_the_sha1_of_the_public_key() {
     let generated = CertAuthority::generate(NOW).expect("generate");
     let cert = generated.authority.ca_certificate();
     let ski: SubjectKeyIdentifier = extension(cert).expect("SKI");
-    let spki = cert.tbs_certificate().subject_public_key_info().owned_to_ref();
+    let spki = cert
+        .tbs_certificate()
+        .subject_public_key_info()
+        .owned_to_ref();
     let expected = SubjectKeyIdentifier::try_from(spki).unwrap();
     assert_eq!(ski, expected);
 

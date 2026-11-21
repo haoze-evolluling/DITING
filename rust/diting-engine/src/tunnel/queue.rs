@@ -21,7 +21,10 @@ pub enum Event {
         peer: IpEndpoint,
         payload: Vec<u8>,
     },
-    UdpExpire { key: TcpKey, generation: u64 },
+    UdpExpire {
+        key: TcpKey,
+        generation: u64,
+    },
 }
 
 pub struct Events {
@@ -68,9 +71,7 @@ impl Events {
         if state.closed {
             return;
         }
-        if state.events.len() >= COMMAND_HIGH_WATER
-            && matches!(event, Event::Datagram { .. })
-        {
+        if state.events.len() >= COMMAND_HIGH_WATER && matches!(event, Event::Datagram { .. }) {
             self.dropped.fetch_add(1, Ordering::Relaxed);
             return;
         }

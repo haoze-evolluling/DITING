@@ -134,11 +134,8 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_raceRows<'local>(
     now_ms: jlong,
 ) -> JObject<'local> {
     resolve(&mut env, |env| {
-        let answer = guarded(|| {
-            with_bytes(env, &packed, |payload| {
-                api::race_batch(payload, now_ms)
-            })
-        });
+        let answer =
+            guarded(|| with_bytes(env, &packed, |payload| api::race_batch(payload, now_ms)));
         Ok(answer_bytes(env, answer))
     })
 }

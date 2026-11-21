@@ -195,7 +195,6 @@ fn scan_badfilter_keys(text: &str) -> HashSet<String> {
     keys
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn diting_rule_core_stream_begin(
     text: *const u8,

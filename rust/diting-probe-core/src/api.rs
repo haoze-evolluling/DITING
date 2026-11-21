@@ -4,7 +4,6 @@ use crate::payload::{Reader, Writer};
 use crate::ping;
 use crate::trace::{self, Hop};
 
-
 pub fn build_dns_query(payload: &[u8]) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let id = reader.u16()?;
@@ -150,7 +149,6 @@ pub fn trace_hop(payload: &[u8]) -> Option<Vec<u8>> {
     Some(writer.into_vec())
 }
 
-
 pub fn sanitize_host(input: &str) -> String {
     host::sanitize(input)
 }
@@ -170,7 +168,6 @@ pub fn doh_endpoint(url: &str, host_text: &str) -> String {
 pub fn trace_response_line(line: &str) -> bool {
     trace::is_response_line(line)
 }
-
 
 fn read_text(payload: &[u8]) -> Option<String> {
     let mut reader = Reader::new(payload);

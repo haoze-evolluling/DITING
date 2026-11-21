@@ -78,7 +78,9 @@ where
 }
 
 pub enum LocalMode {
-    Assets { engine: Arc<Engine> },
+    Assets {
+        engine: Arc<Engine>,
+    },
     Redirect {
         target: String,
         engine: Arc<Engine>,

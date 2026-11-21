@@ -109,7 +109,6 @@ fn page_with_link(host: &str) -> String {
     PAGE.replacen("<head>", &format!("<head>{}", link_tag(host)), 1)
 }
 
-
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_tls_flow_is_decrypted_and_the_stylesheet_link_is_injected() {
     let origin = spawn_origin().await;
@@ -207,7 +206,6 @@ async fn a_plaintext_http_flow_is_relayed_and_injected() {
     let _ = std::fs::remove_dir_all(dir);
 }
 
-
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn the_local_asset_stylesheet_is_served_without_dialing_the_origin() {
     let origin = spawn_origin().await;
@@ -271,7 +269,6 @@ async fn a_rewritten_host_answers_with_a_302_to_the_target() {
     engine.mitm_state().stop();
     let _ = std::fs::remove_dir_all(dir);
 }
-
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_bypassed_host_is_not_decrypted() {
@@ -384,7 +381,6 @@ async fn a_client_that_rejects_the_leaf_records_a_handshake_failure() {
     engine.mitm_state().stop();
     let _ = std::fs::remove_dir_all(dir);
 }
-
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_request_rule_answers_403_with_the_matched_pattern() {

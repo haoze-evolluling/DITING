@@ -89,14 +89,7 @@ pub extern "system" fn Java_com_haoze_diting_platform_NotificationNative_compose
             cached,
             rewritten,
         };
-        match crate::compose::compose(
-            &items,
-            &labels_json,
-            &stats,
-            with_speed,
-            tx_bps,
-            rx_bps,
-        ) {
+        match crate::compose::compose(&items, &labels_json, &stats, with_speed, tx_bps, rx_bps) {
             Some(text) => Ok(answer_string(env, text)),
             None => Ok(JObject::null()),
         }

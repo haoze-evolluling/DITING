@@ -74,7 +74,6 @@ pub fn build(input: &SnapshotInput) -> String {
     serde_json::to_string(&document).expect("a snapshot document is always serializable")
 }
 
-
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 struct OrderedSet {
     items: Vec<String>,
@@ -395,7 +394,6 @@ struct ExportedAppBlock {
     block: Vec<String>,
     important: Vec<String>,
 }
-
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

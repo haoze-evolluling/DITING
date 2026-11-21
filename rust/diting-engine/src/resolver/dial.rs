@@ -154,8 +154,7 @@ impl Dialer {
                     match UdpTransport::direct(target, &self.protector).await {
                         Ok(transport) => return Ok(transport),
                         Err(error)
-                            if round < TRANSIENT_RETRIES
-                                && transient_network_error(&error) =>
+                            if round < TRANSIENT_RETRIES && transient_network_error(&error) =>
                         {
                             last_error = error;
                         }

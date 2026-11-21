@@ -46,11 +46,7 @@ impl PrivilegedExecutor for WindowsPrivilegedExecutor {
             .await
             {
                 Ok(output) => output?,
-                Err(_) => {
-                    return Err(PlatformError::message(format!(
-                        "特权操作执行超时: {exe}"
-                    )))
-                }
+                Err(_) => return Err(PlatformError::message(format!("特权操作执行超时: {exe}"))),
             };
             if !output.status.success() {
                 let mut combined = output.stdout;

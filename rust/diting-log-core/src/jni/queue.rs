@@ -8,7 +8,6 @@ use super::{answer_bytes, guarded, resolve, with_bytes, with_handle};
 use crate::api;
 use crate::queue::Queue;
 
-
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_queueNew(
     _env: EnvUnowned<'_>,

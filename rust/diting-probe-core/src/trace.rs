@@ -26,7 +26,10 @@ pub enum Hop {
         address: Option<String>,
         elapsed_ms: Option<f64>,
     },
-    Answered { address: String, unreachable: bool },
+    Answered {
+        address: String,
+        unreachable: bool,
+    },
     NetUnreachable,
     NoMatch,
     Unsupported,
@@ -58,9 +61,7 @@ pub fn parse_hop(text: &str, resolved: &str) -> Hop {
             .to_string();
         let unreachable = captures
             .get(2)
-            .map(|m| {
-                m.as_str().to_lowercase().contains("unreach")
-            })
+            .map(|m| m.as_str().to_lowercase().contains("unreach"))
             .unwrap_or(false);
         return Hop::Answered {
             address,

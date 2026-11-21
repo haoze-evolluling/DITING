@@ -41,10 +41,7 @@ fn leaf_certificate(chain_pem: &str) -> Certificate {
 }
 
 fn dns_of(cert: &Certificate) -> Vec<String> {
-    let extensions = cert
-        .tbs_certificate()
-        .extensions()
-        .expect("extensions");
+    let extensions = cert.tbs_certificate().extensions().expect("extensions");
     let san = extensions
         .iter()
         .find(|extension| extension.extn_id == x509_cert::ext::pkix::SubjectAltName::OID)

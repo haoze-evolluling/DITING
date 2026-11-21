@@ -2,7 +2,6 @@ use super::Writer;
 use crate::payload::Reader;
 use crate::queue::Queue;
 
-
 fn write_rows(writer: &mut Writer, rows: &[Vec<u8>]) {
     writer.u32(rows.len() as u32);
     for row in rows {

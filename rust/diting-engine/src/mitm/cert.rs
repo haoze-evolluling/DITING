@@ -227,8 +227,7 @@ fn set_mode(path: &Path, mode: u32) {
 }
 
 #[cfg(not(unix))]
-fn set_mode(_path: &Path, _mode: u32) {
-}
+fn set_mode(_path: &Path, _mode: u32) {}
 
 fn certified_key(issued: &IssuedLeaf) -> Result<CertifiedKey, String> {
     let chain = parse_certs(&issued.chain_pem)?;

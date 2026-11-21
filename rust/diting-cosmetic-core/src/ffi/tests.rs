@@ -176,7 +176,6 @@ fn a_queued_tag_clears_before_the_eof_travels() {
     assert_eq!(reads, vec![(8, false), (8, false), (0, true)]);
 }
 
-
 use crate::payload::{decode_response, decode_text_list, encode_rules};
 use crate::rules::{DomainRules, RuleSet, Rules};
 

@@ -210,7 +210,9 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetOutboundProx
             Err(_) => {
                 let _ = env.throw_new(
                     jni::jni_str!("java/lang/IllegalStateException"),
-                    jni::jni_str!("setOutboundProxyStatusCallback: the callback could not be captured"),
+                    jni::jni_str!(
+                        "setOutboundProxyStatusCallback: the callback could not be captured"
+                    ),
                 );
             }
         }

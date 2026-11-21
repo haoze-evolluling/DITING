@@ -115,5 +115,4 @@ fn set_file_mode(path: &Path) {
 }
 
 #[cfg(not(unix))]
-fn set_file_mode(_path: &Path) {
-}
+fn set_file_mode(_path: &Path) {}

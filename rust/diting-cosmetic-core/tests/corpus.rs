@@ -237,7 +237,6 @@ fn query_escape_is_url_query_escape() {
     assert!(checked > 20, "only {checked} hosts carried a query");
 }
 
-
 use diting_cosmetic_core::local::{is_asset_host, respond};
 use diting_cosmetic_core::payload::{decode_response, decode_rules};
 use diting_cosmetic_core::rules::host_suffixes;

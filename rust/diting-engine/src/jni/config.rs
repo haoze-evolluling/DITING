@@ -13,9 +13,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetRewriteRules
 ) {
     resolve(&mut env, |env| {
         let payload = text(env, &payload);
-        with_engine(env, handle, (), |engine| {
-            engine.set_rewrite_rules(&payload)
-        });
+        with_engine(env, handle, (), |engine| engine.set_rewrite_rules(&payload));
         Ok(())
     })
 }
@@ -56,9 +54,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetAllowlistOnl
     enabled: jboolean,
 ) {
     resolve(&mut env, |env| {
-        with_engine(env, handle, (), |engine| {
-            engine.set_allowlist_only(enabled)
-        });
+        with_engine(env, handle, (), |engine| engine.set_allowlist_only(enabled));
         Ok(())
     })
 }
@@ -113,9 +109,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetFilterHttp3<
     enabled: jboolean,
 ) {
     resolve(&mut env, |env| {
-        with_engine(env, handle, (), |engine| {
-            engine.set_filter_http3(enabled)
-        });
+        with_engine(env, handle, (), |engine| engine.set_filter_http3(enabled));
         Ok(())
     })
 }
@@ -157,9 +151,7 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetSystemDns<'l
 ) {
     resolve(&mut env, |env| {
         let servers = text(env, &servers);
-        with_engine(env, handle, (), |engine| {
-            engine.set_system_dns(&servers)
-        });
+        with_engine(env, handle, (), |engine| engine.set_system_dns(&servers));
         Ok(())
     })
 }

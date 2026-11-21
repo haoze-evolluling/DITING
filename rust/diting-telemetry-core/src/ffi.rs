@@ -33,7 +33,6 @@ pub extern "C" fn diting_telemetry_abi_version() -> u32 {
     ABI_VERSION
 }
 
-
 #[no_mangle]
 pub extern "C" fn diting_telemetry_log_new() -> *mut LogAggregator {
     Box::into_raw(Box::new(LogAggregator::new()))
@@ -98,7 +97,6 @@ pub unsafe extern "C" fn diting_telemetry_log_dropped(handle: *const LogAggregat
 pub unsafe extern "C" fn diting_telemetry_log_dropped_conn(handle: *const LogAggregator) -> u64 {
     handle.as_ref().map_or(0, LogAggregator::dropped_conn)
 }
-
 
 #[no_mangle]
 pub extern "C" fn diting_telemetry_traffic_new() -> *mut TrafficTracker {
@@ -184,7 +182,6 @@ pub unsafe extern "C" fn diting_telemetry_traffic_totals(
     }
 }
 
-
 #[no_mangle]
 pub extern "C" fn diting_telemetry_flow_new() -> *mut FlowUidCache {
     Box::into_raw(Box::new(FlowUidCache::new()))
@@ -247,7 +244,6 @@ pub unsafe extern "C" fn diting_telemetry_flow_store(
 pub unsafe extern "C" fn diting_telemetry_flow_len(handle: *const FlowUidCache) -> u32 {
     handle.as_ref().map_or(0, FlowUidCache::len)
 }
-
 
 #[no_mangle]
 pub extern "C" fn diting_telemetry_package_new() -> *mut UidPackageCache {
@@ -315,7 +311,6 @@ pub unsafe extern "C" fn diting_telemetry_package_store(
 pub unsafe extern "C" fn diting_telemetry_package_len(handle: *const UidPackageCache) -> u32 {
     handle.as_ref().map_or(0, UidPackageCache::len)
 }
-
 
 #[no_mangle]
 pub unsafe extern "C" fn diting_telemetry_free_bytes(pointer: *mut u8, length: usize) {

@@ -4,7 +4,6 @@ use crate::payload::{Reader, Writer};
 use crate::stats::{RequestSnapshot, Stats};
 use crate::traffic::{TickRow, Traffic};
 
-
 pub fn stats_snapshot(stats: &Stats) -> Vec<u8> {
     let snapshot: RequestSnapshot = stats.request_snapshot();
     let mut writer = Writer::new();

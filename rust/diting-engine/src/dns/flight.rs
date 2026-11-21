@@ -87,8 +87,7 @@ impl Drop for LeaderGuard {
         if self.finished {
             return;
         }
-        self.flight
-            .finish(Err("resolution cancelled".to_string()));
+        self.flight.finish(Err("resolution cancelled".to_string()));
         self.engine.finish_flight(&self.key);
     }
 }

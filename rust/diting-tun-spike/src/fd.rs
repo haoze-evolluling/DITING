@@ -113,8 +113,7 @@ mod unix {
             ))
         }
 
-        fn wake(&self) {
-        }
+        fn wake(&self) {}
     }
 
     pub struct FdSink {

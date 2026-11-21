@@ -11,7 +11,6 @@ use crate::health::Health;
 use crate::stats::Stats;
 use crate::traffic::Traffic;
 
-
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_statsNew(
     _env: EnvUnowned<'_>,
@@ -98,7 +97,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_rateSnapshot<'local>(
     })
 }
 
-
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficNew(
     _env: EnvUnowned<'_>,
@@ -147,8 +145,9 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficTake<'local>(
     handle: jlong,
 ) -> JObject<'local> {
     resolve(&mut env, |env| {
-        let answer =
-            guarded(|| unsafe { with_handle(handle, |traffic: &Traffic| api::traffic_take(traffic)) });
+        let answer = guarded(|| unsafe {
+            with_handle(handle, |traffic: &Traffic| api::traffic_take(traffic))
+        });
         Ok(answer_bytes(env, answer))
     })
 }
@@ -217,7 +216,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_trafficClear(
     guarded(|| unsafe { with_handle(handle, |traffic: &Traffic| traffic.clear() as jint) })
         .unwrap_or(0)
 }
-
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthNew(
@@ -328,7 +326,6 @@ pub extern "system" fn Java_com_haoze_diting_log_LogNative_healthSnapshot<'local
         Ok(answer_bytes(env, answer))
     })
 }
-
 
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_log_LogNative_attrNew(

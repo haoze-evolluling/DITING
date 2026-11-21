@@ -1,9 +1,9 @@
 pub mod adapters;
-pub mod config;
-pub mod sinks;
 pub mod callbacks;
+pub mod config;
 pub mod mitm;
 pub mod rule_test;
+pub mod sinks;
 pub mod snapshot;
 
 use std::collections::HashMap;

@@ -69,12 +69,9 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeApplyRuleSnapsh
                 ))
             }
         };
-        let answer_text = with_engine(
-            env,
-            handle,
-            Some("engine released".to_string()),
-            |engine| Some(engine.apply_rule_snapshot(&payload)),
-        );
+        let answer_text = with_engine(env, handle, Some("engine released".to_string()), |engine| {
+            Some(engine.apply_rule_snapshot(&payload))
+        });
         Ok(answer(env, answer_text))
     })
 }

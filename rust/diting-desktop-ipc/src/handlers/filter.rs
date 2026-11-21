@@ -157,10 +157,9 @@ pub async fn handle_schedule(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Err(response) => return response,
             };
             let runtime = Arc::clone(server.runtime());
-            let result = tokio::task::spawn_blocking(move || {
-                runtime.configure_blocking_schedule(request)
-            })
-            .await;
+            let result =
+                tokio::task::spawn_blocking(move || runtime.configure_blocking_schedule(request))
+                    .await;
             match result {
                 Ok(Ok(())) => ok_message("时间计划已更新并生效"),
                 Ok(Err(error)) => internal_error(error.message),
@@ -373,10 +372,9 @@ pub async fn handle_services(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Err(response) => return response,
             };
             let runtime = Arc::clone(server.runtime());
-            let result = tokio::task::spawn_blocking(move || {
-                runtime.configure_blocked_services(request)
-            })
-            .await;
+            let result =
+                tokio::task::spawn_blocking(move || runtime.configure_blocked_services(request))
+                    .await;
             match result {
                 Ok(Ok(())) => ok(blocked_services_response(server)),
                 Ok(Err(error)) => internal_error(error.message),

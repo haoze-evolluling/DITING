@@ -147,7 +147,6 @@ pub unsafe extern "C" fn diting_resolver_failure_count(handle: *const ProviderSt
     }
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn diting_resolver_sched_new(
     payload: *const u8,

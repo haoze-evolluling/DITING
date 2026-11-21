@@ -268,8 +268,17 @@ mod tests {
 
     #[test]
     fn normal_full_tunnel_uses_the_default_route() {
-        let plan = route_plan("normal", "enabled", false, false, false, &[], "com.self", "")
-            .unwrap();
+        let plan = route_plan(
+            "normal",
+            "enabled",
+            false,
+            false,
+            false,
+            &[],
+            "com.self",
+            "",
+        )
+        .unwrap();
         assert_eq!(plan["mtu"], 1400);
         assert_eq!(plan["blocking"], true);
         assert_eq!(plan["dnsServers"], json!(["10.0.0.1", "fd00:abcd::1"]));
@@ -308,8 +317,8 @@ mod tests {
 
     #[test]
     fn normal_bypass_lan_with_ipv6_adds_the_global_and_dns_routes() {
-        let plan = route_plan("normal", "enabled", false, false, true, &[], "com.self", "")
-            .unwrap();
+        let plan =
+            route_plan("normal", "enabled", false, false, true, &[], "com.self", "").unwrap();
         let routes = routes(&plan);
         assert!(routes.contains(&("2000::".to_string(), 3)));
         assert!(routes.contains(&("fd00:abcd::1".to_string(), 128)));
@@ -319,8 +328,7 @@ mod tests {
 
     #[test]
     fn express_hijacks_public_v4_and_v6_resolvers() {
-        let plan = route_plan("express", "auto", true, false, false, &[], "com.self", "")
-            .unwrap();
+        let plan = route_plan("express", "auto", true, false, false, &[], "com.self", "").unwrap();
         assert_eq!(plan["enableIpv6"], true);
         let routes = routes(&plan);
         assert_eq!(routes.first().unwrap(), &("10.0.0.0".to_string(), 30));
@@ -335,8 +343,17 @@ mod tests {
 
     #[test]
     fn express_without_ipv6_keeps_only_the_v4_hijack_set() {
-        let plan = route_plan("express", "disabled", true, false, false, &[], "com.self", "")
-            .unwrap();
+        let plan = route_plan(
+            "express",
+            "disabled",
+            true,
+            false,
+            false,
+            &[],
+            "com.self",
+            "",
+        )
+        .unwrap();
         assert_eq!(plan["enableIpv6"], false);
         assert_eq!(plan["addresses"].as_array().unwrap().len(), 1);
         assert_eq!(routes(&plan).len(), 1 + IPV4_HIJACK_IPS.len());
@@ -373,7 +390,10 @@ mod tests {
     fn clat_normal_plan_leaves_ipv4_to_the_system() {
         let plan = route_plan("normal", "auto", true, true, false, &[], "com.self", "").unwrap();
         assert_eq!(plan["enableIpv6"], true);
-        assert_eq!(plan["addresses"], json!([{"address": VPN_ADDRESS_V6, "prefix": 64}]));
+        assert_eq!(
+            plan["addresses"],
+            json!([{"address": VPN_ADDRESS_V6, "prefix": 64}])
+        );
         assert_eq!(plan["dnsServers"], json!([DNS_SERVER_V6]));
         assert_eq!(routes(&plan), vec![("::".to_string(), 0)]);
     }
@@ -384,16 +404,23 @@ mod tests {
         let routes = routes(&plan);
         assert_eq!(
             routes,
-            vec![
-                ("2000::".to_string(), 3),
-                (DNS_SERVER_V6.to_string(), 128)
-            ]
+            vec![("2000::".to_string(), 3), (DNS_SERVER_V6.to_string(), 128)]
         );
     }
 
     #[test]
     fn clat_express_plan_keeps_only_ipv6_hijacks() {
-        let plan = route_plan("express", "disabled", true, true, false, &[], "com.self", "").unwrap();
+        let plan = route_plan(
+            "express",
+            "disabled",
+            true,
+            true,
+            false,
+            &[],
+            "com.self",
+            "",
+        )
+        .unwrap();
         assert_eq!(plan["enableIpv6"], true);
         assert_eq!(plan["dnsServers"], json!([DNS_SERVER_V6]));
         let routes = routes(&plan);
@@ -403,7 +430,17 @@ mod tests {
 
     #[test]
     fn clat_with_ipv6_disabled_still_enables_ipv6() {
-        let plan = route_plan("normal", "disabled", false, true, false, &[], "com.self", "").unwrap();
+        let plan = route_plan(
+            "normal",
+            "disabled",
+            false,
+            true,
+            false,
+            &[],
+            "com.self",
+            "",
+        )
+        .unwrap();
         assert_eq!(plan["enableIpv6"], true);
     }
 }
