@@ -20,7 +20,14 @@ abstract final class DatabaseSchema {
       ..._appTrafficDailyIndexes,
       ..._logIndexes,
     ],
-    DatabaseKind.expressLogs => [..._logTables, ..._logIndexes],
+    DatabaseKind.expressLogs => [
+      ..._logTables,
+      _httpRequestLog,
+      ..._httpRequestLogIndexes,
+      _appTrafficDaily,
+      ..._appTrafficDailyIndexes,
+      ..._logIndexes,
+    ],
     DatabaseKind.global => [..._automationTables, ..._automationIndexes],
   };
 
@@ -34,7 +41,10 @@ abstract final class DatabaseSchema {
       ...logTableNames,
       ...httpTrafficTableNames,
     },
-    DatabaseKind.expressLogs => {...logTableNames},
+    DatabaseKind.expressLogs => {
+      ...logTableNames,
+      ...httpTrafficTableNames,
+    },
     DatabaseKind.global => {...automationTableNames},
   };
 
