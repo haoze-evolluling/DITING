@@ -16,7 +16,7 @@ class RuleControlPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(legacySettingsProvider);
-    final isNormal = ref.watch(workModeProvider) == AppWorkMode.normal;
+    final withTunnel = ref.watch(workModeProvider).hasTunnelFeatures;
     final domainRules = settings.domainRulesEnabled;
     final blockMode = BlockResponseMode.fromStorage(
       settings.blockResponseModeRaw,
@@ -63,7 +63,7 @@ class RuleControlPage extends ConsumerWidget {
                   ref.read(legacySettingsRevisionProvider.notifier).bump();
                 },
               ),
-              if (isNormal)
+              if (withTunnel)
                 ListItem(
                   leading: const Icon(TablerIcons.target),
                   title: Text(context.l10n.ruleControlUrlRules),

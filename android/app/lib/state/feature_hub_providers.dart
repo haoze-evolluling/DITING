@@ -3,7 +3,6 @@ library;
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const hiddenFeaturesContainer = LegacySettings.uiContainer;
@@ -82,13 +81,8 @@ final hiddenFeatureKeysProvider =
 
 final visibleFeatureCategoriesProvider =
     Provider.family<List<MockFeatureCategory>, AppL10n>((ref, l10n) {
-      final express = ref.watch(workModeProvider) == AppWorkMode.express;
       final hidden = ref.watch(hiddenFeatureKeysProvider);
-      return visibleFeatureCategories(
-        express: express,
-        hiddenKeys: hidden,
-        l10n: l10n,
-      );
+      return visibleFeatureCategories(hiddenKeys: hidden, l10n: l10n);
     });
 
 class LogLongPressHintNotifier extends Notifier<bool> {

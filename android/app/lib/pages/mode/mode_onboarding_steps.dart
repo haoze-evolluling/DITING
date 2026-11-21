@@ -97,6 +97,7 @@ class _PermissionStep extends ConsumerWidget {
       AppWorkMode.express => [
         _vpnPermission(l10n, l10n.permVpnExpressBody),
         _notificationPermission(l10n),
+        _appListPermission(l10n),
         _batteryPermission(l10n, l10n.permBatteryBody),
       ],
       AppWorkMode.server => [

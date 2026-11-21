@@ -60,7 +60,8 @@ enum _SpeedDirection {
 
   double of(SpeedSample sample) => this == upload ? sample.up : sample.down;
 
-  IconData get glyph => this == upload ? TablerIcons.arrow_up : TablerIcons.arrow_down;
+  IconData get glyph =>
+      this == upload ? TablerIcons.arrow_up : TablerIcons.arrow_down;
 
   String label(AppL10n l10n) =>
       this == upload ? l10n.speedUpload : l10n.speedDownload;
@@ -166,9 +167,7 @@ class _SpeedTile extends StatelessWidget {
                   child: unsupported
                       ? Center(
                           child: Text(
-                            source == SpeedSource.expressMode
-                                ? context.l10n.speedExpressNoStats
-                                : context.l10n.speedNoChannel,
+                            context.l10n.speedNoChannel,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: DashboardText.label(context),

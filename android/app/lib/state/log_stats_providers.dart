@@ -5,7 +5,6 @@ import 'package:diting_android/data/db/dns_log_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/data/errors.dart';
@@ -50,21 +49,18 @@ typedef LogStatsData = ({int saved, int uploaded, int downloaded});
 final logStatsRequestsProvider =
     FutureProvider.family<LogStatsRequests, TrafficWindow>((ref, window) async {
       ref.watch(dnsLogRevisionProvider);
-      final normal = ref.watch(workModeProvider) == AppWorkMode.normal;
+      final withHttp = ref.watch(workModeProvider).hasTunnelFeatures;
       final since = logStatsWindowStart(window);
       final db = await ref.watch(activeLogDatabaseProvider.future);
       if (db == null) return (total: 0, blocked: 0, cached: 0);
 
       final dns = await DnsLogRepository(db).dailyStats(since: since);
       var http = const HttpRequestDailyStats.empty();
-      if (normal) {
-        final mainDb = await ref.watch(normalLogDatabaseProvider.future);
-        if (mainDb != null) {
-          try {
-            http = await HttpRequestRepository(mainDb).dailyStats(since: since);
-          } on DatabaseException {
-            ignoreError();
-          }
+      if (withHttp) {
+        try {
+          http = await HttpRequestRepository(db).dailyStats(since: since);
+        } on DatabaseException {
+          ignoreError();
         }
       }
       final answer = RustLogQueryCore.instance.derive('stats.requests', {

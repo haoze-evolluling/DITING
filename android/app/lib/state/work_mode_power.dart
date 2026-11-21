@@ -230,16 +230,12 @@ class PowerNotifier extends Notifier<PowerState> {
         dnsConfig: config.encode(settings),
         outboundProxy: proxyUsable ? proxy.toEngineJson() : '',
         proxyAppPackage: proxyUsable ? proxy.proxyAppPackage : '',
-        bypassLan: express ? false : settings.bypassLanEnabled,
+        bypassLan: settings.bypassLanEnabled,
         ipv6Mode: settings.ipv6ModeRaw,
         excludedPackages: settings.excludedPackages.toList(),
-        blockedPackages: express
-            ? const []
-            : settings.blockedAppPackages.toList(),
-        inspectionPackages: express
-            ? const []
-            : settings.httpInspectionPackages.toList(),
-        inspectionEnabled: !express && settings.httpsInspectionOperational,
+        blockedPackages: settings.blockedAppPackages.toList(),
+        inspectionPackages: settings.httpInspectionPackages.toList(),
+        inspectionEnabled: settings.httpsInspectionOperational,
       ),
     );
     if (_disposed) return;

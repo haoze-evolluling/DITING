@@ -14,24 +14,11 @@ export 'package:diting_android/state/dashboard_layout_providers.dart';
 
 bool debugDisableDashboardLiveUpdates = false;
 
-bool dashboardWidgetVisibleIn(DashboardWidget widget, AppWorkMode mode) =>
-    mode != AppWorkMode.express || widget != DashboardWidget.networkSpeed;
+final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>(
+  (ref) => ref.watch(dashboardWidgetsProvider),
+);
 
-final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>((ref) {
-  final mode = ref.watch(workModeProvider);
-  return [
-    for (final widget in ref.watch(dashboardWidgetsProvider))
-      if (dashboardWidgetVisibleIn(widget, mode)) widget,
-  ];
-});
-
-enum SpeedSource {
-  available,
-
-  expressMode,
-
-  noNativeChannel,
-}
+enum SpeedSource { available, noNativeChannel }
 
 class SpeedSeries {
   const SpeedSeries({
@@ -145,8 +132,6 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
 
   SpeedSource _speedSourceOf(VpnTrafficRates rates) {
     if (!rates.unsupported) return SpeedSource.available;
-    final mode = ref.read(workModeProvider);
-    if (mode == AppWorkMode.express) return SpeedSource.expressMode;
     return SpeedSource.noNativeChannel;
   }
 }

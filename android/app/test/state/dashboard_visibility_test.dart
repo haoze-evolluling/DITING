@@ -29,29 +29,26 @@ void main() {
     );
   });
 
-  test('极速模式隐藏网速卡片但不改动存储布局', () {
+  test('极速模式与普通模式显示同一套卡片', () {
+    final normal = container().read(visibleDashboardWidgetsProvider);
     final instance = container(mode: AppWorkMode.express);
     expect(instance.read(dashboardWidgetsProvider), defaultDashboardWidgets);
-    expect(
-      instance.read(visibleDashboardWidgetsProvider),
-      isNot(contains(DashboardWidget.networkSpeed)),
-    );
+    final express = instance.read(visibleDashboardWidgetsProvider);
+    expect(express, normal);
+    expect(express, contains(DashboardWidget.networkSpeed));
   });
 
-  test('极速模式下重排可见卡片，隐藏的网速卡片留在原槽位', () {
+  test('极速模式下重排卡片', () {
     final instance = container(mode: AppWorkMode.express);
     final notifier = instance.read(dashboardWidgetsProvider.notifier);
     final visible = instance.read(visibleDashboardWidgetsProvider);
-    final stored = instance.read(dashboardWidgetsProvider);
-    final slot = stored.indexOf(DashboardWidget.networkSpeed);
     final last = visible.last;
 
     notifier.moveVisible(visible, visible.length - 1, 0);
 
     final next = instance.read(dashboardWidgetsProvider);
-    expect(next, hasLength(stored.length));
+    expect(next, hasLength(visible.length));
     expect(next.first, last);
-    expect(next[slot], DashboardWidget.networkSpeed);
     expect(instance.read(visibleDashboardWidgetsProvider).first, last);
   });
 }

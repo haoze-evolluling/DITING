@@ -9,7 +9,6 @@ import 'package:diting_android/data/log_dashboard_models.dart';
 import 'package:diting_android/data/log_dashboard_rows.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
@@ -139,7 +138,7 @@ LogRecentRequest _recentOfKernel(Map<String, Object?> row) {
 final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
   ref.watch(dnsLogRevisionProvider);
   final mode = ref.watch(logModeProvider);
-  final normal = ref.watch(workModeProvider) == AppWorkMode.normal;
+  final withHttp = ref.watch(workModeProvider).hasTunnelFeatures;
   final off = mode == LegacyLogMode.off;
   final filteredMode = mode == LegacyLogMode.blockedAndErrors;
   final sinceMs = _dayStartMillis();
@@ -164,21 +163,17 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
   }
 
   var httpStats = const HttpRequestDailyStats.empty();
-  Database? mainDb;
-  if (!off && normal) {
-    mainDb = await ref.watch(normalLogDatabaseProvider.future);
-    if (mainDb != null) {
-      try {
-        final parsed = core.rows(
-          'http.daily',
-          await _raw(mainDb, 'http.daily', {'since': sinceMs}),
-        );
-        if (parsed.isNotEmpty) {
-          httpStats = HttpRequestDailyStats.fromParsed(parsed.first);
-        }
-      } on DatabaseException {
-        httpStats = const HttpRequestDailyStats.empty();
+  if (!off && withHttp) {
+    try {
+      final parsed = core.rows(
+        'http.daily',
+        await _raw(db, 'http.daily', {'since': sinceMs}),
+      );
+      if (parsed.isNotEmpty) {
+        httpStats = HttpRequestDailyStats.fromParsed(parsed.first);
       }
+    } on DatabaseException {
+      httpStats = const HttpRequestDailyStats.empty();
     }
   }
 
@@ -217,11 +212,11 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
     }),
   );
   var recentHttp = const <Map<String, Object?>>[];
-  if (normal && mainDb != null) {
+  if (withHttp) {
     try {
       recentHttp = core.rows(
         'http.row',
-        await _raw(mainDb, 'http.query.recent', {
+        await _raw(db, 'http.query.recent', {
           'limit': _recentLogLimit,
           'status': 'all',
           'query': '',
@@ -251,12 +246,12 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
       'subscriptionHit',
       await _raw(db, 'subscription.hits', {'table': 'dns', 'since': sinceMs}),
     );
-    if (normal && mainDb != null) {
+    if (withHttp) {
       try {
         httpTotal = _count(
           core.rows(
             'count',
-            await _raw(mainDb, 'subscription.total', {
+            await _raw(db, 'subscription.total', {
               'table': 'http',
               'since': sinceMs,
             }),
@@ -264,7 +259,7 @@ final logDashboardProvider = FutureProvider<LogDashboardSnapshot>((ref) async {
         );
         httpHits = core.rows(
           'subscriptionHit',
-          await _raw(mainDb, 'subscription.hits', {
+          await _raw(db, 'subscription.hits', {
             'table': 'http',
             'since': sinceMs,
           }),

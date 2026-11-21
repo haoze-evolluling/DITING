@@ -43,12 +43,12 @@ void main() {
     expect(filterGlobalSearch(entries, 'zzz'), isEmpty);
   });
 
-  test('connection rate limiting is indexed only outside express mode', () {
+  test('connection rate limiting is indexed for every tunnel mode', () {
     final l10n = lookupAppL10n(const Locale('zh'));
-    final normal = buildGlobalSearchIndex(l10n);
-    final express = buildGlobalSearchIndex(l10n, express: true);
-    const route = '/network/connection-rate-limit';
-    expect(normal.map((entry) => entry.route), contains(route));
-    expect(express.map((entry) => entry.route), isNot(contains(route)));
+    final entries = buildGlobalSearchIndex(l10n);
+    expect(
+      entries.map((entry) => entry.route),
+      contains('/network/connection-rate-limit'),
+    );
   });
 }

@@ -10,7 +10,6 @@ import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/state/config_providers_resources.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final agentApiClientProvider = Provider<AgentApiClient>(
@@ -157,7 +156,6 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
     List<String> extraContext,
   ) async {
     final db = await ref.read(activeLogDatabaseProvider.future);
-    final express = ref.read(workModeProvider) == AppWorkMode.express;
     switch (target) {
       case AgentDomainTarget(:final domain, :final contextLogs):
         final logs = <String>[...contextLogs, ...extraContext];
@@ -185,10 +183,7 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
         }
         final summary = await summarizeRecentTraffic(
           dnsRepository: DnsLogRepository(db),
-          httpRepository: express ? null : HttpRequestRepository(db),
-          httpUnavailableReason: express
-              ? currentL10n.agentExpressNoHttps
-              : null,
+          httpRepository: HttpRequestRepository(db),
         );
         if (state.sessionId == session) {
           state = AgentAnalysisState(

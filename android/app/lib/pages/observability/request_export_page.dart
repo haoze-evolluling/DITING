@@ -11,7 +11,7 @@ import 'package:diting_android/state/observability_providers.dart'
     show AppRequestCount, requestAppCountsProvider, requestFeedQueryProvider;
 import 'package:diting_android/state/request_export_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart'
-    show AppWorkMode, workModeProvider;
+    show workModeProvider;
 import 'package:diting_android/widgets/app_icon_avatar.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
@@ -171,7 +171,7 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final normalMode = ref.watch(workModeProvider) == AppWorkMode.normal;
+    final withTunnel = ref.watch(workModeProvider).hasTunnelFeatures;
     final error = _validationError(l10n);
     final showError =
         error != null &&
@@ -231,7 +231,7 @@ class _RequestLogExportPageState extends ConsumerState<RequestLogExportPage> {
             children: [
               _ExportField(
                 label: l10n.obsSource,
-                hint: normalMode ? null : l10n.obsExportDnsOnlyNote,
+                hint: withTunnel ? null : l10n.obsExportDnsOnlyNote,
                 child: ChipRow(
                   children: [
                     for (final option in RequestSource.values)

@@ -61,21 +61,17 @@ List<GlobalSearchEntry> _extraCommands(AppL10n l10n) => [
   ),
 ];
 
-List<GlobalSearchEntry> buildGlobalSearchIndex(
-  AppL10n l10n, {
-  bool express = false,
-}) => [
+List<GlobalSearchEntry> buildGlobalSearchIndex(AppL10n l10n) => [
   for (final category in mockFeatureCategories(l10n))
     for (final card in category.cards)
-      if (!express || card.expressVisible)
-        GlobalSearchEntry(
-          title: card.title,
-          subtitle: card.description,
-          route: card.route,
-          group: category.title,
-          glyphName: card.glyphName,
-          keywords: [card.description],
-        ),
+      GlobalSearchEntry(
+        title: card.title,
+        subtitle: card.description,
+        route: card.route,
+        group: category.title,
+        glyphName: card.glyphName,
+        keywords: [card.description],
+      ),
   ..._extraCommands(l10n),
 ];
 

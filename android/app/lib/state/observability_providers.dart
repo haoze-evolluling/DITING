@@ -3,8 +3,6 @@ library;
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
-import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -205,9 +203,8 @@ Future<RequestFeedPage> _loadFeedPage(
 }) async {
   Future<Database?> logDb(FutureProvider<Database?> provider) =>
       watch ? ref.watch(provider.future) : ref.read(provider.future);
-  final noHttp =
-      (watch ? ref.watch(workModeProvider) : ref.read(workModeProvider)) !=
-      AppWorkMode.normal;
+  final mode = watch ? ref.watch(workModeProvider) : ref.read(workModeProvider);
+  final noHttp = !mode.hasTunnelFeatures;
   final window = requestFeedPageSize + 1;
 
   final dnsFuture = query.source == RequestSource.https
@@ -227,7 +224,7 @@ Future<RequestFeedPage> _loadFeedPage(
   final httpFuture = query.source == RequestSource.dns || noHttp
       ? Future.value(const <HttpRequestRecord>[])
       : () async {
-          final db = await logDb(normalLogDatabaseProvider);
+          final db = await logDb(activeLogDatabaseProvider);
           if (db == null) return const <HttpRequestRecord>[];
           return HttpRequestRepository(db).recent(
             limit: window,
@@ -386,7 +383,7 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
   ref,
 ) async {
   ref.watch(dnsLogRevisionProvider);
-  final noHttp = ref.watch(workModeProvider) != AppWorkMode.normal;
+  final noHttp = !ref.watch(workModeProvider).hasTunnelFeatures;
 
   Future<Map<String, int>> dnsCounts() async {
     final db = await ref.watch(activeLogDatabaseProvider.future);
@@ -395,7 +392,7 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
 
   Future<Map<String, int>> httpCounts() async {
     if (noHttp) return const {};
-    final db = await ref.watch(normalLogDatabaseProvider.future);
+    final db = await ref.watch(activeLogDatabaseProvider.future);
     return db == null ? const {} : HttpRequestRepository(db).countByPackage();
   }
 
@@ -418,14 +415,6 @@ final requestAppCountsProvider = FutureProvider<List<AppRequestCount>>((
       ),
   ];
 });
-
-final normalLogDatabaseFileProvider = Provider<String>((ref) {
-  return DataSet.normal.logsDatabase;
-});
-
-final normalLogDatabaseProvider = FutureProvider<Database?>(
-  (ref) => AppDatabase.open(ref.watch(normalLogDatabaseFileProvider)),
-);
 
 const _noDnsRows = <DnsLogRow>[];
 

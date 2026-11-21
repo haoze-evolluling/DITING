@@ -54,33 +54,25 @@ void main() {
     );
   });
 
-  test('极速模式不提供连接限速', () {
-    final visible = visibleFeatureCategories(
-      express: true,
-      hiddenKeys: const {},
-      l10n: l10n,
-    );
-    expect(visible, isNotEmpty);
-    for (final category in visible) {
-      expect(
-        category.cards.every((card) => card.expressVisible),
-        isTrue,
-        reason: '${category.title} 不应出现极速隐藏卡片',
-      );
-    }
-    final titles = visible.map((category) => category.title);
-    expect(titles, isNot(contains('应用与网络')));
-    expect(titles, isNot(contains('高级与诊断')));
+  test('极速模式与普通模式提供同样的功能卡片', () {
+    final visible = visibleFeatureCategories(hiddenKeys: const {}, l10n: l10n);
+    expect(visible.map((category) => category.title), [
+      for (final category in categories) category.title,
+    ]);
     final cards = [for (final category in visible) ...category.cards];
+    expect(cards.map((card) => card.featureKey), [
+      for (final category in categories)
+        for (final card in category.cards) card.featureKey,
+    ]);
     expect(
       cards.map((card) => card.featureKey),
-      isNot(contains('connection_rate_limit')),
+      containsAll(<String>[
+        'connection_rate_limit',
+        'traffic_stats',
+        'https_inspection',
+        'outbound_proxy',
+      ]),
     );
-    expect(
-      cards.map((card) => card.featureKey),
-      isNot(contains('traffic_stats')),
-    );
-    expect(cards.map((card) => card.featureKey), contains('logs'));
   });
 
   test('卡片路由与隐藏键都不重复', () {

@@ -274,9 +274,7 @@ TunnelDocument tunnelDocument(LegacySettings settings) =>
       blockHttpsSvcb: settings.blockHttpsSvcbRecordTypes,
       rebindingProtection: settings.dnsRebindingProtection,
       dns64Enabled: settings.dns64Enabled,
-      connectionRateLimitEnabled:
-          settings.workModeRaw == 'normal' &&
-          settings.connectionRateLimitEnabled,
+      connectionRateLimitEnabled: settings.connectionRateLimitEnabled,
       connectionRateLimitRate: settings.connectionRateLimitRate,
       connectionRateLimitBurst: settings.connectionRateLimitBurst,
       presetProviders: [

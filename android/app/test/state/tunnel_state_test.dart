@@ -245,13 +245,19 @@ void _expressMode() {
       expect(normal.startCalls, 0);
 
       final request = express.lastRequest!;
-      expect(request.bypassLan, isFalse);
+      final settings = c.read(legacySettingsProvider);
+      // 极速模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
+      expect(request.bypassLan, settings.bypassLanEnabled);
       expect(request.ipv6Mode, 'disabled');
+      expect(request.blockedPackages, settings.blockedAppPackages.toList());
+      expect(
+        request.inspectionPackages,
+        settings.httpInspectionPackages.toList(),
+      );
       final json = jsonDecode(request.dnsConfig) as Map;
       final providers = json['providers'] as List;
       expect((providers.first as Map)['id'], 'preset_dnspod_dns');
 
-      final settings = c.read(legacySettingsProvider);
       expect(settings.expressVpnRunning, isTrue);
       expect(settings.vpnRunning, isFalse);
     });

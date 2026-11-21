@@ -471,11 +471,7 @@ void _featureHub() {
       for (final card in _featureCategories.first.cards)
         if (card.featureKey != null) card.featureKey!,
     };
-    final categories = visibleFeatureCategories(
-      express: false,
-      hiddenKeys: hidden,
-      l10n: _zh,
-    );
+    final categories = visibleFeatureCategories(hiddenKeys: hidden, l10n: _zh);
     expect(categories.any((category) => category.title == 'DNS 解析'), isFalse);
     expect(categories.length, _featureCategories.length - 1);
 
@@ -486,7 +482,6 @@ void _featureHub() {
         if (card.featureKey != null) card.featureKey!,
     };
     final onlyFixed = visibleFeatureCategories(
-      express: false,
       hiddenKeys: allHidden,
       l10n: _zh,
     );

@@ -132,7 +132,6 @@ class NetworkSpeedDetailPage extends ConsumerWidget {
 
   static String _unsupportedHint(SpeedSource source, AppL10n l10n) =>
       switch (source) {
-        SpeedSource.expressMode => l10n.speedExpressSource,
         SpeedSource.noNativeChannel => l10n.speedNoChannelSource,
         SpeedSource.available => '',
       };

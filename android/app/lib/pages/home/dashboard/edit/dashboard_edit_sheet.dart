@@ -1,7 +1,6 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
-import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
@@ -12,12 +11,10 @@ class DashboardEditSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final widgets = ref.watch(dashboardWidgetsProvider);
-    final mode = ref.watch(workModeProvider);
     final notifier = ref.read(dashboardWidgetsProvider.notifier);
     final available = [
       for (final widget in DashboardWidget.values)
-        if (!widgets.contains(widget) && dashboardWidgetVisibleIn(widget, mode))
-          widget,
+        if (!widgets.contains(widget)) widget,
     ];
     return CommonScaffold(
       title: context.l10n.dashboardAddCard,

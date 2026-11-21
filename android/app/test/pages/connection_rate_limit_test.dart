@@ -19,7 +19,7 @@ void main() {
   installGlobalTestHooks();
 
   group('连接限速文档', () {
-    test('参数写入隧道文档，并在极速模式保持关闭', () {
+    test('参数写入隧道文档，普通与极速模式都生效', () {
       final store = MemoryLegacyPrefsStore({
         'diting_settings': {'app_work_mode': 'normal'},
       });
@@ -39,7 +39,7 @@ void main() {
       store.putString('diting_settings', 'app_work_mode', 'express');
       final express = buildDnsConfig(settings).toJson(settings);
       expect(express['connectionRateLimit'], {
-        'enabled': false,
+        'enabled': true,
         'rate': 80,
         'burst': 160,
       });
@@ -138,5 +138,4 @@ void main() {
     expect(store.read('dns_vpn_prefs', 'connection_rate_limit_rate'), 55);
     expect(tester.takeException(), isNull);
   });
-
 }

@@ -50,6 +50,12 @@ enum AppWorkMode {
 
   final String storageValue;
 
+  /// 是否走本地全隧道数据面（普通模式与极速模式一致，只有服务器模式例外）。
+  ///
+  /// 流量统计、HTTP 记录、分应用管控、HTTPS 检查等能力都依赖全隧道，
+  /// 因此这些功能的可用性判断一律用它，而不是逐个比较 `AppWorkMode.normal`。
+  bool get hasTunnelFeatures => this != AppWorkMode.server;
+
   static AppWorkMode fromStorageValue(String? value) => values.firstWhere(
     (mode) => mode.storageValue == value,
     orElse: () => normal,

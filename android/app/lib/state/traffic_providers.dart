@@ -5,15 +5,14 @@ import 'package:diting_android/data/db/app_traffic_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final appTrafficRepositoryProvider = FutureProvider<AppTrafficRepository?>((
   ref,
 ) async {
-  if (ref.watch(workModeProvider) != AppWorkMode.normal) return null;
-  final db = await ref.watch(normalLogDatabaseProvider.future);
+  if (!ref.watch(workModeProvider).hasTunnelFeatures) return null;
+  final db = await ref.watch(activeLogDatabaseProvider.future);
   return db == null ? null : AppTrafficRepository(db);
 });
 
@@ -71,9 +70,11 @@ class TrafficSnapshot {
   final int? _kernelTxBytes;
   final int? _kernelRxBytes;
 
-  int get txBytes => _kernelTxBytes ?? rows.fold(0, (sum, row) => sum + row.txBytes);
+  int get txBytes =>
+      _kernelTxBytes ?? rows.fold(0, (sum, row) => sum + row.txBytes);
 
-  int get rxBytes => _kernelRxBytes ?? rows.fold(0, (sum, row) => sum + row.rxBytes);
+  int get rxBytes =>
+      _kernelRxBytes ?? rows.fold(0, (sum, row) => sum + row.rxBytes);
 
   int get totalBytes => txBytes + rxBytes;
 
@@ -175,7 +176,6 @@ final trafficSnapshotOfProvider =
       ref.watch(dnsLogRevisionProvider);
       return _loadSnapshot(ref, window);
     });
-
 
 const trafficHideSystemAppsKey = 'traffic_stats_hide_system_apps';
 

@@ -5,8 +5,6 @@ import 'package:diting_android/data/export/request_log_export_options.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_android/state/observability_providers.dart'
-    show normalLogDatabaseProvider;
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,10 +73,9 @@ class RequestLogExportActions {
       );
     }
     try {
-      final mode = _ref.read(workModeProvider);
       final dnsDb = await _ref.read(activeLogDatabaseProvider.future);
-      final httpDb = mode == AppWorkMode.normal
-          ? await _ref.read(normalLogDatabaseProvider.future)
+      final httpDb = _ref.read(workModeProvider).hasTunnelFeatures
+          ? dnsDb
           : null;
       final installed = _ref.read(installedAppListProvider);
       final appLabels = installed == null
