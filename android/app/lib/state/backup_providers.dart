@@ -6,71 +6,11 @@ import 'package:diting_android/data/backup/backup_exporter.dart';
 import 'package:diting_android/data/backup/backup_importer.dart';
 import 'package:diting_android/data/backup/backup_models.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
-import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-class BackupStats {
-  const BackupStats({
-    required this.providers,
-    required this.subscriptions,
-    required this.customRules,
-    required this.listedApps,
-  });
-
-  const BackupStats.empty()
-    : providers = 0,
-      subscriptions = 0,
-      customRules = 0,
-      listedApps = 0;
-
-  final int providers;
-  final int subscriptions;
-  final int customRules;
-  final int listedApps;
-}
-
-final backupStatsProvider = FutureProvider<BackupStats>((ref) async {
-  ref.watch(legacySettingsRevisionProvider);
-  ref.watch(subscriptionRevisionProvider);
-  ref.watch(dnsLogRevisionProvider);
-  final settings = ref.watch(legacySettingsProvider);
-  final db = await ref.watch(subscriptionDatabaseProvider.future);
-
-  var subscriptions = 0;
-  var customRules = 0;
-  if (db != null) {
-    try {
-      final rows = await db.rawQuery('SELECT COUNT(*) AS n FROM subscription');
-      subscriptions = (rows.first['n'] as num?)?.toInt() ?? 0;
-    } on Exception {
-      subscriptions = 0;
-    }
-    try {
-      customRules = await RuleRepository(db).countUser();
-    } on Exception {
-      customRules = 0;
-    }
-  }
-
-  final listedApps = {
-    ...settings.excludedPackages,
-    ...settings.blockedAppPackages,
-    ...settings.httpInspectionPackages,
-    ...settings.appAllowlistRules.keys,
-  }.length;
-
-  return BackupStats(
-    providers: parseUserProviders(settings.userProvidersJson).length,
-    subscriptions: subscriptions,
-    customRules: customRules,
-    listedApps: listedApps,
-  );
-});
 
 final backupExporterProvider = Provider<BackupExporter>(
   (ref) => const BackupExporter(),

@@ -37,19 +37,10 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = ref.watch(backupStatsProvider).value;
     return CommonScaffold(
       title: context.l10n.transferTitle,
       body: PageBody(
         children: [
-          _metricRow(context, 12, [
-            (context.l10n.transferMetricProviders, stats?.providers),
-            (context.l10n.transferMetricSubs, stats?.subscriptions),
-          ]),
-          _metricRow(context, 10, [
-            (context.l10n.transferMetricCustomRules, stats?.customRules),
-            (context.l10n.transferMetricListedApps, stats?.listedApps),
-          ]),
           for (final group in _sections(context.l10n))
             generateSection(
               title: group.title,
@@ -181,39 +172,6 @@ class _ConfigTransferPageState extends ConsumerState<ConfigTransferPage> {
       groups: const [BackupGroup.appearance, BackupGroup.system],
     ),
   ];
-
-  Widget _metricRow(
-    BuildContext context,
-    double topPadding,
-    List<(String label, int? value)> metrics,
-  ) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, topPadding, 16, 0),
-      child: Row(
-        children: [
-          for (final (index, (label, value)) in metrics.indexed) ...[
-            if (index > 0) const SizedBox(width: 10),
-            Expanded(child: _metric(context, label, _figure(value))),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _figure(int? value) => value == null ? '—' : '$value';
-
-  Widget _metric(BuildContext context, String label, String value) =>
-      CommonCard(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 2,
-          children: [
-            Text(value, style: AppTextRole.rowTitle.of(context)),
-            Text(label, style: AppTextRole.supportingText.of(context)),
-          ],
-        ),
-      );
 
   Future<void> _export() async {
     setState(() => _busy = context.l10n.transferBusyExporting);
