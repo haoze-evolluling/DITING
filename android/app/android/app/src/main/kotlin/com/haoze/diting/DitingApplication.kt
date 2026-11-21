@@ -14,6 +14,9 @@ class DitingApplication : Application() {
         RuntimeEventLog.install(this)
         RuntimeEventLog.info("app", "create")
         installUncaughtHandler()
+        // WorkManager 与定时任务只属于主进程；:log 等辅助进程启动时尚未初始化
+        // WorkManager，重复安装只会抛 IllegalStateException。
+        if (!isMainProcess()) return
         ServerModeRetirement.purge(this)
         RootDnsService.reconcileStaleRules(this)
         runCatching { ScheduleController.install(this) }
@@ -23,6 +26,8 @@ class DitingApplication : Application() {
     companion object {
         private const val TAG = "DitingApplication"
     }
+
+    private fun isMainProcess(): Boolean = Application.getProcessName() == packageName
 
     private fun installUncaughtHandler() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
