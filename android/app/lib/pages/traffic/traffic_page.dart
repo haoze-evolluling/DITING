@@ -32,6 +32,8 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
   SpeedSeriesNotifier? _speed;
   bool _polling = false;
 
+  bool _showTotals = false;
+
   @override
   void initState() {
     super.initState();
@@ -107,6 +109,7 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
     }
 
     final snapshot = asyncSnapshot.requireValue;
+    final l10n = context.l10n;
     final visible = _ranked(
       snapshot.rows,
       sort,
@@ -118,6 +121,13 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
               .where((row) => isKnownSystemPackagePrefix(row.packageName))
               .length
         : 0;
+    final totalsMode = _showTotals && window != TrafficWindow.all;
+    final totals = totalsMode
+        ? ref.watch(trafficSnapshotOfProvider(TrafficWindow.all)).asData?.value
+        : null;
+    final downBytes = totalsMode ? totals?.rxBytes : snapshot.rxBytes;
+    final upBytes = totalsMode ? totals?.txBytes : snapshot.txBytes;
+    final appCount = totalsMode ? totals?.rows.length : visible.length;
 
     return AppListScrollView(
       slivers: [
@@ -127,27 +137,38 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: StatStrip(
-                    stats: [
-                      StatItem(
-                        label: context.l10n.trafficWindowDown(
-                          window.label(context.l10n),
+                  child: CommonCard(
+                    onPressed: window == TrafficWindow.all
+                        ? null
+                        : _toggleTotals,
+                    child: StatStrip(
+                      stats: [
+                        StatItem(
+                          label: totalsMode
+                              ? l10n.trafficTotalDown
+                              : l10n.trafficWindowDown(window.label(l10n)),
+                          value: downBytes == null
+                              ? '—'
+                              : obsFormatBytes(downBytes),
+                          color: context.colorScheme.primary,
                         ),
-                        value: obsFormatBytes(snapshot.rxBytes),
-                        color: context.colorScheme.primary,
-                      ),
-                      StatItem(
-                        label: context.l10n.trafficWindowUp(
-                          window.label(context.l10n),
+                        StatItem(
+                          label: totalsMode
+                              ? l10n.trafficTotalUp
+                              : l10n.trafficWindowUp(window.label(l10n)),
+                          value: upBytes == null
+                              ? '—'
+                              : obsFormatBytes(upBytes),
                         ),
-                        value: obsFormatBytes(snapshot.txBytes),
-                      ),
-                      StatItem(
-                        label: context.l10n.trafficAppCount,
-                        value: '${visible.length}',
-                        unit: context.l10n.trafficAppCountUnit,
-                      ),
-                    ],
+                        StatItem(
+                          label: l10n.trafficAppCount,
+                          value: appCount == null ? '—' : '$appCount',
+                          unit: appCount == null
+                              ? null
+                              : l10n.trafficAppCountUnit,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Padding(
@@ -278,6 +299,10 @@ class _TrafficPageState extends ConsumerState<TrafficPage>
       return l10n.trafficNoRecordsBody;
     }
     return l10n.trafficNoRecordsForWindow(window.label(l10n));
+  }
+
+  void _toggleTotals() {
+    setState(() => _showTotals = !_showTotals);
   }
 
   void _openAttributionSheet() {

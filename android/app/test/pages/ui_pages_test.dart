@@ -11,6 +11,7 @@ import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/rules_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -387,6 +388,53 @@ void _observabilityPages() {
           find.ancestor(of: title, matching: find.byType(FilledButton)),
         ),
       );
+    });
+
+    testWidgets('点按顶部统计条切换到累计上下行，应用数同取全部历史', (tester) async {
+      final allRows = <AppTrafficDaily>[
+        ...trafficRows,
+        const AppTrafficDaily(
+          date: '2026-10-19',
+          packageName: 'com.example.video',
+          appName: '视频',
+          txBytes: 4000,
+          rxBytes: 16000,
+          updatedAt: 1,
+        ),
+      ];
+      await pumpPage(
+        tester,
+        const TrafficPage(),
+        providerOverrides: [
+          ...defaultOverrides(),
+          trafficSnapshotOfProvider.overrideWith(
+            (ref, window) async =>
+                TrafficSnapshot(rows: allRows, startDate: '', endDate: ''),
+          ),
+        ],
+      );
+      expect(tester.takeException(), isNull);
+      expect(find.text('今日下行'), findsOneWidget);
+      expect(find.text('累计下行'), findsNothing);
+
+      await tester.tap(find.text('今日下行'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('累计下行'), findsOneWidget);
+      expect(find.text('累计上行'), findsOneWidget);
+      expect(find.text('今日下行'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(StatStrip),
+          matching: find.text('${allRows.length}'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('累计下行'));
+      await tester.pumpAndSettle();
+      expect(find.text('今日下行'), findsOneWidget);
     });
   });
 }

@@ -3937,6 +3937,12 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get trafficTotalDown => 'Total download';
+
+  @override
+  String get trafficTotalUp => 'Total upload';
+
+  @override
   String get obsRequestsTitle => 'Requests';
 
   @override

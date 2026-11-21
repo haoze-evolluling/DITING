@@ -3735,6 +3735,12 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get trafficTotalDown => '累计下行';
+
+  @override
+  String get trafficTotalUp => '累计上行';
+
+  @override
   String get obsRequestsTitle => '请求';
 
   @override

@@ -2160,6 +2160,8 @@
       }
     }
   },
+  "trafficTotalDown": "累计下行",
+  "trafficTotalUp": "累计上行",
   "obsRequestsTitle": "请求",
   "obsSource": "来源",
   "obsStatus": "状态",

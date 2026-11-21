@@ -2324,6 +2324,10 @@ abstract class AppL10n {
 
   String trafficWindowUp(String window);
 
+  String get trafficTotalDown;
+
+  String get trafficTotalUp;
+
   String get obsRequestsTitle;
 
   String get obsSource;

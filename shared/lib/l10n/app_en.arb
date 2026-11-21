@@ -1170,6 +1170,8 @@
   "trafficSearchPlaceholder": "Search app or package...",
   "trafficWindowDown": "{window} download",
   "trafficWindowUp": "{window} upload",
+  "trafficTotalDown": "Total download",
+  "trafficTotalUp": "Total upload",
   "obsRequestsTitle": "Requests",
   "obsSource": "Source",
   "obsStatus": "Status",
