@@ -36,7 +36,7 @@ void main() {
       expect(dataSet.logsDatabase, StorageContract.normalLogsDatabase);
     });
 
-    test('极速模式使用独立的规则库与日志库', () {
+    test('简洁模式使用独立的规则库与日志库', () {
       final dataSet = DataSet.fromWorkModeValue('express');
       expect(dataSet, DataSet.express);
       expect(dataSet.prefsContainer, LegacySettings.expressContainer);
@@ -79,7 +79,7 @@ void main() {
   });
 
   group('设置视图跟随工作模式', () {
-    test('极速模式下解析模式写进 diting_express_prefs', () {
+    test('简洁模式下解析模式写进 diting_express_prefs', () {
       final c = container(workMode: 'express');
       expect(
         c.read(legacySettingsProvider).dnsContainer,

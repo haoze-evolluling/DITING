@@ -14,7 +14,7 @@
     <string name="widget_block_rate">拦截率</string>
     <string name="widget_work_mode">工作模式</string>
     <string name="widget_mode_normal">普通模式</string>
-    <string name="widget_mode_express">极速模式</string>
+    <string name="widget_mode_express">简洁模式</string>
     <string name="widget_mode_server">服务器模式</string>
     <string name="server_channel_name">局域网 DNS 服务器</string>
     <string name="server_channel_description">服务器模式的运行状态与停止入口</string>

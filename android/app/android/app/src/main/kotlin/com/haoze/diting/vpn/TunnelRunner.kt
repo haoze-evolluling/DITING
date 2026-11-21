@@ -8,7 +8,7 @@ import com.haoze.diting.engine.Engine
 import com.haoze.diting.engine.SocketProtector
 import com.haoze.diting.log.RuntimeEventLog
 
-/** 全隧道会话线程：装载规则快照、启动引擎并监护会话，普通与极速模式共用。 */
+/** 全隧道会话线程：装载规则快照、启动引擎并监护会话，普通与简洁模式共用。 */
 internal object TunnelRunner {
     private const val SESSION_POLL_MS = 200L
 

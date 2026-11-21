@@ -20,7 +20,7 @@ part 'tunnel_state_test_root.dart';
 
 void main() {
   group('启动看门狗', _powerGuard);
-  group('极速模式', _expressMode);
+  group('简洁模式', _expressMode);
   group('引擎计数', _engineStats);
   group('按需连接', _onDemand);
   group('Root 免 VPN 接管', _rootTakeover);
@@ -168,7 +168,7 @@ void _powerGuard() {
 }
 
 void _expressMode() {
-  group('极速模式 prefs 视图', () {
+  group('简洁模式 prefs 视图', () {
     test('DNS 键读 diting_express_prefs，UI 键仍读全局容器', () {
       final store = MemoryLegacyPrefsStore({
         'dns_vpn_prefs': {
@@ -206,7 +206,7 @@ void _expressMode() {
     });
   });
 
-  group('极速模式电源状态机', () {
+  group('简洁模式电源状态机', () {
     ProviderContainer container({
       required FakeVpnController normal,
       required FakeVpnController express,
@@ -233,7 +233,7 @@ void _expressMode() {
       return c;
     }
 
-    test('启动走极速通道、采用极速数据集的 DNS 配置并写 express_vpn_running', () async {
+    test('启动走简洁通道、采用简洁数据集的 DNS 配置并写 express_vpn_running', () async {
       final normal = FakeVpnController();
       final express = FakeVpnController();
       final c = container(normal: normal, express: express);
@@ -246,7 +246,7 @@ void _expressMode() {
 
       final request = express.lastRequest!;
       final settings = c.read(legacySettingsProvider);
-      // 极速模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
+      // 简洁模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
       expect(request.bypassLan, settings.bypassLanEnabled);
       expect(request.ipv6Mode, 'disabled');
       expect(request.blockedPackages, settings.blockedAppPackages.toList());
@@ -262,7 +262,7 @@ void _expressMode() {
       expect(settings.vpnRunning, isFalse);
     });
 
-    test('极速模式里选择的解析模式进入数据集的设置与通知文案', () async {
+    test('简洁模式里选择的解析模式进入数据集的设置与通知文案', () async {
       final c = container(
         normal: FakeVpnController(),
         express: FakeVpnController(),
@@ -302,7 +302,7 @@ void _expressMode() {
       expect(c.read(legacySettingsProvider).expressVpnRunning, isFalse);
     });
 
-    test('切回普通模式会停止极速隧道', () async {
+    test('切回普通模式会停止简洁隧道', () async {
       final express = FakeVpnController();
       final c = container(normal: FakeVpnController(), express: express);
       await c.read(powerProvider.notifier).toggle();

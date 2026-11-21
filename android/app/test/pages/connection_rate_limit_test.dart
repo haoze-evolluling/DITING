@@ -19,7 +19,7 @@ void main() {
   installGlobalTestHooks();
 
   group('连接限速文档', () {
-    test('参数写入隧道文档，普通与极速模式都生效', () {
+    test('参数写入隧道文档，普通与简洁模式都生效', () {
       final store = MemoryLegacyPrefsStore({
         'diting_settings': {'app_work_mode': 'normal'},
       });

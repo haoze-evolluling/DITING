@@ -267,7 +267,7 @@ void _settingsCatalog() {
         store,
         dnsContainer: LegacySettings.expressContainer,
       );
-      expect(express.dnsLogModeRaw, 'all', reason: '极速模式是另一份数据');
+      expect(express.dnsLogModeRaw, 'all', reason: '简洁模式是另一份数据');
       express.setDnsLogModeRaw('off');
       expect(store.read('diting_express_prefs', 'dns_log_mode'), 'off');
     });

@@ -294,13 +294,13 @@ void _agentAnalysis() {
       expect(request.userPrompt, isNot(contains('### 1.')));
     });
 
-    test('极速模式没有 HTTPS 面时说清「没有这一面」而不是「没有流量」', () async {
+    test('简洁模式没有 HTTPS 面时说清「没有这一面」而不是「没有流量」', () async {
       await insertDns('a.test', 'PASSED');
       final summary = await summarizeRecentTraffic(
         dnsRepository: DnsLogRepository(db),
-        httpUnavailableReason: '极速模式不产生 HTTPS 检查记录',
+        httpUnavailableReason: '简洁模式不产生 HTTPS 检查记录',
       );
-      expect(summary.render(), contains('极速模式不产生 HTTPS 检查记录'));
+      expect(summary.render(), contains('简洁模式不产生 HTTPS 检查记录'));
       expect(summary.render(), isNot(contains('采样数量: 0 条')));
     });
   });

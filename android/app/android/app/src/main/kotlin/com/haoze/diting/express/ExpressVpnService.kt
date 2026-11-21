@@ -10,7 +10,7 @@ import com.haoze.diting.vpn.VpnServiceApi
 import com.haoze.diting.vpn.VpnStartConfigStore
 
 /**
- * 极速模式（全隧道），与普通模式共用 [FullTunnelVpnService]。
+ * 简洁模式（全隧道），与普通模式共用 [FullTunnelVpnService]。
  *
  * 与普通模式的差别只在数据：规则库、日志库与偏好容器独立存放。
  */

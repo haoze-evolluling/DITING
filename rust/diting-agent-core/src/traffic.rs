@@ -184,9 +184,9 @@ mod tests {
     #[test]
     fn missing_https_surface_is_reported_as_such() {
         let dns = vec![row("a.test", "PASSED", false)];
-        let summary = summarize(&dns, &[], Some("极速模式不产生 HTTPS 检查记录".to_string()));
+        let summary = summarize(&dns, &[], Some("简洁模式不产生 HTTPS 检查记录".to_string()));
         let rendered = summary.render();
-        assert!(rendered.contains("- 本工作模式没有 HTTPS 检查面：极速模式不产生 HTTPS 检查记录"));
+        assert!(rendered.contains("- 本工作模式没有 HTTPS 检查面：简洁模式不产生 HTTPS 检查记录"));
         assert!(!rendered.contains("采样数量: 0 条"));
     }
 

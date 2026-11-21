@@ -13,7 +13,7 @@ import com.haoze.diting.automation.AutomationReceiver
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.platform.NotificationStatsLine
 
-/** 普通模式与极速模式共用的常驻通知，差异只来自 [VpnModeProfile]。 */
+/** 普通模式与简洁模式共用的常驻通知，差异只来自 [VpnModeProfile]。 */
 internal object VpnModeNotification {
     fun build(context: Context, profile: VpnModeProfile): Notification {
         val openIntent = PendingIntent.getActivity(

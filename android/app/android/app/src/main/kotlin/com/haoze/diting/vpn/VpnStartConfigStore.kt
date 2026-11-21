@@ -3,7 +3,7 @@ package com.haoze.diting.vpn
 import android.content.Context
 import android.content.Intent
 
-/** 一次隧道启动的完整参数集合，普通模式与极速模式共用。 */
+/** 一次隧道启动的完整参数集合，普通模式与简洁模式共用。 */
 internal data class TunnelStartArgs(
     val dnsConfig: String,
     val proxyJson: String,
@@ -19,7 +19,7 @@ internal data class TunnelStartArgs(
 /**
  * 记录最近一次启动参数，供拓扑重建、磁贴/小组件/自动化冷启动与 VpnReclaimer 重连使用。
  *
- * 两种模式各自使用自己的偏好容器（普通 `dns_vpn_prefs`、极速 `express_vpn_prefs`），
+ * 两种模式各自使用自己的偏好容器（普通 `dns_vpn_prefs`、简洁 `express_vpn_prefs`），
  * 因此需要记忆的字段完全一致。
  */
 internal class VpnStartConfigStore(private val prefsName: String) {

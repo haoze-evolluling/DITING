@@ -11,7 +11,7 @@
     <string name="widget_block_rate">block rate</string>
     <string name="widget_work_mode">Mode</string>
     <string name="widget_mode_normal">Normal</string>
-    <string name="widget_mode_express">Express</string>
+    <string name="widget_mode_express">Simple</string>
     <string name="widget_mode_server">Server</string>
     <string name="server_channel_name">LAN DNS server</string>
     <string name="server_channel_description">Server-mode status and stop action</string>

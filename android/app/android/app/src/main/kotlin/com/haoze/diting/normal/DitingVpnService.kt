@@ -9,7 +9,7 @@ import com.haoze.diting.vpn.VpnModeProfile
 import com.haoze.diting.vpn.VpnServiceApi
 import com.haoze.diting.vpn.VpnStartConfigStore
 
-/** 普通模式（全隧道），与极速模式共用 [FullTunnelVpnService]。 */
+/** 普通模式（全隧道），与简洁模式共用 [FullTunnelVpnService]。 */
 internal class DitingVpnService : FullTunnelVpnService() {
     override fun modeProfile(): VpnModeProfile = VpnModeProfile.NORMAL
 

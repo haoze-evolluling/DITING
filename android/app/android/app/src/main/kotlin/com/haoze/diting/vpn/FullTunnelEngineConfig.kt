@@ -15,7 +15,7 @@ import com.haoze.diting.proxy.OutboundProxyScope
 import java.io.File
 
 /**
- * 普通模式与极速模式共用的全隧道数据面配置。
+ * 普通模式与简洁模式共用的全隧道数据面配置。
  *
  * 两种模式唯一的差别是 [RuleDataset]（规则库 / 日志库 / 偏好容器），
  * 其余能力——DNS 过滤、流量统计、HTTP 记录、分应用管控、HTTPS 检查——完全一致。

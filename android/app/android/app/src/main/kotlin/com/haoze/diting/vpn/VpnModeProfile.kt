@@ -8,7 +8,7 @@ import com.haoze.diting.platform.NotificationMode
 /**
  * 一种工作模式与「全隧道数据面」之间的全部差异。
  *
- * 除这里的字段外，普通模式与极速模式的行为完全一致：同一套路由、同一套引擎配置、
+ * 除这里的字段外，普通模式与简洁模式的行为完全一致：同一套路由、同一套引擎配置、
  * 同一套通知与同一套启停流程；数据通过 [dataset] 与偏好容器名保持隔离。
  *
  * 必须用 class 而不是 data class：其中的 [runtime] 是有状态引用。
@@ -80,10 +80,10 @@ internal class VpnModeProfile(
             serviceClass = ExpressVpnService::class.java,
             runtime = VpnRuntime.EXPRESS,
             channelId = "channel_express",
-            channelName = "极速模式",
+            channelName = "简洁模式",
             channelDescription = "保持 VPN 隧道运行",
             notificationId = 2003,
-            modeTitle = "极速模式",
+            modeTitle = "简洁模式",
             notificationMode = NotificationMode.EXPRESS,
             startAction = "com.haoze.diting.express.START_VPN",
             stopAction = "com.haoze.diting.express.STOP_VPN",

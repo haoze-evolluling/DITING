@@ -41,7 +41,7 @@ Android 没有 `rustls-native-certs` 期望的 `/etc/ssl/certs` 汇总文件，�
 
 ## 数据目录
 
-所有文件位于 `filesDir/server/`，与普通/极速模式的数据库和偏好完全分离：
+所有文件位于 `filesDir/server/`，与普通/简洁模式的数据库和偏好完全分离：
 
 ```text
 filesDir/server/

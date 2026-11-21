@@ -28,8 +28,8 @@ abstract final class StorageContract {
   static const expressLogsDatabase = 'diting_express_logs_v2';
   static const globalDatabase = 'diting_global_v2';
 
-  /// v2：极速模式日志库补齐 http_request_log / app_traffic_daily 两张表，
-  /// 使极速模式与普通模式具备相同的 HTTP 记录与按应用流量统计能力。
+  /// v2：简洁模式日志库补齐 http_request_log / app_traffic_daily 两张表，
+  /// 使简洁模式与普通模式具备相同的 HTTP 记录与按应用流量统计能力。
   static const schemaVersion = 2;
 
   static const settingsContainer = 'diting_settings';

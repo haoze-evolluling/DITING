@@ -16,13 +16,13 @@
 | 模式 | `app_work_mode` | 偏好容器 |
 | --- | --- | --- |
 | 普通模式 | `normal` | `dns_vpn_prefs` |
-| 极速模式 | `express` | `diting_express_prefs` |
+| 简洁模式 | `express` | `diting_express_prefs` |
 | 服务器模式 | `dns` | `diting_dns_mode_prefs` |
 
 历史上三种模式的数据存放在旧合并库中：
 
 - `diting_database`：普通模式规则、订阅、日志、HTTP 日志、流量、自动化；
-- `diting_express`：极速模式规则、订阅、日志；
+- `diting_express`：简洁模式规则、订阅、日志；
 - `diting_dns_rules`：服务器模式规则、订阅；
 - `diting_server_logs`：服务器模式日志。
 
@@ -46,8 +46,8 @@
 | --- | --- | --- |
 | `diting_normal_rules_v2` | 普通模式规则、订阅、`rule_version`、`mirror_template` | `0x44495431` |
 | `diting_normal_logs_v2` | 普通模式 `dns_cache`/`dns_log`/`dns_race_log`/`bootstrap_log`、`http_request_log`、`app_traffic_daily` | `0x44495432` |
-| `diting_express_rules_v2` | 极速模式规则、订阅、`rule_version`、`mirror_template` | `0x44495433` |
-| `diting_express_logs_v2` | 极速模式 4 张日志表 | `0x44495434` |
+| `diting_express_rules_v2` | 简洁模式规则、订阅、`rule_version`、`mirror_template` | `0x44495433` |
+| `diting_express_logs_v2` | 简洁模式 4 张日志表 | `0x44495434` |
 | `diting_dns_rules_v2` | 服务器模式规则、订阅、`rule_version`、`mirror_template` | `0x44495435` |
 | `diting_dns_logs_v2` | 服务器模式 4 张日志表 | `0x44495436` |
 | `diting_global_v2` | `automation_rule`、`automation_profile`、`automation_event` | `0x44495437` |

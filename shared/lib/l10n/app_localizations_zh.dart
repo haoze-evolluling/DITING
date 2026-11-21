@@ -491,7 +491,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、极速模式与服务器模式；普通与极速模式都通过全隧道接管全部流量，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与极速模式依赖 Android 本地 VPN 接口接管流量，不连接任何远程 VPN 服务器。两种模式功能相同，各自保存独立的规则、缓存与日志。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、简洁模式与服务器模式；普通与简洁模式都通过全隧道接管全部流量，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与简洁模式依赖 Android 本地 VPN 接口接管流量，不连接任何远程 VPN 服务器。两种模式功能相同，各自保存独立的规则、缓存与日志。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -596,7 +596,7 @@ class AppL10nZh extends AppL10n {
   String get homeTitleNormal => '谛听 · 普通';
 
   @override
-  String get homeTitleExpress => '谛听 · 极速';
+  String get homeTitleExpress => '谛听 · 简洁';
 
   @override
   String get homeTitleServer => '谛听 · DNS 服务';
@@ -1483,10 +1483,10 @@ class AppL10nZh extends AppL10n {
   String get workModeServerSummary => '独立 Rust DNS 服务，为局域网提供过滤、缓存与查询日志';
 
   @override
-  String get workModeExpressTitle => '极速模式';
+  String get workModeExpressTitle => '简洁模式';
 
   @override
-  String get workModeExpressBadge => '极速';
+  String get workModeExpressBadge => '简洁';
 
   @override
   String get workModeExpressSummary => '与普通模式相同的全功能接管，规则与日志独立存放';
@@ -5205,7 +5205,7 @@ class AppL10nZh extends AppL10n {
   String get onboardingTipNormal3 => '首页句子和透明度都能在设置里改。';
 
   @override
-  String get onboardingTipExpress1 => '极速模式与普通模式功能相同，规则、缓存与日志各自独立。';
+  String get onboardingTipExpress1 => '简洁模式与普通模式功能相同，规则、缓存与日志各自独立。';
 
   @override
   String get onboardingTipExpress2 => '多路竞速至少要选 2 家服务商。';
@@ -6648,7 +6648,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get autoUpdateIntervalFooter =>
-      '设置保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。按时刻更新使用手机系统时间与时区；新选的时刻若今天已过，从下一次开始计。本机没有后台任务队列：应用在前台时到点立即执行，不在前台时会在下次启动或切回前台时补跑，进程被完全关闭期间不会更新。';
+      '设置保存在当前工作模式的数据集里（普通 / 简洁 / 服务器各自独立）。按时刻更新使用手机系统时间与时区；新选的时刻若今天已过，从下一次开始计。本机没有后台任务队列：应用在前台时到点立即执行，不在前台时会在下次启动或切回前台时补跑，进程被完全关闭期间不会更新。';
 
   @override
   String get autoUpdateStatusSection => '执行状态';
@@ -8139,7 +8139,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get resolutionConfigFooter =>
-      '解析模式与竞速服务商保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。';
+      '解析模式与竞速服务商保存在当前工作模式的数据集里（普通 / 简洁 / 服务器各自独立）。';
 
   @override
   String get resolutionNotConfigured => '未配置';
@@ -8701,7 +8701,7 @@ class AppL10nZh extends AppL10n {
       '在继续使用本软件前，请确认你已阅读、理解并同意上述全部条款。若不同意，请立即停止使用并卸载本软件。';
 
   @override
-  String get settingsModeSubtitle => '切换普通模式或极速模式';
+  String get settingsModeSubtitle => '切换普通模式或简洁模式';
 
   @override
   String get settingsLogModeSubtitle => '选择 DNS 请求日志的记录范围';
@@ -8716,7 +8716,7 @@ class AppL10nZh extends AppL10n {
   String get settingsAutoStartTitle => '启动时自动开启';
 
   @override
-  String get settingsAutoStartSubtitle => '上次未手动关闭时，打开应用自动恢复普通或极速模式';
+  String get settingsAutoStartSubtitle => '上次未手动关闭时，打开应用自动恢复普通或简洁模式';
 
   @override
   String get settingsVpnWatchdogTitle => 'VPN 看门狗';
@@ -14374,7 +14374,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverUpstreamProviderNote =>
-      '可选择普通/极速模式的内置服务商，也可添加自定义 DNS、DoT 或 DoH 服务；修改会写入服务器独立配置。';
+      '可选择普通/简洁模式的内置服务商，也可添加自定义 DNS、DoT 或 DoH 服务；修改会写入服务器独立配置。';
 
   @override
   String get serverUpstreamModeNote => '主备切换优先使用首个可用服务商；并行竞速取最快响应；智能选择按历史表现调度。';

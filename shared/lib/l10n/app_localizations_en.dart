@@ -515,7 +515,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, express and server. Normal and express both take over all traffic through a full tunnel, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and express modes take over traffic through the Android local VPN interface and never connect to a remote VPN server. The two modes are functionally identical and each keeps its own rules, cache and logs. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, simple and server. Normal and simple both take over all traffic through a full tunnel, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and simple modes take over traffic through the Android local VPN interface and never connect to a remote VPN server. The two modes are functionally identical and each keeps its own rules, cache and logs. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -625,7 +625,7 @@ class AppL10nEn extends AppL10n {
   String get homeTitleNormal => 'DITING · Normal';
 
   @override
-  String get homeTitleExpress => 'DITING · Express';
+  String get homeTitleExpress => 'DITING · Simple';
 
   @override
   String get homeTitleServer => 'DITING · DNS Service';
@@ -1549,10 +1549,10 @@ class AppL10nEn extends AppL10n {
       'Standalone Rust DNS server with filtering, caching and query logs for the LAN';
 
   @override
-  String get workModeExpressTitle => 'Express mode';
+  String get workModeExpressTitle => 'Simple mode';
 
   @override
-  String get workModeExpressBadge => 'Express';
+  String get workModeExpressBadge => 'Simple';
 
   @override
   String get workModeExpressSummary =>
@@ -5489,7 +5489,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get onboardingTipExpress1 =>
-      'Express mode has the same features as normal mode, with its own rules, cache and logs.';
+      'Simple mode has the same features as normal mode, with its own rules, cache and logs.';
 
   @override
   String get onboardingTipExpress2 => 'Racing needs at least two providers.';
@@ -7021,7 +7021,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get autoUpdateIntervalFooter =>
-      'Settings are stored in the dataset of the current work mode (normal, express and server each keep their own). Timed updates follow the phone\'s clock and time zone; if the chosen time has already passed today, counting starts from the next one. There is no background task queue: while the app is in the foreground the update runs on time, otherwise it catches up on the next launch or return to the foreground, and never runs while the process is closed.';
+      'Settings are stored in the dataset of the current work mode (normal, simple and server each keep their own). Timed updates follow the phone\'s clock and time zone; if the chosen time has already passed today, counting starts from the next one. There is no background task queue: while the app is in the foreground the update runs on time, otherwise it catches up on the next launch or return to the foreground, and never runs while the process is closed.';
 
   @override
   String get autoUpdateStatusSection => 'Run status';
@@ -8643,7 +8643,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get resolutionConfigFooter =>
-      'The resolution mode and race providers are stored in the dataset of the current work mode (normal, express and server each keep their own).';
+      'The resolution mode and race providers are stored in the dataset of the current work mode (normal, simple and server each keep their own).';
 
   @override
   String get resolutionNotConfigured => 'Not configured';
@@ -9247,7 +9247,7 @@ class AppL10nEn extends AppL10n {
       'Before continuing, confirm that you have read, understood and agreed to all of the terms above. If you do not agree, stop using the software and uninstall it.';
 
   @override
-  String get settingsModeSubtitle => 'Switch between normal and express mode';
+  String get settingsModeSubtitle => 'Switch between normal and simple mode';
 
   @override
   String get settingsLogModeSubtitle =>
@@ -9265,7 +9265,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get settingsAutoStartSubtitle =>
-      'Restore normal or express mode when the app opens, unless you stopped it';
+      'Restore normal or simple mode when the app opens, unless you stopped it';
 
   @override
   String get settingsVpnWatchdogTitle => 'VPN watchdog';
@@ -15244,7 +15244,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverUpstreamProviderNote =>
-      'Choose a built-in normal/express-mode provider or add a custom DNS, DoT or DoH service. Changes use server-specific configuration.';
+      'Choose a built-in normal/simple-mode provider or add a custom DNS, DoT or DoH service. Changes use server-specific configuration.';
 
   @override
   String get serverUpstreamModeNote =>

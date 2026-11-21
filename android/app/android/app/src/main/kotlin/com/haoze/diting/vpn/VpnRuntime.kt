@@ -9,7 +9,7 @@ import com.haoze.diting.tile.QuickSettingsTileUpdater
 /**
  * 一种工作模式的运行时状态与持久化标记。
  *
- * 普通模式与极速模式各持一个实例，偏好容器与运行标记键都保持原值，
+ * 普通模式与简洁模式各持一个实例，偏好容器与运行标记键都保持原值，
  * 因此两种模式的数据互不影响。
  */
 internal class VpnRuntime(

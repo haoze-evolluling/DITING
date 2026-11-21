@@ -313,7 +313,7 @@ void main() {
 
   for (final (modeLabel, homeTitle) in [
     ('普通模式', '谛听 · 普通'),
-    ('极速模式', '谛听 · 极速'),
+    ('简洁模式', '谛听 · 简洁'),
   ]) {
     testWidgets('服务器模式切到$modeLabel后离开服务器路由', (tester) async {
       await pumpServer(tester, ServerRoutes.root);

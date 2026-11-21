@@ -29,7 +29,7 @@ void main() {
     );
   });
 
-  test('极速模式与普通模式显示同一套卡片', () {
+  test('简洁模式与普通模式显示同一套卡片', () {
     final normal = container().read(visibleDashboardWidgetsProvider);
     final instance = container(mode: AppWorkMode.express);
     expect(instance.read(dashboardWidgetsProvider), defaultDashboardWidgets);
@@ -38,7 +38,7 @@ void main() {
     expect(express, contains(DashboardWidget.networkSpeed));
   });
 
-  test('极速模式下重排卡片', () {
+  test('简洁模式下重排卡片', () {
     final instance = container(mode: AppWorkMode.express);
     final notifier = instance.read(dashboardWidgetsProvider.notifier);
     final visible = instance.read(visibleDashboardWidgetsProvider);

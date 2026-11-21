@@ -19,7 +19,7 @@ import com.haoze.diting.tile.QuickSettingsTileUpdater
 import com.haoze.diting.watchdog.VpnReclaimer
 
 /**
- * 普通模式与极速模式共用的全隧道 VpnService。
+ * 普通模式与简洁模式共用的全隧道 VpnService。
  *
  * 子类只提供 [modeProfile]；两种模式的规则库、日志库与偏好容器由 profile 注入，
  * 其余行为（建隧道、装数据面、通知、重建、回收、诊断）完全一致。
