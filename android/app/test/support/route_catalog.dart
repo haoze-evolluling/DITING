@@ -18,6 +18,7 @@ final Map<String, String> topLevelRoutes = {
   '首页句子': SystemPaths.homeSentence,
   '通知栏设置': SystemPaths.notification,
   '软件背景': SystemPaths.background,
+  '反馈与动效': SystemPaths.feedbackMotion,
   '应用图标': SystemPaths.launcherIcon,
   '字体设置': SystemPaths.fontFamily,
   '字号': SystemPaths.fontSize,

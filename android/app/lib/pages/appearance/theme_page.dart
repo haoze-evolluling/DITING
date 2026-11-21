@@ -22,76 +22,42 @@ class ThemePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pureBlack = ref.watch(pureBlackProvider);
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    warmDemoSchemes(
-      brightness: dark ? Brightness.dark : Brightness.light,
-      pureBlack: pureBlack,
-    );
-    final transition = ref.watch(tabTransitionProvider);
-    final glass = ref.watch(liquidGlassModeProvider);
+    final l10n = context.l10n;
     final barStyle = ref.watch(bottomBarStyleProvider);
     return CommonScaffold(
-      title: context.l10n.appearanceTitle,
+      title: l10n.appearanceTitle,
       body: PageBody(
         children: [
           const _ThemePreview(),
           generateSection(
-            title: context.l10n.appearanceInterfaceSection,
+            title: l10n.appearanceThemeSection,
             items: [
-              ListItem<AppThemeMode>.options(
-                leading: const GlyphIcon(AppGlyphs.sun),
-                title: Text(context.l10n.dayNightTitle),
-                subtitle: Text(
-                  ref.watch(themeModeProvider).label(context.l10n),
-                ),
-                options: AppThemeMode.values,
-                value: ref.watch(themeModeProvider),
-                textBuilder: (value) => value.label(context.l10n),
-                onChanged: (value) =>
-                    ref.read(themeModeProvider.notifier).select(value),
-              ),
-              ListItem<AppPalette>.options(
-                leading: const GlyphIcon(AppGlyphs.palette),
-                title: Text(context.l10n.appearancePaletteTitle),
-                subtitle: Text(ref.watch(paletteProvider).label(context.l10n)),
-                options: AppPalette.values,
-                value: ref.watch(paletteProvider),
-                textBuilder: (value) => value.label(context.l10n),
-                onChanged: (value) =>
-                    ref.read(paletteProvider.notifier).select(value),
+              NavEntryRow(
+                glyph: AppGlyphs.sun,
+                title: l10n.dayNightTitle,
+                subtitle: ref.watch(themeModeProvider).label(l10n),
+                onPressed: () => context.push(SystemPaths.dayNight),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.blur,
-                title: context.l10n.homeOpacityTitle,
-                subtitle: context.l10n.appearanceHomeOpacitySubtitle,
-                onPressed: () => context.push(SystemPaths.homeOpacity),
+                glyph: AppGlyphs.palette,
+                title: l10n.appearancePaletteTitle,
+                subtitle: ref.watch(paletteProvider).label(l10n),
+                onPressed: () => context.push(SystemPaths.colorStyle),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.dashboard,
-                title: context.l10n.bottomBarCustomTitle,
-                subtitle: context.l10n.appearanceBottomBarSelected(
-                  ref.watch(bottomBarProvider).length,
-                ),
-                onPressed: () => context.push(SystemPaths.bottomBar),
+                glyph: AppGlyphs.iconTile,
+                title: l10n.launcherIconTitle,
+                subtitle: ref.watch(launcherIconProvider).label(l10n),
+                onPressed: () => context.push(SystemPaths.launcherIcon),
               ),
-              ListItem.toggle(
-                title: Text(context.l10n.appearancePureBlack),
-                subtitle: Text(
-                  dark
-                      ? context.l10n.appearancePureBlackOn
-                      : context.l10n.appearancePureBlackOff,
-                ),
-                leading: const GlyphIcon(AppGlyphs.pureBlack),
-                value: pureBlack,
-                onChanged: dark
-                    ? (value) =>
-                          ref.read(pureBlackProvider.notifier).toggle(value)
-                    : null,
-              ),
+            ],
+          ),
+          generateSection(
+            title: l10n.appearanceLayoutSection,
+            items: [
               NavEntryRow(
                 glyph: AppGlyphs.font,
-                title: context.l10n.appearanceFontSection,
+                title: l10n.appearanceFontSection,
                 subtitle: fontLabelOf(
                   ref.watch(importedFontsProvider),
                   ref.watch(selectedFontFamilyProvider),
@@ -99,85 +65,70 @@ class ThemePage extends ConsumerWidget {
                 onPressed: () => context.push(SystemPaths.fontFamily),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.iconTile,
-                title: context.l10n.launcherIconTitle,
-                subtitle: ref.watch(launcherIconProvider).label(context.l10n),
-                onPressed: () => context.push(SystemPaths.launcherIcon),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.appearanceHomeSection,
-            items: [
-              NavEntryRow(
-                glyph: AppGlyphs.textShort,
-                title: context.l10n.homeSentenceTitle,
-                subtitle: context.l10n.appearanceHomeSentenceSubtitle,
-                onPressed: () => context.push(SystemPaths.homeSentence),
+                glyph: AppGlyphs.blur,
+                title: l10n.homeOpacityTitle,
+                subtitle: l10n.appearanceHomeOpacitySubtitle,
+                onPressed: () => context.push(SystemPaths.homeOpacity),
               ),
               NavEntryRow(
-                glyph: AppGlyphs.notification,
-                title: context.l10n.appearanceNotification,
-                subtitle: context.l10n.appearanceNotificationSubtitle,
-                onPressed: () => context.push(SystemPaths.notification),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.appearanceBackgroundSection,
-            items: [
-              NavEntryRow(
-                glyph: AppGlyphs.photos,
-                title: context.l10n.backgroundTitle,
-                subtitle: ref.watch(customBackgroundProvider).enabled
-                    ? context.l10n.commonEnabled
-                    : context.l10n.commonDisabled,
-                onPressed: () => context.push(SystemPaths.background),
-              ),
-              ListItem.toggle(
-                title: Text(context.l10n.appearanceHaptic),
-                subtitle: Text(context.l10n.appearanceHapticSubtitle),
-                leading: const GlyphIcon(AppGlyphs.vibrate),
-                value: ref.watch(hapticProvider),
-                onChanged: (value) =>
-                    ref.read(hapticProvider.notifier).toggle(value),
+                glyph: AppGlyphs.dashboard,
+                title: l10n.bottomBarCustomTitle,
+                subtitle: l10n.appearanceBottomBarSelected(
+                  ref.watch(bottomBarProvider).length,
+                ),
+                onPressed: () => context.push(SystemPaths.bottomBar),
               ),
               ListItem<BottomBarStyle>.options(
-                title: Text(context.l10n.appearanceBottomBarStyle),
+                title: Text(l10n.appearanceBottomBarStyle),
                 subtitle: Text(
                   barStyle.isFloating
-                      ? context.l10n.appearanceBottomBarStyleFloating
-                      : context.l10n.appearanceBottomBarStyleDocked,
+                      ? l10n.appearanceBottomBarStyleFloating
+                      : l10n.appearanceBottomBarStyleDocked,
                 ),
                 leading: const GlyphIcon(AppGlyphs.sliders),
                 options: BottomBarStyle.values,
                 value: barStyle,
-                textBuilder: (value) => value.label(context.l10n),
+                textBuilder: (value) => value.label(l10n),
                 onChanged: (value) =>
                     ref.read(bottomBarStyleProvider.notifier).select(value),
               ),
-              ListItem<TabTransition>.options(
-                title: Text(context.l10n.appearanceTabTransition),
-                subtitle: Text(context.l10n.appearanceTabTransitionSubtitle),
-                leading: const GlyphIcon(AppGlyphs.motion),
-                options: TabTransition.values,
-                value: transition,
-                textBuilder: (value) => value.label(context.l10n),
-                onChanged: (value) =>
-                    ref.read(tabTransitionProvider.notifier).select(value),
+            ],
+          ),
+          generateSection(
+            title: l10n.appearanceBackgroundSection,
+            items: [
+              NavEntryRow(
+                glyph: AppGlyphs.photos,
+                title: l10n.backgroundTitle,
+                subtitle: ref.watch(customBackgroundProvider).enabled
+                    ? l10n.commonEnabled
+                    : l10n.commonDisabled,
+                onPressed: () => context.push(SystemPaths.background),
               ),
-              ListItem<LiquidGlassMode>.options(
-                title: Text(context.l10n.appearanceLiquidGlass),
-                subtitle: Text(glass.label(context.l10n)),
-                leading: const GlyphIcon(AppGlyphs.liquidGlass),
-                options: LiquidGlassMode.values,
-                value: glass,
-                textBuilder: (value) => value.label(context.l10n),
-                onChanged: (value) =>
-                    ref.read(liquidGlassModeProvider.notifier).select(value),
+              NavEntryRow(
+                glyph: AppGlyphs.motion,
+                title: l10n.appearanceFeedbackMotionTitle,
+                subtitle: l10n.appearanceFeedbackMotionSubtitle,
+                onPressed: () => context.push(SystemPaths.feedbackMotion),
               ),
             ],
-            footer: context.l10n.appearanceMotionFooter,
+          ),
+          generateSection(
+            title: l10n.appearanceHomeNotificationSection,
+            items: [
+              NavEntryRow(
+                glyph: AppGlyphs.textShort,
+                title: l10n.homeSentenceTitle,
+                subtitle: l10n.appearanceHomeSentenceSubtitle,
+                onPressed: () => context.push(SystemPaths.homeSentence),
+              ),
+              NavEntryRow(
+                glyph: AppGlyphs.notification,
+                title: l10n.appearanceNotification,
+                subtitle: l10n.appearanceNotificationSubtitle,
+                onPressed: () => context.push(SystemPaths.notification),
+              ),
+            ],
           ),
         ],
       ),
@@ -243,6 +194,7 @@ class _ThemePreviewState extends ConsumerState<_ThemePreview>
       AppThemeMode.dark => Brightness.dark,
       AppThemeMode.system => MediaQuery.platformBrightnessOf(context),
     };
+    warmDemoSchemes(brightness: brightness, pureBlack: pureBlack);
     final scheme = demoColorScheme(
       seed: ref.watch(paletteProvider).effectiveSeed,
       brightness: brightness,

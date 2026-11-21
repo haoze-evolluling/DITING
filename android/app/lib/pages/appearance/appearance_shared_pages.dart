@@ -103,7 +103,6 @@ class ThemeBottomBarPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final destinations = ref.watch(bottomBarProvider);
     final notifier = ref.read(bottomBarProvider.notifier);
-    final haptic = ref.watch(hapticProvider);
     final hidden = [
       for (final destination in BottomBarDestination.values)
         if (!destinations.contains(destination)) destination,
@@ -176,19 +175,6 @@ class ThemeBottomBarPage extends ConsumerWidget {
                 ),
             ],
             footer: context.l10n.bottomBarNewItemFooter,
-          ),
-          generateSection(
-            title: context.l10n.bottomBarFeel,
-            items: [
-              ListItem.toggle(
-                title: Text(context.l10n.appearanceHaptic),
-                subtitle: Text(context.l10n.appearanceHapticSubtitle),
-                leading: const GlyphIcon(AppGlyphs.vibrate),
-                value: haptic,
-                onChanged: (value) =>
-                    ref.read(hapticProvider.notifier).toggle(value),
-              ),
-            ],
           ),
         ],
       ),

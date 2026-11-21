@@ -2613,6 +2613,28 @@ class AppL10nEn extends AppL10n {
   String get appearanceTitle => 'Appearance';
 
   @override
+  String get appearanceThemeSection => 'Theme';
+
+  @override
+  String get appearanceLayoutSection => 'Interface & layout';
+
+  @override
+  String get appearanceHomeNotificationSection => 'Home & notifications';
+
+  @override
+  String get appearanceFeedbackMotionTitle => 'Feedback & motion';
+
+  @override
+  String get appearanceFeedbackMotionSubtitle =>
+      'Pure black, haptics and transition effects';
+
+  @override
+  String get appearanceFeedbackSection => 'Feedback';
+
+  @override
+  String get appearanceMotionSection => 'Motion';
+
+  @override
   String get appearanceInterfaceSection => 'Interface';
 
   @override
@@ -2659,7 +2681,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get appearanceMotionFooter =>
-      'Style, animation and glass only apply to the floating bar; the docked bar stays solid.';
+      'Animation and glass only apply to the floating bar; the docked bar stays solid.';
 
   @override
   String get appearancePaletteGoldLegacy =>
@@ -2974,7 +2996,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get dayNightFooter =>
-      'Pure black only applies in dark mode; its switch lives in the Interface group of Appearance.';
+      'Pure black only applies in dark mode; turn it on in Feedback & motion.';
 
   @override
   String get homeOpacityTitle => 'Home opacity';

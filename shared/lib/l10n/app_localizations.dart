@@ -1568,6 +1568,20 @@ abstract class AppL10n {
 
   String get appearanceTitle;
 
+  String get appearanceThemeSection;
+
+  String get appearanceLayoutSection;
+
+  String get appearanceHomeNotificationSection;
+
+  String get appearanceFeedbackMotionTitle;
+
+  String get appearanceFeedbackMotionSubtitle;
+
+  String get appearanceFeedbackSection;
+
+  String get appearanceMotionSection;
+
   String get appearanceInterfaceSection;
 
   String get appearanceHomeOpacitySubtitle;

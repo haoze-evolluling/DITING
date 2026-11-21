@@ -1,5 +1,6 @@
 import 'package:diting_android/pages/appearance/appearance_color_page.dart';
 import 'package:diting_android/pages/appearance/appearance_shared_pages.dart';
+import 'package:diting_android/pages/appearance/feedback_motion_page.dart';
 import 'package:diting_android/pages/appearance/font_family_page.dart';
 import 'package:diting_android/pages/appearance/font_size_page.dart';
 import 'package:diting_android/pages/appearance/launcher_icon_page.dart';
@@ -22,6 +23,7 @@ abstract final class SystemPaths {
   static const homeSentence = '/theme/home-sentence';
   static const notification = '/theme/notification';
   static const background = '/theme/background';
+  static const feedbackMotion = '/theme/feedback-motion';
 
   static const launcherIcon = '/theme/launcher-icon';
 
@@ -54,6 +56,7 @@ List<RouteBase> systemRoutes() => [
   _route(SystemPaths.homeSentence, const ThemeHomeSentencePage()),
   _route(SystemPaths.notification, const ThemeNotificationPage()),
   _route(SystemPaths.background, const ThemeBackgroundPage()),
+  _route(SystemPaths.feedbackMotion, const ThemeFeedbackMotionPage()),
   _route(SystemPaths.launcherIcon, const LauncherIconPage()),
   _route(SystemPaths.fontFamily, const FontFamilyPage()),
   _route(SystemPaths.fontSize, const FontSizePage()),

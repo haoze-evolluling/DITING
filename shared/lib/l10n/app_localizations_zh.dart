@@ -2478,6 +2478,27 @@ class AppL10nZh extends AppL10n {
   String get appearanceTitle => '外观设置';
 
   @override
+  String get appearanceThemeSection => '主题';
+
+  @override
+  String get appearanceLayoutSection => '界面与布局';
+
+  @override
+  String get appearanceHomeNotificationSection => '首页与通知';
+
+  @override
+  String get appearanceFeedbackMotionTitle => '反馈与动效';
+
+  @override
+  String get appearanceFeedbackMotionSubtitle => '纯黑、触感反馈与过渡动效';
+
+  @override
+  String get appearanceFeedbackSection => '反馈';
+
+  @override
+  String get appearanceMotionSection => '动效';
+
+  @override
   String get appearanceInterfaceSection => '界面显示';
 
   @override
@@ -2517,7 +2538,7 @@ class AppL10nZh extends AppL10n {
   String get appearanceTabTransitionSubtitle => '切换底部标签时的动画方式';
 
   @override
-  String get appearanceMotionFooter => '底栏样式、动画与玻璃只作用于浮条；普通底栏始终是实色。';
+  String get appearanceMotionFooter => '动画与玻璃只作用于浮条；普通底栏始终是实色。';
 
   @override
   String get appearancePaletteGoldLegacy => '落盘值沿用旧版的 indigo';
@@ -2800,7 +2821,7 @@ class AppL10nZh extends AppL10n {
   String get dayNightFollowSystemDescription => '系统切换深色时一起切换';
 
   @override
-  String get dayNightFooter => '纯黑只在深色模式下生效，开关在「外观设置」的界面显示组里。';
+  String get dayNightFooter => '纯黑模式只在深色模式下生效，可在「反馈与动效」中开启。';
 
   @override
   String get homeOpacityTitle => '首页透明度';
