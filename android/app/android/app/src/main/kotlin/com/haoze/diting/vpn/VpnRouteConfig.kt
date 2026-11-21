@@ -1,13 +1,10 @@
-package com.haoze.diting.normal
+package com.haoze.diting.vpn
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import com.haoze.diting.vpn.NetworkTopology
-import com.haoze.diting.vpn.VpnPlanNative
-import com.haoze.diting.vpn.applyTo
 
 internal data class VpnEstablishResult(
     val fd: ParcelFileDescriptor?,
@@ -16,18 +13,18 @@ internal data class VpnEstablishResult(
 )
 
 internal object VpnRouteConfig {
-    private const val TAG = "VpnRouteConfig"
-
     fun establish(
         service: VpnService,
         excludedPackages: Set<String>,
         proxyPackage: String?,
         bypassLan: Boolean,
         ipv6Mode: String,
+        routeMode: String = VpnModeProfile.ROUTE_MODE_FULL_TUNNEL,
+        logTag: String = "VpnRouteConfig",
     ): VpnEstablishResult {
         val clat = clatDetected(service)
         val plan = VpnPlanNative.routePlan(
-            mode = "normal",
+            mode = routeMode,
             ipv6Mode = ipv6Mode,
             ipv6Supported = ipv6SupportFor(service, ipv6Mode, clat),
             clat = clat,
@@ -37,18 +34,18 @@ internal object VpnRouteConfig {
             proxyPackage = proxyPackage.orEmpty(),
         )
         Log.i(
-            TAG,
-            "establish: ipv6Mode=$ipv6Mode, enableIpv6=${plan.enableIpv6}, " +
+            logTag,
+            "establish: mode=$routeMode, ipv6Mode=$ipv6Mode, enableIpv6=${plan.enableIpv6}, " +
                 "clat=$clat, bypassLan=$bypassLan",
         )
 
         val builder = service.Builder()
             .setSession(service.applicationInfo.loadLabel(service.packageManager).toString())
-        plan.applyTo(builder, TAG)
+        plan.applyTo(builder, logTag)
         val fd = try {
             builder.establish()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to establish VPN interface", e)
+            Log.e(logTag, "Failed to establish VPN interface", e)
             null
         }
         return VpnEstablishResult(fd, plan.enableIpv6, clat)

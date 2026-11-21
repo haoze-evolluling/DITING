@@ -14,7 +14,8 @@ internal object LogRetention {
 
     private const val INITIAL_DELAY_MS = 30 * 1000L
 
-    private var executor: ScheduledExecutorService? = null
+    /** 按日志库分别持有清理任务：两种模式的日志库互相独立，各自按自己的策略清理。 */
+    private val executors = HashMap<String, ScheduledExecutorService>()
 
     @Synchronized
     fun start(
@@ -23,12 +24,12 @@ internal object LogRetention {
         prefsName: String,
         includeHttpAndTraffic: Boolean,
     ) {
-        if (executor != null) return
+        if (executors.containsKey(databaseName)) return
         val appContext = context.applicationContext
         val scheduler = Executors.newSingleThreadScheduledExecutor { runnable ->
             Thread(runnable, "diting-log-retention").apply { isDaemon = true }
         }
-        executor = scheduler
+        executors[databaseName] = scheduler
         scheduler.scheduleWithFixedDelay(
             {
                 runCatching {
@@ -49,8 +50,8 @@ internal object LogRetention {
 
     @Synchronized
     fun stop() {
-        executor?.shutdownNow()
-        executor = null
+        executors.values.forEach { it.shutdownNow() }
+        executors.clear()
     }
 
     fun prune(

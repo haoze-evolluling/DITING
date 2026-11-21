@@ -1,4 +1,4 @@
-package com.haoze.diting.normal
+package com.haoze.diting.vpn
 
 import android.app.Notification
 import android.app.NotificationManager
@@ -10,16 +10,12 @@ import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 import com.haoze.diting.automation.AutomationContract
 import com.haoze.diting.automation.AutomationReceiver
-import com.haoze.diting.platform.NotificationMode
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.platform.NotificationStatsLine
 
-object VpnNotification {
-    fun build(
-        context: Context,
-        channelId: String,
-        stopAction: String,
-    ): Notification {
+/** 普通模式与极速模式共用的常驻通知，差异只来自 [VpnModeProfile]。 */
+internal object VpnModeNotification {
+    fun build(context: Context, profile: VpnModeProfile): Notification {
         val openIntent = PendingIntent.getActivity(
             context,
             0,
@@ -31,7 +27,7 @@ object VpnNotification {
         val stopIntent = PendingIntent.getService(
             context,
             1,
-            Intent(context, DitingVpnService::class.java).setAction(stopAction),
+            Intent(context, profile.serviceClass).setAction(profile.stopAction),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val pauseIntent = PendingIntent.getBroadcast(
@@ -39,55 +35,49 @@ object VpnNotification {
             2,
             Intent(context, AutomationReceiver::class.java).apply {
                 action = AutomationContract.ACTION_PAUSE
-                putExtra(AutomationContract.EXTRA_PAUSE_MINUTES, AutomationContract.DEFAULT_PAUSE_MINUTES)
+                putExtra(
+                    AutomationContract.EXTRA_PAUSE_MINUTES,
+                    AutomationContract.DEFAULT_PAUSE_MINUTES,
+                )
                 setPackage(context.packageName)
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val label = context.applicationInfo.loadLabel(context.packageManager).toString()
-
         val status = NotificationSettings.runningText(
             context,
-            NotificationMode.NORMAL,
+            profile.notificationMode,
             "运行中",
         )
-        val detail = NotificationStatsLine.compose(context, withSpeed = true)
+        val detail = NotificationStatsLine.compose(context, withSpeed = profile.showSpeedLine)
         val body = if (detail == null) status else "$status\n$detail"
-        return NotificationCompat.Builder(context, channelId)
+        val builder = NotificationCompat.Builder(context, profile.channelId)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("$label · 普通模式")
+            .setContentTitle("$label · ${profile.modeTitle}")
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setContentIntent(openIntent)
             .addAction(0, "停止", stopIntent)
-            .addAction(0, "暂停1小时", pauseIntent)
-            .setOngoing(NotificationSettings.persistent(context))
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
+            .setOngoing(NotificationSettings.persistent(context))
+        if (profile.pauseAction) {
+            builder.addAction(0, "暂停1小时", pauseIntent)
+        }
+        return builder.build()
     }
 
-    fun refresh(
-        context: Context,
-        channelId: String,
-        notificationId: Int,
-        stopAction: String,
-    ) {
+    fun refresh(context: Context, profile: VpnModeProfile) {
         if (!NotificationSettings.hasLiveItems(context)) return
-        rerender(context, channelId, notificationId, stopAction)
+        rerender(context, profile)
     }
 
-    fun rerender(
-        context: Context,
-        channelId: String,
-        notificationId: Int,
-        stopAction: String,
-    ): Boolean = runCatching {
+    fun rerender(context: Context, profile: VpnModeProfile): Boolean = runCatching {
         val manager = context.getSystemService(NotificationManager::class.java)
             ?: return@runCatching false
-        manager.notify(notificationId, build(context, channelId, stopAction))
+        manager.notify(profile.notificationId, build(context, profile))
         true
     }.getOrDefault(false)
 }

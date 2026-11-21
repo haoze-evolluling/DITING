@@ -1,8 +1,9 @@
-package com.haoze.diting.normal
+package com.haoze.diting.vpn
 
 import android.content.Context
 import android.os.PowerManager
 
+/** 按屏幕状态调整刷新频率的统计/通知心跳线程。 */
 internal class SpeedTicker(
     private val context: Context,
     private val active: () -> Boolean,

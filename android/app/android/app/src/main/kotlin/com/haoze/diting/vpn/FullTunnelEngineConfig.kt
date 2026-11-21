@@ -1,5 +1,6 @@
-package com.haoze.diting.normal
+package com.haoze.diting.vpn
 
+import android.content.Context
 import android.util.Log
 import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.core.rule.RuleDataset
@@ -11,47 +12,51 @@ import com.haoze.diting.log.PackageUids
 import com.haoze.diting.log.RequestStats
 import com.haoze.diting.proxy.OutboundProxyBridge
 import com.haoze.diting.proxy.OutboundProxyScope
-import com.haoze.diting.vpn.VpnPlanNative
 import java.io.File
 
-internal object NormalEngineConfig {
-    private const val TAG = "DitingVpnService"
-
+/**
+ * 普通模式与极速模式共用的全隧道数据面配置。
+ *
+ * 两种模式唯一的差别是 [RuleDataset]（规则库 / 日志库 / 偏好容器），
+ * 其余能力——DNS 过滤、流量统计、HTTP 记录、分应用管控、HTTPS 检查——完全一致。
+ */
+internal object FullTunnelEngineConfig {
     private const val MITM_DIR = "go-mitm"
 
     fun configure(
-        service: DitingVpnService,
+        context: Context,
+        dataset: RuleDataset,
         engine: Engine,
-        dnsConfig: String,
-        proxyJson: String,
+        args: TunnelStartArgs,
         ipv6Enabled: Boolean,
-        blockedPackages: Set<String>,
-        inspectionPackages: Set<String>,
-        inspectionEnabled: Boolean,
         logMode: String,
         httpsBypassRules: Set<String>,
+        logTag: String,
     ): EngineDataPlane {
         val proxyError = engine.configureOutboundProxy(
-            OutboundProxyScope.resolve(service, proxyJson.ifBlank { VpnPlanNative.startDefaults.outboundProxy })
+            OutboundProxyScope.resolve(
+                context,
+                args.proxyJson.ifBlank { VpnPlanNative.startDefaults.outboundProxy },
+            ),
         )
         if (proxyError.isNotBlank()) {
-            OutboundProxyBridge.publishStatus(service, "error", proxyError)
+            OutboundProxyBridge.publishStatus(context, "error", proxyError)
         }
         require(proxyError.isBlank()) { proxyError }
         engine.setOutboundProxyStatusCallback(object : OutboundProxyStatusCallback {
             override fun onOutboundProxyStatus(state: String, message: String) {
-                OutboundProxyBridge.publishStatus(service, state, message)
+                OutboundProxyBridge.publishStatus(context, state, message)
             }
         })
-        engine.applyDNSConfig(dnsConfig)
+        engine.applyDNSConfig(args.dnsConfig)
         RequestStats.reset()
-        val logDatabase = RuleDataset.NORMAL.logsDatabase()
-        EngineLogCallbacks.attach(engine, service, logDatabase, logMode)
+        val logDatabase = dataset.logsDatabase()
+        EngineLogCallbacks.attach(engine, context, logDatabase, logMode)
         engine.setFilterDNS(true)
         engine.setBlockIpv6(!ipv6Enabled)
-        BlockPauseLink.apply(service)
+        BlockPauseLink.applyTo(context, engine)
 
-        val plane = EngineDataPlane(service, logMode, logDatabase)
+        val plane = EngineDataPlane(context, logMode, logDatabase)
         try {
             plane.attachResolvers(engine)
             plane.attachBootstrap(engine)
@@ -59,12 +64,11 @@ internal object NormalEngineConfig {
             plane.attachTraffic(engine)
             plane.attachHttp(engine)
             configurePerApp(
-                service = service,
+                context = context,
                 engine = engine,
-                blockedPackages = blockedPackages,
-                inspectionPackages = inspectionPackages,
-                inspectionEnabled = inspectionEnabled,
+                args = args,
                 httpsBypassRules = httpsBypassRules,
+                logTag = logTag,
             )
         } catch (t: Throwable) {
             runCatching { plane.close() }
@@ -74,26 +78,25 @@ internal object NormalEngineConfig {
     }
 
     private fun configurePerApp(
-        service: DitingVpnService,
+        context: Context,
         engine: Engine,
-        blockedPackages: Set<String>,
-        inspectionPackages: Set<String>,
-        inspectionEnabled: Boolean,
+        args: TunnelStartArgs,
         httpsBypassRules: Set<String>,
+        logTag: String,
     ) {
-        val blockedUidCsv = PackageUids.csv(service, blockedPackages)
+        val blockedUidCsv = PackageUids.csv(context, args.blockedPackages)
         if (blockedUidCsv.isNotEmpty()) {
             engine.setBlockedUIDs(blockedUidCsv)
         }
 
-        if (inspectionEnabled) {
-            val mitmDir = File(service.filesDir, MITM_DIR).apply { mkdirs() }
+        if (args.inspectionEnabled) {
+            val mitmDir = File(context.filesDir, MITM_DIR).apply { mkdirs() }
             val caPem = runCatching { engine.startStackMitm(mitmDir.absolutePath) }
                 .getOrDefault("")
             if (caPem.isBlank()) {
-                Log.w(TAG, "startStackMitm produced no CA; HTTPS inspection stays off")
+                Log.w(logTag, "startStackMitm produced no CA; HTTPS inspection stays off")
             } else {
-                engine.setMitmAllowedUIDs(PackageUids.csv(service, inspectionPackages))
+                engine.setMitmAllowedUIDs(PackageUids.csv(context, args.inspectionPackages))
                 if (httpsBypassRules.isNotEmpty()) {
                     engine.setHttpsBypassRules(httpsBypassRules.joinToString("\n"))
                 }

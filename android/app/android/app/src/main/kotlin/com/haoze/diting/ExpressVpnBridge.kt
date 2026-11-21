@@ -29,14 +29,7 @@ class ExpressVpnBridge(
                 result.success(true)
             }
             "status" -> result.success(ExpressVpnService.status(activity))
-            "trafficRates" -> result.success(
-                mapOf(
-                    "running" to ExpressVpnService.isRunning,
-                    "txBps" to 0L,
-                    "rxBps" to 0L,
-                    "unsupported" to true,
-                )
-            )
+            "trafficRates" -> result.success(ExpressVpnService.trafficRates())
             "applyDnsConfig" -> result.success(
                 RuntimeDnsConfig.applyExpress(
                     activity,
@@ -68,8 +61,12 @@ class ExpressVpnBridge(
             dnsConfig = dnsConfig,
             proxyJson = call.argument<String>("outboundProxy").orEmpty(),
             proxyAppPackage = call.argument<String>("proxyAppPackage").orEmpty(),
+            bypassLan = call.argument<Boolean>("bypassLan") ?: true,
             ipv6Mode = call.argument<String>("ipv6Mode") ?: "auto",
             excludedPackages = call.argument<List<String>>("excludedPackages").orEmpty(),
+            blockedPackages = call.argument<List<String>>("blockedPackages").orEmpty(),
+            inspectionPackages = call.argument<List<String>>("inspectionPackages").orEmpty(),
+            inspectionEnabled = call.argument<Boolean>("inspectionEnabled") ?: false,
         )
         return try {
             ContextCompat.startForegroundService(activity, intent)

@@ -1,4 +1,4 @@
-package com.haoze.diting.normal
+package com.haoze.diting.vpn
 
 import android.content.Context
 import com.haoze.diting.engine.Engine
@@ -6,10 +6,16 @@ import com.haoze.diting.log.EngineStats
 import com.haoze.diting.log.TrafficRateMonitor
 import com.haoze.diting.tile.QuickSettingsTileUpdater
 
-internal object NormalVpnRuntime {
-    const val PREFS_NAME = "dns_vpn_prefs"
-    private const val KEY_VPN_RUNNING = "vpn_running"
-
+/**
+ * 一种工作模式的运行时状态与持久化标记。
+ *
+ * 普通模式与极速模式各持一个实例，偏好容器与运行标记键都保持原值，
+ * 因此两种模式的数据互不影响。
+ */
+internal class VpnRuntime(
+    val prefsName: String,
+    private val runningKey: String,
+) {
     @Volatile
     var isRunning: Boolean = false
 
@@ -26,13 +32,13 @@ internal object NormalVpnRuntime {
     var reclaiming: Boolean = false
 
     fun isPersistedRunning(context: Context): Boolean =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_VPN_RUNNING, false)
+        context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
+            .getBoolean(runningKey, false)
 
     fun setPersistedRunning(context: Context, value: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean(KEY_VPN_RUNNING, value)
+            .putBoolean(runningKey, value)
             .apply()
         QuickSettingsTileUpdater.requestTileUpdate(context)
     }
@@ -52,5 +58,14 @@ internal object NormalVpnRuntime {
         }
         val (tx, rx) = TrafficRateMonitor.snapshot()
         return mapOf("running" to true, "txBps" to tx, "rxBps" to rx)
+    }
+
+    companion object {
+        const val NORMAL_PREFS = "dns_vpn_prefs"
+        const val EXPRESS_PREFS = "express_vpn_prefs"
+
+        val NORMAL = VpnRuntime(NORMAL_PREFS, "vpn_running")
+
+        val EXPRESS = VpnRuntime(EXPRESS_PREFS, "express_vpn_running")
     }
 }

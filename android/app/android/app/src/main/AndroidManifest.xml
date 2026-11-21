@@ -155,7 +155,8 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="vpn" />
         </service>
-        <!-- Express mode: narrow-route TUN that only owns DNS traffic. -->
+        <!-- Express mode: same full-tunnel data plane as normal mode, with its own rule and log
+             dataset. -->
         <service
             android:name=".express.ExpressVpnService"
             android:exported="false"

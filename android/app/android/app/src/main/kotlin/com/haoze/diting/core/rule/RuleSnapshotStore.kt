@@ -16,7 +16,8 @@ object RuleSnapshotStore {
         val started = System.nanoTime()
         val prefs = context.getSharedPreferences(dataset.prefsName(), Context.MODE_PRIVATE)
         val filterEnabled = prefs.getBoolean(KEY_DOMAIN_RULES_ENABLED, true)
-        val appAllowlist = if (dataset == RuleDataset.NORMAL) readAppAllowlist(context) else emptyMap()
+        // 应用白名单规则是全局 UI 设置，两种模式都要生效（规则与日志才按数据集隔离）。
+        val appAllowlist = readAppAllowlist(context)
 
         val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase())
             ?: throw IllegalStateException(
