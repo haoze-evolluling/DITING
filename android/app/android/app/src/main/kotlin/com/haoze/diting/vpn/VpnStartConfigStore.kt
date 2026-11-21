@@ -14,21 +14,7 @@ internal data class TunnelStartArgs(
     val blockedPackages: Set<String>,
     val inspectionPackages: Set<String>,
     val inspectionEnabled: Boolean,
-) {
-    companion object {
-        val EMPTY = TunnelStartArgs(
-            dnsConfig = "",
-            proxyJson = "",
-            proxyAppPackage = "",
-            bypassLan = false,
-            ipv6Mode = "auto",
-            excludedPackages = emptySet(),
-            blockedPackages = emptySet(),
-            inspectionPackages = emptySet(),
-            inspectionEnabled = false,
-        )
-    }
-}
+)
 
 /**
  * 记录最近一次启动参数，供拓扑重建、磁贴/小组件/自动化冷启动与 VpnReclaimer 重连使用。
