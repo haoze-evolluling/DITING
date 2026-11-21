@@ -53,6 +53,18 @@ void _editor() {
   Finder inDialog(Finder matching) =>
       find.descendant(of: find.byType(AlertDialog), matching: matching);
 
+  /// The protocol row is a popup: tap the current value, then pick the target.
+  Future<void> chooseProtocol(
+    WidgetTester tester,
+    String current,
+    String target,
+  ) async {
+    await tester.tap(inDialog(find.text(current)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(target).last);
+    await tester.pumpAndSettle();
+  }
+
   List<TextField> fields(WidgetTester tester) => tester
       .widgetList<TextField>(inDialog(find.byType(TextField)))
       .toList(growable: false);
@@ -66,8 +78,7 @@ void _editor() {
     final store = emptyStore();
     await openEditor(tester, store);
 
-    await tester.tap(inDialog(find.text('DNS')));
-    await tester.pumpAndSettle();
+    await chooseProtocol(tester, 'DoH', 'DNS');
 
     final inputs = fields(tester);
     expect(inputs, hasLength(3));
@@ -90,13 +101,11 @@ void _editor() {
     final store = emptyStore();
     await openEditor(tester, store);
 
-    await tester.tap(inDialog(find.text('DoT')));
-    await tester.pumpAndSettle();
+    await chooseProtocol(tester, 'DoH', 'DoT');
     expect(fields(tester), hasLength(3));
     expect(fields(tester)[2].controller?.text, '853');
 
-    await tester.tap(inDialog(find.text('DoH')));
-    await tester.pumpAndSettle();
+    await chooseProtocol(tester, 'DoT', 'DoH');
     expect(fields(tester), hasLength(2));
     expect(fields(tester)[1].decoration?.labelText, 'DoH 地址');
   });
@@ -191,8 +200,7 @@ void _editor() {
       overrides: [dnsLatencyRunnerProvider.overrideWithValue(runner)],
     );
 
-    await tester.tap(inDialog(find.text('DNS')));
-    await tester.pumpAndSettle();
+    await chooseProtocol(tester, 'DoH', 'DNS');
     await tester.enterText(
       inDialog(find.byType(TextField)).at(1),
       'dns.example.com',
