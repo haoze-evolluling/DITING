@@ -8,7 +8,7 @@
 #   用法:
 #     ./build_linux.sh                    # 构建 amd64 二进制
 #     ./build_linux.sh -a arm64           # 构建 arm64 二进制
-#     ./build_linux.sh -v 2.3.0           # 指定 deb 版本号（二进制版本读 ../app/pubspec.yaml）
+#     ./build_linux.sh -v 2.3.0           # 指定 deb 版本号（默认读 ./VERSION）
 #     ./build_linux.sh --package          # 打包为 .deb 发行包
 #     ./build_linux.sh --clean            # 先清理旧产物
 # ============================================================================
@@ -48,9 +48,9 @@ case "$ARCH" in
     *) echo "[错误] 不支持的架构: $ARCH (可选: amd64 / arm64 / arm)" >&2; exit 1 ;;
 esac
 
-PUBSPEC_FILE="$SCRIPT_DIR/../app/pubspec.yaml"
+VERSION_FILE="$SCRIPT_DIR/VERSION"
 if [ -z "$VERSION" ]; then
-    VERSION="$(sed -n 's/^version:[[:space:]]*\([^+ ]*\).*/\1/p' "$PUBSPEC_FILE" 2>/dev/null | head -n1 || true)"
+    VERSION="$(awk 'NF && $1 !~ /^#/ { sub(/^v/, ""); sub(/\+.*/, ""); print; exit }' "$VERSION_FILE" 2>/dev/null || true)"
     VERSION="${VERSION:-0.0.0}"
 fi
 
@@ -135,7 +135,6 @@ if [ "$PACKAGE" -eq 1 ]; then
     mkdir -p "$PKG_DIR/usr/share/diting"
     mkdir -p "$PKG_DIR/lib/systemd/system"
     mkdir -p "$PKG_DIR/etc/diting"
-    mkdir -p "$PKG_DIR/usr/share/applications"
     mkdir -p "$PKG_DIR/usr/share/pixmaps"
 
     cp "$BIN_PATH" "$PKG_DIR/usr/local/bin/$BIN_NAME"
@@ -151,20 +150,6 @@ if [ "$PACKAGE" -eq 1 ]; then
         chmod 0644 "$PKG_DIR/usr/share/pixmaps/diting.png"
     fi
 
-    cat > "$PKG_DIR/usr/share/applications/diting.desktop" <<'EOF'
-[Desktop Entry]
-Type=Application
-Name=Diting DNS
-Name[zh_CN]=谛听 DNS
-Comment=Diting DNS Management Console
-Comment[zh_CN]=谛听 DNS 管理控制台
-Exec=xdg-open http://127.0.0.1:15353
-Icon=diting
-Terminal=false
-Categories=Network;System;
-EOF
-    chmod 0644 "$PKG_DIR/usr/share/applications/diting.desktop"
-
     if command -v dpkg-deb >/dev/null 2>&1; then
         mkdir -p "$PKG_DIR/DEBIAN"
         chmod 0755 "$PKG_DIR/DEBIAN"
@@ -177,7 +162,7 @@ Architecture: $DEB_ARCH
 Maintainer: DITING <https://github.com/haoze-evolluling/diting>
 Description: 谛听 (DITING) DNS 内核特权服务
  谛听 DNS 内核的 Linux 端特权服务，负责系统 DNS 接管、
- 多协议上游转发、本地缓存与规则拦截，并内嵌 Web 控制台。
+ 多协议上游转发、本地缓存与规则拦截，并提供管理 API。
 EOF
 
         cat > "$PKG_DIR/DEBIAN/postinst" <<'EOF'
@@ -225,5 +210,5 @@ else
     echo "   sudo install -m 0755 $BIN_PATH /usr/local/bin/$BIN_NAME"
     echo "   sudo $BIN_NAME -service install && sudo $BIN_NAME -service start"
 fi
-echo "   管理地址: http://127.0.0.1:15353"
+echo "   管理 API: http://127.0.0.1:15353"
 echo "============================================================"

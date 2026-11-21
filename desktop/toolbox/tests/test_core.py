@@ -28,7 +28,7 @@ class PathsTest(unittest.TestCase):
         for name in ("android", "desktop", "shared"):
             self.assertTrue(os.path.isdir(os.path.join(paths.ROOT_DIR, name)), name)
         self.assertTrue(os.path.isfile(paths.BRAND_XML))
-        self.assertEqual(paths.resolve("desktop/app"), os.path.join(paths.ROOT_DIR, "desktop", "app"))
+        self.assertEqual(paths.resolve("desktop/service"), os.path.join(paths.ROOT_DIR, "desktop", "service"))
         self.assertEqual(paths.resolve(""), paths.ROOT_DIR)
 
 
@@ -66,7 +66,7 @@ class VersionTest(unittest.TestCase):
         sources = [item for item in desktop if item["kind"] == "source"]
         derived = [item for item in desktop if item["kind"] == "derived"]
         self.assertEqual(len(sources), 1, "桌面端只应有一份版本字面量")
-        self.assertIn("desktop/app/pubspec.yaml", sources[0]["rel_path"])
+        self.assertEqual("desktop/service/VERSION", sources[0]["rel_path"])
         self.assertGreaterEqual(len(derived), 3, "服务端 / NSIS / deb 都应列为派生位置")
         self.assertTrue(all(item["exists"] for item in desktop))
         self.assertEqual(get_current_version(), sources[0]["version"])
@@ -88,23 +88,30 @@ class VersionTest(unittest.TestCase):
         self.assertTrue(changed)
         self.assertIn("version: 2.2.10+20211", new_content, "构建号只增不减")
 
+    def test_version_file_keeps_comments(self):
+        content = "# version source\n2.2.11\n"
+        new_content, changed = version_manager.version_file_with_version(content, "2.3.0")
+        self.assertTrue(changed)
+        self.assertEqual("# version source\n2.3.0\n", new_content)
+        self.assertEqual(version_manager.parse_version_text(new_content), ("2.3.0", None))
+
     def test_dry_run_writes_nothing(self):
         with tempfile.TemporaryDirectory() as root:
-            pubspec = os.path.join(root, "pubspec.yaml")
-            with open(pubspec, "w", encoding="utf-8") as handle:
-                handle.write("name: x\nversion: 2.2.11+20211\n")
-            with unittest.mock.patch.object(version_manager, "DESKTOP_PUBSPEC", pubspec), \
+            version_file = os.path.join(root, "VERSION")
+            with open(version_file, "w", encoding="utf-8") as handle:
+                handle.write("# version source\n2.2.11\n")
+            with unittest.mock.patch.object(version_manager, "DESKTOP_VERSION_FILE", version_file), \
                     unittest.mock.patch.object(version_manager, "derived_targets", lambda: []):
                 preview = version_manager.sync_version("2.3.0", dry_run=True, groups=["desktop"])
                 self.assertTrue(preview["success"])
                 self.assertEqual(len(preview["modified_files"]), 1)
-                with open(pubspec, encoding="utf-8") as handle:
-                    self.assertIn("version: 2.2.11", handle.read(), "dry-run 不得修改文件")
+                with open(version_file, encoding="utf-8") as handle:
+                    self.assertIn("2.2.11", handle.read(), "dry-run 不得修改文件")
 
                 applied = version_manager.sync_version("2.3.0", groups=["desktop"])
                 self.assertTrue(applied["success"])
-                with open(pubspec, encoding="utf-8") as handle:
-                    self.assertIn("version: 2.3.0+20300", handle.read())
+                with open(version_file, encoding="utf-8") as handle:
+                    self.assertIn("2.3.0", handle.read())
 
 
 class LogoTest(unittest.TestCase):

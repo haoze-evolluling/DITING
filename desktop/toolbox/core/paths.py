@@ -30,7 +30,7 @@ def _detect_root(start: str) -> str:
 ROOT_DIR = _detect_root(DESKTOP_DIR)
 
 SERVICE_DIR = os.path.join(DESKTOP_DIR, "service")
-DESKTOP_APP_DIR = os.path.join(DESKTOP_DIR, "app")
+DESKTOP_VERSION_FILE = os.path.join(SERVICE_DIR, "VERSION")
 ANDROID_APP_DIR = os.path.join(ROOT_DIR, "android", "app")
 SHARED_DIR = os.path.join(ROOT_DIR, "shared")
 
@@ -40,7 +40,6 @@ BRAND_XML = os.path.join(BRAND_DIR, "ic_splash_squircle_logo.xml")
 
 BUILD_BIN_DIR = os.path.join(SERVICE_DIR, "build", "bin")
 INSTALLER_DIR = os.path.join(SERVICE_DIR, "build", "windows", "installer")
-FRONTEND_DIST_DIR = os.path.join(SERVICE_DIR, "frontend", "dist")
 ANDROID_RES_DIR = os.path.join(ANDROID_APP_DIR, "android", "app", "src", "main", "res")
 
 

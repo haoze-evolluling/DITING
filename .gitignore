@@ -37,17 +37,15 @@ android/app/android/app/src/main/jniLibs/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 android/app/build/
-desktop/app/build/
 shared/build/
 coverage/
 app.*.symbols
 app.*.map.json
 
 # ====================================================================
-# Service & Flutter Web Console Build Outputs
+# Service Build Outputs
 # ====================================================================
 desktop/service/build/bin/
-desktop/service/frontend/dist/
 node_modules/
 
 # Flutter tool generates this registrant for the workspace root's `android/`

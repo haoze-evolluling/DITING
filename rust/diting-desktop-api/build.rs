@@ -3,11 +3,12 @@ use std::process::Command;
 
 fn main() {
     let manifest = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default());
-    let pubspec = manifest
+    // Product version single source of truth: `desktop/service/VERSION`.
+    let version_file = manifest
         .parent()
         .and_then(|path| path.parent())
-        .map(|root| root.join("desktop").join("app").join("pubspec.yaml"));
-    let version = pubspec
+        .map(|root| root.join("desktop").join("service").join("VERSION"));
+    let version = version_file
         .as_deref()
         .and_then(read_version)
         .unwrap_or_else(|| "dev".to_string());
@@ -20,7 +21,7 @@ fn main() {
     println!("cargo:rustc-env=DITING_VERSION={version}");
     println!("cargo:rustc-env=DITING_BUILD_TIME={build_time}");
     println!("cargo:rustc-env=DITING_GIT_COMMIT={commit}");
-    if let Some(path) = pubspec {
+    if let Some(path) = version_file {
         println!("cargo:rerun-if-changed={}", path.display());
     }
 }
@@ -29,8 +30,13 @@ fn read_version(path: &std::path::Path) -> Option<String> {
     let text = std::fs::read_to_string(path).ok()?;
     for line in text.lines() {
         let trimmed = line.trim();
-        if let Some(value) = trimmed.strip_prefix("version:") {
-            return Some(value.trim().split('+').next().unwrap_or("dev").to_string());
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+        let value = trimmed.strip_prefix("version:").unwrap_or(trimmed).trim();
+        let value = value.split('+').next().unwrap_or("dev").trim();
+        if !value.is_empty() {
+            return Some(value.to_string());
         }
     }
     None

@@ -3,9 +3,9 @@
 
 """谛听 (DITING) 构建工具链探测。
 
-与 `desktop/build_installer.bat` 的预检保持同一口径：除了 Flutter / NSIS / Rust（cargo，
-特权服务由纯 Rust 实现），Windows 上打 EXE 还必须具备 MSVC C++ 工具链，打 DEB 则依赖 WSL。
-结果带短时缓存，避免每次切换页面都重新执行 `flutter --version`（约 5-8 秒）。
+与 `desktop/build_installer.bat` 的预检保持同一口径：特权服务由纯 Rust 实现，
+打 EXE 需要 cargo、NSIS 与 MSVC 链接器，打 DEB 则依赖 WSL。
+结果带短时缓存，避免每次切换页面都重复探测。
 """
 
 import copy
@@ -114,7 +114,6 @@ def check_toolchain(force: bool = False) -> Dict[str, dict]:
     nsis_extra = ["C:\\Program Files (x86)\\NSIS", "C:\\Program Files\\NSIS"]
     tools: Dict[str, dict] = {
         "git": {"found": False, "version": "", "cmd": shutil.which("git")},
-        "flutter": {"found": False, "version": "", "cmd": shutil.which("flutter")},
         "nsis": {"found": False, "version": "", "cmd": find_tool("makensis", nsis_extra)},
         "cargo": {"found": False, "version": "", "cmd": shutil.which("cargo")},
     }
@@ -126,10 +125,6 @@ def check_toolchain(force: bool = False) -> Dict[str, dict]:
         version = _probe_version(tools["git"]["cmd"], ["--version"])
         if version:
             tools["git"].update(found=True, version=version)
-
-    if tools["flutter"]["cmd"]:
-        version = _probe_version(tools["flutter"]["cmd"], ["--version"], "Flutter ")
-        tools["flutter"].update(found=True, version=version or "已安装")
 
     if tools["cargo"]["cmd"]:
         version = _probe_version(tools["cargo"]["cmd"], ["--version"], "cargo ")

@@ -2,7 +2,7 @@
 setlocal
 title DITING Installer Build
 
-:: Build the DITING desktop installer packages (Windows EXE / Linux .deb).
+:: Build the DITING desktop service installers (Windows EXE / Linux .deb).
 ::
 :: Usage:
 ::   build_installer.bat                    Windows EXE installer (default)
@@ -14,21 +14,20 @@ title DITING Installer Build
 ::
 :: Any argument after the optional target is forwarded to
 :: desktop\toolbox\core\build_manager.py, which runs the whole pipeline:
-::   Flutter Web console (frontend/dist) -> Flutter Windows app ->
-::   diting-service.exe -> NSIS installer.
+::   diting-service.exe (Rust) -> NSIS installer.
 :: Only the final installers are kept, in desktop\service\build\bin.
 ::
 :: Requirements:
 ::   - Python 3.10+ on PATH
-::   - Flutter SDK on PATH (the "Windows (desktop)" device must work)
 ::   - Rust (cargo) on PATH: diting-service is compiled from rust/diting-desktop-service
 ::     (the deb target needs cargo inside WSL as well)
+::   - MSVC C++ build tools for the default Rust MSVC toolchain
 ::   - NSIS (makensis) for the EXE target
-::   - Visual Studio "Desktop development with C++" + Windows Developer Mode
 ::   - WSL for the deb target when this runs on Windows
 ::
 :: This script only builds; it never installs or launches anything. To run the
-:: desktop window from source instead, see "flutter run -d windows" in README.md.
+:: desktop service from source instead, use:
+::   cd rust && cargo run -p diting-desktop-service -- -run
 ::
 :: Intentionally pure ASCII: cmd.exe parses batch files in the OEM code page.
 :: Chinese notes live in README.md.
@@ -66,7 +65,6 @@ goto PARSE_ARGS
 
 :ARGS_READY
 
-if not exist "app\pubspec.yaml" goto ERR_NO_PROJECT
 if not exist "..\rust\diting-desktop-service\Cargo.toml" goto ERR_NO_SERVICE
 if not exist "toolbox\core\build_manager.py" goto ERR_NO_ENGINE
 
@@ -88,12 +86,10 @@ set "NEED_DEB=1"
 
 if not defined NEED_WIN goto CHECK_DEB
 
-where flutter >nul 2>&1
-if errorlevel 1 goto ERR_NO_FLUTTER
 where cargo >nul 2>&1
 if errorlevel 1 goto ERR_NO_CARGO
 
-:: Flutter's windows build needs the MSVC C++ toolchain, which ships with Visual
+:: Rust's default Windows toolchain links with MSVC, which ships with Visual
 :: Studio (not just the Build Tools installer shell). vswhere is the supported probe.
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "HAS_MSVC="
@@ -113,10 +109,6 @@ if not defined MAKENSIS goto ERR_NO_NSIS
 
 :CHECK_DEB
 if not defined NEED_DEB goto PREFLIGHT_OK
-if not defined NEED_WIN (
-    where flutter >nul 2>&1
-    if errorlevel 1 goto ERR_NO_FLUTTER
-)
 if /i not "%OS%"=="Windows_NT" goto PREFLIGHT_OK
 :: The deb is assembled by WSL so the Windows host needs no extra Linux toolchain.
 where wsl >nul 2>&1
@@ -146,10 +138,6 @@ echo.
 pause
 exit /b 0
 
-:ERR_NO_PROJECT
-echo [ERROR] app\pubspec.yaml not found.
-echo         Run this script from the desktop directory.
-goto FAIL
 :ERR_NO_SERVICE
 echo [ERROR] rust\diting-desktop-service\Cargo.toml not found.
 echo         The installer bundles diting-service, so the Rust service crate must exist.
@@ -160,9 +148,6 @@ goto FAIL
 :ERR_NO_PYTHON
 echo [ERROR] 'python' not found on PATH. Install Python 3.10+ and retry.
 goto FAIL
-:ERR_NO_FLUTTER
-echo [ERROR] 'flutter' not found on PATH. Add your Flutter SDK bin directory to PATH.
-goto FAIL
 :ERR_NO_CARGO
 echo [ERROR] 'cargo' not found on PATH.
 echo         diting-service is a pure Rust binary (rust/diting-desktop-service).
@@ -170,8 +155,9 @@ echo         Install the Rust toolchain from https://rustup.rs and retry.
 goto FAIL
 :ERR_NO_MSVC
 echo [ERROR] Visual Studio with "Desktop development with C++" was not found.
+echo         Rust's default toolchain needs the MSVC linker.
 echo         Install it from https://visualstudio.microsoft.com/downloads/
-echo         and select that workload, then run: flutter doctor -v
+echo         and select that workload, then retry.
 goto FAIL
 :ERR_NO_NSIS
 echo [ERROR] makensis (NSIS) was not found.

@@ -103,7 +103,7 @@ Rust 引擎接管全部流量，支持应用分流、按应用拦截、HTTPS 检
 | --- | --- |
 | `shared/` | `diting_shared`：Flutter 设计系统、主题、双语本地化、路由分支，以及共用的偏好与数据库封装 |
 | `android/app/` | `diting_android`：Android Flutter 界面、Kotlin 系统集成、Gradle 工程与 APK 构建脚本 |
-| `desktop/service/` | 桌面服务构建与打包资产、Linux 打包脚本 |
+| `desktop/service/` | 桌面服务构建与打包资产、版本真源 `VERSION` 与 Linux 打包脚本 |
 | `desktop/toolbox/` | Python 构建、版本管理、打包与环境预检工具 |
 | `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎、桌面服务与服务器进程 |
 | `docs/development/` | 构建环境、Root 接管、服务器模式、桌面迁移与存储迁移说明 |
@@ -157,7 +157,7 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 | Rust | 稳定版工具链与 Cargo，edition 2021 |
 | Python | 3.10 或更高，用于构建与验证脚本 |
 | Android | JDK 17+、Android SDK、NDK；应用 `minSdk` 为 28，交叉编译使用 API 28 工具链 |
-| Windows 打包 | Visual Studio 的“使用 C++ 的桌面开发”工作负载、Windows 开发者模式；生成 EXE 安装包还需 NSIS |
+| Windows 打包 | Visual Studio 的“使用 C++ 的桌面开发”工作负载（提供 Rust MSVC 链接器）；生成 EXE 安装包还需 NSIS |
 | Linux 打包 | Cargo；在 Windows 上生成 deb 需要 WSL |
 
 Android 的 Gradle、AGP、Kotlin 版本与镜像配置见 `docs/development/android-build-environment.md`。
@@ -218,7 +218,7 @@ desktop\build_installer.bat
 desktop\build_installer.bat both
 ```
 
-第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。现有脚本仍按“Flutter Web 控制台 → Flutter Windows 客户端 → `diting-service` → NSIS 安装包”的顺序构建；Flutter 前端工程已移除，运行前需自行调整构建脚本。产物位于 `desktop\service\build\bin`。
+第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。完整流水线为：`diting-service` → NSIS / deb 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。
 
 Linux 单独构建：
 

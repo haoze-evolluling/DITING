@@ -201,7 +201,7 @@
             <p class="hint-text">
               图标形状与配色统一由品牌矢量源
               <code>desktop/toolbox/assets/brand/ic_splash_squircle_logo.xml</code>
-              驱动。导出会覆盖 Windows ICO、Web favicon、Flutter 展示图与 Android 启动器位图。
+              驱动。导出会覆盖 Windows ICO、Linux pixmap、共享展示图与 Android 启动器位图。
             </p>
             <div class="brand-palette-list">
               <div class="brand-palette-row">
@@ -217,7 +217,7 @@
             </div>
             <div class="btn-group">
               <button class="btn btn-primary" id="btn-logo-export">导出全部品牌资源</button>
-              <button class="btn btn-secondary" id="btn-logo-open-res">打开 Flutter 图片目录</button>
+              <button class="btn btn-secondary" id="btn-logo-open-res">打开共享图片目录</button>
               <button class="btn btn-ghost" id="btn-logo-open-brand">打开品牌源目录</button>
             </div>
           </div>
@@ -242,7 +242,7 @@
       <section class="tab-pane" id="pane-build">
         <header class="pane-header">
           <h2>纯净安装包构建流水线 (Windows / Linux)</h2>
-          <p class="desc">极简一键输出生产级安装包。工具链预检对齐 desktop/build_installer.bat（Go / Flutter / NSIS，Windows 另需 MSVC 与 WSL）。构建完成后自动剔除多余中间二进制，仅输出独立 EXE 安装包或 Linux DEB 安装包。</p>
+          <p class="desc">极简一键输出生产级安装包。工具链预检对齐 desktop/build_installer.bat（Rust / NSIS，Windows 另需 MSVC，DEB 需要 WSL）。构建完成后自动剔除多余中间二进制，仅输出独立 EXE 安装包或 Linux DEB 安装包。</p>
         </header>
 
         <div class="card toolchain-card">
@@ -300,15 +300,14 @@
       <section class="tab-pane" id="pane-version">
         <header class="pane-header">
           <h2>版本号维护</h2>
-          <p class="desc">桌面端只有一处版本字面量：<code>desktop/app/pubspec.yaml</code>。服务端、NSIS 安装包与 Linux deb 都在构建期从这里取版本号，改这一处即全局生效。</p>
+          <p class="desc">桌面端只有一处版本字面量：<code>desktop/service/VERSION</code>。服务端、NSIS 安装包与 Linux deb 都在构建期从这里取版本号，改这一处即全局生效。</p>
         </header>
 
         <!-- 5.1 桌面端唯一真源 -->
         <div class="card form-card">
-          <div class="card-title">桌面端版本（唯一真源：desktop/app/pubspec.yaml）</div>
+          <div class="card-title">桌面端版本（唯一真源：desktop/service/VERSION）</div>
           <p class="hint-text">
-            写入 <code>version: X.Y.Z+构建号</code>，构建号按
-            <code>major*10000 + minor*100 + patch</code> 自动推导且只增不减，避免系统判定为降级包。
+            写入 <code>X.Y.Z</code> 语义化版本；服务、NSIS 安装包与 Linux deb 均从该文件派生。
           </p>
           <div class="form-row">
             <div class="form-group flex-2">

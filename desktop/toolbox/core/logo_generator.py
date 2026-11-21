@@ -30,11 +30,11 @@ from PIL import Image
 
 try:
     from . import vector_raster as vr
-    from .paths import ANDROID_RES_DIR, BRAND_XML, DESKTOP_APP_DIR, SERVICE_DIR, SHARED_DIR
+    from .paths import ANDROID_RES_DIR, BRAND_XML, SERVICE_DIR, SHARED_DIR
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from core import vector_raster as vr  # type: ignore[no-redef]
-    from core.paths import ANDROID_RES_DIR, BRAND_XML, DESKTOP_APP_DIR, SERVICE_DIR, SHARED_DIR
+    from core.paths import ANDROID_RES_DIR, BRAND_XML, SERVICE_DIR, SHARED_DIR
 
 AND = "{http://schemas.android.com/apk/res/android}"
 
@@ -190,29 +190,16 @@ def _save_ico(base: Image.Image, path: str, log: Callable[[str, str], None]) -> 
 
 
 def export_desktop(log: Callable[[str, str], None]) -> List[str]:
-    """服务端与 Flutter 桌面端：Windows 图标、Linux pixmap、Web 控制台图标。"""
+    """桌面服务：Windows 安装包图标与 Linux pixmap。"""
     server = SERVICE_DIR
-    desktop_app = DESKTOP_APP_DIR
     files: List[str] = []
 
     light_1024 = render_icon(LIGHT, 1024)
     light_512 = light_1024.resize((512, 512), Image.LANCZOS)
-    light_192 = light_1024.resize((192, 192), Image.LANCZOS)
-    light_64 = light_1024.resize((64, 64), Image.LANCZOS)
 
     files.append(_save_png(light_1024, os.path.join(server, "build", "appicon.png"), log))
     files.append(_save_ico(light_512, os.path.join(server, "build", "windows", "icon.ico"), log))
     files.append(_save_png(light_512, os.path.join(server, "build", "linux", "diting.png"), log))
-
-    files.append(_save_ico(light_512, os.path.join(desktop_app, "windows", "runner", "resources", "app_icon.ico"), log))
-
-    web = os.path.join(desktop_app, "web")
-    icons = os.path.join(web, "icons")
-    files.append(_save_png(light_64, os.path.join(web, "favicon.png"), log))
-    files.append(_save_png(light_192, os.path.join(icons, "Icon-192.png"), log))
-    files.append(_save_png(light_512, os.path.join(icons, "Icon-512.png"), log))
-    files.append(_save_png(light_192, os.path.join(icons, "Icon-maskable-192.png"), log))
-    files.append(_save_png(light_512, os.path.join(icons, "Icon-maskable-512.png"), log))
     return files
 
 

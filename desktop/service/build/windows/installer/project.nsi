@@ -3,28 +3,25 @@ SetCompressor /SOLID lzma
 SetCompressorDictSize 32
 
 ####
-## 谛听 (DITING) Windows 端整合安装包配置
-## 包含 Flutter 桌面端（diting_desktop.exe 及其运行时）与 diting-service.exe 特权服务
+## 谛听 (DITING) Windows 服务安装包配置
+## 仅包含 diting-service.exe 特权服务；桌面前端与浏览器控制台已移除
 ####
 !define INFO_PROJECTNAME    "diting-desktop"
 !define INFO_COMPANYNAME    "Diting"
+# 沿用旧版产品名与安装目录，确保覆盖升级与卸载信息连续。
 !define INFO_PRODUCTNAME    "谛听 DNS"
 # 版本号不在本文件存副本：由 build_installer.bat / build_manager.py 从
-# desktop/app/pubspec.yaml 读取后以 -DINFO_PRODUCTVERSION 传入。
+# desktop/service/VERSION 读取后以 -DINFO_PRODUCTVERSION 传入。
 !ifndef INFO_PRODUCTVERSION
-  !error "缺少 -DINFO_PRODUCTVERSION：请用 build_installer.bat 构建（版本号取自 desktop/app/pubspec.yaml）"
+  !error "缺少 -DINFO_PRODUCTVERSION：请用 build_installer.bat 构建（版本号取自 desktop/service/VERSION）"
 !endif
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 
-!define PRODUCT_EXECUTABLE  "diting_desktop.exe"
 !define SERVICE_EXECUTABLE  "diting-service.exe"
 !define SERVICE_NAME        "DitingDNSService"
 !define UNINST_KEY_NAME     "DitingDNS"
 !define UNINST_KEY          "Software\Microsoft\Windows\CurrentVersion\Uninstall\${UNINST_KEY_NAME}"
 
-!ifndef ARG_APP_DIR
-  !error "缺少 -DARG_APP_DIR：Flutter Release 产物目录"
-!endif
 !ifndef ARG_SERVICE_BINARY
   !error "缺少 -DARG_SERVICE_BINARY：diting-service.exe 路径"
 !endif
@@ -63,10 +60,6 @@ Var DeleteConfig
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-
-# 安装完成后直接引导启动客户端
-!define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_EXECUTABLE}"
-!define MUI_FINISHPAGE_RUN_TEXT "启动 ${INFO_PRODUCTNAME} 客户端"
 !insertmacro MUI_PAGE_FINISH
 
 UninstPage custom un.ConfirmPage un.ConfirmPageLeave
@@ -200,41 +193,40 @@ FunctionEnd
 Section
     SetShellVarContext all
 
-    # 安装前先尝试关闭可能正在运行的旧版本进程以防止文件写锁
-    DetailPrint "正在检查并终止正在运行的旧版本实例..."
-    nsExec::Exec 'taskkill /F /IM "${PRODUCT_EXECUTABLE}" /T'
+    # 安装前先停止可能正在运行的旧版本服务
+    DetailPrint "正在停止可能正在运行的旧版本服务..."
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service stop'
     nsExec::Exec 'net.exe stop "${SERVICE_NAME}"'
 
+    # 兼容旧版前端安装包：清理不再提供的桌面端文件与快捷方式
+    Delete "$INSTDIR\diting_desktop.exe"
+    Delete "$INSTDIR\flutter_windows.dll"
+    RMDir /r "$INSTDIR\data"
+    Delete "$SMPROGRAMS\谛听 DNS.lnk"
+    Delete "$DESKTOP\谛听 DNS.lnk"
+
     SetOutPath $INSTDIR
 
-    # 1. 释放 Flutter 桌面端（exe、flutter_windows.dll、data/ 等）
-    File /r "${ARG_APP_DIR}\*.*"
-
-    # 2. 释放内核特权服务二进制（纯 Rust，静态链接，无附带动态库）
+    # 释放内核特权服务二进制（纯 Rust，静态链接，无附带动态库）
     File "/oname=${SERVICE_EXECUTABLE}" "${ARG_SERVICE_BINARY}"
 
-    # 3. 自动向系统注册并启动特权服务
-    DetailPrint "正在向系统注册 ${INFO_PRODUCTNAME} 内核特权服务..."
+    # 自动向系统注册并启动特权服务
+    DetailPrint "正在向系统注册 ${INFO_PRODUCTNAME}..."
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service install'
     nsExec::Exec 'sc.exe config ${SERVICE_NAME} start= auto'
 
-    DetailPrint "正在启动 ${INFO_PRODUCTNAME} 内核特权服务..."
+    DetailPrint "正在启动 ${INFO_PRODUCTNAME}..."
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service start'
     nsExec::Exec 'net.exe start ${SERVICE_NAME}'
 
-    # 4. 创建桌面与开始菜单快捷方式
-    CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0
-    CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}" "" "$INSTDIR\${PRODUCT_EXECUTABLE}" 0
-
-    # 5. 写入卸载信息
+    # 写入卸载信息
     WriteUninstaller "$INSTDIR\uninstall.exe"
 
     SetRegView 64
     WriteRegStr HKLM "${UNINST_KEY}" "Publisher" "${INFO_COMPANYNAME}"
     WriteRegStr HKLM "${UNINST_KEY}" "DisplayName" "${INFO_PRODUCTNAME}"
     WriteRegStr HKLM "${UNINST_KEY}" "DisplayVersion" "${INFO_PRODUCTVERSION}"
-    WriteRegStr HKLM "${UNINST_KEY}" "DisplayIcon" "$INSTDIR\${PRODUCT_EXECUTABLE}"
+    WriteRegStr HKLM "${UNINST_KEY}" "DisplayIcon" "$INSTDIR\${SERVICE_EXECUTABLE}"
     WriteRegStr HKLM "${UNINST_KEY}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
     WriteRegStr HKLM "${UNINST_KEY}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
 
@@ -246,11 +238,7 @@ SectionEnd
 Section "uninstall"
     SetShellVarContext all
 
-    # 1. 关闭正在运行的客户端
-    DetailPrint "正在终止 ${INFO_PRODUCTNAME} 客户端进程..."
-    nsExec::Exec 'taskkill /F /IM "${PRODUCT_EXECUTABLE}" /T'
-
-    # 2. 优雅停止特权服务并自动还原系统网络 DNS 接管状态
+    # 优雅停止特权服务并自动还原系统网络 DNS 接管状态
     DetailPrint "正在安全停止特权服务并恢复系统网络 DNS..."
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service stop'
     nsExec::Exec 'net.exe stop "${SERVICE_NAME}"'
@@ -262,33 +250,32 @@ Section "uninstall"
     # 调用服务特权二进制执行离线恢复与自愈
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -restore'
 
-    # 3. 强力兜底全网卡 DNS 还原机制：服务二进制已使用 Windows 原生 API 遍历并重置所有残留网卡
+    # 强力兜底全网卡 DNS 还原机制：服务二进制已使用 Windows 原生 API 遍历并重置所有残留网卡
     DetailPrint "正在执行全网卡 DNS 兜底自愈与缓存刷新..."
     nsExec::Exec 'ipconfig /flushdns'
 
-    # 4. 从系统服务管理器中注销清理特权服务
+    # 从系统服务管理器中注销清理特权服务
     DetailPrint "正在从系统服务中注销谛听服务..."
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service uninstall'
     nsExec::Exec 'sc.exe delete ${SERVICE_NAME}'
 
-    # 5. 清除用户数据、残留状态与自启动注册表项
+    # 清除用户数据、残留状态与自启动注册表项
     ${If} $DeleteConfig == "1"
         DetailPrint $(UNINST_DETAIL_CLEAN_DATA)
         RMDir /r "$APPDATA\DITING"
-        RMDir /r "$AppData\${PRODUCT_EXECUTABLE}"
-        RMDir /r "$LOCALAPPDATA\${PRODUCT_EXECUTABLE}"
+        RMDir /r "$LOCALAPPDATA\DITING"
     ${Else}
         DetailPrint $(UNINST_DETAIL_KEEP_DATA)
     ${EndIf}
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "DitingDNS"
 
-    # 6. 删除程序本体
+    # 删除程序本体
     Delete "$INSTDIR\uninstall.exe"
     RMDir /r $INSTDIR
 
-    # 7. 删除快捷方式并注销卸载信息
-    Delete "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk"
-    Delete "$DESKTOP\${INFO_PRODUCTNAME}.lnk"
+    # 删除旧版快捷方式并注销卸载信息
+    Delete "$SMPROGRAMS\谛听 DNS.lnk"
+    Delete "$DESKTOP\谛听 DNS.lnk"
 
     SetRegView 64
     DeleteRegKey HKLM "${UNINST_KEY}"

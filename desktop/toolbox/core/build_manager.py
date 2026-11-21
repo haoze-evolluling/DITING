@@ -3,7 +3,7 @@
 
 """
 谛听 (DITING) Windows 端构建与安装包打包引擎
-纯 Python 驱动，支持 Flutter 桌面端 Web 控制台产物、特权服务与 NSIS 安装包流水线编译及环境预检。
+纯 Python 驱动，负责纯 Rust 特权服务与 NSIS / deb 安装包流水线编译及环境预检。
 """
 
 import argparse
@@ -37,7 +37,7 @@ _DESKTOP_DIR = os.path.dirname(_TOOLBOX_DIR)
 if _DESKTOP_DIR not in sys.path:
     sys.path.insert(0, _DESKTOP_DIR)
 
-from toolbox.core.paths import BUILD_BIN_DIR, DESKTOP_APP_DIR, INSTALLER_DIR, ROOT_DIR, SERVICE_DIR
+from toolbox.core.paths import BUILD_BIN_DIR, INSTALLER_DIR, ROOT_DIR, SERVICE_DIR
 from toolbox.core.runner import stream_process_output
 from toolbox.core.toolchain import check_toolchain
 
@@ -61,7 +61,7 @@ def get_current_project_version() -> str:
 def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
     """构建前安全终止旧进程，防止文件占用锁导致编译或打包失败"""
     if sys.platform == "win32":
-        for exe in ("diting_desktop.exe", "diting-service.exe"):
+        for exe in ("diting-service.exe",):
             try:
                 res = subprocess.run(
                     ["taskkill", "/F", "/T", "/IM", exe],
@@ -75,7 +75,7 @@ def stop_running_processes(on_log: Optional[Callable[[str, str], None]] = None):
                 pass
         return
 
-    for name in ("diting_desktop", "diting-service"):
+    for name in ("diting-service",):
         if not shutil.which("pkill"):
             break
         try:
@@ -114,7 +114,7 @@ def build_windows_service(
 ) -> bool:
     """用 cargo 编译纯 Rust 的 Windows 特权服务并复制到暂存目录。
 
-    版本号、构建时间与提交号由 `diting-desktop-api/build.rs` 从 `desktop/app/pubspec.yaml`
+    版本号、构建时间与提交号由 `diting-desktop-api/build.rs` 从 `desktop/service/VERSION`
     与 git 注入，因此 cargo 构建本身就是版本真源，不再需要 `-ldflags`。
     """
     rust_dir = os.path.join(root, "rust")
@@ -134,40 +134,6 @@ def build_windows_service(
     os.makedirs(os.path.dirname(service_bin), exist_ok=True)
     shutil.copy2(built, service_bin)
     return True
-
-
-def build_web_console_assets(
-    server_dir: str,
-    on_log: Optional[Callable[[str, str], None]] = None,
-    is_cancelled: Optional[Callable[[], bool]] = None,
-) -> bool:
-    """把 Flutter 桌面端构建为 Web 控制台产物，供 IPC 服务在编译期嵌入。"""
-    script = os.path.join(server_dir, "build_frontend.py")
-    if not os.path.exists(script):
-        if on_log:
-            on_log("error", f"未找到 Web 控制台构建脚本: {script}")
-        return False
-    if on_log:
-        on_log("info", ">>> 正在构建 Flutter Web 控制台产物 (frontend/dist)...")
-    return run_cmd_live(
-        [sys.executable, script],
-        cwd=server_dir,
-        on_log=on_log or (lambda lvl, msg: None),
-        is_cancelled=is_cancelled or (lambda: False),
-    )
-
-
-def find_flutter_release_dir(flutter_project: str, build_type: str) -> Optional[str]:
-    """定位 `flutter build windows` 的输出目录（新老 Flutter 版本路径不同）。"""
-    config = "Release" if build_type.lower() == "release" else "Debug"
-    for relative in (
-        os.path.join("build", "windows", "x64", "runner", config),
-        os.path.join("build", "windows", "runner", config),
-    ):
-        candidate = os.path.join(flutter_project, relative)
-        if os.path.exists(os.path.join(candidate, "diting_desktop.exe")):
-            return candidate
-    return None
 
 
 def build_pipeline(
@@ -199,10 +165,8 @@ def build_pipeline(
 
     root = get_root_dir()
     server_dir = SERVICE_DIR
-    flutter_project = DESKTOP_APP_DIR
     bin_dir = BUILD_BIN_DIR
     service_bin = os.path.join(bin_dir, "diting-service.exe")
-    app_stage = os.path.join(server_dir, "build", "windows", "app")
 
     on_log("info", "=" * 50)
     on_log("info", f"谛听 (DITING) 构建任务启动: Target={target}, Ver={version}, Type={build_type}")
@@ -224,9 +188,6 @@ def build_pipeline(
 
     if not skip_check:
         if need_win:
-            if not tools["flutter"]["found"]:
-                on_log("error", "未找到 Flutter SDK，请把 flutter 加入 PATH。")
-                return {"success": False, "message": "缺少 Flutter SDK"}
             if not tools["nsis"]["found"]:
                 on_log("error", "未找到 makensis，无法打包 NSIS 安装包。")
                 return {"success": False, "message": "缺少 NSIS"}
@@ -234,13 +195,10 @@ def build_pipeline(
                 on_log("error", "未找到 Rust 工具链（cargo），纯 Rust 特权服务需要 cargo 编译。")
                 return {"success": False, "message": "缺少 Rust 工具链"}
             if sys.platform == "win32" and not tools.get("msvc", {}).get("found"):
-                on_log("error", "未找到 Visual Studio C++ 桌面开发工具链，无法构建 Flutter Windows 窗口。")
-                return {"success": False, "message": "缺少 Visual Studio C++ 工具链"}
+                on_log("error", "未找到 MSVC 链接器，Rust 默认工具链需要 Visual Studio C++ 生成工具。")
+                return {"success": False, "message": "缺少 MSVC 链接器"}
 
         if need_deb:
-            if not tools["flutter"]["found"]:
-                on_log("error", "未找到 Flutter SDK，无法构建内嵌 Web 控制台。")
-                return {"success": False, "message": "缺少 Flutter SDK"}
             if sys.platform == "win32" and not tools.get("wsl", {}).get("found"):
                 on_log("error", "未检测到 WSL 环境。在 Windows 上打包 deb 安装包需要 WSL 支持。")
                 return {"success": False, "message": "缺少 WSL 环境"}
@@ -256,47 +214,14 @@ def build_pipeline(
         shutil.rmtree(bin_dir, ignore_errors=True)
     os.makedirs(bin_dir, exist_ok=True)
 
-    if not build_web_console_assets(server_dir, on_log=on_log, is_cancelled=is_cancelled):
-        return _fail("Web 控制台构建失败")
-
-    is_rel = build_type.lower() == "release"
-
     built_artifacts = []
 
     if need_win:
-        on_log("info", ">>> [1/3] 正在构建 Flutter Windows 桌面端...")
-        if is_rel:
-            stale_kernel = os.path.join(flutter_project, "build", "flutter_assets", "kernel_blob.bin")
-            if os.path.exists(stale_kernel):
-                os.remove(stale_kernel)
-                on_log("info", "已清理 Flutter 调试构建残留的 kernel_blob.bin")
-        flutter_cmd = [tools["flutter"]["cmd"] or "flutter", "build", "windows", "--no-pub"]
-        flutter_cmd.append("--release" if is_rel else "--debug")
-        ok = run_cmd_live(flutter_cmd, cwd=flutter_project, on_log=on_log, is_cancelled=is_cancelled)
-        if not ok:
-            return _fail("Flutter 桌面端编译失败")
-
-        release_dir = find_flutter_release_dir(flutter_project, build_type)
-        if not release_dir:
-            return _fail("未找到 Flutter Windows 产物目录")
-
-        if is_rel:
-            output_kernel = os.path.join(release_dir, "data", "flutter_assets", "kernel_blob.bin")
-            if os.path.exists(output_kernel):
-                os.remove(output_kernel)
-                on_log("info", "已从 Release 产物中移除 kernel_blob.bin")
-
-        if os.path.isdir(app_stage):
-            shutil.rmtree(app_stage, ignore_errors=True)
-        os.makedirs(os.path.dirname(app_stage), exist_ok=True)
-        shutil.copytree(release_dir, app_stage)
-        on_log("info", f"     Flutter 产物已暂存: {app_stage}")
-
-        on_log("info", ">>> [2/3] 正在编译 Windows 特权服务 (纯 Rust, diting-service.exe)...")
+        on_log("info", ">>> [1/2] 正在编译 Windows 特权服务 (纯 Rust, diting-service.exe)...")
         if not build_windows_service(root, service_bin, build_type, on_log, is_cancelled):
             return _fail("特权服务编译失败")
 
-        on_log("info", ">>> [3/3] 正在打包 NSIS 独立安装包...")
+        on_log("info", ">>> [2/2] 正在打包 NSIS 独立安装包...")
         installer_dir = INSTALLER_DIR
         nsi_script = os.path.join(installer_dir, "project.nsi")
         if not os.path.exists(nsi_script):
@@ -312,7 +237,6 @@ def build_pipeline(
             nsis_exe,
             "/INPUTCHARSET",
             "UTF8",
-            f"-DARG_APP_DIR={app_stage}",
             f"-DARG_SERVICE_BINARY={service_bin}",
             f"-DPRODUCT_VERSION={version}",
             f"-DINFO_PRODUCTVERSION={version}",
@@ -333,7 +257,7 @@ def build_pipeline(
             on_log("error", f"未找到生成的安装包文件: {installer_path}")
             return _fail("未生成预期的 EXE 安装包产物")
 
-        for temp_path in (service_bin, app_stage, fallback_installer):
+        for temp_path in (service_bin, fallback_installer):
             if os.path.isdir(temp_path):
                 shutil.rmtree(temp_path, ignore_errors=True)
             elif os.path.exists(temp_path):

@@ -134,9 +134,9 @@ fi
 
 echo "============================================================"
 echo " 安装完成。"
-echo "   管理地址: http://127.0.0.1:${WEB_PORT}"
+echo "   管理 API: http://127.0.0.1:${WEB_PORT}"
 echo "   查看日志: journalctl -u $SERVICE_NAME -f"
 echo "   卸载服务: sudo $SCRIPT_DIR/uninstall.sh"
 echo "============================================================"
 echo "提示: 若 53 端口被 systemd-resolved 的 stub 监听器占用，"
-echo "      可在 Web 控制台执行【一键自动修复】，或手动关闭 DNSStubListener。"
+echo "      可运行 'diting-service -check-ports' 检查，或手动关闭 DNSStubListener。"

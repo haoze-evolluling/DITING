@@ -3,12 +3,11 @@
 
 """谛听 (DITING) 版本号单一真源管理。
 
-`desktop/app/pubspec.yaml` 的 `version: X.Y.Z+构建号` 是桌面端唯一的版本字面量
-（Flutter 工具链强制要求它存在），其余位置一律在构建期从它派生，不再各存一份：
+`desktop/service/VERSION` 是桌面端唯一的版本字面量，其余位置一律在构建期从它派生：
 
   * `diting-service.exe` / Linux 二进制：`rust/diting-desktop-api/build.rs` 在 cargo 构建期读取它
-  * Windows 安装包：`makensis -DINFO_PRODUCTVERSION=<pubspec 版本名>`
-  * Linux `.deb`：`build_linux.sh` 自己从 pubspec 读
+  * Windows 安装包：`makensis -DINFO_PRODUCTVERSION=<VERSION 版本名>`
+  * Linux `.deb`：`build_linux.sh` 自己从 VERSION 读
 
 所以日常升级版本号只改这一行（或用 `set_version.bat` / 本工具写这一行），
 派生位置一旦又被写回硬编码，`inspect_versions` / `-s` 会直接标出来。
@@ -28,10 +27,10 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 try:
-    from .paths import DESKTOP_APP_DIR, ANDROID_APP_DIR, SERVICE_DIR, INSTALLER_DIR, ROOT_DIR
+    from .paths import DESKTOP_VERSION_FILE, ANDROID_APP_DIR, SERVICE_DIR, INSTALLER_DIR, ROOT_DIR
     from .paths import relative as rel_path
 except ImportError:
-    from paths import DESKTOP_APP_DIR, ANDROID_APP_DIR, SERVICE_DIR, INSTALLER_DIR, ROOT_DIR
+    from paths import DESKTOP_VERSION_FILE, ANDROID_APP_DIR, SERVICE_DIR, INSTALLER_DIR, ROOT_DIR
     from paths import relative as rel_path
 
 GROUP_DESKTOP = "desktop"
@@ -39,10 +38,10 @@ GROUP_ANDROID = "android"
 ALL_GROUPS = (GROUP_DESKTOP, GROUP_ANDROID)
 GROUP_ALIASES = {"common": GROUP_DESKTOP, "flutter": GROUP_ANDROID}
 
-DESKTOP_PUBSPEC = os.path.join(DESKTOP_APP_DIR, "pubspec.yaml")
 ANDROID_PUBSPEC = os.path.join(ANDROID_APP_DIR, "pubspec.yaml")
 
 _PUBSPEC_VERSION_RE = re.compile(r"(?m)^(version:\s*)([^\s+#]+)(?:\+(\d+))?")
+_PLAIN_VERSION_RE = re.compile(r"^\s*v?(\d+\.\d+\.\d+)(?:\+(\d+))?\s*$")
 _SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
 
@@ -73,13 +72,15 @@ def source_targets() -> List[Dict[str, str]]:
         {
             "group": GROUP_DESKTOP,
             "name": "桌面端（唯一真源）",
-            "path": DESKTOP_PUBSPEC,
+            "path": DESKTOP_VERSION_FILE,
+            "format": "plain",
             "note": "cargo build / NSIS / deb 全部从这里派生",
         },
         {
             "group": GROUP_ANDROID,
             "name": "Android 客户端",
             "path": ANDROID_PUBSPEC,
+            "format": "pubspec",
             "note": "独立产品线，按需单独升级",
         },
     ]
@@ -92,7 +93,7 @@ def derived_targets() -> List[Dict[str, str]]:
             "name": "桌面特权服务",
             "path": os.path.join(ROOT_DIR, "rust", "diting-desktop-api", "build.rs"),
             "type": "rs",
-            "via": "cargo build（build.rs 读取 pubspec.yaml）",
+            "via": "cargo build（build.rs 读取 desktop/service/VERSION）",
         },
         {
             "name": "Windows 安装包",
@@ -104,7 +105,7 @@ def derived_targets() -> List[Dict[str, str]]:
             "name": "Linux 安装包",
             "path": os.path.join(SERVICE_DIR, "build_linux.sh"),
             "type": "sh",
-            "via": "build_linux.sh 读 pubspec.yaml",
+            "via": "build_linux.sh 读 desktop/service/VERSION",
         },
     ]
 
@@ -119,19 +120,45 @@ def write_file(path: str, content: str) -> None:
         f.write(content)
 
 
+def parse_version_text(content: str) -> Tuple[str, Optional[int]]:
+    """从 VERSION 或 pubspec 文本里取出首行 (版本名, 构建号)。"""
+    for line in content.splitlines():
+        text = line.strip()
+        if not text or text.startswith("#"):
+            continue
+        if text.startswith("version:"):
+            text = text[len("version:"):].strip()
+        text = text.split("#", 1)[0].strip()
+        m = _PLAIN_VERSION_RE.match(text)
+        if m:
+            code = int(m.group(2)) if m.group(2) else None
+            return m.group(1), code
+    return "", None
+
+
 def parse_pubspec_version(content: str) -> Tuple[str, Optional[int]]:
     """从 pubspec 文本里取出 (版本名, 构建号)。"""
-    m = _PUBSPEC_VERSION_RE.search(content)
-    if not m:
-        return "", None
-    code = int(m.group(3)) if m.group(3) else None
-    return m.group(2), code
+    return parse_version_text(content)
 
 
-def get_pubspec_version(path: str) -> Tuple[str, Optional[int]]:
+def get_version(path: str) -> Tuple[str, Optional[int]]:
     if not os.path.exists(path):
         return "", None
-    return parse_pubspec_version(read_file(path))
+    return parse_version_text(read_file(path))
+
+
+def version_file_with_version(content: str, version: str) -> Tuple[str, bool]:
+    """把 VERSION 文件的首个有效行改成语义化版本，保留注释。"""
+    lines = content.splitlines()
+    for index, line in enumerate(lines):
+        text = line.strip()
+        if text and not text.startswith("#"):
+            lines[index] = version
+            new_content = "\n".join(lines) + "\n"
+            return new_content, new_content != content
+    prefix = content.rstrip("\n")
+    new_content = (prefix + "\n" if prefix else "") + version + "\n"
+    return new_content, new_content != content
 
 
 def pubspec_with_version(content: str, version: str) -> Tuple[str, bool]:
@@ -159,25 +186,25 @@ def _derived_literal(item: Dict[str, str]) -> Optional[str]:
     content = read_file(path)
     ftype = item["type"]
     if ftype == "rs":
-        return None if "pubspec.yaml" in content else "build.rs 里的版本字面量"
+        return None if "version_file" in content else "build.rs 里的版本字面量"
     if ftype == "nsi":
         m = re.search(r'(?m)^\s*!define INFO_PRODUCTVERSION\s+"([^"]*)"', content)
         return m.group(1) if m else None
     if ftype == "sh":
-        return None if "pubspec.yaml" in content else "构建脚本里的版本字面量"
+        return None if "VERSION_FILE" in content else "构建脚本里的版本字面量"
     return None
 
 
 def inspect_versions(groups: Optional[List[str]] = None) -> List[Dict[str, object]]:
     """列出当前版本状态：真源各行 + 桌面端派生位置（含硬编码告警）。"""
     wanted = _normalize_groups(groups)
-    desktop_version, desktop_code = get_pubspec_version(DESKTOP_PUBSPEC)
+    desktop_version, desktop_code = get_version(DESKTOP_VERSION_FILE)
     items: List[Dict[str, object]] = []
 
     for target in source_targets():
         if target["group"] not in wanted:
             continue
-        version, code = get_pubspec_version(target["path"])
+        version, code = get_version(target["path"])
         items.append(
             {
                 "name": target["name"],
@@ -215,9 +242,9 @@ def get_current_version(groups: Optional[List[str]] = None) -> str:
     """当前版本号：桌面端统一取唯一真源，Android 取自己的 pubspec。"""
     wanted = _normalize_groups(groups)
     if GROUP_ANDROID in wanted and GROUP_DESKTOP not in wanted:
-        version, _ = get_pubspec_version(ANDROID_PUBSPEC)
+        version, _ = get_version(ANDROID_PUBSPEC)
         return version or "0.0.0"
-    version, _ = get_pubspec_version(DESKTOP_PUBSPEC)
+    version, _ = get_version(DESKTOP_VERSION_FILE)
     return version or "0.0.0"
 
 
@@ -267,9 +294,12 @@ def sync_version(
             _log("warn", f"跳过不存在的文件: {rel}")
             continue
         old_content = read_file(path)
-        new_content, changed = pubspec_with_version(old_content, target_ver)
+        if target.get("format") == "pubspec":
+            new_content, changed = pubspec_with_version(old_content, target_ver)
+        else:
+            new_content, changed = version_file_with_version(old_content, target_ver)
         if not changed:
-            version, code = parse_pubspec_version(old_content)
+            version, code = parse_version_text(old_content)
             _log("info", f"{target['name']} 已是 v{version}（构建号 {code}），无需修改: {rel}")
             continue
         modified.append(rel)
@@ -325,7 +355,7 @@ def sync_version(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="谛听版本号单一真源工具（真源: desktop/app/pubspec.yaml）")
+    parser = argparse.ArgumentParser(description="谛听版本号单一真源工具（真源: desktop/service/VERSION）")
     parser.add_argument("version", nargs="?", default=None, help="目标版本号 (如 2.2.11)")
     parser.add_argument("-s", "--show", action="store_true", help="查看真源与派生位置的版本状态")
     parser.add_argument("-d", "--dry-run", action="store_true", help="试运行：只打印将改动的文件，不落盘")
@@ -342,7 +372,7 @@ def main() -> None:
 
     if args.show or not args.version:
         print("=" * 74)
-        print("  谛听 (DITING) 版本号状态（真源: desktop/app/pubspec.yaml）")
+        print("  谛听 (DITING) 版本号状态（真源: desktop/service/VERSION）")
         print("=" * 74)
         for item in inspect_versions(args.group):
             flag = "真源" if item["kind"] == "source" else "派生"

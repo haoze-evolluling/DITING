@@ -12,11 +12,11 @@
 | `rust/diting-desktop-dns` | DNS 数据面：UDP/TCP/DoT/DoH/DoQ 监听、固定顺序管线与各处理阶段 |
 | `rust/diting-desktop-platform` | Windows / Linux 平台能力（接管、防火墙、端口诊断、服务托管、路径） |
 | `rust/diting-desktop-app` | 运行时组合：引擎生命周期、DNS 起停、后台维护、管理控制器 |
-| `rust/diting-desktop-ipc` | HTTP/WebSocket 管理 API、鉴权/CORS、静态控制台 |
+| `rust/diting-desktop-ipc` | HTTP/WebSocket 管理 API、鉴权/CORS |
 | `rust/diting-desktop-service` | 二进制 `diting-service`：CLI、服务入口、自愈与还原 |
 
-`desktop/service` 仅保留构建与打包资产（`build/`、`build_linux.sh`、`build_frontend.py`）以及
-`frontend/dist`（由 `build_frontend.py` 生成，供 IPC 在编译期嵌入）。
+`desktop/service` 仅保留构建与打包资产（`build/`、`build_linux.sh`、`VERSION`）与安装脚本；
+桌面前端工程已移除，服务只提供管理 API。
 
 ## 构建
 
@@ -26,8 +26,8 @@ desktop\build_installer.bat both       :: EXE + Linux deb（经 WSL）
 ```
 
 服务二进制由 `cargo build --release -p diting-desktop-service` 产出；Windows 安装包只包含一个
-`diting-service.exe`，deb 只包含一个 `/usr/local/bin/diting-service`。Flutter 前端工程已移除，
-`rust/diting-desktop-api/build.rs` 找不到 `desktop/app/pubspec.yaml` 时会回退为 `dev` 版本。
+`diting-service.exe`，deb 只包含一个 `/usr/local/bin/diting-service`。桌面端版本号以
+`desktop/service/VERSION` 为唯一真源，由 `rust/diting-desktop-api/build.rs` 在编译期注入。
 deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 
 ## 兼容性
