@@ -8,6 +8,8 @@ import 'package:diting_android/data/cleanup/cleanup_sql.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
+import 'package:diting_android/data/native/recognition_avatar_bridge.dart';
+import 'package:diting_android/data/native/runtime_log_bridge.dart';
 import 'package:diting_shared/data/db/database_schema.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
@@ -25,18 +27,26 @@ class DataCleanupService {
     required Future<Database?> Function(String fileName) openDatabase,
     required int appVersionCode,
     CaCertificateService? caCertificate,
+    RuntimeLogBridge? runtimeLogs,
+    RecognitionAvatarBridge? recognitionAvatars,
     Future<String> Function()? loadPresetAsset,
   }) : _prefs = prefs,
        _platform = platform,
        _outboundProxy = outboundProxy,
        _appVersionCode = appVersionCode,
        _ca = caCertificate ?? const UnavailableCaCertificateService(),
+       _runtimeLogs = runtimeLogs ?? RuntimeLogBridge(),
+       _recognitionAvatars =
+           recognitionAvatars ?? const RecognitionAvatarBridge(),
        _loadPresetAsset = loadPresetAsset,
        _databases = CleanupDatabases(openDatabase);
 
   final LegacyPrefsStore _prefs;
   final PlatformBridge _platform;
   final OutboundProxyStore _outboundProxy;
+
+  final RuntimeLogBridge _runtimeLogs;
+  final RecognitionAvatarBridge _recognitionAvatars;
 
   final int _appVersionCode;
 
@@ -85,6 +95,14 @@ class DataCleanupService {
           await _platformCall(_platform.clearUpdateCache),
         ),
         CleanupAction.customBackground => await _clearCustomBackground(),
+        CleanupAction.runtimeLogs => _result(
+          action,
+          await _platformCall(_runtimeLogs.clear),
+        ),
+        CleanupAction.automationEvents => await _clearAutomationEvents(),
+        CleanupAction.ruleVersions => await _clearRuleVersions(),
+        CleanupAction.mirrorTemplates => await _clearMirrorTemplates(),
+        CleanupAction.recognitionMembers => await _clearRecognitionMembers(),
         CleanupAction.settingsGuides => _resetSettingsGuides(),
         CleanupAction.allData => await _clearAllLocalData(),
       };
@@ -216,6 +234,7 @@ class DataCleanupService {
         for (final table in _plan.subscriptionTables) {
           count += await deleteAllRows(txn, table);
         }
+        count += await deleteAllRows(txn, _plan.subscriptionVersionTable);
         for (final pair in _plan.subscriptionRulePairs) {
           count += await deleteRowsWhere(
             txn,
@@ -270,6 +289,50 @@ class DataCleanupService {
     return _result(CleanupAction.customBackground, removed);
   }
 
+  Future<CleanupResult> _clearAutomationEvents() async {
+    final db = await _databases.app;
+    final removed = db == null
+        ? 0
+        : await deleteAllRows(db, _plan.automationEventsTable);
+    return _result(CleanupAction.automationEvents, removed);
+  }
+
+  Future<CleanupResult> _clearRuleVersions() async {
+    var removed = 0;
+    for (final db in await _databases.ruleDatabases()) {
+      removed += await deleteAllRows(db, _plan.ruleVersionsTable);
+    }
+    return _result(CleanupAction.ruleVersions, removed);
+  }
+
+  Future<CleanupResult> _clearMirrorTemplates() async {
+    var removed = 0;
+    for (final db in await _databases.ruleDatabases()) {
+      removed += await db.transaction<int>((txn) async {
+        final count = await deleteAllRows(txn, _plan.mirrorTemplatesTable);
+        await clearColumn(
+          txn,
+          _plan.mirrorTemplateSubscriptionTable,
+          _plan.mirrorTemplateSubscriptionColumn,
+        );
+        return count;
+      });
+    }
+    for (final entry in _plan.mirrorTemplateGlobalPrefs) {
+      if (_removeKey(entry.container, entry.key)) removed++;
+    }
+    return _result(CleanupAction.mirrorTemplates, removed);
+  }
+
+  Future<CleanupResult> _clearRecognitionMembers() async {
+    var removed = 0;
+    for (final key in _plan.recognitionMembersKeys) {
+      if (_removeKey(_plan.recognitionMembersContainer, key)) removed++;
+    }
+    removed += await _platformCall(_recognitionAvatars.clear);
+    return _result(CleanupAction.recognitionMembers, removed);
+  }
+
   CleanupResult _resetSettingsGuides() {
     var removed = 0;
     for (final key in _plan.settingsGuideKeys) {
@@ -297,6 +360,7 @@ class DataCleanupService {
     final automation = await _databases.app;
     if (automation != null) {
       for (final table in DatabaseSchema.automationTableNames) {
+        if (table == _plan.automationEventsTable) continue;
         removed += await deleteAllRows(automation, table);
       }
     }

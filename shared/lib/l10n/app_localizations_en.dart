@@ -2203,6 +2203,21 @@ class AppL10nEn extends AppL10n {
   String get cleanupCustomBackground => 'Clear the custom background cache';
 
   @override
+  String get cleanupRuntimeLogs => 'Delete runtime log files';
+
+  @override
+  String get cleanupAutomationEvents => 'Delete automation run history';
+
+  @override
+  String get cleanupRuleVersions => 'Delete rule version snapshots';
+
+  @override
+  String get cleanupMirrorTemplates => 'Delete custom mirror templates';
+
+  @override
+  String get cleanupRecognitionMembers => 'Delete the recognition member cache';
+
+  @override
   String get cleanupSettingsGuides => 'Reset every onboarding guide';
 
   @override
@@ -2533,7 +2548,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get hubDataCleanupDescription =>
-      'Delete caches, logs or domain and address filter rules';
+      'Clean runtime logs, caches, rules, subscriptions and custom data by category';
 
   @override
   String get hubTroubleshooting => 'Troubleshooting';
@@ -7556,6 +7571,20 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
+  String get cleanupCategorySection => 'Cleanup categories';
+
+  @override
+  String get cleanupCategoryItemsSection => 'Actions';
+
+  @override
+  String cleanupCategoryItemsCount(int count) {
+    return 'Actions: $count';
+  }
+
+  @override
+  String get cleanupDangerSection => 'Danger zone';
+
+  @override
   String get cleanupDescLogs =>
       'Clears DNS and HTTP request logs, race statistics and bootstrap resolution logs';
 
@@ -7605,11 +7634,31 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get cleanupDescDownloadCache =>
-      'Deletes update packages, downloaded temporary files and the app cache';
+      'Deletes update packages, downloaded temporary files, app temporary and image caches';
 
   @override
   String get cleanupDescCustomBackground =>
       'Clears the custom wallpaper cache and its stored path, restoring the default background';
+
+  @override
+  String get cleanupDescRuntimeLogs =>
+      'Deletes the runtime log and event files captured for troubleshooting; crash logs are kept';
+
+  @override
+  String get cleanupDescAutomationEvents =>
+      'Clears automation run history; automation rules and scenes are kept';
+
+  @override
+  String get cleanupDescRuleVersions =>
+      'Clears historical rule snapshots saved on subscription updates to free space; version rollback history becomes unavailable';
+
+  @override
+  String get cleanupDescMirrorTemplates =>
+      'Clears custom subscription mirror templates and global mirror settings, falling back to default routes';
+
+  @override
+  String get cleanupDescRecognitionMembers =>
+      'Clears the cached recognition member list and avatars; they are fetched again when needed';
 
   @override
   String get cleanupDescSettingsGuides =>
@@ -7617,7 +7666,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get cleanupDescAllData =>
-      'Deep-clears every log, cache, rule, subscription, certificate and setting, then exits the app';
+      'Deep-clears every log, runtime log, traffic statistic, crash record, DNS cache, weight sample, domain and address rule, subscription, rule version snapshot, mirror template, app list, outbound proxy, CA certificate, temporary cache, custom background, recognition cache and automation record, and resets the guides; the app then exits';
 
   @override
   String get cleanupConfirmLogs =>
@@ -7676,12 +7725,32 @@ class AppL10nEn extends AppL10n {
       'Clear the custom wallpaper cache and restore the default background?';
 
   @override
+  String get cleanupConfirmRuntimeLogs =>
+      'Delete all runtime log files? An in-progress capture keeps writing to a new file; crash logs are untouched.';
+
+  @override
+  String get cleanupConfirmAutomationEvents =>
+      'Delete all automation run history? Automation rules and scenes are kept.';
+
+  @override
+  String get cleanupConfirmRuleVersions =>
+      'Delete all rule version snapshots? You will no longer be able to roll back to previous rule versions.';
+
+  @override
+  String get cleanupConfirmMirrorTemplates =>
+      'Delete all custom mirror templates? Global mirroring is turned off and subscriptions fall back to default routes.';
+
+  @override
+  String get cleanupConfirmRecognitionMembers =>
+      'Delete the recognition member cache and avatars? They will be fetched again next time.';
+
+  @override
   String get cleanupConfirmSettingsGuides =>
       'Reset every first-run guide and the terms agreement? No setting, rule, cache, log or certificate is deleted. The app exits afterwards; the next launch asks for the terms again and shows all guides once more.';
 
   @override
   String get cleanupConfirmAllData =>
-      'Run the full data cleanup? Logs, traffic statistics, crash records, DNS cache, provider weights, domain and address rules, rule subscriptions, temporary caches and capture certificates are cleared in turn. Every custom setting and rule is wiped, the guides are reset, and the app exits when it finishes.';
+      'Run the full data cleanup? Logs, runtime logs, traffic statistics, crash records, DNS cache, provider weights, domain and address rules, subscriptions, rule version snapshots, mirror templates, app lists, outbound proxy, temporary caches, custom background, recognition cache and automation records are cleared in turn, and the guides and capture certificate are reset. Every custom setting and rule is wiped, and the app exits when it finishes.';
 
   @override
   String get cleanupRestartTitle => 'Restart required';

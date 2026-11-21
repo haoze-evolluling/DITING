@@ -9,6 +9,7 @@ import 'package:diting_android/pages/hub/ca_certificate_pages.dart';
 import 'package:diting_android/pages/hub/cache_settings_page.dart';
 import 'package:diting_android/pages/hub/config_transfer_page.dart';
 import 'package:diting_android/pages/hub/config_transfer_webdav.dart';
+import 'package:diting_android/pages/hub/data_cleanup_category_page.dart';
 import 'package:diting_android/pages/hub/data_cleanup_page.dart';
 import 'package:diting_android/pages/hub/hidden_features_page.dart';
 import 'package:diting_android/pages/hub/http_inspection_page.dart';
@@ -63,11 +64,15 @@ abstract final class HubPaths {
   static const troubleshootingLogs = '/hub/troubleshooting/logs';
   static const troubleshootingEvents = '/hub/troubleshooting/events';
   static const dataCleanup = '/hub/data-cleanup';
+  static const dataCleanupCategory = '$dataCleanup/:categoryId';
   static const configTransfer = '/hub/config-transfer';
   static const configTransferWebdav = '/hub/config-transfer/webdav';
   static const sponsorList = '/hub/sponsor-list';
 
   static String resolutionMode(String id) => '$resolution/$id';
+
+  static String dataCleanupCategoryOf(String id) =>
+      '$dataCleanup/${Uri.encodeComponent(id)}';
 
   static String troubleshootingLogContent(String kind, String name) =>
       '$troubleshootingLogs/${Uri.encodeComponent(kind)}/'
@@ -141,6 +146,16 @@ List<RouteBase> hubRoutes() => [
     ),
   ),
   _route(HubPaths.dataCleanup, const DataCleanupPage()),
+  GoRoute(
+    path: HubPaths.dataCleanupCategory,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) => androidDefaultPage(
+      state,
+      DataCleanupCategoryPage(
+        categoryId: state.pathParameters['categoryId'] ?? 'runtime',
+      ),
+    ),
+  ),
   _route(HubPaths.configTransfer, const ConfigTransferPage()),
   _route(HubPaths.configTransferWebdav, const ConfigTransferWebdavPage()),
   _route(HubPaths.sponsorList, const SponsorListPage()),

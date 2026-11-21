@@ -1,9 +1,11 @@
 import 'package:diting_android/data/cleanup/cleanup_plan.dart';
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
+import 'package:diting_android/data/native/runtime_log_bridge.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -73,7 +75,12 @@ void _dataCleanup() {
       'CREATE TABLE subscription (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
       'url TEXT, name TEXT, kind TEXT, ruleCount INTEGER NOT NULL DEFAULT 0, '
       'lastUpdated INTEGER NOT NULL DEFAULT 0, httpEtag TEXT, '
-      'httpLastModified TEXT, ruleSetHash TEXT)',
+      'httpLastModified TEXT, ruleSetHash TEXT, mirrorTemplate TEXT)',
+    );
+    await db.execute(
+      'CREATE TABLE rule_version (id INTEGER PRIMARY KEY AUTOINCREMENT, '
+      'group_id TEXT NOT NULL, hash TEXT NOT NULL, rule_count INTEGER NOT NULL, '
+      'created_at INTEGER NOT NULL, rules_json TEXT NOT NULL)',
     );
     await db.execute(
       'CREATE TABLE subscription_group (id INTEGER PRIMARY KEY AUTOINCREMENT '
@@ -86,6 +93,16 @@ void _dataCleanup() {
     await db.execute(
       'CREATE TABLE mirror_template (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
       'name TEXT)',
+    );
+    await db.execute(
+      'CREATE TABLE automation_rule (id TEXT PRIMARY KEY NOT NULL, name TEXT)',
+    );
+    await db.execute(
+      'CREATE TABLE automation_profile (id TEXT PRIMARY KEY NOT NULL, name TEXT)',
+    );
+    await db.execute(
+      'CREATE TABLE automation_event (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
+      'ts INTEGER NOT NULL, event TEXT NOT NULL)',
     );
   }
 
@@ -107,7 +124,11 @@ void _dataCleanup() {
     });
   });
 
-  tearDown(() => main.close());
+  tearDown(() async {
+    _clearMock(runtimeLogChannelName);
+    _clearMock('com.haoze.diting/recognition');
+    await main.close();
+  });
 
   DataCleanupService buildService() => DataCleanupService(
     prefs: prefs,
@@ -160,6 +181,31 @@ void _dataCleanup() {
       final result = await buildService().run(CleanupAction.dnsCache);
       expect(result.removed, 1);
       expect(await main.query('dns_cache'), isEmpty);
+    });
+
+    test('删除运行日志文件走运行日志通道', () async {
+      _mockChannel(runtimeLogChannelName, (call) async {
+        expect(call.method, 'clear');
+        return 3;
+      });
+      final result = await buildService().run(CleanupAction.runtimeLogs);
+      expect(result.removed, 3);
+      expect(result.failed, isFalse);
+    });
+
+    test('没有运行日志通道时降级为 0 项', () async {
+      final result = await buildService().run(CleanupAction.runtimeLogs);
+      expect(result.removed, 0);
+      expect(result.failed, isFalse);
+    });
+
+    test('删除自动化执行记录只清 automation_event', () async {
+      await main.insert('automation_event', {'ts': 1, 'event': 'run'});
+      await main.insert('automation_rule', {'id': 'r1', 'name': 'n'});
+      final result = await buildService().run(CleanupAction.automationEvents);
+      expect(result.removed, 1);
+      expect(await main.query('automation_event'), isEmpty);
+      expect(await main.query('automation_rule'), hasLength(1));
     });
   });
 
@@ -266,14 +312,65 @@ void _dataCleanup() {
         'ruleId': 2,
         'source': 'useradd',
       });
+      await main.insert('rule_version', {
+        'group_id': 'sub_1',
+        'hash': 'h',
+        'rule_count': 1,
+        'created_at': 1,
+        'rules_json': '[]',
+      });
 
       await buildService().run(CleanupAction.subscriptions);
       expect(await main.query('subscription'), isEmpty);
       expect(await main.query('subscription_group'), isEmpty);
       expect(await main.query('subscription_auto_update_item'), isEmpty);
+      expect(await main.query('rule_version'), isEmpty);
       final rules = await main.query('block_rule');
       expect(rules, hasLength(1));
       expect(rules.single['pattern'], 'mine.test');
+    });
+
+    test('删除规则版本快照只清 rule_version', () async {
+      await main.insert('rule_version', {
+        'group_id': 'sub_1',
+        'hash': 'h',
+        'rule_count': 1,
+        'created_at': 1,
+        'rules_json': '[]',
+      });
+      await main.insert('mirror_template', {'name': 'keep'});
+      final result = await buildService().run(CleanupAction.ruleVersions);
+      expect(result.removed, 1);
+      expect(await main.query('rule_version'), isEmpty);
+      expect(await main.query('mirror_template'), hasLength(1));
+    });
+
+    test('删除自定义镜像模板并解除镜像引用', () async {
+      await main.insert('mirror_template', {'name': 'mirror-a'});
+      await main.insert('subscription', {
+        'url': 'https://s.test',
+        'kind': 'domain',
+        'mirrorTemplate': 'https://mirror/{url}',
+      });
+      prefs.putBool(LegacySettings.uiContainer, 'global_mirror_enabled', true);
+      prefs.putString(
+        LegacySettings.uiContainer,
+        'global_mirror_template',
+        'https://global/{url}',
+      );
+      final result = await buildService().run(CleanupAction.mirrorTemplates);
+      expect(result.removed, greaterThan(0));
+      expect(await main.query('mirror_template'), isEmpty);
+      final subscriptions = await main.query('subscription');
+      expect(subscriptions.single['mirrorTemplate'], isNull);
+      expect(
+        prefs.read(LegacySettings.uiContainer, 'global_mirror_enabled'),
+        isNull,
+      );
+      expect(
+        prefs.read(LegacySettings.uiContainer, 'global_mirror_template'),
+        isNull,
+      );
     });
   });
 
@@ -308,6 +405,22 @@ void _dataCleanup() {
         isNotNull,
       );
     });
+
+    test('删除识别成员缓存清三个键与头像缓存', () async {
+      const container = 'recognition_members';
+      prefs.putString(container, 'config_json', '{}');
+      prefs.putLong(container, 'saved_at_ms', 1);
+      prefs.putString(container, 'etag', 'abc');
+      _mockChannel('com.haoze.diting/recognition', (call) async {
+        expect(call.method, 'clear');
+        return 2;
+      });
+      final result = await buildService().run(CleanupAction.recognitionMembers);
+      expect(result.removed, 5);
+      for (final key in ['config_json', 'saved_at_ms', 'etag']) {
+        expect(prefs.read(container, key), isNull, reason: key);
+      }
+    });
   });
 
   group('全面清理', () {
@@ -321,12 +434,28 @@ void _dataCleanup() {
       });
       await main.insert('block_rule', {'pattern': 'a.com'});
       await main.insert('mirror_template', {'name': 'm'});
+      await main.insert('rule_version', {
+        'group_id': 'sub_1',
+        'hash': 'h',
+        'rule_count': 1,
+        'created_at': 1,
+        'rules_json': '[]',
+      });
+      await main.insert('automation_event', {'ts': 1, 'event': 'run'});
+      await main.insert('automation_rule', {'id': 'r1', 'name': 'n'});
+      prefs.putString('recognition_members', 'config_json', '{}');
+      prefs.putString('recognition_members', 'etag', 'abc');
 
       final result = await buildService().run(CleanupAction.allData);
       expect(result.removed, greaterThan(0));
       expect(await main.query('dns_log'), isEmpty);
       expect(await main.query('app_traffic_daily'), isEmpty);
       expect(await main.query('mirror_template'), isEmpty);
+      expect(await main.query('rule_version'), isEmpty);
+      expect(await main.query('automation_event'), isEmpty);
+      expect(await main.query('automation_rule'), isEmpty);
+      expect(prefs.read('recognition_members', 'config_json'), isNull);
+      expect(prefs.read('recognition_members', 'etag'), isNull);
       expect(
         prefs.read(LegacySettings.uiContainer, 'initial_agreement_accepted'),
         isNull,
@@ -348,7 +477,28 @@ void _dataCleanup() {
         'bootstrap_log',
       ]);
       expect(CleanupPlan.instance.allDataOrder.last, 'settingsGuides');
-      expect(CleanupPlan.instance.allDataTables, ['mirror_template']);
+      expect(CleanupPlan.instance.allDataTables, isEmpty);
+      expect(CleanupPlan.instance.allDataPrefs, isEmpty);
+      expect(CleanupPlan.instance.recognitionMembersKeys, [
+        'config_json',
+        'saved_at_ms',
+        'etag',
+      ]);
+      expect(CleanupPlan.instance.subscriptionVersionTable, 'rule_version');
+      expect(CleanupPlan.instance.mirrorTemplateGlobalPrefs, [
+        (container: LegacySettings.uiContainer, key: 'global_mirror_enabled'),
+        (container: LegacySettings.uiContainer, key: 'global_mirror_template'),
+      ]);
+    });
+
+    test('全面清理顺序覆盖除 allData 外的全部动作', () {
+      final order = CleanupPlan.instance.allDataOrder;
+      final expected = {
+        for (final action in CleanupAction.values)
+          if (action != CleanupAction.allData) action.name,
+      };
+      expect(order.toSet(), expected);
+      expect(order.toSet().length, order.length);
     });
   });
 
@@ -367,4 +517,17 @@ void _dataCleanup() {
       expect(result.failed, isFalse);
     });
   });
+}
+
+void _mockChannel(
+  String name,
+  Future<Object?> Function(MethodCall call) handler,
+) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(MethodChannel(name), handler);
+}
+
+void _clearMock(String name) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(MethodChannel(name), null);
 }

@@ -129,9 +129,30 @@ class CleanupPlan {
   String get addressRewriteWhere => _string('addressRules', 'rewriteWhere');
 
   List<String> get subscriptionTables => _strings('subscriptions', 'tables');
+  String get subscriptionVersionTable =>
+      _string('subscriptions', 'versionTable');
   List<CleanupRulePair> get subscriptionRulePairs =>
       _pairs('subscriptions', 'rulePairs');
   String get subscriptionSourceWhere => _string('subscriptions', 'sourceWhere');
+
+  String get automationEventsTable => _string('automationEvents', 'table');
+  String get ruleVersionsTable => _string('ruleVersions', 'table');
+
+  String get mirrorTemplatesTable => _string('mirrorTemplates', 'table');
+  List<CleanupPrefEntry> get mirrorTemplateGlobalPrefs => [
+    for (final item in _mapList('mirrorTemplates', 'globalPrefs'))
+      for (final key in item['keys'] as List)
+        (container: item['container'] as String, key: key as String),
+  ];
+  String get mirrorTemplateSubscriptionTable =>
+      _string('mirrorTemplates', 'subscriptionTable');
+  String get mirrorTemplateSubscriptionColumn =>
+      _string('mirrorTemplates', 'subscriptionMirrorColumn');
+
+  String get recognitionMembersContainer =>
+      _string('recognitionMembers', 'container');
+  List<String> get recognitionMembersKeys =>
+      _strings('recognitionMembers', 'keys');
 
   String get appRulesContainer => _string('appRules', 'container');
   List<String> get appRuleKeys => _strings('appRules', 'keys');

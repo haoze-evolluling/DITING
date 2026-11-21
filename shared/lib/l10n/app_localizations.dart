@@ -1328,6 +1328,16 @@ abstract class AppL10n {
 
   String get cleanupCustomBackground;
 
+  String get cleanupRuntimeLogs;
+
+  String get cleanupAutomationEvents;
+
+  String get cleanupRuleVersions;
+
+  String get cleanupMirrorTemplates;
+
+  String get cleanupRecognitionMembers;
+
   String get cleanupSettingsGuides;
 
   String get cleanupAllData;
@@ -4395,6 +4405,14 @@ abstract class AppL10n {
 
   String cleanupRunning(String title);
 
+  String get cleanupCategorySection;
+
+  String get cleanupCategoryItemsSection;
+
+  String cleanupCategoryItemsCount(int count);
+
+  String get cleanupDangerSection;
+
   String get cleanupDescLogs;
 
   String get cleanupDescTraffic;
@@ -4422,6 +4440,16 @@ abstract class AppL10n {
   String get cleanupDescDownloadCache;
 
   String get cleanupDescCustomBackground;
+
+  String get cleanupDescRuntimeLogs;
+
+  String get cleanupDescAutomationEvents;
+
+  String get cleanupDescRuleVersions;
+
+  String get cleanupDescMirrorTemplates;
+
+  String get cleanupDescRecognitionMembers;
 
   String get cleanupDescSettingsGuides;
 
@@ -4454,6 +4482,16 @@ abstract class AppL10n {
   String get cleanupConfirmDownloadCache;
 
   String get cleanupConfirmCustomBackground;
+
+  String get cleanupConfirmRuntimeLogs;
+
+  String get cleanupConfirmAutomationEvents;
+
+  String get cleanupConfirmRuleVersions;
+
+  String get cleanupConfirmMirrorTemplates;
+
+  String get cleanupConfirmRecognitionMembers;
 
   String get cleanupConfirmSettingsGuides;
 

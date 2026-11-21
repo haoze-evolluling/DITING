@@ -50,7 +50,7 @@
   "hubBackup": ["备份与迁移", "Backup and migration"],
   "hubBackupDescription": ["导出与导入服务商、规则订阅及个性化设置", "Export and import resolvers, rule subscriptions and personal settings"],
   "hubDataCleanup": ["数据清理", "Data cleanup"],
-  "hubDataCleanupDescription": ["删除缓存、日志或域名与地址过滤规则", "Delete caches, logs or domain and address filter rules"],
+  "hubDataCleanupDescription": ["按分类清理运行日志、缓存、规则、订阅与自定义数据", "Clean runtime logs, caches, rules, subscriptions and custom data by category"],
   "hubTroubleshooting": ["故障排查", "Troubleshooting"],
   "hubTroubleshootingDescription": ["导出崩溃日志，手动抓取并导出运行日志发给开发者", "Export crash logs and capture runtime logs to send to the developer"],
   "hubCategoryAbout": ["关于谛听", "About DITING"],

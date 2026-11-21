@@ -16,6 +16,11 @@ fn actions() -> Value {
         "caCertificate": { "exitsApp": false, "affectsEngine": false },
         "downloadCache": { "exitsApp": false, "affectsEngine": false },
         "customBackground": { "exitsApp": false, "affectsEngine": false },
+        "runtimeLogs": { "exitsApp": false, "affectsEngine": false },
+        "automationEvents": { "exitsApp": false, "affectsEngine": false },
+        "ruleVersions": { "exitsApp": false, "affectsEngine": false },
+        "mirrorTemplates": { "exitsApp": false, "affectsEngine": false },
+        "recognitionMembers": { "exitsApp": false, "affectsEngine": false },
         "settingsGuides": { "exitsApp": true, "affectsEngine": false },
         "allData": { "exitsApp": true, "affectsEngine": false },
     })
@@ -88,6 +93,7 @@ pub fn plan() -> Value {
                 "subscription_group",
                 "subscription_auto_update_item",
             ],
+            "versionTable": "rule_version",
             "rulePairs": rule_pairs(),
             "sourceWhere": "source GLOB 'sub_*' OR source GLOB 'staging_sub_*'",
         },
@@ -112,6 +118,24 @@ pub fn plan() -> Value {
                 "custom_background_uris",
             ],
         },
+        "runtimeLogs": {},
+        "automationEvents": { "table": "automation_event" },
+        "ruleVersions": { "table": "rule_version" },
+        "mirrorTemplates": {
+            "table": "mirror_template",
+            "globalPrefs": [
+                {
+                    "container": "dns_vpn_prefs",
+                    "keys": ["global_mirror_enabled", "global_mirror_template"],
+                },
+            ],
+            "subscriptionTable": "subscription",
+            "subscriptionMirrorColumn": "mirrorTemplate",
+        },
+        "recognitionMembers": {
+            "container": "recognition_members",
+            "keys": ["config_json", "saved_at_ms", "etag"],
+        },
         "settingsGuides": {
             "container": "dns_vpn_prefs",
             "keys": [
@@ -124,6 +148,7 @@ pub fn plan() -> Value {
         "allData": {
             "order": [
                 "logs",
+                "runtimeLogs",
                 "traffic",
                 "crash",
                 "dnsCache",
@@ -133,16 +158,18 @@ pub fn plan() -> Value {
                 "addressRules",
                 "subscriptions",
                 "appRules",
+                "ruleVersions",
+                "mirrorTemplates",
                 "outboundProxy",
                 "caCertificate",
                 "downloadCache",
                 "customBackground",
+                "recognitionMembers",
+                "automationEvents",
                 "settingsGuides",
             ],
-            "tables": ["mirror_template"],
-            "prefs": [
-                { "container": "recognition_members", "key": "members" },
-            ],
+            "tables": [],
+            "prefs": [],
         },
     })
 }
@@ -163,7 +190,7 @@ mod tests {
     #[test]
     fn every_action_has_flags() {
         let actions = plan()["actions"].as_object().unwrap().clone();
-        assert_eq!(actions.len(), 16);
+        assert_eq!(actions.len(), 21);
         for (name, flags) in actions {
             assert!(flags["exitsApp"].is_boolean(), "{name}");
             assert!(flags["affectsEngine"].is_boolean(), "{name}");
@@ -205,15 +232,38 @@ mod tests {
     }
 
     #[test]
-    fn all_data_order_ends_with_guides_and_clears_mirror_and_recognition() {
+    fn all_data_order_ends_with_guides_and_covers_every_action() {
         let plan = plan();
         let order = strings(&plan["allData"], "order");
         assert_eq!(*order.last().unwrap(), "settingsGuides");
-        assert_eq!(order.len(), 15);
-        assert_eq!(strings(&plan["allData"], "tables"), ["mirror_template"]);
+        assert_eq!(order.len(), 20);
+        assert!(strings(&plan["allData"], "tables").is_empty());
+        assert!(plan["allData"]["prefs"].as_array().unwrap().is_empty());
+        let actions = plan["actions"].as_object().unwrap();
+        for name in &order {
+            assert!(actions.contains_key(*name), "{name}");
+        }
+        assert!(!order.contains(&"allData"));
+    }
+
+    #[test]
+    fn new_actions_point_at_the_real_storage() {
+        let plan = plan();
+        assert_eq!(plan["automationEvents"]["table"], "automation_event");
+        assert_eq!(plan["ruleVersions"]["table"], "rule_version");
+        assert_eq!(plan["subscriptions"]["versionTable"], "rule_version");
+        assert_eq!(plan["mirrorTemplates"]["table"], "mirror_template");
         assert_eq!(
-            plan["allData"]["prefs"][0]["container"],
-            "recognition_members"
+            plan["mirrorTemplates"]["subscriptionMirrorColumn"],
+            "mirrorTemplate"
+        );
+        assert_eq!(
+            plan["recognitionMembers"]["keys"],
+            json!(["config_json", "saved_at_ms", "etag"])
+        );
+        assert_eq!(
+            plan["mirrorTemplates"]["globalPrefs"][0]["keys"],
+            json!(["global_mirror_enabled", "global_mirror_template"])
         );
     }
 

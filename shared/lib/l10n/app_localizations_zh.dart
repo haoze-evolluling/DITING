@@ -2103,6 +2103,21 @@ class AppL10nZh extends AppL10n {
   String get cleanupCustomBackground => '清除自定义背景缓存';
 
   @override
+  String get cleanupRuntimeLogs => '删除运行日志文件';
+
+  @override
+  String get cleanupAutomationEvents => '删除自动化执行记录';
+
+  @override
+  String get cleanupRuleVersions => '删除规则版本快照';
+
+  @override
+  String get cleanupMirrorTemplates => '删除自定义镜像模板';
+
+  @override
+  String get cleanupRecognitionMembers => '删除识别成员缓存';
+
+  @override
   String get cleanupSettingsGuides => '重置所有新手引导';
 
   @override
@@ -2407,7 +2422,7 @@ class AppL10nZh extends AppL10n {
   String get hubDataCleanup => '数据清理';
 
   @override
-  String get hubDataCleanupDescription => '删除缓存、日志或域名与地址过滤规则';
+  String get hubDataCleanupDescription => '按分类清理运行日志、缓存、规则、订阅与自定义数据';
 
   @override
   String get hubTroubleshooting => '故障排查';
@@ -7144,6 +7159,20 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
+  String get cleanupCategorySection => '清理分类';
+
+  @override
+  String get cleanupCategoryItemsSection => '清理项';
+
+  @override
+  String cleanupCategoryItemsCount(int count) {
+    return '共 $count 项';
+  }
+
+  @override
+  String get cleanupDangerSection => '危险操作';
+
+  @override
   String get cleanupDescLogs => '清除 DNS、HTTP 请求日志、竞速统计及 Bootstrap 解析日志';
 
   @override
@@ -7180,16 +7209,33 @@ class AppL10nZh extends AppL10n {
   String get cleanupDescCaCertificate => '清除本地生成的 MITM CA 根证书与私钥';
 
   @override
-  String get cleanupDescDownloadCache => '删除更新安装包、下载临时文件及应用临时缓存';
+  String get cleanupDescDownloadCache => '删除更新安装包、下载临时文件、应用临时与图片缓存';
 
   @override
   String get cleanupDescCustomBackground => '清除已配置的自定义壁纸图片缓存及路径记录，恢复默认背景';
 
   @override
+  String get cleanupDescRuntimeLogs => '删除故障排查采集的运行日志与事件文件，不影响崩溃日志';
+
+  @override
+  String get cleanupDescAutomationEvents => '清除场景自动化的历史执行记录，不影响自动化规则与场景本身';
+
+  @override
+  String get cleanupDescRuleVersions =>
+      '清除订阅更新时保存的历史规则快照，释放规则数据库空间；删除后无法回滚到历史版本';
+
+  @override
+  String get cleanupDescMirrorTemplates => '清除自定义订阅镜像模板与全局镜像设置，订阅回退到默认线路';
+
+  @override
+  String get cleanupDescRecognitionMembers => '清除本机缓存的识别成员名单与头像，下次进入相关页面会重新拉取';
+
+  @override
   String get cleanupDescSettingsGuides => '让所有首次进入说明再次显示，需要重新同意使用协议';
 
   @override
-  String get cleanupDescAllData => '深度清空所有日志、缓存、规则、订阅、证书与配置，应用将退出';
+  String get cleanupDescAllData =>
+      '深度清空所有日志、运行日志、流量统计、崩溃记录、DNS 缓存、权重样本、域名与地址规则、规则订阅、规则版本快照、镜像模板、应用名单、出站代理、CA 证书、临时缓存、自定义背景、识别成员缓存与自动化记录，并重置新手引导；应用将退出';
 
   @override
   String get cleanupConfirmLogs =>
@@ -7242,12 +7288,30 @@ class AppL10nZh extends AppL10n {
   String get cleanupConfirmCustomBackground => '确定要清除自定义壁纸缓存并恢复默认外观背景吗？';
 
   @override
+  String get cleanupConfirmRuntimeLogs =>
+      '确定要删除所有运行日志文件吗？正在采集时会继续写入新文件，崩溃日志不受影响。';
+
+  @override
+  String get cleanupConfirmAutomationEvents => '确定要删除所有自动化执行记录吗？自动化规则与场景本身会保留。';
+
+  @override
+  String get cleanupConfirmRuleVersions => '确定要删除所有规则版本快照吗？删除后将无法回滚到历史规则版本。';
+
+  @override
+  String get cleanupConfirmMirrorTemplates =>
+      '确定要删除所有自定义镜像模板吗？全局镜像设置会被关闭，订阅将回退到默认线路。';
+
+  @override
+  String get cleanupConfirmRecognitionMembers =>
+      '确定要删除识别成员缓存与头像吗？下次进入相关页面会重新拉取。';
+
+  @override
   String get cleanupConfirmSettingsGuides =>
       '确定要重置所有应用设置新手引导和首次使用协议吗？这不会删除任何配置、规则、缓存、日志或证书。操作完成后应用将退出；下次打开时需要重新同意使用协议，所有新手引导也会再次显示。';
 
   @override
   String get cleanupConfirmAllData =>
-      '确定要执行全面数据清理吗？将依次清理所有日志、流量统计、崩溃记录、DNS 缓存、服务商权重、域名及地址规则、规则订阅、临时缓存及抓包证书。所有自定义配置与规则将被清空，新手引导也将重置，操作完成后应用将退出。';
+      '确定要执行全面数据清理吗？将依次清理所有日志、运行日志、流量统计、崩溃记录、DNS 缓存、服务商权重、域名及地址规则、规则订阅、规则版本快照、镜像模板、应用名单、出站代理、临时缓存、自定义背景、识别成员缓存与自动化记录，并重置新手引导及抓包证书。所有自定义配置与规则将被清空，操作完成后应用将退出。';
 
   @override
   String get cleanupRestartTitle => '需要重启应用';

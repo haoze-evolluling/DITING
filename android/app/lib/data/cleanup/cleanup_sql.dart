@@ -52,6 +52,18 @@ Future<int> deleteAllRows(DatabaseExecutor db, String table) =>
 Future<int> deleteRowsWhere(DatabaseExecutor db, String table, String where) =>
     _guard(() => db.delete(table, where: where), 'delete $table ($where)');
 
+Future<void> clearColumn(
+  DatabaseExecutor db,
+  String table,
+  String column,
+) async {
+  try {
+    await db.update(table, {column: null});
+  } on DatabaseException catch (error) {
+    debugPrint('cleanup: clear $table.$column skipped ($error)');
+  }
+}
+
 Future<int> deleteOrphanRows(
   DatabaseExecutor db,
   String ruleTable,
