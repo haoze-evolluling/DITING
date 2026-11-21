@@ -25,7 +25,7 @@ class CachePresetCard extends StatelessWidget {
     final l10n = context.l10n;
     final colorScheme = context.colorScheme;
     final percent = tier.isCustom ? scalePercent : tier.defaultScalePercent;
-    return CommonCard(
+    return GroupedCardItem(
       isSelected: selected,
       onPressed: onPressed,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),

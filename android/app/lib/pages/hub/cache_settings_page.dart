@@ -49,19 +49,16 @@ class CacheSettingsPage extends ConsumerWidget {
             ListHeader(title: l10n.cachePresetSection),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                spacing: 10,
-                children: [
-                  for (final tier in DnsCacheTier.values)
-                    CachePresetCard(
-                      tier: tier,
-                      selected: policy.tier == tier,
-                      scalePercent: policy.scalePercent,
-                      onPressed: () => save(tier: tier),
-                      onScaleChanged: (value) => save(scalePercent: value),
-                    ),
-                ],
-              ),
+              child: generateGroup([
+                for (final tier in DnsCacheTier.values)
+                  CachePresetCard(
+                    tier: tier,
+                    selected: policy.tier == tier,
+                    scalePercent: policy.scalePercent,
+                    onPressed: () => save(tier: tier),
+                    onScaleChanged: (value) => save(scalePercent: value),
+                  ),
+              ]),
             ),
             ListFooter(text: l10n.cachePresetNote),
           ],

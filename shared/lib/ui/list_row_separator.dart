@@ -6,12 +6,14 @@ class _ListRowSeparator extends SingleChildRenderObjectWidget {
   final bool emphasized;
   final WidgetStatesController states;
   final double endIndent;
+  final double startIndent;
 
   const _ListRowSeparator({
     required this.separated,
     required this.emphasized,
     required this.states,
     required this.endIndent,
+    this.startIndent = 0,
     required super.child,
   });
 
@@ -26,6 +28,7 @@ class _ListRowSeparator extends SingleChildRenderObjectWidget {
         states: states,
         remote: RemoteFocusAdapter.isEnabledOf(context),
         endIndent: endIndent,
+        startIndent: startIndent,
         color: _color(context),
         textDirection: Directionality.of(context),
         devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
@@ -42,6 +45,7 @@ class _ListRowSeparator extends SingleChildRenderObjectWidget {
       ..states = states
       ..remote = RemoteFocusAdapter.isEnabledOf(context)
       ..endIndent = endIndent
+      ..startIndent = startIndent
       ..color = _color(context)
       ..textDirection = Directionality.of(context)
       ..devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
@@ -90,6 +94,7 @@ class _RenderListRowSeparator extends RenderProxyBox {
     required WidgetStatesController states,
     required bool remote,
     required double endIndent,
+    required double startIndent,
     required Color color,
     required TextDirection textDirection,
     required double devicePixelRatio,
@@ -98,6 +103,7 @@ class _RenderListRowSeparator extends RenderProxyBox {
        _states = states,
        _remote = remote,
        _endIndent = endIndent,
+       _startIndent = startIndent,
        _color = color,
        _textDirection = textDirection,
        _devicePixelRatio = devicePixelRatio {
@@ -163,6 +169,16 @@ class _RenderListRowSeparator extends RenderProxyBox {
       return;
     }
     _endIndent = value;
+    markNeedsPaint();
+  }
+
+  double _startIndent;
+
+  set startIndent(double value) {
+    if (_startIndent == value) {
+      return;
+    }
+    _startIndent = value;
     markNeedsPaint();
   }
 
@@ -336,8 +352,14 @@ class _RenderListRowSeparator extends RenderProxyBox {
           )
         : null;
     final (left, right) = switch (_textDirection) {
-      TextDirection.ltr => (title?.left ?? 0.0, size.width - _endIndent),
-      TextDirection.rtl => (_endIndent, title?.right ?? size.width),
+      TextDirection.ltr => (
+        title?.left ?? _startIndent,
+        size.width - _endIndent,
+      ),
+      TextDirection.rtl => (
+        _endIndent,
+        title?.right ?? size.width - _startIndent,
+      ),
     };
     final overhang = _pixelOverhang() ?? 0;
     _paintedOverhang = overhang;
