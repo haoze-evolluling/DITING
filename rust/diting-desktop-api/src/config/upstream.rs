@@ -7,8 +7,6 @@ use super::serde_util::{is_zero_f64, is_zero_i32, nullable_map, nullable_vec};
 pub const PROTOCOL_PLAIN: &str = "PLAIN";
 pub const PROTOCOL_DOH: &str = "DOH";
 pub const PROTOCOL_DOT: &str = "DOT";
-pub const PROTOCOL_DOQ: &str = "DOQ";
-pub const PROTOCOL_DOH3: &str = "DOH3";
 
 pub const MODE_SINGLE: &str = "single";
 pub const MODE_PRIMARY_BACKUP: &str = "primary_backup";
@@ -142,5 +140,23 @@ impl ResolverConfig {
         if self.bootstrap.servers.is_empty() && self.bootstrap.enabled {
             self.bootstrap.servers = default_bootstrap_servers();
         }
+        normalize_protocols(&mut self.providers, "上游");
+        normalize_protocols(&mut self.fallback_providers, "备用上游");
     }
+}
+
+fn normalize_protocols(providers: &mut Vec<ProviderConfig>, label: &str) {
+    providers.retain_mut(
+        |provider| match provider.protocol.trim().to_ascii_uppercase().as_str() {
+            "DOH3" | "H3" => {
+                provider.protocol = PROTOCOL_DOH.to_string();
+                true
+            }
+            "DOQ" | "QUIC" => {
+                eprintln!("[{label}] 已忽略不再支持的 DoQ 项: {}", provider.id);
+                false
+            }
+            _ => true,
+        },
+    );
 }

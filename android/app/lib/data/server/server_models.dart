@@ -46,7 +46,7 @@ class ServerProviderConfig {
   final int weight;
   final String pin;
 
-  String get address => protocol == 'DOH' || protocol == 'DOH3' ? url : server;
+  String get address => protocol == 'DOH' ? url : server;
 
   factory ServerProviderConfig.fromJson(Map<String, Object?> json) =>
       ServerProviderConfig(

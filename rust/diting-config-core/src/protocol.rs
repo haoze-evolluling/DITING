@@ -7,7 +7,6 @@ pub enum Protocol {
     Plain,
     Doh,
     Dot,
-    Doq,
 }
 
 impl Protocol {
@@ -16,7 +15,6 @@ impl Protocol {
             Protocol::Plain => 0,
             Protocol::Doh => 1,
             Protocol::Dot => 2,
-            Protocol::Doq => 3,
         }
     }
 
@@ -25,7 +23,6 @@ impl Protocol {
             0 => Some(Protocol::Plain),
             1 => Some(Protocol::Doh),
             2 => Some(Protocol::Dot),
-            3 => Some(Protocol::Doq),
             _ => None,
         }
     }
@@ -35,7 +32,6 @@ impl Protocol {
             Protocol::Plain => "PLAIN",
             Protocol::Doh => "DOH",
             Protocol::Dot => "DOT",
-            Protocol::Doq => "DOQ",
         }
     }
 }
@@ -45,7 +41,6 @@ pub fn parse_protocol(text: &str) -> Protocol {
     match upper.as_ref() {
         "DOH" => Protocol::Doh,
         "DOT" => Protocol::Dot,
-        "DOQ" => Protocol::Doq,
         _ => Protocol::Plain,
     }
 }
@@ -56,7 +51,6 @@ pub fn validated_protocol(text: &str) -> Result<Protocol, String> {
         "PLAIN" => Ok(Protocol::Plain),
         "DOH" => Ok(Protocol::Doh),
         "DOT" => Ok(Protocol::Dot),
-        "DOQ" => Ok(Protocol::Doq),
         _ => Err(format!("unsupported protocol {}", go_quote(&upper))),
     }
 }

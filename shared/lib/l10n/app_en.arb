@@ -4285,7 +4285,7 @@
   "desktopParentalOn": "Parental control is on",
   "desktopParentalOff": "Parental control is off",
   "desktopHubEncrypted": "Encrypted DNS",
-  "desktopHubEncryptedBody": "Serve DoT / DoH / DoQ to the LAN, with a certificate and DDR",
+  "desktopHubEncryptedBody": "Serve DoT / DoH to the LAN, with a certificate and DDR",
   "desktopEncryptedPageTitle": "Encrypted DNS server",
   "desktopEncryptedRefresh": "Reload the encrypted DNS status",
   "desktopEncryptedLoadFailed": "Could not read the encrypted DNS status",
@@ -4298,12 +4298,12 @@
     }
   },
   "desktopEncryptedListenersTitle": "Encrypted DNS server",
-  "desktopEncryptedListenersBody": "Serves DoT / DoH / DoQ on the LAN so clients never query in cleartext",
+  "desktopEncryptedListenersBody": "Serves DoT / DoH on the LAN so clients never query in cleartext",
   "desktopEncryptedEnabled": "Enabled",
   "desktopEncryptedDisabled": "Off",
   "desktopEncryptedOn": "The encrypted DNS server is on",
   "desktopEncryptedOff": "The encrypted DNS server is off",
-  "desktopEncryptedNoProtocol": "The server is on but none of the three protocols is selected, so nothing is listening.",
+  "desktopEncryptedNoProtocol": "The server is on but neither protocol is selected, so nothing is listening.",
   "desktopEncryptedDot": "DoT · DNS over TLS",
   "desktopEncryptedDotBody": "Port {port}; clients connect with tls://",
   "@desktopEncryptedDotBody": {
@@ -4325,15 +4325,6 @@
       }
     }
   },
-  "desktopEncryptedDoq": "DoQ · DNS over QUIC",
-  "desktopEncryptedDoqBody": "Port {port}; encrypted DNS over UDP",
-  "@desktopEncryptedDoqBody": {
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
   "desktopEncryptedListening": "Listening on {address}",
   "@desktopEncryptedListening": {
     "placeholders": {
@@ -4347,8 +4338,6 @@
   "desktopEncryptedDotOff": "DoT is off",
   "desktopEncryptedDohOn": "DoH is on",
   "desktopEncryptedDohOff": "DoH is off",
-  "desktopEncryptedDoqOn": "DoQ is on",
-  "desktopEncryptedDoqOff": "DoQ is off",
   "desktopEncryptedUrls": "A client can use any of these addresses:",
   "desktopEncryptedNetworkTitle": "Listener parameters",
   "desktopEncryptedListenAddress": "Listen address",
@@ -4356,7 +4345,6 @@
   "desktopEncryptedServerName": "Server name (for clients)",
   "desktopEncryptedDotPort": "DoT port",
   "desktopEncryptedDohPort": "DoH port",
-  "desktopEncryptedDoqPort": "DoQ port",
   "desktopEncryptedDohPath": "DoH path",
   "desktopEncryptedServerNameHint": "The server name goes into the certificate SAN; clients connecting by it will not see a name error.",
   "desktopEncryptedPortInvalid": "A port must be a whole number from 1 to 65535",

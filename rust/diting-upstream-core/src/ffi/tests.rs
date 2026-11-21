@@ -106,11 +106,6 @@ fn framing_and_length_rules_go_through_the_abi() {
         raw[2] = 0x02;
         assert_eq!(diting_upstream_is_truncated(raw.as_ptr(), raw.len()), 1);
         assert_eq!(diting_upstream_is_truncated(ptr::null(), 0), 0);
-
-        let doq = [0u8, 2, 0xAA, 0xBB];
-        assert_eq!(diting_upstream_doq_skip(doq.as_ptr(), doq.len()), 2);
-        let not_doq = [0u8, 5, 0xAA, 0xBB];
-        assert_eq!(diting_upstream_doq_skip(not_doq.as_ptr(), not_doq.len()), 0);
     }
 }
 

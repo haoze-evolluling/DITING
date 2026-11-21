@@ -9,13 +9,13 @@ String serverProtocolForUi(ProviderProtocol protocol) => switch (protocol) {
 };
 
 ProviderProtocol serverUiProtocol(String protocol) => switch (protocol) {
-  'DOH' || 'DOH3' => ProviderProtocol.doh,
+  'DOH' => ProviderProtocol.doh,
   'DOT' => ProviderProtocol.dot,
   _ => ProviderProtocol.dns,
 };
 
 String serverProtocolLabel(String protocol) => switch (protocol) {
-  'DOH' || 'DOH3' => ProviderProtocol.doh.label,
+  'DOH' => ProviderProtocol.doh.label,
   'DOT' => ProviderProtocol.dot.label,
   _ => ProviderProtocol.dns.label,
 };

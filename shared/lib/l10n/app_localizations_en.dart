@@ -12547,7 +12547,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopHubEncryptedBody =>
-      'Serve DoT / DoH / DoQ to the LAN, with a certificate and DDR';
+      'Serve DoT / DoH to the LAN, with a certificate and DDR';
 
   @override
   String get desktopEncryptedPageTitle => 'Encrypted DNS server';
@@ -12569,7 +12569,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopEncryptedListenersBody =>
-      'Serves DoT / DoH / DoQ on the LAN so clients never query in cleartext';
+      'Serves DoT / DoH on the LAN so clients never query in cleartext';
 
   @override
   String get desktopEncryptedEnabled => 'Enabled';
@@ -12585,7 +12585,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopEncryptedNoProtocol =>
-      'The server is on but none of the three protocols is selected, so nothing is listening.';
+      'The server is on but neither protocol is selected, so nothing is listening.';
 
   @override
   String get desktopEncryptedDot => 'DoT · DNS over TLS';
@@ -12601,14 +12601,6 @@ class AppL10nEn extends AppL10n {
   @override
   String desktopEncryptedDohBody(int port, String path) {
     return 'Port $port, path $path';
-  }
-
-  @override
-  String get desktopEncryptedDoq => 'DoQ · DNS over QUIC';
-
-  @override
-  String desktopEncryptedDoqBody(int port) {
-    return 'Port $port; encrypted DNS over UDP';
   }
 
   @override
@@ -12633,12 +12625,6 @@ class AppL10nEn extends AppL10n {
   String get desktopEncryptedDohOff => 'DoH is off';
 
   @override
-  String get desktopEncryptedDoqOn => 'DoQ is on';
-
-  @override
-  String get desktopEncryptedDoqOff => 'DoQ is off';
-
-  @override
   String get desktopEncryptedUrls => 'A client can use any of these addresses:';
 
   @override
@@ -12658,9 +12644,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get desktopEncryptedDohPort => 'DoH port';
-
-  @override
-  String get desktopEncryptedDoqPort => 'DoQ port';
 
   @override
   String get desktopEncryptedDohPath => 'DoH path';

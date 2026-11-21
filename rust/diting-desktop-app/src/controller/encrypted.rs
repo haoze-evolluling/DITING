@@ -4,8 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use diting_desktop_api::config::security::{
     normalize_cert_config, CertConfig, EncryptedDNSConfig, ReverseProxyConfig,
-    CERT_SOURCE_SELF_SIGNED, DEFAULT_DOH_PATH, DEFAULT_DOH_PORT, DEFAULT_DOQ_PORT,
-    DEFAULT_DOT_PORT,
+    CERT_SOURCE_SELF_SIGNED, DEFAULT_DOH_PATH, DEFAULT_DOH_PORT, DEFAULT_DOT_PORT,
 };
 use diting_desktop_api::config::Config;
 use diting_desktop_core::cert::{CertHealth, CertInfo};
@@ -27,8 +26,6 @@ pub struct ConfigureEncryptedDNSRequest {
     #[serde(default)]
     pub doh_enabled: Option<bool>,
     #[serde(default)]
-    pub doq_enabled: Option<bool>,
-    #[serde(default)]
     pub ddr_enabled: Option<bool>,
     #[serde(default)]
     pub listen_address: Option<String>,
@@ -36,8 +33,6 @@ pub struct ConfigureEncryptedDNSRequest {
     pub dot_port: Option<i32>,
     #[serde(default)]
     pub doh_port: Option<i32>,
-    #[serde(default)]
-    pub doq_port: Option<i32>,
     #[serde(default)]
     pub doh_path: Option<String>,
     #[serde(default)]
@@ -134,11 +129,9 @@ pub struct EncryptedDNSStatusResponse {
     pub cert_dir: String,
     pub default_dot_port: i32,
     pub default_doh_port: i32,
-    pub default_doq_port: i32,
     pub default_doh_path: String,
     pub dot_listen: String,
     pub doh_listen: String,
-    pub doq_listen: String,
     pub doh_urls: Vec<String>,
     pub unrestricted_trust: bool,
     pub cert_expires_soon: bool,
@@ -256,7 +249,7 @@ impl AppRuntime {
         self.cert.reload();
         let info = self.cert.info();
         let health: CertHealth = self.cert.health();
-        let (dot_listen, doh_listen, doq_listen) = self.encrypted_addresses();
+        let (dot_listen, doh_listen) = self.encrypted_addresses();
         EncryptedDNSStatusResponse {
             doh_urls: self.doh_urls(&config),
             config,
@@ -264,11 +257,9 @@ impl AppRuntime {
             cert_dir: self.cert.dir().to_string_lossy().into_owned(),
             default_dot_port: DEFAULT_DOT_PORT,
             default_doh_port: DEFAULT_DOH_PORT,
-            default_doq_port: DEFAULT_DOQ_PORT,
             default_doh_path: DEFAULT_DOH_PATH.to_string(),
             dot_listen: dot_listen.unwrap_or_default(),
             doh_listen: doh_listen.unwrap_or_default(),
-            doq_listen: doq_listen.unwrap_or_default(),
             unrestricted_trust: has_unrestricted_trust(
                 &self.config().encrypted.reverse_proxy.trusted_sources,
             ),
@@ -292,9 +283,6 @@ impl AppRuntime {
             if let Some(value) = request.doh_enabled {
                 encrypted.doh_enabled = value;
             }
-            if let Some(value) = request.doq_enabled {
-                encrypted.doq_enabled = value;
-            }
             if let Some(value) = request.ddr_enabled {
                 encrypted.ddr_enabled = value;
             }
@@ -306,9 +294,6 @@ impl AppRuntime {
             }
             if let Some(value) = request.doh_port {
                 encrypted.doh_port = value;
-            }
-            if let Some(value) = request.doq_port {
-                encrypted.doq_port = value;
             }
             if let Some(value) = request.doh_path {
                 encrypted.doh_path = value;

@@ -2,7 +2,7 @@ use std::fs;
 
 use diting_config_core::dns_config::{normalize, Provider};
 use diting_config_core::dynamic::DynamicBlock;
-use diting_config_core::endpoint::{parse_doq_url, validate_provider};
+use diting_config_core::endpoint::validate_provider;
 use diting_config_core::mode::canonical_dns_mode;
 use diting_config_core::protocol::{parse_protocol, parse_response_type};
 use diting_config_core::rewrite::{classify, normalize_domain};
@@ -116,22 +116,7 @@ fn providers_match_the_old_validation() {
         }
         checked += 1;
     }
-    assert_eq!(checked, 26);
-}
-
-#[test]
-fn doq_urls_split_the_same_way() {
-    let mut checked = 0;
-    for row in rows("doq_url.tsv") {
-        assert_eq!(
-            parse_doq_url(&row[0]),
-            (row[1].clone(), row[2].clone()),
-            "{}",
-            row[0]
-        );
-        checked += 1;
-    }
-    assert_eq!(checked, 12);
+    assert_eq!(checked, 21);
 }
 
 #[test]
@@ -155,7 +140,7 @@ fn name_tables_match() {
         );
         checked += 1;
     }
-    assert_eq!(checked, 17);
+    assert_eq!(checked, 16);
 }
 
 #[test]

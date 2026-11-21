@@ -106,7 +106,7 @@ fn doh_stamp_prefixes_a_missing_slash() {
 }
 
 #[test]
-fn dot_and_doq_stamps_share_the_layout() {
+fn dot_stamps_use_the_tls_layout() {
     let hash = hash_of(0xAB);
     let dot = parse(&build_stamp(
         0x03,
@@ -117,22 +117,11 @@ fn dot_and_doq_stamps_share_the_layout() {
     assert_eq!(dot.proto, Proto::Tls);
     assert_eq!(dot.server(), "one.one.one.one");
     assert_eq!(dot.proto.protocol(), "DOT");
-
-    let doq = parse(&build_stamp(
-        0x04,
-        0,
-        &[&lp("1.1.1.1"), &vlp(&[&hash]), &lp("one.one.one.one")],
-    ))
-    .unwrap();
-    assert_eq!(doq.proto, Proto::DoQ);
-    assert_eq!(doq.proto.protocol(), "DOQ");
-    assert_eq!(doq.server(), "one.one.one.one");
-    assert!(doq.url().is_empty());
 }
 
 #[test]
 fn unsupported_protocols_are_rejected() {
-    for proto in [0x01u8, 0x05, 0x81, 0x85, 0x7f] {
+    for proto in [0x01u8, 0x04, 0x05, 0x81, 0x85, 0x7f] {
         let text = build_stamp(
             proto,
             0,

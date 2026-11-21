@@ -11815,7 +11815,7 @@ class AppL10nZh extends AppL10n {
   String get desktopHubEncrypted => '加密 DNS 服务';
 
   @override
-  String get desktopHubEncryptedBody => '以 DoT / DoH / DoQ 向局域网提供加密解析，含证书与 DDR';
+  String get desktopHubEncryptedBody => '以 DoT / DoH 向局域网提供加密解析，含证书与 DDR';
 
   @override
   String get desktopEncryptedPageTitle => '加密 DNS 服务';
@@ -11836,7 +11836,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopEncryptedListenersBody =>
-      '在局域网内以 DoT / DoH / DoQ 提供解析，终端无需明文查询';
+      '在局域网内以 DoT / DoH 提供解析，终端无需明文查询';
 
   @override
   String get desktopEncryptedEnabled => '已启用';
@@ -11851,7 +11851,7 @@ class AppL10nZh extends AppL10n {
   String get desktopEncryptedOff => '加密 DNS 服务已关闭';
 
   @override
-  String get desktopEncryptedNoProtocol => '服务总开关已打开，但三种协议都没选中，因此不会有任何监听。';
+  String get desktopEncryptedNoProtocol => '服务总开关已打开，但两种协议都没选中，因此不会有任何监听。';
 
   @override
   String get desktopEncryptedDot => 'DoT · DNS over TLS';
@@ -11867,14 +11867,6 @@ class AppL10nZh extends AppL10n {
   @override
   String desktopEncryptedDohBody(int port, String path) {
     return '端口 $port，路径 $path';
-  }
-
-  @override
-  String get desktopEncryptedDoq => 'DoQ · DNS over QUIC';
-
-  @override
-  String desktopEncryptedDoqBody(int port) {
-    return '端口 $port，UDP 上的加密解析';
   }
 
   @override
@@ -11898,12 +11890,6 @@ class AppL10nZh extends AppL10n {
   String get desktopEncryptedDohOff => 'DoH 已停用';
 
   @override
-  String get desktopEncryptedDoqOn => 'DoQ 已启用';
-
-  @override
-  String get desktopEncryptedDoqOff => 'DoQ 已停用';
-
-  @override
   String get desktopEncryptedUrls => '客户端填写以下任一地址即可使用：';
 
   @override
@@ -11923,9 +11909,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get desktopEncryptedDohPort => 'DoH 端口';
-
-  @override
-  String get desktopEncryptedDoqPort => 'DoQ 端口';
 
   @override
   String get desktopEncryptedDohPath => 'DoH 路径';

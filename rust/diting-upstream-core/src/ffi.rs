@@ -4,8 +4,8 @@ use std::str;
 use crate::doh::{should_retry, status_kind, StatusKind};
 use crate::endpoint::{dial_address, split_target, TargetProtocol};
 use crate::framing::{
-    doq_skip, dot_response_length, first_deadline_ns, frame_into, initial_retry_delay_ns,
-    is_truncated, retry_deadline_ns, tcp_response_length, DotLength,
+    dot_response_length, first_deadline_ns, frame_into, initial_retry_delay_ns, is_truncated,
+    retry_deadline_ns, tcp_response_length, DotLength,
 };
 use crate::payload::{encode_address, encode_ids, encode_target, encode_tuning};
 use crate::plan::{is_policy_rejection, strategy, Strategy};
@@ -150,14 +150,6 @@ pub unsafe extern "C" fn diting_upstream_is_truncated(raw: *const u8, raw_len: u
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn diting_upstream_doq_skip(raw: *const u8, raw_len: usize) -> u32 {
-    let Some(raw) = bytes_argument(raw, raw_len) else {
-        return 0;
-    };
-    doq_skip(raw) as u32
-}
-
-#[no_mangle]
 pub extern "C" fn diting_upstream_plain_initial_delay_ns(ctx_value_ns: i64) -> i64 {
     initial_retry_delay_ns(ctx_value_ns)
 }
@@ -229,7 +221,6 @@ pub unsafe extern "C" fn diting_upstream_strategy(mode: *const u8, mode_len: usi
 pub extern "C" fn diting_upstream_is_policy_rejection(rcode: i32) -> i32 {
     i32::from(is_policy_rejection(rcode))
 }
-
 
 #[no_mangle]
 pub extern "C" fn diting_upstream_pool_new() -> *mut DotPool {

@@ -319,9 +319,15 @@ fn dns_config(settings: &ResolverSettings, providers: &[ProviderSettings]) -> Dn
         "smart_prediction" | "prediction" => "smart_prediction",
         _ => "primary_backup",
     };
+    let mut skipped = Vec::new();
+    let providers = providers
+        .iter()
+        .filter_map(|provider| engine_provider(provider, &mut skipped))
+        .collect();
     DnsConfig {
         mode,
-        providers: providers.iter().map(engine_provider).collect(),
+        providers,
+        skipped,
         block_response: 0,
         dynamic_response: BlockConfig {
             enabled: false,
@@ -352,24 +358,31 @@ fn dns_config(settings: &ResolverSettings, providers: &[ProviderSettings]) -> Dn
     }
 }
 
-fn engine_provider(provider: &ProviderSettings) -> EngineProvider {
+fn engine_provider(
+    provider: &ProviderSettings,
+    skipped: &mut Vec<String>,
+) -> Option<EngineProvider> {
     let upper = provider.protocol.trim().to_ascii_uppercase();
-    let (protocol, force_h3) = match upper.as_str() {
-        "DOH3" | "H3" => (Protocol::Doh, true),
-        "DOH" => (Protocol::Doh, false),
-        "DOT" | "TLS" => (Protocol::Dot, false),
-        "DOQ" | "QUIC" => (Protocol::Doq, false),
-        _ => (Protocol::Plain, false),
+    let protocol = match upper.as_str() {
+        "DOH3" | "H3" | "DOH" => Protocol::Doh,
+        "DOT" | "TLS" => Protocol::Dot,
+        "DOQ" | "QUIC" => {
+            skipped.push(format!(
+                "provider {}: DoQ is no longer supported",
+                provider.id
+            ));
+            return None;
+        }
+        _ => Protocol::Plain,
     };
-    EngineProvider {
+    Some(EngineProvider {
         id: provider.id.clone(),
         protocol,
         server: provider.server.clone(),
         url: provider.url.clone(),
         weight: provider.weight,
         pin: provider.pin.clone(),
-        force_h3,
-    }
+    })
 }
 
 fn parse_route(upstream: &str, pattern: &str) -> Option<ProviderSettings> {
@@ -382,7 +395,7 @@ fn parse_route(upstream: &str, pattern: &str) -> Option<ProviderSettings> {
         ..ProviderSettings::default()
     };
     if let Some(rest) = upstream.strip_prefix("h3://") {
-        provider.protocol = "DOH3".to_string();
+        provider.protocol = "DOH".to_string();
         provider.url = format!("https://{rest}");
     } else if upstream.starts_with("https://") || upstream.starts_with("http://") {
         provider.protocol = "DOH".to_string();
@@ -393,12 +406,8 @@ fn parse_route(upstream: &str, pattern: &str) -> Option<ProviderSettings> {
     {
         provider.protocol = "DOT".to_string();
         provider.server = rest.to_string();
-    } else if let Some(rest) = upstream
-        .strip_prefix("quic://")
-        .or_else(|| upstream.strip_prefix("doq://"))
-    {
-        provider.protocol = "DOQ".to_string();
-        provider.server = rest.to_string();
+    } else if upstream.starts_with("quic://") || upstream.starts_with("doq://") {
+        return None;
     } else {
         provider.protocol = "PLAIN".to_string();
         provider.server = upstream.to_string();
@@ -412,7 +421,6 @@ fn provider_host(provider: &ProviderSettings) -> Option<String> {
         "DOH" | "DOH3" | "H3" => {
             host_of_url(&provider.url).or_else(|| host_of_target(&provider.server))
         }
-        "DOQ" | "QUIC" => host_of_url(&provider.url).or_else(|| host_of_target(&provider.server)),
         _ => host_of_target(&provider.server),
     }
 }

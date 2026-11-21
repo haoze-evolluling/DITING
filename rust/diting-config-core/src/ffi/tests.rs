@@ -22,11 +22,11 @@ fn abi_version_is_published() {
 fn a_call_returns_the_encoded_response() {
     let mut payload = vec![crate::payload::OP_PROTOCOL];
     payload.extend_from_slice(&3u32.to_le_bytes());
-    payload.extend_from_slice(b"doq");
+    payload.extend_from_slice(b"dot");
     let (status, body) = call(&payload);
     assert_eq!(status, STATUS_OK);
     assert_eq!(body[0], 0);
-    assert_eq!(&body[1..], &3i64.to_le_bytes());
+    assert_eq!(&body[1..], &2i64.to_le_bytes());
 
     let mut payload = vec![crate::payload::OP_DOMAIN];
     payload.extend_from_slice(&1u32.to_le_bytes());

@@ -1,6 +1,5 @@
 use crate::dns_config::{normalize, NormalizedConfig, Provider};
 use crate::dynamic::DynamicBlock;
-use crate::endpoint::parse_doq_url;
 use crate::protocol::{parse_protocol, parse_response_type};
 use crate::rewrite;
 
@@ -9,7 +8,6 @@ pub const LAYOUT_VERSION: u8 = 1;
 pub const OP_DNS_CONFIG: u8 = 0;
 pub const OP_PROTOCOL: u8 = 1;
 pub const OP_RESPONSE_TYPE: u8 = 2;
-pub const OP_DOQ_URL: u8 = 3;
 pub const OP_DOMAIN: u8 = 4;
 pub const OP_REWRITE: u8 = 5;
 
@@ -32,9 +30,6 @@ pub enum Request {
     },
     ResponseType {
         text: String,
-    },
-    DoqUrl {
-        url: String,
     },
     Domain {
         domain: String,
@@ -163,9 +158,6 @@ pub fn decode_request(payload: &[u8]) -> Option<Request> {
         OP_RESPONSE_TYPE => Request::ResponseType {
             text: reader.text()?,
         },
-        OP_DOQ_URL => Request::DoqUrl {
-            url: reader.text()?,
-        },
         OP_DOMAIN => Request::Domain {
             domain: reader.text()?,
         },
@@ -209,13 +201,6 @@ pub fn handle(request: Request) -> Response {
         }
         Request::Protocol { text } => ok_i64(parse_protocol(&text).code()),
         Request::ResponseType { text } => ok_i64(parse_response_type(&text).code()),
-        Request::DoqUrl { url } => {
-            let (host, port) = parse_doq_url(&url);
-            let mut body = Vec::with_capacity(host.len() + port.len() + 8);
-            put_text(&mut body, &host);
-            put_text(&mut body, &port);
-            Response::Ok(body)
-        }
         Request::Domain { domain } => ok_text(&rewrite::normalize_domain(&domain)),
         Request::Rewrite { targets } => {
             let entry = rewrite::classify(&targets).unwrap_or_default();

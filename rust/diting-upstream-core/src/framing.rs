@@ -48,16 +48,6 @@ pub fn is_truncated(raw: &[u8]) -> bool {
     raw.len() >= DNS_HEADER_LEN && raw[2] & TRUNCATED_FLAG != 0
 }
 
-pub fn doq_skip(raw: &[u8]) -> usize {
-    if raw.len() >= 2 {
-        let declared = u16::from_be_bytes([raw[0], raw[1]]) as usize;
-        if declared == raw.len() - 2 {
-            return 2;
-        }
-    }
-    0
-}
-
 pub fn initial_retry_delay_ns(ctx_value_ns: i64) -> i64 {
     if ctx_value_ns > 0 {
         ctx_value_ns

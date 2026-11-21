@@ -9,7 +9,7 @@
 |---|---|
 | `rust/diting-desktop-api` | 配置模型、IPC DTO、平台值类型、版本信息 |
 | `rust/diting-desktop-core` | 解析器/缓存/规则/查询日志/证书等引擎门面 |
-| `rust/diting-desktop-dns` | DNS 数据面：UDP/TCP/DoT/DoH/DoQ 监听、固定顺序管线与各处理阶段 |
+| `rust/diting-desktop-dns` | DNS 数据面：UDP/TCP/DoT/DoH 监听、固定顺序管线与各处理阶段 |
 | `rust/diting-desktop-platform` | Windows / Linux 平台能力（接管、防火墙、端口诊断、服务托管、路径） |
 | `rust/diting-desktop-app` | 运行时组合：引擎生命周期、DNS 起停、后台维护、管理控制器 |
 | `rust/diting-desktop-ipc` | HTTP/WebSocket 管理 API、鉴权/CORS |
@@ -65,4 +65,4 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 - `cargo fmt --all --check`、`cargo clippy --all-targets -- -D warnings`、`cargo test`；
 - `python rust/verify.py --desktop`：包含真实的 DoT 回环握手、HTTP/WebSocket 契约测试；
 - 手工冒烟：`diting-service -run -port <port> -ipc-addr 127.0.0.1:<port>` 后查询
-  `/api/v1/health`、`/api/v1/status`，并验证 UDP/TCP/DoT/DoH/DoQ 解析与 Web 配置热重绑。
+  `/api/v1/health`、`/api/v1/status`，并验证 UDP/TCP/DoT/DoH 解析与 Web 配置热重绑。

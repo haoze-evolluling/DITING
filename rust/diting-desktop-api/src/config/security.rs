@@ -9,7 +9,6 @@ pub const DEFAULT_SAFEBROWSING_CACHE_TTL: i32 = 600;
 
 pub const DEFAULT_DOT_PORT: i32 = 853;
 pub const DEFAULT_DOH_PORT: i32 = 443;
-pub const DEFAULT_DOQ_PORT: i32 = 853;
 pub const DEFAULT_DOH_PATH: &str = "/dns-query";
 pub const DEFAULT_SERVER_NAME: &str = "dns.lan";
 
@@ -146,11 +145,9 @@ pub struct EncryptedDNSConfig {
     pub cert: CertConfig,
     pub dot_enabled: bool,
     pub doh_enabled: bool,
-    pub doq_enabled: bool,
     pub listen_address: String,
     pub dot_port: i32,
     pub doh_port: i32,
-    pub doq_port: i32,
     pub doh_path: String,
     pub server_name: String,
     pub ddr_enabled: bool,
@@ -165,11 +162,9 @@ impl Default for EncryptedDNSConfig {
             cert: CertConfig::default(),
             dot_enabled: false,
             doh_enabled: false,
-            doq_enabled: false,
             listen_address: String::new(),
             dot_port: DEFAULT_DOT_PORT,
             doh_port: DEFAULT_DOH_PORT,
-            doq_port: DEFAULT_DOQ_PORT,
             doh_path: DEFAULT_DOH_PATH.to_string(),
             server_name: DEFAULT_SERVER_NAME.to_string(),
             ddr_enabled: false,
@@ -199,9 +194,6 @@ impl EncryptedDNSConfig {
         }
         if !is_valid_port(self.doh_port) {
             self.doh_port = DEFAULT_DOH_PORT;
-        }
-        if !is_valid_port(self.doq_port) {
-            self.doq_port = DEFAULT_DOQ_PORT;
         }
 
         self.doh_path = self.doh_path.trim().to_string();

@@ -1,7 +1,7 @@
 use diting_upstream_core::doh::{should_retry, status_kind, StatusKind};
 use diting_upstream_core::endpoint::{split_target, TargetProtocol};
 use diting_upstream_core::framing::{
-    doq_skip, dot_response_length, encode_length_prefixed, first_deadline_ns, is_truncated,
+    dot_response_length, encode_length_prefixed, first_deadline_ns, is_truncated,
     retry_deadline_ns, tcp_response_length, DotLength,
 };
 use diting_upstream_core::plan::{is_policy_rejection, strategy, Strategy};
@@ -15,7 +15,6 @@ const DOT_FRAME: &str = include_str!("fixtures/dot_frame.tsv");
 const DOH_STATUS: &str = include_str!("fixtures/doh_status.tsv");
 const POOL_TRACE: &str = include_str!("fixtures/pool_trace.tsv");
 const RETRY_PLAN: &str = include_str!("fixtures/retry_plan.tsv");
-const DOQ_SKIP: &str = include_str!("fixtures/doq_skip.tsv");
 
 fn rows(fixture: &str) -> impl Iterator<Item = Vec<&str>> {
     fixture
@@ -240,19 +239,6 @@ fn the_retry_plan_corpus_replays_exactly() {
         count += 1;
     }
     assert_eq!(count, 80);
-}
-
-#[test]
-fn the_doq_skip_corpus_replays_exactly() {
-    let mut count = 0;
-    for fields in rows(DOQ_SKIP) {
-        assert_eq!(fields.len(), 2, "row shape: {fields:?}");
-        let raw = bytes(fields[0]);
-        let expected: usize = fields[1].parse().unwrap();
-        assert_eq!(doq_skip(&raw), expected, "row {fields:?}");
-        count += 1;
-    }
-    assert_eq!(count, 11);
 }
 
 #[test]

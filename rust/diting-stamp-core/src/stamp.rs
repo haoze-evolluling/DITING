@@ -14,7 +14,6 @@ pub const HASH_LEN: usize = 32;
 const PROTO_PLAIN: u8 = 0x00;
 const PROTO_DOH: u8 = 0x02;
 const PROTO_TLS: u8 = 0x03;
-const PROTO_DOQ: u8 = 0x04;
 const PROTO_DNSCRYPT: u8 = 0x01;
 const PROTO_ODOH_TARGET: u8 = 0x05;
 const PROTO_DNSCRYPT_RELAY: u8 = 0x81;
@@ -25,7 +24,6 @@ pub enum Proto {
     Plain,
     DoH,
     Tls,
-    DoQ,
 }
 
 impl Proto {
@@ -34,7 +32,6 @@ impl Proto {
             Proto::Plain => PROTO_PLAIN,
             Proto::DoH => PROTO_DOH,
             Proto::Tls => PROTO_TLS,
-            Proto::DoQ => PROTO_DOQ,
         }
     }
 
@@ -43,7 +40,6 @@ impl Proto {
             Proto::Plain => "Plain",
             Proto::DoH => "DoH",
             Proto::Tls => "TLS",
-            Proto::DoQ => "DoQ",
         }
     }
 
@@ -52,7 +48,6 @@ impl Proto {
             Proto::Plain => "PLAIN",
             Proto::DoH => "DOH",
             Proto::Tls => "DOT",
-            Proto::DoQ => "DOQ",
         }
     }
 
@@ -60,7 +55,7 @@ impl Proto {
         match self {
             Proto::Plain => DEFAULT_DNS_PORT,
             Proto::DoH => DEFAULT_HTTPS_PORT,
-            Proto::Tls | Proto::DoQ => DEFAULT_TLS_PORT,
+            Proto::Tls => DEFAULT_TLS_PORT,
         }
     }
 }
@@ -147,12 +142,11 @@ pub fn parse(stamp_text: &str) -> Result<Stamp, String> {
         PROTO_PLAIN => parse_plain(&bin),
         PROTO_DOH => parse_doh(&bin),
         PROTO_TLS => parse_dot(&bin),
-        PROTO_DOQ => parse_doq(&bin),
         PROTO_DNSCRYPT | PROTO_DNSCRYPT_RELAY => {
-            Err("DNSCrypt 印章暂不支持，请改用 DoH / DoT / DoQ 印章".to_string())
+            Err("DNSCrypt 印章暂不支持，请改用 DoH / DoT 印章".to_string())
         }
         PROTO_ODOH_TARGET | PROTO_ODOH_RELAY => {
-            Err("oDoH 印章暂不支持，请改用 DoH / DoT / DoQ 印章".to_string())
+            Err("oDoH 印章暂不支持，请改用 DoH / DoT 印章".to_string())
         }
         other => Err(format!("unsupported stamp protocol byte 0x{other:02x}")),
     }
@@ -212,12 +206,6 @@ fn parse_dot(bin: &[u8]) -> Result<Stamp, String> {
     stamp.hashes = hashes;
     stamp.provider_name = provider;
     stamp.bootstrap_ips = bootstrap_ips;
-    Ok(stamp)
-}
-
-fn parse_doq(bin: &[u8]) -> Result<Stamp, String> {
-    let mut stamp = parse_dot(bin)?;
-    stamp.proto = Proto::DoQ;
     Ok(stamp)
 }
 

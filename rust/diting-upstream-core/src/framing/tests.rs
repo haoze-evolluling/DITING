@@ -64,16 +64,6 @@ fn truncation_is_bit_one_of_the_high_flags_byte() {
 }
 
 #[test]
-fn doq_strips_the_prefix_only_when_it_declares_the_remainder() {
-    assert_eq!(doq_skip(&[]), 0);
-    assert_eq!(doq_skip(&[0]), 0);
-    assert_eq!(doq_skip(&[0, 2, 0xAA, 0xBB]), 2);
-    assert_eq!(doq_skip(&[0, 5, 0xAA, 0xBB]), 0);
-    assert_eq!(doq_skip(&[0, 1, 0xAA, 0xBB]), 0);
-    assert_eq!(doq_skip(&[0, 0]), 2);
-}
-
-#[test]
 fn the_plain_initial_delay_prefers_a_positive_caller_value() {
     assert_eq!(initial_retry_delay_ns(0), TUNING.plain_retry_default_ns);
     assert_eq!(initial_retry_delay_ns(-1), TUNING.plain_retry_default_ns);

@@ -8,7 +8,6 @@ use diting_engine::resolver::trust::UpstreamTrust;
 use http::Version;
 use support::*;
 
-
 #[tokio::test]
 async fn plain_udp_answers_the_query() {
     let (upstream, count) = spawn_udp_upstream([1, 2, 3, 4], false);
@@ -105,27 +104,6 @@ async fn doh_speaks_http2_and_reuses_the_session() {
 }
 
 #[tokio::test]
-async fn doh_surfaces_the_alt_svc_h3_advertisement() {
-    let pki = TestPki::new("localhost");
-    let (upstream, _, _) = spawn_doh(&pki).await;
-
-    let url = format!("https://localhost:{}/dns-query", upstream.port());
-    let config = config_json("single", &[provider_json("p1", "DOH", "", &url)], None);
-    let resolver = resolver(&config, Some(&pki.ca_pem), Arc::new(Recorder::default()));
-
-    assert!(!resolver.doh3_ready(), "no answer yet, so no advertisement");
-    resolver
-        .resolve(&query_wire("doh.test", 7))
-        .await
-        .0
-        .expect("a DoH answer");
-    assert!(
-        resolver.doh3_ready(),
-        "the Alt-Svc: h3 header makes N7's HTTP/3 upgrade eligible"
-    );
-}
-
-#[tokio::test]
 async fn doh_reports_the_rate_limit_status() {
     let pki = TestPki::new("localhost");
     let (upstream, _, _) = spawn_doh(&pki).await;
@@ -140,27 +118,6 @@ async fn doh_reports_the_rate_limit_status() {
         .0
         .expect_err("403 is a failure");
     assert_eq!(error, "DoH rate limited (403)");
-}
-
-#[tokio::test]
-async fn doq_answers_on_a_bidirectional_stream() {
-    let pki = TestPki::new("localhost");
-    let (upstream, connections) = spawn_doq(&pki).await;
-
-    let url = format!("doq://localhost:{}", upstream.port());
-    let config = config_json("single", &[provider_json("p1", "DOQ", "", &url)], None);
-    let resolver = resolver(&config, Some(&pki.ca_pem), Arc::new(Recorder::default()));
-
-    for id in 0..2u16 {
-        let query = query_wire("doq.test", id);
-        let response = resolver.resolve(&query).await.0.expect("a DoQ answer");
-        assert_eq!(response, answer_wire(&query, [6, 5, 4, 3], 60));
-    }
-    assert_eq!(
-        connections.load(Ordering::Relaxed),
-        1,
-        "the QUIC session is reused"
-    );
 }
 
 #[tokio::test]

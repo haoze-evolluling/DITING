@@ -48,18 +48,6 @@ fn protocol_and_response_type_are_one_integer() {
 }
 
 #[test]
-fn doq_url_returns_host_and_port() {
-    let mut payload = request(OP_DOQ_URL);
-    push_text(&mut payload, "quic://dns.adguard.com:8853");
-    let decoded = decode_request(&payload).expect("request");
-    let response = encode_response(handle(decoded));
-    let mut reader = Reader::new(ok_body(&response));
-    assert_eq!(reader.text().unwrap(), "dns.adguard.com");
-    assert_eq!(reader.text().unwrap(), "8853");
-    assert!(reader.at_end());
-}
-
-#[test]
 fn domain_normalization_round_trips() {
     let mut payload = request(OP_DOMAIN);
     push_text(&mut payload, " Example.COM. ");

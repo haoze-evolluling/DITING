@@ -14,19 +14,9 @@ use tokio::time::Instant as TokioInstant;
 
 use super::{elapsed_ns, now_ns, plain, Inner, RaceEvent, NO_PROVIDER};
 
-const DOH3_ATTEMPT_TIMEOUT: Duration = Duration::from_secs(2);
 /// 系统 DNS 兜底单台超时与整体预算。本地网关通常几毫秒内响应。
 const SYSTEM_ATTEMPT_TIMEOUT: Duration = Duration::from_millis(700);
 const SYSTEM_TOTAL_TIMEOUT: Duration = Duration::from_millis(1500);
-
-fn h3_attempt_timeout(budget: Option<Duration>) -> Duration {
-    match budget {
-        Some(budget) => (budget / 2)
-            .min(DOH3_ATTEMPT_TIMEOUT)
-            .max(Duration::from_millis(1)),
-        None => DOH3_ATTEMPT_TIMEOUT,
-    }
-}
 
 struct Attempt {
     provider: u32,
@@ -171,7 +161,6 @@ async fn attempt(
     let retry_delay_ns = provider.stats.udp_retry_delay();
     let started = Instant::now();
 
-    let h3_timeout = h3_attempt_timeout(budget);
     let transport = async {
         match provider.protocol {
             Protocol::Plain => {
@@ -192,58 +181,8 @@ async fn attempt(
                 None => Err("DoT transport is not configured".to_string()),
             },
             Protocol::Doh => match (&inner.doh, &provider.doh_uri) {
-                (Some(doh), Some(uri)) => {
-                    if provider.force_h3 {
-                        let h3 = inner
-                            .doh3
-                            .as_ref()
-                            .ok_or_else(|| "DoH3 transport is not configured".to_string())?;
-                        let port = uri.port_u16().unwrap_or(443);
-                        let path = uri
-                            .path_and_query()
-                            .map(|value| value.as_str())
-                            .unwrap_or("/dns-query");
-                        h3.query(&inner.dial, &provider.host, port, path, query)
-                            .await
-                    } else if doh.doh3_ready() {
-                        if let Some(h3) = &inner.doh3 {
-                            let port = doh
-                                .doh3_port()
-                                .unwrap_or_else(|| uri.port_u16().unwrap_or(443));
-                            let path = uri
-                                .path_and_query()
-                                .map(|value| value.as_str())
-                                .unwrap_or("/dns-query");
-                            match tokio::time::timeout(
-                                h3_timeout,
-                                h3.query(&inner.dial, &provider.host, port, path, query),
-                            )
-                            .await
-                            {
-                                Ok(Ok(answer)) => {
-                                    doh.note_h3_success();
-                                    Ok(answer)
-                                }
-                                Ok(Err(_)) | Err(_) => {
-                                    doh.note_h3_failure();
-                                    doh.query(uri, query).await
-                                }
-                            }
-                        } else {
-                            doh.query(uri, query).await
-                        }
-                    } else {
-                        doh.query(uri, query).await
-                    }
-                }
+                (Some(doh), Some(uri)) => doh.query(uri, query).await,
                 _ => Err("DoH transport is not configured".to_string()),
-            },
-            Protocol::Doq => match &inner.doq {
-                Some(doq) => {
-                    doq.query(&inner.dial, &provider.host, &provider.port, query)
-                        .await
-                }
-                None => Err("DoQ transport is not configured".to_string()),
             },
         }
     };

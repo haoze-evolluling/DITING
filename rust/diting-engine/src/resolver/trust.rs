@@ -18,8 +18,6 @@ pub const ANDROID_CERT_DIRECTORIES: [&str; 2] = [
 
 pub const DOH_ALPN: [&[u8]; 2] = [b"h2", b"http/1.1"];
 pub const DOT_ALPN: [&[u8]; 0] = [];
-pub const DOQ_ALPN: [&[u8]; 1] = [b"doq"];
-pub const H3_ALPN: [&[u8]; 1] = [b"h3"];
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct RootStoreReport {
@@ -121,26 +119,6 @@ impl UpstreamTrust {
             false,
         )
     }
-
-    pub fn quic_client_config(&self) -> Arc<ClientConfig> {
-        crate::resolver::pin::client_config(
-            &self.roots,
-            Arc::clone(&self.provider),
-            Arc::clone(&self.pins),
-            &DOQ_ALPN,
-            true,
-        )
-    }
-
-    pub fn h3_client_config(&self) -> Arc<ClientConfig> {
-        crate::resolver::pin::client_config(
-            &self.roots,
-            Arc::clone(&self.provider),
-            Arc::clone(&self.pins),
-            &H3_ALPN,
-            true,
-        )
-    }
 }
 
 impl Default for UpstreamTrust {
@@ -240,17 +218,13 @@ mod tests {
     }
 
     #[test]
-    fn the_three_client_configs_differ_only_in_alpn_and_versions() {
+    fn the_client_configs_differ_only_in_alpn_and_versions() {
         let trust = UpstreamTrust::platform();
         assert_eq!(
             trust.client_config(&DOH_ALPN).alpn_protocols,
             vec![b"h2".to_vec(), b"http/1.1".to_vec()]
         );
         assert!(trust.client_config(&DOT_ALPN).alpn_protocols.is_empty());
-        assert_eq!(
-            trust.quic_client_config().alpn_protocols,
-            vec![b"doq".to_vec()]
-        );
     }
 
     fn now() -> i64 {

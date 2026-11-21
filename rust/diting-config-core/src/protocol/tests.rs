@@ -7,7 +7,6 @@ fn protocol_folds_case_and_defaults_to_plain() {
         ("doh", Protocol::Doh),
         ("DoH", Protocol::Doh),
         ("DOT", Protocol::Dot),
-        ("DOQ", Protocol::Doq),
         ("PLAIN", Protocol::Plain),
         ("plain", Protocol::Plain),
         ("", Protocol::Plain),
@@ -57,7 +56,7 @@ fn response_type_is_case_sensitive() {
 
 #[test]
 fn codes_round_trip() {
-    for protocol in [Protocol::Plain, Protocol::Doh, Protocol::Dot, Protocol::Doq] {
+    for protocol in [Protocol::Plain, Protocol::Doh, Protocol::Dot] {
         assert_eq!(Protocol::from_code(protocol.code()), Some(protocol));
         assert!(!protocol.name().is_empty());
     }
@@ -69,6 +68,7 @@ fn codes_round_trip() {
     ] {
         assert_eq!(ResponseType::from_code(response.code()), Some(response));
     }
+    assert_eq!(Protocol::from_code(3), None);
     assert_eq!(Protocol::from_code(4), None);
     assert_eq!(ResponseType::from_code(-1), None);
 }

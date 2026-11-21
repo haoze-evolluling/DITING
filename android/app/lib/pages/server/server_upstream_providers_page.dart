@@ -194,7 +194,7 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
 }
 
 Glyph _protocolGlyph(String protocol) => switch (protocol) {
-  'DOH' || 'DOH3' => AppGlyphs.lock,
+  'DOH' => AppGlyphs.lock,
   'DOT' => AppGlyphs.verified,
   _ => AppGlyphs.dns,
 };

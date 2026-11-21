@@ -17,10 +17,5 @@ DOH		http://dns.google/dns-query	err	invalid DOH URL "http://dns.google/dns-quer
 DOH		https:///dns-query	err	invalid DOH URL "https:///dns-query"
 DOH		dns.google	err	invalid DOH URL "dns.google"
 DOH			err	invalid DOH URL ""
-DOQ		quic://dns.adguard.com:8853	ok	DOQ
-DOQ		https://dns.adguard.com/dns-query	ok	DOQ
-DOQ		doq://[2606:4700::1111]:853	ok	DOQ
-DOQ		dns.adguard.com	ok	DOQ
-DOQ			err	invalid DOQ URL ""
 HYPER	1.1.1.1:53		err	unsupported protocol "HYPER"
 	1.1.1.1:53		err	unsupported protocol ""

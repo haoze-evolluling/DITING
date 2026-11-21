@@ -18,17 +18,15 @@ pub struct DdrAnswer {
     pub server_name: String,
     pub dot_enabled: bool,
     pub doh_enabled: bool,
-    pub doq_enabled: bool,
     pub dot_port: u16,
     pub doh_port: u16,
-    pub doq_port: u16,
     pub doh_path: String,
     pub cert_has_ips: bool,
 }
 
 impl DdrAnswer {
     pub fn is_empty(&self) -> bool {
-        !self.dot_enabled && !self.doh_enabled && !self.doq_enabled
+        !self.dot_enabled && !self.doh_enabled
     }
 }
 
@@ -101,12 +99,6 @@ impl Stage for DdrStage {
                     builder = builder.push_answer(svcb_record(
                         &target,
                         vec![SvcParam::alpn(&["dot"]), SvcParam::port(answer.dot_port)],
-                    ));
-                }
-                if answer.doq_enabled {
-                    builder = builder.push_answer(svcb_record(
-                        &target,
-                        vec![SvcParam::alpn(&["doq"]), SvcParam::port(answer.doq_port)],
                     ));
                 }
             }

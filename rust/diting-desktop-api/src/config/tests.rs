@@ -351,6 +351,29 @@ fn save_and_load_roundtrip() {
 }
 
 #[test]
+fn normalize_downgrades_doh3_and_drops_doq() {
+    let mut config = Config::default();
+    config.upstream.providers = vec![
+        ProviderConfig {
+            id: "keep".to_string(),
+            protocol: "DOH3".to_string(),
+            url: "https://dns.example/dns-query".to_string(),
+            ..ProviderConfig::default()
+        },
+        ProviderConfig {
+            id: "gone".to_string(),
+            protocol: "DOQ".to_string(),
+            url: "quic://dns.example:853".to_string(),
+            ..ProviderConfig::default()
+        },
+    ];
+    config.normalize();
+    assert_eq!(config.upstream.providers.len(), 1);
+    assert_eq!(config.upstream.providers[0].protocol, "DOH");
+    assert_eq!(config.upstream.providers[0].id, "keep");
+}
+
+#[test]
 fn normalization_is_idempotent() {
     let mut config = Config::default();
     config.filter.schedules.push(BlockingSchedule {

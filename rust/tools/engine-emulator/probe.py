@@ -3,7 +3,7 @@
 
 The engine's standalone server listens on UDP **and** TCP; `adb forward` only forwards TCP, so this
 probe speaks the 2-byte-framed TCP form (RFC 1035 §4.2.2) that `standalone.rs` serves. That is enough
-to exercise the whole pipeline on a device: server → cache → policy → resolver → DoH/DoT/DoQ.
+to exercise the whole pipeline on a device: server → cache → policy → resolver → DoH/DoT.
 
     adb forward tcp:15353 tcp:1053
     python rust/tools/engine-emulator/probe.py --name example.com

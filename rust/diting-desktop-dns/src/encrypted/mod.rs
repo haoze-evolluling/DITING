@@ -1,6 +1,5 @@
 pub mod client_id;
 mod doh;
-mod doq;
 mod dot;
 pub mod realip;
 
@@ -23,10 +22,8 @@ pub struct EncryptedConfig {
     pub listen_address: String,
     pub dot_enabled: bool,
     pub doh_enabled: bool,
-    pub doq_enabled: bool,
     pub dot_port: u16,
     pub doh_port: u16,
-    pub doq_port: u16,
     pub doh_path: String,
     pub server_name: String,
     pub reverse_proxy: ReverseProxyConfig,
@@ -38,10 +35,8 @@ impl Default for EncryptedConfig {
             listen_address: "0.0.0.0".to_string(),
             dot_enabled: false,
             doh_enabled: false,
-            doq_enabled: false,
             dot_port: 853,
             doh_port: 443,
-            doq_port: 853,
             doh_path: "/dns-query".to_string(),
             server_name: "dns.lan".to_string(),
             reverse_proxy: ReverseProxyConfig::default(),
@@ -52,11 +47,9 @@ impl Default for EncryptedConfig {
 pub struct EncryptedListeners {
     shutdown: watch::Sender<bool>,
     tasks: Mutex<Vec<JoinHandle<()>>>,
-    doq_endpoint: Mutex<Option<quinn::Endpoint>>,
     addresses: Vec<String>,
     dot_address: Option<String>,
     doh_address: Option<String>,
-    doq_address: Option<String>,
     enabled: AtomicBool,
 }
 
@@ -72,8 +65,6 @@ impl EncryptedListeners {
         let mut addresses = Vec::new();
         let mut dot_address = None;
         let mut doh_address = None;
-        let mut doq_address = None;
-        let mut doq_endpoint = None;
         let mut requested = 0usize;
         let mut started = 0usize;
 
@@ -103,20 +94,6 @@ impl EncryptedListeners {
             }
         }
 
-        if config.doq_enabled {
-            requested += 1;
-            match doq::start(server.clone(), &cert, config.clone(), receiver.clone()).await {
-                Ok((address, endpoint, task)) => {
-                    started += 1;
-                    addresses.push(address.clone());
-                    doq_address = Some(address);
-                    tasks.push(task);
-                    doq_endpoint = Some(endpoint);
-                }
-                Err(error) => eprintln!("[加密DNS] DoQ 监听器启动失败: {error}"),
-            }
-        }
-
         if requested > 0 && started == 0 {
             return Err("所有加密 DNS 监听器均启动失败".to_string());
         }
@@ -124,11 +101,9 @@ impl EncryptedListeners {
         Ok(Self {
             shutdown,
             tasks: Mutex::new(tasks),
-            doq_endpoint: Mutex::new(doq_endpoint),
             addresses,
             dot_address,
             doh_address,
-            doq_address,
             enabled: AtomicBool::new(started > 0),
         })
     }
@@ -138,9 +113,6 @@ impl EncryptedListeners {
             return;
         }
         let _ = self.shutdown.send(true);
-        if let Some(endpoint) = self.doq_endpoint.lock().unwrap().take() {
-            endpoint.close(0u32.into(), b"shutdown");
-        }
 
         tokio::time::sleep(Duration::from_millis(100)).await;
         let mut tasks = std::mem::take(&mut *self.tasks.lock().unwrap());
@@ -164,10 +136,6 @@ impl EncryptedListeners {
 
     pub fn doh_address(&self) -> Option<&str> {
         self.doh_address.as_deref()
-    }
-
-    pub fn doq_address(&self) -> Option<&str> {
-        self.doq_address.as_deref()
     }
 }
 
@@ -200,7 +168,6 @@ mod tests {
         assert_eq!(config.doh_path, "/dns-query");
         assert_eq!(config.dot_port, 853);
         assert_eq!(config.doh_port, 443);
-        assert_eq!(config.doq_port, 853);
         assert!(!config.reverse_proxy.enabled);
     }
 }

@@ -9,7 +9,6 @@ pub enum Transport {
     Tcp,
     Dot,
     Doh,
-    Doq,
 }
 
 impl Transport {
@@ -19,7 +18,6 @@ impl Transport {
             Transport::Tcp => "tcp",
             Transport::Dot => "dot",
             Transport::Doh => "doh",
-            Transport::Doq => "doq",
         }
     }
 }

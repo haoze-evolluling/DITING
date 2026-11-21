@@ -66,7 +66,7 @@ Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 - 系统 DNS 接管：Windows 逐网卡接管，Linux 支持 systemd-resolved 等后端；提供紧急恢复与端口诊断。
 - 局域网 DNS 服务：对外监听 53 端口，供路由器和终端共享解析与拦截。
 - 客户端访问控制：限定可解析的局域网客户端，并按客户端限速。
-- 加密 DNS 服务：以 DoT、DoH、DoQ 向局域网提供加密解析，支持自签证书与 PEM/PKCS#12 导入。
+- 加密 DNS 服务：以 DoT、DoH 向局域网提供加密解析，支持自签证书与 PEM/PKCS#12 导入。
 - 上游解析、缓存、自定义重写、规则订阅、自定义规则、时间计划与应用拦截。
 - 安全隐私：协议加固、ECS 隐私、DNS 重绑定与 hosts 防御。
 - 查询日志、客户端分组流量统计与规则检测。
@@ -125,7 +125,7 @@ Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策�
 
 `diting-service` 是纯 Rust 特权服务，负责：
 
-- 启动与管理 DNS 监听（UDP、TCP，以及 DoT、DoH、DoQ 加密服务）。
+- 启动与管理 DNS 监听（UDP、TCP，以及 DoT、DoH 加密服务）。
 - 接管系统 DNS、配置防火墙、诊断端口占用，并在退出或异常时恢复原配置。
 - 提供 HTTP/WebSocket 管理 API，默认监听 `127.0.0.1:15353`，包含认证与 CORS。
 

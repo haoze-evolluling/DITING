@@ -15,8 +15,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "sync", "io-util", "macros"] }
 
-# The four upstream transports (stage 2). DoH is HTTP/2-first, which RFC 8484 requires, so the
-# client is `hyper` + its pooled legacy client; DoT/DoQ reuse the same `rustls` provider the MITM
+# The upstream transports (stage 2). DoH is HTTP/2-first, which RFC 8484 requires, so the
+# client is `hyper` + its pooled legacy client; DoT reuses the same `rustls` provider the MITM
 # spike already proves cross-compiles for Android with `ring`.
 bytes = "1"
 http = "1"
@@ -35,7 +35,6 @@ tower-service = "0.3"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
 rustls-pemfile = "2"
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
-quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls-ring"] }
 # Stage 4b's HTTP relay: `BodyExt`/`StreamExt` on the hyper bodies, `ReaderStream` + the gzip/zlib
 # decoders for the streaming cosmetic injection. All three are what the MITM spike already proved.
 futures-util = "0.3"

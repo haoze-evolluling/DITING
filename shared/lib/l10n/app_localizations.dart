@@ -7250,10 +7250,6 @@ abstract class AppL10n {
 
   String desktopEncryptedDohBody(int port, String path);
 
-  String get desktopEncryptedDoq;
-
-  String desktopEncryptedDoqBody(int port);
-
   String desktopEncryptedListening(String address);
 
   String get desktopEncryptedNotListening;
@@ -7265,10 +7261,6 @@ abstract class AppL10n {
   String get desktopEncryptedDohOn;
 
   String get desktopEncryptedDohOff;
-
-  String get desktopEncryptedDoqOn;
-
-  String get desktopEncryptedDoqOff;
 
   String get desktopEncryptedUrls;
 
@@ -7283,8 +7275,6 @@ abstract class AppL10n {
   String get desktopEncryptedDotPort;
 
   String get desktopEncryptedDohPort;
-
-  String get desktopEncryptedDoqPort;
 
   String get desktopEncryptedDohPath;
 

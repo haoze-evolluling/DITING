@@ -90,25 +90,6 @@ fn doh_requires_an_https_url_with_a_host() {
 }
 
 #[test]
-fn doq_accepts_the_loose_url_form() {
-    for url in [
-        "quic://dns.adguard.com:8853",
-        "https://dns.adguard.com/dns-query",
-        "doq://[2606:4700::1111]:853",
-        "dns.adguard.com",
-    ] {
-        assert!(validate_provider("DOQ", "", url).is_ok(), "{url}");
-    }
-    for url in ["", "quic://", "doq:///path"] {
-        assert_eq!(
-            validate_provider("DOQ", "", url).unwrap_err(),
-            format!("invalid DOQ URL \"{url}\""),
-            "{url}"
-        );
-    }
-}
-
-#[test]
 fn unknown_protocols_are_rejected_before_the_endpoint() {
     assert_eq!(
         validate_provider("HYPER", "1.1.1.1:53", "").unwrap_err(),
@@ -118,37 +99,6 @@ fn unknown_protocols_are_rejected_before_the_endpoint() {
         validate_provider("hyper", "1.1.1.1:53", "").unwrap_err(),
         "unsupported protocol \"HYPER\""
     );
-}
-
-#[test]
-fn doq_url_splits_like_the_old_helper() {
-    for (url, host, port) in [
-        ("quic://dns.adguard.com:8853", "dns.adguard.com", "8853"),
-        (
-            "https://dns.adguard.com/dns-query",
-            "dns.adguard.com",
-            "853",
-        ),
-        ("doq://dns.adguard.com", "dns.adguard.com", "853"),
-        ("dns.adguard.com", "dns.adguard.com", "853"),
-        ("dns.adguard.com:8853", "dns.adguard.com", "8853"),
-        ("quic://[2606:4700::1111]:853", "2606:4700::1111", "853"),
-        ("[2606:4700::1111]", "[2606:4700::1111]", "853"),
-        (
-            "quic://dns.adguard.com:8853/path?x=1",
-            "dns.adguard.com",
-            "8853",
-        ),
-        ("doq://::1", "::1", "853"),
-        ("quic://", "", "853"),
-        ("", "", "853"),
-    ] {
-        assert_eq!(
-            parse_doq_url(url),
-            (host.to_string(), port.to_string()),
-            "{url}"
-        );
-    }
 }
 
 #[test]

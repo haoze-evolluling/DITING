@@ -28,12 +28,7 @@ pub const DNS_MESSAGE: &str = "application/dns-message";
 
 pub struct DohClient {
     client: Client<DohConnector, Full<Bytes>>,
-    doh3_advertised: std::sync::atomic::AtomicBool,
-    h3_failures: std::sync::atomic::AtomicU32,
-    doh3_port: std::sync::atomic::AtomicU16,
 }
-
-const H3_MAX_FAILURES: u32 = 3;
 
 impl DohClient {
     pub fn new(trust: Arc<UpstreamTrust>, dialer: Dialer) -> Self {
@@ -47,35 +42,7 @@ impl DohClient {
             ))
             .pool_max_idle_per_host(TUNING.doh_max_idle_conns_per_host.max(1) as usize)
             .build(connector);
-        Self {
-            client,
-            doh3_advertised: std::sync::atomic::AtomicBool::new(false),
-            h3_failures: std::sync::atomic::AtomicU32::new(0),
-            doh3_port: std::sync::atomic::AtomicU16::new(0),
-        }
-    }
-
-    pub fn doh3_ready(&self) -> bool {
-        self.doh3_advertised
-            .load(std::sync::atomic::Ordering::Relaxed)
-            && self.h3_failures.load(std::sync::atomic::Ordering::Relaxed) < H3_MAX_FAILURES
-    }
-
-    pub fn note_h3_success(&self) {
-        self.h3_failures
-            .store(0, std::sync::atomic::Ordering::Relaxed);
-    }
-
-    pub fn note_h3_failure(&self) {
-        self.h3_failures
-            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    }
-
-    pub fn doh3_port(&self) -> Option<u16> {
-        match self.doh3_port.load(std::sync::atomic::Ordering::Relaxed) {
-            0 => None,
-            port => Some(port),
-        }
+        Self { client }
     }
 
     pub async fn query(&self, uri: &Uri, query: &[u8]) -> Result<Vec<u8>, String> {
@@ -112,19 +79,6 @@ impl DohClient {
             StatusKind::Ok => {}
             StatusKind::RateLimited => return Err("DoH rate limited (403)".to_string()),
             StatusKind::Other => return Err(format!("DoH status {}", response.status().as_u16())),
-        }
-
-        if let Some(value) = response
-            .headers()
-            .get("alt-svc")
-            .and_then(|value| value.to_str().ok())
-        {
-            if let Some(alt) = diting_upstream_core::alt_svc::parse_alt_svc(value) {
-                self.doh3_port
-                    .store(alt.port, std::sync::atomic::Ordering::Relaxed);
-                self.doh3_advertised
-                    .store(true, std::sync::atomic::Ordering::Relaxed);
-            }
         }
 
         let body = response

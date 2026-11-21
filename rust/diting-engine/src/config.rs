@@ -24,8 +24,6 @@ pub struct ProviderJson {
     pub weight: i64,
     #[serde(default)]
     pub pin: String,
-    #[serde(default)]
-    pub force_h3: bool,
 }
 
 #[derive(Debug, Clone, Copy, Default, Deserialize)]
@@ -167,7 +165,6 @@ pub struct Provider {
     pub url: String,
     pub weight: i64,
     pub pin: String,
-    pub force_h3: bool,
 }
 
 impl Provider {
@@ -179,7 +176,6 @@ impl Provider {
             url: provider.url.clone(),
             weight: provider.weight,
             pin: source.pin.clone(),
-            force_h3: source.force_h3,
         }
     }
 }
@@ -197,6 +193,8 @@ pub struct DnsConfig {
     pub rate_limit: diting_ratelimit_core::Config,
     pub connection_rate_limit: ConnectionRateLimitConfig,
     pub race_max_parallel: i64,
+    /// 解析阶段丢弃、不再支持的上游协议，供 Resolver 汇总到 skipped 日志。
+    pub skipped: Vec<String>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -245,17 +243,34 @@ impl DnsConfig {
             document.dynamic_response.nx_domain_duration_seconds,
         );
 
-        let incoming: Vec<ConfigProvider> = document
-            .providers
-            .iter()
-            .map(|provider| ConfigProvider {
+        let mut incoming = Vec::with_capacity(document.providers.len());
+        let mut sources = Vec::with_capacity(document.providers.len());
+        let mut skipped = Vec::new();
+        for provider in &document.providers {
+            let text = provider.protocol.trim().to_ascii_uppercase();
+            if matches!(text.as_str(), "DOQ" | "QUIC") {
+                let name = if provider.id.is_empty() {
+                    format!("provider {}", incoming.len())
+                } else {
+                    format!("provider {}", provider.id)
+                };
+                skipped.push(format!("{name}: DoQ is no longer supported"));
+                continue;
+            }
+            let protocol = if matches!(text.as_str(), "DOH3" | "H3") {
+                "DOH".to_string()
+            } else {
+                provider.protocol.clone()
+            };
+            incoming.push(ConfigProvider {
                 id: provider.id.clone(),
-                protocol: provider.protocol.clone(),
+                protocol,
                 server: provider.server.clone(),
                 url: provider.url.clone(),
                 weight: provider.weight,
-            })
-            .collect();
+            });
+            sources.push(provider);
+        }
 
         let normalized = normalize(&document.mode, &document.block_response, dynamic, &incoming)
             .map_err(EngineError::config_invalid)?;
@@ -265,7 +280,7 @@ impl DnsConfig {
             providers: normalized
                 .providers
                 .iter()
-                .zip(document.providers.iter())
+                .zip(sources.iter())
                 .map(|(provider, source)| Provider::from_parts(provider, source))
                 .collect(),
             block_response: normalized.block_response.code() as u32,
@@ -290,6 +305,7 @@ impl DnsConfig {
                 document.connection_rate_limit.as_ref(),
             ),
             race_max_parallel: document.race_max_parallel.unwrap_or(0),
+            skipped,
         })
     }
 }
@@ -453,5 +469,23 @@ mod tests {
         let config = DnsConfig::from_json(json).expect("ok");
         assert_eq!(config.privacy.blocked_qtypes, vec![64, 65]);
         assert!(config.privacy.rebinding_protection);
+    }
+
+    #[test]
+    fn drops_doq_providers_and_records_them() {
+        let json = r#"{"mode":"primary_backup","providers":[{"id":"keep","protocol":"PLAIN","server":"8.8.8.8:53","url":"","weight":1},{"id":"gone","protocol":"DOQ","server":"","url":"quic://dns.example:853","weight":1}],"blockResponse":"NXDOMAIN"}"#;
+        let config = DnsConfig::from_json(json).expect("ok");
+        assert_eq!(config.providers.len(), 1);
+        assert_eq!(config.providers[0].id, "keep");
+        assert_eq!(config.skipped.len(), 1);
+        assert!(config.skipped[0].contains("gone"), "{:?}", config.skipped);
+    }
+
+    #[test]
+    fn doh3_providers_downgrade_to_doh() {
+        let json = r#"{"mode":"single","providers":[{"id":"p1","protocol":"DOH3","server":"","url":"https://dns.example/dns-query","weight":1}],"blockResponse":"NXDOMAIN"}"#;
+        let config = DnsConfig::from_json(json).expect("ok");
+        assert_eq!(config.providers[0].protocol, Protocol::Doh);
+        assert!(config.skipped.is_empty());
     }
 }

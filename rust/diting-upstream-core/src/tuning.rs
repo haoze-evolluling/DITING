@@ -3,7 +3,6 @@ pub struct Tuning {
     pub query_timeout_plain_ns: i64,
     pub query_timeout_doh_ns: i64,
     pub query_timeout_dot_ns: i64,
-    pub query_timeout_doq_ns: i64,
     pub connect_timeout_ns: i64,
     pub plain_retry_limit: i64,
     pub plain_retry_default_ns: i64,
@@ -15,7 +14,6 @@ pub struct Tuning {
     pub doh_idle_conn_timeout_ns: i64,
     pub doh_max_idle_conns: i64,
     pub doh_max_idle_conns_per_host: i64,
-    pub doq_max_idle_timeout_ns: i64,
     pub encrypted_preference_window_ns: i64,
 }
 
@@ -23,7 +21,6 @@ pub const TUNING: Tuning = Tuning {
     query_timeout_plain_ns: 5_000_000_000,
     query_timeout_doh_ns: 5_000_000_000,
     query_timeout_dot_ns: 5_000_000_000,
-    query_timeout_doq_ns: 5_000_000_000,
     connect_timeout_ns: 3_000_000_000,
     plain_retry_limit: 2,
     plain_retry_default_ns: 1_500_000_000,
@@ -35,17 +32,15 @@ pub const TUNING: Tuning = Tuning {
     doh_idle_conn_timeout_ns: 90_000_000_000,
     doh_max_idle_conns: 5,
     doh_max_idle_conns_per_host: 2,
-    doq_max_idle_timeout_ns: 30_000_000_000,
     encrypted_preference_window_ns: 25_000_000,
 };
 
 impl Tuning {
-    pub fn fields(&self) -> [i64; 17] {
+    pub fn fields(&self) -> [i64; 15] {
         [
             self.query_timeout_plain_ns,
             self.query_timeout_doh_ns,
             self.query_timeout_dot_ns,
-            self.query_timeout_doq_ns,
             self.connect_timeout_ns,
             self.plain_retry_limit,
             self.plain_retry_default_ns,
@@ -57,30 +52,27 @@ impl Tuning {
             self.doh_idle_conn_timeout_ns,
             self.doh_max_idle_conns,
             self.doh_max_idle_conns_per_host,
-            self.doq_max_idle_timeout_ns,
             self.encrypted_preference_window_ns,
         ]
     }
 
-    pub fn from_fields(fields: [i64; 17]) -> Self {
+    pub fn from_fields(fields: [i64; 15]) -> Self {
         Self {
             query_timeout_plain_ns: fields[0],
             query_timeout_doh_ns: fields[1],
             query_timeout_dot_ns: fields[2],
-            query_timeout_doq_ns: fields[3],
-            connect_timeout_ns: fields[4],
-            plain_retry_limit: fields[5],
-            plain_retry_default_ns: fields[6],
-            dot_probe_timeout_ns: fields[7],
-            dot_idle_timeout_ms: fields[8],
-            dot_max_idle_conns_per_host: fields[9],
-            max_read_bytes: fields[10],
-            doh_retry_delay_ns: fields[11],
-            doh_idle_conn_timeout_ns: fields[12],
-            doh_max_idle_conns: fields[13],
-            doh_max_idle_conns_per_host: fields[14],
-            doq_max_idle_timeout_ns: fields[15],
-            encrypted_preference_window_ns: fields[16],
+            connect_timeout_ns: fields[3],
+            plain_retry_limit: fields[4],
+            plain_retry_default_ns: fields[5],
+            dot_probe_timeout_ns: fields[6],
+            dot_idle_timeout_ms: fields[7],
+            dot_max_idle_conns_per_host: fields[8],
+            max_read_bytes: fields[9],
+            doh_retry_delay_ns: fields[10],
+            doh_idle_conn_timeout_ns: fields[11],
+            doh_max_idle_conns: fields[12],
+            doh_max_idle_conns_per_host: fields[13],
+            encrypted_preference_window_ns: fields[14],
         }
     }
 }

@@ -2,7 +2,7 @@ use crate::tuning::Tuning;
 
 pub const LAYOUT_VERSION: u8 = 1;
 
-pub const TUNING_FIELDS: usize = 17;
+pub const TUNING_FIELDS: usize = 15;
 
 struct Reader<'a> {
     payload: &'a [u8],

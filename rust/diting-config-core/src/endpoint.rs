@@ -8,7 +8,6 @@ pub fn validate_provider(protocol: &str, server: &str, url: &str) -> Result<Prot
     match protocol {
         Protocol::Plain | Protocol::Dot => validate_host_port(protocol, server)?,
         Protocol::Doh => validate_doh(url)?,
-        Protocol::Doq => validate_doq(url)?,
     }
     Ok(protocol)
 }
@@ -39,32 +38,6 @@ fn validate_doh(url: &str) -> Result<(), String> {
         _ => Err(format!("invalid DOH URL {}", go_quote(url))),
     }
 }
-
-fn validate_doq(url: &str) -> Result<(), String> {
-    let (host, port) = parse_doq_url(url);
-    if host.is_empty() || port.is_empty() {
-        return Err(format!("invalid DOQ URL {}", go_quote(url)));
-    }
-    Ok(())
-}
-
-pub fn parse_doq_url(url: &str) -> (String, String) {
-    let mut rest = url;
-    for prefix in ["quic://", "https://", "doq://"] {
-        if let Some(stripped) = rest.strip_prefix(prefix) {
-            rest = stripped;
-        }
-    }
-    if let Some(index) = rest.find('/') {
-        rest = &rest[..index];
-    }
-    match split_host_port(rest) {
-        Ok((host, port)) => (host.to_string(), port.to_string()),
-        Err(_) => (rest.to_string(), DEFAULT_DOQ_PORT.to_string()),
-    }
-}
-
-pub const DEFAULT_DOQ_PORT: &str = "853";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RequestUri {

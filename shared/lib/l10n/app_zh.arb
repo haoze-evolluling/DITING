@@ -6910,7 +6910,7 @@
   "desktopParentalOn": "家长控制已开启",
   "desktopParentalOff": "家长控制已关闭",
   "desktopHubEncrypted": "加密 DNS 服务",
-  "desktopHubEncryptedBody": "以 DoT / DoH / DoQ 向局域网提供加密解析，含证书与 DDR",
+  "desktopHubEncryptedBody": "以 DoT / DoH 向局域网提供加密解析，含证书与 DDR",
   "desktopEncryptedPageTitle": "加密 DNS 服务",
   "desktopEncryptedRefresh": "刷新加密 DNS 状态",
   "desktopEncryptedLoadFailed": "读不到加密 DNS 服务状态",
@@ -6923,12 +6923,12 @@
     }
   },
   "desktopEncryptedListenersTitle": "加密 DNS 服务",
-  "desktopEncryptedListenersBody": "在局域网内以 DoT / DoH / DoQ 提供解析，终端无需明文查询",
+  "desktopEncryptedListenersBody": "在局域网内以 DoT / DoH 提供解析，终端无需明文查询",
   "desktopEncryptedEnabled": "已启用",
   "desktopEncryptedDisabled": "未启用",
   "desktopEncryptedOn": "加密 DNS 服务已开启",
   "desktopEncryptedOff": "加密 DNS 服务已关闭",
-  "desktopEncryptedNoProtocol": "服务总开关已打开，但三种协议都没选中，因此不会有任何监听。",
+  "desktopEncryptedNoProtocol": "服务总开关已打开，但两种协议都没选中，因此不会有任何监听。",
   "desktopEncryptedDot": "DoT · DNS over TLS",
   "desktopEncryptedDotBody": "端口 {port}，客户端用 tls:// 连接",
   "@desktopEncryptedDotBody": {
@@ -6950,15 +6950,6 @@
       }
     }
   },
-  "desktopEncryptedDoq": "DoQ · DNS over QUIC",
-  "desktopEncryptedDoqBody": "端口 {port}，UDP 上的加密解析",
-  "@desktopEncryptedDoqBody": {
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
   "desktopEncryptedListening": "正在监听 {address}",
   "@desktopEncryptedListening": {
     "placeholders": {
@@ -6972,8 +6963,6 @@
   "desktopEncryptedDotOff": "DoT 已停用",
   "desktopEncryptedDohOn": "DoH 已启用",
   "desktopEncryptedDohOff": "DoH 已停用",
-  "desktopEncryptedDoqOn": "DoQ 已启用",
-  "desktopEncryptedDoqOff": "DoQ 已停用",
   "desktopEncryptedUrls": "客户端填写以下任一地址即可使用：",
   "desktopEncryptedNetworkTitle": "监听参数",
   "desktopEncryptedListenAddress": "监听地址",
@@ -6981,7 +6970,6 @@
   "desktopEncryptedServerName": "服务器名（客户端连接用）",
   "desktopEncryptedDotPort": "DoT 端口",
   "desktopEncryptedDohPort": "DoH 端口",
-  "desktopEncryptedDoqPort": "DoQ 端口",
   "desktopEncryptedDohPath": "DoH 路径",
   "desktopEncryptedServerNameHint": "服务器名会被写进证书的 SAN，终端按它连接才不会报证书错误。",
   "desktopEncryptedPortInvalid": "端口需为 1–65535 的整数",

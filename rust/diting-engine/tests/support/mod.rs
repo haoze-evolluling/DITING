@@ -29,7 +29,6 @@ use tokio_rustls::TlsAcceptor;
 
 const DNS_MESSAGE: &str = "application/dns-message";
 
-
 pub fn query_wire(name: &str, id: u16) -> Vec<u8> {
     let mut out = vec![0u8; 12];
     out[0..2].copy_from_slice(&id.to_be_bytes());
@@ -65,7 +64,6 @@ pub fn truncated_wire(query: &[u8]) -> Vec<u8> {
     out[3] = 0x80;
     out
 }
-
 
 pub fn spawn_udp_upstream(answer: [u8; 4], truncate: bool) -> (SocketAddr, Arc<AtomicUsize>) {
     spawn_udp_socket(
@@ -138,7 +136,6 @@ pub fn spawn_tcp_listener(
     (address, count)
 }
 
-
 pub struct TestPki {
     pub ca_pem: String,
     chain: Vec<rustls::pki_types::CertificateDer<'static>>,
@@ -190,7 +187,6 @@ pub fn unix_seconds() -> i64 {
         .unwrap_or(0)
 }
 
-
 pub async fn spawn_dot(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     let acceptor = TlsAcceptor::from(pki.server_config(&[]));
     let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind DoT");
@@ -231,12 +227,10 @@ pub async fn spawn_dot(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
     (address, connections)
 }
 
-
 pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mutex<Vec<Version>>>) {
     let acceptor = TlsAcceptor::from(pki.server_config(&[b"h2", b"http/1.1"]));
     let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind DoH");
     let address = listener.local_addr().expect("local addr");
-    let h3_port = address.port();
     let connections = Arc::new(AtomicUsize::new(0));
     let versions = Arc::new(Mutex::new(Vec::new()));
     let counter = Arc::clone(&connections);
@@ -272,7 +266,6 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
                             Response::builder()
                                 .status(StatusCode::OK)
                                 .header(http::header::CONTENT_TYPE, DNS_MESSAGE)
-                                .header("alt-svc", format!("h3=\":{h3_port}\"; ma=60"))
                                 .body(Full::new(Bytes::from(answer_wire(
                                     &query,
                                     [4, 3, 2, 1],
@@ -291,170 +284,6 @@ pub async fn spawn_doh(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>, Arc<Mute
 
     (address, connections, versions)
 }
-
-
-pub async fn spawn_doh3(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
-    let bind: SocketAddr = "127.0.0.1:0".parse().expect("a valid bind");
-    spawn_doh3_on(pki, bind).await
-}
-
-pub async fn spawn_doh3_on(pki: &TestPki, bind: SocketAddr) -> (SocketAddr, Arc<AtomicUsize>) {
-    let tls = pki.server_config(&[b"h3"]);
-    let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
-        .expect("the DoH3 server config is valid");
-    let server_config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
-    let endpoint = quinn::Endpoint::server(server_config, bind).expect("bind DoH3");
-    let address = endpoint.local_addr().expect("local addr");
-    let connections = Arc::new(AtomicUsize::new(0));
-    let counter = Arc::clone(&connections);
-
-    tokio::spawn(async move {
-        while let Some(incoming) = endpoint.accept().await {
-            let counter = Arc::clone(&counter);
-            tokio::spawn(async move {
-                let Ok(connection) = incoming.await else {
-                    return;
-                };
-                counter.fetch_add(1, Ordering::Relaxed);
-                while let Ok((mut send, mut recv)) = connection.accept_bi().await {
-                    let Ok(request) = recv.read_to_end(65_535).await else {
-                        return;
-                    };
-                    let Some(query) = h3_data(&request) else {
-                        continue;
-                    };
-                    let answer = answer_wire(&query, [4, 3, 2, 1], 60);
-                    let mut out = Vec::new();
-                    h3_frame(&mut out, 0x01, &[0x00, 0x00]);
-                    h3_frame(&mut out, 0x00, &answer);
-                    if send.write_all(&out).await.is_err() {
-                        return;
-                    }
-                    let _ = send.finish();
-                }
-            });
-        }
-    });
-
-    (address, connections)
-}
-
-pub async fn spawn_doh3_silent_on(pki: &TestPki, bind: SocketAddr) -> SocketAddr {
-    let tls = pki.server_config(&[b"h3"]);
-    let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
-        .expect("the DoH3 server config is valid");
-    let server_config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
-    let endpoint = quinn::Endpoint::server(server_config, bind).expect("bind DoH3");
-    let address = endpoint.local_addr().expect("local addr");
-
-    tokio::spawn(async move {
-        let mut connections = Vec::new();
-        while let Some(incoming) = endpoint.accept().await {
-            if let Ok(connection) = incoming.await {
-                connections.push(connection);
-            }
-        }
-    });
-
-    address
-}
-
-fn h3_data(bytes: &[u8]) -> Option<Vec<u8>> {
-    let mut rest = bytes;
-    let mut data = Vec::new();
-    while !rest.is_empty() {
-        let (kind, used) = h3_varint_read(rest)?;
-        rest = &rest[used..];
-        let (len, used) = h3_varint_read(rest)?;
-        rest = &rest[used..];
-        let len = len as usize;
-        if rest.len() < len {
-            return None;
-        }
-        if kind == 0x00 {
-            data.extend_from_slice(&rest[..len]);
-        }
-        rest = &rest[len..];
-    }
-    (!data.is_empty()).then_some(data)
-}
-
-fn h3_frame(out: &mut Vec<u8>, kind: u64, payload: &[u8]) {
-    h3_varint(out, kind);
-    h3_varint(out, payload.len() as u64);
-    out.extend_from_slice(payload);
-}
-
-fn h3_varint(out: &mut Vec<u8>, value: u64) {
-    if value < 64 {
-        out.push(value as u8);
-    } else if value < 16_384 {
-        out.push((0x40 | (value >> 8)) as u8);
-        out.push(value as u8);
-    } else {
-        out.push((0x80 | (value >> 24)) as u8);
-        out.push((value >> 16) as u8);
-        out.push((value >> 8) as u8);
-        out.push(value as u8);
-    }
-}
-
-fn h3_varint_read(buf: &[u8]) -> Option<(u64, usize)> {
-    let first = *buf.first()?;
-    let len = 1usize << (first >> 6);
-    if buf.len() < len {
-        return None;
-    }
-    let mut value = (first & 0x3f) as u64;
-    for byte in &buf[1..len] {
-        value = (value << 8) | *byte as u64;
-    }
-    Some((value, len))
-}
-
-pub async fn spawn_doq(pki: &TestPki) -> (SocketAddr, Arc<AtomicUsize>) {
-    let tls = pki.server_config(&[b"doq"]);
-    let crypto = quinn::crypto::rustls::QuicServerConfig::try_from((*tls).clone())
-        .expect("the DoQ server config is valid");
-    let server_config = quinn::ServerConfig::with_crypto(Arc::new(crypto));
-    let endpoint =
-        quinn::Endpoint::server(server_config, "127.0.0.1:0".parse().expect("a valid bind"))
-            .expect("bind DoQ");
-    let address = endpoint.local_addr().expect("local addr");
-    let connections = Arc::new(AtomicUsize::new(0));
-    let counter = Arc::clone(&connections);
-
-    tokio::spawn(async move {
-        while let Some(incoming) = endpoint.accept().await {
-            let counter = Arc::clone(&counter);
-            tokio::spawn(async move {
-                let Ok(connection) = incoming.await else {
-                    return;
-                };
-                counter.fetch_add(1, Ordering::Relaxed);
-                while let Ok((mut send, mut recv)) = connection.accept_bi().await {
-                    let Ok(framed) = recv.read_to_end(65_535).await else {
-                        return;
-                    };
-                    if framed.len() < 2 {
-                        continue;
-                    }
-                    let query = &framed[2..];
-                    let response = answer_wire(query, [6, 5, 4, 3], 60);
-                    let mut out = (response.len() as u16).to_be_bytes().to_vec();
-                    out.extend_from_slice(&response);
-                    if send.write_all(&out).await.is_err() {
-                        return;
-                    }
-                    let _ = send.finish();
-                }
-            });
-        }
-    });
-
-    (address, connections)
-}
-
 
 #[derive(Default)]
 pub struct Recorder {

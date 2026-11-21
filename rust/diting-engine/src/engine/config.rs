@@ -100,7 +100,7 @@ impl Engine {
         self.system_dns.clear_degraded();
     }
 
-    /// 网络切换后重建解析器：清空上游健康度、Bootstrap、DoT/DoQ 与 DoH 连接池，
+    /// 网络切换后重建解析器：清空上游健康度、Bootstrap、DoT 与 DoH 连接池，
     /// 避免继续复用旧链路。新链路立即可用时，首轮查询短暂优先走系统 DNS。
     pub fn reset_resolver_health(&self) {
         self.negative.clear();

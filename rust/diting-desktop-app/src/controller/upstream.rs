@@ -88,9 +88,15 @@ fn validate_providers(
             return Err(format!("上游名称重复: {id}"));
         }
         let protocol = provider.protocol.trim().to_ascii_uppercase();
-        if !matches!(protocol.as_str(), "PLAIN" | "DOH" | "DOT" | "DOQ" | "DOH3") {
-            return Err(format!("不支持的上游协议: {}", provider.protocol));
-        }
+        let protocol = match protocol.as_str() {
+            "PLAIN" | "DOH" | "DOT" => protocol,
+            "DOH3" | "H3" => "DOH".to_string(),
+            "DOQ" | "QUIC" => {
+                eprintln!("[{prefix}] 已忽略不再支持的 DoQ 项: {id}");
+                continue;
+            }
+            _ => return Err(format!("不支持的上游协议: {}", provider.protocol)),
+        };
         let server = provider.server.trim().to_string();
         let url = provider.url.trim().to_string();
         if server.is_empty() && url.is_empty() {
@@ -272,14 +278,6 @@ fn probe_provider(protocol: &str, target: &str, url: &str) -> Result<ProviderSet
         }),
         "DOH" => Ok(ProviderSettings {
             url: doh_url(target, url),
-            ..provider
-        }),
-        "DOQ" => Ok(ProviderSettings {
-            url: if url.is_empty() {
-                format!("quic://{}", with_default_port(target, 853))
-            } else {
-                url.to_string()
-            },
             ..provider
         }),
         other => Err(format!("不支持的上游协议: {other}")),

@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use diting_desktop_api::config::security::{
-    CERT_SOURCE_SELF_SIGNED, DEFAULT_DOH_PORT, DEFAULT_DOQ_PORT, DEFAULT_DOT_PORT,
+    CERT_SOURCE_SELF_SIGNED, DEFAULT_DOH_PORT, DEFAULT_DOT_PORT,
 };
 use diting_desktop_api::config::Config;
 use diting_desktop_core::cert::{derive_cert_names, CertManager};
@@ -36,7 +36,6 @@ impl EncryptedDdrProvider {
             server_name: encrypted.server_name.clone(),
             dot_enabled: listeners.dot_address().is_some(),
             doh_enabled: listeners.doh_address().is_some(),
-            doq_enabled: listeners.doq_address().is_some(),
             dot_port: bound_port(
                 listeners.dot_address(),
                 encrypted.dot_port,
@@ -46,11 +45,6 @@ impl EncryptedDdrProvider {
                 listeners.doh_address(),
                 encrypted.doh_port,
                 DEFAULT_DOH_PORT,
-            ),
-            doq_port: bound_port(
-                listeners.doq_address(),
-                encrypted.doq_port,
-                DEFAULT_DOQ_PORT,
             ),
             doh_path: encrypted.doh_path.clone(),
             cert_has_ips: cert_has_ips(cert_ips),
@@ -110,7 +104,7 @@ impl AppRuntime {
         self.set_encrypted(self.start_encrypted(&config, server).await);
     }
 
-    pub fn encrypted_addresses(&self) -> (Option<String>, Option<String>, Option<String>) {
+    pub fn encrypted_addresses(&self) -> (Option<String>, Option<String>) {
         let listeners = self
             .encrypted
             .read()
@@ -120,9 +114,8 @@ impl AppRuntime {
             Some(listeners) => (
                 listeners.dot_address().map(str::to_string),
                 listeners.doh_address().map(str::to_string),
-                listeners.doq_address().map(str::to_string),
             ),
-            None => (None, None, None),
+            None => (None, None),
         }
     }
 
@@ -185,9 +178,7 @@ impl AppRuntime {
         server: Arc<DnsServer>,
     ) -> Option<EncryptedListeners> {
         let encrypted = &config.encrypted;
-        if !encrypted.enabled
-            || (!encrypted.dot_enabled && !encrypted.doh_enabled && !encrypted.doq_enabled)
-        {
+        if !encrypted.enabled || (!encrypted.dot_enabled && !encrypted.doh_enabled) {
             return None;
         }
         self.prepare_certificate(config);
@@ -195,10 +186,8 @@ impl AppRuntime {
             listen_address: encrypted.listen_address.clone(),
             dot_enabled: encrypted.dot_enabled,
             doh_enabled: encrypted.doh_enabled,
-            doq_enabled: encrypted.doq_enabled,
             dot_port: encrypted_port(encrypted.dot_port, DEFAULT_DOT_PORT),
             doh_port: encrypted_port(encrypted.doh_port, DEFAULT_DOH_PORT),
-            doq_port: encrypted_port(encrypted.doq_port, DEFAULT_DOQ_PORT),
             doh_path: encrypted.doh_path.clone(),
             server_name: encrypted.server_name.clone(),
             reverse_proxy: ListenerReverseProxyConfig {

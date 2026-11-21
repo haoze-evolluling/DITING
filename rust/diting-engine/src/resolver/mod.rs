@@ -1,13 +1,10 @@
 pub mod bootstrap;
 pub mod dial;
 pub mod doh;
-pub mod doh3;
-pub mod doq;
 pub mod dot;
 pub mod pin;
 pub mod plain;
 pub mod schedule;
-mod session;
 mod system;
 pub mod trust;
 
@@ -15,7 +12,6 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-use diting_config_core::endpoint::parse_doq_url;
 use diting_config_core::protocol::Protocol;
 use diting_resolver_core::ProviderStats;
 use diting_upstream_core::endpoint::{split_target, TargetProtocol};
@@ -67,7 +63,6 @@ pub(crate) struct Provider {
     pub port: String,
     pub doh_uri: Option<Uri>,
     pub pin: Option<[u8; 32]>,
-    pub force_h3: bool,
     pub stats: Arc<ProviderStats>,
 }
 
@@ -84,9 +79,7 @@ pub(crate) struct Inner {
     pub skipped: Vec<String>,
     pub dial: Dialer,
     pub doh: Option<doh::DohClient>,
-    pub doh3: Option<doh3::Doh3Client>,
     pub dot: Option<dot::DotClient>,
-    pub doq: Option<doq::DoqClient>,
     pub system_dns: SystemDns,
 }
 
@@ -105,9 +98,7 @@ impl Resolver {
                 skipped: Vec::new(),
                 dial: Dialer::new(deps.bootstrap, deps.protector),
                 doh: None,
-                doh3: None,
                 dot: None,
-                doq: None,
                 system_dns: deps.system_dns,
             }),
         }
@@ -116,7 +107,7 @@ impl Resolver {
     pub fn configured(config: &DnsConfig, deps: ResolverDeps) -> Self {
         deps.bootstrap.update(&config.bootstrap);
 
-        let mut skipped = Vec::new();
+        let mut skipped = config.skipped.clone();
         let mut providers = Vec::new();
         for provider in &config.providers {
             match build_provider(provider, &deps.stats) {
@@ -142,31 +133,9 @@ impl Resolver {
         let wants_dot = providers
             .iter()
             .any(|entry| entry.protocol == Protocol::Dot);
-        let wants_doq = providers
-            .iter()
-            .any(|entry| entry.protocol == Protocol::Doq);
         let dial = Dialer::new(deps.bootstrap, deps.protector).with_outbound(deps.outbound.clone());
         let doh = wants_doh.then(|| doh::DohClient::new(Arc::clone(&trust), dial.clone()));
-        let doh3 = wants_doh
-            .then(|| doh3::Doh3Client::new(&trust).ok())
-            .flatten();
-        if doh3.is_none() && providers.iter().any(|provider| provider.force_h3) {
-            skipped.push("DoH3 transport unavailable".to_string());
-            providers.retain(|provider| !provider.force_h3);
-        }
         let dot = wants_dot.then(|| dot::DotClient::new(&trust));
-        let doq = if wants_doq {
-            match doq::DoqClient::new(&trust) {
-                Ok(client) => Some(client),
-                Err(error) => {
-                    skipped.push(format!("DoQ transport unavailable: {error}"));
-                    providers.retain(|entry| entry.protocol != Protocol::Doq);
-                    None
-                }
-            }
-        } else {
-            None
-        };
 
         Self {
             inner: Arc::new(Inner {
@@ -176,9 +145,7 @@ impl Resolver {
                 skipped,
                 dial,
                 doh,
-                doh3,
                 dot,
-                doq,
                 system_dns: deps.system_dns,
             }),
         }
@@ -233,22 +200,9 @@ impl Resolver {
             .collect()
     }
 
-    pub fn doh3_ready(&self) -> bool {
-        self.inner.doh3.is_some()
-            && self
-                .inner
-                .doh
-                .as_ref()
-                .map(|doh| doh.doh3_ready())
-                .unwrap_or(false)
-    }
-
     pub fn shutdown(&self) {
         if let Some(dot) = &self.inner.dot {
             dot.close_all();
-        }
-        if let Some(doq) = &self.inner.doq {
-            doq.detach();
         }
     }
 
@@ -258,9 +212,6 @@ impl Resolver {
         self.inner.dial.bootstrap().reset();
         if let Some(dot) = &self.inner.dot {
             dot.close_all();
-        }
-        if let Some(doq) = &self.inner.doq {
-            doq.detach();
         }
         for provider in &self.inner.providers {
             provider.stats.reset();
@@ -288,10 +239,6 @@ fn build_provider(provider: &ConfigProvider, stats: &StatsStore) -> Result<Provi
                 .map_err(|error| format!("provider {key}: {error}"))?,
         )
     };
-    if provider.force_h3 && provider.protocol != Protocol::Doh {
-        return Err(format!("provider {key}: force_h3 is only valid for DoH"));
-    }
-
     let (host, port, doh_uri) = match provider.protocol {
         Protocol::Plain => {
             let (host, port) = split_target(&provider.server, TargetProtocol::Plain);
@@ -313,13 +260,6 @@ fn build_provider(provider: &ConfigProvider, stats: &StatsStore) -> Result<Provi
             let port = uri.port_u16().unwrap_or(443).to_string();
             (host, port, Some(uri))
         }
-        Protocol::Doq => {
-            let (host, port) = parse_doq_url(&provider.url);
-            if host.is_empty() {
-                return Err(format!("provider {key}: DOQ URL has no host"));
-            }
-            (host, port, None)
-        }
     };
 
     Ok(Provider {
@@ -329,7 +269,6 @@ fn build_provider(provider: &ConfigProvider, stats: &StatsStore) -> Result<Provi
         port,
         doh_uri,
         pin,
-        force_h3: provider.force_h3,
         stats,
     })
 }

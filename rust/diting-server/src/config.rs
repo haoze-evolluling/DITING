@@ -208,7 +208,6 @@ impl ServerConfig {
         config.encrypted.enabled = false;
         config.encrypted.dot_enabled = false;
         config.encrypted.doh_enabled = false;
-        config.encrypted.doq_enabled = false;
         config.client.groups_enabled = false;
         config.client.groups.clear();
         config.web.enabled = false;
@@ -239,6 +238,7 @@ fn validate_upstream(config: &mut ResolverConfig) -> Result<(), String> {
     if !MODES.contains(&config.mode.trim()) {
         return Err(format!("未知的上游调度模式: {}", config.mode));
     }
+    config.normalize();
     if config.providers.is_empty() {
         return Err("至少需要配置一个上游 DNS 服务".to_string());
     }
@@ -249,7 +249,7 @@ fn validate_upstream(config: &mut ResolverConfig) -> Result<(), String> {
             return Err("上游 DNS 服务名称不能为空".to_string());
         }
         let protocol = provider.protocol.trim().to_ascii_uppercase();
-        if !matches!(protocol.as_str(), "PLAIN" | "DOH" | "DOT" | "DOQ" | "DOH3") {
+        if !matches!(protocol.as_str(), "PLAIN" | "DOH" | "DOT") {
             return Err(format!("未知的 DNS 协议: {}", provider.protocol));
         }
         provider.protocol = protocol;
@@ -260,7 +260,6 @@ fn validate_upstream(config: &mut ResolverConfig) -> Result<(), String> {
             return Err(format!("上游 DNS 服务名称重复: {}", provider.id));
         }
     }
-    config.normalize();
     Ok(())
 }
 
