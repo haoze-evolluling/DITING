@@ -1,8 +1,8 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CachePreset {
-    Conservative = 0,
-    Balanced = 1,
-    HighHitRate = 2,
+    Conservative,
+    Balanced,
+    HighHitRate,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,23 +17,6 @@ pub struct CacheValues {
 }
 
 impl CachePreset {
-    pub fn from_index(index: u8) -> Option<Self> {
-        match index {
-            0 => Some(CachePreset::Conservative),
-            1 => Some(CachePreset::Balanced),
-            2 => Some(CachePreset::HighHitRate),
-            _ => None,
-        }
-    }
-
-    pub fn storage_value(self) -> &'static str {
-        match self {
-            CachePreset::Conservative => "conservative",
-            CachePreset::Balanced => "balanced",
-            CachePreset::HighHitRate => "high_hit_rate",
-        }
-    }
-
     pub fn from_storage(value: &str) -> Option<Self> {
         match value {
             "conservative" => Some(CachePreset::Conservative),
@@ -76,39 +59,6 @@ impl CachePreset {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CachePolicy {
-    pub mode: String,
-    pub max_ttl_seconds: i32,
-    pub min_ttl_enabled: bool,
-    pub min_ttl_seconds: i32,
-    pub stale_fallback_enabled: bool,
-    pub stale_fallback_seconds: i32,
-}
-
-pub fn from_policy(policy: &CachePolicy) -> CachePreset {
-    if policy.mode == "follow_dns_ttl" && !policy.min_ttl_enabled && !policy.stale_fallback_enabled
-    {
-        return CachePreset::Conservative;
-    }
-    let balanced = CachePreset::Balanced.values();
-    if policy.mode == "limit_max_ttl"
-        && policy.max_ttl_seconds <= balanced.max_ttl_seconds
-        && (!policy.min_ttl_enabled || policy.min_ttl_seconds <= balanced.min_ttl_seconds)
-        && (!policy.stale_fallback_enabled
-            || policy.stale_fallback_seconds <= balanced.stale_fallback_seconds)
-    {
-        return CachePreset::Balanced;
-    }
-    CachePreset::HighHitRate
-}
-
-pub fn current(preset_raw: Option<&str>, policy: &CachePolicy) -> CachePreset {
-    preset_raw
-        .and_then(CachePreset::from_storage)
-        .unwrap_or_else(|| from_policy(policy))
-}
-
 pub fn server_cache_document(preset_raw: &str) -> (CacheValues, i32) {
     match CachePreset::from_storage(preset_raw) {
         Some(CachePreset::Conservative) => (CachePreset::Conservative.values(), 15),
@@ -121,24 +71,6 @@ pub fn server_cache_document(preset_raw: &str) -> (CacheValues, i32) {
 mod tests {
     use super::*;
 
-    fn policy(
-        mode: &str,
-        max_ttl: i32,
-        min_enabled: bool,
-        min_ttl: i32,
-        stale_enabled: bool,
-        stale_ttl: i32,
-    ) -> CachePolicy {
-        CachePolicy {
-            mode: mode.to_string(),
-            max_ttl_seconds: max_ttl,
-            min_ttl_enabled: min_enabled,
-            min_ttl_seconds: min_ttl,
-            stale_fallback_enabled: stale_enabled,
-            stale_fallback_seconds: stale_ttl,
-        }
-    }
-
     #[test]
     fn preset_values_are_the_stored_contract() {
         assert_eq!(CachePreset::Conservative.values().mode, "follow_dns_ttl");
@@ -147,37 +79,6 @@ mod tests {
         assert_eq!(high.max_ttl_seconds, 21600);
         assert_eq!(high.min_ttl_seconds, 120);
         assert_eq!(high.stale_fallback_seconds, 900);
-    }
-
-    #[test]
-    fn policy_derivation_matches_the_installs_that_predate_the_key() {
-        assert_eq!(
-            from_policy(&policy("follow_dns_ttl", 3600, false, 60, false, 300)),
-            CachePreset::Conservative
-        );
-        assert_eq!(
-            from_policy(&policy("limit_max_ttl", 1800, true, 30, false, 300)),
-            CachePreset::Balanced
-        );
-        assert_eq!(
-            from_policy(&policy("limit_max_ttl", 21600, true, 120, true, 900)),
-            CachePreset::HighHitRate
-        );
-        assert_eq!(
-            from_policy(&policy("limit_max_ttl", 5000, false, 60, false, 300)),
-            CachePreset::HighHitRate
-        );
-    }
-
-    #[test]
-    fn stored_preset_wins_over_the_policy() {
-        let stored = policy("follow_dns_ttl", 3600, false, 60, false, 300);
-        assert_eq!(
-            current(Some("high_hit_rate"), &stored),
-            CachePreset::HighHitRate
-        );
-        assert_eq!(current(Some("nope"), &stored), CachePreset::Conservative);
-        assert_eq!(current(None, &stored), CachePreset::Conservative);
     }
 
     #[test]

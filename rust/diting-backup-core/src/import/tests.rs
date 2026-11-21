@@ -386,35 +386,63 @@ fn cache_is_written_as_one_policy() {
     let content = document(
         &["cache"],
         json!({"cache": {
-            "enabled": true, "mode": "fixed", "maxTtlSeconds": 86400,
-            "fixedTtlSeconds": 600, "minTtlEnabled": true, "minTtlSeconds": 30,
-            "staleFallbackEnabled": true, "staleFallbackSeconds": 900,
-            "preset": "custom",
+            "enabled": true, "preset": "custom", "ttlScalePercent": 130,
         }}),
     );
     let current = json!({"cache": {
-        "enabled": false, "mode": "auto", "maxTtlSeconds": 3600,
-        "fixedTtlSeconds": 300, "minTtlEnabled": false, "minTtlSeconds": 10,
-        "staleFallbackEnabled": false, "staleFallbackSeconds": 600, "preset": "balanced",
+        "enabled": false, "preset": "standard", "ttlScalePercent": 100,
     }});
     let plan = run_import(&content, current, false);
     let config = write_of(&plan, "cache.config").expect("cache policy");
-    assert_eq!(config["fixedTtlSeconds"], json!(600));
+    assert_eq!(config["enabled"], json!(true));
     assert_eq!(config["preset"], json!("custom"));
+    assert_eq!(config["ttlScalePercent"], json!(130));
     assert_eq!(outcome_of(&plan, "cache")["added"], json!(1));
 
     let again = run_import(
         &content,
         json!({"cache": {
-            "enabled": true, "mode": "fixed", "maxTtlSeconds": 86400,
-            "fixedTtlSeconds": 600, "minTtlEnabled": true, "minTtlSeconds": 30,
-            "staleFallbackEnabled": true, "staleFallbackSeconds": 900,
-            "preset": "custom",
+            "enabled": true, "preset": "custom", "ttlScalePercent": 130,
         }}),
         false,
     );
     assert_eq!(again["writes"], json!([]));
     assert_eq!(outcome_of(&again, "cache")["skipped"], json!(1));
+}
+
+#[test]
+fn cache_migrates_the_old_shape() {
+    let content = json!({
+        "format": "diting-backup",
+        "version": 2,
+        "exportedAt": 0,
+        "data": {"cache": {
+            "enabled": true, "mode": "limit_max_ttl", "maxTtlSeconds": 21600,
+            "fixedTtlSeconds": 3600, "minTtlEnabled": true, "minTtlSeconds": 120,
+            "staleFallbackEnabled": true, "staleFallbackSeconds": 900,
+            "preset": "high_hit_rate",
+        }},
+    })
+    .to_string();
+    let plan = run_import(&content, json!({"cache": {"enabled": false}}), false);
+    let config = write_of(&plan, "cache.config").expect("cache policy");
+    assert_eq!(config["preset"], json!("aggressive"));
+    assert_eq!(config["ttlScalePercent"], json!(200));
+
+    let follow = json!({
+        "format": "diting-backup",
+        "version": 2,
+        "exportedAt": 0,
+        "data": {"cache": {
+            "enabled": true, "mode": "follow_dns_ttl",
+            "minTtlEnabled": false, "staleFallbackEnabled": false,
+        }},
+    })
+    .to_string();
+    let plan = run_import(&follow, json!({"cache": {"enabled": false}}), false);
+    let config = write_of(&plan, "cache.config").expect("cache policy");
+    assert_eq!(config["preset"], json!("conservative"));
+    assert_eq!(config["ttlScalePercent"], json!(50));
 }
 
 #[test]

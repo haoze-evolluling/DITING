@@ -101,16 +101,11 @@ extension _BackupExportSnapshot on BackupExporter {
 
   Map<String, Object?> _cache(BackupExportSource source) {
     final settings = source.settings;
+    final policy = DnsCachePolicy.read(settings);
     return {
       'enabled': settings.cacheEnabled,
-      'mode': settings.cacheModeRaw,
-      'maxTtlSeconds': settings.cacheMaxTtlSeconds,
-      'fixedTtlSeconds': settings.cacheFixedTtlSeconds,
-      'minTtlEnabled': settings.cacheMinTtlEnabled,
-      'minTtlSeconds': settings.cacheMinTtlSeconds,
-      'staleFallbackEnabled': settings.cacheStaleFallbackEnabled,
-      'staleFallbackSeconds': settings.cacheStaleFallbackSeconds,
-      'preset': settings.cachePresetRaw,
+      'preset': policy.tier.storageValue,
+      'ttlScalePercent': policy.scalePercent,
     };
   }
 

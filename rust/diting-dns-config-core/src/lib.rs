@@ -14,7 +14,7 @@ pub use document::{
     ServerConfig, ServerSettings, TunnelConfig, TunnelSettings,
 };
 pub use ffi::ABI_VERSION;
-pub use presets::{CachePolicy, CachePreset, CacheValues};
+pub use presets::{CachePreset, CacheValues};
 pub use protocol::Protocol;
 pub use providers::Provider;
 pub use upstreams::ServerUpstream;

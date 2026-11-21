@@ -6,7 +6,7 @@ use crate::value::{as_object, get, integer};
 mod values;
 
 pub const FORMAT: &str = "diting-backup";
-pub const VERSION: i64 = 2;
+pub const VERSION: i64 = 3;
 
 pub fn run(input: &Value) -> Value {
     let now = integer(input, "nowMs").unwrap_or(0);

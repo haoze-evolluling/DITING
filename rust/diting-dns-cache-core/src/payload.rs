@@ -1,7 +1,7 @@
 use crate::cache::{Hit, SnapshotEntry, Stats};
 use crate::policy::{Config, TtlMode};
 
-pub const LAYOUT_VERSION: u8 = 2;
+pub const LAYOUT_VERSION: u8 = 3;
 
 const CONFIG_ENABLED: u8 = 1 << 0;
 const CONFIG_MIN_TTL: u8 = 1 << 1;
@@ -31,6 +31,7 @@ pub fn decode_config(data: &[u8]) -> Result<Config, String> {
         stale_fallback_seconds: reader.i64("stale_seconds")?,
         negative_ttl_enabled: flags & CONFIG_NEGATIVE_TTL != 0,
         negative_ttl_seconds: reader.i64("negative_seconds")?,
+        ttl_scale_percent: reader.i64("ttl_scale_percent")?,
     };
     let mode = reader.text("mode")?;
     reader.expect_end()?;
@@ -240,17 +241,18 @@ mod tests {
     fn config_layout_round_trips() {
         let mut data = vec![LAYOUT_VERSION];
         data.push(CONFIG_ENABLED | CONFIG_STALE_FALLBACK | CONFIG_NEGATIVE_TTL);
-        for value in [3600i64, 120, 60, 300, 30] {
+        for value in [3600i64, 120, 60, 300, 30, 130] {
             data.extend_from_slice(&value.to_le_bytes());
         }
-        push_text(&mut data, "fixed_ttl");
+        push_text(&mut data, "scale");
         let config = decode_config(&data).unwrap();
         assert!(config.enabled);
         assert!(config.stale_fallback_enabled);
         assert!(config.negative_ttl_enabled);
         assert!(!config.min_ttl_enabled);
         assert_eq!(config.fixed_ttl_seconds, 120);
-        assert_eq!(config.mode, TtlMode::FixedTtl);
+        assert_eq!(config.ttl_scale_percent, 130);
+        assert_eq!(config.mode, TtlMode::Scale);
         assert!(decode_config(&data[..data.len() - 1]).is_err());
         let mut trailing = data.clone();
         trailing.push(0);

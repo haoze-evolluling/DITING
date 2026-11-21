@@ -13,13 +13,7 @@ extension DocumentBuilders on RustDnsConfigCore {
     required String? bootstrapCustomJson,
     required String blockResponseModeRaw,
     required bool cacheEnabled,
-    required String cacheModeRaw,
-    required int cacheMaxTtlSeconds,
-    required int cacheFixedTtlSeconds,
-    required bool cacheMinTtlEnabled,
-    required int cacheMinTtlSeconds,
-    required bool cacheStaleFallbackEnabled,
-    required int cacheStaleFallbackSeconds,
+    required int cacheTtlScalePercent,
     required bool dynamicBlockEnabled,
     required int dynamicBlockRequestThreshold,
     required int dynamicBlockWindowSeconds,
@@ -37,8 +31,6 @@ extension DocumentBuilders on RustDnsConfigCore {
       ..u8(
         (bootstrapEnabled ? 0x1 : 0) |
             (cacheEnabled ? 0x2 : 0) |
-            (cacheMinTtlEnabled ? 0x4 : 0) |
-            (cacheStaleFallbackEnabled ? 0x8 : 0) |
             (dynamicBlockEnabled ? 0x10 : 0) |
             (blockHttpsSvcb ? 0x20 : 0) |
             (rebindingProtection ? 0x40 : 0) |
@@ -54,11 +46,7 @@ extension DocumentBuilders on RustDnsConfigCore {
       ..strings(bootstrapPresetIds)
       ..optionalUtf8(bootstrapCustomJson)
       ..utf8(blockResponseModeRaw)
-      ..utf8(cacheModeRaw)
-      ..i32(cacheMaxTtlSeconds)
-      ..i32(cacheFixedTtlSeconds)
-      ..i32(cacheMinTtlSeconds)
-      ..i32(cacheStaleFallbackSeconds)
+      ..i32(cacheTtlScalePercent)
       ..i32(dynamicBlockRequestThreshold)
       ..i32(dynamicBlockWindowSeconds)
       ..i32(dynamicBlockNxDomainDurationSeconds)

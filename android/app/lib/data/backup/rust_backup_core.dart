@@ -4,6 +4,8 @@ import 'package:diting_android/data/db/kernel_core.dart';
 
 const _payloadMagic = 0x314b4244;
 
+const _abiVersion = 2;
+
 class RustBackupCore {
   RustBackupCore._(this._core);
 
@@ -19,6 +21,7 @@ class RustBackupCore {
     KernelCore.load(
       crate: 'diting-backup-core',
       payloadMagic: _payloadMagic,
+      abiVersion: _abiVersion,
       errorPrefix: 'backup core',
       entries: const ['export', 'import'],
     ),

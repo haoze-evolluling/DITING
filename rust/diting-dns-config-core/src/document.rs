@@ -72,16 +72,10 @@ impl Default for ConnectionRateLimitInput {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CacheInput {
     pub enabled: bool,
-    pub mode: String,
-    pub max_ttl_seconds: i32,
-    pub fixed_ttl_seconds: i32,
-    pub min_ttl_enabled: bool,
-    pub min_ttl_seconds: i32,
-    pub stale_fallback_enabled: bool,
-    pub stale_fallback_seconds: i32,
+    pub ttl_scale_percent: i32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -138,9 +132,27 @@ pub struct ServerConfig {
     pub document: String,
 }
 
+const MAX_TTL_SECONDS: i32 = 86_400;
+const STALE_FALLBACK_SECONDS: i32 = 300;
+const NEGATIVE_TTL_SECONDS: i32 = 30;
+const MIN_SCALE_PERCENT: i32 = 10;
+const MAX_SCALE_PERCENT: i32 = 500;
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct CacheDocument {
+struct TunnelCacheDocument {
+    enabled: bool,
+    ttl_scale_percent: i32,
+    max_ttl_seconds: i32,
+    stale_fallback_enabled: bool,
+    stale_fallback_seconds: i32,
+    negative_ttl_enabled: bool,
+    negative_ttl_seconds: i32,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ServerCacheDocument {
     enabled: bool,
     mode: String,
     max_ttl_seconds: i32,
@@ -216,11 +228,11 @@ struct BootstrapDocument<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct TunnelDocument<'a> {
+struct TunnelDocument<'a, C> {
     mode: &'a str,
     block_response: &'a str,
     dynamic_response: DynamicDocument,
-    cache: CacheDocument,
+    cache: C,
     providers: Vec<ProviderDocument<'a>>,
     bootstrap: BootstrapDocument<'a>,
     privacy: PrivacyDocument,
@@ -285,18 +297,19 @@ fn upstream_document(upstream: &ServerUpstream) -> ProviderDocument<'_> {
     }
 }
 
-fn cache_document(input: &CacheInput) -> CacheDocument {
-    CacheDocument {
+fn cache_document(input: &CacheInput) -> TunnelCacheDocument {
+    TunnelCacheDocument {
         enabled: input.enabled,
-        mode: input.mode.clone(),
-        max_ttl_seconds: clamp(input.max_ttl_seconds, 30, 86400),
-        fixed_ttl_seconds: clamp(input.fixed_ttl_seconds, 30, 86400),
-        min_ttl_enabled: input.min_ttl_enabled,
-        min_ttl_seconds: clamp(input.min_ttl_seconds, 30, 86400),
-        stale_fallback_enabled: input.stale_fallback_enabled,
-        stale_fallback_seconds: clamp(input.stale_fallback_seconds, 30, 86400),
+        ttl_scale_percent: clamp(
+            input.ttl_scale_percent,
+            MIN_SCALE_PERCENT,
+            MAX_SCALE_PERCENT,
+        ),
+        max_ttl_seconds: MAX_TTL_SECONDS,
+        stale_fallback_enabled: true,
+        stale_fallback_seconds: STALE_FALLBACK_SECONDS,
         negative_ttl_enabled: true,
-        negative_ttl_seconds: 30,
+        negative_ttl_seconds: NEGATIVE_TTL_SECONDS,
     }
 }
 
@@ -498,7 +511,7 @@ pub fn build_server(
     };
 
     let (values, negative_ttl_seconds) = presets::server_cache_document(&settings.cache_preset_raw);
-    let cache = CacheDocument {
+    let cache = ServerCacheDocument {
         enabled: settings.cache_enabled,
         mode: values.mode.to_string(),
         max_ttl_seconds: values.max_ttl_seconds,

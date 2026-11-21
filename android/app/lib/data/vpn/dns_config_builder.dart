@@ -3,6 +3,7 @@ library;
 import 'dart:convert';
 
 import 'package:diting_android/data/mock_data.dart';
+import 'package:diting_android/data/vpn/cache_presets.dart';
 import 'package:diting_android/data/vpn/rust_dns_config_core.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
@@ -264,13 +265,7 @@ TunnelDocument tunnelDocument(LegacySettings settings) =>
       bootstrapCustomJson: settings.bootstrapCustomJson,
       blockResponseModeRaw: settings.blockResponseModeRaw,
       cacheEnabled: settings.cacheEnabled,
-      cacheModeRaw: settings.cacheModeRaw,
-      cacheMaxTtlSeconds: settings.cacheMaxTtlSeconds,
-      cacheFixedTtlSeconds: settings.cacheFixedTtlSeconds,
-      cacheMinTtlEnabled: settings.cacheMinTtlEnabled,
-      cacheMinTtlSeconds: settings.cacheMinTtlSeconds,
-      cacheStaleFallbackEnabled: settings.cacheStaleFallbackEnabled,
-      cacheStaleFallbackSeconds: settings.cacheStaleFallbackSeconds,
+      cacheTtlScalePercent: DnsCachePolicy.read(settings).scalePercent,
       dynamicBlockEnabled: settings.dynamicBlockEnabled,
       dynamicBlockRequestThreshold: settings.dynamicBlockRequestThreshold,
       dynamicBlockWindowSeconds: settings.dynamicBlockWindowSeconds,

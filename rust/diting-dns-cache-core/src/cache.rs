@@ -1,11 +1,16 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Condvar, Mutex, MutexGuard, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant};
 
 use crate::policy::{Config, DEFAULT_MAX_ENTRIES, NUM_SHARDS};
 use crate::wire::{self, ChainTarget};
+
+use self::keys::{
+    build_key, mutex_guard, now_wall_ms, parse_key_parts, read_guard, shard_index, write_guard,
+};
+pub use self::persist::PersistEntry;
 
 pub const LRU_PROMOTE_MS: i64 = 1000;
 
@@ -48,26 +53,6 @@ pub struct SnapshotEntry {
     pub hit_count: u64,
     pub original_ttl: u32,
     pub response_size: u32,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PersistEntry {
-    pub key: Vec<u8>,
-    pub domain: Vec<u8>,
-    pub qtype: u16,
-    pub qclass: u16,
-    pub wire: Vec<u8>,
-    pub ttl_offsets: Vec<u16>,
-    pub original_ttl: u32,
-    pub created_at_ms: i64,
-    pub expires_at_ms: i64,
-    pub stale_until_ms: i64,
-    pub is_negative: bool,
-    pub chain_targets: Vec<ChainTarget>,
-    pub ip_list: Vec<String>,
-    pub resolved_ips: String,
-    pub hit_count: u64,
-    pub last_hit_at_ms: i64,
 }
 
 struct Entry {
@@ -491,106 +476,6 @@ impl Cache {
         self.capacity.load(Ordering::Relaxed)
     }
 
-    pub fn export(&self) -> Vec<PersistEntry> {
-        let now = Instant::now();
-        let now_ms = now_wall_ms();
-        let mut out = Vec::new();
-        for shard in &self.shards {
-            let guard = read_guard(shard);
-            for entry in guard.entries.values() {
-                if entry.stale_until <= now {
-                    continue;
-                }
-                out.push(PersistEntry {
-                    key: entry.key.clone(),
-                    domain: entry.domain.clone(),
-                    qtype: entry.qtype,
-                    qclass: entry.qclass,
-                    wire: entry.wire.clone(),
-                    ttl_offsets: entry.ttl_offsets.clone(),
-                    original_ttl: entry.original_ttl,
-                    created_at_ms: entry.created_at_ms,
-                    expires_at_ms: entry.expires_at_ms,
-                    stale_until_ms: now_ms
-                        + entry
-                            .stale_until
-                            .saturating_duration_since(now)
-                            .as_millis()
-                            .min(i64::MAX as u128) as i64,
-                    is_negative: entry.is_negative,
-                    chain_targets: entry.chain_targets.clone(),
-                    ip_list: entry.ip_list.clone(),
-                    resolved_ips: entry.resolved_ips.clone(),
-                    hit_count: entry.hit_count.load(Ordering::Relaxed),
-                    last_hit_at_ms: entry.last_hit_at_ms.load(Ordering::Relaxed),
-                });
-            }
-        }
-        out
-    }
-
-    pub fn import(&self, entries: Vec<PersistEntry>) -> usize {
-        let now = Instant::now();
-        let now_ms = now_wall_ms();
-        let mut restored = 0usize;
-        for entry in entries {
-            if entry.key.is_empty() || entry.wire.len() < 12 || entry.stale_until_ms <= now_ms {
-                continue;
-            }
-            let expires_at = now
-                + Duration::from_millis(entry.expires_at_ms.saturating_sub(now_ms).max(1) as u64);
-            let stale_until = now
-                + Duration::from_millis(entry.stale_until_ms.saturating_sub(now_ms).max(1) as u64);
-            let restored_entry = Entry {
-                key: entry.key.clone(),
-                domain: entry.domain,
-                qtype: entry.qtype,
-                qclass: entry.qclass,
-                wire: entry.wire,
-                ttl_offsets: entry.ttl_offsets,
-                original_ttl: entry.original_ttl,
-                created_at_ms: entry.created_at_ms,
-                expires_at_ms: entry.expires_at_ms,
-                expires_at,
-                stale_until,
-                is_negative: entry.is_negative,
-                chain_targets: entry.chain_targets,
-                ip_list: entry.ip_list,
-                resolved_ips: entry.resolved_ips,
-                lru_seq: 0,
-                hit_count: AtomicU64::new(entry.hit_count),
-                last_hit_at_ms: AtomicI64::new(entry.last_hit_at_ms),
-                refreshing: AtomicBool::new(false),
-            };
-            let index = shard_index(&restored_entry.key);
-            let mut shard = write_guard(&self.shards[index]);
-            if shard.entries.contains_key(&restored_entry.key) {
-                shard.entries.remove(&restored_entry.key);
-            } else if shard.entries.len() >= shard.max_entries {
-                let victim = shard
-                    .entries
-                    .iter()
-                    .min_by_key(|(_, candidate)| candidate.lru_seq)
-                    .map(|(key, _)| key.clone());
-                if let Some(victim) = victim {
-                    shard.entries.remove(&victim);
-                    self.evictions.fetch_add(1, Ordering::Relaxed);
-                }
-            }
-            shard.next_seq += 1;
-            let seq = shard.next_seq;
-            shard.entries.insert(
-                restored_entry.key.clone(),
-                Entry {
-                    lru_seq: seq,
-                    ..restored_entry
-                },
-            );
-            restored += 1;
-        }
-        restored
-    }
-
     pub fn stats(&self) -> Stats {
         let entry_count: usize = self
             .shards
@@ -652,71 +537,9 @@ impl Drop for Cache {
     }
 }
 
-fn build_key(query: &[u8]) -> Option<([u8; wire::MAX_KEY_LEN], wire::KeyParts)> {
-    if query.len() < 12 {
-        return None;
-    }
-    let mut buffer = [0u8; wire::MAX_KEY_LEN];
-    let parts = wire::write_question_key(query, &mut buffer)?;
-    Some((buffer, parts))
-}
-
-fn parse_key_parts(key: &[u8]) -> Option<(Vec<u8>, u16, u16)> {
-    let last = key.iter().rposition(|byte| *byte == b':')?;
-    let previous = key[..last].iter().rposition(|byte| *byte == b':')?;
-    let qclass = parse_decimal(&key[last + 1..])?;
-    let qtype = parse_decimal(&key[previous + 1..last])?;
-    Some((key[..previous].to_vec(), qtype, qclass))
-}
-
-fn parse_decimal(bytes: &[u8]) -> Option<u16> {
-    if bytes.is_empty() || bytes.len() > 5 {
-        return None;
-    }
-    let mut value = 0u32;
-    for byte in bytes {
-        if !byte.is_ascii_digit() {
-            return None;
-        }
-        value = value * 10 + u32::from(byte - b'0');
-    }
-    u16::try_from(value).ok()
-}
-
-fn shard_index(key: &[u8]) -> usize {
-    (fnv32(key) as usize) % NUM_SHARDS
-}
-
-fn fnv32(bytes: &[u8]) -> u32 {
-    let mut hash = 2166136261u32;
-    for &byte in bytes {
-        hash ^= u32::from(byte);
-        hash = hash.wrapping_mul(16777619);
-    }
-    hash
-}
-
-fn now_wall_ms() -> i64 {
-    match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(elapsed) => elapsed.as_millis().min(i64::MAX as u128) as i64,
-        Err(_) => 0,
-    }
-}
-
-fn read_guard<T>(lock: &RwLock<T>) -> RwLockReadGuard<'_, T> {
-    lock.read().unwrap_or_else(|poisoned| poisoned.into_inner())
-}
-
-fn write_guard<T>(lock: &RwLock<T>) -> RwLockWriteGuard<'_, T> {
-    lock.write()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-}
-
-fn mutex_guard<T>(lock: &Mutex<T>) -> MutexGuard<'_, T> {
-    lock.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
-}
-
+mod keys;
 mod maintenance;
+mod persist;
 
 #[cfg(test)]
 mod tests;

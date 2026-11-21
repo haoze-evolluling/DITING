@@ -2,11 +2,20 @@ pub const NUM_SHARDS: usize = 64;
 
 pub const DEFAULT_MAX_ENTRIES: usize = 4096;
 
+pub const MAX_TTL_SECONDS: i64 = 86_400;
+
+pub const MIN_TTL_SCALE_PERCENT: i64 = 10;
+
+pub const MAX_TTL_SCALE_PERCENT: i64 = 500;
+
+pub const DEFAULT_TTL_SCALE_PERCENT: i64 = 100;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TtlMode {
     FollowDnsTtl,
     LimitMaxTtl,
     FixedTtl,
+    Scale,
     Default,
 }
 
@@ -18,6 +27,7 @@ impl TtlMode {
             b"follow_dns_ttl" => TtlMode::FollowDnsTtl,
             b"limit_max_ttl" => TtlMode::LimitMaxTtl,
             b"fixed_ttl" => TtlMode::FixedTtl,
+            b"scale" | b"scale_ttl" => TtlMode::Scale,
             _ => TtlMode::Default,
         }
     }
@@ -27,6 +37,7 @@ impl TtlMode {
 pub struct Config {
     pub enabled: bool,
     pub mode: TtlMode,
+    pub ttl_scale_percent: i64,
     pub max_ttl_seconds: i64,
     pub fixed_ttl_seconds: i64,
     pub min_ttl_enabled: bool,
@@ -42,6 +53,7 @@ impl Default for Config {
         Self {
             enabled: false,
             mode: TtlMode::Default,
+            ttl_scale_percent: 0,
             max_ttl_seconds: 0,
             fixed_ttl_seconds: 0,
             min_ttl_enabled: false,
@@ -57,7 +69,19 @@ impl Default for Config {
 impl Config {
     pub fn normalized(mut self) -> Self {
         if self.max_ttl_seconds <= 0 {
-            self.max_ttl_seconds = 3600;
+            self.max_ttl_seconds = if self.mode == TtlMode::Scale {
+                MAX_TTL_SECONDS
+            } else {
+                3600
+            };
+        }
+        if self.mode == TtlMode::Scale {
+            if self.ttl_scale_percent <= 0 {
+                self.ttl_scale_percent = DEFAULT_TTL_SCALE_PERCENT;
+            }
+            self.ttl_scale_percent = self
+                .ttl_scale_percent
+                .clamp(MIN_TTL_SCALE_PERCENT, MAX_TTL_SCALE_PERCENT);
         }
         if self.fixed_ttl_seconds <= 0 {
             self.fixed_ttl_seconds = 3600;
@@ -91,9 +115,23 @@ impl Config {
                     ttl = self.fixed_ttl_seconds;
                 }
             }
+            TtlMode::Scale => {
+                let percent = if self.ttl_scale_percent > 0 {
+                    self.ttl_scale_percent
+                } else {
+                    DEFAULT_TTL_SCALE_PERCENT
+                };
+                ttl = (ttl * percent + 50) / 100;
+            }
         }
         if self.min_ttl_enabled && self.min_ttl_seconds > 0 && ttl < self.min_ttl_seconds {
             ttl = self.min_ttl_seconds;
+        }
+        if self.mode == TtlMode::Scale {
+            ttl = ttl.min(MAX_TTL_SECONDS);
+            if self.max_ttl_seconds > 0 {
+                ttl = ttl.min(self.max_ttl_seconds);
+            }
         }
         if ttl <= 0 {
             0

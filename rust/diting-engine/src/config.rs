@@ -3,7 +3,10 @@ use serde::Deserialize;
 use diting_config_core::dns_config::{normalize, NormalizedProvider, Provider as ConfigProvider};
 use diting_config_core::dynamic::DynamicBlock;
 use diting_config_core::protocol::Protocol;
-use diting_dns_cache_core::policy::{Config as CacheConfig, TtlMode};
+use diting_dns_cache_core::policy::{
+    Config as CacheConfig, TtlMode, DEFAULT_TTL_SCALE_PERCENT, MAX_TTL_SCALE_PERCENT,
+    MAX_TTL_SECONDS, MIN_TTL_SCALE_PERCENT,
+};
 use diting_dns_core::block::BlockConfig;
 
 use crate::connection_limit::Config as ConnectionRateLimitConfig;
@@ -45,15 +48,9 @@ pub struct CacheJson {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
-    pub mode: String,
+    pub ttl_scale_percent: i64,
     #[serde(default)]
     pub max_ttl_seconds: i64,
-    #[serde(default)]
-    pub fixed_ttl_seconds: i64,
-    #[serde(default)]
-    pub min_ttl_enabled: bool,
-    #[serde(default)]
-    pub min_ttl_seconds: i64,
     #[serde(default)]
     pub stale_fallback_enabled: bool,
     #[serde(default)]
@@ -354,18 +351,32 @@ fn rate_limit_config(document: &RateLimitJson) -> diting_ratelimit_core::Config 
 }
 
 fn cache_config(document: &CacheJson) -> CacheConfig {
+    let percent = if document.ttl_scale_percent > 0 {
+        document
+            .ttl_scale_percent
+            .clamp(MIN_TTL_SCALE_PERCENT, MAX_TTL_SCALE_PERCENT)
+    } else {
+        DEFAULT_TTL_SCALE_PERCENT
+    };
+    let max_ttl_seconds = if document.max_ttl_seconds > 0 {
+        document.max_ttl_seconds.min(MAX_TTL_SECONDS)
+    } else {
+        MAX_TTL_SECONDS
+    };
     CacheConfig {
         enabled: document.enabled,
-        mode: TtlMode::parse(document.mode.as_bytes()),
-        max_ttl_seconds: document.max_ttl_seconds,
-        fixed_ttl_seconds: document.fixed_ttl_seconds,
-        min_ttl_enabled: document.min_ttl_enabled,
-        min_ttl_seconds: document.min_ttl_seconds,
+        mode: TtlMode::Scale,
+        ttl_scale_percent: percent,
+        max_ttl_seconds,
+        fixed_ttl_seconds: 0,
+        min_ttl_enabled: false,
+        min_ttl_seconds: 0,
         stale_fallback_enabled: document.stale_fallback_enabled,
         stale_fallback_seconds: document.stale_fallback_seconds,
         negative_ttl_enabled: document.negative_ttl_enabled,
         negative_ttl_seconds: document.negative_ttl_seconds,
     }
+    .normalized()
 }
 
 #[cfg(test)]
@@ -374,7 +385,7 @@ mod tests {
 
     fn payload(mode: &str, protocol: &str, server: &str) -> String {
         format!(
-            r#"{{"mode":"{mode}","providers":[{{"id":"p1","protocol":"{protocol}","server":"{server}","url":"","weight":1}}],"blockResponse":"NXDOMAIN","dynamicResponse":{{"enabled":false,"requestThreshold":0,"windowSeconds":0,"nxDomainDurationSeconds":0}},"cache":{{"enabled":true,"mode":"limit_max_ttl","maxTtlSeconds":600}},"bootstrap":{{"enabled":false,"ips":[]}}}}"#
+            r#"{{"mode":"{mode}","providers":[{{"id":"p1","protocol":"{protocol}","server":"{server}","url":"","weight":1}}],"blockResponse":"NXDOMAIN","dynamicResponse":{{"enabled":false,"requestThreshold":0,"windowSeconds":0,"nxDomainDurationSeconds":0}},"cache":{{"enabled":true,"ttlScalePercent":150,"maxTtlSeconds":600}},"bootstrap":{{"enabled":false,"ips":[]}}}}"#
         )
     }
 
@@ -388,7 +399,9 @@ mod tests {
         assert_eq!(config.block_response, 1, "NXDOMAIN");
         assert!(config.cache.enabled);
         assert_eq!(config.cache.max_ttl_seconds, 600);
-        assert_eq!(config.cache.mode, TtlMode::LimitMaxTtl);
+        assert_eq!(config.cache.mode, TtlMode::Scale);
+        assert_eq!(config.cache.ttl_scale_percent, 150);
+        assert_eq!(config.cache.effective_ttl(300), 450);
     }
 
     #[test]
@@ -424,7 +437,7 @@ mod tests {
     fn missing_collections_default_to_empty() {
         let document = DnsConfig::parse(r#"{"mode":"single"}"#).expect("decodes");
         assert!(document.providers.is_empty());
-        assert!(document.cache.mode.is_empty());
+        assert_eq!(document.cache.ttl_scale_percent, 0);
         assert!(!document.bootstrap.enabled);
         assert!(document.privacy.block_record_types.is_empty());
         assert!(!document.dns64.enabled);

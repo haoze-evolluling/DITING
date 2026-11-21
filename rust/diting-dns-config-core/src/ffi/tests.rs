@@ -24,7 +24,7 @@ fn body_of(bytes: &Option<Vec<u8>>) -> Reader<'_> {
 
 fn tunnel_payload() -> Vec<u8> {
     let mut writer = Writer::new();
-    writer.u8(0b1_0001);
+    writer.u8(0b1_0011);
     writer.u8(0b1);
     writer.string("single");
     writer.string("preset_alidns_dns");
@@ -35,11 +35,7 @@ fn tunnel_payload() -> Vec<u8> {
     writer.strings(&["preset_alidns".to_string()]);
     writer.opt_string(None);
     writer.string("nxdomain");
-    writer.string("limit_max_ttl");
-    writer.i32(3600);
-    writer.i32(3600);
-    writer.i32(60);
-    writer.i32(300);
+    writer.i32(130);
     writer.i32(80);
     writer.i32(160);
     writer.i32(5);
@@ -67,6 +63,10 @@ fn tunnel_entry_returns_mode_document_and_rows() {
     let document = reader.string().expect("document");
     assert!(document.contains(r#""mode":"single""#));
     assert!(document.contains(r#""server":"223.5.5.5:53""#));
+    assert!(document.contains(r#""ttlScalePercent":130"#));
+    assert!(document.contains(r#""maxTtlSeconds":86400"#));
+    assert!(document.contains(r#""staleFallbackSeconds":300"#));
+    assert!(!document.contains(r#""mode":"limit_max_ttl""#));
     assert!(document.contains(r#""connectionRateLimit":{"enabled":true"#));
     assert_eq!(reader.u32(), Some(1));
     assert_eq!(reader.string().as_deref(), Some("preset_alidns_dns"));
@@ -203,65 +203,6 @@ fn provider_ops_cover_split_parse_encode_upsert_and_join() {
 }
 
 #[test]
-fn preset_ops_cover_derivation_values_and_server_cache() {
-    let mut from_policy = Writer::new();
-    from_policy.u8(OP_PRESET_FROM_POLICY);
-    from_policy.string("follow_dns_ttl");
-    from_policy.i32(3600);
-    from_policy.bool(false);
-    from_policy.i32(60);
-    from_policy.bool(false);
-    from_policy.i32(300);
-    let bytes = unsafe { call(diting_dns_config_core_presets, &from_policy.finish()) };
-    assert_eq!(body_of(&bytes).u8(), Some(0));
-
-    let mut current = Writer::new();
-    current.u8(OP_PRESET_CURRENT);
-    current.opt_string(Some("high_hit_rate"));
-    current.string("follow_dns_ttl");
-    current.i32(3600);
-    current.bool(false);
-    current.i32(60);
-    current.bool(false);
-    current.i32(300);
-    let bytes = unsafe { call(diting_dns_config_core_presets, &current.finish()) };
-    assert_eq!(body_of(&bytes).u8(), Some(2));
-
-    let mut values = Writer::new();
-    values.u8(OP_PRESET_VALUES);
-    values.u8(2);
-    let bytes = unsafe { call(diting_dns_config_core_presets, &values.finish()) };
-    let mut reader = body_of(&bytes);
-    assert_eq!(reader.string().as_deref(), Some("limit_max_ttl"));
-    assert_eq!(reader.i32(), Some(21600));
-    assert_eq!(reader.i32(), Some(3600));
-    assert_eq!(reader.bool(), Some(true));
-    assert_eq!(reader.i32(), Some(120));
-    assert_eq!(reader.bool(), Some(true));
-    assert_eq!(reader.i32(), Some(900));
-
-    let mut server = Writer::new();
-    server.u8(OP_SERVER_CACHE);
-    server.string("conservative");
-    let bytes = unsafe { call(diting_dns_config_core_presets, &server.finish()) };
-    let mut reader = body_of(&bytes);
-    assert_eq!(reader.string().as_deref(), Some("follow_dns_ttl"));
-    assert_eq!(reader.i32(), Some(3600));
-    assert_eq!(reader.i32(), Some(3600));
-    assert_eq!(reader.bool(), Some(false));
-    assert_eq!(reader.i32(), Some(60));
-    assert_eq!(reader.bool(), Some(false));
-    assert_eq!(reader.i32(), Some(300));
-    assert_eq!(reader.i32(), Some(15));
-
-    let mut storage = Writer::new();
-    storage.u8(OP_PRESET_STORAGE);
-    storage.u8(1);
-    let bytes = unsafe { call(diting_dns_config_core_presets, &storage.finish()) };
-    assert_eq!(body_of(&bytes).string().as_deref(), Some("balanced"));
-}
-
-#[test]
 fn upstream_ops_cover_parse_encode_validate_normalize_and_host_port() {
     let mut parse = Writer::new();
     parse.u8(OP_PARSE_UPSTREAMS);
@@ -347,11 +288,6 @@ fn malformed_payloads_are_rejected() {
         unsafe { call(diting_dns_config_core_providers, &[9]) },
         None,
         "unknown op"
-    );
-    assert_eq!(
-        unsafe { call(diting_dns_config_core_presets, &[OP_PRESET_VALUES, 7]) },
-        None,
-        "unknown preset"
     );
     assert_eq!(
         unsafe { call(diting_dns_config_core_upstreams, &[OP_SERVER_HOST_PORT, 0]) },

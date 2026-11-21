@@ -305,7 +305,7 @@ pub fn provider_json(id: &str, protocol: &str, server: &str, url: &str) -> Strin
 pub fn config_json(mode: &str, providers: &[String], bootstrap: Option<&str>) -> String {
     let bootstrap = bootstrap.unwrap_or(r#"{"enabled":false,"ips":[]}"#);
     format!(
-        r#"{{"mode":"{mode}","providers":[{}],"blockResponse":"NXDOMAIN","dynamicResponse":{{"enabled":false,"requestThreshold":0,"windowSeconds":0,"nxDomainDurationSeconds":0}},"cache":{{"enabled":false,"mode":"limit_max_ttl","maxTtlSeconds":0,"fixedTtlSeconds":0,"minTtlEnabled":false,"minTtlSeconds":0,"staleFallbackEnabled":false,"staleFallbackSeconds":0,"negativeTtlEnabled":false,"negativeTtlSeconds":0}},"bootstrap":{bootstrap}}}"#,
+        r#"{{"mode":"{mode}","providers":[{}],"blockResponse":"NXDOMAIN","dynamicResponse":{{"enabled":false,"requestThreshold":0,"windowSeconds":0,"nxDomainDurationSeconds":0}},"cache":{{"enabled":false}},"bootstrap":{bootstrap}}}"#,
         providers.join(",")
     )
 }

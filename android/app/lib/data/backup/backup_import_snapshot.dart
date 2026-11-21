@@ -6,6 +6,7 @@ extension _BackupImportSnapshot on BackupImporter {
     final settings = target.settings;
     final store = target.store;
     final db = target.database;
+    final cachePolicy = DnsCachePolicy.read(settings);
     List<Map<String, Object?>>? rewriteRows;
     return {
       'providers': {
@@ -27,14 +28,8 @@ extension _BackupImportSnapshot on BackupImporter {
       },
       'cache': {
         'enabled': settings.cacheEnabled,
-        'mode': settings.cacheModeRaw,
-        'maxTtlSeconds': settings.cacheMaxTtlSeconds,
-        'fixedTtlSeconds': settings.cacheFixedTtlSeconds,
-        'minTtlEnabled': settings.cacheMinTtlEnabled,
-        'minTtlSeconds': settings.cacheMinTtlSeconds,
-        'staleFallbackEnabled': settings.cacheStaleFallbackEnabled,
-        'staleFallbackSeconds': settings.cacheStaleFallbackSeconds,
-        'preset': settings.cachePresetRaw,
+        'preset': cachePolicy.tier.storageValue,
+        'ttlScalePercent': cachePolicy.scalePercent,
       },
       'outbound': {
         'protocol': store.read(

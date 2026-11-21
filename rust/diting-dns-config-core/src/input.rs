@@ -108,16 +108,9 @@ pub fn tunnel_settings(reader: &mut Reader<'_>) -> Option<TunnelSettings> {
     let bootstrap_preset_ids = reader.strings()?;
     let bootstrap_custom_json = reader.opt_string()?;
     let block_response_mode = reader.string()?;
-    let cache_mode = reader.string()?;
     let cache = CacheInput {
         enabled: flags & 0b10 != 0,
-        mode: cache_mode,
-        max_ttl_seconds: reader.i32()?,
-        fixed_ttl_seconds: reader.i32()?,
-        min_ttl_enabled: flags & 0b100 != 0,
-        min_ttl_seconds: reader.i32()?,
-        stale_fallback_enabled: flags & 0b1000 != 0,
-        stale_fallback_seconds: reader.i32()?,
+        ttl_scale_percent: reader.i32()?,
     };
     let dynamic = DynamicInput {
         enabled: flags & 0b10000 != 0,

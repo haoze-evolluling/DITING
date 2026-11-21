@@ -8,6 +8,7 @@ import 'package:diting_android/data/backup/backup_models.dart';
 import 'package:diting_android/data/backup/rust_backup_core.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
+import 'package:diting_android/data/vpn/cache_presets.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';

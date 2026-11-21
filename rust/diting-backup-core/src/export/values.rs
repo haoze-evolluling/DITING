@@ -135,14 +135,8 @@ fn bootstrap(source: &Value) -> Result<Value, &'static str> {
 fn cache(source: &Value) -> Value {
     json!({
         "enabled": boolean(source, "enabled").unwrap_or(false),
-        "mode": text(source, "mode"),
-        "maxTtlSeconds": integer(source, "maxTtlSeconds"),
-        "fixedTtlSeconds": integer(source, "fixedTtlSeconds"),
-        "minTtlEnabled": boolean(source, "minTtlEnabled").unwrap_or(false),
-        "minTtlSeconds": integer(source, "minTtlSeconds"),
-        "staleFallbackEnabled": boolean(source, "staleFallbackEnabled").unwrap_or(false),
-        "staleFallbackSeconds": integer(source, "staleFallbackSeconds"),
         "preset": text(source, "preset"),
+        "ttlScalePercent": integer(source, "ttlScalePercent"),
     })
 }
 

@@ -284,53 +284,73 @@ pub fn bootstrap(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     outcome
 }
 
+const CACHE_MIN_PERCENT: i64 = 10;
+const CACHE_MAX_PERCENT: i64 = 500;
+const CACHE_STEP_PERCENT: i64 = 10;
+
+fn cache_clamp_percent(percent: i64) -> i64 {
+    let rounded =
+        ((percent as f64 / CACHE_STEP_PERCENT as f64).round() as i64) * CACHE_STEP_PERCENT;
+    rounded.clamp(CACHE_MIN_PERCENT, CACHE_MAX_PERCENT)
+}
+
+fn cache_policy_of(value: &Value) -> Option<(&'static str, i64)> {
+    let percent = integer(value, "ttlScalePercent").filter(|value| *value > 0);
+    let preset = text(value, "preset").unwrap_or_default();
+    let builtin = |storage: &'static str, percent: i64| Some((storage, percent));
+    match preset.as_str() {
+        "conservative" => builtin("conservative", 50),
+        "balanced" | "standard" => builtin("standard", 100),
+        "high_hit_rate" | "aggressive" => builtin("aggressive", 200),
+        "custom" => Some(("custom", cache_clamp_percent(percent.unwrap_or(100)))),
+        _ => {
+            if let Some(percent) = percent {
+                let percent = cache_clamp_percent(percent);
+                return Some(match percent {
+                    50 => ("conservative", 50),
+                    100 => ("standard", 100),
+                    200 => ("aggressive", 200),
+                    _ => ("custom", percent),
+                });
+            }
+            let mode = text(value, "mode")?;
+            let min_enabled = get(value, "minTtlEnabled")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            let stale_enabled = get(value, "staleFallbackEnabled")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            if mode == "follow_dns_ttl" && !min_enabled && !stale_enabled {
+                Some(("conservative", 50))
+            } else {
+                Some(("standard", 100))
+            }
+        }
+    }
+}
+
 pub fn cache(value: &Value, current: &Value, plan: &mut Plan) -> Outcome {
     if !value.is_object() {
         return Outcome::failed(Group::Cache, "cacheNotObject");
     }
-    let pick_text =
-        |key: &str, fallback: &str| text(value, key).unwrap_or_else(|| fallback.to_string());
-    let local_text = |key: &str| text(current, key).unwrap_or_default();
-    let pick_bool =
-        |key: &str, fallback: bool| get(value, key).and_then(Value::as_bool).unwrap_or(fallback);
-    let pick_int = |key: &str, fallback: i64| integer(value, key).unwrap_or(fallback);
-
+    let local = cache_policy_of(current).unwrap_or(("standard", 100));
+    let (preset, ttl_scale_percent) = cache_policy_of(value).unwrap_or(local);
+    let enabled = get(value, "enabled")
+        .and_then(Value::as_bool)
+        .or_else(|| get(current, "enabled").and_then(Value::as_bool))
+        .unwrap_or(false);
     let next = json!({
-        "preset": pick_text("preset", &local_text("preset")),
-        "enabled": pick_bool("enabled", get(current, "enabled").and_then(Value::as_bool).unwrap_or(false)),
-        "mode": pick_text("mode", &local_text("mode")),
-        "maxTtlSeconds": pick_int("maxTtlSeconds", integer(current, "maxTtlSeconds").unwrap_or(0)),
-        "fixedTtlSeconds": pick_int("fixedTtlSeconds", integer(current, "fixedTtlSeconds").unwrap_or(0)),
-        "minTtlEnabled": pick_bool("minTtlEnabled", get(current, "minTtlEnabled").and_then(Value::as_bool).unwrap_or(false)),
-        "minTtlSeconds": pick_int("minTtlSeconds", integer(current, "minTtlSeconds").unwrap_or(0)),
-        "staleFallbackEnabled": pick_bool("staleFallbackEnabled", get(current, "staleFallbackEnabled").and_then(Value::as_bool).unwrap_or(false)),
-        "staleFallbackSeconds": pick_int("staleFallbackSeconds", integer(current, "staleFallbackSeconds").unwrap_or(0)),
+        "enabled": enabled,
+        "preset": preset,
+        "ttlScalePercent": ttl_scale_percent,
     });
 
-    let mut unchanged = true;
-    for key in [
-        "preset",
-        "enabled",
-        "mode",
-        "maxTtlSeconds",
-        "fixedTtlSeconds",
-        "minTtlEnabled",
-        "minTtlSeconds",
-        "staleFallbackEnabled",
-        "staleFallbackSeconds",
-    ] {
-        let local = match key {
-            "preset" | "mode" => Value::String(local_text(key)),
-            "enabled" | "minTtlEnabled" | "staleFallbackEnabled" => {
-                Value::from(get(current, key).and_then(Value::as_bool).unwrap_or(false))
-            }
-            _ => Value::from(integer(current, key).unwrap_or(0)),
-        };
-        if next.get(key) != Some(&local) {
-            unchanged = false;
-        }
-    }
-    if unchanged {
+    let local_value = json!({
+        "enabled": get(current, "enabled").and_then(Value::as_bool).unwrap_or(false),
+        "preset": local.0,
+        "ttlScalePercent": local.1,
+    });
+    if next == local_value {
         return Outcome {
             skipped: 1,
             ..Outcome::new(Group::Cache)

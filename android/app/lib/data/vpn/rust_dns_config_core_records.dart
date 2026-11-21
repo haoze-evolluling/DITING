@@ -13,16 +13,6 @@ typedef BootstrapEntryRow = ({String id, String name, String ip});
 
 typedef BootstrapRow = ({String id, String name, String ip, bool enabled});
 
-typedef CacheValues = ({
-  String mode,
-  int maxTtlSeconds,
-  int fixedTtlSeconds,
-  bool minTtlEnabled,
-  int minTtlSeconds,
-  bool staleFallbackEnabled,
-  int staleFallbackSeconds,
-});
-
 typedef TunnelDocument = ({
   String mode,
   String document,

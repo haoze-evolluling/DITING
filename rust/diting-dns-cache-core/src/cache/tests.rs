@@ -169,6 +169,40 @@ fn fixed_ttl_overrides_the_upstream_value() {
     cache.close();
 }
 
+#[test]
+fn scale_mode_multiplies_the_upstream_ttl() {
+    let mut config = config();
+    config.mode = crate::policy::TtlMode::Scale;
+    config.ttl_scale_percent = 200;
+    config.max_ttl_seconds = crate::policy::MAX_TTL_SECONDS;
+    let cache = Cache::new(config);
+    assert!(store(&cache, "scale.example.", 300, &[[1, 2, 3, 4]]));
+    let request = query("scale.example.", TYPE_A);
+    let (buffer, parts) = build_key(&request).expect("key");
+    let key = &buffer[..parts.key_len];
+    let shard = read_guard(&cache.shards[shard_index(key)]);
+    let entry = shard.entries.get(key).expect("entry");
+    assert_eq!(entry.created_at_ms + 600_000, entry.expires_at_ms);
+    drop(shard);
+
+    let hit = cache.get(&request, true).expect("hit");
+    let ttl = ttl_at(&hit.wire, "scale.example.");
+    assert!((599..=600).contains(&ttl), "ttl was {ttl}");
+    cache.close();
+}
+
+#[test]
+fn ttl_at_keeps_patched_ttls_consistent() {
+    let cache = Cache::new(config());
+    assert!(store(&cache, "bounded.example.", 60, &[[1, 1, 1, 1]]));
+    let hit = cache
+        .get(&query("bounded.example.", TYPE_A), true)
+        .expect("hit");
+    let ttl = ttl_at(&hit.wire, "bounded.example.");
+    assert!((59..=60).contains(&ttl), "ttl was {ttl}");
+    cache.close();
+}
+
 fn ttl_at(wire: &[u8], name: &str) -> u32 {
     let offset = 12 + name_wire(name).len() + 4 + name_wire(name).len() + 4;
     u32::from_be_bytes([

@@ -70,9 +70,9 @@ enum BackupGroup {
 abstract final class BackupFormat {
   static const magic = 'diting-backup';
 
-  static const version = 2;
+  static const version = 3;
 
-  static const maxReadableVersion = 2;
+  static const maxReadableVersion = 3;
 
   static const fileNamePrefix = 'DITING-backup';
 

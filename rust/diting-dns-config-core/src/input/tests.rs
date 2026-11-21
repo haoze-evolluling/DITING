@@ -3,7 +3,7 @@ use crate::wire::Writer;
 
 fn tunnel_payload() -> Vec<u8> {
     let mut writer = Writer::new();
-    writer.u8(0b1_1111);
+    writer.u8(0b1_0011);
     writer.u8(0b1);
     writer.string("parallel_race");
     writer.string("preset_alidns_dns");
@@ -17,11 +17,7 @@ fn tunnel_payload() -> Vec<u8> {
     writer.strings(&["preset_alidns".to_string()]);
     writer.opt_string(Some("[]"));
     writer.string("refused");
-    writer.string("follow_dns_ttl");
-    writer.i32(600);
-    writer.i32(3600);
-    writer.i32(30);
-    writer.i32(300);
+    writer.i32(130);
     writer.i32(7);
     writer.i32(120);
     writer.i32(600);
@@ -52,11 +48,7 @@ fn tunnel_settings_decode_every_field() {
     assert_eq!(settings.bootstrap_custom_json.as_deref(), Some("[]"));
     assert_eq!(settings.block_response_mode, "refused");
     assert!(settings.cache.enabled);
-    assert_eq!(settings.cache.mode, "follow_dns_ttl");
-    assert_eq!(settings.cache.max_ttl_seconds, 600);
-    assert!(settings.cache.min_ttl_enabled);
-    assert!(settings.cache.stale_fallback_enabled);
-    assert_eq!(settings.cache.stale_fallback_seconds, 300);
+    assert_eq!(settings.cache.ttl_scale_percent, 130);
     assert!(settings.dynamic.enabled);
     assert_eq!(settings.dynamic.request_threshold, 7);
     assert_eq!(settings.dynamic.window_seconds, 120);
@@ -80,11 +72,7 @@ fn flags_carry_the_booleans() {
     writer.strings(&[]);
     writer.opt_string(None);
     writer.string("nxdomain");
-    writer.string("limit_max_ttl");
-    writer.i32(3600);
-    writer.i32(3600);
-    writer.i32(60);
-    writer.i32(300);
+    writer.i32(100);
     writer.i32(50);
     writer.i32(100);
     writer.i32(5);
@@ -95,8 +83,7 @@ fn flags_carry_the_booleans() {
     let settings = tunnel_settings(&mut reader).expect("settings");
     assert!(!settings.bootstrap_enabled);
     assert!(!settings.cache.enabled);
-    assert!(!settings.cache.min_ttl_enabled);
-    assert!(!settings.cache.stale_fallback_enabled);
+    assert_eq!(settings.cache.ttl_scale_percent, 100);
     assert!(!settings.dynamic.enabled);
     assert!(!settings.connection_rate_limit.enabled);
 }

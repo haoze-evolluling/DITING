@@ -1372,19 +1372,23 @@ abstract class AppL10n {
 
   String get cachePresetConservativeSummary;
 
-  String get cachePresetConservativeDescription;
-
   String get cachePresetStandardName;
 
   String get cachePresetStandardSummary;
-
-  String get cachePresetStandardDescription;
 
   String get cachePresetAggressiveName;
 
   String get cachePresetAggressiveSummary;
 
-  String get cachePresetAggressiveDescription;
+  String get cachePresetCustomName;
+
+  String get cachePresetCustomSummary;
+
+  String cachePresetMultiplier(String value);
+
+  String cachePresetExample(int upstream, int cached);
+
+  String get cachePresetRecommended;
 
   String get cacheDisabledSummary;
 
@@ -3747,65 +3751,9 @@ abstract class AppL10n {
 
   String get cachePresetNote;
 
-  String get cachePresetCustomName;
+  String get cacheCustomScaleLabel;
 
-  String get cachePresetCustomSummary;
-
-  String get cachePresetCustomDescription;
-
-  String get cacheCustomSection;
-
-  String get cacheCustomMode;
-
-  String get cacheCustomModeFollow;
-
-  String get cacheCustomModeLimit;
-
-  String get cacheCustomModeFixed;
-
-  String get cacheCustomModeFollowDesc;
-
-  String get cacheCustomModeLimitDesc;
-
-  String get cacheCustomModeFixedDesc;
-
-  String get cacheCustomMaxTtl;
-
-  String get cacheCustomFixedTtl;
-
-  String get cacheCustomMinTtlEnabled;
-
-  String get cacheCustomMinTtlEnabledDesc;
-
-  String get cacheCustomMinTtl;
-
-  String get cacheCustomStaleEnabled;
-
-  String get cacheCustomStaleEnabledDesc;
-
-  String get cacheCustomStaleSeconds;
-
-  String get cacheCustomFooter;
-
-  String get cacheCustomSecondsLabel;
-
-  String get cacheCustomSecondsHelper;
-
-  String get cacheCustomSecondsInvalid;
-
-  String cacheDurationSeconds(int value);
-
-  String cacheDurationMinutes(int value);
-
-  String cacheDurationHours(int value);
-
-  String cacheCustomSummaryMax(String value);
-
-  String cacheCustomSummaryFixed(String value);
-
-  String cacheCustomSummaryMin(String value);
-
-  String cacheCustomSummaryStale(String value);
+  String get cacheCustomScaleHint;
 
   String get recognitionSponsorTitle;
 

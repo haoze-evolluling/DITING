@@ -55,13 +55,7 @@ fn settings() -> TunnelSettings {
         block_response_mode: "nxdomain".to_string(),
         cache: CacheInput {
             enabled: true,
-            mode: "limit_max_ttl".to_string(),
-            max_ttl_seconds: 3600,
-            fixed_ttl_seconds: 3600,
-            min_ttl_enabled: false,
-            min_ttl_seconds: 60,
-            stale_fallback_enabled: false,
-            stale_fallback_seconds: 300,
+            ttl_scale_percent: 130,
         },
         dynamic: DynamicInput {
             enabled: false,
@@ -101,12 +95,9 @@ fn default_single_mode_picks_the_selected_plain_provider() {
         json["cache"],
         serde_json::json!({
             "enabled": true,
-            "mode": "limit_max_ttl",
-            "maxTtlSeconds": 3600,
-            "fixedTtlSeconds": 3600,
-            "minTtlEnabled": false,
-            "minTtlSeconds": 60,
-            "staleFallbackEnabled": false,
+            "ttlScalePercent": 130,
+            "maxTtlSeconds": 86400,
+            "staleFallbackEnabled": true,
             "staleFallbackSeconds": 300,
             "negativeTtlEnabled": true,
             "negativeTtlSeconds": 30
@@ -239,10 +230,7 @@ fn bootstrap_keeps_only_selected_presets_and_enabled_custom_rows() {
 fn clamps_and_block_response_are_applied() {
     let mut input = settings();
     input.block_response_mode = "zero_address".to_string();
-    input.cache.max_ttl_seconds = 1;
-    input.cache.fixed_ttl_seconds = 999_999;
-    input.cache.min_ttl_seconds = 0;
-    input.cache.stale_fallback_seconds = 1;
+    input.cache.ttl_scale_percent = 1;
     input.dynamic = DynamicInput {
         enabled: true,
         request_threshold: 500,
@@ -255,10 +243,10 @@ fn clamps_and_block_response_are_applied() {
         &preset_bootstrap(),
     ));
     assert_eq!(json["blockResponse"], "CUSTOM_IP");
-    assert_eq!(json["cache"]["maxTtlSeconds"], 30);
-    assert_eq!(json["cache"]["fixedTtlSeconds"], 86400);
-    assert_eq!(json["cache"]["minTtlSeconds"], 30);
-    assert_eq!(json["cache"]["staleFallbackSeconds"], 30);
+    assert_eq!(json["cache"]["ttlScalePercent"], 10);
+    assert_eq!(json["cache"]["maxTtlSeconds"], 86400);
+    assert_eq!(json["cache"]["staleFallbackSeconds"], 300);
+    assert_eq!(json["cache"]["negativeTtlSeconds"], 30);
     assert_eq!(
         json["dynamicResponse"],
         serde_json::json!({

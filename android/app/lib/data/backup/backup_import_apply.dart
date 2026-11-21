@@ -62,17 +62,17 @@ extension _BackupImportApply on BackupImporter {
         settings.setBootstrapCustomJson('$value');
       case 'cache.config':
         final record = value as Map;
-        settings.applyCachePreset(
-          storageValue: '${record['preset']}',
-          enabled: record['enabled'] == true,
-          mode: '${record['mode']}',
-          maxTtlSeconds: record['maxTtlSeconds'] as int? ?? 0,
-          fixedTtlSeconds: record['fixedTtlSeconds'] as int? ?? 0,
-          minTtlEnabled: record['minTtlEnabled'] == true,
-          minTtlSeconds: record['minTtlSeconds'] as int? ?? 0,
-          staleFallbackEnabled: record['staleFallbackEnabled'] == true,
-          staleFallbackSeconds: record['staleFallbackSeconds'] as int? ?? 0,
-        );
+        final tier =
+            DnsCacheTier.fromStorage('${record['preset']}') ??
+            DnsCacheTier.standard;
+        final percent = switch (record['ttlScalePercent']) {
+          final num value => value.toInt(),
+          _ => tier.defaultScalePercent,
+        };
+        DnsCachePolicy(
+          tier: tier,
+          scalePercent: percent,
+        ).write(settings, enabled: record['enabled'] == true);
       case 'outbound.protocol':
         store.putString(
           LegacySettings.uiContainer,

@@ -9,7 +9,7 @@ part 'rust_dns_config_core_build.dart';
 part 'rust_dns_config_core_payload.dart';
 part 'rust_dns_config_core_records.dart';
 
-const _abiVersion = 3;
+const _abiVersion = 4;
 
 const _payloadMagic = 0x31434444;
 
@@ -20,10 +20,6 @@ const _opUpsertProvider = 3;
 const _opJoinHostPort = 4;
 const _opParseBootstrap = 5;
 const _opEncodeBootstrap = 6;
-const _opPresetFromPolicy = 0;
-const _opPresetCurrent = 1;
-const _opPresetValues = 2;
-const _opPresetStorage = 4;
 
 class RustDnsConfigCore {
   RustDnsConfigCore._(this._core);
@@ -42,7 +38,7 @@ class RustDnsConfigCore {
       payloadMagic: _payloadMagic,
       abiVersion: _abiVersion,
       errorPrefix: 'dns config core',
-      entries: const ['tunnel', 'providers', 'presets'],
+      entries: const ['tunnel', 'providers'],
     ),
   );
 
@@ -128,101 +124,6 @@ class RustDnsConfigCore {
         ..bootstrapCustomRows(rows),
     );
     return reader.string();
-  }
-
-  int cachePresetFromPolicy({
-    required String mode,
-    required int maxTtlSeconds,
-    required bool minTtlEnabled,
-    required int minTtlSeconds,
-    required bool staleFallbackEnabled,
-    required int staleFallbackSeconds,
-  }) => _presetOf(
-    _opPresetFromPolicy,
-    null,
-    mode: mode,
-    maxTtlSeconds: maxTtlSeconds,
-    minTtlEnabled: minTtlEnabled,
-    minTtlSeconds: minTtlSeconds,
-    staleFallbackEnabled: staleFallbackEnabled,
-    staleFallbackSeconds: staleFallbackSeconds,
-  );
-
-  int currentCachePreset(
-    String? presetRaw, {
-    required String mode,
-    required int maxTtlSeconds,
-    required bool minTtlEnabled,
-    required int minTtlSeconds,
-    required bool staleFallbackEnabled,
-    required int staleFallbackSeconds,
-  }) => _presetOf(
-    _opPresetCurrent,
-    presetRaw,
-    mode: mode,
-    maxTtlSeconds: maxTtlSeconds,
-    minTtlEnabled: minTtlEnabled,
-    minTtlSeconds: minTtlSeconds,
-    staleFallbackEnabled: staleFallbackEnabled,
-    staleFallbackSeconds: staleFallbackSeconds,
-  );
-
-  int _presetOf(
-    int op,
-    String? presetRaw, {
-    required String mode,
-    required int maxTtlSeconds,
-    required bool minTtlEnabled,
-    required int minTtlSeconds,
-    required bool staleFallbackEnabled,
-    required int staleFallbackSeconds,
-  }) {
-    final writer = _PayloadWriter()..u8(op);
-    if (op == _opPresetCurrent) {
-      writer.optionalUtf8(presetRaw);
-    }
-    writer
-      ..utf8(mode)
-      ..i32(maxTtlSeconds)
-      ..flag(minTtlEnabled)
-      ..i32(minTtlSeconds)
-      ..flag(staleFallbackEnabled)
-      ..i32(staleFallbackSeconds);
-    return _call('presets', writer).u8();
-  }
-
-  CacheValues presetValues(int index) => _readCacheValues(
-    _call(
-      'presets',
-      _PayloadWriter()
-        ..u8(_opPresetValues)
-        ..u8(index),
-    ),
-  );
-
-  String presetStorage(int index) => _call(
-    'presets',
-    _PayloadWriter()
-      ..u8(_opPresetStorage)
-      ..u8(index),
-  ).string();
-
-  CacheValues _readCacheValues(_PayloadReader reader) {
-    final mode = reader.string();
-    final maxTtlSeconds = reader.i32();
-    final fixedTtlSeconds = reader.i32();
-    final minTtlEnabled = reader.flag();
-    final minTtlSeconds = reader.i32();
-    final staleFallbackEnabled = reader.flag();
-    return (
-      mode: mode,
-      maxTtlSeconds: maxTtlSeconds,
-      fixedTtlSeconds: fixedTtlSeconds,
-      minTtlEnabled: minTtlEnabled,
-      minTtlSeconds: minTtlSeconds,
-      staleFallbackEnabled: staleFallbackEnabled,
-      staleFallbackSeconds: reader.i32(),
-    );
   }
 
   _PayloadReader _call(String entry, _PayloadWriter writer) {

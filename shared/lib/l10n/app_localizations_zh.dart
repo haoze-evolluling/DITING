@@ -2175,31 +2175,38 @@ class AppL10nZh extends AppL10n {
   String get cachePresetConservativeName => '保守';
 
   @override
-  String get cachePresetConservativeSummary => '遵从服务器有效期 (TTL)';
-
-  @override
-  String get cachePresetConservativeDescription =>
-      '遵从 DNS 服务器返回的有效期，不主动延长缓存时间，适合经常切换网络或对实时性敏感的场景。';
+  String get cachePresetConservativeSummary => '缓存时间为上游 TTL 的一半';
 
   @override
   String get cachePresetStandardName => '标准';
 
   @override
-  String get cachePresetStandardSummary => '最长 1 小时，短记录至少 1 分钟';
+  String get cachePresetStandardSummary => '与上游 TTL 保持一致';
 
   @override
-  String get cachePresetStandardDescription =>
-      '减少重复查询，同时避免记录过期滞后。解析失败时可短暂使用 5 分钟内的旧记录应急。';
+  String get cachePresetAggressiveName => '激进';
 
   @override
-  String get cachePresetAggressiveName => '高命中';
+  String get cachePresetAggressiveSummary => '缓存时间为上游 TTL 的两倍';
 
   @override
-  String get cachePresetAggressiveSummary => '最长 6 小时，短记录至少 2 分钟';
+  String get cachePresetCustomName => '自定义';
 
   @override
-  String get cachePresetAggressiveDescription =>
-      '更偏向降低网络请求次数和提升弱网可用性。域名变更时更新可能会稍慢一些。';
+  String get cachePresetCustomSummary => '手动设置缓存时长倍率';
+
+  @override
+  String cachePresetMultiplier(String value) {
+    return '$value×';
+  }
+
+  @override
+  String cachePresetExample(int upstream, int cached) {
+    return '上游 $upstream 秒 → 缓存 $cached 秒';
+  }
+
+  @override
+  String get cachePresetRecommended => '推荐';
 
   @override
   String get cacheDisabledSummary => '已关闭 · 每次解析都会请求上游';
@@ -6058,111 +6065,13 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get cachePresetNote =>
-      '建议使用「标准」。档位会自动设置最长 TTL、最短 TTL 和解析失败兜底时间；需要更细的控制时选择「自定义」。';
+      '标准为推荐档位。缓存时间 = 上游 TTL × 倍率，最长 24 小时；解析失败时可短暂使用 5 分钟内的旧记录应急。';
 
   @override
-  String get cachePresetCustomName => '自定义';
+  String get cacheCustomScaleLabel => 'TTL 倍率';
 
   @override
-  String get cachePresetCustomSummary => '手动设置各项缓存参数';
-
-  @override
-  String get cachePresetCustomDescription => '自行设置缓存模式、最长/最短 TTL 和解析失败兜底时间。';
-
-  @override
-  String get cacheCustomSection => '自定义参数';
-
-  @override
-  String get cacheCustomMode => '缓存模式';
-
-  @override
-  String get cacheCustomModeFollow => '跟随上游 TTL';
-
-  @override
-  String get cacheCustomModeLimit => '限制最长 TTL';
-
-  @override
-  String get cacheCustomModeFixed => '固定 TTL';
-
-  @override
-  String get cacheCustomModeFollowDesc => '直接使用 DNS 服务器返回的有效期。';
-
-  @override
-  String get cacheCustomModeLimitDesc => '使用上游有效期，但不超过设定的最长 TTL。';
-
-  @override
-  String get cacheCustomModeFixedDesc => '忽略上游有效期，统一使用固定的 TTL。';
-
-  @override
-  String get cacheCustomMaxTtl => '最长 TTL';
-
-  @override
-  String get cacheCustomFixedTtl => '固定 TTL';
-
-  @override
-  String get cacheCustomMinTtlEnabled => '应用最短 TTL';
-
-  @override
-  String get cacheCustomMinTtlEnabledDesc => '短记录至少保留设定的时间。';
-
-  @override
-  String get cacheCustomMinTtl => '最短 TTL';
-
-  @override
-  String get cacheCustomStaleEnabled => '解析失败兜底';
-
-  @override
-  String get cacheCustomStaleEnabledDesc => '解析失败时可短暂使用过期记录应急。';
-
-  @override
-  String get cacheCustomStaleSeconds => '兜底时长';
-
-  @override
-  String get cacheCustomFooter => '参数直接写入缓存策略，取值范围 30–86400 秒；重新选择档位会覆盖自定义值。';
-
-  @override
-  String get cacheCustomSecondsLabel => '秒数';
-
-  @override
-  String get cacheCustomSecondsHelper => '30–86400 秒';
-
-  @override
-  String get cacheCustomSecondsInvalid => '请输入 30–86400 之间的整数秒数';
-
-  @override
-  String cacheDurationSeconds(int value) {
-    return '$value 秒';
-  }
-
-  @override
-  String cacheDurationMinutes(int value) {
-    return '$value 分钟';
-  }
-
-  @override
-  String cacheDurationHours(int value) {
-    return '$value 小时';
-  }
-
-  @override
-  String cacheCustomSummaryMax(String value) {
-    return '最长 $value';
-  }
-
-  @override
-  String cacheCustomSummaryFixed(String value) {
-    return '固定 $value';
-  }
-
-  @override
-  String cacheCustomSummaryMin(String value) {
-    return '最短 $value';
-  }
-
-  @override
-  String cacheCustomSummaryStale(String value) {
-    return '兜底 $value';
-  }
+  String get cacheCustomScaleHint => '0.1×–5×，步进 0.1×';
 
   @override
   String get recognitionSponsorTitle => '赞助者名单';

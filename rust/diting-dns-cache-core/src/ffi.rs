@@ -4,7 +4,7 @@ use crate::cache::Cache;
 use crate::payload::{decode_config, encode_hit, encode_snapshot, encode_stats};
 use crate::wire;
 
-pub const ABI_VERSION: u32 = 2;
+pub const ABI_VERSION: u32 = 3;
 
 const STATUS_OK: u32 = 0;
 const STATUS_REJECTED: u32 = 1;
@@ -320,6 +320,7 @@ pub(crate) fn encode_test_config(config: &crate::policy::Config, mode: &str) -> 
         config.min_ttl_seconds,
         config.stale_fallback_seconds,
         config.negative_ttl_seconds,
+        config.ttl_scale_percent,
     ] {
         out.extend_from_slice(&value.to_le_bytes());
     }

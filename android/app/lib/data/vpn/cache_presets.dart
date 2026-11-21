@@ -1,216 +1,132 @@
 library;
 
-import 'package:diting_android/data/vpn/rust_dns_config_core.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/prefs/legacy_settings.dart';
 
-enum DnsCachePreset {
-  conservative('conservative'),
-  balanced('balanced'),
-  highHitRate('high_hit_rate'),
-  custom('custom');
+enum DnsCacheTier {
+  conservative('conservative', 50),
+  standard('standard', 100),
+  aggressive('aggressive', 200),
+  custom('custom', 100);
 
-  const DnsCachePreset(this.storageValue);
+  const DnsCacheTier(this.storageValue, this.defaultScalePercent);
 
   final String storageValue;
+  final int defaultScalePercent;
+
+  bool get isCustom => this == DnsCacheTier.custom;
 
   String label(AppL10n l10n) => switch (this) {
-    DnsCachePreset.conservative => l10n.cachePresetConservativeName,
-    DnsCachePreset.balanced => l10n.cachePresetStandardName,
-    DnsCachePreset.highHitRate => l10n.cachePresetAggressiveName,
-    DnsCachePreset.custom => l10n.cachePresetCustomName,
+    DnsCacheTier.conservative => l10n.cachePresetConservativeName,
+    DnsCacheTier.standard => l10n.cachePresetStandardName,
+    DnsCacheTier.aggressive => l10n.cachePresetAggressiveName,
+    DnsCacheTier.custom => l10n.cachePresetCustomName,
   };
 
   String summary(AppL10n l10n) => switch (this) {
-    DnsCachePreset.conservative => l10n.cachePresetConservativeSummary,
-    DnsCachePreset.balanced => l10n.cachePresetStandardSummary,
-    DnsCachePreset.highHitRate => l10n.cachePresetAggressiveSummary,
-    DnsCachePreset.custom => l10n.cachePresetCustomSummary,
+    DnsCacheTier.conservative => l10n.cachePresetConservativeSummary,
+    DnsCacheTier.standard => l10n.cachePresetStandardSummary,
+    DnsCacheTier.aggressive => l10n.cachePresetAggressiveSummary,
+    DnsCacheTier.custom => l10n.cachePresetCustomSummary,
   };
 
-  String description(AppL10n l10n) => switch (this) {
-    DnsCachePreset.conservative => l10n.cachePresetConservativeDescription,
-    DnsCachePreset.balanced => l10n.cachePresetStandardDescription,
-    DnsCachePreset.highHitRate => l10n.cachePresetAggressiveDescription,
-    DnsCachePreset.custom => l10n.cachePresetCustomDescription,
+  static DnsCacheTier? fromStorage(String? value) => switch (value) {
+    'conservative' => DnsCacheTier.conservative,
+    'standard' || 'balanced' => DnsCacheTier.standard,
+    'aggressive' || 'high_hit_rate' => DnsCacheTier.aggressive,
+    'custom' => DnsCacheTier.custom,
+    _ => null,
   };
+}
 
-  static DnsCachePreset? fromStorage(String? value) {
-    for (final preset in values) {
-      if (preset.storageValue == value) return preset;
-    }
-    return null;
+class DnsCachePolicy {
+  const DnsCachePolicy({required this.tier, required this.scalePercent});
+
+  final DnsCacheTier tier;
+  final int scalePercent;
+
+  static const int minScalePercent = 10;
+  static const int maxScalePercent = 500;
+  static const int scaleStepPercent = 10;
+  static const int maxTtlSeconds = 86400;
+  static const int staleFallbackSeconds = 300;
+  static const int sampleUpstreamSeconds = 300;
+
+  static int clampScale(int percent) {
+    final rounded = (percent / scaleStepPercent).round() * scaleStepPercent;
+    return rounded.clamp(minScalePercent, maxScalePercent);
   }
 
-  static DnsCachePreset fromPolicy(LegacySettings settings) =>
-      values[RustDnsConfigCore.instance.cachePresetFromPolicy(
-        mode: settings.cacheModeRaw,
-        maxTtlSeconds: settings.cacheMaxTtlSeconds,
-        minTtlEnabled: settings.cacheMinTtlEnabled,
-        minTtlSeconds: settings.cacheMinTtlSeconds,
-        staleFallbackEnabled: settings.cacheStaleFallbackEnabled,
-        staleFallbackSeconds: settings.cacheStaleFallbackSeconds,
-      )];
-
-  static DnsCachePreset current(LegacySettings settings) {
-    if (settings.cachePresetRaw == DnsCachePreset.custom.storageValue) {
-      return DnsCachePreset.custom;
-    }
-    return values[RustDnsConfigCore.instance.currentCachePreset(
-      settings.cachePresetRaw,
-      mode: settings.cacheModeRaw,
-      maxTtlSeconds: settings.cacheMaxTtlSeconds,
-      minTtlEnabled: settings.cacheMinTtlEnabled,
-      minTtlSeconds: settings.cacheMinTtlSeconds,
-      staleFallbackEnabled: settings.cacheStaleFallbackEnabled,
-      staleFallbackSeconds: settings.cacheStaleFallbackSeconds,
-    )];
+  static int effectiveTtl(int upstreamSeconds, int scalePercent) {
+    final scaled = (upstreamSeconds * clampScale(scalePercent) + 50) ~/ 100;
+    return scaled.clamp(0, maxTtlSeconds);
   }
 
-  void applyTo(LegacySettings settings, {required bool enabled}) {
-    if (this == DnsCachePreset.custom) {
-      DnsCacheCustomPolicy.read(settings).write(settings, enabled: enabled);
-      return;
+  static DnsCachePolicy read(LegacySettings settings) {
+    final stored = DnsCacheTier.fromStorage(settings.cachePresetV4);
+    if (stored != null) {
+      if (!stored.isCustom) {
+        return DnsCachePolicy(
+          tier: stored,
+          scalePercent: stored.defaultScalePercent,
+        );
+      }
+      return DnsCachePolicy(
+        tier: DnsCacheTier.custom,
+        scalePercent: clampScale(settings.cacheScalePercentV4 ?? 100),
+      );
     }
-    final preset = RustDnsConfigCore.instance.presetValues(index);
-    settings.applyCachePreset(
-      storageValue: storageValue,
+
+    final legacy = DnsCacheTier.fromStorage(settings.cachePresetRaw);
+    if (legacy != null) {
+      if (!legacy.isCustom) {
+        return DnsCachePolicy(
+          tier: legacy,
+          scalePercent: legacy.defaultScalePercent,
+        );
+      }
+      return const DnsCachePolicy(tier: DnsCacheTier.custom, scalePercent: 100);
+    }
+
+    final conservative =
+        settings.cacheModeRaw == 'follow_dns_ttl' &&
+        !settings.cacheMinTtlEnabled &&
+        !settings.cacheStaleFallbackEnabled;
+    return conservative
+        ? const DnsCachePolicy(
+            tier: DnsCacheTier.conservative,
+            scalePercent: 50,
+          )
+        : const DnsCachePolicy(tier: DnsCacheTier.standard, scalePercent: 100);
+  }
+
+  void write(LegacySettings settings, {required bool enabled}) {
+    settings.writeCachePolicy(
       enabled: enabled,
-      mode: preset.mode,
-      maxTtlSeconds: preset.maxTtlSeconds,
-      fixedTtlSeconds: preset.fixedTtlSeconds,
-      minTtlEnabled: preset.minTtlEnabled,
-      minTtlSeconds: preset.minTtlSeconds,
-      staleFallbackEnabled: preset.staleFallbackEnabled,
-      staleFallbackSeconds: preset.staleFallbackSeconds,
+      preset: tier.storageValue,
+      scalePercent: tier.isCustom
+          ? clampScale(scalePercent)
+          : tier.defaultScalePercent,
     );
   }
 }
 
-class DnsCacheCustomPolicy {
-  const DnsCacheCustomPolicy({
-    required this.mode,
-    required this.maxTtlSeconds,
-    required this.fixedTtlSeconds,
-    required this.minTtlEnabled,
-    required this.minTtlSeconds,
-    required this.staleFallbackEnabled,
-    required this.staleFallbackSeconds,
-  });
-
-  static const int minSeconds = 30;
-  static const int maxSeconds = 86400;
-
-  static const String modeFollow = 'follow_dns_ttl';
-  static const String modeLimitMax = 'limit_max_ttl';
-  static const String modeFixed = 'fixed_ttl';
-
-  static const List<String> modes = [modeFollow, modeLimitMax, modeFixed];
-
-  final String mode;
-  final int maxTtlSeconds;
-  final int fixedTtlSeconds;
-  final bool minTtlEnabled;
-  final int minTtlSeconds;
-  final bool staleFallbackEnabled;
-  final int staleFallbackSeconds;
-
-  factory DnsCacheCustomPolicy.read(LegacySettings settings) =>
-      DnsCacheCustomPolicy(
-        mode: modes.contains(settings.cacheModeRaw)
-            ? settings.cacheModeRaw
-            : modeLimitMax,
-        maxTtlSeconds: settings.cacheMaxTtlSeconds,
-        fixedTtlSeconds: settings.cacheFixedTtlSeconds,
-        minTtlEnabled: settings.cacheMinTtlEnabled,
-        minTtlSeconds: settings.cacheMinTtlSeconds,
-        staleFallbackEnabled: settings.cacheStaleFallbackEnabled,
-        staleFallbackSeconds: settings.cacheStaleFallbackSeconds,
-      );
-
-  DnsCacheCustomPolicy copyWith({
-    String? mode,
-    int? maxTtlSeconds,
-    int? fixedTtlSeconds,
-    bool? minTtlEnabled,
-    int? minTtlSeconds,
-    bool? staleFallbackEnabled,
-    int? staleFallbackSeconds,
-  }) => DnsCacheCustomPolicy(
-    mode: mode ?? this.mode,
-    maxTtlSeconds: maxTtlSeconds ?? this.maxTtlSeconds,
-    fixedTtlSeconds: fixedTtlSeconds ?? this.fixedTtlSeconds,
-    minTtlEnabled: minTtlEnabled ?? this.minTtlEnabled,
-    minTtlSeconds: minTtlSeconds ?? this.minTtlSeconds,
-    staleFallbackEnabled: staleFallbackEnabled ?? this.staleFallbackEnabled,
-    staleFallbackSeconds: staleFallbackSeconds ?? this.staleFallbackSeconds,
-  );
-
-  void write(LegacySettings settings, {required bool enabled}) =>
-      settings.applyCachePreset(
-        storageValue: DnsCachePreset.custom.storageValue,
-        enabled: enabled,
-        mode: mode,
-        maxTtlSeconds: maxTtlSeconds,
-        fixedTtlSeconds: fixedTtlSeconds,
-        minTtlEnabled: minTtlEnabled,
-        minTtlSeconds: minTtlSeconds,
-        staleFallbackEnabled: staleFallbackEnabled,
-        staleFallbackSeconds: staleFallbackSeconds,
-      );
+String formatCacheScale(int percent) {
+  final clamped = DnsCachePolicy.clampScale(percent);
+  if (clamped % 100 == 0) return '${clamped ~/ 100}';
+  return (clamped / 100).toStringAsFixed(1);
 }
 
-String cacheCustomModeLabel(AppL10n l10n, String mode) => switch (mode) {
-  DnsCacheCustomPolicy.modeFollow => l10n.cacheCustomModeFollow,
-  DnsCacheCustomPolicy.modeFixed => l10n.cacheCustomModeFixed,
-  _ => l10n.cacheCustomModeLimit,
-};
-
-String cacheCustomModeDescription(AppL10n l10n, String mode) => switch (mode) {
-  DnsCacheCustomPolicy.modeFollow => l10n.cacheCustomModeFollowDesc,
-  DnsCacheCustomPolicy.modeFixed => l10n.cacheCustomModeFixedDesc,
-  _ => l10n.cacheCustomModeLimitDesc,
-};
-
-String cacheSummaryOf(LegacySettings settings) {
-  if (!settings.cacheEnabled) return currentL10n.cacheDisabledSummary;
-  return cachePolicySummary(settings, currentL10n);
+String cachePresetExampleText(AppL10n l10n, int scalePercent) {
+  final cached = DnsCachePolicy.effectiveTtl(
+    DnsCachePolicy.sampleUpstreamSeconds,
+    scalePercent,
+  );
+  return l10n.cachePresetExample(DnsCachePolicy.sampleUpstreamSeconds, cached);
 }
 
 String cachePolicySummary(LegacySettings settings, AppL10n l10n) {
-  final preset = DnsCachePreset.current(settings);
-  if (preset != DnsCachePreset.custom) {
-    return '${preset.label(l10n)} · ${preset.summary(l10n)}';
-  }
-  final policy = DnsCacheCustomPolicy.read(settings);
-  final parts = <String>[
-    switch (policy.mode) {
-      DnsCacheCustomPolicy.modeFollow => l10n.cacheCustomModeFollow,
-      DnsCacheCustomPolicy.modeFixed => l10n.cacheCustomSummaryFixed(
-        formatCacheSeconds(l10n, policy.fixedTtlSeconds),
-      ),
-      _ => l10n.cacheCustomSummaryMax(
-        formatCacheSeconds(l10n, policy.maxTtlSeconds),
-      ),
-    },
-    if (policy.minTtlEnabled)
-      l10n.cacheCustomSummaryMin(
-        formatCacheSeconds(l10n, policy.minTtlSeconds),
-      ),
-    if (policy.staleFallbackEnabled)
-      l10n.cacheCustomSummaryStale(
-        formatCacheSeconds(l10n, policy.staleFallbackSeconds),
-      ),
-  ];
-  return '${preset.label(l10n)} · ${parts.join(' · ')}';
-}
-
-String formatCacheSeconds(AppL10n l10n, int seconds) {
-  if (seconds >= 3600 && seconds % 3600 == 0) {
-    return l10n.cacheDurationHours(seconds ~/ 3600);
-  }
-  if (seconds >= 60 && seconds % 60 == 0) {
-    return l10n.cacheDurationMinutes(seconds ~/ 60);
-  }
-  return l10n.cacheDurationSeconds(seconds);
+  final policy = DnsCachePolicy.read(settings);
+  return '${policy.tier.label(l10n)} · '
+      '${l10n.cachePresetMultiplier(formatCacheScale(policy.scalePercent))}';
 }

@@ -163,90 +163,95 @@ void _providerCatalog() {
   });
 
   group('缓存预设', () {
-    test('三档预设各自写满 9 个 v2 键，并可从引擎侧读回', () {
+    test('内置档写入 v4 键，并把倍率送入引擎文档', () {
       final settings = LegacySettings(MemoryLegacyPrefsStore());
-      DnsCachePreset.highHitRate.applyTo(settings, enabled: true);
+      DnsCachePolicy(
+        tier: DnsCacheTier.aggressive,
+        scalePercent: 400,
+      ).write(settings, enabled: true);
 
-      expect(settings.cachePresetRaw, 'high_hit_rate');
+      expect(settings.cachePresetV4, 'aggressive');
+      expect(settings.cacheScalePercentV4, 200);
       expect(settings.cacheEnabled, isTrue);
-      expect(settings.cacheModeRaw, 'limit_max_ttl');
-      expect(settings.cacheMaxTtlSeconds, 21600);
-      expect(settings.cacheMinTtlEnabled, isTrue);
-      expect(settings.cacheMinTtlSeconds, 120);
-      expect(settings.cacheStaleFallbackEnabled, isTrue);
-      expect(settings.cacheStaleFallbackSeconds, 900);
-
-      final config = buildDnsConfig(settings);
-      final cache = config.toJson(settings)['cache'] as Map;
-      expect(cache['maxTtlSeconds'], 21600);
-      expect(cache['minTtlSeconds'], 120);
-    });
-
-    test('缺少 preset 键时按策略推断，旧安装不会显示空档位', () {
-      final conservative = LegacySettings(
-        MemoryLegacyPrefsStore({
-          'dns_vpn_prefs': {
-            'dns_cache_mode_v2': 'follow_dns_ttl',
-            'dns_cache_min_ttl_enabled_v2': false,
-            'dns_cache_stale_fallback_enabled_v2': false,
-          },
-        }),
-      );
-      expect(DnsCachePreset.current(conservative), DnsCachePreset.conservative);
-
-      final legacyBalanced = LegacySettings(
-        MemoryLegacyPrefsStore({
-          'dns_vpn_prefs': {
-            'dns_cache_mode_v2': 'limit_max_ttl',
-            'dns_cache_max_ttl_seconds_v2': 1800,
-            'dns_cache_min_ttl_enabled_v2': true,
-            'dns_cache_min_ttl_seconds_v2': 30,
-            'dns_cache_stale_fallback_enabled_v2': false,
-          },
-        }),
-      );
-      expect(DnsCachePreset.current(legacyBalanced), DnsCachePreset.balanced);
-    });
-
-    test('自定义参数写满原始键，档位标记保持 custom', () {
-      final settings = LegacySettings(MemoryLegacyPrefsStore());
-      DnsCachePreset.custom.applyTo(settings, enabled: true);
-
-      expect(settings.cachePresetRaw, 'custom');
-      expect(settings.cacheModeRaw, 'limit_max_ttl');
-      expect(DnsCachePreset.current(settings), DnsCachePreset.custom);
-
-      DnsCacheCustomPolicy.read(settings)
-          .copyWith(
-            mode: DnsCacheCustomPolicy.modeFixed,
-            fixedTtlSeconds: 120,
-            minTtlEnabled: true,
-            minTtlSeconds: 45,
-            staleFallbackEnabled: true,
-            staleFallbackSeconds: 600,
-          )
-          .write(settings, enabled: true);
-
-      expect(settings.cachePresetRaw, 'custom');
-      expect(settings.cacheModeRaw, DnsCacheCustomPolicy.modeFixed);
-      expect(settings.cacheFixedTtlSeconds, 120);
-      expect(settings.cacheMinTtlSeconds, 45);
-      expect(settings.cacheStaleFallbackSeconds, 600);
 
       final cache = buildDnsConfig(settings).toJson(settings)['cache'] as Map;
-      expect(cache['mode'], DnsCacheCustomPolicy.modeFixed);
-      expect(cache['fixedTtlSeconds'], 120);
-      expect(cache['minTtlSeconds'], 45);
-      expect(cache['staleFallbackSeconds'], 600);
+      expect(cache['ttlScalePercent'], 200);
+      expect(cache['maxTtlSeconds'], DnsCachePolicy.maxTtlSeconds);
+      expect(cache['staleFallbackEnabled'], isTrue);
+      expect(
+        cache['staleFallbackSeconds'],
+        DnsCachePolicy.staleFallbackSeconds,
+      );
+      expect(cache.containsKey('mode'), isFalse);
+    });
 
-      DnsCacheCustomPolicy.read(settings)
-          .copyWith(maxTtlSeconds: 5)
-          .write(settings, enabled: true);
-      expect(settings.cacheMaxTtlSeconds, DnsCacheCustomPolicy.minSeconds);
+    test('旧 preset 与旧策略都能迁移到新档位', () {
+      LegacySettings settingsWith(Map<String, Object?> values) =>
+          LegacySettings(MemoryLegacyPrefsStore({'dns_vpn_prefs': values}));
 
-      DnsCachePreset.balanced.applyTo(settings, enabled: true);
-      expect(settings.cachePresetRaw, 'balanced');
-      expect(DnsCachePreset.current(settings), DnsCachePreset.balanced);
+      expect(
+        DnsCachePolicy.read(
+          settingsWith({'dns_cache_preset_v3': 'conservative'}),
+        ),
+        isA<DnsCachePolicy>()
+            .having((p) => p.tier, 'tier', DnsCacheTier.conservative)
+            .having((p) => p.scalePercent, 'scale', 50),
+      );
+      expect(
+        DnsCachePolicy.read(settingsWith({'dns_cache_preset_v3': 'balanced'}))
+            .tier,
+        DnsCacheTier.standard,
+      );
+      expect(
+        DnsCachePolicy.read(
+          settingsWith({'dns_cache_preset_v3': 'high_hit_rate'}),
+        ).scalePercent,
+        200,
+      );
+      expect(
+        DnsCachePolicy.read(settingsWith({'dns_cache_preset_v3': 'custom'}))
+            .scalePercent,
+        100,
+      );
+
+      final conservative = settingsWith({
+        'dns_cache_mode_v2': 'follow_dns_ttl',
+        'dns_cache_min_ttl_enabled_v2': false,
+        'dns_cache_stale_fallback_enabled_v2': false,
+      });
+      expect(DnsCachePolicy.read(conservative).tier, DnsCacheTier.conservative);
+
+      final standard = settingsWith({
+        'dns_cache_mode_v2': 'limit_max_ttl',
+        'dns_cache_min_ttl_enabled_v2': true,
+      });
+      expect(DnsCachePolicy.read(standard).tier, DnsCacheTier.standard);
+    });
+
+    test('自定义档只保留倍率，并做步进与边界归一', () {
+      final settings = LegacySettings(MemoryLegacyPrefsStore());
+      DnsCachePolicy(
+        tier: DnsCacheTier.custom,
+        scalePercent: 130,
+      ).write(settings, enabled: true);
+
+      expect(settings.cachePresetV4, 'custom');
+      expect(settings.cacheScalePercentV4, 130);
+      final cache = buildDnsConfig(settings).toJson(settings)['cache'] as Map;
+      expect(cache['ttlScalePercent'], 130);
+
+      expect(DnsCachePolicy.clampScale(137), 140);
+      expect(DnsCachePolicy.clampScale(1), 10);
+      expect(DnsCachePolicy.clampScale(9999), 500);
+      expect(formatCacheScale(50), '0.5');
+      expect(formatCacheScale(100), '1');
+      expect(formatCacheScale(130), '1.3');
+      expect(formatCacheScale(200), '2');
+
+      expect(DnsCachePolicy.effectiveTtl(300, 50), 150);
+      expect(DnsCachePolicy.effectiveTtl(300, 100), 300);
+      expect(DnsCachePolicy.effectiveTtl(300, 200), 600);
+      expect(DnsCachePolicy.effectiveTtl(100000, 200), 86400);
     });
   });
 
@@ -396,12 +401,9 @@ void _vpnConfig() {
       expect(json['blockResponse'], 'CUSTOM_IP');
       expect(json['cache'], {
         'enabled': true,
-        'mode': 'limit_max_ttl',
-        'maxTtlSeconds': 3600,
-        'fixedTtlSeconds': 3600,
-        'minTtlEnabled': false,
-        'minTtlSeconds': 60,
-        'staleFallbackEnabled': false,
+        'ttlScalePercent': 100,
+        'maxTtlSeconds': 86400,
+        'staleFallbackEnabled': true,
         'staleFallbackSeconds': 300,
         'negativeTtlEnabled': true,
         'negativeTtlSeconds': 30,

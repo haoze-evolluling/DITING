@@ -324,6 +324,7 @@ fn kernel_config(settings: &CacheSettings) -> KernelConfig {
     KernelConfig {
         enabled: settings.enabled,
         mode: TtlMode::parse(settings.mode.as_bytes()),
+        ttl_scale_percent: 0,
         max_ttl_seconds: settings.max_ttl_seconds,
         fixed_ttl_seconds: settings.fixed_ttl_seconds,
         min_ttl_enabled: settings.min_ttl_enabled,

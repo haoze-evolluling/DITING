@@ -1,13 +1,12 @@
 use crate::bootstrap::{self, BootstrapRow};
 use crate::document::{self, BootstrapEntry};
 use crate::input;
-use crate::presets::{self, CachePolicy, CachePreset};
 use crate::protocol::{self, Protocol};
 use crate::providers::{self, Provider};
 use crate::upstreams::{self, ServerUpstream};
 use crate::wire::{Reader, Writer};
 
-pub const ABI_VERSION: u32 = 3;
+pub const ABI_VERSION: u32 = 4;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DDC1");
 const OP_SPLIT_ADDRESS: u8 = 0;
@@ -17,11 +16,6 @@ const OP_UPSERT_PROVIDER: u8 = 3;
 const OP_JOIN_HOST_PORT: u8 = 4;
 const OP_PARSE_BOOTSTRAP: u8 = 5;
 const OP_ENCODE_BOOTSTRAP: u8 = 6;
-const OP_PRESET_FROM_POLICY: u8 = 0;
-const OP_PRESET_CURRENT: u8 = 1;
-const OP_PRESET_VALUES: u8 = 2;
-const OP_SERVER_CACHE: u8 = 3;
-const OP_PRESET_STORAGE: u8 = 4;
 const OP_PARSE_UPSTREAMS: u8 = 0;
 const OP_ENCODE_UPSTREAMS: u8 = 1;
 const OP_VALIDATE_UPSTREAM: u8 = 2;
@@ -108,30 +102,9 @@ fn write_upstreams(writer: &mut Writer, upstreams: &[ServerUpstream]) {
     }
 }
 
-fn write_cache_values(writer: &mut Writer, values: presets::CacheValues) {
-    writer.string(values.mode);
-    writer.i32(values.max_ttl_seconds);
-    writer.i32(values.fixed_ttl_seconds);
-    writer.bool(values.min_ttl_enabled);
-    writer.i32(values.min_ttl_seconds);
-    writer.bool(values.stale_fallback_enabled);
-    writer.i32(values.stale_fallback_seconds);
-}
-
 fn read_protocol(reader: &mut Reader<'_>) -> Option<Protocol> {
     let storage = reader.string()?;
     Some(protocol::from_storage(&storage).unwrap_or(Protocol::Plain))
-}
-
-fn read_cache_policy(reader: &mut Reader<'_>) -> Option<CachePolicy> {
-    Some(CachePolicy {
-        mode: reader.string()?,
-        max_ttl_seconds: reader.i32()?,
-        min_ttl_enabled: reader.bool()?,
-        min_ttl_seconds: reader.i32()?,
-        stale_fallback_enabled: reader.bool()?,
-        stale_fallback_seconds: reader.i32()?,
-    })
 }
 
 #[no_mangle]
@@ -285,65 +258,6 @@ pub unsafe extern "C" fn diting_dns_config_core_providers(
                 return respond(None, out_len);
             };
             writer.string(&bootstrap::encode_custom(&rows));
-        }
-        _ => return respond(None, out_len),
-    }
-    respond(Some(writer.finish()), out_len)
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn diting_dns_config_core_presets(
-    input: *const u8,
-    len: usize,
-    out_len: *mut usize,
-) -> *mut u8 {
-    let mut reader = reader_at(input, len);
-    let Some(op) = reader.u8() else {
-        return respond(None, out_len);
-    };
-    let mut writer = Writer::new();
-    header(&mut writer);
-    match op {
-        OP_PRESET_FROM_POLICY => {
-            let Some(policy) = read_cache_policy(&mut reader) else {
-                return respond(None, out_len);
-            };
-            writer.u8(presets::from_policy(&policy) as u8);
-        }
-        OP_PRESET_CURRENT => {
-            let Some(raw) = reader.opt_string() else {
-                return respond(None, out_len);
-            };
-            let Some(policy) = read_cache_policy(&mut reader) else {
-                return respond(None, out_len);
-            };
-            writer.u8(presets::current(raw.as_deref(), &policy) as u8);
-        }
-        OP_PRESET_VALUES => {
-            let Some(index) = reader.u8() else {
-                return respond(None, out_len);
-            };
-            let Some(preset) = CachePreset::from_index(index) else {
-                return respond(None, out_len);
-            };
-            write_cache_values(&mut writer, preset.values());
-        }
-        OP_SERVER_CACHE => {
-            let Some(raw) = reader.string() else {
-                return respond(None, out_len);
-            };
-            let (values, negative_ttl_seconds) = presets::server_cache_document(&raw);
-            write_cache_values(&mut writer, values);
-            writer.i32(negative_ttl_seconds);
-        }
-        OP_PRESET_STORAGE => {
-            let Some(index) = reader.u8() else {
-                return respond(None, out_len);
-            };
-            let Some(preset) = CachePreset::from_index(index) else {
-                return respond(None, out_len);
-            };
-            writer.string(preset.storage_value());
         }
         _ => return respond(None, out_len),
     }

@@ -400,8 +400,6 @@ class LegacySettings {
   static String _encodeSet(Set<String> values) =>
       jsonEncode(values.toList()..sort());
 
-  static int _clampSeconds(int seconds) => seconds.clamp(30, 86400);
-
   static double _clampedOpacity(double value) => value.clamp(0.1, 1.0);
 
 }

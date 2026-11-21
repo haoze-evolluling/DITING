@@ -92,7 +92,7 @@ fn answer_wire(query: &[u8], address: [u8; 4], ttl: u32) -> Vec<u8> {
 
 fn config_json(upstream: SocketAddr, block_response: &str, cache_ttl: u32) -> String {
     format!(
-        r#"{{"mode":"single","providers":[{{"id":"p1","protocol":"PLAIN","server":"{}","url":"","weight":1}}],"blockResponse":"{block_response}","dynamicResponse":{{"enabled":false,"requestThreshold":0,"windowSeconds":0,"nxDomainDurationSeconds":0}},"cache":{{"enabled":true,"mode":"limit_max_ttl","maxTtlSeconds":{cache_ttl},"fixedTtlSeconds":0,"minTtlEnabled":false,"minTtlSeconds":0,"staleFallbackEnabled":true,"staleFallbackSeconds":60,"negativeTtlEnabled":false,"negativeTtlSeconds":0}},"bootstrap":{{"enabled":false,"ips":[]}}}}"#,
+        r#"{{"mode":"single","providers":[{{"id":"p1","protocol":"PLAIN","server":"{}","url":"","weight":1}}],"blockResponse":"{block_response}","dynamicResponse":{{"enabled":false,"requestThreshold":0,"windowSeconds":0,"nxDomainDurationSeconds":0}},"cache":{{"enabled":true,"ttlScalePercent":100,"maxTtlSeconds":{cache_ttl},"staleFallbackEnabled":true,"staleFallbackSeconds":60,"negativeTtlEnabled":true,"negativeTtlSeconds":30}},"bootstrap":{{"enabled":false,"ips":[]}}}}"#,
         upstream
     )
 }

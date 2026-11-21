@@ -189,46 +189,24 @@ extension LegacyDnsSettings on LegacySettings {
 
   String? get cachePresetRaw => _string(dnsContainer, 'dns_cache_preset_v3');
 
-  void applyCachePreset({
-    required String storageValue,
+  String? get cachePresetV4 => _string(dnsContainer, 'dns_cache_preset_v4');
+
+  int? get cacheScalePercentV4 {
+    final value = _store.read(dnsContainer, 'dns_cache_scale_percent_v4');
+    return value is int ? value : null;
+  }
+
+  void writeCachePolicy({
     required bool enabled,
-    required String mode,
-    required int maxTtlSeconds,
-    required int fixedTtlSeconds,
-    required bool minTtlEnabled,
-    required int minTtlSeconds,
-    required bool staleFallbackEnabled,
-    required int staleFallbackSeconds,
+    required String preset,
+    required int scalePercent,
   }) {
-    int clamp(int seconds) => LegacySettings._clampSeconds(seconds);
-    _store.putString(dnsContainer, 'dns_cache_preset_v3', storageValue);
     _store.putBool(dnsContainer, 'dns_cache_enabled_v2', enabled);
-    _store.putString(dnsContainer, 'dns_cache_mode_v2', mode);
+    _store.putString(dnsContainer, 'dns_cache_preset_v4', preset);
     _store.putLong(
       dnsContainer,
-      'dns_cache_max_ttl_seconds_v2',
-      clamp(maxTtlSeconds),
-    );
-    _store.putLong(
-      dnsContainer,
-      'dns_cache_fixed_ttl_seconds_v2',
-      clamp(fixedTtlSeconds),
-    );
-    _store.putBool(dnsContainer, 'dns_cache_min_ttl_enabled_v2', minTtlEnabled);
-    _store.putLong(
-      dnsContainer,
-      'dns_cache_min_ttl_seconds_v2',
-      clamp(minTtlSeconds),
-    );
-    _store.putBool(
-      dnsContainer,
-      'dns_cache_stale_fallback_enabled_v2',
-      staleFallbackEnabled,
-    );
-    _store.putLong(
-      dnsContainer,
-      'dns_cache_stale_fallback_seconds_v2',
-      clamp(staleFallbackSeconds),
+      'dns_cache_scale_percent_v4',
+      scalePercent.clamp(10, 500),
     );
   }
 

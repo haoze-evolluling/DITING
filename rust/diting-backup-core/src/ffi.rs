@@ -1,7 +1,7 @@
 use crate::export;
 use crate::import;
 
-pub const ABI_VERSION: u32 = 1;
+pub const ABI_VERSION: u32 = 2;
 
 const MAGIC: u32 = u32::from_le_bytes(*b"DBK1");
 
