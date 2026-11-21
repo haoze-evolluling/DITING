@@ -94,11 +94,10 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 
 ## 跑测试（native assets 与资源包）
 
-`flutter test` 要在各个 app 目录里跑：
+`flutter test` 要在 app 目录里跑：
 
 ```bash
 cd android/app && flutter test     # Android 全量（含 sqflite 用例）
-cd desktop/app && flutter test     # 桌面全量
 ```
 
 从工作区根目录跑 `flutter test android/app` 会踩两个坑，都是 `flutter_tools` 按“当前包的依赖图”

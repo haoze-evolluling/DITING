@@ -2,10 +2,10 @@
 
 谛听（DITING）是一个以本地 DNS 为核心的网络过滤与隐私工具。域名解析、规则匹配、缓存与日志都在设备本机完成，不依赖云端服务。
 
-项目包含两套客户端：
+项目包含 Android 客户端与桌面端服务：
 
 - Android 客户端：Flutter 界面、Kotlin 系统集成与 Rust 数据面，提供普通、极速、服务器三种工作模式。
-- 桌面端：Flutter Windows 客户端与浏览器控制台，后端是 Rust 特权服务，负责系统 DNS 接管、局域网 DNS 服务与管理 API。
+- 桌面端：仅保留 Rust 特权服务后端，负责系统 DNS 接管、局域网 DNS 服务与管理 API；Flutter 前端界面已移除。
 
 Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 
@@ -70,7 +70,7 @@ Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 - 上游解析、缓存、自定义重写、规则订阅、自定义规则、时间计划与应用拦截。
 - 安全隐私：协议加固、ECS 隐私、DNS 重绑定与 hosts 防御。
 - 查询日志、客户端分组流量统计与规则检测。
-- 管理 API：HTTP/WebSocket，带认证与 CORS；同一套 Flutter 界面同时作为 Windows 客户端和局域网 Web 控制台。
+- 管理 API：HTTP/WebSocket，带认证与 CORS。
 - 服务托管：Windows 通过 SCM 注册系统服务，Linux 提供 deb 安装包与服务注册命令。
 
 ## 工作模式
@@ -101,10 +101,9 @@ Rust 引擎接管全部流量，支持应用分流、按应用拦截、HTTPS 检
 
 | 目录 | 内容 |
 | --- | --- |
-| `shared/` | `diting_shared`：Flutter 设计系统、主题、双语本地化、路由分支，以及两种客户端共用的偏好与数据库封装 |
+| `shared/` | `diting_shared`：Flutter 设计系统、主题、双语本地化、路由分支，以及共用的偏好与数据库封装 |
 | `android/app/` | `diting_android`：Android Flutter 界面、Kotlin 系统集成、Gradle 工程与 APK 构建脚本 |
-| `desktop/app/` | `diting_desktop`：Flutter Windows 客户端，同时编译为内嵌于服务的 Web 控制台 |
-| `desktop/service/` | 桌面服务构建与打包资产、Flutter Web 产物与 Linux 打包脚本 |
+| `desktop/service/` | 桌面服务构建与打包资产、Linux 打包脚本 |
 | `desktop/toolbox/` | Python 构建、版本管理、打包与环境预检工具 |
 | `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎、桌面服务与服务器进程 |
 | `docs/development/` | 构建环境、Root 接管、服务器模式、桌面迁移与存储迁移说明 |
@@ -128,9 +127,9 @@ Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策�
 
 - 启动与管理 DNS 监听（UDP、TCP，以及 DoT、DoH、DoQ 加密服务）。
 - 接管系统 DNS、配置防火墙、诊断端口占用，并在退出或异常时恢复原配置。
-- 提供 HTTP/WebSocket 管理 API，默认监听 `127.0.0.1:15353`，包含认证、CORS 与内嵌的 Flutter Web 控制台。
+- 提供 HTTP/WebSocket 管理 API，默认监听 `127.0.0.1:15353`，包含认证与 CORS。
 
-Flutter Windows 客户端作为 API 客户端运行，登录后管理服务；浏览器访问服务地址即可使用同一套 Web 控制台。
+桌面端不再内置前端界面，管理 API 由外部调用方直接访问。
 
 桌面端数据目录：
 
@@ -203,19 +202,14 @@ NDK 从 `ANDROID_NDK_HOME`、`ANDROID_NDK_ROOT` 或 `android/local.properties` �
 
 ### 桌面端
 
-从源码运行需要先启动 Rust 服务，再启动 Flutter 客户端：
+启动 Rust 服务：
 
 ```bash
 cd rust
 cargo run -p diting-desktop-service -- -run
 ```
 
-```bash
-cd desktop/app
-flutter run -d windows
-```
-
-服务默认在 `127.0.0.1:15353` 提供管理 API，客户端首次连接时完成账号初始化。系统 DNS 接管等特权操作需要管理员或 root 权限。
+服务默认在 `127.0.0.1:15353` 提供管理 API。系统 DNS 接管等特权操作需要管理员或 root 权限。
 
 生成安装包：
 
@@ -224,7 +218,7 @@ desktop\build_installer.bat
 desktop\build_installer.bat both
 ```
 
-第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。完整流水线为：Flutter Web 控制台、Flutter Windows 客户端、`diting-service`、NSIS 安装包；产物位于 `desktop\service\build\bin`。
+第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。现有脚本仍按“Flutter Web 控制台 → Flutter Windows 客户端 → `diting-service` → NSIS 安装包”的顺序构建；Flutter 前端工程已移除，运行前需自行调整构建脚本。产物位于 `desktop\service\build\bin`。
 
 Linux 单独构建：
 
@@ -262,7 +256,6 @@ python rust/verify.py --all
 ```bash
 cd shared && flutter test
 cd android/app && flutter test
-cd desktop/app && flutter test
 ```
 
 首次运行前需要为 sqlite3 原生资源开启一次开关：

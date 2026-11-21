@@ -26,8 +26,8 @@ desktop\build_installer.bat both       :: EXE + Linux deb（经 WSL）
 ```
 
 服务二进制由 `cargo build --release -p diting-desktop-service` 产出；Windows 安装包只包含一个
-`diting-service.exe`，deb 只包含一个 `/usr/local/bin/diting-service`。版本号仍以
-`desktop/app/pubspec.yaml` 为唯一真源，由 `rust/diting-desktop-api/build.rs` 在编译期注入。
+`diting-service.exe`，deb 只包含一个 `/usr/local/bin/diting-service`。Flutter 前端工程已移除，
+`rust/diting-desktop-api/build.rs` 找不到 `desktop/app/pubspec.yaml` 时会回退为 `dev` 版本。
 deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 
 ## 兼容性
@@ -53,7 +53,7 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
   `service.log`，文件超过 2 MiB 时在下次启动前轮换；
 - `diting-service -v` 的「DNS engine」一栏显示为原生 Rust；
 - Linux 安装脚本会清理旧的 `/usr/lib/diting` 目录；
-- 日志内部格式变化，不影响管理 API 与 Web 控制台。
+- 日志内部格式变化，不影响管理 API。
 
 ## 已知限制
 
