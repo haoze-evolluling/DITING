@@ -112,7 +112,7 @@ class InitialAgreementDialog extends StatelessWidget {
       title: context.l10n.agreementTitle,
       width: double.infinity,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      padding: const EdgeInsets.fromLTRB(30, 8, 30, 16),
       actions: [
         TextButton(
           onPressed: onDecline,
@@ -123,17 +123,134 @@ class InitialAgreementDialog extends StatelessWidget {
           child: Text(context.l10n.agreementAccept),
         ),
       ],
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.5,
-        ),
+      child: _AgreementBody(message: context.l10n.agreementMessage),
+    );
+  }
+}
+
+class _AgreementBody extends StatefulWidget {
+  const _AgreementBody({required this.message});
+
+  final String message;
+
+  @override
+  State<_AgreementBody> createState() => _AgreementBodyState();
+}
+
+class _AgreementBodyState extends State<_AgreementBody> {
+  final _scrollController = ScrollController();
+  var _atStart = true;
+  var _atEnd = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_syncFade);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncFade());
+  }
+
+  @override
+  void didUpdateWidget(_AgreementBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.message != widget.message) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncFade());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _syncFade() {
+    if (!mounted) {
+      return;
+    }
+    final position = _scrollController.hasClients
+        ? _scrollController.position
+        : null;
+    final atStart = position == null || position.pixels <= 0.5;
+    final atEnd =
+        position == null || position.maxScrollExtent - position.pixels <= 0.5;
+    if (atStart != _atStart || atEnd != _atEnd) {
+      setState(() {
+        _atStart = atStart;
+        _atEnd = atEnd;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.5,
+      ),
+      child: ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) => LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            _atStart ? Colors.white : Colors.transparent,
+            Colors.white,
+            Colors.white,
+            _atEnd ? Colors.white : Colors.transparent,
+          ],
+          stops: const [0.0, 0.05, 0.94, 1.0],
+        ).createShader(bounds),
         child: SingleChildScrollView(
-          child: Text(
-            context.l10n.agreementMessage,
-            style: AppTextRole.legalText.of(context),
+          controller: _scrollController,
+          padding: const EdgeInsets.only(bottom: 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 16,
+            children: [
+              for (final section in _parseSections(widget.message))
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 6,
+                  children: [
+                    Text(
+                      section.title,
+                      style: AppTextRole.bodyStrong.of(context),
+                    ),
+                    Text(
+                      section.body,
+                      style: AppTextRole.legalText.of(context),
+                    ),
+                  ],
+                ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+class _AgreementSection {
+  const _AgreementSection({required this.title, required this.body});
+
+  final String title;
+  final String body;
+}
+
+List<_AgreementSection> _parseSections(String message) {
+  final sections = <_AgreementSection>[];
+  for (final raw in message.split(RegExp(r'\n\s*\n'))) {
+    final block = raw.trim();
+    if (block.isEmpty) {
+      continue;
+    }
+    final lines = block.split('\n');
+    sections.add(
+      _AgreementSection(
+        title: lines.first.trim(),
+        body: lines.skip(1).join('\n').trim(),
+      ),
+    );
+  }
+  return sections;
 }
