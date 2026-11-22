@@ -9,6 +9,9 @@ publish = false
 name = "diting-service"
 path = "src/main.rs"
 
+[build-dependencies]
+winresource = "0.1"
+
 [dependencies]
 diting-desktop-api = { path = "../diting-desktop-api" }
 diting-desktop-app = { path = "../diting-desktop-app" }
