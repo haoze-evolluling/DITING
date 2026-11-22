@@ -69,6 +69,9 @@ fn decide(
     mitm_uid_allowed: bool,
 ) -> FlowAction {
     let port = key.local.port;
+    // 每条新连接都会走到这里，地址写进栈缓冲，避免为 4/16 字节做一次堆分配。
+    let mut ip = [0u8; 16];
+    let ip_len = crate::netstack::address_bytes_into(key.local.addr, &mut ip);
     let input = FlowInput {
         uid_blocked: engine.is_uid_blocked(context.uid),
         app_allowlist_allowed: true,
@@ -77,7 +80,7 @@ fn decide(
         quic_uid_selected: mitm_uid_allowed,
         mitm_uid_allowed,
         port,
-        ip: &crate::netstack::address_bytes(key.local.addr),
+        ip: &ip[..ip_len],
     };
     let decision = admit(mode, &input);
     let protocol = if mode == MODE_FULL_UDP {

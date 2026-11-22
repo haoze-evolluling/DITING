@@ -10,7 +10,6 @@ use std::sync::{Arc, Mutex};
 use std::thread::JoinHandle;
 
 use tokio::sync::{mpsc, Semaphore};
-use tokio::task::JoinSet;
 
 use crate::engine::Engine;
 use crate::netstack::{Limits, Stats, TcpKey};
@@ -32,7 +31,6 @@ pub struct Session {
     link: Arc<dyn PacketLink>,
     counters: Arc<TunnelCounters>,
     stack_stats: Arc<Mutex<Stats>>,
-    flow_tasks: Arc<Mutex<JoinSet<()>>>,
     threads: Vec<JoinHandle<()>>,
 }
 
@@ -48,7 +46,6 @@ impl Session {
         let egress = Arc::new(Egress::new(EGRESS_QUEUE));
         let counters = Arc::new(TunnelCounters::default());
         let stack_stats = Arc::new(Mutex::new(Stats::default()));
-        let flow_tasks: Arc<Mutex<JoinSet<()>>> = Arc::new(Mutex::new(JoinSet::new()));
         let dns_permits = Arc::new(Semaphore::new(MAX_DNS_INFLIGHT));
 
         let reader = io::spawn_reader(
@@ -70,7 +67,6 @@ impl Session {
             Arc::clone(&egress),
             Arc::clone(&counters),
             Arc::clone(&stack_stats),
-            Arc::clone(&flow_tasks),
             dns_permits,
             limits,
         )?;
@@ -82,7 +78,6 @@ impl Session {
             link,
             counters,
             stack_stats,
-            flow_tasks,
             threads: vec![reader, stack, writer],
         })
     }
@@ -110,18 +105,10 @@ impl Session {
         self.link.close();
         self.events.close();
         self.egress.close();
-        self.abort_flows();
+        // 栈线程自己持有流任务表，退出时会 `abort_all`，这里只需等它结束。
         for thread in self.threads.drain(..) {
             let _ = thread.join();
         }
-        self.abort_flows();
-    }
-
-    fn abort_flows(&self) {
-        self.flow_tasks
-            .lock()
-            .unwrap_or_else(|error| error.into_inner())
-            .abort_all();
     }
 }
 

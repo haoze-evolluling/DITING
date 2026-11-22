@@ -8,7 +8,7 @@ use tokio::task::JoinSet;
 use crate::attribution::PROTOCOL_TCP;
 use crate::connection_limit::BucketKind;
 use crate::engine::Engine;
-use crate::netstack::{self, Netstack, TcpKey};
+use crate::netstack::{Netstack, TcpKey};
 use crate::tunnel::dnsflow::Inbound;
 use crate::tunnel::gate::{self, FlowAction};
 use crate::tunnel::relay;
@@ -23,7 +23,7 @@ pub(super) fn open_tcp_flow(
     engine: &Arc<Engine>,
     events: &Arc<crate::tunnel::queue::Events>,
     counters: &Arc<TunnelCounters>,
-    flow_tasks: &Arc<std::sync::Mutex<JoinSet<()>>>,
+    flow_tasks: &mut JoinSet<()>,
     flows: &mut HashMap<TcpKey, Flow>,
     net: &mut Netstack,
     key: TcpKey,
@@ -42,7 +42,7 @@ pub(super) fn open_tcp_flow(
         )
     {
         counters.blocked_flows.fetch_add(1, Ordering::Relaxed);
-        net.tcp_abort(&key, netstack::now());
+        net.tcp_abort_now(&key);
         net.tcp_remove(&key);
         return;
     }
@@ -108,7 +108,7 @@ pub(super) fn open_tcp_flow(
         }
         FlowAction::Blocked => {
             counters.blocked_flows.fetch_add(1, Ordering::Relaxed);
-            net.tcp_abort(&key, netstack::now());
+            net.tcp_abort_now(&key);
             net.tcp_remove(&key);
         }
     }
@@ -141,7 +141,7 @@ pub(super) fn dispatch_tcp_output(
                 }
                 // 流任务已经结束（或通道关闭）：连接没有接收方，直接清理。
                 Err(_) => {
-                    net.tcp_abort(&output.key, netstack::now());
+                    net.tcp_abort_now(&output.key);
                     net.tcp_remove(&output.key);
                     flows.remove(&output.key);
                     writes.forget(&output.key);

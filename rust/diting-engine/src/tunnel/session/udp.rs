@@ -22,7 +22,7 @@ pub(super) fn dispatch_udp(
     engine: &Arc<Engine>,
     events: &Arc<Events>,
     counters: &Arc<TunnelCounters>,
-    flow_tasks: &Arc<std::sync::Mutex<JoinSet<()>>>,
+    flow_tasks: &mut JoinSet<()>,
     dns_permits: &Arc<Semaphore>,
     udp_relays: &mut UdpRelays,
     udp_generation: &mut u64,

@@ -43,16 +43,15 @@ impl WriteBacklog {
                 entry.close_after_pending = true;
                 flush(&key, entry, net);
             }
-            None => net.tcp_close_write(&key, crate::netstack::now()),
+            None => net.tcp_close_write_now(&key),
         }
     }
 
     pub fn flush_all(&mut self, net: &mut Netstack) {
-        let keys: Vec<TcpKey> = self.entries.keys().copied().collect();
-        for key in keys {
-            if let Some(entry) = self.entries.get_mut(&key) {
-                flush(&key, entry, net);
-            }
+        // `entries` 与 `net` 是两个不同的字段，`iter_mut` 可以直接借用，
+        // 不必每轮循环先收集一份 key 列表。
+        for (key, entry) in self.entries.iter_mut() {
+            flush(key, entry, net);
         }
     }
 
@@ -75,16 +74,17 @@ impl Drop for WriteBacklog {
     }
 }
 
+/// 把积压的数据塞进 smoltcp 的发送缓冲。**不** poll：发送由会话循环在一批写完之后统一做，
+/// 否则一次 `flush` 里每写一块就要遍历一遍整个 socket 表。
 fn flush(key: &TcpKey, entry: &mut Entry, net: &mut Netstack) {
-    let mut now = crate::netstack::now();
+    let now = crate::netstack::now();
     let before = entry.at;
     while entry.at < entry.data.len() {
-        let written = net.tcp_write(key, &entry.data[entry.at..], now);
+        let written = net.tcp_write_now(key, &entry.data[entry.at..], now);
         if written == 0 {
             break;
         }
         entry.at += written;
-        now = crate::netstack::now();
     }
     let flushed = entry.at - before;
     if flushed > 0 {
@@ -97,7 +97,7 @@ fn flush(key: &TcpKey, entry: &mut Entry, net: &mut Netstack) {
         entry.at = 0;
         if entry.close_after_pending {
             entry.close_after_pending = false;
-            net.tcp_close_write(key, now);
+            net.tcp_close_write_now(key);
         }
     } else if entry.at >= 64 * 1024 {
         entry.data.drain(..entry.at);

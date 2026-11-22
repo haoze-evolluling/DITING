@@ -68,13 +68,14 @@ impl Attribution {
     }
 
     pub fn uid_for(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint, now_ns: i64) -> i32 {
-        let (app_bytes, server_bytes) = (
-            crate::netstack::address_bytes(app.addr),
-            crate::netstack::address_bytes(server.addr),
-        );
+        let mut app_bytes = [0u8; 16];
+        let mut server_bytes = [0u8; 16];
+        let app_len = crate::netstack::address_bytes_into(app.addr, &mut app_bytes);
+        let server_len = crate::netstack::address_bytes_into(server.addr, &mut server_bytes);
+        let (app_bytes, server_bytes) = (&app_bytes[..app_len], &server_bytes[..server_len]);
         let (Some(app_addr), Some(server_addr)) = (
-            Addr::from_bytes(&app_bytes),
-            Addr::from_bytes(&server_bytes),
+            Addr::from_bytes(app_bytes),
+            Addr::from_bytes(server_bytes),
         ) else {
             return UID_UNKNOWN;
         };
@@ -88,10 +89,10 @@ impl Attribution {
         if let Some(uid) = self.flows.lookup(&key, now_ns) {
             return uid;
         }
-        let Some(resolver) = self.uid_slot().clone() else {
+        let Some(resolver) = self.uid_resolver() else {
             return UID_UNKNOWN;
         };
-        let uid = resolver.resolve(protocol, &app_bytes, app.port, &server_bytes, server.port);
+        let uid = resolver.resolve(protocol, app_bytes, app.port, server_bytes, server.port);
         self.flows.store(key, uid, now_ns);
         uid
     }
@@ -103,7 +104,7 @@ impl Attribution {
         if let Some(name) = self.packages.lookup(uid, now_ns) {
             return name;
         }
-        let Some(resolver) = self.app_slot().clone() else {
+        let Some(resolver) = self.app_resolver() else {
             return String::new();
         };
         let name = resolver.package_for(uid);
@@ -120,6 +121,22 @@ impl Attribution {
             return format!("uid:{uid}");
         }
         "unknown".to_string()
+    }
+
+    /// 热路径（每条新流、每条日志）只读，必须走读锁：
+    /// 用 `write()` 会让所有连接在解析器槽位上互相串行。
+    fn uid_resolver(&self) -> Option<Arc<dyn UidResolver>> {
+        self.uid_resolver
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .clone()
+    }
+
+    fn app_resolver(&self) -> Option<Arc<dyn AppUidResolver>> {
+        self.app_resolver
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .clone()
     }
 
     fn uid_slot(&self) -> std::sync::RwLockWriteGuard<'_, Option<Arc<dyn UidResolver>>> {

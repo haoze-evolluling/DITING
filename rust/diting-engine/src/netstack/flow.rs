@@ -22,7 +22,11 @@ impl TcpKey {
 pub struct TcpFlow {
     pub key: TcpKey,
     pub(crate) handle: SocketHandle,
-    pub recv: VecDeque<u8>,
+    /// 上行数据按块排队。块的所有权直接在 smoltcp 的 socket 缓冲与流任务之间移动，
+    /// 不再逐字节 `push_back`（旧实现一个字节一次环绕判断，并且取走时还要整段再拷一次）。
+    recv: VecDeque<Vec<u8>>,
+    /// `recv` 里的总字节数，随出入队维护，避免每次判断容量都遍历所有块。
+    buffered: usize,
     pub(crate) state: tcp::State,
     pub(crate) may_recv: bool,
     pub(crate) may_send: bool,
@@ -43,6 +47,7 @@ impl TcpFlow {
             key,
             handle,
             recv: VecDeque::new(),
+            buffered: 0,
             state: tcp::State::Listen,
             may_recv: true,
             may_send: true,
@@ -54,6 +59,44 @@ impl TcpFlow {
             rx_bytes: 0,
             tx_bytes: 0,
         }
+    }
+
+    pub(crate) fn push_chunk(&mut self, chunk: Vec<u8>) {
+        if chunk.is_empty() {
+            return;
+        }
+        self.buffered += chunk.len();
+        self.recv.push_back(chunk);
+    }
+
+    /// 背压回退：把已取出的块按原顺序放回队首，O(1)，不再逐字节倒灌。
+    pub(crate) fn push_chunk_front(&mut self, chunk: Vec<u8>) {
+        if chunk.is_empty() {
+            return;
+        }
+        self.buffered += chunk.len();
+        self.recv.push_front(chunk);
+    }
+
+    /// 取走全部待上行数据：只有一个块时直接移出所有权，多块才合并。
+    pub(crate) fn take_data(&mut self) -> Vec<u8> {
+        self.buffered = 0;
+        match self.recv.len() {
+            0 => Vec::new(),
+            1 => self.recv.pop_front().unwrap_or_default(),
+            _ => {
+                let mut merged = Vec::with_capacity(self.recv.iter().map(Vec::len).sum());
+                for chunk in self.recv.drain(..) {
+                    merged.extend_from_slice(&chunk);
+                }
+                merged
+            }
+        }
+    }
+
+    pub(crate) fn clear_recv(&mut self) {
+        self.buffered = 0;
+        self.recv.clear();
     }
 
     pub fn state(&self) -> tcp::State {
@@ -73,7 +116,7 @@ impl TcpFlow {
     }
 
     pub fn buffered(&self) -> usize {
-        self.recv.len()
+        self.buffered
     }
 
     pub fn socket_handle(&self) -> SocketHandle {

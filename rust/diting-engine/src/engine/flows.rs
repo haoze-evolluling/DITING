@@ -20,8 +20,11 @@ impl Engine {
     }
 
     pub fn record_flow(&self, key: FlowKey, app: &str, domain: &str, status: FlowStatus) {
-        if let Ok(mut table) = self.flows.lock() {
-            table.record(FlowEvent {
+        // 与仓库其它地方一致：中毒的锁照常使用内部值，否则这条连接记录会被静默丢掉。
+        self.flows
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .record(FlowEvent {
                 key,
                 domain: domain.to_string(),
                 package: app.to_string(),
@@ -30,7 +33,6 @@ impl Engine {
                 status,
                 at_ms: now_ms(),
             });
-        }
     }
 
     pub fn flow_snapshot_json(&self, since_seq: u64, limit: usize) -> String {

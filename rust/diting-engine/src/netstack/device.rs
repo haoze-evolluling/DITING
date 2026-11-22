@@ -22,8 +22,9 @@ impl IpDevice {
         self.rx.push_back(packet);
     }
 
-    pub fn drain_tx(&mut self) -> Vec<Vec<u8>> {
-        self.tx.drain(..).collect()
+    /// 逐个取走出站包，避免每轮把整个队列收集成 `Vec`。
+    pub fn tx_pop(&mut self) -> Option<Vec<u8>> {
+        self.tx.pop_front()
     }
 
     pub fn pending_rx(&self) -> usize {
