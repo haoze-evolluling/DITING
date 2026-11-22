@@ -1,12 +1,14 @@
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_upstream_shared.dart';
+import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ServerUpstreamPage extends ConsumerWidget {
@@ -28,18 +30,8 @@ class ServerUpstreamPage extends ConsumerWidget {
         ? cache.maxTtlSeconds
         : cache.fixedTtlSeconds;
 
-    Future<void> saveCache(ServerCacheConfig next) async {
-      try {
-        await ref
-            .read(serverControllerProvider.notifier)
-            .saveConfig(config.copyWith(cache: next));
-        if (context.mounted) {
-          showAppSnack(context, context.l10n.serverCacheSaved);
-        }
-      } catch (error) {
-        if (context.mounted) showAppSnack(context, error.toString());
-      }
-    }
+    Future<void> saveCache(ServerCacheConfig next) =>
+        saveServerCache(context, ref, config, next);
 
     return CommonScaffold(
       title: context.l10n.serverUpstreamTitle,
@@ -78,7 +70,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                 ListItem(
                   leading: const Icon(TablerIcons.cpu_2, size: 20),
                   title: Text(context.l10n.serverCacheEntries),
-                  trailing: _CacheValue(label: '${cache.maxEntries}'),
+                  trailing: ServerCacheValue(label: '${cache.maxEntries}'),
                   onTap: () async {
                     final value = await editServerNumber(
                       context,
@@ -108,7 +100,7 @@ class ServerUpstreamPage extends ConsumerWidget {
                         ? context.l10n.serverCacheMaxTtl
                         : context.l10n.serverCacheFixedTtl,
                   ),
-                  trailing: _CacheValue(label: '${ttl}s'),
+                  trailing: ServerCacheValue(label: '${ttl}s'),
                   onTap: () async {
                     final value = await editServerNumber(
                       context,
@@ -131,61 +123,13 @@ class ServerUpstreamPage extends ConsumerWidget {
           ),
           if (cache.enabled)
             generateSection(
-              title: context.l10n.serverCacheAdvanced,
               items: [
-                ListItem.toggle(
-                  leading: const Icon(TablerIcons.gauge, size: 20),
-                  title: Text(context.l10n.serverCacheMinTtl),
-                  subtitle: Text(context.l10n.serverCacheMinTtlBody),
-                  value: cache.minTtlEnabled,
-                  onChanged: (value) =>
-                      saveCache(cache.copyWith(minTtlEnabled: value)),
-                ),
-                if (cache.minTtlEnabled)
-                  ListItem(
-                    leading: const Icon(TablerIcons.arrow_up, size: 20),
-                    title: Text(context.l10n.serverCacheMinTtlValue),
-                    trailing: _CacheValue(label: '${cache.minTtlSeconds}s'),
-                    onTap: () async {
-                      final value = await editServerNumber(
-                        context,
-                        title: context.l10n.serverCacheMinTtlValue,
-                        initial: cache.minTtlSeconds,
-                        suffix: 's',
-                      );
-                      if (value != null) {
-                        await saveCache(cache.copyWith(minTtlSeconds: value));
-                      }
-                    },
-                  ),
-                ListItem.toggle(
-                  leading: const Icon(TablerIcons.rotate_clockwise, size: 20),
-                  title: Text(context.l10n.serverCacheStale),
-                  subtitle: Text(context.l10n.serverCacheStaleBody),
-                  value: cache.staleFallbackEnabled,
-                  onChanged: (value) =>
-                      saveCache(cache.copyWith(staleFallbackEnabled: value)),
-                ),
-                ListItem.toggle(
-                  leading: const Icon(TablerIcons.alert_triangle, size: 20),
-                  title: Text(context.l10n.serverCacheNegative),
-                  value: cache.negativeTtlEnabled,
-                  onChanged: (value) =>
-                      saveCache(cache.copyWith(negativeTtlEnabled: value)),
-                ),
-                ListItem.toggle(
-                  leading: const Icon(TablerIcons.sparkles, size: 20),
-                  title: Text(context.l10n.serverCacheOptimistic),
-                  value: cache.optimistic,
-                  onChanged: (value) =>
-                      saveCache(cache.copyWith(optimistic: value)),
-                ),
-                ListItem.toggle(
-                  leading: const Icon(TablerIcons.bolt, size: 20),
-                  title: Text(context.l10n.serverCachePrefetch),
-                  value: cache.prefetchEnabled,
-                  onChanged: (value) =>
-                      saveCache(cache.copyWith(prefetchEnabled: value)),
+                ListItem(
+                  leading: const Icon(TablerIcons.adjustments, size: 20),
+                  title: Text(context.l10n.serverCacheAdvanced),
+                  subtitle: Text(context.l10n.serverCacheAdvancedSummary),
+                  trailing: const Icon(TablerIcons.chevron_right, size: 18),
+                  onTap: () => context.push(ServerRoutes.upstreamAdvanced),
                 ),
               ],
               footer: context.l10n.serverCacheFooter,
@@ -209,24 +153,5 @@ class ServerUpstreamPage extends ConsumerWidget {
     } catch (error) {
       if (context.mounted) showAppSnack(context, error.toString());
     }
-  }
-}
-
-class _CacheValue extends StatelessWidget {
-  const _CacheValue({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: AppTextRole.supportingText
-          .of(context)
-          .copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-            fontFeatures: appTabularFigures,
-          ),
-    );
   }
 }

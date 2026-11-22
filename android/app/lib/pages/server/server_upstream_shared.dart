@@ -1,5 +1,9 @@
+import 'package:diting_android/data/server/server_models.dart';
+import 'package:diting_android/state/server_providers.dart';
+import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 const serverUpstreamModes = <String>[
@@ -30,3 +34,38 @@ String serverModeDescription(BuildContext context, String mode) =>
       'smart_prediction' => context.l10n.serverModeSmartDesc,
       _ => context.l10n.serverModePrimaryBackupDesc,
     };
+
+Future<void> saveServerCache(
+  BuildContext context,
+  WidgetRef ref,
+  ServerConfig config,
+  ServerCacheConfig cache,
+) async {
+  try {
+    await ref
+        .read(serverControllerProvider.notifier)
+        .saveConfig(config.copyWith(cache: cache));
+    if (context.mounted) showAppSnack(context, context.l10n.serverCacheSaved);
+  } catch (error) {
+    if (context.mounted) showAppSnack(context, error.toString());
+  }
+}
+
+class ServerCacheValue extends StatelessWidget {
+  const ServerCacheValue({super.key, required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: AppTextRole.supportingText
+          .of(context)
+          .copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+            fontFeatures: appTabularFigures,
+          ),
+    );
+  }
+}

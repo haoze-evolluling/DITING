@@ -48,6 +48,16 @@ class ServerHubPage extends ConsumerWidget {
                   onTap: () => context.push(ServerRoutes.upstreamProviders),
                 ),
                 FeatureHubCardData(
+                  title: context.l10n.serverSettingsTitle,
+                  description: context.l10n.serverHubSettingsSummary(
+                    config.listen.root
+                        ? context.l10n.serverRootMode
+                        : context.l10n.serverNonRootMode,
+                  ),
+                  glyph: TablerIcons.settings,
+                  onTap: () => context.push(ServerRoutes.settings),
+                ),
+                FeatureHubCardData(
                   title: context.l10n.serverUpstreamTitle,
                   description: serverModeLabel(context, upstream.mode),
                   glyph: TablerIcons.cloud_upload,
@@ -92,16 +102,6 @@ class ServerHubPage extends ConsumerWidget {
             category: FeatureHubCategoryData(
               title: context.l10n.serverHubSystem,
               cards: [
-                FeatureHubCardData(
-                  title: context.l10n.serverSettingsTitle,
-                  description: context.l10n.serverHubSettingsSummary(
-                    config.listen.root
-                        ? context.l10n.serverRootMode
-                        : context.l10n.serverNonRootMode,
-                  ),
-                  glyph: TablerIcons.settings,
-                  onTap: () => context.push(ServerRoutes.settings),
-                ),
                 FeatureHubCardData(
                   title: context.l10n.serverAppearance,
                   description: context.l10n.serverAppearanceHint,

@@ -41,7 +41,7 @@ void main() {
       .ancestor(of: find.text(title), matching: find.byType(AnimatedScale))
       .first;
 
-  testWidgets('配置中心按解析服务与系统分组，奇数卡片保持半宽', (tester) async {
+  testWidgets('配置中心按解析服务与系统分组并保持双列卡片宽度', (tester) async {
     await pumpServer(tester, ServerRoutes.hub);
 
     expect(find.text('配置中心'), findsOneWidget);
@@ -63,32 +63,31 @@ void main() {
     expect(find.textContaining('保留 7 天'), findsOneWidget);
 
     final providers = tester.getTopLeft(card('服务商'));
+    final settings = tester.getTopLeft(card('服务器设置'));
     final upstream = tester.getTopLeft(card('调度与缓存'));
     final bootstrap = tester.getTopLeft(card('Bootstrap 摘要'));
     final filter = tester.getTopLeft(card('过滤规则'));
     final log = tester.getTopLeft(card('日志记录'));
-    expect(upstream.dx, greaterThan(providers.dx));
-    expect(upstream.dy, closeTo(providers.dy, 0.5));
-    expect(bootstrap.dx, closeTo(providers.dx, 0.5));
-    expect(bootstrap.dy, greaterThan(providers.dy));
-    expect(filter.dx, closeTo(upstream.dx, 0.5));
-    expect(filter.dy, closeTo(bootstrap.dy, 0.5));
-    expect(log.dx, closeTo(providers.dx, 0.5));
-    expect(log.dy, greaterThan(bootstrap.dy));
+    expect(settings.dx, greaterThan(providers.dx));
+    expect(settings.dy, closeTo(providers.dy, 0.5));
+    expect(upstream.dx, closeTo(providers.dx, 0.5));
+    expect(upstream.dy, greaterThan(providers.dy));
+    expect(bootstrap.dx, closeTo(settings.dx, 0.5));
+    expect(bootstrap.dy, closeTo(upstream.dy, 0.5));
+    expect(filter.dx, closeTo(providers.dx, 0.5));
+    expect(filter.dy, greaterThan(upstream.dy));
+    expect(log.dx, closeTo(settings.dx, 0.5));
+    expect(log.dy, closeTo(filter.dy, 0.5));
     expect(
       tester.getRect(card('日志记录')).width,
       closeTo(tester.getRect(card('服务商')).width, 0.5),
     );
 
-    final settings = tester.getRect(card('服务器设置'));
     final appearance = tester.getRect(card('外观'));
     final about = tester.getRect(card('关于'));
-    expect(appearance.left, greaterThan(settings.left));
-    expect(appearance.top, closeTo(settings.top, 0.5));
-    expect(about.left, closeTo(settings.left, 0.5));
-    expect(about.top, greaterThan(settings.top));
-    expect(about.width, closeTo(settings.width, 0.5));
-    expect(about.width, lessThan(settings.width + appearance.width));
+    expect(about.left, greaterThan(appearance.left));
+    expect(about.top, closeTo(appearance.top, 0.5));
+    expect(about.width, closeTo(appearance.width, 0.5));
   });
 
   testWidgets('调度与缓存页面按用途分组展示设置卡片', (tester) async {
@@ -98,15 +97,22 @@ void main() {
     expect(find.text('缓存'), findsOneWidget);
     final scrollable = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(
-      find.text('预取'),
+      find.text('高级选项'),
       280,
       scrollable: scrollable,
     );
-    expect(find.text('高级选项'), findsOneWidget);
-    expect(find.text('最小 TTL 值'), findsOneWidget);
+    expect(find.textContaining('最小 TTL、过期回退'), findsOneWidget);
+    expect(find.text('预取'), findsNothing);
+    expect(find.text('最小 TTL 值'), findsNothing);
     expect(find.text('缓存状态'), findsNothing);
     expect(find.text('容量'), findsNothing);
     expect(find.text('TTL 策略'), findsNothing);
+
+    await tester.tap(find.text('高级选项'));
+    await tester.pumpAndSettle();
+    expect(find.text('高级选项'), findsOneWidget);
+    expect(find.text('最小 TTL 值'), findsOneWidget);
+    expect(find.text('预取'), findsOneWidget);
   });
 
   testWidgets('日志域名搜索防抖 300ms，客户端筛选独立生效', (tester) async {
@@ -171,20 +177,30 @@ void main() {
     expect(find.text('过滤状态'), findsOneWidget);
   });
 
-  testWidgets('调度与缓存页面可切换预取', (tester) async {
-    final client = _LogFake();
-    await pumpServer(tester, ServerRoutes.upstream, client: client);
+  testWidgets('高级选项二级页面可切换预取', (tester) async {
+    final client = FakeServerClient();
+    await pumpServer(tester, ServerRoutes.upstreamAdvanced, client: client);
 
-    await tester.scrollUntilVisible(
-      find.text('预取'),
-      280,
-      scrollable: find.byType(Scrollable).first,
-    );
     await tester.tap(find.text('预取'));
     await tester.pumpAndSettle();
 
     final saved = await client.getConfig();
     expect(saved.cache.prefetchEnabled, isTrue);
+  });
+
+  testWidgets('调度与缓存页面可进入高级选项二级页面', (tester) async {
+    await pumpServer(tester, ServerRoutes.upstream);
+
+    await tester.scrollUntilVisible(
+      find.text('高级选项'),
+      280,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('高级选项'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('最小 TTL'), findsOneWidget);
+    expect(find.text('乐观缓存'), findsOneWidget);
   });
 
   testWidgets('缓存 TTL 模式通过弹出菜单切换', (tester) async {

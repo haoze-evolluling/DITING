@@ -8,6 +8,7 @@ import 'package:diting_android/pages/server/server_logs_page.dart';
 import 'package:diting_android/pages/server/server_query_log_page.dart';
 import 'package:diting_android/pages/server/server_settings_page.dart';
 import 'package:diting_android/pages/server/server_shell.dart';
+import 'package:diting_android/pages/server/server_upstream_advanced_page.dart';
 import 'package:diting_android/pages/server/server_upstream_providers_page.dart';
 import 'package:diting_android/pages/server/server_upstream_page.dart';
 import 'package:diting_android/pages/server/server_upstream_bootstrap_page.dart';
@@ -22,6 +23,7 @@ abstract final class ServerRoutes {
   static const hub = '/server/hub';
   static const logs = '/server/logs';
   static const upstream = '/server/upstream';
+  static const upstreamAdvanced = '/server/upstream/advanced';
   static const upstreamProviders = '/server/upstream/providers';
   static const upstreamBootstrap = '/server/upstream/bootstrap';
   static const filter = '/server/filter';
@@ -78,6 +80,7 @@ List<RouteBase> serverRoutes() => [
     ],
   ),
   _leaf(ServerRoutes.upstream, const ServerUpstreamPage()),
+  _leaf(ServerRoutes.upstreamAdvanced, const ServerUpstreamAdvancedPage()),
   _leaf(ServerRoutes.upstreamProviders, const ServerUpstreamProvidersPage()),
   _leaf(ServerRoutes.upstreamBootstrap, const ServerUpstreamBootstrapPage()),
   _leaf(ServerRoutes.filter, const ServerFilterPage()),
