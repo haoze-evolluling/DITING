@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Display name shared by the application and its launcher-icon aliases. -->
+    <string name="app_name">谛听</string>
+    <!-- Quick settings tile, worded exactly like the legacy app. -->
+    <string name="quick_settings_tile_label">谛听</string>
+    <string name="quick_settings_tile_state_on">已开启</string>
+    <string name="quick_settings_tile_state_off">已关闭</string>
+    <!-- Home screen widget: same state wording as the tile, plus the daily blocked figure. -->
+    <string name="widget_protected">已开启</string>
+    <string name="widget_unprotected">已关闭</string>
+    <string name="widget_blocked_today">今日拦截</string>
+    <string name="widget_today_queries">今日查询</string>
+    <string name="widget_block_rate">拦截率</string>
+    <string name="widget_work_mode">工作模式</string>
+    <string name="widget_mode_normal">普通模式</string>
+    <string name="widget_mode_express">简洁模式</string>
+    <string name="widget_mode_server">服务器模式</string>
+    <string name="server_channel_name">局域网 DNS 服务器</string>
+    <string name="server_channel_description">服务器模式的运行状态与停止入口</string>
+    <string name="server_notification_title">谛听 · 服务器模式</string>
+    <string name="server_notification_starting">正在启动局域网 DNS…</string>
+    <string name="server_notification_running">局域网 DNS · 端口 %1$d</string>
+    <string name="server_notification_running_root">Root 监听 · 端口 %1$d</string>
+    <string name="server_notification_stopped">服务器已停止</string>
+    <string name="server_notification_stop">停止</string>
+    <string name="server_binary_missing">服务器可执行文件缺失，请重新构建 APK</string>
+    <string name="server_start_timeout">服务器启动超时</string>
+    <string name="server_start_failed">服务器启动失败</string>
+    <string name="server_exited">服务器进程异常退出（%1$d）</string>
+    <string name="root_dns_channel_name">Root DNS 接管</string>
+    <string name="root_dns_channel_description">普通模式的免 VPN Root DNS 接管状态</string>
+    <string name="root_dns_notification_title">谛听 · Root DNS 接管</string>
+    <string name="root_dns_notification_starting">正在启动 Root DNS 接管…</string>
+    <string name="root_dns_notification_running">本机 DNS 已接管 · 端口 %1$d</string>
+    <string name="root_dns_notification_stopped">Root DNS 接管已停止</string>
+    <string name="root_dns_notification_stop">停止</string>
+    <string name="root_dns_no_root">未获得 Root 权限</string>
+    <string name="root_dns_missing_config">缺少 DNS 配置</string>
+    <string name="root_dns_start_failed">Root DNS 接管启动失败</string>
+    <string name="root_dns_bind_failed">无法绑定本地 DNS 端口</string>
+    <string name="root_dns_vpn_running">请先停止 VPN 隧道后再启用 Root DNS 接管</string>
+    <string name="root_dns_storage_busy">存储升级尚未完成，请稍后重试</string>
+    <string name="widget_value_unknown">—</string>
+    <string name="widget_toggle_desc">开启或关闭</string>
+    <string name="widget_description">显示保护状态与今日拦截数，支持大中小三种尺寸，一键开启或关闭</string>
+</resources>

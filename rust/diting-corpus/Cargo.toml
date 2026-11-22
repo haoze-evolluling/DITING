@@ -1,0 +1,40 @@
+[package]
+name = "diting-corpus"
+version = "0.1.0"
+edition = "2021"
+description = "The stage 0 baseline corpus: the frozen bytes and JSON documents the Rust engine must keep producing while the Go engine is replaced"
+publish = false
+
+[lib]
+crate-type = ["lib"]
+
+# `cargo run -p diting-corpus --bin gen-corpus` regenerates the fixtures.
+[[bin]]
+name = "gen-corpus"
+path = "src/bin/gen_corpus.rs"
+
+[dependencies]
+serde_json = "1"
+
+# The producers whose output is frozen. Each one is the implementation that replaced the Go code, so
+# a fixture change here means a semantic change in the engine, not in the test.
+diting-dns-cache-core = { path = "../diting-dns-cache-core" }
+diting-dns-core = { path = "../diting-dns-core" }
+diting-dns-wire = { path = "../diting-dns-wire" }
+diting-engine = { path = "../diting-engine" }
+diting-telemetry-core = { path = "../diting-telemetry-core" }
+diting-cosmetic-core = { path = "../diting-cosmetic-core" }
+diting-mitm-spike = { path = "../diting-mitm-spike" }
+diting-netstack-spike = { path = "../diting-netstack-spike" }
+smoltcp = { version = "0.14", default-features = false, features = [
+    "std",
+    "medium-ip",
+    "proto-ipv4",
+    "proto-ipv6",
+    "socket-tcp",
+    "socket-udp",
+] }
+
+# The gzip/deflate leg of the MITM corpus and the async packet reader the injection path uses.
+async-compression = { version = "0.4", features = ["tokio", "gzip", "deflate", "zlib"] }
+tokio = { version = "1", features = ["rt", "macros", "io-util"] }

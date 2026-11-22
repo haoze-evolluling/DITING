@@ -1,0 +1,281 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Needed to enumerate installed apps for the block / exclude / inspection
+         pickers; without it the platform returns only this app's own packages. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <uses-permission android:name="com.android.permission.GET_INSTALLED_APPS" />
+    <!-- In-app update: hands the downloaded APK to the system installer. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- On-demand connection reads the joined Wi-Fi name to match its SSID whitelist.
+         Android 10+ only returns a real SSID to an app holding a location permission, and
+         Android 13+ lets NEARBY_WIFI_DEVICES satisfy that instead of precise location. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="tiramisu" />
+    <!-- Scheduled automation re-arms its alarms after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Without this declaration the battery-optimization dialog is filtered out and the
+         request silently lands on the app info screen instead. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- Floating log window shown over other apps while the tunnel runs in the background. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 自动化平台层（A5/A9）：签名级 CONTROL 保护控制广播，签名级 RECEIVE_EVENTS 保护状态/定时事件广播。 -->
+    <permission android:name="com.haoze.diting.permission.CONTROL"
+        android:protectionLevel="signature" />
+    <permission android:name="com.haoze.diting.permission.RECEIVE_EVENTS"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.haoze.diting.permission.CONTROL" />
+    <uses-permission android:name="com.haoze.diting.permission.RECEIVE_EVENTS" />
+    <!-- 定时自动化需要精确闹钟；显式不加 USE_EXACT_ALARM（商店政策），运行时可退回非精确。 -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <application
+        android:label="@string/app_name"
+        android:name="com.haoze.diting.DitingApplication"
+        android:extractNativeLibs="true"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:enableOnBackInvokedCallback="false"
+            android:windowSoftInputMode="adjustResize">
+            <!-- Theme applied while the process starts and the Flutter UI
+                 initialises, then behind the Flutter UI. -->
+            <meta-data
+              android:name="io.flutter.embedding.android.NormalTheme"
+              android:resource="@style/NormalTheme"
+              />
+            <!-- The MAIN/LAUNCHER filter lives on the activity-alias entries below: one per icon
+                 style, with exactly one enabled at a time, so the launcher icon can be switched. -->
+            <!-- Long-pressing the quick settings tile opens this app's tile settings. -->
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES"/>
+            </intent-filter>
+            <!-- Subscription deep link, FlClash style: diting://install-config?url=<encoded>.
+                 Dart parses it and opens the add-subscription sheet pre-filled. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="diting" android:host="install-config"/>
+                <data android:scheme="diting" android:host="install-sub"/>
+            </intent-filter>
+        </activity>
+        <!-- Headless automation entry: adb / Tasker send START, STOP or TOGGLE. -->
+        <activity
+            android:name=".QuickActionActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="com.haoze.diting.action.START"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.haoze.diting.action.STOP"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.haoze.diting.action.TOGGLE"/>
+            </intent-filter>
+        </activity>
+        <!-- Launcher icon styles. Android cannot repaint an installed activity's icon at runtime,
+             so each style is an activity-alias pointing at MainActivity and the native
+             `LauncherIconBridge` enables exactly one. `LauncherDefault` is on out of the box;
+             `LauncherAdguard` is the alternative shipped icon. -->
+        <activity-alias
+            android:name=".LauncherDefault"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:enabled="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherAdguard"
+            android:targetActivity=".MainActivity"
+            android:exported="true"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_adguard"
+            android:roundIcon="@mipmap/ic_launcher_adguard_round"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <!-- Required by the Flutter tool to generate GeneratedPluginRegistrant.java. -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+        <!-- sqflite opens without WAL by default, and Android resets the journal mode on every
+             open: the Flutter connection could switch diting_database back to TRUNCATE, after
+             which each Dart read blocked the native log writers. Keep both sides on WAL. -->
+        <meta-data
+            android:name="com.tekartik.sqflite.wal_enabled"
+            android:value="true" />
+        <!-- In-app update: serves APKs from filesDir/app-update as content:// URIs to
+             the system installer. Paths are declared in res/xml/file_paths.xml. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        <!-- Full tunnel: libditing_native.so owns the data plane, MITM and DNS. -->
+        <service
+            android:name=".normal.DitingVpnService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vpn" />
+        </service>
+        <!-- Express mode: same full-tunnel data plane as normal mode, with its own rule and log
+             dataset. -->
+        <service
+            android:name=".express.ExpressVpnService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="vpn" />
+        </service>
+        <!-- Normal mode's root variant: an engine DNS listener plus iptables redirection, with no
+             VpnService and therefore no VPN consent. -->
+        <service
+            android:name=".root.RootDnsService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="dns_server" />
+        </service>
+        <!-- Server mode: supervises the standalone Rust LAN DNS process. -->
+        <service
+            android:name=".server.ServerDnsService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="dns_server" />
+        </service>
+        <!-- Manual runtime-log capture (功能中心 → 故障排查 → 运行日志). Foreground so a
+             backgrounded app keeps collecting; the notification is also the stop affordance.
+             Its own process on purpose: a capture inside the app process dies with it, so the
+             crash the user is trying to record would never be written. -->
+        <service
+            android:name=".log.RuntimeLogService"
+            android:exported="false"
+            android:process=":log"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="diagnostics" />
+        </service>
+        <!-- Home screen widget: protection state, today's blocked count and a one-tap toggle.
+             The provider must be exported for the system's update broadcasts; the toggle receiver
+             is a separate, unexported component so no other app can flip the tunnel. -->
+        <receiver
+            android:name=".widget.DitingWidgetProvider"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/diting_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.DitingWidgetToggleReceiver"
+            android:exported="false" />
+        <!-- Quick settings tile: toggles whichever data plane the current mode uses. -->
+        <service
+            android:name=".tile.DitingTileService"
+            android:exported="true"
+            android:icon="@drawable/dns_svgrepo_com"
+            android:label="@string/quick_settings_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+        <!-- 自动化控制入口（A9）：签名权限 CONTROL 保护的导出广播，adb/Tasker/通知动作可启动/停止/切换/暂停。 -->
+        <receiver
+            android:name=".automation.AutomationReceiver"
+            android:exported="true"
+            android:permission="com.haoze.diting.permission.CONTROL">
+            <intent-filter>
+                <action android:name="com.haoze.diting.automation.START" />
+                <action android:name="com.haoze.diting.automation.STOP" />
+                <action android:name="com.haoze.diting.automation.TOGGLE" />
+                <action android:name="com.haoze.diting.automation.PAUSE" />
+                <action android:name="com.haoze.diting.automation.CANCEL_PAUSE" />
+                <action android:name="com.haoze.diting.automation.RUN_RULES" />
+            </intent-filter>
+        </receiver>
+        <!-- 定时到点，仅应用内 alarm 触发。 -->
+        <receiver
+            android:name=".automation.ScheduleAlarmReceiver"
+            android:exported="false" />
+        <!-- 开机/校时/时区/应用更新后重排定时（exported=false，仅系统可发隐式广播）。 -->
+        <receiver
+            android:name=".automation.ScheduleBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <!-- 开机后按「前后台行为 → 开机自启动」恢复上次使用的数据面。 -->
+        <receiver
+            android:name=".control.BootAutoStartReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+    <!-- Package visibility for ACTION_PROCESS_TEXT, which the Flutter engine's
+         ProcessTextPlugin queries. See https://developer.android.com/training/package-visibility -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
+    </queries>
+</manifest>

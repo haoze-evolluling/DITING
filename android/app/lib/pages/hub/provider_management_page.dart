@@ -1,0 +1,269 @@
+// ignore_for_file: sort_child_properties_last
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/mock_data.dart';
+import 'package:diting_android/pages/hub/provider_editor.dart';
+import 'package:diting_android/routes/hub_routes.dart';
+import 'package:diting_android/state/provider_catalog_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
+class ProviderManagementPage extends ConsumerStatefulWidget {
+  const ProviderManagementPage({super.key});
+
+  @override
+  ConsumerState<ProviderManagementPage> createState() =>
+      _ProviderManagementPageState();
+}
+
+class _ProviderManagementPageState
+    extends ConsumerState<ProviderManagementPage> {
+  ProviderProtocol _protocol = ProviderProtocol.doh;
+
+  void _select(MockProvider provider) {
+    ref.read(selectedProviderProvider.notifier).select(provider.id);
+  }
+
+  Future<void> _add() async {
+    final draft = await showFloatingDialog<ProviderDraft>(
+      context: context,
+      child: ProviderEditor(protocol: _protocol),
+    );
+    if (draft == null || !mounted) {
+      return;
+    }
+    final notifier = ref.read(dnsProviderCatalogProvider.notifier);
+    notifier.addCustom(
+      name: draft.name,
+      protocol: draft.protocol,
+      address: draft.address,
+    );
+    final created = ref.read(dnsProviderCatalogProvider).last;
+    ref.read(selectedProviderProvider.notifier).select(created.id);
+    setState(() => _protocol = draft.protocol);
+  }
+
+  Future<void> _edit(MockProvider provider) async {
+    final draft = await showFloatingDialog<ProviderDraft>(
+      context: context,
+      child: ProviderEditor(protocol: provider.protocol, initial: provider),
+    );
+    if (draft == null || !mounted) {
+      return;
+    }
+    ref
+        .read(dnsProviderCatalogProvider.notifier)
+        .updateCustom(
+          id: provider.id,
+          name: draft.name,
+          protocol: draft.protocol,
+          address: draft.address,
+        );
+    setState(() => _protocol = draft.protocol);
+  }
+
+  Future<void> _delete(MockProvider provider) async {
+    final confirmed = await showFloatingDialog<bool>(
+      context: context,
+      child: CommonDialog(
+        title: context.l10n.providerMgmtDeleteTitle,
+        destructive: true,
+        child: Text(context.l10n.providerMgmtDeleteBody(provider.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.uiCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.l10n.commonDelete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    ref.read(dnsProviderCatalogProvider.notifier).deleteCustom(provider.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final all = ref.watch(dnsProviderCatalogProvider);
+    final selectedId = ref.watch(selectedProviderProvider);
+    final selected = all
+        .where((provider) => provider.id == selectedId)
+        .firstOrNull;
+    final list = all
+        .where((provider) => provider.protocol == _protocol)
+        .toList(growable: false);
+    final presets = list.where((provider) => provider.isPreset).toList();
+    final customs = list.where((provider) => !provider.isPreset).toList();
+    return CommonScaffold(
+      title: context.l10n.providerMgmtTitle,
+      iconActions: [
+        IconButtonData(
+          glyph: TablerIcons.plus,
+          tooltip: context.l10n.providerMgmtAdd,
+          onPressed: _add,
+        ),
+      ],
+      body: PageBody(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: CommonCard(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                spacing: 12,
+                children: [
+                  Icon(
+                    TablerIcons.cloud_upload,
+                    size: 22,
+                    color: colorScheme.primary,
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 2,
+                      children: [
+                        Text(
+                          context.l10n.providerMgmtCurrent,
+                          style: AppTextRole.rowTitle.of(context),
+                        ),
+                        Text(
+                          selected == null
+                              ? context.l10n.resolutionNotConfigured
+                              : '(${selected.protocol.label}) ${selected.name}',
+                          style: AppTextRole.supportingText.of(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+            child: SegmentedControl<ProviderProtocol>(
+              segments: [
+                for (final protocol in ProviderProtocol.values)
+                  (protocol, protocol.label),
+              ],
+              value: _protocol,
+              onChanged: (value) => setState(() => _protocol = value),
+            ),
+          ),
+          if (customs.isNotEmpty)
+            generateSection(
+              title: context.l10n.providerMgmtCustom,
+              items: [
+                for (final provider in customs)
+                  _ProviderRow(
+                    provider: provider,
+                    selected: provider.id == selectedId,
+                    onTap: () => _select(provider),
+                    onEdit: () => _edit(provider),
+                    onDelete: () => _delete(provider),
+                  ),
+              ],
+            )
+          else
+            generateSection(
+              title: context.l10n.providerMgmtCustom,
+              items: [
+                ListItem(
+                  title: Text(context.l10n.providerMgmtEmptyCustom),
+                  subtitle: Text(context.l10n.providerMgmtEmptyCustomSubtitle),
+                  leading: Icon(TablerIcons.circle_plus),
+                ),
+              ],
+            ),
+          if (presets.isNotEmpty)
+            generateSection(
+              title: context.l10n.providerMgmtBuiltin,
+              items: [
+                for (final provider in presets)
+                  _ProviderRow(
+                    provider: provider,
+                    selected: provider.id == selectedId,
+                    onTap: () => _select(provider),
+                  ),
+              ],
+            ),
+          generateSection(
+            title: context.l10n.hubModuleMore,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.language),
+                title: Text(context.l10n.hubBootstrap),
+                subtitle: Text(context.l10n.hubBootstrapDescription),
+                onTap: () => context.push(HubPaths.bootstrap),
+              ),
+            ],
+          ),
+          ListFooter(text: context.l10n.providerMgmtFooter),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProviderRow extends StatelessWidget {
+  const _ProviderRow({
+    required this.provider,
+    required this.selected,
+    required this.onTap,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  final MockProvider provider;
+  final bool selected;
+  final VoidCallback onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem(
+      leading: Icon(
+        provider.protocol == ProviderProtocol.doh
+            ? TablerIcons.lock
+            : TablerIcons.cloud_upload,
+        size: 20,
+      ),
+      title: Text(provider.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(
+        provider.address,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selected) const SelectionCheck(),
+          if (onEdit != null)
+            IconButton(
+              tooltip: context.l10n.commonEdit,
+              onPressed: onEdit,
+              icon: const Icon(TablerIcons.pencil, size: 20),
+            ),
+          if (onDelete != null)
+            IconButton(
+              tooltip: context.l10n.commonDelete,
+              onPressed: onDelete,
+              icon: const Icon(TablerIcons.trash, size: 20),
+            ),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+}

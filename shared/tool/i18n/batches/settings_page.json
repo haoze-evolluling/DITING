@@ -1,0 +1,62 @@
+{
+  "settingsModeSubtitle": [
+    "切换普通模式或服务器模式",
+    "Switch between normal and server mode"
+  ],
+  "settingsLogModeSubtitle": [
+    "选择 DNS 请求日志的记录范围",
+    "Choose how much of the DNS request log is recorded"
+  ],
+  "settingsRunSection": [
+    "运行设置",
+    "Run"
+  ],
+  "settingsForegroundSubtitle": [
+    "后台隐藏、通知常驻、绕过局域网",
+    "Hide in the background, keep the notification, bypass the LAN"
+  ],
+  "settingsSystemSection": [
+    "应用与系统",
+    "App & system"
+  ],
+  "settingsLanguageSubtitle": [
+    "选择应用界面语言",
+    "Choose the app language"
+  ],
+  "settingsWizardSubtitle": [
+    "架构原理、权限配置与上手指引",
+    "Architecture, permissions and a getting-started guide"
+  ],
+  "hubOtherSettings": [
+    "其他设置",
+    "Other settings"
+  ],
+  "devOptions": [
+    "开发者选项",
+    "Developer options"
+  ],
+  "serverRunMode": [
+    "运行模式",
+    "Run mode"
+  ],
+  "cacheSettingsTitle": [
+    "缓存设置",
+    "Cache settings"
+  ],
+  "logRetentionTitle": [
+    "日志模式",
+    "Log mode"
+  ],
+  "foregroundTitle": [
+    "前后台行为",
+    "Foreground and background"
+  ],
+  "languageTitle": [
+    "语言设置",
+    "Language"
+  ],
+  "serverWizard": [
+    "使用向导",
+    "Setup guide"
+  ]
+}

@@ -1,0 +1,534 @@
+package com.haoze.diting.log
+
+internal class LogNative private constructor() {
+    external fun dnsBatchSubmit(
+        stats: Long,
+        queue: Long,
+        modeTag: Int,
+        packed: ByteArray,
+        nowMs: Long,
+    ): ByteArray?
+    external fun httpEvents(
+        stats: Long,
+        queue: Long,
+        modeTag: Int,
+        packed: ByteArray,
+        nowMs: Long,
+    ): ByteArray?
+    external fun raceRows(packed: ByteArray, nowMs: Long): ByteArray?
+    external fun raceRowsSubmit(queue: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun bootstrapRows(packed: ByteArray, nowMs: Long): ByteArray?
+    external fun bootstrapRowsSubmit(queue: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun retentionPlan(packed: ByteArray): ByteArray?
+    external fun crashSelect(packed: ByteArray): ByteArray?
+
+    external fun statsNew(): Long
+    external fun statsFree(handle: Long)
+    external fun statsRequestReset(handle: Long)
+    external fun statsRateReset(handle: Long)
+    external fun statsSnapshot(handle: Long): ByteArray?
+    external fun rateTick(handle: Long, tx: Long, rx: Long, nowMs: Long)
+    external fun rateSnapshot(handle: Long, nowMs: Long): ByteArray?
+
+    external fun trafficNew(): Long
+    external fun trafficFree(handle: Long)
+    external fun trafficOnTick(handle: Long, packed: ByteArray): ByteArray?
+    external fun trafficTake(handle: Long): ByteArray?
+    external fun trafficRequeue(handle: Long, packed: ByteArray): Boolean
+    external fun trafficBackoff(handle: Long, nowMs: Long): Long
+    external fun trafficResetBackoff(handle: Long)
+    external fun trafficInBackoff(handle: Long, nowMs: Long): Boolean
+    external fun trafficClear(handle: Long): Int
+
+    external fun healthNew(): Long
+    external fun healthFree(handle: Long)
+    external fun healthDropped(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun healthOpenFailure(
+        handle: Long,
+        databaseName: String,
+        cause: String,
+        nowMs: Long,
+    ): ByteArray?
+
+    external fun healthWarn(handle: Long, message: String, cause: String, nowMs: Long): ByteArray?
+    external fun healthSnapshot(handle: Long): ByteArray?
+
+    external fun attrNew(): Long
+    external fun attrFree(handle: Long)
+    external fun attrUidLookup(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun attrUidStore(handle: Long, packed: ByteArray, uid: Int, nowMs: Long): Boolean
+    external fun attrPackageLookup(handle: Long, uid: Int): ByteArray?
+    external fun attrPackageStore(handle: Long, uid: Int, name: String)
+    external fun attrClear(handle: Long)
+
+    external fun queueNew(settingsTag: Int): Long
+    external fun queueFree(handle: Long)
+    external fun queueSubmitMany(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun queueTake(handle: Long): ByteArray?
+    external fun queueRequeue(handle: Long, packed: ByteArray): Int
+    external fun queueBackoff(handle: Long, nowMs: Long): Long
+    external fun queueResetBackoff(handle: Long)
+    external fun queueRetryWait(handle: Long, nowMs: Long): Long
+    external fun queueInBackoff(handle: Long, nowMs: Long): Boolean
+    external fun queueMissingLatched(handle: Long, nowMs: Long): Boolean
+    external fun queueLatchMissing(handle: Long, nowMs: Long)
+    external fun queueMarkClosed(handle: Long)
+    external fun queueIsClosed(handle: Long): Boolean
+    external fun queueClose(handle: Long): Int
+    external fun queuePendingLen(handle: Long): Int
+
+    external fun storeIndex(packed: ByteArray): ByteArray?
+    external fun storeDocument(packed: ByteArray): ByteArray?
+    external fun capturePlan(pid: Int, uid: Int, detailed: Int): ByteArray?
+    external fun captureSessionNew(): Long
+    external fun captureSessionFree(handle: Long)
+    external fun captureLine(handle: Long, packed: ByteArray): ByteArray?
+    external fun runtimeEventNew(minLevelTag: Int, dedupWindowMs: Long): Long
+    external fun runtimeEventFree(handle: Long)
+    external fun runtimeEventSetLevel(handle: Long, minLevelTag: Int)
+    external fun runtimeEventLine(handle: Long, packed: ByteArray, nowMs: Long): ByteArray?
+    external fun mirrorLayout(): ByteArray?
+    external fun mirrorRows(packed: ByteArray): ByteArray?
+
+    companion object {
+        const val MODE_TAG_ALL = 0
+        const val MODE_TAG_BLOCKED_AND_ERRORS = 1
+        const val MODE_TAG_OFF = 2
+
+        const val QUEUE_LOG_TABLE = 0
+        const val QUEUE_HTTP = 1
+
+        internal val instance: LogNative by lazy {
+            try {
+                System.loadLibrary("diting_native")
+                LogNative()
+            } catch (error: Throwable) {
+                throw IllegalStateException(
+                    "native log kernel unavailable; build it with " +
+                        "`python rust/build_android.py`",
+                    error,
+                )
+            }
+        }
+
+        fun modeTag(mode: String): Int = when (mode) {
+            DnsLogWriter.MODE_ALL -> MODE_TAG_ALL
+            DnsLogWriter.MODE_BLOCKED_AND_ERRORS -> MODE_TAG_BLOCKED_AND_ERRORS
+            DnsLogWriter.MODE_OFF -> MODE_TAG_OFF
+            else -> MODE_TAG_ALL
+        }
+
+        fun retentionPlan(
+            logDays: Int?,
+            trafficDays: Int?,
+            nowMs: Long,
+        ): LogRetentionPlan {
+            val packed = LogPayload.pack { out ->
+                out.writeByte(if (logDays == null) 0 else 1)
+                out.writeInt(logDays ?: 0)
+                out.writeByte(if (trafficDays == null) 0 else 1)
+                out.writeInt(trafficDays ?: 0)
+                out.writeLong(nowMs)
+            }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.retentionPlan(packed)) {
+                    "native retention plan rejected the payload"
+                },
+            )
+            return LogRetentionPlan(
+                logDays = reader.i32(),
+                logCutoffMs = reader.i64(),
+                trafficDays = reader.i32(),
+                trafficCutoffMs = reader.i64(),
+                tables = List(reader.count()) { reader.string() },
+                trafficTable = reader.string(),
+                batchRows = reader.i64(),
+            )
+        }
+
+        fun crashSelect(packageName: String, lines: List<String>): List<String> {
+            val packed = LogPayload.pack { out ->
+                LogPayload.writeString(out, packageName)
+                out.writeInt(lines.size)
+                lines.forEach { LogPayload.writeString(out, it) }
+            }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.crashSelect(packed)) {
+                    "native crash selector rejected the payload"
+                },
+            )
+            return List(reader.count()) { reader.string() }
+        }
+
+        fun statsNew(): Long = requireHandle(instance.statsNew(), "stats")
+        fun statsFree(handle: Long) = instance.statsFree(handle)
+        fun statsRequestReset(handle: Long) = instance.statsRequestReset(handle)
+        fun statsRateReset(handle: Long) = instance.statsRateReset(handle)
+        fun rateTick(handle: Long, tx: Long, rx: Long) =
+            instance.rateTick(handle, tx, rx, System.currentTimeMillis())
+
+        fun statsSnapshot(handle: Long): LogRequestSnapshot {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.statsSnapshot(handle)) {
+                    "native request counters returned no value"
+                },
+            )
+            return LogRequestSnapshot(
+                total = reader.i64(),
+                passed = reader.i64(),
+                filtered = reader.i64(),
+                cached = reader.i64(),
+                rewritten = reader.i64(),
+                failed = reader.i64(),
+            )
+        }
+
+        fun rateSnapshot(handle: Long): Pair<Long, Long> {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.rateSnapshot(handle, System.currentTimeMillis())) {
+                    "native traffic rates returned no value"
+                },
+            )
+            return reader.i64() to reader.i64()
+        }
+
+        fun trafficNew(): Long = requireHandle(instance.trafficNew(), "traffic")
+        fun trafficFree(handle: Long) = instance.trafficFree(handle)
+        fun trafficClear(handle: Long): Int = instance.trafficClear(handle)
+        fun trafficBackoff(handle: Long): Long =
+            instance.trafficBackoff(handle, System.currentTimeMillis())
+
+        fun trafficResetBackoff(handle: Long) = instance.trafficResetBackoff(handle)
+
+        fun trafficInBackoff(handle: Long): Boolean =
+            instance.trafficInBackoff(handle, System.currentTimeMillis())
+
+        fun trafficOnTick(handle: Long, packed: ByteArray): LogTrafficOutcome {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.trafficOnTick(handle, packed)) {
+                    "native traffic tick rejected the payload"
+                },
+            )
+            val flags = reader.u8()
+            return LogTrafficOutcome(
+                flush = flags and 1 != 0,
+                tickTx = reader.i64(),
+                tickRx = reader.i64(),
+                droppedDate = reader.string().takeIf { flags and 2 != 0 && it.isNotEmpty() },
+                droppedPackages = reader.count(),
+            )
+        }
+
+        fun trafficTake(handle: Long): List<LogTrafficBatch> {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.trafficTake(handle)) {
+                    "native traffic take returned no value"
+                },
+            )
+            return List(reader.count()) {
+                val date = reader.string()
+                LogTrafficBatch(
+                    date = date,
+                    rows = List(reader.count()) {
+                        LogTrafficRow(
+                            packageName = reader.string(),
+                            tx = reader.i64(),
+                            rx = reader.i64(),
+                        )
+                    },
+                )
+            }
+        }
+
+        fun trafficRequeue(handle: Long, batches: List<LogTrafficBatch>): Boolean {
+            val packed = LogPayload.pack { out ->
+                out.writeInt(batches.size)
+                for (batch in batches) {
+                    LogPayload.writeString(out, batch.date)
+                    out.writeInt(batch.rows.size)
+                    for (row in batch.rows) {
+                        LogPayload.writeString(out, row.packageName)
+                        out.writeLong(row.tx)
+                        out.writeLong(row.rx)
+                    }
+                }
+            }
+            return instance.trafficRequeue(handle, packed)
+        }
+
+        fun healthNew(): Long = requireHandle(instance.healthNew(), "write health")
+        fun healthFree(handle: Long) = instance.healthFree(handle)
+
+        fun healthDropped(handle: Long, rows: Int, reasonTag: Int, table: String): String? {
+            val packed = LogPayload.pack { out ->
+                out.writeInt(rows)
+                out.writeByte(reasonTag)
+                LogPayload.writeString(out, table)
+            }
+            return readWarnLine(
+                requireNotNull(instance.healthDropped(handle, packed, System.currentTimeMillis())) {
+                    "native write health rejected the dropped-row payload"
+                },
+            )
+        }
+
+        fun healthOpenFailure(handle: Long, databaseName: String, cause: String): String? =
+            readWarnLine(
+                requireNotNull(
+                    instance.healthOpenFailure(
+                        handle,
+                        databaseName,
+                        cause,
+                        System.currentTimeMillis(),
+                    ),
+                ) { "native write health rejected the open-failure call" },
+            )
+
+        fun healthWarn(handle: Long, message: String, cause: String): String? = readWarnLine(
+            requireNotNull(
+                instance.healthWarn(handle, message, cause, System.currentTimeMillis()),
+            ) { "native write health rejected the warning call" },
+        )
+
+        fun healthSnapshot(handle: Long): LogHealthSnapshot {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.healthSnapshot(handle)) {
+                    "native write health returned no value"
+                },
+            )
+            val droppedRows = reader.i64()
+            val droppedByReason = LinkedHashMap<String, Long>(4)
+            repeat(4) { droppedByReason[reader.string()] = reader.i64() }
+            return LogHealthSnapshot(
+                droppedRows = droppedRows,
+                droppedByReason = droppedByReason,
+                lastDrop = reader.string(),
+                openFailures = reader.i64(),
+                suppressed = reader.i64(),
+                lastCause = reader.string(),
+            )
+        }
+
+        fun attrNew(): Long = requireHandle(instance.attrNew(), "attribution cache")
+        fun attrFree(handle: Long) = instance.attrFree(handle)
+        fun attrClear(handle: Long) = instance.attrClear(handle)
+
+        fun attrUidLookup(handle: Long, packed: ByteArray): Int? {
+            val reader = LogPayload.Reader(
+                requireNotNull(
+                    instance.attrUidLookup(handle, packed, System.currentTimeMillis()),
+                ) { "native attribution cache rejected the flow key" },
+            )
+            return if (reader.u8() == 1) reader.i32() else null
+        }
+
+        fun attrUidStore(handle: Long, packed: ByteArray, uid: Int): Boolean =
+            instance.attrUidStore(handle, packed, uid, System.currentTimeMillis())
+
+        fun attrPackageLookup(handle: Long, uid: Int): LogPackageLookup {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.attrPackageLookup(handle, uid)) {
+                    "native attribution cache returned no package answer"
+                },
+            )
+            return when (reader.u8()) {
+                0 -> LogPackageLookup.Miss
+                1 -> LogPackageLookup.Hit(reader.string())
+                2 -> LogPackageLookup.NotKnown
+                else -> throw IllegalStateException("native package lookup returned no status")
+            }
+        }
+
+        fun attrPackageStore(handle: Long, uid: Int, name: String) =
+            instance.attrPackageStore(handle, uid, name)
+
+        fun queueNew(settingsTag: Int): Long =
+            requireHandle(instance.queueNew(settingsTag), "writer queue")
+
+        fun queueFree(handle: Long) = instance.queueFree(handle)
+
+        fun queueTake(handle: Long): List<ByteArray>? {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.queueTake(handle)) {
+                    "native writer queue returned no batch"
+                },
+            )
+            if (reader.u8() == 0) return null
+            return reader.blobs()
+        }
+
+        fun queueRequeue(handle: Long, rows: List<ByteArray>): Int {
+            val packed = LogPayload.pack { out -> LogPayload.writeBlobs(out, rows) }
+            return instance.queueRequeue(handle, packed)
+        }
+
+        fun queueBackoff(handle: Long): Long =
+            instance.queueBackoff(handle, System.currentTimeMillis())
+
+        fun queueResetBackoff(handle: Long) = instance.queueResetBackoff(handle)
+
+        fun queueRetryWait(handle: Long): Long =
+            instance.queueRetryWait(handle, System.currentTimeMillis())
+
+        fun queueInBackoff(handle: Long): Boolean =
+            instance.queueInBackoff(handle, System.currentTimeMillis())
+
+        fun queueMissingLatched(handle: Long): Boolean =
+            instance.queueMissingLatched(handle, System.currentTimeMillis())
+
+        fun queueLatchMissing(handle: Long) =
+            instance.queueLatchMissing(handle, System.currentTimeMillis())
+
+        fun queueMarkClosed(handle: Long) = instance.queueMarkClosed(handle)
+        fun queueIsClosed(handle: Long): Boolean = instance.queueIsClosed(handle)
+        fun queueClose(handle: Long): Int = instance.queueClose(handle)
+        fun queuePendingLen(handle: Long): Int = instance.queuePendingLen(handle)
+
+        fun storeIndex(files: List<LogStoreFile>): LogStoreIndex {
+            val packed = LogPayload.pack { out ->
+                out.writeInt(files.size)
+                for (file in files) {
+                    LogPayload.writeString(out, file.name)
+                    out.writeLong(file.lastModified)
+                    out.writeLong(file.length)
+                }
+            }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.storeIndex(packed)) {
+                    "native log store rejected the listing"
+                },
+            )
+            val keep = reader.count()
+            return LogStoreIndex(keep = keep, files = List(reader.count()) { readStoreFile(reader) })
+        }
+
+        private fun readStoreFile(reader: LogPayload.Reader): LogStoreFile = LogStoreFile(
+            name = reader.string(),
+            lastModified = reader.i64(),
+            length = reader.i64(),
+        )
+
+        fun storeDocument(
+            sections: List<LogStoreSection>,
+            crash: String,
+            exportedAt: String,
+        ): String? {
+            val packed = LogPayload.pack { out ->
+                out.writeInt(sections.size)
+                for (section in sections) {
+                    LogPayload.writeString(out, section.name)
+                    LogPayload.writeOptional(out, section.content)
+                }
+                LogPayload.writeString(out, crash)
+                LogPayload.writeString(out, exportedAt)
+            }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.storeDocument(packed)) {
+                    "native log store rejected the export payload"
+                },
+            )
+            return if (reader.u8() == 1) reader.string() else null
+        }
+
+        fun capturePlan(pid: Int, uid: Int, detailed: Boolean): LogCapturePlan {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.capturePlan(pid, uid, if (detailed) 1 else 0)) {
+                    "native log capture rejected the plan request"
+                },
+            )
+            val watchIntervalMs = reader.i64()
+            return LogCapturePlan(
+                watchIntervalMs = watchIntervalMs,
+                attempts = List(reader.count()) {
+                    List(reader.count()) { reader.string() }
+                },
+            )
+        }
+
+        fun captureSessionNew(): Long = requireHandle(instance.captureSessionNew(), "capture session")
+        fun captureSessionFree(handle: Long) = instance.captureSessionFree(handle)
+
+        fun captureLine(handle: Long, line: String): LogCaptureLine {
+            val packed = LogPayload.pack { out -> LogPayload.writeString(out, line) }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.captureLine(handle, packed)) {
+                    "native log capture rejected the line"
+                },
+            )
+            return LogCaptureLine(written = reader.i64(), rotate = reader.u8() == 1)
+        }
+
+        fun runtimeEventNew(minLevelTag: Int, dedupWindowMs: Long): Long =
+            requireHandle(instance.runtimeEventNew(minLevelTag, dedupWindowMs), "runtime event gate")
+
+        fun runtimeEventFree(handle: Long) = instance.runtimeEventFree(handle)
+
+        fun runtimeEventSetLevel(handle: Long, minLevelTag: Int) =
+            instance.runtimeEventSetLevel(handle, minLevelTag)
+
+        fun runtimeEventLine(
+            handle: Long,
+            timeText: String,
+            levelTag: Int,
+            module: String,
+            code: String,
+            fields: List<Pair<String, String>>,
+            nowMs: Long,
+        ): LogRuntimeEventLine {
+            val packed = LogPayload.pack { out ->
+                LogPayload.writeString(out, timeText)
+                out.writeByte(levelTag)
+                LogPayload.writeString(out, module)
+                LogPayload.writeString(out, code)
+                out.writeInt(fields.size)
+                for ((key, value) in fields) {
+                    LogPayload.writeString(out, key)
+                    LogPayload.writeString(out, value)
+                }
+            }
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.runtimeEventLine(handle, packed, nowMs)) {
+                    "native runtime event rejected the call"
+                },
+            )
+            val wrote = reader.u8() == 1
+            return LogRuntimeEventLine(wrote = wrote, line = reader.string())
+        }
+
+        fun mirrorLayout(): LogMirrorLayout {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.mirrorLayout()) {
+                    "native cache mirror returned no layout"
+                },
+            )
+            return LogMirrorLayout(
+                maxRows = reader.i64(),
+                initialDelayMs = reader.i64(),
+                intervalMs = reader.i64(),
+            )
+        }
+
+        fun mirrorRows(snapshot: ByteArray): List<ByteArray> {
+            val reader = LogPayload.Reader(
+                requireNotNull(instance.mirrorRows(snapshot)) {
+                    "native cache mirror rejected the snapshot"
+                },
+            )
+            return reader.blobs()
+        }
+
+        private fun readWarnLine(payload: ByteArray): String? {
+            val reader = LogPayload.Reader(payload)
+            return when (reader.u8()) {
+                0 -> null
+                1 -> reader.string()
+                else -> throw IllegalStateException("native write health returned no status")
+            }
+        }
+
+        private fun requireHandle(handle: Long, what: String): Long {
+            if (handle == 0L) throw IllegalStateException("native $what handle was not created")
+            return handle
+        }
+    }
+}

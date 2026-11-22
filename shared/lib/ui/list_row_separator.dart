@@ -1,0 +1,400 @@
+// Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
+part of 'list.dart';
+
+class _ListRowSeparator extends SingleChildRenderObjectWidget {
+  final bool separated;
+  final bool emphasized;
+  final WidgetStatesController states;
+  final double endIndent;
+  final double startIndent;
+
+  const _ListRowSeparator({
+    required this.separated,
+    required this.emphasized,
+    required this.states,
+    required this.endIndent,
+    this.startIndent = 0,
+    required super.child,
+  });
+
+  Color _color(BuildContext context) =>
+      DividerTheme.of(context).color ?? context.colorScheme.outlineVariant;
+
+  @override
+  _RenderListRowSeparator createRenderObject(BuildContext context) =>
+      _RenderListRowSeparator(
+        separated: separated,
+        emphasized: emphasized,
+        states: states,
+        remote: RemoteFocusAdapter.isEnabledOf(context),
+        endIndent: endIndent,
+        startIndent: startIndent,
+        color: _color(context),
+        textDirection: Directionality.of(context),
+        devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
+      );
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderListRowSeparator renderObject,
+  ) {
+    renderObject
+      ..separated = separated
+      ..emphasized = emphasized
+      ..states = states
+      ..remote = RemoteFocusAdapter.isEnabledOf(context)
+      ..endIndent = endIndent
+      ..startIndent = startIndent
+      ..color = _color(context)
+      ..textDirection = Directionality.of(context)
+      ..devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    if (separated) {
+      renderObject.markNeedsPaint();
+    }
+  }
+}
+
+class _ListRowSeparatorStart extends SingleChildRenderObjectWidget {
+  const _ListRowSeparatorStart({required super.child});
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderListRowSeparatorStart();
+}
+
+class _RenderListRowSeparatorStart extends RenderProxyBox {
+  _RenderListRowSeparator? _row;
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    var node = parent;
+    while (node != null && node is! _RenderListRowSeparator) {
+      node = node.parent;
+    }
+    _row = node as _RenderListRowSeparator?;
+    _row?._start = this;
+  }
+
+  @override
+  void detach() {
+    if (_row?._start == this) {
+      _row!._start = null;
+    }
+    _row = null;
+    super.detach();
+  }
+}
+
+class _RenderListRowSeparator extends RenderProxyBox {
+  _RenderListRowSeparator({
+    required bool separated,
+    required bool emphasized,
+    required WidgetStatesController states,
+    required bool remote,
+    required double endIndent,
+    required double startIndent,
+    required Color color,
+    required TextDirection textDirection,
+    required double devicePixelRatio,
+  }) : _separated = separated,
+       _emphasized = emphasized,
+       _states = states,
+       _remote = remote,
+       _endIndent = endIndent,
+       _startIndent = startIndent,
+       _color = color,
+       _textDirection = textDirection,
+       _devicePixelRatio = devicePixelRatio {
+    _highlighted = _resolveHighlighted();
+  }
+
+  static const _maxSearchDepth = 32;
+
+  _RenderListRowSeparatorStart? _start;
+  late bool _highlighted;
+  double? _paintedOverhang;
+  double? _settlingOverhang;
+  bool _realignRequested = false;
+
+  bool _separated;
+
+  set separated(bool value) {
+    if (_separated == value) {
+      return;
+    }
+    _separated = value;
+    markNeedsPaint();
+  }
+
+  bool _emphasized;
+
+  set emphasized(bool value) {
+    if (_emphasized == value) {
+      return;
+    }
+    _emphasized = value;
+    _updateHighlighted();
+  }
+
+  WidgetStatesController _states;
+
+  set states(WidgetStatesController value) {
+    if (_states == value) {
+      return;
+    }
+    if (attached) {
+      _states.removeListener(_updateHighlighted);
+      value.addListener(_updateHighlighted);
+    }
+    _states = value;
+    _updateHighlighted();
+  }
+
+  bool _remote;
+
+  set remote(bool value) {
+    if (_remote == value) {
+      return;
+    }
+    _remote = value;
+    _updateHighlighted();
+  }
+
+  double _endIndent;
+
+  set endIndent(double value) {
+    if (_endIndent == value) {
+      return;
+    }
+    _endIndent = value;
+    markNeedsPaint();
+  }
+
+  double _startIndent;
+
+  set startIndent(double value) {
+    if (_startIndent == value) {
+      return;
+    }
+    _startIndent = value;
+    markNeedsPaint();
+  }
+
+  Color _color;
+
+  set color(Color value) {
+    if (_color == value) {
+      return;
+    }
+    _color = value;
+    markNeedsPaint();
+  }
+
+  TextDirection _textDirection;
+
+  set textDirection(TextDirection value) {
+    if (_textDirection == value) {
+      return;
+    }
+    _textDirection = value;
+    markNeedsPaint();
+  }
+
+  double _devicePixelRatio;
+
+  set devicePixelRatio(double value) {
+    if (_devicePixelRatio == value) {
+      return;
+    }
+    _devicePixelRatio = value;
+    markNeedsPaint();
+  }
+
+  double get _thickness {
+    final pixels = (_devicePixelRatio * 0.75).round();
+    return (pixels < 1 ? 1 : pixels) / _devicePixelRatio;
+  }
+
+  bool _resolveHighlighted() {
+    if (_emphasized) {
+      return true;
+    }
+    final states = _states.value;
+    return states.contains(WidgetState.pressed) ||
+        (states.contains(WidgetState.focused) &&
+            (_remote || FocusMovedByKey.instance.value));
+  }
+
+  void _updateHighlighted() {
+    final highlighted = _resolveHighlighted();
+    if (_highlighted == highlighted) {
+      return;
+    }
+    _highlighted = highlighted;
+    markNeedsPaint();
+    _neighbour(below: false)?.markNeedsPaint();
+  }
+
+  _RenderListRowSeparator? _neighbour({required bool below}) {
+    RenderObject node = this;
+    for (
+      var depth = 0;
+      node.parentData is! ContainerParentDataMixin<RenderObject>;
+      depth++
+    ) {
+      final parent = node.parent;
+      if (parent == null || depth == _maxSearchDepth) {
+        return null;
+      }
+      node = parent;
+    }
+    final siblings = node.parentData! as ContainerParentDataMixin<RenderObject>;
+    RenderObject? candidate = below
+        ? siblings.nextSibling
+        : siblings.previousSibling;
+    for (var depth = 0; candidate != null; depth++) {
+      if (candidate is _RenderListRowSeparator) {
+        return candidate;
+      }
+      if (depth == _maxSearchDepth) {
+        return null;
+      }
+      RenderObject? onlyChild;
+      var childCount = 0;
+      candidate.visitChildren((child) {
+        onlyChild = child;
+        childCount++;
+      });
+      candidate = childCount == 1 ? onlyChild : null;
+    }
+    return null;
+  }
+
+  @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+    _states.addListener(_updateHighlighted);
+    FocusMovedByKey.instance.addListener(_updateHighlighted);
+    _highlighted = _resolveHighlighted();
+    _PixelRealignment.watch(this);
+  }
+
+  @override
+  void detach() {
+    _PixelRealignment.unwatch(this);
+    _states.removeListener(_updateHighlighted);
+    FocusMovedByKey.instance.removeListener(_updateHighlighted);
+    super.detach();
+  }
+
+  double? _pixelOverhang() {
+    final deviceBottom =
+        localToGlobal(Offset(0, size.height)).dy * _devicePixelRatio;
+    if (!deviceBottom.isFinite) {
+      return null;
+    }
+    return deviceBottom - (deviceBottom + 1e-3).floorToDouble();
+  }
+
+  bool _realign() {
+    final painted = _paintedOverhang;
+    if (painted == null) {
+      return false;
+    }
+    final overhang = _pixelOverhang();
+    if (overhang == null) {
+      return false;
+    }
+    bool same(double? other) =>
+        other != null && (overhang - other).abs() < 0.01;
+    if (same(painted)) {
+      _settlingOverhang = null;
+      return false;
+    }
+    if (!same(_settlingOverhang)) {
+      _settlingOverhang = overhang;
+      return true;
+    }
+    if (_realignRequested) {
+      return false;
+    }
+    _realignRequested = true;
+    markNeedsPaint();
+    return true;
+  }
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    if (_highlighted) {
+      _neighbour(below: false)?.markNeedsPaint();
+    }
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    super.paint(context, offset);
+    _paintedOverhang = null;
+    _realignRequested = false;
+    if (!_separated || _highlighted) {
+      return;
+    }
+    if (_neighbour(below: true)?._highlighted ?? false) {
+      return;
+    }
+    final start = _start;
+    final title = start != null && start.hasSize
+        ? MatrixUtils.transformRect(
+            start.getTransformTo(this),
+            Offset.zero & start.size,
+          )
+        : null;
+    final (left, right) = switch (_textDirection) {
+      TextDirection.ltr => (
+        title?.left ?? _startIndent,
+        size.width - _endIndent,
+      ),
+      TextDirection.rtl => (
+        _endIndent,
+        title?.right ?? size.width - _startIndent,
+      ),
+    };
+    final overhang = _pixelOverhang() ?? 0;
+    _paintedOverhang = overhang;
+    final bottom = size.height - overhang / _devicePixelRatio;
+    context.canvas.drawRect(
+      Rect.fromLTRB(left, bottom - _thickness, right, bottom).shift(offset),
+      Paint()..color = _color,
+    );
+  }
+}
+
+abstract final class _PixelRealignment {
+  static final _rows = <_RenderListRowSeparator>{};
+  static var _listening = false;
+
+  static void watch(_RenderListRowSeparator row) {
+    _rows.add(row);
+    if (!_listening) {
+      _listening = true;
+      SchedulerBinding.instance.addPersistentFrameCallback(_check);
+    }
+  }
+
+  static void unwatch(_RenderListRowSeparator row) => _rows.remove(row);
+
+  static void _check(Duration _) {
+    if (_rows.isEmpty || SchedulerBinding.instance.hasScheduledFrame) {
+      return;
+    }
+    var needsFrame = false;
+    for (final row in _rows) {
+      needsFrame = row._realign() || needsFrame;
+    }
+    if (needsFrame) {
+      SchedulerBinding.instance.scheduleFrame();
+    }
+  }
+}

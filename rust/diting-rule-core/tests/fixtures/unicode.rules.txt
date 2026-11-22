@@ -1,0 +1,8 @@
+münchen.example	sub_1	0	~	0	0	~	0	~
+例子.中国	sub_2	0	~	0	0	~	0	~
+İstanbul.EXAMPLE	sub_3	0	~	0	0	~	0	~
+😀.example	sub_1	0	~	0	0	~	0	~
+straße.de	sub_4	0	~	0	0	~	0	~
+ÄÖÜ.example	sub_2	0	~	0	0	~	0	~
+Ünicode.Shared.example	sub_1	0	~	0	0	~	0	~
+Ünicode.Shared.example	sub_9	0	~	0	0	~	0	~

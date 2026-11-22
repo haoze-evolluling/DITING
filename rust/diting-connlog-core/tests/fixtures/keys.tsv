@@ -1,0 +1,8 @@
+prefix	app	dest	port	protocol	reason	key
+	com.example.app	1.2.3.4	443	6		com.example.app|1.2.3.4|443|6
+blk|	com.example.app	1.2.3.4	443	6	uid_blocked	blk|com.example.app|1.2.3.4|443|6|uid_blocked
+	unknown	2001:db8::1	53	17		unknown|2001:db8::1|53|17
+	uid:1000	::1	8080	6		uid:1000|::1|8080|6
+			0	0		||0|0
+	名字	例子.cn	65535	17	原因|带竖线	名字|例子.cn|65535|17|原因|带竖线
+blk|	a|b	c|d	1	6	x	blk|a|b|c|d|1|6|x

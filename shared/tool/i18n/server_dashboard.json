@@ -1,0 +1,36 @@
+{
+  "serverStatusTitle": ["运行状态", "Server status"],
+  "serverUptime": ["运行时长", "Uptime"],
+  "serverOverviewTitle": ["请求概览", "Request overview"],
+  "serverLast24Hours": ["最近 24 小时", "Last 24 hours"],
+  "serverTrafficTitle": ["解析流量", "DNS traffic"],
+  "serverTrafficPeak": ["峰值", "Peak"],
+  "serverTrafficAverage": ["平均", "Average"],
+  "serverPerHour": ["每小时", "per hour"],
+  "serverBlockingTitle": ["拦截分析", "Blocking analysis"],
+  "serverAllowed": ["已放行", "Allowed"],
+  "serverTopBlocked": ["拦截最多", "Top blocked"],
+  "serverCacheEfficiency": ["缓存效率", "Cache efficiency"],
+  "serverCacheForwarded": ["上游转发", "Forwarded"],
+  "serverCacheErrors": ["解析错误", "Errors"],
+  "serverTopDomainsTitle": ["热门域名", "Top domains"],
+  "serverTopClientsTitle": ["活跃客户端", "Active clients"],
+  "serverQuickActions": ["快捷操作", "Quick actions"],
+  "serverNoStatistics": ["暂无统计数据", "No statistics yet"],
+  "serverNoTraffic": ["还没有解析流量", "No DNS traffic yet"],
+  "serverTrafficStopped": [
+    "启动服务器后，这里会显示最近的解析流量。",
+    "Start the server to see recent DNS traffic here."
+  ],
+  "serverNoRanking": ["暂无排行数据", "No ranking data yet"],
+  "serverCacheEntriesShort": {
+    "zh": "{count} 条",
+    "en": "{count} entries",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "serverUpstreamShort": {
+    "zh": "{count} 个上游",
+    "en": "{count} upstreams",
+    "placeholders": {"count": {"type": "int"}}
+  }
+}

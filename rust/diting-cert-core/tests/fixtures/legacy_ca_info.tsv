@@ -1,0 +1,21 @@
+ca_subject	CN=DITING HTTPS Inspection Root CA,O=DITING
+ca_not_before	1793967423
+ca_not_after	2109413823
+ca_serial	19828775008e2ed699f396d62168a65a
+ca_ski	82e17694f2f1457ebaf573c173ccd48dd6c228d5
+ca_key_pem_type	EC PRIVATE KEY
+ca_extensions	2.5.29.15:true,2.5.29.19:true,2.5.29.14:false
+leaf_subject	CN=example.com,O=DITING
+leaf_dns_names	example.com
+leaf_key_usage	1
+leaf_eku	1:1
+leaf_extensions	2.5.29.15:true,2.5.29.37:false,2.5.29.19:true,2.5.29.35:false,2.5.29.17:false
+leaf_aki_matches_ca_ski	true
+leaf_chain	2
+leaf_not_before_offset	-3600
+leaf_not_after_offset	86400
+leaf_key_der_len	121
+san.www.example.com	www.example.com	www.example.com,*.example.com
+san.a.b.example.com	a.b.example.com	a.b.example.com,*.b.example.com
+san.localhost	localhost	localhost
+san.example.com	example.com	example.com

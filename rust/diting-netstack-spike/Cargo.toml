@@ -1,0 +1,19 @@
+[package]
+name = "diting-netstack-spike"
+version = "0.1.0"
+edition = "2021"
+description = "Stage 0 spike for the Android engine migration: prove that smoltcp can transparently accept the arbitrary destination addresses and ports a TUN device delivers"
+publish = false
+
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+smoltcp = { version = "0.14", default-features = false, features = [
+    "std",
+    "medium-ip",
+    "proto-ipv4",
+    "proto-ipv6",
+    "socket-tcp",
+    "socket-udp",
+] }

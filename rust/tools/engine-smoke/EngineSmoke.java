@@ -1,0 +1,404 @@
+import com.haoze.diting.engine.Engine;
+
+import java.io.ByteArrayOutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+public final class EngineSmoke {
+    static int checks;
+
+    public static void main(String[] args) throws Exception {
+        System.load(args.length > 0 ? args[0] : "diting_engine");
+
+        FakeUpstream upstream = FakeUpstream.start();
+        try {
+            lifecycle(upstream);
+        } finally {
+            upstream.close();
+        }
+        System.out.println("engine smoke ok: " + checks + " checks");
+    }
+
+    private static void lifecycle(FakeUpstream upstream) throws Exception {
+        Engine engine = new Engine();
+        check(engine.handle() != 0, "engine handle");
+        check(!engine.isRunning(), "not running before start");
+
+        String configError = engine.applyDNSConfig(upstream.config());
+        check(configError == null, "applyDNSConfig accepted: " + configError);
+
+        String snapshotError = engine.applyRuleSnapshot(
+                "{\"filterEnabled\":true,\"globalBlock\":[\"blocked.test\"],"
+                        + "\"globalAllow\":[],\"globalImportant\":[]}");
+        check(snapshotError.isEmpty(), "applyRuleSnapshot accepted: " + snapshotError);
+
+        engine.setRewriteRules("{\"rewrite.test\":\"9.8.7.6\"}");
+        engine.setBlockResponseType("NXDOMAIN");
+        engine.setFilterDNS(true);
+
+        AtomicInteger batches = new AtomicInteger();
+        AtomicReference<byte[]> batch = new AtomicReference<>();
+        AtomicReference<String> race = new AtomicReference<>();
+        CountDownLatch logged = new CountDownLatch(1);
+        CountDownLatch raced = new CountDownLatch(1);
+        engine.setBatchLogCallback(rows -> {
+            batch.set(rows);
+            batches.incrementAndGet();
+            logged.countDown();
+        });
+        engine.setRaceLogCallback(rows -> {
+            Payload payload = new Payload(rows);
+            payload.u32();
+            String queryName = payload.text();
+            int queryType = payload.i32();
+            String strategy = payload.text();
+            payload.i32();
+            boolean success = payload.u8() != 0;
+            payload.i64();
+            String selectedProviderID = payload.text();
+            race.set(queryName + "|" + queryType + "|" + strategy + "|" + success + "|"
+                    + selectedProviderID);
+            raced.countDown();
+        });
+        engine.setBootstrapLogCallback(rows -> {
+            throw new IllegalStateException("no bootstrap event is expected in stage 1");
+        });
+
+        String startError = engine.startStandalone(0);
+        check(startError == null, "startStandalone accepted: " + startError);
+        check(engine.isRunning(), "running after start");
+
+        byte[] query = query("forward.test", 11);
+        byte[] answer = udp(port(engine), query);
+        check(answer.length > 12, "udp answer received");
+        check(answer[0] == 0 && answer[1] == 11, "udp answer carries the client id");
+        check((answer[3] & 0x0f) == 0, "udp answer is NOERROR (rcode=" + (answer[3] & 0x0f)
+                + ", length=" + answer.length + ")");
+
+        check(logged.await(3, TimeUnit.SECONDS), "batch log delivered");
+        check(batches.get() >= 1, "one batch delivered");
+        Payload batchPayload = new Payload(batch.get());
+        check(batchPayload.u32() >= 1, "one row in the batch");
+        batchPayload.i64();
+        String domain = batchPayload.text();
+        batchPayload.i32();
+        batchPayload.u8();
+        batchPayload.text();
+        batchPayload.text();
+        batchPayload.u8();
+        batchPayload.text();
+        String resolvedIps = batchPayload.text();
+        check(domain.equals("forward.test"), "batch row carries the domain: " + domain);
+        check(resolvedIps.contains("1.2.3.4"), "batch row carries the addresses: " + resolvedIps);
+        check(raced.await(3, TimeUnit.SECONDS), "race log delivered");
+        check(race.get().startsWith("forward.test|1|single|true|p1"), "race row: " + race.get());
+
+        udp(port(engine), query("forward.test", 12));
+        check(upstream.count() == 1, "the cache served the repeat: " + upstream.count());
+
+        byte[] blocked = udp(port(engine), query("blocked.test", 13));
+        check((blocked[3] & 0x0f) == 3, "blocked answer is NXDOMAIN");
+        byte[] rewritten = udp(port(engine), query("rewrite.test", 14));
+        check((rewritten[3] & 0x0f) == 0, "rewrite answer is NOERROR");
+        check(rewritten[rewritten.length - 4] == 9, "rewrite answer is the configured address");
+        check(upstream.count() == 1, "blocked and rewritten queries stayed local");
+
+        byte[] overTcp = tcp(port(engine), query("tcp.test", 15));
+        check(overTcp[0] == 0 && overTcp[1] == 15, "tcp answer carries the client id");
+
+        String stats = engine.getStats();
+        check(stats.contains("\"total\":"), "stats document: " + stats);
+        check(stats.contains("\"dropped_logs\":"), "stats document carries the drop counter");
+        String cacheStats = engine.getDNSCacheStats();
+        check(cacheStats.contains("\"totalHits\":"), "cache stats: " + cacheStats);
+        check(cacheStats.contains("\"evictionCount\":"), "cache stats carries evictions");
+        byte[] statsSnapshot = engine.statsSnapshot();
+        check(statsSnapshot.length == 6 * 8, "stats snapshot is six u64s");
+        check(java.nio.ByteBuffer.wrap(statsSnapshot).getLong(0) >= 3, "stats snapshot total");
+        String entries = engine.getDNSCacheEntries(10);
+        check(entries.startsWith("["), "cache entries: " + entries);
+        check(entries.contains("\"queryName\""), "cache entry carries the query name");
+        check(entries.contains("\"originalTtlSeconds\""), "cache entry carries the TTL");
+        String resolved = engine.resolveDomain("example.test", true);
+        check(resolved.contains("\"source\":\"upstream\""), "resolveDomain: " + resolved);
+        String empty = engine.resolveDomain("", true);
+        check(empty.contains("\"error\":\"empty domain\""), "resolveDomain error: " + empty);
+
+        engine.clearDNSCache();
+        check(engine.getDNSCacheEntries(10).equals("[]"), "the cache is empty after clear");
+
+
+        AtomicInteger protects = new AtomicInteger();
+        AtomicInteger lastFd = new AtomicInteger(-1);
+        AtomicInteger trafficTicks = new AtomicInteger();
+        engine.setSocketProtector(fd -> {
+            protects.incrementAndGet();
+            lastFd.set((int) fd);
+            return true;
+        });
+        engine.setUIDResolver((protocol, localAddress, localPort, remoteAddress, remotePort) -> {
+            check(
+                    java.util.Arrays.equals(localAddress, new byte[] {10, 0, 0, 2}),
+                    "uid resolver sees the app endpoint as raw bytes");
+            return 10123L;
+        });
+        engine.setAppUidResolver(uid -> uid == 10123L ? "com.test.app" : "");
+        engine.setTrafficCallback(rows -> trafficTicks.incrementAndGet());
+        engine.setBlockedUIDs("10123, 20234,bogus");
+        engine.setFilterHttp3(true);
+        engine.setBlockEncryptedDns(true);
+        engine.setTickIntervalMs(500);
+
+        udp(port(engine), query("protected.test", 21));
+        check(protects.get() >= 1, "protect called before the upstream dial: " + protects.get());
+        check(lastFd.get() >= 0 || System.getProperty("os.name").startsWith("Windows"),
+                "protect received a descriptor: " + lastFd.get());
+
+        try {
+            engine.startFull(-1, null);
+            check(false, "startFull on an invalid descriptor must fail");
+        } catch (IllegalStateException expected) {
+            check(expected.getMessage() != null && expected.getMessage().contains("TUN fd"),
+                    "startFull error: " + expected.getMessage());
+        }
+        check(!engine.isFullRunning(), "no TUN session after a failed start");
+        check(!engine.getStats().contains("\"tun\""), "no tun object without a session");
+        engine.stopFull();
+        engine.releaseTun();
+        check(trafficTicks.get() == 0, "no traffic tick without a running session");
+
+        engine.setSocketProtector(null);
+        engine.setUIDResolver(null);
+        engine.setAppUidResolver(null);
+        engine.setTrafficCallback(null);
+
+
+        String badProxy = engine.configureOutboundProxy(
+                "{\"enabled\":true,\"protocol\":\"ftp\",\"host\":\"127.0.0.1\",\"port\":1080}");
+        check(badProxy.contains("unsupported outbound proxy protocol"),
+                "proxy config error: " + badProxy);
+        check(engine.configureOutboundProxy("").isEmpty(), "a blank config disables the proxy");
+        String goodProxy = engine.configureOutboundProxy(
+                "{\"enabled\":true,\"protocol\":\"socks5\",\"host\":\"127.0.0.1\","
+                        + "\"port\":1080,\"scope\":\"all\"}");
+        check(goodProxy.isEmpty(), "a valid proxy config is accepted: " + goodProxy);
+        AtomicInteger proxyEvents = new AtomicInteger();
+        engine.setOutboundProxyStatusCallback((state, message) -> proxyEvents.incrementAndGet());
+        engine.setOutboundProxyStatusCallback(null);
+        check(proxyEvents.get() == 0, "no status before a tunnel starts");
+
+
+        String certDir = Files.createTempDirectory("diting-mitm").toString();
+        String caPem = engine.startStackMitm(certDir);
+        check(caPem.contains("BEGIN CERTIFICATE"), "startStackMitm hands back the root CA");
+        check(engine.isMitmActive(), "MITM is active after start");
+        check(engine.getMitmCACert(certDir).equals(caPem), "the live CA is the one reported");
+        engine.setMitmAllowedUIDs("10123, 20234");
+        engine.setHttpsBypassRules("bank.test");
+        engine.setExtraPassthroughSuffixes("bank.test");
+        engine.setCosmeticRules("{\"globalHide\":[\"#ad\"],\"globalException\":[],\"domains\":{}}");
+        engine.setRequestRules("[{\"pattern\":\"https://ads.test/p\",\"kind\":\"block\"}]");
+        AtomicInteger httpEvents = new AtomicInteger();
+        engine.setHttpLogCallback(rows -> httpEvents.incrementAndGet());
+        check(engine.getMitmBlacklistCount() == 0, "a fresh session has no blacklist entries");
+        engine.clearMitmBlacklist();
+        engine.setHttpLogCallback(null);
+        engine.stopStackMitm();
+        check(!engine.isMitmActive(), "MITM stopped");
+        check(engine.getMitmCACert(certDir).contains("BEGIN CERTIFICATE"),
+                "the root survives stopStackMitm");
+        check(httpEvents.get() == 0, "no HTTP events without a relayed flow");
+
+        engine.flushLogs();
+        engine.stopStandalone();
+        check(!engine.isRunning(), "stopped");
+        engine.stop();
+        engine.free();
+        check(engine.handle() == 0, "handle released");
+
+        try {
+            engine.getStats();
+            check(false, "a released engine refuses calls");
+        } catch (IllegalStateException expected) {
+            check(true, "released engine reported");
+        }
+
+        Engine second = new Engine();
+        try {
+            String error = second.applyDNSConfig("{\"mode\":\"nope\"}");
+            check(error != null && error.contains("mode"), "config error reported: " + error);
+            String missing = second.startStandalone(1);
+            check(missing == null || missing.contains("bind"), "start on a privileged port: " + missing);
+        } finally {
+            second.stop();
+            second.free();
+        }
+    }
+
+
+    private static void check(boolean condition, String message) {
+        checks++;
+        if (!condition) {
+            throw new IllegalStateException("check failed: " + message);
+        }
+    }
+
+    static final class Payload {
+        private final byte[] bytes;
+        private int offset;
+
+        Payload(byte[] bytes) {
+            this.bytes = bytes;
+        }
+
+        int u8() {
+            return bytes[offset++] & 0xFF;
+        }
+
+        int u32() {
+            return (u8() << 24) | (u8() << 16) | (u8() << 8) | u8();
+        }
+
+        int i32() {
+            return u32();
+        }
+
+        long i64() {
+            return ((long) u32() << 32) | (u32() & 0xFFFFFFFFL);
+        }
+
+        String text() {
+            int length = u32();
+            String value = new String(bytes, offset, length, StandardCharsets.UTF_8);
+            offset += length;
+            return value;
+        }
+    }
+
+    private static byte[] question(String name) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        for (String label : name.split("\\.")) {
+            out.write(label.length());
+            out.writeBytes(label.getBytes(StandardCharsets.US_ASCII));
+        }
+        out.write(0);
+        out.writeBytes(new byte[] {0, 1, 0, 1});
+        return out.toByteArray();
+    }
+
+    static byte[] query(String name, int id) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        out.writeBytes(new byte[] {(byte) (id >> 8), (byte) id, 0x01, 0x00, 0, 1, 0, 0, 0, 0, 0, 0});
+        out.writeBytes(question(name));
+        return out.toByteArray();
+    }
+
+    static byte[] answer(byte[] query, int[] address) {
+        byte[] response = query.clone();
+        response[2] = (byte) 0x81;
+        response[3] = (byte) 0x80;
+        response[7] = 1;
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        out.writeBytes(response);
+        out.writeBytes(new byte[] {(byte) 0xc0, 0x0c, 0, 1, 0, 1, 0, 0, 0, 60, 0, 4});
+        for (int octet : address) {
+            out.write(octet);
+        }
+        return out.toByteArray();
+    }
+
+    private static int port(Engine engine) {
+        long port = engine.standalonePort();
+        check(port > 0, "server reports its port");
+        return (int) port;
+    }
+
+    private static byte[] udp(int port, byte[] query) throws Exception {
+        try (DatagramSocket socket = new DatagramSocket()) {
+            socket.setSoTimeout(3000);
+            InetAddress loopback = InetAddress.getByName("127.0.0.1");
+            socket.send(new DatagramPacket(query, query.length, loopback, port));
+            byte[] buffer = new byte[4096];
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+            socket.receive(packet);
+            byte[] response = new byte[packet.getLength()];
+            System.arraycopy(packet.getData(), 0, response, 0, response.length);
+            return response;
+        }
+    }
+
+    private static byte[] tcp(int port, byte[] query) throws Exception {
+        try (Socket socket = new Socket("127.0.0.1", port)) {
+            socket.setSoTimeout(3000);
+            socket.getOutputStream().write(new byte[] {(byte) (query.length >> 8), (byte) query.length});
+            socket.getOutputStream().write(query);
+            socket.getOutputStream().flush();
+            byte[] length = socket.getInputStream().readNBytes(2);
+            int size = ((length[0] & 0xff) << 8) | (length[1] & 0xff);
+            return socket.getInputStream().readNBytes(size);
+        }
+    }
+
+    static final class FakeUpstream {
+        private final DatagramSocket socket;
+        private final AtomicInteger queries = new AtomicInteger();
+        private final Thread thread;
+
+        private FakeUpstream(DatagramSocket socket) {
+            this.socket = socket;
+            this.thread = new Thread(this::loop, "fake-dns-upstream");
+            this.thread.setDaemon(true);
+            this.thread.start();
+        }
+
+        static FakeUpstream start() throws Exception {
+            DatagramSocket socket = new DatagramSocket(new InetSocketAddress("127.0.0.1", 0));
+            socket.setSoTimeout(200);
+            return new FakeUpstream(socket);
+        }
+
+        String config() {
+            return "{\"mode\":\"single\",\"providers\":[{\"id\":\"p1\",\"protocol\":\"PLAIN\","
+                    + "\"server\":\"127.0.0.1:" + socket.getLocalPort() + "\",\"url\":\"\",\"weight\":1}],"
+                    + "\"blockResponse\":\"NXDOMAIN\","
+                    + "\"dynamicResponse\":{\"enabled\":false,\"requestThreshold\":0,"
+                    + "\"windowSeconds\":0,\"nxDomainDurationSeconds\":0},"
+                    + "\"cache\":{\"enabled\":true,\"mode\":\"limit_max_ttl\",\"maxTtlSeconds\":600},"
+                    + "\"bootstrap\":{\"enabled\":false,\"ips\":[]}}";
+        }
+
+        int count() {
+            return queries.get();
+        }
+
+        private void loop() {
+            byte[] buffer = new byte[4096];
+            while (!socket.isClosed()) {
+                try {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(packet);
+                    byte[] query = new byte[packet.getLength()];
+                    System.arraycopy(packet.getData(), 0, query, 0, query.length);
+                    queries.incrementAndGet();
+                    byte[] response = answer(query, new int[] {1, 2, 3, 4});
+                    socket.send(new DatagramPacket(response, response.length, packet.getAddress(),
+                            packet.getPort()));
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        void close() {
+            socket.close();
+        }
+    }
+}

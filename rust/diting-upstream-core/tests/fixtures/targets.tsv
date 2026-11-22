@@ -1,0 +1,37 @@
+protocol	server	host	port
+PLAIN	dns.google	dns.google	53
+PLAIN	dns.google:853	dns.google	853
+PLAIN	9.9.9.9:5353	9.9.9.9	5353
+PLAIN	9.9.9.9	9.9.9.9	53
+PLAIN	[2001:db8::1]:53	2001:db8::1	53
+PLAIN	2001:db8::1	2001:db8::1	53
+PLAIN	::1	::1	53
+PLAIN			53
+PLAIN	:53		53
+PLAIN	1.2.3.4:	1.2.3.4	
+PLAIN	dns.google:053	dns.google	053
+PLAIN	[::1]	[::1]	53
+PLAIN	[::1]:	::1	
+PLAIN	a:b:c	a:b:c	53
+PLAIN	[2001:db8::1]	[2001:db8::1]	53
+PLAIN	host name:53	host name	53
+PLAIN	example.com:99999	example.com	99999
+PLAIN	example.com:-1	example.com	-1
+DOT	dns.google	dns.google	853
+DOT	dns.google:853	dns.google	853
+DOT	9.9.9.9:5353	9.9.9.9	5353
+DOT	9.9.9.9	9.9.9.9	853
+DOT	[2001:db8::1]:53	2001:db8::1	53
+DOT	2001:db8::1	2001:db8::1	853
+DOT	::1	::1	853
+DOT			853
+DOT	:53		53
+DOT	1.2.3.4:	1.2.3.4	
+DOT	dns.google:053	dns.google	053
+DOT	[::1]	[::1]	853
+DOT	[::1]:	::1	
+DOT	a:b:c	a:b:c	853
+DOT	[2001:db8::1]	[2001:db8::1]	853
+DOT	host name:53	host name	53
+DOT	example.com:99999	example.com	99999
+DOT	example.com:-1	example.com	-1

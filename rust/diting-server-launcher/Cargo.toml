@@ -1,0 +1,13 @@
+[package]
+name = "diting-server-launcher"
+version = "0.1.0"
+edition = "2021"
+description = "Tiny Android process launcher that loads libditing_native.so and runs server mode"
+publish = false
+
+[[bin]]
+name = "diting-server-launcher"
+path = "src/main.rs"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

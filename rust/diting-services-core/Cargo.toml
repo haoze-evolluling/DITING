@@ -1,0 +1,12 @@
+[package]
+name = "diting-services-core"
+version = "0.1.0"
+edition = "2021"
+description = "Built-in blocked-service catalog: the service → domain directory and the rule-group patterns it expands to for the timed / on-demand blocking feature (R7 / K8)"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+serde_json = "1"

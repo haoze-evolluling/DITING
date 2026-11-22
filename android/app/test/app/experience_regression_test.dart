@@ -1,0 +1,102 @@
+import 'package:diting_android/app/app.dart';
+import 'package:diting_android/pages/system/unknown_route_page.dart';
+import 'package:diting_shared/state/settings_providers.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../support/route_catalog.dart';
+import '../support/test_hooks.dart';
+
+void main() {
+  installGlobalTestHooks();
+
+  const keys = [
+    '隐私套件',
+    'DNS64',
+    '连接限速',
+    '订阅版本回滚',
+    '连接监控',
+    '按需连接',
+    'User-Agent',
+  ];
+
+  testWidgets('英语 + 320dp + 1.3 倍字号：阶段三页面无溢出', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.view.reset);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    for (final key in keys) {
+      final route = topLevelRoutes[key];
+      expect(route, isNotNull, reason: 'route catalogue is missing $key');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...appTestOverrides(),
+            appLocaleProvider.overrideWithValue(const Locale('en')),
+          ],
+          child: DitingApp(initialLocation: route!),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(tester.takeException(), isNull, reason: '$key（$route）在英语窄屏下溢出');
+      expect(find.byType(UnknownRoutePage), findsNothing, reason: '$key 未注册');
+    }
+  });
+
+  testWidgets('简中 / 英文 / 繁中三种 locale 均无溢出', (tester) async {
+    tester.view.physicalSize = const Size(360, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    for (final locale in const [Locale('zh'), Locale('en'), Locale('zh', 'TW')]) {
+      for (final key in keys) {
+        final route = topLevelRoutes[key]!;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              ...appTestOverrides(),
+              appLocaleProvider.overrideWithValue(locale),
+            ],
+            child: DitingApp(initialLocation: route),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 30));
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: '$key（$route）在 $locale 下溢出',
+        );
+        expect(find.byType(UnknownRoutePage), findsNothing, reason: '$key 未注册');
+      }
+    }
+  });
+
+  testWidgets('平板宽度：阶段三页面自适应双栏且不溢出', (tester) async {
+    tester.view.physicalSize = const Size(1000, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    for (final key in keys) {
+      final route = topLevelRoutes[key]!;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ...appTestOverrides(),
+            appLocaleProvider.overrideWithValue(const Locale('zh')),
+          ],
+          child: DitingApp(initialLocation: route),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(tester.takeException(), isNull, reason: '$key（$route）在平板宽度下溢出');
+      expect(find.byType(UnknownRoutePage), findsNothing, reason: '$key 未注册');
+    }
+  });
+}

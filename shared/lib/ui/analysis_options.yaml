@@ -1,0 +1,13 @@
+# Port of the original design system, kept close to upstream sources (see NOTICE.md).
+# Only style rules that conflict with upstream conventions are disabled here; all
+# other flutter_lints rules, including every error and warning, still apply.
+include: ../../analysis_options.yaml
+
+linter:
+  rules:
+    # Upstream glyph constants use CamelCase and are split into `_g_xxx_`
+    # top-level private constants; renaming them would break the upstream mapping.
+    constant_identifier_names: false
+    non_constant_identifier_names: false
+    # Upstream widgets declare fields then assign them in the constructor body.
+    prefer_initializing_formals: false

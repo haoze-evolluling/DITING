@@ -1,0 +1,556 @@
+{
+  "agentApiEnabled": [
+    "AI 分析已启用",
+    "AI analysis is on"
+  ],
+  "agentApiDisabled": [
+    "AI 分析未启用",
+    "AI analysis is off"
+  ],
+  "agentApiNoProvider": [
+    "尚未配置 AI 厂商；请先在「AI 厂商管理」中添加并填写 API Key。",
+    "No AI provider configured yet; add one and fill in the API key under \"AI provider management\" first."
+  ],
+  "agentApiCurrentProvider": {
+    "zh": "当前厂商：{name} · {model}",
+    "en": "Current provider: {name} · {model}",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "agentApiNoModel": [
+    "未选择模型",
+    "No model selected"
+  ],
+  "agentApiKeyConfigured": [
+    "密钥已配置",
+    "Key configured"
+  ],
+  "agentApiTemperature": {
+    "zh": "温度 {value}",
+    "en": "Temperature {value}",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "agentApiProviderChip": [
+    "请求由你的厂商处理",
+    "Requests go to your provider"
+  ],
+  "agentApiReadyHintOn": [
+    "补全厂商与密钥后，日志页就能直接发起分析。",
+    "Once the provider and key are filled in, the log pages can start an analysis directly."
+  ],
+  "agentApiReadyHintOff": [
+    "开启后即可在日志页直接发起分析。",
+    "Turn it on to start an analysis straight from the log pages."
+  ],
+  "agentApiSectionProvider": [
+    "厂商与参数",
+    "Provider and parameters"
+  ],
+  "agentApiProvidersSubtitle": {
+    "zh": "{count} 个已配置厂商 · 选择接口与模型",
+    "en": "{count} providers configured · choose the endpoint and model",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agentParamsSubtitle": [
+    "系统提示词与采样温度",
+    "System prompt and sampling temperature"
+  ],
+  "agentApiSectionTest": [
+    "功能测试",
+    "Feature test"
+  ],
+  "agentApiTestDomain": [
+    "分析一个域名",
+    "Analyse a domain"
+  ],
+  "agentApiTestDomainSubtitle": [
+    "用示例域名真实调用模型，检查安全风险与处置建议",
+    "Calls the model with a sample domain to check risks and recommended actions"
+  ],
+  "agentApiTestTraffic": [
+    "分析最近流量",
+    "Analyse recent traffic"
+  ],
+  "agentApiTestTrafficSubtitle": [
+    "汇总最近 DNS 与 HTTPS 记录后真实调用模型",
+    "Summarises recent DNS and HTTPS records and calls the model"
+  ],
+  "agentApiTestFooterReady": [
+    "两项都会真实请求你配置的厂商并消耗额度。",
+    "Both entries really call your provider and consume quota."
+  ],
+  "agentApiTestFooterNotReady": [
+    "当前配置不完整（未启用或缺少 API Key），点击会提示先补配置。",
+    "The configuration is incomplete (off, or no API key); tapping asks you to finish it first."
+  ],
+  "agentApiSectionEntries": [
+    "分析入口",
+    "Where to analyse"
+  ],
+  "agentApiCacheTable": [
+    "DNS 缓存表",
+    "DNS cache table"
+  ],
+  "agentApiCacheTableSubtitle": [
+    "点按任意一行，分析该域名的安全风险",
+    "Tap any row to analyse that domain's security risk"
+  ],
+  "agentApiRequests": [
+    "请求记录",
+    "Request records"
+  ],
+  "agentApiRequestsSubtitle": [
+    "打开一条请求的详情，底部可分析该域名",
+    "Open a request's details; the domain can be analysed at the bottom"
+  ],
+  "agentApiDashboard": [
+    "日志仪表盘",
+    "Log dashboard"
+  ],
+  "agentApiDashboardSubtitle": [
+    "「AI 研判」卡片可对最近流量发起整体分析",
+    "The \"AI review\" card analyses recent traffic as a whole"
+  ],
+  "agentApiEntriesFooter": [
+    "分析结果里的域名可以一键写入白名单或屏蔽规则，写入后启动 DNS VPN 生效。",
+    "A domain in the report can be written to the allow or block list in one tap; it takes effect once the DNS VPN starts."
+  ],
+  "agentApiSectionReset": [
+    "重置设置",
+    "Reset settings"
+  ],
+  "agentApiResetItem": [
+    "恢复出厂默认配置",
+    "Restore factory defaults"
+  ],
+  "agentApiResetSubtitle": [
+    "将清空厂商、API Key、提示词与温度",
+    "Clears providers, API keys, prompts and temperature"
+  ],
+  "agentApiFooter": [
+    "AI 分析用于辅助研判，不会自动修改规则；所有请求由你配置的厂商处理，密钥只存在本机。",
+    "AI analysis only helps you judge; it never changes rules by itself. Requests are handled by the provider you configured and the key stays on this device."
+  ],
+  "agentApiResetTitle": [
+    "恢复默认配置？",
+    "Restore the default settings?"
+  ],
+  "agentApiResetBody": [
+    "此操作将把所有 AI 分析参数、API Key 与系统提示词恢复为默认设置。",
+    "This restores every AI analysis parameter, API key and system prompt to its default."
+  ],
+  "agentApiResetConfirm": [
+    "确认恢复",
+    "Restore"
+  ],
+  "agentProvidersTitle": [
+    "AI 厂商管理",
+    "AI provider management"
+  ],
+  "agentProvidersAdd": [
+    "添加自定义厂商",
+    "Add custom provider"
+  ],
+  "agentProvidersIntro": [
+    "点选下方预设厂商会自动预填接口地址；模型名请在编辑页点「拉取模型」从厂商真实返回的列表里选。编辑时若 API Key 留空则保留原密钥。密钥以旧版同一套掩码混淆后存在本机，不额外落明文。",
+    "Picking a preset below pre-fills the endpoint; choose the model from the provider's real list via \"Fetch models\" in the editor. Leaving the API key empty while editing keeps the existing key. Keys are stored on this device with the same obfuscation as before, with no extra plain text."
+  ],
+  "agentProvidersMine": [
+    "我的厂商",
+    "My providers"
+  ],
+  "agentProvidersEmpty": [
+    "暂无厂商",
+    "No providers yet"
+  ],
+  "agentProvidersEmptySubtitle": [
+    "从下方预设厂商目录点选，或点击右上角添加自定义厂商",
+    "Pick one from the presets below, or add a custom provider from the top right"
+  ],
+  "agentProvidersRow": {
+    "zh": "{model} · {baseUrl} · {key}",
+    "en": "{model} · {baseUrl} · {key}",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      },
+      "baseUrl": {
+        "type": "String"
+      },
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "agentProvidersKeyMissing": [
+    "缺少密钥",
+    "Key missing"
+  ],
+  "agentProvidersFooter": [
+    "点一行可切换当前生效厂商；切换会把接口地址、密钥与模型同步到旧版的四个平铺键，避免新版界面与旧版读取来源不一致。",
+    "Tap a row to make that provider active; switching also syncs the endpoint, key and model into the four legacy flat keys so the new and old screens never disagree."
+  ],
+  "agentProvidersAdded": [
+    "已添加",
+    "Added"
+  ],
+  "agentProvidersDeleteTitle": [
+    "删除厂商",
+    "Delete provider"
+  ],
+  "agentProvidersDeleteBody": {
+    "zh": "确定要删除「{name}」吗？相关 API Key 也会从本机移除。",
+    "en": "Delete \"{name}\"? Its API key is removed from this device as well.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "agentEditorAddTitle": [
+    "添加厂商",
+    "Add provider"
+  ],
+  "agentEditorEditTitle": [
+    "编辑厂商",
+    "Edit provider"
+  ],
+  "agentEditorPaste": [
+    "从剪贴板识别",
+    "Read from clipboard"
+  ],
+  "agentEditorName": [
+    "厂商名称",
+    "Provider name"
+  ],
+  "agentEditorBaseUrl": [
+    "接口地址",
+    "Endpoint URL"
+  ],
+  "agentEditorModel": [
+    "模型名称",
+    "Model name"
+  ],
+  "agentEditorModelHint": [
+    "点「拉取模型」从厂商返回的列表里选",
+    "Tap \"Fetch models\" to pick from the provider's list"
+  ],
+  "agentEditorKeyKeep": [
+    "留空则保留原密钥",
+    "Leave empty to keep the current key"
+  ],
+  "agentEditorKeyLocal": [
+    "仅保存在本机（旧版同一套掩码）",
+    "Stored on this device only (same obfuscation as before)"
+  ],
+  "agentEditorFetching": [
+    "请求中…",
+    "Requesting…"
+  ],
+  "agentEditorFetch": [
+    "拉取模型",
+    "Fetch models"
+  ],
+  "agentEditorTest": [
+    "测试连接",
+    "Test connection"
+  ],
+  "agentEditorErrorRequired": [
+    "请填写名称、以 http(s) 开头的接口地址与模型名",
+    "Fill in a name, an http(s) endpoint and a model name"
+  ],
+  "agentEditorErrorBaseUrl": [
+    "请先填写接口地址",
+    "Fill in the endpoint URL first"
+  ],
+  "agentEditorErrorTestNeeds": [
+    "测试连接需要接口地址与模型名",
+    "Testing needs an endpoint URL and a model name"
+  ],
+  "agentEditorFetched": {
+    "zh": "拉取到 {count} 个模型，点下方标签选择",
+    "en": "Fetched {count} models; pick one from the chips below",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agentEditorFetchFailed": {
+    "zh": "拉取模型失败：{error}",
+    "en": "Fetching models failed: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "agentEditorConnected": {
+    "zh": "连接成功：{model}",
+    "en": "Connected: {model}",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "agentEditorUsage": {
+    "zh": "，用量 {tokens} tokens",
+    "en": ", {tokens} tokens used",
+    "placeholders": {
+      "tokens": {
+        "type": "int"
+      }
+    }
+  },
+  "agentEditorConnectFailed": {
+    "zh": "连接失败：{error}",
+    "en": "Connection failed: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "agentParamsTitle": [
+    "参数与提示词",
+    "Parameters and prompt"
+  ],
+  "agentParamsPromptSection": [
+    "系统提示词",
+    "System prompt"
+  ],
+  "agentParamsPromptItem": [
+    "系统提示词设定",
+    "System prompt"
+  ],
+  "agentParamsPromptUnset": [
+    "未设置（将使用各分析场景的内置提示词）",
+    "Not set (each analysis scenario uses its built-in prompt)"
+  ],
+  "agentParamsPromptFooter": [
+    "留空时域名分析与流量分析各用自己那份内置提示词；填写后两者都以此为准。",
+    "When empty, domain and traffic analysis each use their own built-in prompt; once filled in, both use this one."
+  ],
+  "agentParamsPromptHint": [
+    "例如：你是一名网络安全与 DNS 威胁情报专家……",
+    "For example: you are a network security and DNS threat intelligence expert…"
+  ],
+  "agentParamsTemperatureSection": [
+    "采样温度（Temperature）",
+    "Sampling temperature"
+  ],
+  "agentParamsTemperatureItem": [
+    "生成随机度与创造性",
+    "Randomness and creativity"
+  ],
+  "agentParamsTemperatureFooter": [
+    "安全研判建议 0.2–0.4：温度越低，结论越稳定、越少自由发挥。",
+    "For security judgements 0.2–0.4 is recommended: the lower the temperature, the steadier and more restrained the answer."
+  ],
+  "agentParamsTemperatureStrict": [
+    "严谨精确（适合安全分析与结构化输出）",
+    "Precise (good for security analysis and structured output)"
+  ],
+  "agentParamsTemperatureBalanced": [
+    "平衡适中（推荐日常综合分析场景）",
+    "Balanced (recommended for everyday analysis)"
+  ],
+  "agentParamsTemperatureWild": [
+    "发散多变（输出内容更为丰富自由）",
+    "Loose and varied (richer, freer answers)"
+  ],
+  "agentParamsTemplateSecurity": [
+    "安全威胁分析",
+    "Security threat analysis"
+  ],
+  "agentParamsTemplateTechnical": [
+    "极简技术审查",
+    "Minimal technical review"
+  ],
+  "agentParamsTemplatePrivacy": [
+    "隐私与遥测审查",
+    "Privacy and telemetry review"
+  ],
+  "agentSheetCopied": [
+    "分析结果已复制到剪贴板",
+    "Report copied to the clipboard"
+  ],
+  "agentSheetRuleAdded": {
+    "zh": "已写入{kind}，启动 DNS VPN 后生效",
+    "en": "Added to {kind}; it takes effect once the DNS VPN starts",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "agentSheetRuleExists": {
+    "zh": "该域名已在{kind}中",
+    "en": "This domain is already in {kind}",
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "agentSheetFooter": [
+    "AI 只做研判，不会自动修改规则；结论仅供参考。请求由你配置的厂商处理，密钥只存在本机。",
+    "AI only helps you judge and never changes rules by itself; the report is for reference. Requests go to the provider you configured and the key stays on this device."
+  ],
+  "agentSheetDisabledTitle": [
+    "AI 分析功能已关闭",
+    "AI analysis is turned off"
+  ],
+  "agentSheetDisabledBody": [
+    "AI 分析服务当前处于停用状态。你可以直接在此开启，或前往设置页面管理。",
+    "The AI analysis service is disabled. You can turn it on right here or manage it on the settings page."
+  ],
+  "agentSheetEnableAndStart": [
+    "开启 AI 分析并继续",
+    "Turn on AI analysis and continue"
+  ],
+  "agentSheetNoKeyTitle": [
+    "未配置 API 密钥",
+    "No API key configured"
+  ],
+  "agentSheetNoKeyBody": [
+    "需配置 OpenAI / DeepSeek 兼容的 API 密钥后，方可使用 AI 域名与流量分析功能。",
+    "Configure an OpenAI / DeepSeek compatible API key before using AI domain and traffic analysis."
+  ],
+  "agentSheetGoConfigure": [
+    "前往配置",
+    "Configure"
+  ],
+  "agentSheetRunning": [
+    "正在进行 AI 分析…",
+    "AI analysis in progress…"
+  ],
+  "agentSheetModel": {
+    "zh": "模型 {model}",
+    "en": "Model {model}",
+    "placeholders": {
+      "model": {
+        "type": "String"
+      }
+    }
+  },
+  "agentSheetUnknown": [
+    "未知",
+    "Unknown"
+  ],
+  "agentSheetFailed": [
+    "分析失败",
+    "Analysis failed"
+  ],
+  "agentSheetUnknownError": [
+    "未知错误",
+    "Unknown error"
+  ],
+  "agentSheetCheckSettings": [
+    "检查设置",
+    "Check settings"
+  ],
+  "agentSheetNotStarted": [
+    "尚未分析",
+    "Not analysed yet"
+  ],
+  "agentSheetSuperseded": [
+    "结果已被新的分析取代",
+    "The result was replaced by a newer analysis"
+  ],
+  "agentSheetStartHint": [
+    "点下面的按钮开始分析。",
+    "Tap the button below to start."
+  ],
+  "agentSheetSupersededHint": [
+    "另一个分析请求覆盖了这次会话，重新分析可以取回结论。",
+    "Another analysis replaced this session; running it again brings the result back."
+  ],
+  "agentSheetStart": [
+    "开始分析",
+    "Start analysis"
+  ],
+  "agentSheetHideDigest": [
+    "收起送检摘要",
+    "Hide the prompt summary"
+  ],
+  "agentSheetShowDigest": [
+    "查看送检摘要",
+    "Show the prompt summary"
+  ],
+  "agentSheetAddBlock": [
+    "加入屏蔽规则",
+    "Add to block list"
+  ],
+  "agentSheetCopyResult": [
+    "复制结果",
+    "Copy report"
+  ],
+  "agentSheetReanalyze": [
+    "重新分析",
+    "Analyse again"
+  ],
+  "agentTargetDomainTitle": [
+    "域名安全分析",
+    "Domain security analysis"
+  ],
+  "agentTargetTrafficTitle": [
+    "网络流量分析",
+    "Network traffic analysis"
+  ],
+  "agentTargetTrafficSubtitle": [
+    "基于近期 DNS 与 HTTPS 监控数据",
+    "Based on recent DNS and HTTPS monitoring data"
+  ],
+  "hubAiAnalysis": [
+    "AI 分析",
+    "AI analysis"
+  ],
+  "uiCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "commonSave": [
+    "保存",
+    "Save"
+  ],
+  "commonDelete": [
+    "删除",
+    "Delete"
+  ],
+  "commonEdit": [
+    "编辑",
+    "Edit"
+  ],
+  "formAdd": [
+    "添加",
+    "Add"
+  ],
+  "obsRetry": [
+    "重试",
+    "Retry"
+  ],
+  "agentApiChipKeyMissing": [
+    "缺少 API Key",
+    "API key missing"
+  ],
+  "agentSheetAddAllowlist": [
+    "加入白名单",
+    "Add to allowlist"
+  ]
+}

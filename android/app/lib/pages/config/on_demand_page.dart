@@ -1,0 +1,317 @@
+library;
+
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/mock_config_resources.dart';
+import 'package:diting_android/data/native/battery_optimization.dart';
+import 'package:diting_android/pages/config/config_common.dart';
+import 'package:diting_android/pages/config/on_demand_capabilities.dart';
+import 'package:diting_android/state/config_providers_resources.dart';
+import 'package:diting_android/state/on_demand_runner.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+part 'on_demand_ssid_form.dart';
+
+class OnDemandConfigPage extends ConsumerWidget {
+  const OnDemandConfigPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resources = ref.watch(configResourcesProvider);
+    final notifier = ref.read(configResourcesProvider.notifier);
+    final rules = resources.ssidRules;
+    final decision = ref.watch(onDemandDecisionProvider);
+    return CommonScaffold(
+      title: context.l10n.odTitle,
+      iconActions: [
+        IconButtonData(
+          glyph: TablerIcons.refresh,
+          tooltip: context.l10n.odApplyNow,
+          onPressed: () => _applyAndHint(context, ref),
+        ),
+        IconButtonData(
+          glyph: TablerIcons.plus,
+          tooltip: context.l10n.ssidAdd,
+          onPressed: () => showSsidForm(context, ref),
+        ),
+      ],
+      body: PageBody(
+        children: [
+          generateSection(
+            title: context.l10n.odTitle,
+            items: [
+              ListItem.toggle(
+                leading: const Icon(TablerIcons.wifi),
+                title: Text(context.l10n.odEnable),
+                subtitle: Text(
+                  resources.onDemand
+                      ? _decisionSummary(decision, context.l10n)
+                      : context.l10n.odDisableBody,
+                ),
+                value: resources.onDemand,
+                onChanged: (value) => _setEnabled(context, ref, value),
+              ),
+            ],
+            footer: context.l10n.odNote,
+          ),
+          if (resources.onDemand) _DecisionCard(decision: decision),
+          if (resources.onDemand)
+            generateSection(
+              title: context.l10n.odAllowlist,
+              actions: [
+                IconButtonData(
+                  glyph: TablerIcons.plus,
+                  tooltip: context.l10n.ssidAdd,
+                  onPressed: () => showSsidForm(context, ref),
+                ),
+              ],
+              items: [
+                if (rules.isEmpty)
+                  ListItem(
+                    leading: const Icon(TablerIcons.wifi_off),
+                    title: Text(context.l10n.odNoSsid),
+                    subtitle: Text(context.l10n.odNoSsidBody),
+                    onTap: () => showSsidForm(context, ref),
+                  )
+                else
+                  for (final rule in rules)
+                    ListItem(
+                      leading: Icon(
+                        rule.enabled ? TablerIcons.wifi : TablerIcons.wifi_off,
+                        size: 20,
+                      ),
+                      title: Text(rule.ssid),
+                      subtitle: Text(_ruleSummary(rule, context.l10n)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 2,
+                        children: [
+                          ConfigRemoveButton(
+                            tooltip: context.l10n.odEditSsidTooltip(rule.ssid),
+                            glyph: TablerIcons.pencil,
+                            onPressed: () =>
+                                showSsidForm(context, ref, existing: rule.ssid),
+                          ),
+                          ConfigRemoveButton(
+                            tooltip: context.l10n.odDeleteSsidTooltip(
+                              rule.ssid,
+                            ),
+                            onPressed: () => notifier.removeSsid(rule.ssid),
+                          ),
+                        ],
+                      ),
+                      onTap: () =>
+                          showSsidForm(context, ref, existing: rule.ssid),
+                    ),
+              ],
+              footer: context.l10n.odDelayNote,
+            ),
+          const _NetworkSection(),
+          const _BatterySection(),
+        ],
+      ),
+    );
+  }
+}
+
+String _ruleSummary(MockSsidRule rule, AppL10n l10n) {
+  final parts = <String>[
+    if (rule.cellular) l10n.odCellular,
+    if (rule.wifi) 'Wi-Fi',
+  ];
+  final kinds = parts.isEmpty ? l10n.odKindsNone : parts.join(' / ');
+  final delay = rule.delayMs == 0
+      ? l10n.ssidImmediate
+      : l10n.odDelayValue('${rule.delayMs}');
+  return '$kinds · $delay';
+}
+
+String _decisionSummary(SsidDecision decision, AppL10n l10n) =>
+    switch (decision.state) {
+      SsidMatchState.disabled => l10n.odStateDisabled,
+      SsidMatchState.unknown => l10n.odStateUnknown,
+      SsidMatchState.noWifi => l10n.odStateNoWifi,
+      SsidMatchState.matched => l10n.odStateMatched(decision.rule?.ssid ?? ''),
+      SsidMatchState.unmatched => l10n.odStateUnmatched,
+    };
+
+Future<void> _setEnabled(
+  BuildContext context,
+  WidgetRef ref,
+  bool value,
+) async {
+  ref.read(configResourcesProvider.notifier).setOnDemand(value);
+  if (!value) {
+    showConfigHint(context, context.l10n.odDisabledHint);
+    return;
+  }
+  await _applyAndHint(context, ref);
+}
+
+Future<void> _applyAndHint(BuildContext context, WidgetRef ref) async {
+  final outcome = await ref.read(onDemandRunnerProvider).apply(force: true);
+  if (!context.mounted) return;
+  showConfigHint(context, outcome.label(context.l10n));
+}
+
+class _DecisionCard extends StatelessWidget {
+  const _DecisionCard({required this.decision});
+
+  final SsidDecision decision;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final (glyph, title, tone) = switch (decision.state) {
+      SsidMatchState.disabled => (
+        TablerIcons.wifi_off,
+        context.l10n.odPillDisabled,
+        colorScheme.onSurfaceVariant,
+      ),
+      SsidMatchState.unknown => (
+        TablerIcons.crosshair,
+        context.l10n.odPillUnknown,
+        colorScheme.warning,
+      ),
+      SsidMatchState.noWifi => (
+        TablerIcons.wifi_off,
+        context.l10n.odPillNoWifi,
+        colorScheme.onSurfaceVariant,
+      ),
+      SsidMatchState.matched => (
+        TablerIcons.check,
+        context.l10n.odPillWillStart,
+        colorScheme.primary,
+      ),
+      SsidMatchState.unmatched => (
+        TablerIcons.wifi,
+        context.l10n.odPillWillNotStart,
+        colorScheme.warning,
+      ),
+    };
+    final rule = decision.rule;
+    return generateSection(
+      title: context.l10n.odDecision,
+      items: [
+        ListItem(
+          leading: Icon(glyph, size: 20, color: tone),
+          title: Text(
+            title,
+            style: AppTextRole.rowTitle.of(context).copyWith(color: tone),
+          ),
+          subtitle: Text(
+            rule == null
+                ? _decisionSummary(decision, context.l10n)
+                : _ruleSummary(rule, context.l10n),
+          ),
+        ),
+      ],
+      footer: context.l10n.odDecisionFooter,
+    );
+  }
+}
+
+class _NetworkSection extends ConsumerWidget {
+  const _NetworkSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = context.colorScheme;
+    final async = ref.watch(currentSsidProvider);
+    final ssid = async.asData?.value;
+    final unknown = async.hasValue && ssid == null;
+    return generateSection(
+      title: context.l10n.odCurrentNetwork,
+      items: [
+        ListItem(
+          leading: const Icon(TablerIcons.wifi, size: 20),
+          title: Text(context.l10n.odWifiName),
+          subtitle: Text(describeSsid(ssid, context.l10n)),
+          trailing: ConfigRemoveButton(
+            tooltip: context.l10n.odReadAgain,
+            glyph: TablerIcons.refresh,
+            onPressed: () => ref.invalidate(currentSsidProvider),
+          ),
+          onTap: () => ref.invalidate(currentSsidProvider),
+        ),
+        if (unknown)
+          ListItem(
+            leading: const Icon(TablerIcons.crosshair, size: 20),
+            title: Text(context.l10n.odPermission),
+            subtitle: Text(context.l10n.odPermissionBody),
+            trailing: Text(
+              context.l10n.odNotGranted,
+              style: AppTextRole.supportingText
+                  .of(context)
+                  .copyWith(color: colorScheme.warning),
+            ),
+          ),
+      ],
+      footer: unknown
+          ? context.l10n.odWifiUnreadable
+          : context.l10n.odSsidPrivacy,
+    );
+  }
+}
+
+class _BatterySection extends ConsumerWidget {
+  const _BatterySection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = context.colorScheme;
+    final async = ref.watch(batteryOptimizationProvider);
+    final state = async.asData?.value;
+    final (label, color) = switch (state) {
+      BatteryOptimizationState.ignored => (
+        context.l10n.odBatteryJoined,
+        colorScheme.primary,
+      ),
+      BatteryOptimizationState.notIgnored => (
+        context.l10n.odBatteryNotJoined,
+        colorScheme.warning,
+      ),
+      BatteryOptimizationState.unavailable ||
+      null => (context.l10n.odBatteryUnavailable, colorScheme.onSurfaceVariant),
+    };
+    final subtitle = switch (state) {
+      BatteryOptimizationState.ignored => context.l10n.odBatteryOk,
+      BatteryOptimizationState.notIgnored => context.l10n.odBatteryAsk,
+      BatteryOptimizationState.unavailable ||
+      null => context.l10n.odBatteryNoChannel,
+    };
+    return generateSection(
+      title: context.l10n.odPrerequisites,
+      items: [
+        ListItem(
+          leading: const Icon(TablerIcons.battery, size: 20),
+          title: Text(context.l10n.odIgnoreBattery),
+          subtitle: Text(subtitle),
+          trailing: Text(
+            label,
+            style: AppTextRole.supportingText
+                .of(context)
+                .copyWith(color: color),
+          ),
+          onTap: state == BatteryOptimizationState.notIgnored
+              ? () => _request(context, ref)
+              : null,
+        ),
+      ],
+      footer: context.l10n.odBatteryFooter,
+    );
+  }
+
+  Future<void> _request(BuildContext context, WidgetRef ref) async {
+    final state = await requestBatteryOptimizationAccess(ref);
+    if (!context.mounted) return;
+    showConfigHint(context, switch (state) {
+      BatteryOptimizationState.ignored => context.l10n.odBatteryJoinedHint,
+      BatteryOptimizationState.notIgnored => context.l10n.odBatteryStillOff,
+      BatteryOptimizationState.unavailable =>
+        context.l10n.odBatteryUnsupportedHint,
+    });
+  }
+}

@@ -1,0 +1,13 @@
+[package]
+name = "diting-go-compat"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Shared by diting-policy-core (Android tunnel) and diting-filter-core (desktop rule index): both
+# sit behind Go code that used the standard library, so the compat helpers must be one copy.
+[lib]
+crate-type = ["lib"]
+
+[dependencies]
+regex = "1"

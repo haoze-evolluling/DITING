@@ -1,0 +1,196 @@
+// Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
+library;
+
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/app/theme/layout.dart';
+import 'package:diting_shared/state/appearance_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+class FontSizePage extends ConsumerWidget {
+  const FontSizePage({super.key});
+
+  static const _step = 0.05;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scale = ref.watch(textScaleProvider);
+    void set(double value) => ref.read(textScaleProvider.notifier).set(value);
+    final isDefault = (scale - 1).abs() < 0.001;
+    return CommonScaffold(
+      title: context.l10n.appearanceFontSizeLabel,
+      iconActions: [
+        IconButtonData(
+          glyph: TablerIcons.restore,
+          tooltip: context.l10n.fontSizeRestoreDefaults,
+          onPressed: isDefault ? null : () => set(1),
+        ),
+      ],
+      body: PageBody(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: _SizePreview(scale: scale),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: CommonCard(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        TablerIcons.text_size,
+                        size: 20,
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          context.l10n.appearanceFontSizeLabel,
+                          style: AppTextRole.rowTitle.of(context),
+                        ),
+                      ),
+                      Text(
+                        '${(scale * 100).round()}%',
+                        style: AppTextRole.supportingText
+                            .of(context)
+                            .copyWith(
+                              fontFeatures: appTabularFigures,
+                              color: context.colorScheme.primary,
+                            ),
+                      ),
+                    ],
+                  ),
+                  Slider(
+                    value: scale,
+                    min: minTextScale,
+                    max: maxTextScale,
+                    divisions: ((maxTextScale - minTextScale) / _step).round(),
+                    label: '${(scale * 100).round()}%',
+                    onChanged: set,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${(minTextScale * 100).round()}%',
+                          style: AppTextRole.supportingText.of(context),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${(maxTextScale * 100).round()}%',
+                          style: AppTextRole.supportingText.of(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          generateSection(
+            title: context.l10n.fontSizePresets,
+            items: [
+              ListItem<double>.options(
+                leading: const Icon(TablerIcons.text_size),
+                title: Text(context.l10n.appearanceFontSizeLabel),
+                value: _nearestPreset(scale),
+                options: _presets,
+                textBuilder: (value) => _presetLabel(context, value, scale),
+                onChanged: set,
+              ),
+            ],
+          ),
+          ListFooter(text: context.l10n.fontSizeFooter),
+        ],
+      ),
+    );
+  }
+
+  static const _presets = [0.85, 1.0, 1.2, 1.4];
+
+  static double _nearestPreset(double scale) {
+    for (final preset in _presets) {
+      if ((scale - preset).abs() < 0.001) {
+        return preset;
+      }
+    }
+    return -1;
+  }
+
+  static String _presetLabel(
+    BuildContext context,
+    double value,
+    double scale,
+  ) => switch (value) {
+    0.85 => context.l10n.fontSizeSmall,
+    1.0 => context.l10n.fontSizeStandard,
+    1.2 => context.l10n.fontSizeLarge,
+    1.4 => context.l10n.fontSizeExtraLarge,
+    _ => '${(scale * 100).round()}%',
+  };
+}
+
+class _SizePreview extends StatelessWidget {
+  const _SizePreview({required this.scale});
+
+  final double scale;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return CommonCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.l10n.fontSizePreview,
+                  style: AppTextRole.supportingText.of(context),
+                ),
+              ),
+              TonalChip(
+                label: '${(scale * 100).round()}%',
+                color: colorScheme.primaryContainer,
+                foregroundColor: colorScheme.onPrimaryContainer,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            context.l10n.appearancePoem,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextRole.sectionTitle.of(context),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            context.l10n.appearancePoemBody,
+            style: AppTextRole.body.of(context),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'The quick brown fox jumps over the lazy dog · 0123456789',
+            style: AppTextRole.supportingText
+                .of(context)
+                .copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontFeatures: appTabularFigures,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}

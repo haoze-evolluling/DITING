@@ -1,0 +1,334 @@
+use crate::bootstrap::{self, BootstrapRow};
+use crate::document::{self, BootstrapEntry};
+use crate::input;
+use crate::protocol::{self, Protocol};
+use crate::providers::{self, Provider};
+use crate::upstreams::{self, ServerUpstream};
+use crate::wire::{Reader, Writer};
+
+pub const ABI_VERSION: u32 = 4;
+
+const MAGIC: u32 = u32::from_le_bytes(*b"DDC1");
+const OP_SPLIT_ADDRESS: u8 = 0;
+const OP_PARSE_PROVIDERS: u8 = 1;
+const OP_ENCODE_PROVIDERS: u8 = 2;
+const OP_UPSERT_PROVIDER: u8 = 3;
+const OP_JOIN_HOST_PORT: u8 = 4;
+const OP_PARSE_BOOTSTRAP: u8 = 5;
+const OP_ENCODE_BOOTSTRAP: u8 = 6;
+const OP_PARSE_UPSTREAMS: u8 = 0;
+const OP_ENCODE_UPSTREAMS: u8 = 1;
+const OP_VALIDATE_UPSTREAM: u8 = 2;
+const OP_NORMALIZE_ADDRESS: u8 = 3;
+const OP_SERVER_HOST_PORT: u8 = 4;
+
+fn header(writer: &mut Writer) {
+    writer.u32(MAGIC);
+    writer.u32(ABI_VERSION);
+}
+
+fn into_buffer(bytes: Vec<u8>) -> (*mut u8, usize) {
+    let mut boxed = bytes.into_boxed_slice();
+    let length = boxed.len();
+    let pointer = boxed.as_mut_ptr();
+    std::mem::forget(boxed);
+    (pointer, length)
+}
+
+unsafe fn respond(bytes: Option<Vec<u8>>, out_len: *mut usize) -> *mut u8 {
+    if out_len.is_null() {
+        return std::ptr::null_mut();
+    }
+    match bytes {
+        Some(bytes) => {
+            let (pointer, length) = into_buffer(bytes);
+            *out_len = length;
+            pointer
+        }
+        None => {
+            *out_len = 0;
+            std::ptr::null_mut()
+        }
+    }
+}
+
+unsafe fn reader_at<'a>(input: *const u8, len: usize) -> Reader<'a> {
+    if input.is_null() || len == 0 {
+        Reader::new(&[])
+    } else {
+        Reader::new(std::slice::from_raw_parts(input, len))
+    }
+}
+
+fn write_providers(writer: &mut Writer, providers: &[Provider]) {
+    writer.u32(providers.len() as u32);
+    for provider in providers {
+        writer.string(&provider.id);
+        writer.string(&provider.name);
+        writer.string(protocol::storage_value(provider.protocol));
+        writer.string(&provider.url);
+        writer.string(&provider.host);
+        writer.i32(provider.port);
+    }
+}
+
+fn write_bootstrap(writer: &mut Writer, entries: &[BootstrapEntry]) {
+    writer.u32(entries.len() as u32);
+    for entry in entries {
+        writer.string(&entry.id);
+        writer.string(&entry.name);
+        writer.string(&entry.ip);
+    }
+}
+
+fn write_bootstrap_rows(writer: &mut Writer, rows: &[BootstrapRow]) {
+    writer.u32(rows.len() as u32);
+    for row in rows {
+        writer.string(&row.id);
+        writer.string(&row.name);
+        writer.string(&row.ip);
+        writer.bool(row.enabled);
+    }
+}
+
+fn write_upstreams(writer: &mut Writer, upstreams: &[ServerUpstream]) {
+    writer.u32(upstreams.len() as u32);
+    for upstream in upstreams {
+        writer.string(&upstream.id);
+        writer.string(&upstream.name);
+        writer.string(protocol::storage_value(upstream.protocol));
+        writer.string(&upstream.address);
+        writer.i32(upstream.port);
+    }
+}
+
+fn read_protocol(reader: &mut Reader<'_>) -> Option<Protocol> {
+    let storage = reader.string()?;
+    Some(protocol::from_storage(&storage).unwrap_or(Protocol::Plain))
+}
+
+#[no_mangle]
+pub extern "C" fn diting_dns_config_core_abi_version() -> u32 {
+    ABI_VERSION
+}
+
+#[no_mangle]
+pub extern "C" fn diting_dns_config_core_alloc(size: usize) -> *mut u8 {
+    if size == 0 {
+        return std::ptr::null_mut();
+    }
+    let mut boxed = vec![0u8; size].into_boxed_slice();
+    let pointer = boxed.as_mut_ptr();
+    std::mem::forget(boxed);
+    pointer
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn diting_dns_config_core_free(pointer: *mut u8, len: usize) {
+    if pointer.is_null() {
+        return;
+    }
+    drop(Vec::from_raw_parts(pointer, len, len));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn diting_dns_config_core_tunnel(
+    input: *const u8,
+    len: usize,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let mut reader = reader_at(input, len);
+    let Some(settings) = input::tunnel_settings(&mut reader) else {
+        return respond(None, out_len);
+    };
+    let Some(preset_providers) = input::read_providers(&mut reader) else {
+        return respond(None, out_len);
+    };
+    let Some(preset_bootstrap) = input::read_bootstrap(&mut reader) else {
+        return respond(None, out_len);
+    };
+    let config = document::build_tunnel(&settings, &preset_providers, &preset_bootstrap);
+    let mut writer = Writer::new();
+    header(&mut writer);
+    writer.string(&config.mode);
+    writer.string(&config.document);
+    write_providers(&mut writer, &config.providers);
+    write_bootstrap(&mut writer, &config.bootstrap);
+    respond(Some(writer.finish()), out_len)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn diting_dns_config_core_server(
+    input: *const u8,
+    len: usize,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let mut reader = reader_at(input, len);
+    let Some(settings) = input::server_settings(&mut reader) else {
+        return respond(None, out_len);
+    };
+    let Some(preset_upstreams) = input::read_upstreams(&mut reader) else {
+        return respond(None, out_len);
+    };
+    let Some(config) = document::build_server(&settings, &preset_upstreams) else {
+        return respond(None, out_len);
+    };
+    let mut writer = Writer::new();
+    header(&mut writer);
+    writer.i32(config.port);
+    writer.string(&config.mode);
+    writer.string(&config.document);
+    write_upstreams(&mut writer, &config.providers);
+    respond(Some(writer.finish()), out_len)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn diting_dns_config_core_providers(
+    input: *const u8,
+    len: usize,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let mut reader = reader_at(input, len);
+    let Some(op) = reader.u8() else {
+        return respond(None, out_len);
+    };
+    let mut writer = Writer::new();
+    header(&mut writer);
+    match op {
+        OP_SPLIT_ADDRESS => {
+            let Some(protocol) = read_protocol(&mut reader) else {
+                return respond(None, out_len);
+            };
+            let Some(address) = reader.string() else {
+                return respond(None, out_len);
+            };
+            let (url, host, port) = providers::split_address(protocol, &address);
+            writer.string(&url);
+            writer.string(&host);
+            writer.i32(port);
+        }
+        OP_PARSE_PROVIDERS => {
+            let Some(raw) = reader.opt_string() else {
+                return respond(None, out_len);
+            };
+            write_providers(
+                &mut writer,
+                &providers::parse_user_providers(raw.as_deref()),
+            );
+        }
+        OP_ENCODE_PROVIDERS => {
+            let Some(records) = input::read_providers(&mut reader) else {
+                return respond(None, out_len);
+            };
+            writer.string(&providers::encode_user_providers(&records));
+        }
+        OP_UPSERT_PROVIDER => {
+            let Some(records) = input::read_providers(&mut reader) else {
+                return respond(None, out_len);
+            };
+            let Some(id) = reader.string() else {
+                return respond(None, out_len);
+            };
+            let Some(name) = reader.string() else {
+                return respond(None, out_len);
+            };
+            let Some(protocol) = read_protocol(&mut reader) else {
+                return respond(None, out_len);
+            };
+            let Some(address) = reader.string() else {
+                return respond(None, out_len);
+            };
+            let updated = providers::upsert_user_provider(&records, &id, &name, protocol, &address);
+            write_providers(&mut writer, &updated);
+        }
+        OP_JOIN_HOST_PORT => {
+            let (Some(host), Some(port)) = (reader.string(), reader.i32()) else {
+                return respond(None, out_len);
+            };
+            writer.string(&protocol::join_host_port(&host, port));
+        }
+        OP_PARSE_BOOTSTRAP => {
+            let Some(raw) = reader.opt_string() else {
+                return respond(None, out_len);
+            };
+            write_bootstrap_rows(&mut writer, &bootstrap::parse_custom(raw.as_deref()));
+        }
+        OP_ENCODE_BOOTSTRAP => {
+            let Some(rows) = input::read_bootstrap_rows(&mut reader) else {
+                return respond(None, out_len);
+            };
+            writer.string(&bootstrap::encode_custom(&rows));
+        }
+        _ => return respond(None, out_len),
+    }
+    respond(Some(writer.finish()), out_len)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn diting_dns_config_core_upstreams(
+    input: *const u8,
+    len: usize,
+    out_len: *mut usize,
+) -> *mut u8 {
+    let mut reader = reader_at(input, len);
+    let Some(op) = reader.u8() else {
+        return respond(None, out_len);
+    };
+    let mut writer = Writer::new();
+    header(&mut writer);
+    match op {
+        OP_PARSE_UPSTREAMS => {
+            let Some(raw) = reader.opt_string() else {
+                return respond(None, out_len);
+            };
+            write_upstreams(
+                &mut writer,
+                &upstreams::parse_custom_upstreams(raw.as_deref()),
+            );
+        }
+        OP_ENCODE_UPSTREAMS => {
+            let Some(records) = input::read_upstreams(&mut reader) else {
+                return respond(None, out_len);
+            };
+            writer.string(&upstreams::encode_custom_upstreams(&records));
+        }
+        OP_VALIDATE_UPSTREAM => {
+            let Some(name) = reader.string() else {
+                return respond(None, out_len);
+            };
+            let Some(protocol) = read_protocol(&mut reader) else {
+                return respond(None, out_len);
+            };
+            let Some(address) = reader.string() else {
+                return respond(None, out_len);
+            };
+            let Some(port) = reader.i32() else {
+                return respond(None, out_len);
+            };
+            writer.u8(match upstreams::validate(&name, protocol, &address, port) {
+                Ok(()) => upstreams::UPSTREAM_OK,
+                Err(kind) => kind as u8,
+            });
+        }
+        OP_NORMALIZE_ADDRESS => {
+            let Some(protocol) = read_protocol(&mut reader) else {
+                return respond(None, out_len);
+            };
+            let Some(address) = reader.string() else {
+                return respond(None, out_len);
+            };
+            writer.string(&upstreams::normalize_address(protocol, &address));
+        }
+        OP_SERVER_HOST_PORT => {
+            let (Some(address), Some(port)) = (reader.string(), reader.i32()) else {
+                return respond(None, out_len);
+            };
+            writer.string(&protocol::server_host_port(&address, port));
+        }
+        _ => return respond(None, out_len),
+    }
+    respond(Some(writer.finish()), out_len)
+}
+
+#[cfg(test)]
+mod tests;

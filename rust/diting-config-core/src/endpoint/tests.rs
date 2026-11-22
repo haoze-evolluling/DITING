@@ -1,0 +1,114 @@
+use super::*;
+
+#[test]
+fn plain_and_dot_take_host_port() {
+    for (protocol, server) in [
+        ("PLAIN", "1.1.1.1:53"),
+        ("plain", "1.1.1.1:53"),
+        ("PLAIN", "[2606:4700:4700::1111]:53"),
+        ("DOT", "dns.google:853"),
+        ("PLAIN", "1.1.1.1:"),
+        ("PLAIN", "1.1.1.1:053"),
+        ("PLAIN", "1.1.1.1:65536"),
+        ("DOT", "host name:853"),
+    ] {
+        assert!(
+            validate_provider(protocol, server, "").is_ok(),
+            "{protocol} {server}"
+        );
+    }
+}
+
+#[test]
+fn plain_and_dot_reject_bad_addresses() {
+    for (server, expected) in [
+        (
+            "1.1.1.1",
+            "invalid PLAIN endpoint \"1.1.1.1\": address 1.1.1.1: missing port in address",
+        ),
+        ("", "invalid PLAIN endpoint \"\": missing port in address"),
+        (
+            "[::1]",
+            "invalid PLAIN endpoint \"[::1]\": address [::1]: missing port in address",
+        ),
+        (
+            "::1:53",
+            "invalid PLAIN endpoint \"::1:53\": address ::1:53: too many colons in address",
+        ),
+        (
+            ":53",
+            "invalid PLAIN endpoint \":53\": host is not a valid IP literal",
+        ),
+        (
+            "[1.1.1.1:53]:53",
+            "invalid PLAIN endpoint \"[1.1.1.1:53]:53\": host is not a valid IP literal",
+        ),
+    ] {
+        assert_eq!(
+            validate_provider("PLAIN", server, "").unwrap_err(),
+            expected,
+            "{server}"
+        );
+    }
+    assert!(validate_provider("dot", "1.1.1.1", "")
+        .unwrap_err()
+        .starts_with("invalid DOT endpoint"));
+}
+
+#[test]
+fn doh_requires_an_https_url_with_a_host() {
+    for url in [
+        "https://dns.google/dns-query",
+        "https://dns.google:443/dns-query?x=1",
+        "HTTPS://dns.google/x",
+        "https://user:pw@dns.google/x",
+        "https://dns.google:/x",
+        "https://dns.google/x#frag",
+        "https://[::1]:443/x",
+        "https://例子.example/x",
+    ] {
+        assert!(validate_provider("DOH", "", url).is_ok(), "{url}");
+    }
+    for url in [
+        "http://dns.google/dns-query",
+        "https:///dns-query",
+        "https:opaque",
+        "dns.google",
+        "",
+        "https://dns.google:abc/x",
+        "https://dns google/x",
+        "https://dns%2egoogle/x",
+        " https://dns.google/x",
+        "//dns.google/x",
+    ] {
+        assert_eq!(
+            validate_provider("DOH", "", url).unwrap_err(),
+            format!("invalid DOH URL \"{url}\""),
+            "{url}"
+        );
+    }
+}
+
+#[test]
+fn unknown_protocols_are_rejected_before_the_endpoint() {
+    assert_eq!(
+        validate_provider("HYPER", "1.1.1.1:53", "").unwrap_err(),
+        "unsupported protocol \"HYPER\""
+    );
+    assert_eq!(
+        validate_provider("hyper", "1.1.1.1:53", "").unwrap_err(),
+        "unsupported protocol \"HYPER\""
+    );
+}
+
+#[test]
+fn request_uri_keeps_the_lower_cased_scheme_and_host() {
+    let uri = parse_request_uri("HTTPS://User:pw@dns.google:443/x?q=1").expect("parses");
+    assert_eq!(uri.scheme, "https");
+    assert_eq!(uri.host, "dns.google:443");
+    let opaque = parse_request_uri("https:opaque").expect("parses");
+    assert_eq!(opaque.scheme, "https");
+    assert!(opaque.host.is_empty());
+    assert!(parse_request_uri("dns.google").is_none());
+    assert!(parse_request_uri("https://dns.google/x\n").is_none());
+}

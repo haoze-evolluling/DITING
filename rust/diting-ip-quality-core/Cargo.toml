@@ -1,0 +1,13 @@
+[package]
+name = "diting-ip-quality-core"
+version = "0.1.0"
+edition = "2021"
+description = "IP-quality source parsing, type classification and report aggregation for the Android app tools"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# Source bodies are JSON text; the answer is a small JSON result the Dart caller maps to its model.
+serde_json = "1"

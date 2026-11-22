@@ -1,0 +1,7 @@
+{
+  "obsCurrentFilter": ["当前筛选：{filter}。", "Filtered by: {filter}."],
+  "obsFooterCount": ["共 {count} 条，其中 {failed} 条处理失败{filter}{more}。点按一行查看规则命中与处理结果。", "{count} records, {failed} failed{filter}{more}. Tap a row to see the rule match and outcome."],
+  "obsFooterFilter": ["（筛选：{filter}）", " (filtered by: {filter})"],
+  "obsFooterMore": ["；继续下滑加载更多", "; scroll for more"],
+  "obsFooterAll": ["；已加载全部", "; all loaded"]
+}

@@ -1,0 +1,394 @@
+{
+  "backupErrEmpty": [
+    "文件内容为空",
+    "The file is empty"
+  ],
+  "backupErrInvalidJson": {
+    "zh": "不是合法的 JSON：{error}",
+    "en": "Not valid JSON: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupErrRootNotObject": [
+    "备份文件的根节点必须是 JSON 对象",
+    "The root of a backup file must be a JSON object"
+  ],
+  "backupErrNotDiting": [
+    "这不是谛听的备份文件：缺少 format 标记",
+    "This is not a DITING backup: the format marker is missing"
+  ],
+  "backupErrNoVersion": [
+    "备份文件缺少版本号",
+    "The backup file has no version number"
+  ],
+  "backupErrVersionTooHigh": {
+    "zh": "备份版本 {version} 高于本版应用支持的 {max}，请升级应用后再导入",
+    "en": "The backup version {version} is higher than the supported {max}; update the app before importing",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "backupErrNoData": [
+    "备份文件缺少 data 段",
+    "The backup file has no data section"
+  ],
+  "backupErrProvidersNotArray": [
+    "服务商分组应为数组",
+    "The providers section must be an array"
+  ],
+  "backupErrBootstrapNotObject": [
+    "Bootstrap 分组应为对象",
+    "The Bootstrap section must be an object"
+  ],
+  "backupErrCacheNotObject": [
+    "缓存分组应为对象",
+    "The cache section must be an object"
+  ],
+  "backupErrOutboundNotObject": [
+    "出站代理分组应为对象",
+    "The outbound proxy section must be an object"
+  ],
+  "backupErrBlockedNotObject": [
+    "禁止联网分组应为对象",
+    "The blocked apps section must be an object"
+  ],
+  "backupErrAppRulesNotObject": [
+    "应用独立规则分组应为对象",
+    "The per-app rules section must be an object"
+  ],
+  "backupErrInspectionNotObject": [
+    "HTTPS 抓包分组应为对象",
+    "The HTTPS capture section must be an object"
+  ],
+  "backupErrSubsNotObject": [
+    "订阅分组应为对象",
+    "The subscriptions section must be an object"
+  ],
+  "backupErrNoRuleDbSubs": [
+    "本机还没有规则库，无法导入订阅",
+    "This device has no rule database yet, so subscriptions cannot be imported"
+  ],
+  "backupErrRulesNotArray": [
+    "规则分组应为数组",
+    "The rules section must be an array"
+  ],
+  "backupErrNoRuleDbRules": [
+    "本机还没有规则库，无法导入规则",
+    "This device has no rule database yet, so rules cannot be imported"
+  ],
+  "backupErrRewriteNotArray": [
+    "覆写规则分组应为数组",
+    "The override rules section must be an array"
+  ],
+  "backupErrNoRuleDbRewrite": [
+    "本机还没有规则库，无法导入覆写规则",
+    "This device has no rule database yet, so override rules cannot be imported"
+  ],
+  "backupErrAddressNotArray": [
+    "地址规则分组应为数组",
+    "The address rules section must be an array"
+  ],
+  "backupErrNoRuleDbAddress": [
+    "本机还没有规则库，无法导入地址规则",
+    "This device has no rule database yet, so address rules cannot be imported"
+  ],
+  "agentPasteEmpty": [
+    "剪贴板为空",
+    "The clipboard is empty"
+  ],
+  "agentPasteBoth": [
+    "已自动识别并填入服务地址与 API Key",
+    "Recognised and filled in the endpoint and API key"
+  ],
+  "agentPasteBaseUrl": [
+    "已填入服务地址",
+    "Endpoint filled in"
+  ],
+  "agentPasteKey": [
+    "已填入 API Key",
+    "API key filled in"
+  ],
+  "agentPasteJson": [
+    "已从 JSON 中识别并更新 API 配置",
+    "Recognised the API settings from the JSON and updated them"
+  ],
+  "logDirect": {
+    "zh": "{protocol} 直连",
+    "en": "{protocol} direct",
+    "placeholders": {
+      "protocol": {
+        "type": "String"
+      }
+    }
+  },
+  "logDirectWithApp": {
+    "zh": "{protocol} 直连 · {app}",
+    "en": "{protocol} direct · {app}",
+    "placeholders": {
+      "protocol": {
+        "type": "String"
+      },
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "subsErrUrlUnavailable": [
+    "订阅地址不可用",
+    "The subscription URL is not usable"
+  ],
+  "subsErrTimeout": {
+    "zh": "下载超时（读取 {seconds} 秒）",
+    "en": "Download timed out (read {seconds} s)",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "subsErrTls": [
+    "TLS 握手失败，请检查证书或镜像地址",
+    "TLS handshake failed; check the certificate or the mirror address"
+  ],
+  "subsErrEmptyResponse": [
+    "订阅响应为空",
+    "The subscription response was empty"
+  ],
+  "subsErrUnreachable": [
+    "网络不可达",
+    "Network unreachable"
+  ],
+  "subsErrUnreachableCode": {
+    "zh": "网络不可达：{code}",
+    "en": "Network unreachable: {code}",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "subsErrUnsupported": [
+    "当前环境不支持网络订阅更新",
+    "This environment cannot update online subscriptions"
+  ],
+  "subsErrMirrorPlaceholder": {
+    "zh": "镜像模板必须包含 {list}",
+    "en": "A mirror template must contain {list}",
+    "placeholders": {
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "subsErrRawUrlInvalid": [
+    "原始订阅地址格式无效",
+    "The original subscription URL is not valid"
+  ],
+  "subsErrMirrorScheme": [
+    "镜像模板生成的地址必须使用 HTTP 或 HTTPS",
+    "The address built from the mirror template must use HTTP or HTTPS"
+  ],
+  "subsErrEmpty": [
+    "订阅地址不能为空",
+    "The subscription URL cannot be empty"
+  ],
+  "subsErrBadFormat": [
+    "订阅地址格式无效",
+    "The subscription URL is not valid"
+  ],
+  "subsErrNotHttp": [
+    "订阅链接必须使用 HTTP 或 HTTPS",
+    "A subscription link must use HTTP or HTTPS"
+  ],
+  "subsErrNoHost": [
+    "订阅地址缺少主机名",
+    "The subscription URL has no host name"
+  ],
+  "siteCategoryShopping": [
+    "购物",
+    "Shopping"
+  ],
+  "siteCategoryVideo": [
+    "视频",
+    "Video"
+  ],
+  "siteCategoryMusic": [
+    "音乐",
+    "Music"
+  ],
+  "siteCategorySocial": [
+    "社交",
+    "Social"
+  ],
+  "siteCategoryDeveloper": [
+    "开发者",
+    "Developer"
+  ],
+  "siteCategoryGame": [
+    "游戏",
+    "Games"
+  ],
+  "outboundProxyHostInvalid": [
+    "代理地址仅支持 127.0.0.1 或 ::1",
+    "The proxy address must be 127.0.0.1 or ::1"
+  ],
+  "outboundProxyPortRange": [
+    "代理端口必须在 1 到 65535 之间",
+    "The proxy port must be between 1 and 65535"
+  ],
+  "outboundProxyAppRequired": [
+    "请选择提供本地代理端口的应用",
+    "Pick the app that provides the local proxy port"
+  ],
+  "outboundProxySelfNotAllowed": [
+    "不能选择 DITING 自身作为代理应用",
+    "DITING cannot be its own proxy app"
+  ],
+  "outboundProxyAppMissing": [
+    "所选代理应用未安装",
+    "The selected proxy app is not installed"
+  ],
+  "outboundProxyCredentialsTooLong": [
+    "代理账号或密码过长",
+    "The proxy username or password is too long"
+  ],
+  "updateDownloadNoPath": [
+    "下载失败：未返回安装包路径",
+    "Download failed: no package path was returned"
+  ],
+  "updateDownloadUnsupported": [
+    "当前设备不支持应用内下载，请用浏览器打开下载地址",
+    "This device cannot download inside the app; open the download URL in a browser"
+  ],
+  "updateDownloadFailedCode": {
+    "zh": "下载失败（{code}）",
+    "en": "Download failed ({code})",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "dnsLatencySuccessRate": {
+    "zh": "成功率 {success}/{attempts}",
+    "en": "Success {success}/{attempts}",
+    "placeholders": {
+      "success": {
+        "type": "int"
+      },
+      "attempts": {
+        "type": "int"
+      }
+    }
+  },
+  "dnsLatencyUnsupported": [
+    "当前设备不支持测速",
+    "This device does not support latency tests"
+  ],
+  "dnsLatencyChannelFailedCode": {
+    "zh": "测速通道调用失败（{code}）",
+    "en": "The latency channel failed ({code})",
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "dnsLatencyChannelFailedDetail": {
+    "zh": "测速通道调用失败：{detail}",
+    "en": "The latency channel failed: {detail}",
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "fontImportFailed": [
+    "无法导入该字体",
+    "Could not import that font"
+  ],
+  "fontReadFailed": [
+    "无法读取该字体文件",
+    "Could not read that font file"
+  ],
+  "fontParseFailed": [
+    "无法解析该字体文件，请确认它是完整的 TTF/OTF",
+    "Could not parse that font file; make sure it is a complete TTF/OTF"
+  ],
+  "fontCustomName": [
+    "自定义字体",
+    "Custom font"
+  ],
+  "recognitionAvatarTooLarge": [
+    "头像体积超限",
+    "The avatar file is too large"
+  ],
+  "recognitionConfigTooLarge": [
+    "名单配置过大",
+    "The list configuration is too large"
+  ],
+  "taglineRunning": [
+    "谛听万象，明察清浊",
+    "Listen to all things, tell clear from murky"
+  ],
+  "taglineStopped": [
+    "收耳静眠，归于无声",
+    "Ears at rest, back to silence"
+  ],
+  "logPassed": [
+    "通过",
+    "Passed"
+  ],
+  "logFiltered": [
+    "过滤",
+    "Filtered"
+  ],
+  "commonFailed": [
+    "失败",
+    "Failed"
+  ],
+  "subscriptionDeleted": [
+    "已删除",
+    "Deleted"
+  ],
+  "commonEnabled": [
+    "已启用",
+    "Enabled"
+  ],
+  "subscriptionDisabled": [
+    "已禁用",
+    "Disabled"
+  ],
+  "permVpn": [
+    "VPN 连接",
+    "VPN connection"
+  ],
+  "permNotification": [
+    "通知",
+    "Notifications"
+  ],
+  "permAppList": [
+    "应用列表",
+    "App list"
+  ],
+  "permBattery": [
+    "忽略电池优化",
+    "Ignore battery optimisation"
+  ],
+  "caChannelUnavailable": [
+    "证书通道不可用",
+    "The certificate channel is unavailable"
+  ],
+  "uiSearch": [
+    "搜索",
+    "Search"
+  ]
+}

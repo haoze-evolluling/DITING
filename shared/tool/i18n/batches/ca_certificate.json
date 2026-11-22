@@ -1,0 +1,286 @@
+{
+  "caCertTitle": [
+    "CA 证书设置",
+    "CA certificate settings"
+  ],
+  "caCertStatusMissing": [
+    "尚未生成：引擎还没有产出 ca.crt",
+    "Not generated yet: the engine has not produced ca.crt"
+  ],
+  "caCertStatusUntrusted": [
+    "已生成，但未装进系统信任存储",
+    "Generated, but not installed in the system trust store"
+  ],
+  "caCertStatusTrusted": [
+    "已生成且已被系统信任",
+    "Generated and trusted by the system"
+  ],
+  "caCertSectionStatus": [
+    "证书状态",
+    "Certificate status"
+  ],
+  "caCertRootStatus": [
+    "根证书状态",
+    "Root certificate status"
+  ],
+  "caCertVerified": [
+    "已验证",
+    "Verified"
+  ],
+  "caCertUnverified": [
+    "未验证",
+    "Not verified"
+  ],
+  "caCertReadFailed": [
+    "读取失败",
+    "Read failed"
+  ],
+  "caCertStatusFooter": [
+    "仅已验证的根证书支持流量检查；启用了证书绑定（SSL Pinning）的应用将自动旁路。",
+    "Traffic inspection only works with a verified root certificate; apps that use certificate pinning (SSL Pinning) are bypassed automatically."
+  ],
+  "caCertSectionActions": [
+    "证书操作",
+    "Certificate actions"
+  ],
+  "caCertGuide": [
+    "安装与卸载指南",
+    "Install and remove guide"
+  ],
+  "caCertGuideSubtitle": [
+    "查看各机型系统证书的安装、移除及安全说明",
+    "How to install, remove and stay safe with the system certificate on each device"
+  ],
+  "caCertInstall": [
+    "安装根证书",
+    "Install root certificate"
+  ],
+  "caCertInstallSubtitle": [
+    "交给系统安装器；Android 11 起还需在设置里手动确认",
+    "Hands off to the system installer; Android 11 and later still need a manual confirmation in Settings"
+  ],
+  "caCertInstalled": [
+    "已安装",
+    "Installed"
+  ],
+  "caCertNotInstalled": [
+    "未安装",
+    "Not installed"
+  ],
+  "caCertSaveToDownloads": [
+    "保存证书到下载目录",
+    "Save certificate to Downloads"
+  ],
+  "caCertSaveToDownloadsSubtitle": [
+    "下载目录里的 .crt 可在系统设置里手动安装",
+    "The .crt in Downloads can be installed by hand from system settings"
+  ],
+  "caCertFingerprint": [
+    "证书指纹",
+    "Certificate fingerprint"
+  ],
+  "caCertNoFingerprint": [
+    "尚未生成证书时没有指纹",
+    "There is no fingerprint until a certificate is generated"
+  ],
+  "caCertFingerprintSubtitle": [
+    "SHA-256（点击查看完整指纹）",
+    "SHA-256 (tap to see the full fingerprint)"
+  ],
+  "caCertViewPem": [
+    "查看证书内容",
+    "View certificate"
+  ],
+  "caCertViewPemSubtitle": [
+    "以可复制的 PEM 文本显示，便于拷到别处安装",
+    "Shown as copyable PEM text so it can be installed elsewhere"
+  ],
+  "caCertSectionManage": [
+    "证书管理",
+    "Certificate management"
+  ],
+  "caCertRegenerate": [
+    "重新生成根证书",
+    "Regenerate root certificate"
+  ],
+  "caCertRegenerateSubtitle": [
+    "作废当前私钥并生成新证书，重置后需重新安装",
+    "Revokes the current private key and creates a new certificate; reinstall afterwards"
+  ],
+  "caCertNoCertificate": [
+    "还没有可用证书，请先点「重新生成根证书」",
+    "No certificate is available yet; tap \"Regenerate root certificate\" first"
+  ],
+  "caCertInstallDialogBody": [
+    "Android 只允许用户手动把根证书装进「CA 证书」一栏，应用无法静默写入系统信任存储。\n\n点「继续」会先保存一份证书文件到下载目录，再尝试打开系统安装器；若安装器只提示去设置，请用该文件在「设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书」里手动选中它。",
+    "Android only lets the user install a root certificate into the \"CA certificate\" section by hand; the app cannot write to the system trust store silently.\n\nTapping \"Continue\" first saves a certificate file to Downloads and then tries to open the system installer. If the installer only points at Settings, pick that file manually under \"Settings → Security → Encryption & credentials → Install a certificate → CA certificate\"."
+  ],
+  "caCertSavedTo": {
+    "zh": "证书已存到 {name}。",
+    "en": "The certificate was saved to {name}.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "caCertDownloadsDir": [
+    "下载目录",
+    "Downloads"
+  ],
+  "caCertSaveFailed": {
+    "zh": "证书文件保存失败（{error}）。",
+    "en": "Saving the certificate file failed ({error}).",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "caCertOpenedInstaller": [
+    "已打开系统证书安装界面。",
+    "The system certificate installer was opened."
+  ],
+  "caCertOpenedSettings": [
+    "系统没有证书安装器，已打开安全设置。",
+    "This system has no certificate installer, so security settings were opened."
+  ],
+  "caCertInstallerUnavailable": [
+    "无法打开证书安装界面。",
+    "Could not open the certificate installer."
+  ],
+  "caCertManualHint": [
+    "若界面只提示前往设置，请在「加密与凭据 → 安装证书 → CA 证书」里手动选中它。",
+    "If the screen only points at Settings, select it manually under \"Encryption & credentials → Install a certificate → CA certificate\"."
+  ],
+  "caCertSavedHint": {
+    "zh": "已保存到 {name}，可在「加密与凭据 → 安装证书」里选中它",
+    "en": "Saved to {name}; select it under \"Encryption & credentials → Install a certificate\"",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "caCertDownloadsFailed": [
+    "无法写入下载目录",
+    "Could not write to Downloads"
+  ],
+  "caCertRegenerateTitle": [
+    "重新生成根证书？",
+    "Regenerate the root certificate?"
+  ],
+  "caCertRegenerateBody": [
+    "会删除现有的 ca.crt / ca.key 与黑名单缓存。已安装的旧证书随即失效，之前被信任的所有连接都需要重新安装新证书，HTTPS 检查也会被自动关闭。",
+    "The existing ca.crt / ca.key and the blocklist cache are deleted. The installed certificate stops working immediately, every previously trusted connection needs the new certificate, and HTTPS inspection is turned off automatically."
+  ],
+  "caCertRegenerateAction": [
+    "重新生成",
+    "Regenerate"
+  ],
+  "caCertGenerateFailed": {
+    "zh": "生成失败：{error}",
+    "en": "Generation failed: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "caCertGenerated": [
+    "已生成新证书，请前往系统设置安装",
+    "A new certificate was generated; install it from system settings"
+  ],
+  "caCertFingerprintTitle": [
+    "证书指纹（SHA-256）",
+    "Certificate fingerprint (SHA-256)"
+  ],
+  "caCertFingerprintCopied": [
+    "指纹已复制",
+    "Fingerprint copied"
+  ],
+  "caCertPemTitle": [
+    "根证书 PEM",
+    "Root certificate PEM"
+  ],
+  "caCertPemCopied": [
+    "证书内容已复制",
+    "Certificate copied"
+  ],
+  "caCertGuideTitle": [
+    "CA 证书指南",
+    "CA certificate guide"
+  ],
+  "caCertWhyTitle": [
+    "为什么需要安装",
+    "Why installation is required"
+  ],
+  "caCertWhyBody": [
+    "HTTPS 流量检查需要在设备上建立一条本地解密通道。系统只信任「用户」证书区里手工安装的根证书，应用无法代替你点这一步。",
+    "HTTPS traffic inspection needs a local decryption channel on the device. The system only trusts root certificates installed by hand in the \"user\" certificate store, and the app cannot tap that step for you."
+  ],
+  "caCertStepsTitle": [
+    "安装步骤",
+    "Installation steps"
+  ],
+  "caCertStep1": [
+    "1. 在「CA 证书设置」里点「安装根证书」，应用会把证书文件存进下载目录，再交给系统安装器。",
+    "1. Tap \"Install root certificate\" in \"CA certificate settings\"; the app saves the file to Downloads and hands it to the system installer."
+  ],
+  "caCertStep2": [
+    "2. Android 11 起系统安装器通常只提示前往设置，这是平台限制，不是应用故障。请从「设置 → 安全 → 加密与凭据 → 安装证书 → CA 证书」里选中下载目录里的那个 .crt 文件。",
+    "2. Since Android 11 the system installer usually only points at Settings; that is a platform limit, not an app fault. Select the .crt file from Downloads under \"Settings → Security → Encryption & credentials → Install a certificate → CA certificate\"."
+  ],
+  "caCertStep3": [
+    "3. 安装时系统会要求屏幕锁或指纹；设备没有锁屏时无法安装，需先设一个 PIN。",
+    "3. The system asks for the screen lock or fingerprint; installation is impossible without one, so set a PIN first."
+  ],
+  "caCertStep4": [
+    "4. 回到本页，状态应变成「已验证」；没变就退出重进该页重新检查。",
+    "4. Come back to this page; the status should read \"Verified\". If not, leave and reopen the page to check again."
+  ],
+  "caCertWhichAppsTitle": [
+    "哪些应用能被检查",
+    "Which apps can be inspected"
+  ],
+  "caCertWhichAppsBody": [
+    "系统只信任「用户」证书区的根证书，而 targetSdk 24（Android 7.0）及以上的应用默认不信任用户证书。只有自带网络安全配置允许用户 CA 的应用，其 HTTPS 才能被解密并看到明文。",
+    "The system only trusts root certificates in the \"user\" store, and apps with targetSdk 24 (Android 7.0) or later do not trust user certificates by default. Only apps whose network security config allows user CAs can have their HTTPS decrypted and read in plain text."
+  ],
+  "caCertWhichAppsWarning": [
+    "其余应用的 HTTPS 请求会被记录为「失败 / client_tls」，这是应用的证书绑定或系统策略导致的，属于预期行为；这类应用应加入绕过规则。",
+    "HTTPS requests from other apps are recorded as \"failed / client_tls\" because of certificate pinning or system policy. That is expected; add those apps to the bypass rules."
+  ],
+  "caCertRiskTitle": [
+    "卸载与风险",
+    "Removal and risks"
+  ],
+  "caCertRiskWarning": [
+    "根证书一旦装进用户信任区，任何持有对应私钥的软件都能解密本机流量。不再使用时请到系统设置里删除它，并在本页「重新生成根证书」作废旧私钥。",
+    "Once the root certificate is in the user trust store, any software holding the matching private key can decrypt this device's traffic. When you no longer need it, delete it in system settings and tap \"Regenerate root certificate\" here to revoke the old key."
+  ],
+  "caCertRiskPinning": [
+    "部分应用使用证书绑定（SSL Pinning），装证书后仍会连接失败；这类应用应加入绕过规则，而不是反复重装证书。",
+    "Some apps use certificate pinning (SSL Pinning) and still fail to connect after the certificate is installed; add them to the bypass rules instead of reinstalling the certificate over and over."
+  ],
+  "commonCopy": [
+    "复制",
+    "Copy"
+  ],
+  "commonContinue": [
+    "继续",
+    "Continue"
+  ],
+  "commonUnknownReason": [
+    "未知原因",
+    "Unknown reason"
+  ],
+  "uiCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "uiClose": [
+    "关闭",
+    "Close"
+  ]
+}

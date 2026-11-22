@@ -1,0 +1,27 @@
+pub mod document;
+pub mod domain;
+pub mod dtri;
+pub mod fast_hash;
+pub mod ffi;
+pub mod hosts;
+pub mod index_layout;
+pub mod jni_bridge;
+pub mod jni_payload;
+pub mod keys;
+pub mod line;
+pub mod models;
+pub mod modifiers;
+pub mod payload;
+pub mod search;
+pub mod search_ffi;
+pub mod snapshot;
+pub mod stream;
+
+pub use document::{parse_categorized_line, parse_document};
+pub use dtri::compile as compile_rule_index;
+pub use ffi::ABI_VERSION;
+pub use models::{CategorizedLine, CategorizedRules, ParsedRule};
+pub use search::RuleSearchIndex;
+pub use search_ffi::SEARCH_ABI_VERSION;
+pub use snapshot::{build as build_rule_snapshot, SnapshotInput};
+pub use stream::StreamParse;

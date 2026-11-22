@@ -1,0 +1,12 @@
+[package]
+name = "diting-upstream-core"
+version = "0.1.0"
+edition = "2021"
+description = "Upstream DNS transport kernel for the Android tunnel engine: endpoint targets, length framing, DoH response classification, the DoT idle pool and the transport tuning table"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+diting-go-compat = { path = "../diting-go-compat" }

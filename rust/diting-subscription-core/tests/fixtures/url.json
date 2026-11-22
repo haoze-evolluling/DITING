@@ -1,0 +1,982 @@
+{
+  "urls": [
+    {
+      "url": "",
+      "parsed": true,
+      "hasScheme": false,
+      "scheme": "",
+      "host": "",
+      "path": "/",
+      "query": "",
+      "validateKind": "empty",
+      "name": "",
+      "build": "https://m.example.com/",
+      "buildKind": null,
+      "example": "https://m.example.com///",
+      "exampleKind": null
+    },
+    {
+      "url": "   ",
+      "parsed": true,
+      "hasScheme": false,
+      "scheme": "",
+      "host": "",
+      "path": "%20%20%20",
+      "query": "",
+      "validateKind": "empty",
+      "name": "%20%20%20",
+      "build": "https://m.example.com/   ",
+      "buildKind": null,
+      "example": "https://m.example.com//%20%20%20",
+      "exampleKind": null
+    },
+    {
+      "url": "example.com/rules.txt",
+      "parsed": true,
+      "hasScheme": false,
+      "scheme": "",
+      "host": "",
+      "path": "example.com/rules.txt",
+      "query": "",
+      "validateKind": "badFormat",
+      "name": "rules.txt",
+      "build": "https://m.example.com/example.com/rules.txt",
+      "buildKind": null,
+      "example": "https://m.example.com//example.com/rules.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "/local/rules.txt",
+      "parsed": true,
+      "hasScheme": false,
+      "scheme": "",
+      "host": "",
+      "path": "/local/rules.txt",
+      "query": "",
+      "validateKind": "badFormat",
+      "name": "rules.txt",
+      "build": "https://m.example.com//local/rules.txt",
+      "buildKind": null,
+      "example": "https://m.example.com///local/rules.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/",
+      "query": "",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/",
+      "query": "",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com/",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/rules.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/rules.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "rules.txt",
+      "build": "https://m.example.com/https://example.com/rules.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/rules.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "http://sub.example.com:8080/a/b.txt?x=1&y=2#frag",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "http",
+      "host": "sub.example.com",
+      "path": "/a/b.txt",
+      "query": "x=1&y=2",
+      "validateKind": null,
+      "name": "b.txt",
+      "build": "https://m.example.com/http://sub.example.com:8080/a/b.txt?x=1&y=2#frag",
+      "buildKind": null,
+      "example": "https://m.example.com/http/sub.example.com/a/b.txt?x=1&y=2",
+      "exampleKind": null
+    },
+    {
+      "url": "HTTPS://Example.COM/Path/File.TXT",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/Path/File.TXT",
+      "query": "",
+      "validateKind": null,
+      "name": "File.TXT",
+      "build": "https://m.example.com/HTTPS://Example.COM/Path/File.TXT",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/Path/File.TXT",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/a%20b?q=%E4%B8%AD",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/a%20b",
+      "query": "q=%E4%B8%AD",
+      "validateKind": null,
+      "name": "a%20b",
+      "build": "https://m.example.com/https://example.com/a%20b?q=%E4%B8%AD",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/a%20b?q=%E4%B8%AD",
+      "exampleKind": null
+    },
+    {
+      "url": "https://user:secret@example.com/a/b?x=1",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/a/b",
+      "query": "x=1",
+      "validateKind": null,
+      "name": "b",
+      "build": "https://m.example.com/https://user:secret@example.com/a/b?x=1",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/a/b?x=1",
+      "exampleKind": null
+    },
+    {
+      "url": "https://[::1]:8443/x.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "::1",
+      "path": "/x.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "x.txt",
+      "build": "https://m.example.com/https://[::1]:8443/x.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/https/::1/x.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/a/b.txt?",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/a/b.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "b.txt",
+      "build": "https://m.example.com/https://example.com/a/b.txt?",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/a/b.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com?x=1",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/",
+      "query": "x=1",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com?x=1",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/?x=1",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/a//b/",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/a//b/",
+      "query": "",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com/a//b/",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/a//b/",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/.",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/",
+      "query": "",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com/.",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/..",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/",
+      "query": "",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com/..",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/",
+      "exampleKind": null
+    },
+    {
+      "url": "not a url",
+      "parsed": true,
+      "hasScheme": false,
+      "scheme": "",
+      "host": "",
+      "path": "not%20a%20url",
+      "query": "",
+      "validateKind": "badFormat",
+      "name": "not%20a%20url",
+      "build": "https://m.example.com/not a url",
+      "buildKind": null,
+      "example": "https://m.example.com//not%20a%20url",
+      "exampleKind": null
+    },
+    {
+      "url": "ftp://example.com/x",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "ftp",
+      "host": "example.com",
+      "path": "/x",
+      "query": "",
+      "validateKind": "notHttp",
+      "name": "x",
+      "build": "https://m.example.com/ftp://example.com/x",
+      "buildKind": null,
+      "example": "https://m.example.com/ftp/example.com/x",
+      "exampleKind": null
+    },
+    {
+      "url": "https://",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "",
+      "path": "/",
+      "query": "",
+      "validateKind": "noHost",
+      "name": "https://",
+      "build": "https://m.example.com/https://",
+      "buildKind": null,
+      "example": "https://m.example.com/https//",
+      "exampleKind": null
+    },
+    {
+      "url": "http:///x",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "http",
+      "host": "",
+      "path": "/x",
+      "query": "",
+      "validateKind": "noHost",
+      "name": "x",
+      "build": "https://m.example.com/http:///x",
+      "buildKind": null,
+      "example": "https://m.example.com/http//x",
+      "exampleKind": null
+    },
+    {
+      "url": "https://#frag",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "",
+      "path": "/",
+      "query": "",
+      "validateKind": "noHost",
+      "name": "https://#frag",
+      "build": "https://m.example.com/https://#frag",
+      "buildKind": null,
+      "example": "https://m.example.com/https//",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/a b.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/a%20b.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "a%20b.txt",
+      "build": "https://m.example.com/https://example.com/a b.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/a%20b.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://例え.jp/规则.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "%E4%BE%8B%E3%81%88.jp",
+      "path": "/%E8%A7%84%E5%88%99.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "%E8%A7%84%E5%88%99.txt",
+      "build": "https://m.example.com/https://例え.jp/规则.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/https/%E4%BE%8B%E3%81%88.jp/%E8%A7%84%E5%88%99.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/%zz",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/%25zz",
+      "query": "",
+      "validateKind": null,
+      "name": "%25zz",
+      "build": "https://m.example.com/https://example.com/%zz",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/%25zz",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/50%",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/50%25",
+      "query": "",
+      "validateKind": null,
+      "name": "50%25",
+      "build": "https://m.example.com/https://example.com/50%",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/50%25",
+      "exampleKind": null
+    },
+    {
+      "url": "content://com.android.providers/document/rules.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "content",
+      "host": "com.android.providers",
+      "path": "/document/rules.txt",
+      "query": "",
+      "validateKind": "notHttp",
+      "name": "rules.txt",
+      "build": "https://m.example.com/content://com.android.providers/document/rules.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/content/com.android.providers/document/rules.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "file:///storage/emulated/0/rules.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "file",
+      "host": "",
+      "path": "/storage/emulated/0/rules.txt",
+      "query": "",
+      "validateKind": "notHttp",
+      "name": "rules.txt",
+      "build": "https://m.example.com/file:///storage/emulated/0/rules.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/file//storage/emulated/0/rules.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/a+b*c~d e.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/a+b*c~d%20e.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "a+b*c~d%20e.txt",
+      "build": "https://m.example.com/https://example.com/a+b*c~d e.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/a+b*c~d%20e.txt",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/path?x={y}#z",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/path",
+      "query": "x=%7By%7D",
+      "validateKind": null,
+      "name": "path",
+      "build": "https://m.example.com/https://example.com/path?x={y}#z",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/path?x=%7By%7D",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com:0/x",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x",
+      "query": "",
+      "validateKind": null,
+      "name": "x",
+      "build": "https://m.example.com/https://example.com:0/x",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com:99999/x",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x",
+      "query": "",
+      "validateKind": null,
+      "name": "x",
+      "build": "https://m.example.com/https://example.com:99999/x",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x?a=b/c",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x",
+      "query": "a=b/c",
+      "validateKind": null,
+      "name": "x",
+      "build": "https://m.example.com/https://example.com/x?a=b/c",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x?a=b/c",
+      "exampleKind": null
+    },
+    {
+      "url": "https://EXAMPLE.com/Ünïcode?q=值",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/%C3%9Cn%C3%AFcode",
+      "query": "q=%E5%80%BC",
+      "validateKind": null,
+      "name": "%C3%9Cn%C3%AFcode",
+      "build": "https://m.example.com/https://EXAMPLE.com/Ünïcode?q=值",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/%C3%9Cn%C3%AFcode?q=%E5%80%BC",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x?",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x",
+      "query": "",
+      "validateKind": null,
+      "name": "x",
+      "build": "https://m.example.com/https://example.com/x?",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x#",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x",
+      "query": "",
+      "validateKind": null,
+      "name": "x",
+      "build": "https://m.example.com/https://example.com/x#",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com//",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "//",
+      "query": "",
+      "validateKind": null,
+      "name": "example.com",
+      "build": "https://m.example.com/https://example.com//",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com//",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x/../y",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/y",
+      "query": "",
+      "validateKind": null,
+      "name": "y",
+      "build": "https://m.example.com/https://example.com/x/../y",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/y",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x/./y",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x/y",
+      "query": "",
+      "validateKind": null,
+      "name": "y",
+      "build": "https://m.example.com/https://example.com/x/./y",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x/y",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x%2Fy",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x%2Fy",
+      "query": "",
+      "validateKind": null,
+      "name": "x%2Fy",
+      "build": "https://m.example.com/https://example.com/x%2Fy",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x%2Fy",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/x?y=%20",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/x",
+      "query": "y=%20",
+      "validateKind": null,
+      "name": "x",
+      "build": "https://m.example.com/https://example.com/x?y=%20",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/x?y=%20",
+      "exampleKind": null
+    },
+    {
+      "url": "https://example.com/长路径/文件.txt",
+      "parsed": true,
+      "hasScheme": true,
+      "scheme": "https",
+      "host": "example.com",
+      "path": "/%E9%95%BF%E8%B7%AF%E5%BE%84/%E6%96%87%E4%BB%B6.txt",
+      "query": "",
+      "validateKind": null,
+      "name": "%E6%96%87%E4%BB%B6.txt",
+      "build": "https://m.example.com/https://example.com/长路径/文件.txt",
+      "buildKind": null,
+      "example": "https://m.example.com/https/example.com/%E9%95%BF%E8%B7%AF%E5%BE%84/%E6%96%87%E4%BB%B6.txt",
+      "exampleKind": null
+    }
+  ],
+  "templates": [
+    {
+      "template": null,
+      "normalized": null,
+      "normalizeKind": null,
+      "build": null,
+      "buildKind": "scheme",
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "",
+      "normalized": null,
+      "normalizeKind": null,
+      "build": null,
+      "buildKind": "scheme",
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "   ",
+      "normalized": null,
+      "normalizeKind": null,
+      "build": null,
+      "buildKind": "scheme",
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{url}",
+      "normalized": "https://m.example.com/{url}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/https://example.com/rules.txt?q=1",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{urlEncoded}",
+      "normalized": "https://m.example.com/{urlEncoded}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/https%3A%2F%2Fexample.com%2Frules.txt%3Fq%3D1",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{scheme}/{host}/{path}/{pathAndQuery}",
+      "normalized": "https://m.example.com/{scheme}/{host}/{path}/{pathAndQuery}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/https/example.com//rules.txt//rules.txt?q=1",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "  https://m.example.com/{url}  ",
+      "normalized": "https://m.example.com/{url}",
+      "normalizeKind": null,
+      "build": null,
+      "buildKind": "scheme",
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/static",
+      "normalized": null,
+      "normalizeKind": "placeholder",
+      "build": "https://m.example.com/static",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "ftp://m.example.com/{url}",
+      "normalized": null,
+      "normalizeKind": "scheme",
+      "build": null,
+      "buildKind": "scheme",
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "m.example.com/{url}",
+      "normalized": null,
+      "normalizeKind": "scheme",
+      "build": null,
+      "buildKind": "scheme",
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{unknown}",
+      "normalized": null,
+      "normalizeKind": "placeholder",
+      "build": "https://m.example.com/{unknown}",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{url}{path}{host}{scheme}",
+      "normalized": "https://m.example.com/{url}{path}{host}{scheme}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/https://example.com/rules.txt?q=1/rules.txtexample.comhttps",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/a?b={urlEncoded}",
+      "normalized": "https://m.example.com/a?b={urlEncoded}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/a?b=https%3A%2F%2Fexample.com%2Frules.txt%3Fq%3D1",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{path}",
+      "normalized": "https://m.example.com/{path}",
+      "normalizeKind": null,
+      "build": "https://m.example.com//rules.txt",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{pathAndQuery}",
+      "normalized": "https://m.example.com/{pathAndQuery}",
+      "normalizeKind": null,
+      "build": "https://m.example.com//rules.txt?q=1",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "http://m.example.com/{host}",
+      "normalized": "http://m.example.com/{host}",
+      "normalizeKind": null,
+      "build": "http://m.example.com/example.com",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{scheme}",
+      "normalized": "https://m.example.com/{scheme}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/https",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{url",
+      "normalized": null,
+      "normalizeKind": "placeholder",
+      "build": "https://m.example.com/{url",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{{url}}",
+      "normalized": "https://m.example.com/{{url}}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/{https://example.com/rules.txt?q=1}",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/%7Burl%7D",
+      "normalized": null,
+      "normalizeKind": "placeholder",
+      "build": "https://m.example.com/%7Burl%7D",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{url}#{path}",
+      "normalized": "https://m.example.com/{url}#{path}",
+      "normalizeKind": null,
+      "build": "https://m.example.com/https://example.com/rules.txt?q=1#/rules.txt",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    },
+    {
+      "template": "https://m.example.com/{pathAndQuery}?x={url}",
+      "normalized": "https://m.example.com/{pathAndQuery}?x={url}",
+      "normalizeKind": null,
+      "build": "https://m.example.com//rules.txt?q=1?x=https://example.com/rules.txt?q=1",
+      "buildKind": null,
+      "exampleComponents": {
+        "scheme": "https",
+        "host": "example.com",
+        "path": "/rules.txt",
+        "query": "q=1",
+        "pathAndQuery": "/rules.txt?q=1"
+      }
+    }
+  ],
+  "contents": [
+    {
+      "content": "",
+      "lines": 0
+    },
+    {
+      "content": "a.com",
+      "lines": 1
+    },
+    {
+      "content": "a.com\nb.com",
+      "lines": 2
+    },
+    {
+      "content": "a.com\n\nb.com\n",
+      "lines": 2
+    },
+    {
+      "content": "  a.com  \n\t\n",
+      "lines": 1
+    },
+    {
+      "content": "! comment\n# comment\n// comment\na.com\n  // x\n!y",
+      "lines": 1
+    },
+    {
+      "content": "a.com\r\nb.com\r\n",
+      "lines": 2
+    },
+    {
+      "content": " \n \n ",
+      "lines": 0
+    },
+    {
+      "content": "a.com\n b.com \n!x\nhttp://x/y",
+      "lines": 3
+    }
+  ]
+}

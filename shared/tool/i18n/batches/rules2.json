@@ -1,0 +1,20 @@
+{
+  "ruleBatchImported": ["已向{kind}导入 {count} 条规则。", "Imported {count} rules into {kind}."],
+  "ruleBatchSkippedDuplicates": ["跳过 {count} 条重复规则。", "Skipped {count} duplicate rules."],
+  "ruleBatchAllowRejected": ["{count} 条放行规则（含 #@#）未导入：该规则为放行规则，请在白名单中添加。", "{count} allow rules (with #@#) were not imported: allow rules belong in the allow list."],
+  "ruleBatchImportCount": ["导入 {count} 条", "Import {count}"],
+  "ruleBatchMoreDuplicates": ["等 {count} 条", "and {count} more"],
+  "ruleAddForKind": ["添加{kind}规则", "Add a {kind} rule"],
+  "ruleEditDefaultPreset": ["编辑默认预设规则", "Edit a default preset rule"],
+  "ruleEditForKind": ["编辑{kind}规则", "Edit a {kind} rule"],
+  "ruleDeletePresetMessage": ["「{pattern}」是内置预设规则，删除后可通过重置默认恢复。", "\"{pattern}\" is a built-in preset rule; resetting the defaults restores it."],
+  "ruleDeleteSubscriptionMessage": ["「{pattern}」来自订阅「{name}」，删除后下次更新订阅可能重新出现。", "\"{pattern}\" comes from the subscription \"{name}\" and may return on the next update."],
+  "ruleDeleteUserMessage": ["确定删除「{pattern}」吗？此操作不可撤销。", "Delete \"{pattern}\"? This cannot be undone."],
+  "ruleClearCustomMessage": ["将删除全部用户自定义的{kind}规则，订阅与预设规则不受影响。", "All user-defined {kind} rules will be deleted; subscription and preset rules are untouched."],
+  "ruleResetMessage": ["将内置预设规则恢复为初始内容，你自己添加与订阅带来的规则保留。", "Restores the built-in preset rules; rules you added and subscription rules are kept."],
+  "rulePresetProtectedMessage": ["默认白名单规则处于只读状态。请先开启页面顶部的「允许编辑默认白名单」开关，再修改或删除这些规则。", "Default allow list rules are read-only. Turn on \"Allow editing the default allow list\" at the top of the page before changing or deleting them."],
+  "ruleAllowEditMessage": ["白名单是放行名单，改动它可能让本应被拦截的流量通过。确认你清楚这条风险后再开启。", "The allow list lets traffic through, so changing it may pass traffic that should be blocked. Enable this only if you understand the risk."],
+  "ruleTally": ["共 {matched} 条 · 启用 {enabled}", "{matched} total · {enabled} enabled"],
+  "ruleNoRulesForKind": ["还没有{kind}规则", "No {kind} rules yet"],
+  "ruleClearCustomForKind": ["清空自定义{kind}", "Clear custom {kind}"]
+}

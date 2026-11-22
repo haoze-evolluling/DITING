@@ -1,0 +1,269 @@
+library;
+
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/pages/system/app_info.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/icon_badge.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:material_ui/material_ui.dart';
+
+class SponsorPage extends StatelessWidget {
+  const SponsorPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonScaffold(
+      title: context.l10n.aboutSponsor,
+      body: PageBody(
+        children: [
+          const _SponsorHero(),
+          const _PaymentSection(),
+          generateSection(
+            title: context.l10n.sponsorGithub,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.link),
+                title: Text(context.l10n.sponsorReadme),
+                subtitle: Text(
+                  sponsorReadmeUrl.replaceFirst('https://', ''),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: const Icon(TablerIcons.external_link, size: 20),
+                onTap: () => openLinkOrCopy(
+                  context,
+                  sponsorReadmeUrl,
+                  context.l10n.sponsorReadmeCopied,
+                ),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.sponsorUsage,
+            items: [
+              _BulletRow(text: context.l10n.sponsorUsageNewFeatures),
+              _BulletRow(text: context.l10n.sponsorUsageBugs),
+              _BulletRow(text: context.l10n.sponsorUsageTokens),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.sponsorFreeWays,
+            items: [
+              _BulletRow(text: context.l10n.sponsorFreeStar),
+              _BulletRow(text: context.l10n.sponsorFreeIssue),
+              _BulletRow(text: context.l10n.sponsorFreePr),
+              _BulletRow(text: context.l10n.sponsorFreeShare),
+            ],
+          ),
+          ListFooter(text: context.l10n.sponsorFooter),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _SponsorHero extends StatelessWidget {
+  const _SponsorHero();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: CommonCard(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
+          children: [
+            Row(
+              spacing: 12,
+              children: [
+                IconBadge(
+                  glyph: TablerIcons.heart,
+                  size: 52,
+                  glyphSize: 28,
+                  color: colorScheme.primaryContainer,
+                  foregroundColor: colorScheme.onPrimaryContainer,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 2,
+                    children: [
+                      Text(
+                        context.l10n.sponsorSupportKicker,
+                        style: AppTextRole.micro
+                            .of(context)
+                            .copyWith(
+                              color: colorScheme.primary,
+                              fontFeatures: appTabularFigures,
+                            ),
+                      ),
+                      Text(
+                        context.l10n.sponsorBuyDrink,
+                        style: AppTextRole.sectionTitle.of(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              context.l10n.sponsorNote,
+              style: AppTextRole.supportingText.of(context),
+            ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                MetaChip(label: context.l10n.sponsorAlipay),
+                MetaChip(label: context.l10n.sponsorWechat),
+                MetaChip(label: context.l10n.sponsorNickname),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentSection extends StatelessWidget {
+  const _PaymentSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListHeader(title: context.l10n.sponsorScan),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            spacing: 12,
+            children: [
+              Expanded(
+                child: _PaymentCard(
+                  asset: 'packages/diting_shared/assets/pay/alipay_code.webp',
+                  label: context.l10n.sponsorAlipay,
+                ),
+              ),
+              Expanded(
+                child: _PaymentCard(
+                  asset:
+                      'packages/diting_shared/assets/pay/wechatpay_code.webp',
+                  label: context.l10n.sponsorWechat,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentCard extends StatelessWidget {
+  const _PaymentCard({required this.asset, required this.label});
+
+  final String asset;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return CommonCard(
+      padding: EdgeInsets.zero,
+      onPressed: () => _showFullscreen(context),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          spacing: 8,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: ClipRRect(
+                borderRadius: AppRadius.standard,
+                child: ColoredBox(
+                  color: Colors.white,
+                  child: Image.asset(
+                    asset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Center(
+                      child: Icon(TablerIcons.qrcode, size: 32),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 6,
+              children: [
+                Icon(
+                  TablerIcons.qrcode,
+                  size: 16,
+                  color: context.colorScheme.primary,
+                ),
+                Text(label, style: AppTextRole.supportingText.of(context)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFullscreen(BuildContext context) {
+    showFloatingDialog<void>(
+      context: context,
+      child: CommonDialog(
+        title: context.l10n.sponsorQrCode(label),
+        width: 320,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.sponsorClose),
+          ),
+        ],
+        child: Column(
+          spacing: 12,
+          children: [
+            ClipRRect(
+              borderRadius: AppRadius.standard,
+              child: ColoredBox(
+                color: Colors.white,
+                child: Image.asset(asset, fit: BoxFit.contain),
+              ),
+            ),
+            Text(
+              context.l10n.sponsorNoteShort,
+              style: AppTextRole.supportingText.of(context),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BulletRow extends StatelessWidget {
+  const _BulletRow({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem(
+      leading: Text(
+        '•',
+        style: AppTextRole.body
+            .of(context)
+            .copyWith(color: context.colorScheme.primary),
+      ),
+      title: Text(text),
+    );
+  }
+}

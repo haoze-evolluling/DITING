@@ -1,0 +1,20 @@
+[package]
+name = "diting-desktop-app"
+version = "0.1.0"
+edition = "2021"
+description = "Application runtime of the DITING desktop Rust service: engines, DNS lifecycle and controller operations"
+publish = false
+
+[dependencies]
+diting-desktop-api = { path = "../diting-desktop-api" }
+diting-desktop-core = { path = "../diting-desktop-core" }
+diting-desktop-dns = { path = "../diting-desktop-dns" }
+diting-desktop-platform = { path = "../diting-desktop-platform" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros", "fs"] }
+async-trait = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["test-util"] }

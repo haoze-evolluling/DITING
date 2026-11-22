@@ -1,0 +1,341 @@
+use std::fs;
+use std::io::{BufReader, Write};
+use std::net::{Ipv4Addr, Ipv6Addr};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use base64::Engine;
+use chrono::{DateTime, SecondsFormat, Utc};
+use diting_desktop_api::config::security::{
+    CertConfig, CERT_SOURCE_PKCS12, CERT_SOURCE_SELF_SIGNED,
+};
+use p12_keystore::{KeyStore, Pkcs12ImportPolicy};
+use rustls::pki_types::CertificateDer;
+use rustls_pemfile::{certs, private_key};
+use sha2::{Digest, Sha256};
+use x509_cert::der::{Decode, Encode};
+use x509_cert::ext::pkix::name::GeneralName;
+use x509_cert::ext::pkix::SubjectAltName;
+use x509_cert::Certificate as X509Certificate;
+
+use super::{SELF_SIGNED_CERT_FILE, SELF_SIGNED_KEY_FILE};
+
+#[derive(Debug, Clone)]
+pub(crate) struct Leaf {
+    pub subject: String,
+    pub issuer: String,
+    pub serial_number: String,
+    pub not_before: String,
+    pub not_after: String,
+    pub not_before_unix: i64,
+    pub not_after_unix: i64,
+    pub dns_names: Vec<String>,
+    pub ip_addresses: Vec<String>,
+    pub chain_length: i64,
+    pub self_signed: bool,
+    pub fingerprint: String,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct Material {
+    pub cert_pem: Vec<u8>,
+    pub key_pem: Vec<u8>,
+    pub leaf: Leaf,
+}
+
+pub(crate) struct ResolvedPaths {
+    pub cert: PathBuf,
+    pub key: PathBuf,
+}
+
+pub(crate) fn load_material(dir: &Path, config: &CertConfig) -> Result<Material, String> {
+    let paths = resolve_paths(dir, config)?;
+    let (cert_pem, key_pem) = if config.source == CERT_SOURCE_PKCS12 {
+        let pfx = fs::read(&paths.cert).map_err(|error| format!("读取证书失败: {error}"))?;
+        decode_pkcs12(&pfx, &config.pkcs12_password)?
+    } else {
+        let cert_pem = fs::read(&paths.cert).map_err(|error| format!("读取证书失败: {error}"))?;
+        let key_pem = fs::read(&paths.key).map_err(|error| format!("读取私钥失败: {error}"))?;
+        (cert_pem, key_pem)
+    };
+
+    let chain = parse_pair(&cert_pem, &key_pem)?;
+    let leaf = summarize(&chain)?;
+    Ok(Material {
+        cert_pem,
+        key_pem,
+        leaf,
+    })
+}
+
+pub(crate) fn decode_pkcs12(data: &[u8], password: &str) -> Result<(Vec<u8>, Vec<u8>), String> {
+    let store = KeyStore::from_pkcs12(data, password, Pkcs12ImportPolicy::Strict)
+        .map_err(|error| format!("解析 PKCS#12 失败（口令是否正确）: {error}"))?;
+    let (_, chain) = store
+        .private_key_chain()
+        .ok_or_else(|| "PKCS#12 中缺少私钥或证书".to_string())?;
+    let leaf = chain
+        .certs()
+        .first()
+        .ok_or_else(|| "PKCS#12 中缺少私钥或证书".to_string())?;
+    Ok((
+        pem_encode("CERTIFICATE", leaf.as_der()),
+        pem_encode("PRIVATE KEY", chain.key().as_der()),
+    ))
+}
+
+pub(crate) fn pem_encode(label: &str, der: &[u8]) -> Vec<u8> {
+    let encoded = base64::engine::general_purpose::STANDARD.encode(der);
+    let mut pem = format!("-----BEGIN {label}-----\n").into_bytes();
+    for line in encoded.as_bytes().chunks(64) {
+        pem.extend_from_slice(line);
+        pem.push(b'\n');
+    }
+    pem.extend_from_slice(format!("-----END {label}-----\n").as_bytes());
+    pem
+}
+
+pub(crate) fn resolve_paths(dir: &Path, config: &CertConfig) -> Result<ResolvedPaths, String> {
+    let source = config.source.as_str();
+    if source.is_empty() || source == CERT_SOURCE_SELF_SIGNED {
+        if dir.as_os_str().is_empty() {
+            return Err("证书目录未配置".to_string());
+        }
+        return Ok(ResolvedPaths {
+            cert: dir.join(SELF_SIGNED_CERT_FILE),
+            key: dir.join(SELF_SIGNED_KEY_FILE),
+        });
+    }
+
+    let cert = PathBuf::from(config.cert_file.trim());
+    if cert.as_os_str().is_empty() {
+        return Err("未指定证书文件路径".to_string());
+    }
+    if source == CERT_SOURCE_PKCS12 {
+        return Ok(ResolvedPaths {
+            cert: cert.clone(),
+            key: cert,
+        });
+    }
+
+    let key = PathBuf::from(config.key_file.trim());
+    if key.as_os_str().is_empty() {
+        return Err("未指定私钥文件路径".to_string());
+    }
+    Ok(ResolvedPaths { cert, key })
+}
+
+pub(crate) fn parse_pair(
+    cert_pem: &[u8],
+    key_pem: &[u8],
+) -> Result<Vec<CertificateDer<'static>>, String> {
+    let chain = parse_chain(cert_pem)?;
+    let key = parse_private_key(key_pem)?;
+
+    let provider = rustls::crypto::ring::default_provider();
+    let certified = rustls::sign::CertifiedKey::from_der(chain, key, &provider)
+        .map_err(|error| format!("证书与私钥不匹配或格式无效: {error}"))?;
+    Ok(certified.cert)
+}
+
+pub(crate) fn parse_chain(cert_pem: &[u8]) -> Result<Vec<CertificateDer<'static>>, String> {
+    let chain = certs(&mut BufReader::new(cert_pem))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| format!("解析证书链失败: {error}"))?;
+    if chain.is_empty() {
+        return Err("证书文件中没有可用的 CERTIFICATE 块".to_string());
+    }
+    Ok(chain)
+}
+
+pub(crate) fn parse_private_key(
+    pem: &[u8],
+) -> Result<rustls::pki_types::PrivateKeyDer<'static>, String> {
+    private_key(&mut BufReader::new(pem))
+        .map_err(|error| format!("解析私钥失败: {error}"))?
+        .ok_or_else(|| "私钥文件中没有可用的 PRIVATE KEY 块".to_string())
+}
+
+fn summarize(chain: &[CertificateDer<'static>]) -> Result<Leaf, String> {
+    let der = chain.first().ok_or_else(|| "证书链为空".to_string())?;
+    let certificate = X509Certificate::from_der(der.as_ref())
+        .map_err(|error| format!("解析证书链失败: {error}"))?;
+
+    let tbs = certificate.tbs_certificate();
+    let not_before_unix = tbs.validity().not_before.to_unix_duration().as_secs() as i64;
+    let not_after_unix = tbs.validity().not_after.to_unix_duration().as_secs() as i64;
+    let (dns_names, ip_addresses) = subject_alt_names(&certificate);
+
+    Ok(Leaf {
+        subject: tbs.subject().to_string(),
+        issuer: tbs.issuer().to_string(),
+        serial_number: format_serial(tbs.serial_number().as_bytes()),
+        not_before: rfc3339(not_before_unix),
+        not_after: rfc3339(not_after_unix),
+        not_before_unix,
+        not_after_unix,
+        dns_names,
+        ip_addresses,
+        chain_length: chain.len() as i64,
+        self_signed: is_self_signed(&certificate),
+        fingerprint: format_fingerprint(&Sha256::digest(der.as_ref())),
+    })
+}
+
+fn subject_alt_names(certificate: &X509Certificate) -> (Vec<String>, Vec<String>) {
+    let mut dns_names = Vec::new();
+    let mut ip_addresses = Vec::new();
+
+    let Some(extensions) = certificate
+        .tbs_certificate()
+        .extensions()
+        .map(|v| v.as_slice())
+    else {
+        return (dns_names, ip_addresses);
+    };
+    for extension in extensions {
+        if extension.extn_id.to_string() != "2.5.29.17" {
+            continue;
+        }
+        let Ok(san) = SubjectAltName::from_der(extension.extn_value.as_bytes()) else {
+            continue;
+        };
+        for name in san.0 {
+            match name {
+                GeneralName::DnsName(name) => dns_names.push(name.as_str().to_string()),
+                GeneralName::IpAddress(bytes) => {
+                    if let Some(address) = format_ip(bytes.as_bytes()) {
+                        ip_addresses.push(address);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    (dns_names, ip_addresses)
+}
+
+fn format_ip(bytes: &[u8]) -> Option<String> {
+    match bytes {
+        [a, b, c, d] => Some(Ipv4Addr::new(*a, *b, *c, *d).to_string()),
+        _ if bytes.len() == 16 => {
+            let mut octets = [0u8; 16];
+            octets.copy_from_slice(bytes);
+            Some(Ipv6Addr::from(octets).to_string())
+        }
+        _ => None,
+    }
+}
+
+fn is_self_signed(certificate: &X509Certificate) -> bool {
+    match (
+        certificate.tbs_certificate().issuer().to_der(),
+        certificate.tbs_certificate().subject().to_der(),
+    ) {
+        (Ok(issuer), Ok(subject)) => issuer == subject,
+        _ => false,
+    }
+}
+
+fn format_serial(bytes: &[u8]) -> String {
+    let hex: String = bytes.iter().map(|byte| format!("{byte:02X}")).collect();
+    let trimmed = hex.trim_start_matches('0');
+    if trimmed.is_empty() {
+        "0".to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
+
+fn format_fingerprint(digest: &[u8]) -> String {
+    digest
+        .iter()
+        .map(|byte| format!("{byte:02X}"))
+        .collect::<Vec<_>>()
+        .join(":")
+}
+
+fn rfc3339(seconds: i64) -> String {
+    DateTime::<Utc>::from_timestamp(seconds, 0)
+        .map(|time| time.to_rfc3339_opts(SecondsFormat::Secs, true))
+        .unwrap_or_default()
+}
+
+pub(crate) fn same_file_path(a: &Path, b: &Path) -> bool {
+    if a.as_os_str().is_empty() || b.as_os_str().is_empty() {
+        return false;
+    }
+    let normalize = |path: &Path| {
+        let absolute = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            std::env::current_dir()
+                .map(|cwd| cwd.join(path))
+                .unwrap_or_else(|_| path.to_path_buf())
+        };
+        absolute
+            .components()
+            .collect::<PathBuf>()
+            .to_string_lossy()
+            .into_owned()
+    };
+    normalize(a).eq_ignore_ascii_case(&normalize(b))
+}
+
+pub(crate) fn write_private(path: &Path, data: &[u8]) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    fs::create_dir_all(parent).map_err(|error| format!("创建证书目录失败: {error}"))?;
+    set_dir_mode_private(parent);
+
+    let temporary = temp_path(path);
+    {
+        let mut file = fs::File::create(&temporary)
+            .map_err(|error| format!("写入 {} 失败: {error}", file_name(path)))?;
+        file.write_all(data)
+            .map_err(|error| format!("写入 {} 失败: {error}", file_name(path)))?;
+        let _ = file.sync_all();
+    }
+    set_file_mode_private(&temporary);
+
+    if let Err(error) = fs::rename(&temporary, path) {
+        let _ = fs::remove_file(&temporary);
+        return Err(format!("写入 {} 失败: {error}", file_name(path)));
+    }
+    set_file_mode_private(path);
+    Ok(())
+}
+
+fn file_name(path: &Path) -> String {
+    path.file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.to_string_lossy().into_owned())
+}
+
+fn temp_path(path: &Path) -> PathBuf {
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let name = file_name(path);
+    path.with_file_name(format!(".{name}.tmp-{}-{counter}", std::process::id()))
+}
+
+#[cfg(unix)]
+fn set_dir_mode_private(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o700));
+}
+
+#[cfg(not(unix))]
+fn set_dir_mode_private(_path: &Path) {}
+
+#[cfg(unix)]
+fn set_file_mode_private(path: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
+}
+
+#[cfg(not(unix))]
+fn set_file_mode_private(_path: &Path) {}

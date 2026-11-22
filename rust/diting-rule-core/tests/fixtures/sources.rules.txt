@@ -1,0 +1,10 @@
+a.example.com	sub_1	0	~	0	0	~	0	~
+a.example.com	sub_2	0	~	0	0	~	0	~
+a.example.com	preset	0	~	0	0	~	0	~
+b.example.com	sub_3	1	~	0	0	~	0	~
+b.example.com	sub_1	1	~	0	0	~	0	~
+c.example.com	sub_10	0	~	0	0	~	0	~
+c.example.com	sub_2	0	~	0	0	~	0	~
+example.co.uk	sub_4	0	~	0	0	~	0	~
+com	sub_5	0	~	0	0	~	0	~
+deep.sub.example.co.uk	sub_6	0	~	0	0	~	0	~

@@ -1,0 +1,19 @@
+op	host	now_ms	id	result	closed
+put	a:853	0	1	kept	
+put	a:853	100	2	kept	
+acquire	a:853	200		2	
+acquire	a:853	200		1	
+acquire	a:853	200			
+put	a:853	300	3	kept	
+put	a:853	300	4	kept	
+put	a:853	300	5	kept	
+put	a:853	300	6	kept	
+put	a:853	400	7	closed	
+put	b:853	500	8	kept	
+acquire	a:853	16000			3,4,5,6
+acquire	a:853	16001			
+acquire	b:853	16500			8
+close_all		20000			
+put	a:853	30000	9	kept	
+acquire	a:853	30000		9	
+close_all		30001			

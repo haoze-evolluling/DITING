@@ -1,0 +1,34 @@
+# Pub workspace root: one lockfile for the shared package and the Android app.
+#
+#   flutter pub get                  # resolve everything
+#   flutter analyze                  # analyze from the root
+#   cd android/app && flutter test   # Android suites
+#
+# Tests run per package, not from the root: `flutter_tools` resolves native-asset
+# hooks and the test asset bundle against the *current* package's dependency
+# graph, so a root-level `flutter test android/app` compiles no hooks (every
+# sqflite test then dies on `sqlite3_initialize`) and cannot load
+# `packages/diting_shared/...` assets. See `docs/development/`
+# `android-build-environment.md`.
+#
+# The platform app lives in android/app; shared UI, theme, l10n and data shims
+# live in shared. Each package only depends on what it actually imports.
+name: diting_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.14.0
+
+workspace:
+  - shared
+  - android/app
+
+# Native-asset hook configuration is workspace-wide: pub reads `user_defines`
+# from the workspace root, not from an individual member package. The sqlite3
+# hook downloads precompiled binaries from GitHub releases, which is unreachable
+# from this network, so route it through the mirror.
+hooks:
+  user_defines:
+    sqlite3:
+      url_pattern: "https://gh-proxy.com/https://github.com/simolus3/sqlite3.dart/releases/download/$RELEASE_TAG/$FILENAME"
+

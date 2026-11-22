@@ -1,0 +1,9 @@
+# Workspace root analysis scope. The three code packages carry their own
+# analysis_options.yaml; this file only keeps reference material that lives in the
+# repository (git-ignored) out of `flutter analyze` at the root.
+analyzer:
+  exclude:
+    - LearningObjects/**
+    - .tmpimg/**
+    - .tmp-test/**
+    - .tmp_verify/**

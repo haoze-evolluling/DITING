@@ -1,0 +1,5 @@
+{
+  "obsCopiedHost": ["已复制 {host}", "Copied {host}"],
+  "obsAddedToKind": ["已将 {domain} 加入{kind}", "Added {domain} to {kind}"],
+  "obsAlreadyInKind": ["{domain} 已在{kind}中", "{domain} is already in {kind}"]
+}

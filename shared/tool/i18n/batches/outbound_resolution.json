@@ -1,0 +1,259 @@
+{
+  "outboundSaved": [
+    "出站代理设置已保存，启动隧道后生效",
+    "Outbound proxy settings saved; they take effect once the tunnel starts"
+  ],
+  "outboundSaveFailed": {
+    "zh": "保存失败：{error}",
+    "en": "Save failed: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "outboundResetTitle": [
+    "重置出站代理？",
+    "Reset the outbound proxy?"
+  ],
+  "outboundResetBody": [
+    "将删除全部九个出站代理键（包括已加密保存的账号与密码）。",
+    "Deletes all nine outbound proxy keys, including the encrypted username and password."
+  ],
+  "outboundResetDone": [
+    "已重置出站代理",
+    "Outbound proxy reset"
+  ],
+  "outboundResetMenu": [
+    "重置出站代理",
+    "Reset outbound proxy"
+  ],
+  "outboundSectionProxy": [
+    "代理",
+    "Proxy"
+  ],
+  "outboundEnable": [
+    "启用出站代理功能",
+    "Enable the outbound proxy"
+  ],
+  "outboundApp": [
+    "代理应用",
+    "Proxy app"
+  ],
+  "outboundHostLabel": [
+    "地址",
+    "Address"
+  ],
+  "outboundHostHelper": [
+    "仅支持 127.0.0.1 或 ::1",
+    "Only 127.0.0.1 or ::1 is supported"
+  ],
+  "outboundUsernameLabel": [
+    "账号（可选）",
+    "Username (optional)"
+  ],
+  "outboundPasswordLabel": [
+    "密码（可选）",
+    "Password (optional)"
+  ],
+  "outboundHttpFooter": [
+    "HTTP CONNECT 不支持 UDP；UDP 会被严格阻断，QUIC 可回退到 TCP。代理应用本身将绕过 DITING。",
+    "HTTP CONNECT does not support UDP; UDP is blocked outright and QUIC can fall back to TCP. The proxy app itself bypasses DITING."
+  ],
+  "outboundSocksFooter": [
+    "SOCKS5 通过 UDP ASSOCIATE 转发 UDP。代理应用本身将绕过 DITING，防止流量环路。",
+    "SOCKS5 forwards UDP through UDP ASSOCIATE. The proxy app itself bypasses DITING so traffic cannot loop."
+  ],
+  "outboundStatusOff": [
+    "未运行",
+    "Not running"
+  ],
+  "outboundStatusConnecting": [
+    "正在连接",
+    "Connecting"
+  ],
+  "outboundStatusReady": [
+    "代理可用",
+    "Proxy available"
+  ],
+  "outboundStatusFailed": [
+    "连接失败",
+    "Connection failed"
+  ],
+  "outboundFooterError": [
+    "引擎上报的错误会一直保留到下一次隧道启动，便于回看原因。",
+    "An error reported by the engine stays until the next tunnel start so you can look back at the cause."
+  ],
+  "outboundFooterReady": [
+    "引擎已确认代理可用；修改配置后需要重启隧道才会重新校验。",
+    "The engine confirmed the proxy works; after changing the settings the tunnel must restart to check again."
+  ],
+  "outboundFooterConnecting": [
+    "隧道启动时会校验代理连通性，结果会实时显示在这里。",
+    "The tunnel checks proxy connectivity when it starts and shows the result here live."
+  ],
+  "outboundAppsTitle": [
+    "选择代理应用",
+    "Choose the proxy app"
+  ],
+  "outboundAppsIntro": [
+    "选择提供本地代理端口的应用。代理应用本身会绕过 DITING。端口由该应用绑定，谛听无法代它监听。",
+    "Pick the app that provides the local proxy port. The proxy app itself bypasses DITING; it owns the port and DITING cannot listen for it."
+  ],
+  "outboundAppsCount": {
+    "zh": "已安装应用（{count}）",
+    "en": "Installed apps ({count})",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "outboundAppsEmpty": [
+    "设备上没有可选的代理应用",
+    "There are no proxy apps to pick on this device"
+  ],
+  "resolutionSingleDesc": [
+    "所有查询都发往当前选中的服务商。",
+    "Every query goes to the selected provider."
+  ],
+  "resolutionSmartDesc": [
+    "按历史成功率挑一个，失败后自动换下一个。",
+    "Picks one by past success rate and moves on to the next if it fails."
+  ],
+  "resolutionParallelDesc": [
+    "同时向所有服务商发起，取最先返回的结果。",
+    "Asks every provider at once and keeps the first answer."
+  ],
+  "resolutionPrimaryBackupDesc": [
+    "主服务商优先，超时后才动备用。",
+    "Prefers the primary provider and only uses the backups after a timeout."
+  ],
+  "resolutionProtocolSavedError": {
+    "zh": "协议已保存，运行中的服务未能更新：{error}",
+    "en": "The protocol was saved but the running service could not be updated: {error}",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "resolutionBuiltinProtocol": [
+    "内置服务协议",
+    "Built-in service protocol"
+  ],
+  "resolutionBuiltinNote": [
+    "仅切换内置服务商使用的 DNS / DoT / DoH 协议；自定义服务商按自身协议展示。",
+    "Only switches the DNS / DoT / DoH protocol used by built-in providers; custom providers keep their own protocol."
+  ],
+  "resolutionConfigSection": [
+    "模式配置",
+    "Mode configuration"
+  ],
+  "resolutionConfigFooter": [
+    "解析模式与竞速服务商保存在当前工作模式的数据集里（普通 / 极速 / 服务器各自独立）。",
+    "The resolution mode and race providers are stored in the dataset of the current work mode (normal, speed and server each keep their own)."
+  ],
+  "resolutionNotConfigured": [
+    "未配置",
+    "Not configured"
+  ],
+  "resolutionProviderCount": {
+    "zh": "{count} 个服务商",
+    "en": "{count} providers",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resolutionPickerTitle": [
+    "选择解析模式",
+    "Choose the resolution mode"
+  ],
+  "resolutionMinProviders": [
+    "至少保留 2 家服务商",
+    "Keep at least 2 providers"
+  ],
+  "resolutionSingleHint": [
+    "选择一个服务商作为唯一查询出口。",
+    "Pick one provider as the only way out."
+  ],
+  "resolutionRaceHint": {
+    "zh": "已选 {count} 家服务商，至少需要 2 家。",
+    "en": "{count} providers selected; at least 2 are required.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resolutionReady": [
+    "已就绪",
+    "Ready"
+  ],
+  "resolutionPending": [
+    "待配置",
+    "Needs setup"
+  ],
+  "resolutionSectionSingle": [
+    "查询服务",
+    "Query provider"
+  ],
+  "resolutionSectionSmart": [
+    "候选服务",
+    "Candidate providers"
+  ],
+  "resolutionSectionParallel": [
+    "同时查询的服务",
+    "Providers queried in parallel"
+  ],
+  "resolutionSectionBackup": [
+    "依次尝试的服务",
+    "Providers tried in order"
+  ],
+  "resolutionNoProviders": [
+    "暂无此协议的服务商",
+    "No provider uses this protocol"
+  ],
+  "resolutionMoveUp": [
+    "上移",
+    "Move up"
+  ],
+  "resolutionMoveDown": [
+    "下移",
+    "Move down"
+  ],
+  "resolutionModeTitle": [
+    "解析模式",
+    "Resolution mode"
+  ],
+  "hubOutboundProxy": [
+    "出站代理",
+    "Outbound proxy"
+  ],
+  "uiReset": [
+    "重置",
+    "Reset"
+  ],
+  "serverPort": [
+    "端口",
+    "Port"
+  ],
+  "commonSave": [
+    "保存",
+    "Save"
+  ],
+  "uiCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "appSelectionNoMatch": [
+    "未找到匹配应用",
+    "No matching apps"
+  ],
+  "outboundNoApp": [
+    "未选择",
+    "Not selected"
+  ]
+}

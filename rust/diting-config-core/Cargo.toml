@@ -1,0 +1,12 @@
+[package]
+name = "diting-config-core"
+version = "0.1.0"
+edition = "2021"
+description = "DNS / rewrite configuration normalization and validation for the Android tunnel engine"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+diting-go-compat = { path = "../diting-go-compat" }

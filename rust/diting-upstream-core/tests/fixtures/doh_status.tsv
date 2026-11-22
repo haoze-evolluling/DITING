@@ -1,0 +1,8 @@
+status	body_len	outcome	result_len
+200	2	ok	2
+200	70000	ok	65535
+200	0	ok	0
+403	6	DoH rate limited (403)	0
+500	4	DoH status 500	0
+404	4	DoH status 404	0
+429	9	DoH status 429	0

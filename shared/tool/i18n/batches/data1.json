@@ -1,0 +1,218 @@
+{
+  "commonBypass": [
+    "旁路",
+    "Bypass"
+  ],
+  "commonRewrite": [
+    "覆写",
+    "Rewrite"
+  ],
+  "cleanupLogs": [
+    "删除请求日志",
+    "Delete request logs"
+  ],
+  "cleanupTraffic": [
+    "删除流量统计",
+    "Delete traffic statistics"
+  ],
+  "cleanupCrash": [
+    "删除崩溃日志",
+    "Delete crash logs"
+  ],
+  "cleanupDnsCache": [
+    "删除 DNS 缓存",
+    "Delete DNS cache"
+  ],
+  "cleanupProviderWeights": [
+    "恢复 DNS 默认权重",
+    "Restore default DNS weights"
+  ],
+  "cleanupBootstrapWeights": [
+    "恢复 Bootstrap 权重",
+    "Restore Bootstrap weights"
+  ],
+  "cleanupDomainRules": [
+    "删除全部域名规则",
+    "Delete all domain rules"
+  ],
+  "cleanupAddressRules": [
+    "删除全部地址规则",
+    "Delete all address rules"
+  ],
+  "cleanupSubscriptions": [
+    "删除全部规则订阅",
+    "Delete all rule subscriptions"
+  ],
+  "cleanupAppRules": [
+    "重置应用控制名单",
+    "Reset the app control list"
+  ],
+  "cleanupOutboundProxy": [
+    "重置出站代理配置",
+    "Reset the outbound proxy settings"
+  ],
+  "cleanupCaCertificate": [
+    "重置 HTTPS 抓包证书",
+    "Reset the HTTPS inspection certificate"
+  ],
+  "cleanupDownloadCache": [
+    "清理下载与临时缓存",
+    "Clear download and temporary caches"
+  ],
+  "cleanupCustomBackground": [
+    "清除自定义背景缓存",
+    "Clear the custom background cache"
+  ],
+  "cleanupSettingsGuides": [
+    "重置所有新手引导",
+    "Reset every onboarding guide"
+  ],
+  "cleanupAllData": [
+    "清理全部本地数据",
+    "Clear all local data"
+  ],
+  "cleanupDoneItems": [
+    "已{action}：{count} 项{detail}",
+    "{action}: {count} items{detail}"
+  ],
+  "cleanupDoneEmpty": [
+    "已{action}：没有可清理的数据",
+    "{action}: nothing to clean up"
+  ],
+  "blockResponseNxdomain": [
+    "返回 NXDOMAIN",
+    "Return NXDOMAIN"
+  ],
+  "blockResponseNxdomainDescription": [
+    "返回域名不存在，并提供 5 分钟负缓存以减少重复查询",
+    "Answers that the domain does not exist, with a 5-minute negative cache to reduce repeated queries"
+  ],
+  "blockResponseNodata": [
+    "返回 NODATA",
+    "Return NODATA"
+  ],
+  "blockResponseNodataDescription": [
+    "返回域名存在但没有该记录，并提供 5 分钟负缓存",
+    "Answers that the domain exists but has no such record, with a 5-minute negative cache"
+  ],
+  "blockResponseRefused": [
+    "返回 REFUSED",
+    "Return REFUSED"
+  ],
+  "blockResponseRefusedDescription": [
+    "返回服务器拒绝该查询，不提供缓存记录",
+    "Answers that the server refused the query, with no cached record"
+  ],
+  "blockResponseZeroAddress": [
+    "返回 0.0.0.0 / ::",
+    "Return 0.0.0.0 / ::"
+  ],
+  "blockResponseZeroAddressDescription": [
+    "A 返回 0.0.0.0，AAAA 返回 ::，其他类型返回空结果",
+    "A answers 0.0.0.0, AAAA answers ::, other types get an empty answer"
+  ],
+  "subscriptionSourceRemote": [
+    "网络订阅",
+    "Remote subscription"
+  ],
+  "subscriptionSourceLocal": [
+    "本地文件",
+    "Local file"
+  ],
+  "subscriptionKindDomain": [
+    "黑白名单规则",
+    "Domain list rules"
+  ],
+  "subscriptionKindHosts": [
+    "hosts 规则",
+    "Hosts rules"
+  ],
+  "logRowDirect": [
+    "{protocol} 直连",
+    "{protocol} direct"
+  ],
+  "logRowDirectWithPackage": [
+    "{protocol} 直连 · {package}",
+    "{protocol} direct · {package}"
+  ],
+  "logRowCacheHit": [
+    "命中缓存",
+    "cache hit"
+  ],
+  "logRowNoAuthority": [
+    "未取得 authority",
+    "no authority"
+  ],
+  "cachePresetConservativeName": [
+    "保守",
+    "Conservative"
+  ],
+  "cachePresetConservativeSummary": [
+    "遵从服务器有效期 (TTL)",
+    "Follow the server's TTL"
+  ],
+  "cachePresetConservativeDescription": [
+    "遵从 DNS 服务器返回的有效期，不主动延长缓存时间，适合经常切换网络或对实时性敏感的场景。",
+    "Uses the TTL the DNS server returns and never extends it. Best for people who switch networks often or need real-time answers."
+  ],
+  "cachePresetStandardName": [
+    "标准",
+    "Standard"
+  ],
+  "cachePresetStandardSummary": [
+    "最长 1 小时，短记录至少 1 分钟",
+    "At most 1 hour, short records at least 1 minute"
+  ],
+  "cachePresetStandardDescription": [
+    "减少重复查询，同时避免记录过期滞后。解析失败时可短暂使用 5 分钟内的旧记录应急。",
+    "Cuts repeated queries without letting records lag behind. When resolution fails, records up to 5 minutes old may be reused as a stopgap."
+  ],
+  "cachePresetAggressiveName": [
+    "高命中",
+    "High hit rate"
+  ],
+  "cachePresetAggressiveSummary": [
+    "最长 6 小时，短记录至少 2 分钟",
+    "At most 6 hours, short records at least 2 minutes"
+  ],
+  "cachePresetAggressiveDescription": [
+    "更偏向降低网络请求次数和提升弱网可用性。域名变更时更新可能会稍慢一些。",
+    "Favours fewer network requests and better usability on weak networks. Domain changes may take longer to show up."
+  ],
+  "cacheDisabledSummary": [
+    "已关闭 · 每次解析都会请求上游",
+    "Off · every lookup goes upstream"
+  ],
+  "upstreamNameRequired": [
+    "请填写名称",
+    "Enter a name"
+  ],
+  "upstreamAddressRequired": [
+    "请填写地址",
+    "Enter an address"
+  ],
+  "upstreamDohNeedsHttps": [
+    "DoH 地址必须以 https:// 开头",
+    "A DoH address must start with https://"
+  ],
+  "upstreamDohInvalidUrl": [
+    "DoH 地址不是合法的 URL",
+    "The DoH address is not a valid URL"
+  ],
+  "upstreamPortRange": [
+    "端口需在 1–65535 之间",
+    "The port must be between 1 and 65535"
+  ],
+  "upstreamIpv6Invalid": [
+    "IPv6 地址格式不正确",
+    "The IPv6 address is not valid"
+  ],
+  "upstreamPresetAliyun": [
+    "阿里云",
+    "Aliyun"
+  ],
+  "upstreamPresetTencent": [
+    "腾讯云 DNSPod",
+    "Tencent Cloud DNSPod"
+  ]
+}

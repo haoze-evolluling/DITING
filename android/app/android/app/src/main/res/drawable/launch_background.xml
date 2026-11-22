@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Launch window: the app's own page colour, so no white flash before the first frame. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/diting_window_background" />
+</layer-list>

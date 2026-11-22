@@ -1,0 +1,3 @@
+{
+  "subscriptionAlreadyExistsNamed": ["{what}已作为{kind}存在（「{name}」）", "{what} already exists as {kind} (\"{name}\")"]
+}

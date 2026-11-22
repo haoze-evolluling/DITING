@@ -1,0 +1,21 @@
+{
+  "rulesReadFailed": ["读取应用规则失败：{detail}", "Failed to read app rules: {detail}"],
+  "autoUpdateChecked": ["已检查 {count} 个订阅", "Checked {count} subscriptions"],
+  "caChannelUnavailableDetail": ["证书通道不可用：{detail}", "The certificate channel is unavailable: {detail}"],
+  "caReadFailedCode": ["读取根证书失败（{code}）", "Failed to read the root certificate ({code})"],
+  "caReadFailed": ["读取根证书失败：{detail}", "Failed to read the root certificate: {detail}"],
+  "agentAnalysisFailed": ["分析失败：{detail}", "Analysis failed: {detail}"],
+  "diagnosticsFailedCode": ["诊断执行失败（{code}）", "The diagnostic failed ({code})"],
+  "diagnosticsFailed": ["诊断执行失败：{detail}", "The diagnostic failed: {detail}"],
+  "subscriptionDeletedWithId": ["已删除订阅 #{id}", "Deleted subscription #{id}"],
+  "providerLatencyValue": ["{value}ms", "{value}ms"],
+  "providerRaceSummaryNames": ["已选 {count} 个：{names}", "{count} selected: {names}"],
+  "providerNamesSeparator": ["、", ", "],
+  "recognitionInvalidConfigKept": ["云端名单配置无效（{detail}），已保留本地缓存", "The cloud roster configuration is invalid ({detail}); the local cache is kept"],
+  "recognitionFetchFailed": ["云端名单拉取失败（{detail}）", "Fetching the cloud roster failed ({detail})"],
+  "recognitionUpdateFailedDetail": ["名单更新失败：{detail}", "The roster update failed: {detail}"],
+  "subscriptionAlreadyExists": ["{what}已作为{kind}存在", "{what} already exists as {kind}"],
+  "subscriptionUpdatedCount": ["{count} 个已更新", "{count} updated"],
+  "subscriptionUnchangedCount": ["{count} 个未变化", "{count} unchanged"],
+  "subscriptionFailedCount": ["{count} 个失败", "{count} failed"]
+}

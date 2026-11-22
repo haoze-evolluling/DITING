@@ -1,0 +1,217 @@
+// ignore_for_file: sort_child_properties_last
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/agent/agent_analysis_target.dart';
+import 'package:diting_android/pages/hub/agent_analysis_sheet.dart';
+import 'package:diting_android/router.dart';
+import 'package:diting_android/routes/hub_routes.dart';
+import 'package:diting_android/routes/standalone_routes.dart';
+import 'package:diting_android/state/hub_settings_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/page_intro.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
+class AgentApiPage extends ConsumerWidget {
+  const AgentApiPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(agentApiProvider);
+    final notifier = ref.read(agentApiProvider.notifier);
+    final provider = state.activeProvider;
+    final colorScheme = context.colorScheme;
+    final ready = state.ready;
+    return CommonScaffold(
+      title: context.l10n.hubAiAnalysis,
+      body: PageBody(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: CommonCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: 12,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        TablerIcons.sparkles,
+                        size: 24,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          state.enabled
+                              ? context.l10n.agentApiEnabled
+                              : context.l10n.agentApiDisabled,
+                          style: AppTextRole.rowTitle.of(context),
+                        ),
+                      ),
+                      CommonSwitch(
+                        value: state.enabled,
+                        onChanged: notifier.setEnabled,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    _providerSummary(context, provider),
+                    style: AppTextRole.supportingText.of(context),
+                  ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      MetaChip(
+                        label: provider?.hasKey == true
+                            ? context.l10n.agentApiKeyConfigured
+                            : context.l10n.agentApiChipKeyMissing,
+                      ),
+                      MetaChip(
+                        label: context.l10n.agentApiTemperature(
+                          state.temperature.toStringAsFixed(1),
+                        ),
+                      ),
+                      MetaChip(label: context.l10n.agentApiProviderChip),
+                    ],
+                  ),
+                  if (!ready)
+                    Text(
+                      state.enabled
+                          ? context.l10n.agentApiReadyHintOn
+                          : context.l10n.agentApiReadyHintOff,
+                      style: AppTextRole.supportingText
+                          .of(context)
+                          .copyWith(color: colorScheme.onSurfaceVariant),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          generateSection(
+            title: context.l10n.agentApiSectionProvider,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.devices),
+                title: Text(context.l10n.agentProvidersTitle),
+                subtitle: Text(
+                  context.l10n.agentApiProvidersSubtitle(
+                    state.providers.length,
+                  ),
+                ),
+                onTap: () => context.push(HubPaths.agentProviders),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.adjustments),
+                title: Text(context.l10n.agentParamsTitle),
+                subtitle: Text(context.l10n.agentParamsSubtitle),
+                onTap: () => context.push(HubPaths.agentParams),
+              ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.agentApiSectionTest,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.server_2),
+                title: Text(context.l10n.agentApiTestDomain),
+                subtitle: Text(context.l10n.agentApiTestDomainSubtitle),
+                onTap: () => openAgentAnalysis(
+                  context,
+                  const AgentDomainTarget('example-tracker.com'),
+                ),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.chart_pie),
+                title: Text(context.l10n.agentApiTestTraffic),
+                subtitle: Text(context.l10n.agentApiTestTrafficSubtitle),
+                onTap: () =>
+                    openAgentAnalysis(context, const AgentTrafficTarget()),
+              ),
+            ],
+            footer: ready
+                ? context.l10n.agentApiTestFooterReady
+                : context.l10n.agentApiTestFooterNotReady,
+          ),
+          generateSection(
+            title: context.l10n.agentApiSectionEntries,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.database),
+                title: Text(context.l10n.agentApiCacheTable),
+                subtitle: Text(context.l10n.agentApiCacheTableSubtitle),
+                onTap: () => context.push('/logs/cache'),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.clock),
+                title: Text(context.l10n.agentApiRequests),
+                subtitle: Text(context.l10n.agentApiRequestsSubtitle),
+                onTap: () => context.push('/requests'),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.layout_dashboard),
+                title: Text(context.l10n.agentApiDashboard),
+                subtitle: Text(context.l10n.agentApiDashboardSubtitle),
+                onTap: () {
+                  if (!pushStandalone(context, Routes.logs)) {
+                    openLocation(context, Routes.logs);
+                  }
+                },
+              ),
+            ],
+            footer: context.l10n.agentApiEntriesFooter,
+          ),
+          generateSection(
+            title: context.l10n.agentApiSectionReset,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.restore),
+                title: Text(context.l10n.agentApiResetItem),
+                subtitle: Text(context.l10n.agentApiResetSubtitle),
+                onTap: () => _reset(context, notifier),
+              ),
+            ],
+          ),
+          PageIntroText(text: context.l10n.agentApiFooter),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  static String _providerSummary(
+    BuildContext context,
+    AiProviderConfig? provider,
+  ) {
+    if (provider == null) return context.l10n.agentApiNoProvider;
+    final model = provider.model.isEmpty
+        ? context.l10n.agentApiNoModel
+        : provider.model;
+    return context.l10n.agentApiCurrentProvider(provider.name, model);
+  }
+
+  Future<void> _reset(BuildContext context, AgentApiNotifier notifier) async {
+    final confirmed = await showFloatingDialog<bool>(
+      context: context,
+      child: CommonDialog(
+        title: context.l10n.agentApiResetTitle,
+        destructive: true,
+        child: Text(context.l10n.agentApiResetBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.uiCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.l10n.agentApiResetConfirm),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) notifier.reset();
+  }
+}

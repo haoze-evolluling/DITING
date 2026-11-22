@@ -1,0 +1,20 @@
+{
+  "appearanceTitle": ["外观设置", "Appearance"],
+  "appearanceInterfaceSection": ["界面显示", "Interface"],
+  "appearanceHomeSection": ["首页内容", "Home content"],
+  "appearanceBackgroundSection": ["背景与动效", "Background and motion"],
+  "appearanceHaptic": ["底栏触感反馈", "Bottom bar haptics"],
+  "appearancePureBlack": ["纯黑", "Pure black"],
+  "appearanceBottomBarStyle": ["底栏样式", "Bottom bar style"],
+  "appearanceTabTransition": ["tab 切换动画", "Tab transition"],
+  "appearanceLiquidGlass": ["Liquid 玻璃", "Liquid glass"],
+  "appearanceMotionFooter": ["底栏样式、动画与玻璃只作用于浮条；普通底栏始终是实色。", "Style, animation and glass only apply to the floating bar; the docked bar stays solid."],
+  "fontFamilyTitle": ["字体设置", "Font settings"],
+  "fontSizeRestoreDefaults": ["恢复默认", "Restore defaults"],
+  "fontFamilyHapticSubtitle": ["切换 tab 时给一次轻震", "A short vibration when switching tabs"],
+  "homeOpacityComponents": ["交互组件", "Interactive components"],
+  "homeOpacityText": ["文字", "Text"],
+  "bottomBarFeel": ["手感", "Feel"],
+  "bottomBarDisabled": ["未启用", "Not in use"],
+  "bottomBarNewItemFooter": ["新启用的项排在底栏最右侧。", "Newly enabled items go to the far right."]
+}

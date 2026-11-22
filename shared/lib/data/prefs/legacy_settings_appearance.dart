@@ -1,0 +1,182 @@
+part of 'legacy_settings.dart';
+
+
+String logDashboardWidgetOrderKey(String mode) =>
+    'log_dashboard_widget_order_$mode';
+
+extension LegacyAppearanceSettings on LegacySettings {
+  String? get themeModeRaw =>
+      _string(LegacySettings.uiContainer, 'app_theme_mode');
+
+  void setThemeModeRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'app_theme_mode',
+    storageValue,
+  );
+
+  String? get paletteRaw =>
+      _string(LegacySettings.uiContainer, 'theme_color_style');
+
+  void setPaletteRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'theme_color_style',
+    storageValue,
+  );
+
+  String get liquidGlassModeRaw =>
+      _string(LegacySettings.uiContainer, 'liquid_glass_mode') ?? 'none';
+
+  void setLiquidGlassModeRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'liquid_glass_mode',
+    storageValue,
+  );
+
+  String get bottomBarStyleRaw =>
+      _string(LegacySettings.uiContainer, 'bottom_bar_style') ?? 'floating';
+
+  void setBottomBarStyleRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'bottom_bar_style',
+    storageValue,
+  );
+
+  String get tabTransitionRaw =>
+      _string(LegacySettings.uiContainer, 'tab_transition') ?? 'slide';
+
+  void setTabTransitionRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'tab_transition',
+    storageValue,
+  );
+
+  bool get pureBlackEnabled =>
+      _bool(LegacySettings.uiContainer, 'pure_black_theme', false);
+
+  void setPureBlackEnabled(bool value) =>
+      _store.putBool(LegacySettings.uiContainer, 'pure_black_theme', value);
+
+  double get textScale =>
+      _double(LegacySettings.uiContainer, 'app_text_scale', 1);
+
+  void setTextScale(double value) =>
+      _store.putFloat(LegacySettings.uiContainer, 'app_text_scale', value);
+
+  String? get fontFamily {
+    final raw = _string(LegacySettings.uiContainer, 'app_font_family');
+    return raw == null || raw.isEmpty ? null : raw;
+  }
+
+  void setFontFamily(String? family) => _store.putString(
+    LegacySettings.uiContainer,
+    'app_font_family',
+    family ?? '',
+  );
+
+  String? get importedFontsRaw =>
+      _string(LegacySettings.uiContainer, 'app_imported_fonts');
+
+  void setImportedFontsRaw(String raw) =>
+      _store.putString(LegacySettings.uiContainer, 'app_imported_fonts', raw);
+
+  List<String>? get dashboardWidgetOrder => _decodeWidgetNames(
+    _string(LegacySettings.uiContainer, 'dashboard_widget_order'),
+  );
+
+  List<String>? logDashboardWidgetOrder(String mode) => _decodeWidgetNames(
+    _string(LegacySettings.uiContainer, logDashboardWidgetOrderKey(mode)),
+  );
+
+  void setLogDashboardWidgetOrder(String mode, List<String> names) =>
+      _store.putString(
+        LegacySettings.uiContainer,
+        logDashboardWidgetOrderKey(mode),
+        jsonEncode(names),
+      );
+
+  List<String>? _decodeWidgetNames(String? raw) {
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return null;
+      }
+      final names = <String>[];
+      for (final item in decoded) {
+        if (item is String && item.isNotEmpty && !names.contains(item)) {
+          names.add(item);
+        }
+      }
+      return names;
+    } on FormatException {
+      return null;
+    }
+  }
+
+  void setDashboardWidgetOrder(List<String> names) => _store.putString(
+    LegacySettings.uiContainer,
+    'dashboard_widget_order',
+    jsonEncode(names),
+  );
+
+  double get componentOpacity => LegacySettings._clampedOpacity(
+    _double(LegacySettings.uiContainer, 'home_component_opacity', 1),
+  );
+
+  double homeOpacity(String storageKey) => LegacySettings._clampedOpacity(
+    _double(LegacySettings.uiContainer, storageKey, componentOpacity),
+  );
+
+  void setHomeOpacity(String storageKey, double value) => _store.putFloat(
+    LegacySettings.uiContainer,
+    storageKey,
+    LegacySettings._clampedOpacity(value),
+  );
+
+  void setHomeComponentOpacity(double value) => _store.putFloat(
+    LegacySettings.uiContainer,
+    'home_component_opacity',
+    LegacySettings._clampedOpacity(value),
+  );
+  ({String running, String stopped}) get homeSentences => (
+    running:
+        _string(LegacySettings.uiContainer, 'home_sentence_running') ??
+        LegacySettings.defaultRunningSentence(currentL10n),
+    stopped:
+        _string(LegacySettings.uiContainer, 'home_sentence_stopped') ??
+        LegacySettings.defaultStoppedSentence(currentL10n),
+  );
+
+  void setHomeSentences({required String running, required String stopped}) {
+    _store.putString(
+      LegacySettings.uiContainer,
+      'home_sentence_running',
+      running,
+    );
+    _store.putString(
+      LegacySettings.uiContainer,
+      'home_sentence_stopped',
+      stopped,
+    );
+  }
+
+  bool get hapticEnabled =>
+      _bool(LegacySettings.uiContainer, 'bottom_bar_haptic_enabled', true);
+
+  void setHapticEnabled(bool value) => _store.putBool(
+    LegacySettings.uiContainer,
+    'bottom_bar_haptic_enabled',
+    value,
+  );
+
+  String get launcherIconStyleRaw =>
+      _string(LegacySettings.uiContainer, 'launcher_icon_style') ?? 'default';
+
+  void setLauncherIconStyleRaw(String storageValue) => _store.putString(
+    LegacySettings.uiContainer,
+    'launcher_icon_style',
+    storageValue,
+  );
+}

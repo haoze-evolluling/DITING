@@ -1,0 +1,81 @@
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/dashboard_models.dart';
+import 'package:diting_android/state/dashboard_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+class DashboardEditSheet extends ConsumerWidget {
+  const DashboardEditSheet({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final widgets = ref.watch(dashboardWidgetsProvider);
+    final notifier = ref.read(dashboardWidgetsProvider.notifier);
+    final available = [
+      for (final widget in DashboardWidget.values)
+        if (!widgets.contains(widget)) widget,
+    ];
+    return CommonScaffold(
+      title: context.l10n.dashboardAddCard,
+      actions: [
+        TextButton(
+          onPressed: () => notifier.reset(),
+          child: Text(context.l10n.dashboardRestoreDefaults),
+        ),
+      ],
+      body: available.isEmpty
+          ? AppBarClearance(
+              child: Center(
+                child: NullStatus(
+                  illustration: NullStatusIllustration.data,
+                  label: context.l10n.dashboardAllCardsAdded,
+                  description: context.l10n.dashboardAllCardsAddedDescription,
+                ),
+              ),
+            )
+          : ListView(
+              padding: EdgeInsets.only(
+                top: context.contentTopPadding,
+                bottom: 24,
+              ),
+              children: [
+                ListHeader(title: context.l10n.dashboardAvailableCards),
+                for (final widget in available)
+                  ListItem(
+                    leading: Icon(_glyphOf(widget)),
+                    title: Text(widget.label(context.l10n)),
+                    subtitle: Text(_descriptionOf(widget, context.l10n)),
+                    trailing: const Icon(TablerIcons.circle_plus, size: 20),
+                    onTap: () {
+                      notifier.add(widget);
+                      Navigator.of(context).maybePop();
+                    },
+                  ),
+                ListFooter(text: context.l10n.dashboardOrderHint),
+              ],
+            ),
+    );
+  }
+
+  static IconData _glyphOf(DashboardWidget widget) => switch (widget) {
+    DashboardWidget.provider => TablerIcons.cloud_upload,
+    DashboardWidget.resolution => TablerIcons.arrows_shuffle,
+    DashboardWidget.status => TablerIcons.activity,
+    DashboardWidget.networkSpeed => TablerIcons.gauge,
+    DashboardWidget.siteLatency => TablerIcons.target,
+    DashboardWidget.memoryInfo => TablerIcons.cpu_2,
+    DashboardWidget.intranetIp => TablerIcons.devices,
+  };
+
+  static String _descriptionOf(DashboardWidget widget, AppL10n l10n) =>
+      switch (widget) {
+        DashboardWidget.provider => l10n.dashboardCardProviderDescription,
+        DashboardWidget.resolution => l10n.dashboardCardResolutionDescription,
+        DashboardWidget.status => l10n.dashboardCardStatusDescription,
+        DashboardWidget.networkSpeed => l10n.dashboardCardSpeedDescription,
+        DashboardWidget.siteLatency => l10n.dashboardCardSiteLatencyDescription,
+        DashboardWidget.memoryInfo => l10n.dashboardCardMemoryDescription,
+        DashboardWidget.intranetIp => l10n.dashboardCardIntranetDescription,
+      };
+}

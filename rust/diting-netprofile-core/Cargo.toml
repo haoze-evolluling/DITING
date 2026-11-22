@@ -1,0 +1,13 @@
+[package]
+name = "diting-netprofile-core"
+version = "0.1.0"
+edition = "2021"
+description = "Network-profile evaluator: maps the normalized network context (type / metered / roaming / ssid) plus the profile definitions to the effective configuration reference (N1 / K5)"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The request/answer crosses the dart:ffi boundary as JSON, matching the other UI-side kernels.
+serde_json = "1"

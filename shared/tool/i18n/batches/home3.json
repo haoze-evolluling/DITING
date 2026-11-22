@@ -1,0 +1,6 @@
+{
+  "intranetModeNotListening": ["{mode}不监听局域网，其他设备无法把这里当 DNS", "{mode} does not listen on the LAN, so other devices cannot use this as their DNS"],
+  "intranetListeningOn": ["已监听 0.0.0.0:{port}，其他设备把 DNS 指到上面的地址", "Listening on 0.0.0.0:{port}; point other devices' DNS at the address above"],
+  "intranetServiceStopped": ["服务未启动：启动后才会绑定 {port} 端口", "Service not started: port {port} is bound once it starts"],
+  "commonCopied": ["已复制 {text}", "Copied {text}"]
+}

@@ -1,0 +1,426 @@
+{
+  "serverSwitched": [
+    "已切换到 {name}，重启服务后生效",
+    "Switched to {name}; restart the service to apply"
+  ],
+  "serverSelected": [
+    "已选择 {name}",
+    "Selected {name}"
+  ],
+  "serverAdded": [
+    "已添加 {name}",
+    "Added {name}"
+  ],
+  "serverSaved": [
+    "已保存 {name}",
+    "Saved {name}"
+  ],
+  "serverDeleteConfirm": [
+    "删除 {name}？",
+    "Delete {name}?"
+  ],
+  "serverDeleteBody": [
+    "如果它正被使用，删除后会回落到第一个内置服务商。",
+    "If it is in use, the first built-in provider is used after deletion."
+  ],
+  "serverDeleted": [
+    "已删除 {name}",
+    "Deleted {name}"
+  ],
+  "serverUpstreamTitle": [
+    "上游服务器",
+    "Upstream servers"
+  ],
+  "serverAddCustom": [
+    "添加自定义服务商",
+    "Add a custom provider"
+  ],
+  "serverCurrentUpstream": [
+    "当前用于解析 DNS：({protocol}) {name}",
+    "Currently resolving DNS: ({protocol}) {name}"
+  ],
+  "serverBuiltinProviders": [
+    "内置 DNS 服务商",
+    "Built-in DNS providers"
+  ],
+  "serverNoBuiltin": [
+    "暂无内置服务商",
+    "No built-in providers"
+  ],
+  "serverCustomProviders": [
+    "自定义 DNS 服务商",
+    "Custom DNS providers"
+  ],
+  "serverNoCustom": [
+    "暂无自定义服务商",
+    "No custom providers"
+  ],
+  "serverNoCustomBody": [
+    "点右上角加号添加 DoH / DoT / 明文 DNS 上游",
+    "Tap the plus button to add a DoH / DoT / plaintext DNS upstream"
+  ],
+  "serverUpstreamFooter": [
+    "服务器模式支持单服务商与智能选择 / 并行竞速 / 主备切换，解析模式与候选上游在上方切换；需重启服务生效。内置服务商由应用维护，只能切换；自定义项可通过右侧菜单编辑或删除。",
+    "Server mode supports a single upstream and smart / parallel-race / primary-backup scheduling; switch the mode and candidates above and restart the service to apply. Built-in providers are maintained by the app and can only be selected; edit or delete a custom one from its menu."
+  ],
+  "serverEditName": [
+    "编辑 {name}",
+    "Edit {name}"
+  ],
+  "serverDeleteName": [
+    "删除 {name}",
+    "Delete {name}"
+  ],
+  "serverEditCustom": [
+    "编辑自定义服务商",
+    "Edit custom provider"
+  ],
+  "serverSave": [
+    "保存",
+    "Save"
+  ],
+  "serverName": [
+    "名称",
+    "Name"
+  ],
+  "serverDohAddress": [
+    "DoH 地址",
+    "DoH address"
+  ],
+  "serverAddress": [
+    "服务器地址",
+    "Server address"
+  ],
+  "serverDohPrefix": [
+    "必须以 https:// 开头",
+    "Must start with https://"
+  ],
+  "serverAddressHint": [
+    "IPv4 / IPv6 均可；IPv6 可直接填 [::1]",
+    "IPv4 or IPv6; IPv6 can be entered as [::1]"
+  ],
+  "serverPort": [
+    "端口",
+    "Port"
+  ],
+  "serverPortHint": [
+    "DNS 通常 53，DoT 通常 853",
+    "DNS usually uses 53, DoT usually 853"
+  ],
+  "serverUnavailable": [
+    "当前设备不可用",
+    "Unavailable on this device"
+  ],
+  "serverBatteryJoined": [
+    "已加入电池优化白名单",
+    "Added to the battery optimisation allowlist"
+  ],
+  "serverBatteryNotJoined": [
+    "尚未加入电池优化白名单",
+    "Not in the battery optimisation allowlist yet"
+  ],
+  "serverClearCache": [
+    "清空缓存",
+    "Clear cache"
+  ],
+  "serverClear": [
+    "清空",
+    "Clear"
+  ],
+  "serverClearCacheBody": [
+    "将清空本机已缓存的解析结果，下一次查询会重新向上游请求。",
+    "Cached answers will be cleared, so the next lookup goes upstream again."
+  ],
+  "serverCacheCleared": [
+    "缓存已清空",
+    "Cache cleared"
+  ],
+  "serverCacheClearFailed": [
+    "清空失败：请先启动解析服务再试",
+    "Clearing failed: start the DNS service first"
+  ],
+  "serverCacheOn": [
+    "{preset} · 命中缓存的查询不再请求上游",
+    "{preset} · cache hits no longer go upstream"
+  ],
+  "serverCacheOff": [
+    "已关闭 · 每次解析都请求上游 DNS",
+    "Off · every lookup goes to the upstream DNS"
+  ],
+  "serverModeSettings": [
+    "模式设置",
+    "Mode settings"
+  ],
+  "serverProxySettings": [
+    "代理与解析设置",
+    "Proxy and resolution"
+  ],
+  "serverCacheSettings": [
+    "缓存设置",
+    "Cache settings"
+  ],
+  "serverRuleControl": [
+    "规则控制",
+    "Rule control"
+  ],
+  "serverRuleControlOn": [
+    "已开启 · 命中规则按拦截策略返回",
+    "On · matched rules return the blocking policy"
+  ],
+  "serverRuleControlOff": [
+    "已关闭 · 使用独立的过滤规则库",
+    "Off · a separate filter rule library is used"
+  ],
+  "serverListenPort": [
+    "本地监听端口",
+    "Local listen port"
+  ],
+  "serverListenPortBody": [
+    "DNS 服务在本机监听的端口，默认 1053",
+    "The port the DNS service listens on; the default is 1053"
+  ],
+  "serverRuleManagement": [
+    "规则管理",
+    "Rule management"
+  ],
+  "serverBlocklist": [
+    "黑名单",
+    "Blocklist"
+  ],
+  "serverBlocklistBody": [
+    "管理域名屏蔽规则，独立规则库",
+    "Manage domain blocking rules in a separate library"
+  ],
+  "serverAllowlist": [
+    "白名单",
+    "Allowlist"
+  ],
+  "serverAllowlistBody": [
+    "管理域名放行规则，独立规则库",
+    "Manage domain allow rules in a separate library"
+  ],
+  "serverHosts": [
+    "Hosts 覆写",
+    "Hosts overrides"
+  ],
+  "serverHostsBody": [
+    "将指定域名解析到配置的 IP 或 CNAME",
+    "Resolve chosen domains to a configured IP or CNAME"
+  ],
+  "serverRulesFooter": [
+    "这三张表只影响服务器模式的独立规则库，与普通模式的规则互不覆盖。",
+    "These three tables only affect the server mode rule library and never override normal mode rules."
+  ],
+  "serverDataReset": [
+    "数据与重置",
+    "Data and reset"
+  ],
+  "serverResetStats": [
+    "重置运行统计",
+    "Reset runtime statistics"
+  ],
+  "serverResetStatsBody": [
+    "清空本次运行的统计数据",
+    "Clear the statistics for this run"
+  ],
+  "serverBackground": [
+    "后台稳定性",
+    "Background stability"
+  ],
+  "serverBackgroundBody": [
+    "系统会在后台冻结省电名单之外的应用；把它加入白名单，DNS 服务才能在息屏后继续应答局域网查询。",
+    "The system freezes apps outside the power-saving allowlist; add this app to it so the DNS service keeps answering LAN queries with the screen off."
+  ],
+  "serverRunMode": [
+    "运行模式",
+    "Run mode"
+  ],
+  "serverWizard": [
+    "使用向导",
+    "Setup guide"
+  ],
+  "serverWizardBody": [
+    "查看服务器模式架构原理、局域网配置与就绪指引",
+    "See how server mode works, how to configure the LAN and how to get ready"
+  ],
+  "serverReselectMode": [
+    "重新选择工作模式",
+    "Choose the work mode again"
+  ],
+  "serverReselectModeBody": [
+    "浏览所有工作模式详情并重新选择",
+    "Review every work mode and choose again"
+  ],
+  "serverBatteryIgnored": [
+    "已忽略电池优化",
+    "Battery optimisation ignored"
+  ],
+  "serverBatteryIgnoredShort": [
+    "已忽略",
+    "Ignored"
+  ],
+  "serverBatteryKeepAlive": [
+    "保持 DNS 服务在后台稳定运行",
+    "Keeps the DNS service running in the background"
+  ],
+  "serverIgnoreBattery": [
+    "忽略电池优化",
+    "Ignore battery optimisation"
+  ],
+  "serverCachePresetConservative": [
+    "保守",
+    "Conservative"
+  ],
+  "serverCachePresetHighHit": [
+    "高命中",
+    "High hit rate"
+  ],
+  "serverCachePresetStandard": [
+    "标准",
+    "Standard"
+  ],
+  "serverNavOverview": [
+    "概览",
+    "Overview"
+  ],
+  "serverPortInvalid": [
+    "请输入数字",
+    "Enter a number"
+  ],
+  "serverPortRange": [
+    "范围 {min}–{max}",
+    "Range {min}–{max}"
+  ],
+  "serverPortChanged": [
+    "端口已改为 {port}，重启服务后生效",
+    "The port is now {port}; restart the service to apply"
+  ],
+  "serverResetConfirm": [
+    "确认重置",
+    "Reset"
+  ],
+  "serverResetStatsConfirmBody": [
+    "将清空本次运行的全部统计数据，确认继续吗？",
+    "All statistics for this run will be cleared. Continue?"
+  ],
+  "serverStatsReset": [
+    "运行统计已重置",
+    "Runtime statistics reset"
+  ],
+  "serverOverviewTitle": [
+    "谛听 · 服务器模式",
+    "Diting · Server mode"
+  ],
+  "serverSwitchMode": [
+    "切换工作模式",
+    "Switch work mode"
+  ],
+  "serverChangePort": [
+    "修改监听端口",
+    "Change the listen port"
+  ],
+  "serverCurrentUpstreamCard": [
+    "当前上游",
+    "Current upstream"
+  ],
+  "serverLanAccess": [
+    "局域网接入",
+    "LAN access"
+  ],
+  "serverLanBody": [
+    "把同网段设备的 DNS 指向上面这个地址即可；端口只在启动时绑定，改动后需要重启服务。",
+    "Point devices on the same subnet at the address above; the port is bound only at startup, so restart the service after changing it."
+  ],
+  "serverNoNetwork": [
+    "未连接网络",
+    "No network"
+  ],
+  "serverLanConnectHint": [
+    "连上 Wi-Fi 或以太网后这里会显示可用地址",
+    "An available address appears here once you are on Wi-Fi or Ethernet"
+  ],
+  "serverLanPointHint": [
+    "将局域网其他设备的 DNS 指向此地址",
+    "Point other LAN devices' DNS at this address"
+  ],
+  "serverCopied": [
+    "已复制 {text}",
+    "Copied {text}"
+  ],
+  "serverServiceStatus": [
+    "服务状态",
+    "Service status"
+  ],
+  "serverTotalQueries": [
+    "总查询量",
+    "Total queries"
+  ],
+  "serverCacheHits": [
+    "缓存命中",
+    "Cache hits"
+  ],
+  "serverBlocked": [
+    "已拦截",
+    "Blocked"
+  ],
+  "serverAverageLatency": [
+    "平均时延",
+    "Average latency"
+  ],
+  "serverUptime": [
+    "运行时长",
+    "Uptime"
+  ],
+  "serverResetStatsBodyShort": [
+    "清空本次运行的全部计数，不清规则与缓存",
+    "Clear every counter for this run without touching rules or cache"
+  ],
+  "serverModeSettingsBody": [
+    "缓存、规则、后台稳定性与运行模式",
+    "Cache, rules, background stability and run mode"
+  ],
+  "serverModeNote": [
+    "服务器模式不建立 VPN 隧道：它只在本机监听 DNS 端口，因此可以与其它 VPN 共存，也不占用系统的 VPN 槽位；本机应用的查询不会自动经过该服务。",
+    "Server mode creates no VPN tunnel: it only listens on a DNS port locally, so it coexists with other VPNs and takes no VPN slot; this device's own app queries do not go through it automatically."
+  ],
+  "serverBusyStarting": [
+    "启动中",
+    "Starting"
+  ],
+  "serverBusyStopping": [
+    "停止中",
+    "Stopping"
+  ],
+  "serverRunning": [
+    "停止",
+    "Stop"
+  ],
+  "serverStopped": [
+    "开启",
+    "Start"
+  ],
+  "serverListening": [
+    "监听 0.0.0.0:{port}",
+    "Listening on 0.0.0.0:{port}"
+  ],
+  "serverStatusStopped": [
+    "服务器模式已停止",
+    "Server mode is stopped"
+  ],
+  "serverStatusStarting": [
+    "正在启动服务...",
+    "Starting the service..."
+  ],
+  "serverStatusRunning": [
+    "服务器模式运行中",
+    "Server mode is running"
+  ],
+  "serverStatusStopping": [
+    "正在停止服务...",
+    "Stopping the service..."
+  ],
+  "serverStatusErrorText": [
+    "服务异常：端口可能已被占用",
+    "Service error: the port may already be in use"
+  ]
+}

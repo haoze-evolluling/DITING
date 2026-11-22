@@ -1,0 +1,7 @@
+{
+  "logsModelName": ["模型 {model}", "Model {model}"],
+  "logsSuccessWith": ["成功 {percent}", "{percent} succeeded"],
+  "logsAverageWith": ["平均 {latency}", "Average {latency}"],
+  "logsPrimaryHitOnly": ["首选命中 {percent}", "Primary hit {percent}"],
+  "logsFallbackUses": ["兜底 {count} 次", "{count} fallbacks"]
+}

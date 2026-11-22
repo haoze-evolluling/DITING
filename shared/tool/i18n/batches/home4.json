@@ -1,0 +1,90 @@
+{
+  "intranetGatewaySuffix": [
+    " · 网关 {gateway}",
+    " · Gateway {gateway}"
+  ],
+  "speedTotalDash": [
+    "累计 —",
+    "Total —"
+  ],
+  "siteLatencyAliveRatio": [
+    "{alive} / {total} 通畅",
+    "{alive} / {total} reachable"
+  ],
+  "siteLatencyLastRun": [
+    "最近测速 {ago}",
+    "Last test {ago}"
+  ],
+  "siteLatencyProviderSuffix": [
+    " · 解析服务商 {name}",
+    " · Resolver {name}"
+  ],
+  "siteLatencySitesCount": [
+    "{count} 个站点",
+    "{count} sites"
+  ],
+  "siteLatencyTestCategory": [
+    "测速{category}",
+    "Test {category}"
+  ],
+  "memorySystemShare": [
+    "占整机 {percent}",
+    "{percent} of the system"
+  ],
+  "memorySystemUsedOf": [
+    "整机已用 {used} / {total}",
+    "System used {used} / {total}"
+  ],
+  "memoryNoChannel": [
+    "当前环境读不到内存数据（桌面环境或纯 Dart 测试）。",
+    "Memory data is unavailable here (desktop or pure Dart tests)."
+  ],
+  "trafficStructureRateValue": [
+    "{percent} · {count} 次 · {latency}",
+    "{percent} · {count} times · {latency}"
+  ],
+  "trafficStructureShareValue": [
+    "{percent} · {count} 次",
+    "{percent} · {count} times"
+  ],
+  "statusPausedSummary": [
+    "{mode}{core}，计时已暂停",
+    "{mode} {core}, timing paused"
+  ],
+  "speedTotalsDown": [
+    "下行 {percent}",
+    "Down {percent}"
+  ],
+  "speedTotalsUp": [
+    "上行 {percent}",
+    "Up {percent}"
+  ],
+  "speedPeakAverage": [
+    "峰值 {peak} · 平均 {average}",
+    "Peak {peak} · Average {average}"
+  ],
+  "intranetConnectHintSentence": [
+    "连上 Wi-Fi 或以太网后这里会显示可用地址。",
+    "Connect to Wi-Fi or Ethernet to see a usable address here."
+  ],
+  "intranetModeNotListeningSentence": [
+    "{mode}不监听局域网，其它设备无法把这里当 DNS。",
+    "{mode} does not listen on the LAN, so other devices cannot use this as their DNS."
+  ],
+  "intranetPrivateDnsOn": [
+    "系统开启了私人 DNS（{dns}），系统解析会走加密通道，可能绕过本地服务。",
+    "System Private DNS is on ({dns}); system lookups use an encrypted channel and may bypass the local service."
+  ],
+  "intranetSecondaryDns": [
+    "备用 {index}",
+    "Secondary {index}"
+  ],
+  "intranetCopyAddressSemantics": [
+    "复制地址 {address}",
+    "Copy address {address}"
+  ],
+  "speedTotalAccumulated": [
+    "累计 {value}",
+    "Total {value}"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "disclaimerTerm1Title": ["一、软件性质", "1. Nature of the software"],
+  "disclaimerTerm1Content": ["谛听是一款开源的本地域名解析与流量观测工具，不以任何形式提供网络接入服务。软件本身不含任何服务器、节点或订阅内容，也不代替任何网络服务商。", "DITING is an open-source local domain resolution and traffic observation tool; it does not provide network access of any kind. The software ships with no servers, nodes or subscription content, and does not stand in for any network service provider."],
+  "disclaimerTerm2Title": ["二、使用方式", "2. How it may be used"],
+  "disclaimerTerm2Content": ["用户应仅在自有设备与自有网络上使用本软件。将本软件用于任何网络接入、绕过计费或在未授权网络上运行的行为，均超出软件设计用途。", "Use the software only on devices and networks you own. Using it for network access, to bypass billing, or on networks you are not authorised to use falls outside its intended purpose."],
+  "disclaimerTerm3Title": ["三、责任范围", "3. Scope of responsibility"],
+  "disclaimerTerm3Content": ["因使用或无法使用本软件导致的任何直接或间接损失，包括但不限于数据丢失、服务中断、设备损坏，作者与贡献者均不承担责任。", "The authors and contributors accept no liability for any direct or indirect loss arising from the use of, or inability to use, this software, including but not limited to data loss, service interruption and device damage."],
+  "disclaimerTerm4Title": ["四、第三方组件", "4. Third-party components"],
+  "disclaimerTerm4Content": ["本软件的界面组件层移植自 DITING（GPL-3.0-or-later），并使用了 material_ui、material_color_utilities 等开源组件。各组件的许可条款见仓库 NOTICE.md，使用本软件即表示同时接受这些条款。", "The UI component layer is ported from DITING (GPL-3.0-or-later) and uses open-source components such as material_ui and material_color_utilities. The licence of each component is listed in NOTICE.md in the repository; using this software means accepting those terms as well."],
+  "disclaimerTerm5Title": ["五、无担保", "5. No warranty"],
+  "disclaimerTerm5Content": ["本软件按「现状」提供，不附带任何明示或暗示的担保，包括但不限于适销性、特定用途适用性与不侵权的担保。", "The software is provided \"as is\", without any express or implied warranty, including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement."],
+  "disclaimerTerm6Title": ["六、责任限制", "6. Limitation of liability"],
+  "disclaimerTerm6Content": ["在法律允许的最大范围内，作者不对任何间接、附带、特殊或后果性损害负责，即使已被告知此类损害的可能性。", "To the fullest extent permitted by law, the authors are not liable for any indirect, incidental, special or consequential damage, even if advised of the possibility of such damage."],
+  "disclaimerTerm7Title": ["七、隐私", "7. Privacy"],
+  "disclaimerTerm7Content": ["本软件默认不收集、不上传任何用户数据。日志与规则仅保存在本地；若用户主动配置 WebDAV 备份，数据将上传至用户自行指定的服务器。", "By default the software collects and uploads no user data. Logs and rules stay on the device; if you configure a WebDAV backup yourself, the data is uploaded to the server you specify."],
+  "disclaimerTerm8Title": ["八、许可", "8. Licence"],
+  "disclaimerTerm8Content": ["本软件以 GPL-3.0-or-later 发布。你可以自由使用、修改与再分发，但衍生作品必须沿用同一许可并保留原始版权声明。", "The software is released under GPL-3.0-or-later. You may use, modify and redistribute it freely, but derivative works must keep the same licence and the original copyright notices."],
+  "disclaimerTerm9Title": ["九、条款变更", "9. Changes to these terms"],
+  "disclaimerTerm9Content": ["作者保留随时修改本免责声明的权利。变更后的条款随新版本一同发布，继续使用即视为接受修改后的条款。", "The authors may revise this disclaimer at any time. Revised terms ship with new versions, and continued use means you accept them."],
+  "disclaimerTerm10Title": ["十、接受条款", "10. Accepting the terms"],
+  "disclaimerTerm10Content": ["在继续使用本软件前，请确认你已阅读、理解并同意上述全部条款。若不同意，请立即停止使用并卸载本软件。", "Before continuing, confirm that you have read, understood and agreed to all of the terms above. If you do not agree, stop using the software and uninstall it."]
+}

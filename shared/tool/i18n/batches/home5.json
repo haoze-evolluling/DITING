@@ -1,0 +1,8 @@
+{
+  "dashboardSitesFull": ["卡片只能放 {count} 个站点，先点掉一个再换别的。", "The card holds {count} sites; turn one off before adding another."],
+  "dashboardSitesRemaining": ["还可以再放 {count} 个站点。", "You can add {count} more sites."],
+  "dashboardSitesMax": ["卡片最多放 {count} 个站点，先取消一个再选。", "The card holds at most {count} sites; deselect one first."],
+  "dashboardSitesPosition": ["第 {index} 位", "Position {index}"],
+  "siteLatencyFailedCount": ["{count} 个失败", "{count} failed"],
+  "siteLatencyDetailFooterLong": ["每个站点发 3 个 ICMP 回显，取平均值；系统 ping 不可用时退回 TCP 握手，会标上 * 号，数值略高于真实往返。本应用自身流量不经过 VPN，测的是物理网络。", "Each site gets three ICMP echo requests and the average is used; when system ping is unavailable the TCP handshake is used instead, marked with *, and reads slightly higher than the real round trip. This app's own traffic bypasses the VPN, so the physical network is measured."]
+}

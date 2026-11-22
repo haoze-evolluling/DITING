@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Diting</string>
+    <string name="quick_settings_tile_label">Diting</string>
+    <string name="quick_settings_tile_state_on">On</string>
+    <string name="quick_settings_tile_state_off">Off</string>
+    <string name="widget_protected">Protected</string>
+    <string name="widget_unprotected">Unprotected</string>
+    <string name="widget_blocked_today">blocked today</string>
+    <string name="widget_today_queries">queries today</string>
+    <string name="widget_block_rate">block rate</string>
+    <string name="widget_work_mode">Mode</string>
+    <string name="widget_mode_normal">Normal</string>
+    <string name="widget_mode_express">Simple</string>
+    <string name="widget_mode_server">Server</string>
+    <string name="server_channel_name">LAN DNS server</string>
+    <string name="server_channel_description">Server-mode status and stop action</string>
+    <string name="server_notification_title">Diting · Server mode</string>
+    <string name="server_notification_starting">Starting LAN DNS…</string>
+    <string name="server_notification_running">LAN DNS · port %1$d</string>
+    <string name="server_notification_running_root">Root listener · port %1$d</string>
+    <string name="server_notification_stopped">Server stopped</string>
+    <string name="server_notification_stop">Stop</string>
+    <string name="server_binary_missing">Server executable is missing; rebuild the APK</string>
+    <string name="server_start_timeout">Server startup timed out</string>
+    <string name="server_start_failed">Server failed to start</string>
+    <string name="server_exited">Server process exited unexpectedly (%1$d)</string>
+    <string name="root_dns_channel_name">Root DNS takeover</string>
+    <string name="root_dns_channel_description">No-VPN root DNS takeover status for normal mode</string>
+    <string name="root_dns_notification_title">Diting · Root DNS takeover</string>
+    <string name="root_dns_notification_starting">Starting root DNS takeover…</string>
+    <string name="root_dns_notification_running">Device DNS taken over · port %1$d</string>
+    <string name="root_dns_notification_stopped">Root DNS takeover stopped</string>
+    <string name="root_dns_notification_stop">Stop</string>
+    <string name="root_dns_no_root">Root permission not granted</string>
+    <string name="root_dns_missing_config">DNS configuration is missing</string>
+    <string name="root_dns_start_failed">Root DNS takeover failed to start</string>
+    <string name="root_dns_bind_failed">Unable to bind the local DNS port</string>
+    <string name="root_dns_vpn_running">Stop the VPN tunnel before enabling root DNS takeover</string>
+    <string name="root_dns_storage_busy">The storage upgrade is still running; try again later</string>
+    <string name="widget_value_unknown">—</string>
+    <string name="widget_toggle_desc">Turn protection on or off</string>
+    <string name="widget_description">Protection status and today\'s blocked count in small, medium and large sizes, with a one-tap toggle</string>
+</resources>

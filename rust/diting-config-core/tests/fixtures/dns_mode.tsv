@@ -1,0 +1,16 @@
+"single"	ok	single
+"SINGLE"	ok	single
+" single "	ok	single
+"primary_backup"	ok	primary_backup
+"Primary_Backup"	ok	primary_backup
+"parallel_race"	ok	parallel_race
+"race"	ok	parallel_race
+"brute_force_parallel"	ok	parallel_race
+"smart_prediction"	ok	smart_prediction
+"prediction"	ok	smart_prediction
+""	err	unsupported DNS mode ""
+"single2"	err	unsupported DNS mode "single2"
+"unknown"	err	unsupported DNS mode "unknown"
+"smart"	err	unsupported DNS mode "smart"
+"single mode"	err	unsupported DNS mode "single mode"
+"sİngle"	ok	single

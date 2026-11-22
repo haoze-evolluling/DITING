@@ -1,0 +1,100 @@
+library;
+
+import 'package:diting_android/data/db/dns_cache_repository.dart';
+import 'package:diting_android/data/db/dns_log_repository.dart';
+import 'package:diting_android/data/db/http_request_repository.dart';
+import 'package:diting_android/data/db/rust_log_query_core.dart';
+import 'package:diting_android/state/log_providers.dart';
+import 'package:diting_android/state/traffic_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_shared/data/errors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sqflite/sqflite.dart';
+
+enum LogStatsSection { requests, data }
+
+final logStatsWindowProvider =
+    NotifierProvider.family<
+      LogStatsWindowNotifier,
+      TrafficWindow,
+      LogStatsSection
+    >(LogStatsWindowNotifier.new);
+
+class LogStatsWindowNotifier extends Notifier<TrafficWindow> {
+  LogStatsWindowNotifier(this.section);
+
+  final LogStatsSection section;
+
+  @override
+  TrafficWindow build() => TrafficWindow.today;
+
+  void select(TrafficWindow window) => state = window;
+}
+
+DateTime logStatsWindowStart(TrafficWindow window, [DateTime? now]) {
+  final today = now ?? DateTime.now();
+  final midnight = DateTime(today.year, today.month, today.day);
+  return switch (window) {
+    TrafficWindow.today => midnight,
+    TrafficWindow.week => midnight.subtract(Duration(days: today.weekday - 1)),
+    TrafficWindow.month => DateTime(today.year, today.month),
+    TrafficWindow.all => DateTime.fromMillisecondsSinceEpoch(0),
+  };
+}
+
+typedef LogStatsRequests = ({int total, int blocked, int cached});
+
+typedef LogStatsData = ({int saved, int uploaded, int downloaded});
+
+final logStatsRequestsProvider =
+    FutureProvider.family<LogStatsRequests, TrafficWindow>((ref, window) async {
+      ref.watch(dnsLogRevisionProvider);
+      final withHttp = ref.watch(workModeProvider).hasTunnelFeatures;
+      final since = logStatsWindowStart(window);
+      final db = await ref.watch(activeLogDatabaseProvider.future);
+      if (db == null) return (total: 0, blocked: 0, cached: 0);
+
+      final dns = await DnsLogRepository(db).dailyStats(since: since);
+      var http = const HttpRequestDailyStats.empty();
+      if (withHttp) {
+        try {
+          http = await HttpRequestRepository(db).dailyStats(since: since);
+        } on DatabaseException {
+          ignoreError();
+        }
+      }
+      final answer = RustLogQueryCore.instance.derive('stats.requests', {
+        'dns': dns.toKernel(),
+        'http': http.toKernel(),
+      });
+      return (
+        total: (answer['total'] as num?)?.toInt() ?? 0,
+        blocked: (answer['blocked'] as num?)?.toInt() ?? 0,
+        cached: (answer['cached'] as num?)?.toInt() ?? 0,
+      );
+    });
+
+final logStatsDataProvider = FutureProvider.family<LogStatsData, TrafficWindow>(
+  (ref, window) async {
+    final traffic = await ref.watch(trafficSnapshotOfProvider(window).future);
+    final db = await ref.watch(activeLogDatabaseProvider.future);
+    var cached = 0;
+    var average = 0.0;
+    if (db != null) {
+      final since = logStatsWindowStart(window);
+      cached = (await DnsLogRepository(db).dailyStats(since: since)).cached;
+      average = await DnsCacheRepository(db).averageResponseSize();
+    }
+    final answer = RustLogQueryCore.instance.derive('stats.data', {
+      'cached': cached,
+      'avgResponseSize': average,
+      'txBytes': traffic.txBytes,
+      'rxBytes': traffic.rxBytes,
+    });
+    return (
+      saved: (answer['saved'] as num?)?.toInt() ?? 0,
+      uploaded: (answer['uploaded'] as num?)?.toInt() ?? 0,
+      downloaded: (answer['downloaded'] as num?)?.toInt() ?? 0,
+    );
+  },
+);

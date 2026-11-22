@@ -1,0 +1,402 @@
+{
+  "fontSizeSmall": [
+    "小",
+    "Small"
+  ],
+  "fontSizeStandard": [
+    "标准",
+    "Standard"
+  ],
+  "fontSizeLarge": [
+    "大",
+    "Large"
+  ],
+  "fontSizeExtraLarge": [
+    "特大",
+    "Extra large"
+  ],
+  "fontSizeFooter": [
+    "字号会同时放大正文、标题与列表行，不会改变系统设置；界面已按所选比例排版，无需重启。",
+    "The text size scales body copy, titles and list rows together without touching system settings; the layout follows it immediately, no restart needed."
+  ],
+  "fontSizePreview": [
+    "实时预览",
+    "Live preview"
+  ],
+  "appearancePoem": [
+    "谛听万象，明察清浊",
+    "Hear every sound, tell clear from murky"
+  ],
+  "appearancePoemBody": [
+    "网络连通性、规则命中与设备状态，都在这一页里说清楚。",
+    "Connectivity, rule matches and device state, all explained on one page."
+  ],
+  "appearanceTitle": [
+    "外观设置",
+    "Appearance"
+  ],
+  "appearanceInterfaceSection": [
+    "界面显示",
+    "Interface"
+  ],
+  "appearanceHomeOpacitySubtitle": [
+    "交互组件与文字的透明度",
+    "Opacity of interactive components and text"
+  ],
+  "appearancePureBlackOn": [
+    "深色表面折叠为纯黑，OLED 更省电",
+    "Dark surfaces collapse to pure black, saving power on OLED"
+  ],
+  "appearancePureBlackOff": [
+    "切到深色模式后才可开启",
+    "Available once dark mode is on"
+  ],
+  "appearanceHomeSection": [
+    "首页内容",
+    "Home content"
+  ],
+  "appearanceHomeSentenceSubtitle": [
+    "运行与停止两种状态各一句",
+    "One sentence each for running and stopped"
+  ],
+  "appearanceNotification": [
+    "通知栏设置",
+    "Notification"
+  ],
+  "appearanceNotificationSubtitle": [
+    "常驻通知、实时速率与自定义文案",
+    "Persistent notification, live rate and custom text"
+  ],
+  "appearanceBackgroundSection": [
+    "背景与动效",
+    "Background and motion"
+  ],
+  "appearanceHapticSubtitle": [
+    "切换 tab 时给一次轻震",
+    "A short vibration when switching tabs"
+  ],
+  "appearanceBottomBarStyleFloating": [
+    "浮在页面之上",
+    "Floating above the page"
+  ],
+  "appearanceBottomBarStyleDocked": [
+    "贴底排列",
+    "Docked at the bottom"
+  ],
+  "appearanceTabTransitionSubtitle": [
+    "切换底部标签时的动画方式",
+    "Animation used when switching tabs"
+  ],
+  "appearanceMotionFooter": [
+    "底栏样式、动画与玻璃只作用于浮条；普通底栏始终是实色。",
+    "Style, animation and glass only apply to the floating bar; the docked bar stays solid."
+  ],
+  "appearancePaletteGoldLegacy": [
+    "落盘值沿用旧版的 indigo",
+    "Stored value keeps the legacy indigo"
+  ],
+  "appearancePaletteFooter": [
+    "色板只提供种子，上屏的是 HCT 推导出的整套角色色。旧版没有自定义取色，因此这里也不提供。",
+    "The palette only supplies a seed; the screen shows the full HCT-derived role set. The legacy app had no custom picker, so there is none here."
+  ],
+  "fontFamilySizeSubtitle": [
+    "当前 {percent}%",
+    "{percent}% now"
+  ],
+  "fontFamilySystemDefault": [
+    "跟随宿主平台的中文界面字体，最稳妥的选择",
+    "Follows the host platform's interface font; the safest choice"
+  ],
+  "fontFamilyImported": [
+    "已导入的第三方字体",
+    "Imported third-party font"
+  ],
+  "fontFamilyEmpty": [
+    "还没有导入字体。导入后即可在这里切换，字体文件只保存在本机。",
+    "No imported fonts yet. Once imported you can switch here; font files stay on this device."
+  ],
+  "fontFamilyFooter": [
+    "导入的字体只影响本机显示，删除后会自动回退到系统默认。",
+    "Imported fonts only affect this device and fall back to the system default when deleted."
+  ],
+  "fontFamilyLocalOnly": [
+    "选择只影响本机显示，不改动服务端规则。",
+    "The choice only affects this device and never changes server-side rules."
+  ],
+  "fontFamilyImportFailed": [
+    "导入失败",
+    "Import failed"
+  ],
+  "fontFamilyDeleteTitle": [
+    "删除字体",
+    "Delete font"
+  ],
+  "commonCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "commonDelete": [
+    "删除",
+    "Delete"
+  ],
+  "fontFamilyDeleteConfirm": [
+    "删除「{name}」后，使用该字体的界面会回退到系统默认。",
+    "After deleting \"{name}\", the interface falls back to the system default font."
+  ],
+  "fontFamilyImport": [
+    "导入字体",
+    "Import font"
+  ],
+  "fontFamilyReading": [
+    "正在读取字体文件…",
+    "Reading the font file…"
+  ],
+  "fontFamilyPickFile": [
+    "选择本机的 TTF / OTF 文件",
+    "Pick a TTF / OTF file on this device"
+  ],
+  "notificationPersistentSection": [
+    "常驻通知",
+    "Persistent notification"
+  ],
+  "notificationPersistentFooter": [
+    "关闭后服务运行时不再显示常驻通知，系统可能因此更快回收进程。",
+    "When off, no persistent notification is shown while the service runs, so the system may reclaim the process sooner."
+  ],
+  "notificationPersistent": [
+    "通知常驻",
+    "Persistent notification"
+  ],
+  "notificationPersistentSubtitle": [
+    "服务运行时保留一条不可划掉的通知",
+    "Keeps an unswipeable notification while the service runs"
+  ],
+  "notificationShowSpeed": [
+    "显示实时速率",
+    "Show live rate"
+  ],
+  "notificationShowSpeedSubtitle": [
+    "在通知里显示当前上下行速率",
+    "Shows the current up/down rate in the notification"
+  ],
+  "notificationTextRunning": [
+    "DNS 服务开启时",
+    "When the DNS service is on"
+  ],
+  "notificationTextStopped": [
+    "DNS 服务关闭时",
+    "When the DNS service is off"
+  ],
+  "notificationTextHint": [
+    "留空则使用默认文案",
+    "Leave empty to use the default text"
+  ],
+  "notificationTextFooter": [
+    "留空则使用默认文案；文案只影响通知栏，不改变服务行为。",
+    "Empty fields use the default text; the wording only affects the notification, never the service."
+  ],
+  "notificationPermissions": [
+    "权限",
+    "Permissions"
+  ],
+  "notificationSystemPermission": [
+    "系统通知权限",
+    "System notification permission"
+  ],
+  "notificationSystemPermissionSubtitle": [
+    "打开系统的通知设置页",
+    "Opens the system notification settings"
+  ],
+  "backgroundTitle": [
+    "软件背景",
+    "App background"
+  ],
+  "backgroundSection": [
+    "自定义背景",
+    "Custom background"
+  ],
+  "backgroundFooter": [
+    "壁纸只保存在本机，不随备份导出。",
+    "Wallpapers stay on this device and are never exported with backups."
+  ],
+  "backgroundEnable": [
+    "启用自定义背景",
+    "Enable custom background"
+  ],
+  "backgroundPickFirst": [
+    "请先添加一张图片",
+    "Add an image first"
+  ],
+  "backgroundBehindPages": [
+    "在全部页面下垫一层壁纸",
+    "Puts a wallpaper behind every page"
+  ],
+  "backgroundAddImage": [
+    "添加图片",
+    "Add image"
+  ],
+  "backgroundAddImageSubtitle": [
+    "从相册选择一张",
+    "Pick one from the gallery"
+  ],
+  "backgroundAdded": [
+    "已添加壁纸",
+    "Added wallpapers"
+  ],
+  "backgroundAddedFooter": [
+    "点一下切换，长按删除。",
+    "Tap to switch, long-press to delete."
+  ],
+  "backgroundEmpty": [
+    "还没有背景图",
+    "No background image yet"
+  ],
+  "backgroundEmptyDescription": [
+    "点「添加图片」从相册里挑一张。",
+    "Tap \"Add image\" and pick one from the gallery."
+  ],
+  "backgroundDeleteTitle": [
+    "删除壁纸",
+    "Delete wallpaper"
+  ],
+  "backgroundDeleteConfirm": [
+    "确定删除这张已添加的壁纸吗？",
+    "Delete this wallpaper?"
+  ],
+  "foregroundTitle": [
+    "前后台行为",
+    "Foreground and background"
+  ],
+  "foregroundPrivacySection": [
+    "后台与隐私",
+    "Background and privacy"
+  ],
+  "foregroundPrivacyFooter": [
+    "「后台隐藏」会从最近任务列表里移除本应用；下次从桌面图标进入即可。",
+    "Hiding in the background removes the app from the recent tasks list; open it again from the home screen."
+  ],
+  "foregroundHide": [
+    "后台隐藏",
+    "Hide in background"
+  ],
+  "foregroundHideSubtitle": [
+    "不在最近任务列表中显示",
+    "Not shown in the recent tasks list"
+  ],
+  "foregroundRouting": [
+    "路由",
+    "Routing"
+  ],
+  "foregroundBypassLan": [
+    "绕过局域网",
+    "Bypass LAN"
+  ],
+  "foregroundBypassLanSubtitle": [
+    "本地网段与本机地址不走隧道",
+    "Local subnets and this device stay off the tunnel"
+  ],
+  "foregroundStability": [
+    "稳定性",
+    "Stability"
+  ],
+  "foregroundBatteryFooter": [
+    "关闭电池优化后，系统在后台更不容易回收服务进程。",
+    "With battery optimisation off, the system is less likely to reclaim the service process."
+  ],
+  "foregroundIgnoreBattery": [
+    "忽略电池优化",
+    "Ignore battery optimisation"
+  ],
+  "foregroundIgnoreBatterySubtitle": [
+    "请求把本应用加入系统白名单",
+    "Ask to whitelist this app in the system"
+  ],
+  "dayNightTitle": [
+    "日夜模式",
+    "Day/night mode"
+  ],
+  "dayNightFollowSystemDescription": [
+    "系统切换深色时一起切换",
+    "Switches together with the system dark mode"
+  ],
+  "dayNightFooter": [
+    "纯黑只在深色模式下生效，开关在「外观设置」的界面显示组里。",
+    "Pure black only applies in dark mode; its switch lives in the Interface group of Appearance."
+  ],
+  "homeOpacityTitle": [
+    "首页透明度",
+    "Home opacity"
+  ],
+  "homeOpacityComponents": [
+    "交互组件",
+    "Interactive components"
+  ],
+  "homeOpacityComponentsFooter": [
+    "透明度只影响可见度，不影响这些组件的点击区域。",
+    "Opacity only affects visibility, not the tap targets of these components."
+  ],
+  "homeOpacityText": [
+    "文字",
+    "Text"
+  ],
+  "bottomBarHomeSubtitle": [
+    "首页与仪表盘",
+    "Home and dashboard"
+  ],
+  "bottomBarFeatureHubSubtitle": [
+    "全部功能入口",
+    "Every feature entry point"
+  ],
+  "bottomBarLogDashboardSubtitle": [
+    "日志仪表盘",
+    "Log dashboard"
+  ],
+  "bottomBarAppTrafficSubtitle": [
+    "应用流量排行",
+    "App traffic ranking"
+  ],
+  "bottomBarNetworkToolsSubtitle": [
+    "测速与网络诊断",
+    "Speed tests and diagnostics"
+  ],
+  "bottomBarSettingsSubtitle": [
+    "全部设置项",
+    "All settings"
+  ],
+  "bottomBarMinimumHint": [
+    "底栏至少保留 2 项",
+    "Keep at least 2 items in the bottom bar"
+  ],
+  "bottomBarCustomTitle": [
+    "底栏自定义",
+    "Bottom bar"
+  ],
+  "bottomBarItemsHeader": [
+    "底栏项（{count}/{max}）",
+    "Bottom bar items ({count}/{max})"
+  ],
+  "bottomBarDragHint": [
+    "按住右侧把手或长按整行拖动排序，顺序即底栏从左到右的顺序。至少 2 项、最多 {max} 项：浮条按项数等比分配宽度，再多就挤到看不清图标。",
+    "Drag by the handle on the right or long-press a row to reorder; the order is the bottom bar order from left to right. Keep 2 to {max} items: the floating bar splits its width evenly and more would squeeze the icons."
+  ],
+  "bottomBarDisabled": [
+    "未启用",
+    "Not in use"
+  ],
+  "bottomBarNewItemFooter": [
+    "新启用的项排在底栏最右侧。",
+    "Newly enabled items go to the far right."
+  ],
+  "bottomBarFeel": [
+    "手感",
+    "Feel"
+  ],
+  "homeSentenceTitle": [
+    "首页句子",
+    "Home sentences"
+  ],
+  "homeSentenceFooter": [
+    "两项均可留空；留空后对应状态下首页不显示句子，句子只在首页电源区下方出现一次。",
+    "Both fields may stay empty; when empty, no sentence is shown in that state. The sentence appears once, below the power button."
+  ]
+}

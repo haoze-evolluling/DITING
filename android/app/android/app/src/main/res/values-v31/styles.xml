@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ draws its own splash window and ignores `windowBackground`, so the launch
+         colour has to be declared here too; without it the platform paints its near-white default,
+         which is the white flash seen on newer devices.
+         The icon is `@drawable/splash_icon` (a self-contained rounded-square card) rather than
+         `@mipmap/ic_launcher`: the platform only masks adaptive icons to a circle, so pointing it
+         at the launcher icon either gets clipped round or, when the night bitmap wins resource
+         matching, scaled 1.5x into a bare square. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/diting_window_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/diting_window_background</item>
+    </style>
+</resources>

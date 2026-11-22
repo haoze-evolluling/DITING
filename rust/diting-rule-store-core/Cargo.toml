@@ -1,0 +1,13 @@
+[package]
+name = "diting-rule-store-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The boundary payload is JSON like the backup document: the app hands over joined rows and gets
+# typed rules or a statement plan back, so no field order can drift between the two sides.
+serde_json = "1"

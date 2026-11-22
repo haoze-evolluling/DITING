@@ -1,0 +1,11 @@
+[package]
+name = "diting-sniffer-core"
+version = "0.1.0"
+edition = "2021"
+description = "TLS ClientHello and plaintext HTTP flow sniffer for the Android tunnel engine"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]

@@ -1,0 +1,15 @@
+# System hosts mock
+127.0.0.1 localhost myapp.local
+192.168.1.100 nas.home storage.home # lan nas
+::1 localhost ip6-localhost
+2001:db8::1 ipv6.test.local
+fe80::1%eth0 linklocal.local
+
+  192.168.1.101  Dotted.Host.  dotted.host
+127.0.0.1 127.0.0.1 same.ip.two.aliases
+::ffff:192.168.1.100 mapped.home
+not-an-ip host.without.ip
+10.0.0.1
+10.0.0.2	tabbed.host	second.host
+127.0.0.1 dup.host
+127.0.0.1 dup.host

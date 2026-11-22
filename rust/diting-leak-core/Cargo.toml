@@ -1,0 +1,13 @@
+[package]
+name = "diting-leak-core"
+version = "0.1.0"
+edition = "2021"
+description = "DNS-leak detection evaluator: compares a fingerprint probe's answering resolver identity and plaintext egress against the configured upstream and returns pass / leak / unknown (N6 / K6)"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The request/answer crosses the dart:ffi boundary as JSON, matching the other UI-side kernels.
+serde_json = "1"

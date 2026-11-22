@@ -1,0 +1,236 @@
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/native/diagnostics_bridge.dart';
+import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/pages/home/dashboard/detail/dashboard_detail_parts.dart';
+import 'package:diting_android/state/diagnostics_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_snack.dart';
+import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+class IntranetIpDetailPage extends ConsumerWidget {
+  const IntranetIpDetailPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final network = ref.watch(networkInfoProvider);
+    final info = network.asData?.value;
+    final mode = ref.watch(workModeProvider);
+    final colorScheme = context.colorScheme;
+    final localIp = info?.localIpv4 ?? '';
+    final dnsAddress = localIp.isEmpty ? null : localIp;
+    final placeholder = network.isLoading
+        ? context.l10n.intranetReading
+        : context.l10n.intranetNoActiveNetwork;
+    final hint = localIp.isEmpty
+        ? context.l10n.intranetConnectHintSentence
+        : context.l10n.intranetModeNotListeningSentence(
+            mode.title(context.l10n),
+          );
+    final dnsServers = info?.dnsServers ?? const <String>[];
+    final vpnActive = info?.vpnActive == true;
+    return DashboardDetailScaffold(
+      title: context.l10n.intranetDetailTitle,
+      actions: [
+        IconButton(
+          tooltip: context.l10n.intranetRefresh,
+          onPressed: () => ref.invalidate(networkInfoProvider),
+          icon: const Icon(TablerIcons.refresh),
+        ),
+      ],
+      children: [
+        DashboardDetailHero(
+          glyph: TablerIcons.wifi,
+          label: context.l10n.intranetLocalAddress,
+          value: dnsAddress ?? placeholder,
+          tabular: dnsAddress != null,
+          chipLabel: context.l10n.intranetLocalOnly,
+          chipColor: colorScheme.onSurfaceVariant,
+          hint: hint,
+        ),
+        if (dnsAddress != null) _CopyCard(address: dnsAddress),
+        DashboardDetailCard(
+          glyph: TablerIcons.topology_star,
+          title: context.l10n.intranetNetworkOverview,
+          child: DashboardStatGrid(
+            stats: [
+              StatItem(label: 'IPv4', value: localIp.isEmpty ? '—' : localIp),
+              StatItem(
+                label: 'VPN',
+                value: vpnActive
+                    ? context.l10n.commonEnabled
+                    : context.l10n.commonDisabled,
+                color: vpnActive ? colorScheme.primary : null,
+              ),
+              StatItem(
+                label: context.l10n.intranetDnsServers,
+                value: '${dnsServers.length}',
+              ),
+            ],
+          ),
+        ),
+        DashboardDetailCard(
+          glyph: TablerIcons.wifi,
+          title: context.l10n.intranetInterfaces,
+          footer: info == null || info.interfaceName.isEmpty
+              ? context.l10n.intranetNoInterface
+              : null,
+          child: DashboardDetailRows(
+            rows: [
+              DashboardDetailRow(
+                label: context.l10n.intranetAdapter,
+                value: networkInterfaceLabel(info ?? _emptyInfo),
+                tabular: true,
+              ),
+              DashboardDetailRow(
+                label: 'IPv4',
+                value: localIp.isEmpty ? '—' : localIp,
+                tabular: true,
+              ),
+              DashboardDetailRow(
+                label: 'IPv6',
+                value: info?.localIpv6?.isNotEmpty == true
+                    ? info!.localIpv6!
+                    : '—',
+                tabular: true,
+              ),
+              DashboardDetailRow(
+                label: context.l10n.intranetGateway,
+                value: info?.gateway?.isNotEmpty == true ? info!.gateway! : '—',
+                tabular: true,
+              ),
+            ],
+          ),
+        ),
+        DashboardDetailCard(
+          glyph: TablerIcons.server_2,
+          title: 'DNS',
+          footer: info != null && info.privateDns != 'off'
+              ? context.l10n.intranetPrivateDnsOn(info.privateDns)
+              : context.l10n.intranetPrivateDnsOff,
+          child: dnsServers.isEmpty
+              ? Row(
+                  spacing: 10,
+                  children: [
+                    Icon(
+                      TablerIcons.info_circle,
+                      size: 20,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    Expanded(
+                      child: Text(
+                        context.l10n.intranetNoDnsServer,
+                        style: AppTextRole.body
+                            .of(context)
+                            .copyWith(color: colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                  ],
+                )
+              : DashboardDetailRows(
+                  rows: [
+                    for (final (index, server) in dnsServers.indexed)
+                      DashboardDetailRow(
+                        label: index == 0
+                            ? context.l10n.intranetPrimaryDns
+                            : context.l10n.intranetSecondaryDns(index),
+                        value: server,
+                        tabular: true,
+                      ),
+                    DashboardDetailRow(
+                      label: context.l10n.intranetPrivateDns,
+                      value: info?.privateDns ?? '—',
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  static const _emptyInfo = NetworkInfoSnapshot(
+    interfaceName: '',
+    localIpv4: '',
+    privateDns: 'off',
+    vpnActive: false,
+  );
+}
+
+class _CopyCard extends StatelessWidget {
+  const _CopyCard({required this.address});
+
+  final String address;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = context.colorScheme;
+    final colors = DashboardColors.of(context);
+    return DashboardDetailCard(
+      semanticLabel: context.l10n.intranetCopyAddressSemantics(address),
+      onTap: () => _copy(context, address),
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+      child: Row(
+        spacing: 12,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: ShapeDecoration(
+              color: colors.tone,
+              shape: AppShape.standard,
+            ),
+            child: Center(
+              child: Icon(
+                TablerIcons.copy,
+                size: 18,
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              spacing: 2,
+              children: [
+                Text(
+                  context.l10n.intranetCopyAddress,
+                  style: AppTextRole.bodyStrong.of(context),
+                ),
+                Text(
+                  address,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextRole.caption
+                      .of(context)
+                      .copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontFeatures: appTabularFigures,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            TablerIcons.chevron_right,
+            size: 18,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Future<void> _copy(BuildContext context, String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    showAppSnack(
+      context,
+      context.l10n.commonCopied(text),
+      duration: const Duration(milliseconds: 1600),
+    );
+  }
+}

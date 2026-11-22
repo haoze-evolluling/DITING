@@ -1,0 +1,15 @@
+{
+  "trafficWindowLabelDate": ["统计日期 {date}", "Statistics for {date}"],
+  "trafficWindowLabelRange": ["统计范围 {start} 至 {end}", "Statistics from {start} to {end}"],
+  "trafficShareWindow": ["占比按{window}总字节数（下行 + 上行）计算；{range}。点按一行查看该应用的上下行明细。", "Shares use the total bytes (download + upload) for {window}; {range}. Tap a row to see that app's breakdown."],
+  "trafficTotalApps": ["共 {count} 个应用产生流量 · 合计 {total}", "{count} apps generated traffic · {total} total"],
+  "trafficSearchEmpty": ["没有应用名或包名包含「{search}」。", "No app name or package contains \"{search}\"."],
+  "trafficHiddenCount": ["本次共有 {count} 个应用被「隐藏系统应用」过滤掉，关闭该开关即可看到。", "{count} apps are hidden by \"Hide system apps\"; turn it off to see them."],
+  "trafficNoRecordsBody": ["流量按天由原生侧汇总落库；启动隧道并产生流量后，这里会出现各应用的下行 / 上行字节数。", "Traffic is summed per day by the native side; once the tunnel runs and carries traffic, each app's download and upload bytes appear here."],
+  "trafficNoRecordsForWindow": ["「{window}」还没有流量记录。流量按天由原生侧汇总落库，换个时间窗口或启动隧道产生流量后再看。", "No traffic records for \"{window}\" yet. Records are summed per day, so try another window or run the tunnel first."],
+  "trafficOptionUnavailable": ["「{label}」不可用：{reason}", "\"{label}\" is unavailable: {reason}"],
+  "trafficNoSourceReason": ["本仓没有对应的数据来源", "no matching data source here"],
+  "trafficCleared": ["已清除 {count} 条流量记录", "Cleared {count} traffic records"],
+  "trafficClearFailed": ["清除失败：{detail}", "Clearing failed: {detail}"],
+  "trafficShareBarTooltip": ["占比条长度是这一行按「{sort}」在当前窗口总量里的份额（当前 {value}），与列表排序一致。", "The bar length is this row's share of the window total under \"{sort}\" (currently {value}), matching the list order."]
+}

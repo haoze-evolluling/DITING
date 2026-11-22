@@ -1,0 +1,12 @@
+[package]
+name = "diting-cosmetic-core"
+version = "0.1.0"
+edition = "2021"
+description = "Cosmetic ad-blocking HTML injection kernel for the Android tunnel engine"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[dependencies]
+diting-go-compat = { path = "../diting-go-compat" }

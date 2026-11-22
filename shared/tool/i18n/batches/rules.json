@@ -1,0 +1,218 @@
+{
+  "ruleKindBlockTitle": [
+    "黑名单",
+    "Block list"
+  ],
+  "ruleKindBlockSummary": [
+    "拦截匹配的域名",
+    "Block matching domains"
+  ],
+  "ruleKindAllowTitle": [
+    "白名单",
+    "Allow list"
+  ],
+  "ruleKindAllowSummary": [
+    "放行匹配的域名",
+    "Let matching domains through"
+  ],
+  "ruleKindRewriteTitle": [
+    "覆写",
+    "Rewrite"
+  ],
+  "ruleKindRewriteSummary": [
+    "改写域名解析结果",
+    "Rewrite DNS answers"
+  ],
+  "ruleSourceUser": [
+    "用户自定义",
+    "User defined"
+  ],
+  "ruleSourceSubscription": [
+    "规则订阅",
+    "Rule subscription"
+  ],
+  "ruleSourcePreset": [
+    "内置预设",
+    "Built-in preset"
+  ],
+  "rulePatternRequired": [
+    "规则内容不能为空",
+    "The rule cannot be empty"
+  ],
+  "ruleAllowNeedsAllowlist": [
+    "该规则为放行规则，请在白名单中添加",
+    "This is an allow rule; add it to the allow list instead"
+  ],
+  "ruleAlreadyExists": [
+    "该规则已存在",
+    "This rule already exists"
+  ],
+  "ruleDomainHint": [
+    "域名，如 cdn.example.com",
+    "Domain, e.g. cdn.example.com"
+  ],
+  "ruleTargetRequired": [
+    "目标值不能为空",
+    "The target cannot be empty"
+  ],
+  "ruleTargetHint": [
+    "目标值，如 10.0.0.8",
+    "Target, e.g. 10.0.0.8"
+  ],
+  "ruleImportant": [
+    "重要",
+    "Important"
+  ],
+  "ruleReadOnly": [
+    "只读",
+    "Read only"
+  ],
+  "ruleEdit": [
+    "编辑规则",
+    "Edit rule"
+  ],
+  "ruleDelete": [
+    "删除规则",
+    "Delete rule"
+  ],
+  "batchImportDone": [
+    "导入完成",
+    "Import finished"
+  ],
+  "batchAddTitle": [
+    "批量添加规则",
+    "Add rules in bulk"
+  ],
+  "batchTarget": [
+    "导入到",
+    "Import into"
+  ],
+  "batchTargetTable": [
+    "目标规则表",
+    "Target rule list"
+  ],
+  "batchTargetTableSubtitle": [
+    "导入的规则将写入所选规则表",
+    "Imported rules go into the selected list"
+  ],
+  "batchPlaceholder": [
+    "每行一条规则，例如：\n||ads.example.com^\n\n空行会被忽略，重复规则自动跳过。",
+    "One rule per line, for example:\n||ads.example.com^\n\nBlank lines are ignored and duplicates are skipped automatically."
+  ],
+  "batchImportable": [
+    "可导入",
+    "Importable"
+  ],
+  "batchDuplicated": [
+    "重复",
+    "Duplicated"
+  ],
+  "batchInvalid": [
+    "无效",
+    "Invalid"
+  ],
+  "batchInvalidHeader": [
+    "以下规则未通过校验",
+    "These rules failed validation"
+  ],
+  "batchDuplicateHeader": [
+    "已存在，将跳过",
+    "Already present, will be skipped"
+  ],
+  "ruleClearCustomTitle": [
+    "清空自定义规则",
+    "Clear custom rules"
+  ],
+  "commonClearAll": [
+    "清空",
+    "Clear"
+  ],
+  "ruleResetDefault": [
+    "重置默认白名单",
+    "Reset the default allow list"
+  ],
+  "commonReset": [
+    "重置",
+    "Reset"
+  ],
+  "rulePresetProtectedTitle": [
+    "预设规则受保护",
+    "Preset rules are protected"
+  ],
+  "ruleAllowEditTitle": [
+    "允许编辑默认白名单？",
+    "Allow editing the default allow list?"
+  ],
+  "ruleAllowEditConfirm": [
+    "仍然开启",
+    "Enable anyway"
+  ],
+  "ruleTotal": [
+    "规则总数",
+    "Total rules"
+  ],
+  "ruleEnabled": [
+    "已启用",
+    "Enabled"
+  ],
+  "ruleRewriteEntries": [
+    "覆写条目",
+    "Rewrite entries"
+  ],
+  "ruleCustom": [
+    "自定义",
+    "Custom"
+  ],
+  "ruleAllowEditDefault": [
+    "允许编辑默认白名单",
+    "Allow editing the default allow list"
+  ],
+  "ruleAllowEditDefaultSubtitle": [
+    "关闭时预设规则只读，避免误放宽放行范围",
+    "When off, preset rules are read-only so the allow list cannot widen by accident"
+  ],
+  "ruleNoMatch": [
+    "没有匹配的规则",
+    "No matching rules"
+  ],
+  "ruleNoMatchDescription": [
+    "换个关键词或筛选条件再试",
+    "Try another keyword or filter"
+  ],
+  "ruleAll": [
+    "全部",
+    "All"
+  ],
+  "formIssuesTitle": [
+    "有几点需要先修正",
+    "A few things need fixing"
+  ],
+  "formSave": [
+    "保存",
+    "Save"
+  ],
+  "formProcessing": [
+    "处理中…",
+    "Working…"
+  ],
+  "formAdd": [
+    "添加",
+    "Add"
+  ],
+  "formDelete": [
+    "删除",
+    "Delete"
+  ],
+  "formHelp": [
+    "说明",
+    "Help"
+  ],
+  "formGotIt": [
+    "知道了",
+    "Got it"
+  ],
+  "rulePatternHint": [
+    "规则内容，如 ||ads.example.com^",
+    "Rule text, e.g. ||ads.example.com^"
+  ]
+}

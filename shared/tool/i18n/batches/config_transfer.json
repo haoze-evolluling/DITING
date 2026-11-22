@@ -1,0 +1,520 @@
+{
+  "transferTitle": [
+    "备份与迁移",
+    "Backup and migration"
+  ],
+  "transferMetricProviders": [
+    "DNS 服务商",
+    "DNS providers"
+  ],
+  "transferMetricSubs": [
+    "规则订阅",
+    "Rule subscriptions"
+  ],
+  "transferMetricCustomRules": [
+    "自定义规则",
+    "Custom rules"
+  ],
+  "transferMetricListedApps": [
+    "名单应用",
+    "Listed apps"
+  ],
+  "transferSectionAppConfig": [
+    "应用配置备份",
+    "App configuration"
+  ],
+  "transferSectionRules": [
+    "规则与订阅配置",
+    "Rules and subscriptions"
+  ],
+  "transferSectionAppControl": [
+    "应用控制与流量管理",
+    "App control and traffic"
+  ],
+  "transferSectionPersonal": [
+    "个性化与通用设置",
+    "Personalization and general"
+  ],
+  "transferDeselectAll": [
+    "全不选",
+    "Deselect all"
+  ],
+  "transferImportExportSection": [
+    "导入导出",
+    "Import and export"
+  ],
+  "transferExportJson": [
+    "导出应用配置 (JSON)",
+    "Export app configuration (JSON)"
+  ],
+  "transferExportHintNone": [
+    "请先勾选要导出的分组",
+    "Select the groups to export first"
+  ],
+  "transferExportHintCount": {
+    "zh": "将勾选的 {count} 组配置保存为 JSON 文件",
+    "en": "Save the {count} selected groups to a JSON file",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferImportJson": [
+    "导入应用配置 (JSON)",
+    "Import app configuration (JSON)"
+  ],
+  "transferImportSubtitle": [
+    "从备份文件合并配置，自动跳过本机已存在项目",
+    "Merges a backup file and skips items this device already has"
+  ],
+  "transferImportExportFooter": [
+    "导出的配置文件包含个人自定义设置，请妥善保管；导入时将合并配置并自动跳过已存在的条目。出站代理的账号密码不在备份范围内。",
+    "The exported file contains your personal settings, so keep it safe. Importing merges the settings and skips items that already exist. Outbound proxy credentials are not part of a backup."
+  ],
+  "transferCloudSection": [
+    "云端备份",
+    "Cloud backup"
+  ],
+  "transferWebdav": [
+    "WebDAV 云同步",
+    "WebDAV sync"
+  ],
+  "transferWebdavSubtitle": [
+    "把配置文件同步到自建 WebDAV 服务器",
+    "Sync the configuration file to your own WebDAV server"
+  ],
+  "transferBusyExporting": [
+    "正在生成备份文件…",
+    "Building the backup file…"
+  ],
+  "transferBusySaving": [
+    "等待选择保存位置…",
+    "Waiting for a save location…"
+  ],
+  "transferBusyPickingImport": [
+    "等待选择备份文件…",
+    "Waiting for a backup file…"
+  ],
+  "transferExportEmpty": [
+    "所选分组没有可导出的内容",
+    "The selected groups have nothing to export"
+  ],
+  "transferExportCancelled": [
+    "已取消保存",
+    "Save cancelled"
+  ],
+  "transferExportDone": {
+    "zh": "已导出 {groups} 组、共 {items} 项",
+    "en": "Exported {groups} groups, {items} items in total",
+    "placeholders": {
+      "groups": {
+        "type": "int"
+      },
+      "items": {
+        "type": "int"
+      }
+    }
+  },
+  "transferExportSkipped": {
+    "zh": "；跳过 {count} 项",
+    "en": "; {count} items skipped",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferExportFailed": [
+    "导出失败",
+    "Export failed"
+  ],
+  "transferImportCancelled": [
+    "已取消导入",
+    "Import cancelled"
+  ],
+  "transferImportTitle": [
+    "导入应用配置",
+    "Import app configuration"
+  ],
+  "transferImportFailedChip": [
+    "导入失败",
+    "Import failed"
+  ],
+  "transferImportDoneChip": [
+    "导入完成",
+    "Import finished"
+  ],
+  "transferImportSummary": {
+    "zh": "导入汇总：新增 {added} 项，更新 {updated} 项，跳过 {skipped} 项",
+    "en": "Import summary: {added} added, {updated} updated, {skipped} skipped",
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "transferSourceFile": {
+    "zh": "来源文件：{name}",
+    "en": "Source file: {name}",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "transferExportedAt": {
+    "zh": "备份导出于 {time}",
+    "en": "Backup exported at {time}",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "transferOutcomeRow": {
+    "zh": "  + {group} · {detail}",
+    "en": "  + {group} · {detail}",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "transferFailedGroupRow": {
+    "zh": "  ! {group}：{error}",
+    "en": "  ! {group}: {error}",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transferNothingChanged": [
+    "  （备份中的条目本机都已存在，没有需要变更的内容）",
+    "  (Every item in the backup already exists here; nothing to change)"
+  ],
+  "transferSubscriptionsNote": {
+    "zh": "包含 {count} 个订阅，请进入订阅管理执行规则更新。",
+    "en": "Contains {count} subscriptions; open subscription management to update their rules.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferDone": [
+    "完成",
+    "Done"
+  ],
+  "transferOutcomeAdded": {
+    "zh": "新增 {count}",
+    "en": "{count} added",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferOutcomeUpdated": {
+    "zh": "更新 {count}",
+    "en": "{count} updated",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferOutcomeSkipped": {
+    "zh": "跳过 {count}",
+    "en": "{count} skipped",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "transferNoChange": [
+    "无变化",
+    "No changes"
+  ],
+  "transferOutcomeSeparator": [
+    "，",
+    ", "
+  ],
+  "webdavClearConfig": [
+    "清空配置",
+    "Clear settings"
+  ],
+  "webdavTest": [
+    "测试连接",
+    "Test connection"
+  ],
+  "webdavServer": [
+    "服务器",
+    "Server"
+  ],
+  "webdavUsername": [
+    "用户名",
+    "Username"
+  ],
+  "webdavPassword": [
+    "密码",
+    "Password"
+  ],
+  "webdavPath": [
+    "远端路径",
+    "Remote path"
+  ],
+  "webdavUpload": [
+    "上传备份",
+    "Upload backup"
+  ],
+  "webdavDownload": [
+    "下载恢复",
+    "Download and restore"
+  ],
+  "webdavFooter": {
+    "zh": "「测试连接」会真实发起 WebDAV 请求：PROPFIND 探测目录，不存在则尝试创建。上传与下载走与「备份与迁移」同一份备份格式。{hint}密码只存在内存里，不落盘。",
+    "en": "\"Test connection\" sends a real WebDAV request: PROPFIND probes the folder and creates it when missing. Upload and download use the same backup format as \"Backup and migration\". {hint}The password is kept in memory only and never written to disk.",
+    "placeholders": {
+      "hint": {
+        "type": "String"
+      }
+    }
+  },
+  "webdavFooterConnected": [
+    "连接成功后即可上传或恢复。",
+    "Once connected you can upload or restore. "
+  ],
+  "webdavNoConfig": [
+    "本机没有可备份的配置",
+    "There is no configuration to back up on this device"
+  ],
+  "webdavUploadFailed": [
+    "上传失败",
+    "Upload failed"
+  ],
+  "webdavNoCloudBackup": [
+    "云端没有可恢复的备份",
+    "There is no backup in the cloud to restore"
+  ],
+  "webdavRestoreTitle": [
+    "从云端恢复配置",
+    "Restore configuration from the cloud"
+  ],
+  "webdavRestoreFailed": [
+    "恢复失败",
+    "Restore failed"
+  ],
+  "webdavRestoreDone": [
+    "恢复完成",
+    "Restore finished"
+  ],
+  "webdavRestoreSummary": {
+    "zh": "恢复汇总：新增 {added} 项，更新 {updated} 项，跳过 {skipped} 项",
+    "en": "Restore summary: {added} added, {updated} updated, {skipped} skipped",
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "updated": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "webdavOutcomeRow": {
+    "zh": "  + {group} · 新增 {added}，跳过 {skipped}",
+    "en": "  + {group} · {added} added, {skipped} skipped",
+    "placeholders": {
+      "group": {
+        "type": "String"
+      },
+      "added": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "webdavNothingChanged": [
+    "  （云端备份与本机一致，没有需要变更的内容）",
+    "  (The cloud backup matches this device; nothing to change)"
+  ],
+  "webdavHintIdle": [
+    "配置服务器信息后可测试连接",
+    "Fill in the server details to test the connection"
+  ],
+  "webdavHintConnecting": [
+    "正在握手，请稍候",
+    "Handshaking, please wait"
+  ],
+  "webdavHintConnected": [
+    "可上传备份或从云端恢复配置",
+    "You can upload a backup or restore from the cloud"
+  ],
+  "webdavHintFailed": [
+    "检查地址、账号与证书后重试",
+    "Check the address, account and certificate, then retry"
+  ],
+  "backupGroupProviders": [
+    "自定义 DNS 服务商",
+    "Custom DNS providers"
+  ],
+  "backupGroupProvidersDesc": [
+    "DoH、DoT 服务商与解析配置",
+    "DoH and DoT providers and resolution settings"
+  ],
+  "backupGroupBootstrap": [
+    "自定义 Bootstrap IP",
+    "Custom bootstrap IPs"
+  ],
+  "backupGroupBootstrapDesc": [
+    "引导 DNS 节点与启用状态",
+    "Bootstrap DNS nodes and their switches"
+  ],
+  "backupGroupCache": [
+    "DNS 缓存策略",
+    "DNS cache policy"
+  ],
+  "backupGroupCacheDesc": [
+    "DNS 缓存开关、预设与 TTL 控制",
+    "DNS cache switches, presets and TTL limits"
+  ],
+  "backupGroupOutbound": [
+    "出站代理配置",
+    "Outbound proxy settings"
+  ],
+  "backupGroupOutboundDesc": [
+    "SOCKS5 / HTTP 代理与代理应用，不含账号密码",
+    "SOCKS5 / HTTP proxy and proxied apps, without credentials"
+  ],
+  "backupGroupSubscriptions": [
+    "网络规则订阅",
+    "Online rule subscriptions"
+  ],
+  "backupGroupSubscriptionsDesc": [
+    "订阅源链接、镜像加速与自动更新",
+    "Subscription links, mirrors and auto-update"
+  ],
+  "backupGroupDomainRules": [
+    "自定义屏蔽域名规则",
+    "Custom blocked domain rules"
+  ],
+  "backupGroupDomainRulesDesc": [
+    "手动添加的域名屏蔽规则及状态",
+    "Blocked domains added by hand and their switches"
+  ],
+  "backupGroupRewriteDomain": [
+    "自定义复写域名规则",
+    "Custom domain rewrite rules"
+  ],
+  "backupGroupRewriteDomainDesc": [
+    "IPv4 / IPv6 域名覆写规则",
+    "IPv4 / IPv6 domain override rules"
+  ],
+  "backupGroupRewriteCname": [
+    "自定义复写 CNAME 规则",
+    "Custom CNAME rewrite rules"
+  ],
+  "backupGroupRewriteCnameDesc": [
+    "CNAME 域名覆写规则",
+    "CNAME override rules"
+  ],
+  "backupGroupAddressRules": [
+    "自定义屏蔽地址规则",
+    "Custom blocked address rules"
+  ],
+  "backupGroupAddressRulesDesc": [
+    "URL 路径屏蔽规则",
+    "URL path blocking rules"
+  ],
+  "backupGroupExcluded": [
+    "排除应用名单",
+    "Excluded apps"
+  ],
+  "backupGroupExcludedDesc": [
+    "绕过过滤使用系统 DNS 的应用",
+    "Apps that bypass filtering and use the system DNS"
+  ],
+  "backupGroupBlocked": [
+    "禁止联网名单",
+    "Blocked apps"
+  ],
+  "backupGroupBlockedDesc": [
+    "服务运行时禁止联网的应用",
+    "Apps that cannot go online while the service runs"
+  ],
+  "backupGroupAllowlist": [
+    "应用独立规则与放行",
+    "Per-app rules and allow lists"
+  ],
+  "backupGroupAllowlistDesc": [
+    "单应用放行规则与域名白名单",
+    "Per-app pass rules and domain allowlists"
+  ],
+  "backupGroupHttpInspection": [
+    "HTTPS 抓包检测配置",
+    "HTTPS capture settings"
+  ],
+  "backupGroupHttpInspectionDesc": [
+    "流量抓包开关与目标应用名单",
+    "Capture switches and target apps"
+  ],
+  "backupGroupAppearance": [
+    "外观与界面个性化",
+    "Appearance and personalization"
+  ],
+  "backupGroupAppearanceDesc": [
+    "主题风格、组件透明度与标语",
+    "Theme, component opacity and taglines"
+  ],
+  "backupGroupSystem": [
+    "系统与通用设置",
+    "System and general settings"
+  ],
+  "backupGroupSystemDesc": [
+    "局域网绕行、日志模式、语言与通知",
+    "LAN bypass, log mode, language and notifications"
+  ],
+  "commonSelectAll": [
+    "全选",
+    "Select all"
+  ],
+  "commonClearAll": [
+    "清空",
+    "Clear"
+  ],
+  "commonCancel": [
+    "取消",
+    "Cancel"
+  ],
+  "webdavUploadedCount": {
+    "zh": "已上传 {groups} 组、共 {items} 项",
+    "en": "Uploaded {groups} groups, {items} items in total",
+    "placeholders": {
+      "groups": {
+        "type": "int"
+      },
+      "items": {
+        "type": "int"
+      }
+    }
+  }
+}

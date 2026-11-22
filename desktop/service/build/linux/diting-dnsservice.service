@@ -1,0 +1,20 @@
+[Unit]
+Description=谛听 DNS 内核特权服务 (DITING DNS Service)
+Documentation=https://github.com/haoze-evolluling/diting
+After=syslog.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 可选：在 /etc/default/diting 中覆盖运行参数（如 DITING_DATA_DIR、DITING_PORT）
+EnvironmentFile=-/etc/default/diting
+EnvironmentFile=-/etc/sysconfig/diting
+ExecStart=/usr/local/bin/diting-service -run
+Restart=always
+RestartSec=10
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

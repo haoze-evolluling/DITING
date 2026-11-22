@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme while the process starts, light mode. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <!-- Splash shown until the Flutter engine draws its first frame. -->
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <!-- Window theme behind the Flutter UI once it is running; same colour as the splash and the
+         page, so a dropped frame never shows a white gap. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/diting_window_background</item>
+    </style>
+</resources>

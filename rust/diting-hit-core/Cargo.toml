@@ -1,0 +1,13 @@
+[package]
+name = "diting-hit-core"
+version = "0.1.0"
+edition = "2021"
+description = "Sharded atomic rule-hit counters with a snapshot export"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# The boundary is JSON like the other kernels: the engine/Dart increments and snapshots.
+serde_json = "1"

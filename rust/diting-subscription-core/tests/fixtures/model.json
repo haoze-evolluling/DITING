@@ -1,0 +1,322 @@
+{
+  "records": [
+    {
+      "row": {
+        "id": 7,
+        "url": "https://example.com/r.txt",
+        "name": "n",
+        "sourceType": "remote",
+        "kind": "domain",
+        "enabled": 1,
+        "ruleCount": 3,
+        "lastUpdated": 100,
+        "addedAt": 50,
+        "importState": "ready",
+        "importError": null,
+        "httpEtag": "e",
+        "httpLastModified": null,
+        "ruleSetHash": null,
+        "lastAttemptAt": 90,
+        "consecutiveFailureCount": 2,
+        "mirrorTemplate": null,
+        "mirrorFallback": 1,
+        "groupId": 4
+      },
+      "expected": {
+        "id": 7,
+        "url": "https://example.com/r.txt",
+        "name": "n",
+        "sourceType": "remote",
+        "kind": "domain",
+        "enabled": true,
+        "ruleCount": 3,
+        "lastUpdated": 100,
+        "addedAt": 50,
+        "importState": "ready",
+        "importError": null,
+        "httpEtag": "e",
+        "httpLastModified": null,
+        "ruleSetHash": null,
+        "lastAttemptAt": 90,
+        "consecutiveFailureCount": 2,
+        "mirrorTemplate": null,
+        "mirrorFallback": true,
+        "groupId": 4,
+        "isRemote": true
+      }
+    },
+    {
+      "row": {
+        "sourceType": "local",
+        "kind": "HOSTS",
+        "enabled": 0,
+        "mirrorFallback": 0,
+        "importState": "importing",
+        "groupId": null
+      },
+      "expected": {
+        "id": 0,
+        "url": "",
+        "name": "",
+        "sourceType": "local",
+        "kind": "hosts",
+        "enabled": false,
+        "ruleCount": 0,
+        "lastUpdated": 0,
+        "addedAt": 0,
+        "importState": "importing",
+        "importError": null,
+        "httpEtag": null,
+        "httpLastModified": null,
+        "ruleSetHash": null,
+        "lastAttemptAt": 0,
+        "consecutiveFailureCount": 0,
+        "mirrorTemplate": null,
+        "mirrorFallback": false,
+        "groupId": null,
+        "isRemote": false
+      }
+    },
+    {
+      "row": {},
+      "expected": {
+        "id": 0,
+        "url": "",
+        "name": "",
+        "sourceType": "remote",
+        "kind": "domain",
+        "enabled": true,
+        "ruleCount": 0,
+        "lastUpdated": 0,
+        "addedAt": 0,
+        "importState": "ready",
+        "importError": null,
+        "httpEtag": null,
+        "httpLastModified": null,
+        "ruleSetHash": null,
+        "lastAttemptAt": 0,
+        "consecutiveFailureCount": 0,
+        "mirrorTemplate": null,
+        "mirrorFallback": true,
+        "groupId": null,
+        "isRemote": true
+      }
+    },
+    {
+      "row": {
+        "id": 8,
+        "enabled": true,
+        "mirrorFallback": false,
+        "kind": "weird",
+        "sourceType": null,
+        "importState": "failed",
+        "consecutiveFailureCount": 0
+      },
+      "expected": {
+        "id": 8,
+        "url": "",
+        "name": "",
+        "sourceType": "remote",
+        "kind": "domain",
+        "enabled": true,
+        "ruleCount": 0,
+        "lastUpdated": 0,
+        "addedAt": 0,
+        "importState": "failed",
+        "importError": null,
+        "httpEtag": null,
+        "httpLastModified": null,
+        "ruleSetHash": null,
+        "lastAttemptAt": 0,
+        "consecutiveFailureCount": 0,
+        "mirrorTemplate": null,
+        "mirrorFallback": false,
+        "groupId": null,
+        "isRemote": true
+      }
+    },
+    {
+      "row": {
+        "id": 9,
+        "enabled": null,
+        "mirrorFallback": null,
+        "kind": " domain ",
+        "sourceType": "REMOTE",
+        "importState": null
+      },
+      "expected": {
+        "id": 9,
+        "url": "",
+        "name": "",
+        "sourceType": "remote",
+        "kind": "domain",
+        "enabled": true,
+        "ruleCount": 0,
+        "lastUpdated": 0,
+        "addedAt": 0,
+        "importState": "ready",
+        "importError": null,
+        "httpEtag": null,
+        "httpLastModified": null,
+        "ruleSetHash": null,
+        "lastAttemptAt": 0,
+        "consecutiveFailureCount": 0,
+        "mirrorTemplate": null,
+        "mirrorFallback": true,
+        "groupId": null,
+        "isRemote": true
+      }
+    }
+  ],
+  "groups": [
+    {
+      "row": {
+        "id": 3,
+        "name": "g",
+        "autoUpdateEnabled": 1,
+        "addedAt": 10
+      },
+      "expected": {
+        "id": 3,
+        "name": "g",
+        "autoUpdateEnabled": true,
+        "addedAt": 10
+      }
+    },
+    {
+      "row": {
+        "name": "h",
+        "autoUpdateEnabled": 0
+      },
+      "expected": {
+        "id": 0,
+        "name": "h",
+        "autoUpdateEnabled": false,
+        "addedAt": 0
+      }
+    },
+    {
+      "row": {},
+      "expected": {
+        "id": 0,
+        "name": "",
+        "autoUpdateEnabled": true,
+        "addedAt": 0
+      }
+    },
+    {
+      "row": {
+        "autoUpdateEnabled": null
+      },
+      "expected": {
+        "id": 0,
+        "name": "",
+        "autoUpdateEnabled": true,
+        "addedAt": 0
+      }
+    }
+  ],
+  "items": [
+    {
+      "row": {
+        "batchId": "b",
+        "subscriptionId": 2,
+        "status": "success",
+        "changed": 1,
+        "ruleCount": 5
+      },
+      "expected": {
+        "batchId": "b",
+        "subscriptionId": 2,
+        "status": "success",
+        "changed": true,
+        "ruleCount": 5
+      }
+    },
+    {
+      "row": {
+        "status": "failed",
+        "changed": 0
+      },
+      "expected": {
+        "batchId": "",
+        "subscriptionId": 0,
+        "status": "failed",
+        "changed": false,
+        "ruleCount": 0
+      }
+    },
+    {
+      "row": {
+        "status": "pending_retry"
+      },
+      "expected": {
+        "batchId": "",
+        "subscriptionId": 0,
+        "status": "pending_retry",
+        "changed": false,
+        "ruleCount": 0
+      }
+    },
+    {
+      "row": {},
+      "expected": {
+        "batchId": "",
+        "subscriptionId": 0,
+        "status": "pending_retry",
+        "changed": false,
+        "ruleCount": 0
+      }
+    }
+  ],
+  "kinds": {
+    "null": {
+      "normalize": "domain",
+      "canonical": false
+    },
+    "": {
+      "normalize": "domain",
+      "canonical": false
+    },
+    "domain": {
+      "normalize": "domain",
+      "canonical": true
+    },
+    "HOSTS": {
+      "normalize": "hosts",
+      "canonical": true
+    },
+    " hosts ": {
+      "normalize": "hosts",
+      "canonical": true
+    },
+    "weird": {
+      "normalize": "domain",
+      "canonical": false
+    }
+  },
+  "sourceTypes": {
+    "null": "remote",
+    "": "remote",
+    "remote": "remote",
+    "local": "local",
+    "LOCAL": "remote",
+    "weird": "remote"
+  },
+  "importStates": {
+    "null": "ready",
+    "": "ready",
+    "ready": "ready",
+    "importing": "importing",
+    "failed": "failed",
+    "x": "ready"
+  },
+  "autoUpdateStatuses": {
+    "null": "pending_retry",
+    "": "pending_retry",
+    "pending_retry": "pending_retry",
+    "success": "success",
+    "failed": "failed",
+    "x": "pending_retry"
+  }
+}

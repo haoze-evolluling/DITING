@@ -1,0 +1,478 @@
+// ignore_for_file: sort_child_properties_last
+import 'dart:async';
+
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/native/apps_bridge.dart';
+import 'package:diting_android/data/mock_data.dart';
+import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/pages/hub/app_rules_store.dart';
+import 'package:diting_android/state/app_rules_providers.dart';
+import 'package:diting_android/state/installed_apps_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/widgets/app_list_error_state.dart';
+import 'package:diting_android/widgets/app_snack.dart';
+import 'package:diting_android/widgets/app_list_view.dart';
+import 'package:diting_android/widgets/leading_slot.dart';
+import 'package:diting_android/widgets/section_slivers.dart';
+import 'package:diting_android/widgets/unsaved_changes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
+part 'app_rules_detail.dart';
+
+class AppRulesPage extends ConsumerStatefulWidget {
+  const AppRulesPage({super.key});
+
+  @override
+  ConsumerState<AppRulesPage> createState() => _AppRulesPageState();
+}
+
+class _AppRulesPageState extends ConsumerState<AppRulesPage> {
+  static const _searchDebounce = Duration(milliseconds: 250);
+
+  final _search = TextEditingController();
+  Timer? _debounce;
+
+  String _query = '';
+
+  String? _selected;
+
+  AppRulesDraft? _draft;
+
+  String? _lastKey;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(_searchDebounce, () {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _query = value.trim().toLowerCase());
+    });
+  }
+
+  AppRulesDraft _draftOf(LegacySettings settings) {
+    final key = appRulesKey(
+      settings.appAllowlistEnabled,
+      settings.appAllowlistRules,
+    );
+    if (_draft == null || (key != _lastKey && key != _draft!.baselineKey)) {
+      _draft = AppRulesDraft.load(settings);
+      _lastKey = key;
+    }
+    return _draft!;
+  }
+
+  void _save() {
+    final draft = _draft;
+    if (draft == null) {
+      return;
+    }
+    saveAppRules(ref, draft);
+    setState(() {
+      draft.commit();
+      _lastKey = draft.baselineKey;
+    });
+    showAppSnack(context, context.l10n.appRulesSaved);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(legacySettingsProvider);
+    final draft = _draftOf(settings);
+    final snapshot = ref.watch(installedAppsProvider);
+    final apps = snapshot.value?.apps ?? const <InstalledApp>[];
+    final app = _selected == null
+        ? null
+        : apps.where((item) => item.packageName == _selected).firstOrNull;
+    final showing = app != null ? _selected : null;
+    return PopScope(
+      canPop: showing == null && !draft.dirty,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) {
+          return;
+        }
+        if (showing != null) {
+          setState(() => _selected = null);
+          return;
+        }
+        if (!await _confirmLeave(draft)) {
+          return;
+        }
+        if (mounted) {
+          Navigator.of(this.context).pop();
+        }
+      },
+      child: app == null
+          ? _buildList(context, draft, snapshot, settings)
+          : _buildDetail(context, draft, app),
+    );
+  }
+
+  Future<bool> _confirmLeave(AppRulesDraft draft) async {
+    final choice = await showUnsavedChangesDialog(
+      context,
+      title: context.l10n.commonSaveChangesTitle,
+      message: context.l10n.commonSaveChangesMessageFor(
+        context.l10n.hubAppRules,
+      ),
+    );
+    if (!mounted) {
+      return false;
+    }
+    switch (choice) {
+      case UnsavedChangesChoice.cancel:
+        return false;
+      case UnsavedChangesChoice.discard:
+        return true;
+      case UnsavedChangesChoice.save:
+        _save();
+        return true;
+    }
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    AppRulesDraft draft,
+    AsyncValue<InstalledAppsSnapshot> snapshot,
+    LegacySettings settings,
+  ) {
+    final apps = snapshot.value?.apps ?? const <InstalledApp>[];
+    final filter = AppListFilter.fromStorageValue(
+      settings.appAllowlistFilterRaw,
+    );
+    final sort = AppListSort.fromStorageValue(settings.appAllowlistSortRaw);
+    final visible = appRulesVisibleApps(
+      apps: apps,
+      query: _query,
+      filter: filter,
+      sort: sort,
+      draft: draft,
+    );
+    final hasAllowlist = draft.configuredApps > 0;
+    return CommonScaffold(
+      title: context.l10n.hubAppRules,
+      iconActions: [
+        IconButtonData(
+          glyph: TablerIcons.brush,
+          tooltip: context.l10n.appRulesClearAllTooltip,
+          onPressed: hasAllowlist ? () => _clearAll(draft) : null,
+        ),
+      ],
+      menuItems: [
+        CommonPopupMenuItem(
+          label: context.l10n.commonFilter,
+          glyph: TablerIcons.filter,
+          subItems: [
+            for (final option in AppListFilter.values)
+              CommonPopupMenuItem(
+                label: option.label(context.l10n),
+                checked: option == filter,
+                onPressed: () {
+                  settings.setAppAllowlistFilterRaw(option.storageValue);
+                  ref.read(legacySettingsRevisionProvider.notifier).bump();
+                },
+              ),
+          ],
+        ),
+        CommonPopupMenuItem(
+          label: context.l10n.uiSort,
+          glyph: TablerIcons.sort_ascending,
+          subItems: [
+            for (final option in AppListSort.values)
+              CommonPopupMenuItem(
+                label: option.label(context.l10n),
+                checked: option == sort,
+                onPressed: () {
+                  settings.setAppAllowlistSortRaw(option.storageValue);
+                  ref.read(legacySettingsRevisionProvider.notifier).bump();
+                },
+              ),
+          ],
+        ),
+        CommonPopupMenuItem(
+          label: context.l10n.commonSave,
+          glyph: TablerIcons.circle_check,
+          onPressed: draft.dirty ? _save : null,
+        ),
+      ],
+      body: AppListScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                generateSection(
+                  title: context.l10n.appRulesMasterSection,
+                  items: [
+                    ListItem.toggle(
+                      leading: const LeadingSlot(
+                        child: Icon(TablerIcons.rosette_discount_check),
+                      ),
+                      title: Text(context.l10n.appRulesMasterToggle),
+                      subtitle: Text(
+                        draft.configuredApps == 0
+                            ? context.l10n.appRulesNoConfigured
+                            : context.l10n.appRulesConfiguredSummary(
+                                draft.configuredApps,
+                                draft.totalDomains,
+                              ),
+                      ),
+                      value: draft.master,
+                      onChanged: (value) =>
+                          setState(() => draft.master = value),
+                    ),
+                  ],
+                  footer: context.l10n.appRulesMasterFooter,
+                ),
+                generateSection(
+                  title: context.l10n.hubModuleMore,
+                  items: [
+                    ListItem(
+                      leading: const LeadingSlot(
+                        child: Icon(TablerIcons.wifi_off),
+                      ),
+                      title: Text(context.l10n.hubBlockedApps),
+                      subtitle: Text(context.l10n.hubBlockedAppsDescription),
+                      onTap: () => context.push('/hub/blocked-apps'),
+                    ),
+                    ListItem(
+                      leading: const LeadingSlot(
+                        child: Icon(TablerIcons.list),
+                      ),
+                      title: Text(context.l10n.hubExcludedApps),
+                      subtitle: Text(context.l10n.hubExcludedAppsDescription),
+                      onTap: () => context.push('/hub/excluded-apps'),
+                    ),
+                  ],
+                ),
+                if (!snapshot.isLoading &&
+                    snapshot.value?.error == null &&
+                    visible.isNotEmpty)
+                  ListHeader(
+                    title: context.l10n.appRulesAppsCount(visible.length),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: SearchField(
+                    controller: _search,
+                    onChanged: _onSearchChanged,
+                  ),
+                ),
+                if (snapshot.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 48),
+                    child: Center(child: CommonCircleLoading()),
+                  )
+                else if (snapshot.value?.error case final error?)
+                  AppListErrorState(error: error, minHeight: 280),
+              ],
+            ),
+          ),
+          if (!snapshot.isLoading && snapshot.value?.error == null)
+            ...lazySectionOrEmpty(
+              itemCount: visible.length,
+              empty: AppListEmptyState(
+                label: apps.isEmpty
+                    ? context.l10n.appRulesNoConfigurableApps
+                    : context.l10n.appSelectionNoMatch,
+                illustration: apps.isEmpty
+                    ? NullStatusIllustration.apps
+                    : NullStatusIllustration.search,
+              ),
+              itemBuilder: (context, index) {
+                final item = visible[index];
+                return AppRuleAppRow(
+                  app: item,
+                  domainCount: draft.domainsOf(item.packageName).length,
+                  onTap: () => setState(() => _selected = item.packageName),
+                );
+              },
+            ),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: TonalButton(
+                    label: context.l10n.commonSave,
+                    onPressed: draft.dirty ? _save : null,
+                  ),
+                ),
+                ListFooter(
+                  text: apps.isEmpty
+                      ? context.l10n.appRulesFooterNoApps
+                      : context.l10n.appRulesFooterSave,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetail(
+    BuildContext context,
+    AppRulesDraft draft,
+    InstalledApp app,
+  ) {
+    final domains = draft.domainsOf(app.packageName);
+    final rules = ref.watch(appScopedRulesProvider(app.packageName));
+    return CommonScaffold(
+      title: app.label,
+      iconActions: [
+        IconButtonData(
+          glyph: TablerIcons.plus,
+          tooltip: context.l10n.appRulesAddAllowDomain,
+          onPressed: () => _addDomain(draft, app.packageName),
+        ),
+      ],
+      body: SliverPageBody(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                generateSection(
+                  title: context.l10n.appRulesAppSection,
+                  items: [
+                    ListItem(
+                      leading: const LeadingSlot(
+                        child: Icon(TablerIcons.arrow_left, size: 20),
+                      ),
+                      title: Text(context.l10n.appRulesBackToList),
+                      subtitle: Text(app.packageName),
+                      onTap: () => setState(() => _selected = null),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          ..._allowDomainSlivers(draft, app, domains),
+          ..._scopedRuleSlivers(app),
+          SliverToBoxAdapter(child: _detailFooter(app, rules)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _clearAll(AppRulesDraft draft) async {
+    final confirmed = await _confirmDestructive(
+      context.l10n.appRulesClearAllTitle,
+      Text(context.l10n.appRulesClearAllBody),
+      context.l10n.commonClearAll,
+    );
+    if (!confirmed) {
+      return;
+    }
+    setState(draft.clearAll);
+  }
+
+  void _removeDomain(AppRulesDraft draft, String packageName, String domain) =>
+      setState(() => draft.removeDomain(packageName, domain));
+
+  Future<void> _addDomain(AppRulesDraft draft, String packageName) async {
+    final domain = await showAppAllowDomainDialog(context);
+    if (domain == null || !mounted) {
+      return;
+    }
+    setState(() => draft.addDomain(packageName, domain));
+  }
+
+  Future<void> _addScopedRule(InstalledApp app) async {
+    final result = await showAppScopedRuleDialog(context);
+    if (result == null || !mounted) {
+      return;
+    }
+    final controller = ref.read(appScopedRulesControllerProvider);
+    final ok = await controller.addRule(
+      app.packageName,
+      result.kind,
+      result.pattern,
+    );
+    if (!mounted) {
+      return;
+    }
+    if (!ok) {
+      showAppSnack(context, context.l10n.appRulesRuleExists);
+      return;
+    }
+    showAppSnack(
+      context,
+      context.l10n.appRulesRuleAdded(result.kind.title(context.l10n)),
+    );
+  }
+
+  Future<void> _toggleScopedRule(
+    InstalledApp app,
+    MockRule rule,
+    bool enabled,
+  ) async {
+    await ref
+        .read(appScopedRulesControllerProvider)
+        .toggle(app.packageName, rule, enabled);
+  }
+
+  Future<void> _deleteScopedRule(InstalledApp app, MockRule rule) async {
+    final confirmed = await _confirmDestructive(
+      context.l10n.appRulesDeleteRuleTitle,
+      Text(rule.pattern),
+      context.l10n.commonDelete,
+    );
+    if (!confirmed) {
+      return;
+    }
+    await ref
+        .read(appScopedRulesControllerProvider)
+        .delete(app.packageName, rule);
+  }
+
+  Future<bool> _confirmDestructive(
+    String title,
+    Widget content,
+    String confirmLabel,
+  ) async {
+    final confirmed = await showFloatingDialog<bool>(
+      context: context,
+      child: CommonDialog(
+        title: title,
+        destructive: true,
+        child: content,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.uiCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(confirmLabel),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true && mounted;
+  }
+
+  Future<void> _toggleFullBlock(InstalledApp app, bool enabled) async {
+    final next = await ref
+        .read(appScopedRulesControllerProvider)
+        .setFullBlock(app.packageName, enabled);
+    if (!mounted) {
+      return;
+    }
+    showAppSnack(
+      context,
+      next
+          ? context.l10n.appRulesFullBlockOn
+          : context.l10n.appRulesFullBlockOff,
+    );
+  }
+}

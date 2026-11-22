@@ -1,0 +1,6 @@
+{
+  "upstreamPresetByteDance": ["字节跳动", "ByteDance"],
+  "cleanupFailed": ["清理失败：{detail}", "Cleanup failed: {detail}"],
+  "cleanupProxyRestored": ["已恢复直连", "Direct connection restored"],
+  "cleanupCaNeedsReimport": ["需重新生成并导入系统证书", "The certificate must be regenerated and installed again"]
+}

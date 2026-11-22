@@ -1,0 +1,25 @@
+# input	sanitized	isIpLiteral
+  https://user:pw@dns.google:8443/dns-query?x=1#f  	dns.google	0
+dns.google	dns.google	0
+dns.google:53	dns.google	0
+dns.google:port	dns.google:port	0
+example.com/path	example.com	0
+2001:db8::1	2001:db8::1	1
+[2001:db8::1]:53	2001:db8::1	0
+[2001:db8::1]	2001:db8::1	1
+[]		0
+[::1	[::1	1
+		0
+   		0
+1.2.3.4	1.2.3.4	1
+010.0.0.1	010.0.0.1	1
+1.2.3	1.2.3	0
+1.2.3.4.5	1.2.3.4.5	0
+256.0.0.1	256.0.0.1	0
+::	::	1
+::1	::1	1
+2001:4860:4860::8888	2001:4860:4860::8888	1
+dns.google:53	dns.google	0
+1:2	1	0
+:1		0
+2001:db8::zz	2001:db8::zz	0

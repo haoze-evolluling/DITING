@@ -1,0 +1,141 @@
+library;
+
+import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/state/notification_stats_providers.dart';
+import 'package:diting_shared/ui/ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
+class NotificationStatsSection extends ConsumerWidget {
+  const NotificationStatsSection({
+    super.key,
+    required this.enabled,
+    required this.onChanged,
+  });
+
+  final bool enabled;
+
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(notificationStatsProvider);
+    final notifier = ref.read(notificationStatsProvider.notifier);
+    final hidden = [
+      for (final item in NotificationStatItem.values)
+        if (!items.contains(item)) item,
+    ];
+    void toggle(NotificationStatItem item) {
+      notifier.toggle(item);
+      onChanged();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListHeader(title: context.l10n.notificationStatsSection),
+        if (items.isEmpty)
+          generateSection(
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.info_circle),
+                title: Text(context.l10n.notificationStatsEmpty),
+              ),
+            ],
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              proxyDecorator: commonProxyDecorator,
+              itemCount: items.length,
+              onReorderItem: (oldIndex, newIndex) {
+                notifier.move(oldIndex, newIndex);
+                onChanged();
+              },
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return ReorderableDelayedDragStartListener(
+                  key: ValueKey(item),
+                  index: index,
+                  enabled: enabled,
+                  child: ItemPositionProvider(
+                    position: ItemPosition.get(index, items.length),
+                    child: _EnabledRow(
+                      item: item,
+                      index: index,
+                      enabled: enabled,
+                      onToggle: () => toggle(item),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ListFooter(text: context.l10n.notificationStatsFooter),
+        if (hidden.isNotEmpty)
+          generateSection(
+            title: context.l10n.notificationStatsHidden,
+            items: [
+              for (final item in hidden)
+                ListItem.toggle(
+                  title: Text(item.label(context.l10n)),
+                  subtitle: Text(item.description(context.l10n)),
+                  leading: Icon(item.glyph),
+                  value: false,
+                  onChanged: enabled ? (_) => toggle(item) : null,
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _EnabledRow extends StatelessWidget {
+  const _EnabledRow({
+    required this.item,
+    required this.index,
+    required this.enabled,
+    required this.onToggle,
+  });
+
+  final NotificationStatItem item;
+  final int index;
+  final bool enabled;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListItem(
+      title: Text(item.label(context.l10n)),
+      subtitle: Text(item.description(context.l10n)),
+      leading: Icon(item.glyph),
+      padding: const EdgeInsets.only(left: 16, right: 4),
+      onTap: enabled ? onToggle : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CommonSwitch(
+            value: true,
+            onChanged: enabled ? (_) => onToggle() : null,
+          ),
+          ReorderableDragStartListener(
+            index: index,
+            enabled: enabled,
+            child: const MouseRegion(
+              cursor: SystemMouseCursors.grab,
+              child: SizedBox.square(
+                dimension: kMinInteractiveDimension,
+                child: Center(child: Icon(TablerIcons.grip_vertical)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

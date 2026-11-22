@@ -1,0 +1,42 @@
+[package]
+name = "diting-desktop-core"
+version = "0.1.0"
+edition = "2021"
+description = "Runtime engines of the DITING desktop Rust service: resolver, cache, filter, query log and certificates"
+publish = false
+
+[dependencies]
+diting-desktop-api = { path = "../diting-desktop-api" }
+diting-engine = { path = "../diting-engine" }
+diting-resolver-core = { path = "../diting-resolver-core" }
+diting-dns-cache-core = { path = "../diting-dns-cache-core" }
+diting-dns-core = { path = "../diting-dns-core" }
+diting-dns-wire = { path = "../diting-dns-wire" }
+diting-filter-core = { path = "../diting-filter-core" }
+diting-rewrite-core = { path = "../diting-rewrite-core" }
+diting-response-core = { path = "../diting-response-core" }
+diting-services-core = { path = "../diting-services-core" }
+diting-go-compat = { path = "../diting-go-compat" }
+diting-config-core = { path = "../diting-config-core" }
+diting-ratelimit-core = { path = "../diting-ratelimit-core" }
+diting-cert-core = { path = "../diting-cert-core" }
+diting-safebrowsing-core = { path = "../diting-safebrowsing-core" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros", "fs"] }
+thiserror = "2"
+regex = "1"
+dns-lookup = "4"
+sha2 = "0.11"
+rand = "0.10"
+base64 = "0.23"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-native-certs = "0.8"
+rustls-pemfile = "2"
+p12-keystore = "0.4"
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "pem", "ring"] }
+x509-cert = { version = "0.3", features = ["std", "builder", "hazmat"] }
+rsa = { version = "0.10", features = ["pkcs1v15"] }
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider", "gzip"] }
