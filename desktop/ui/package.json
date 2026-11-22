@@ -9,9 +9,6 @@
     "prebuild": "node scripts/check-version.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
@@ -22,7 +19,6 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.90.2",
-    "@tauri-apps/api": "^2.9.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
@@ -35,7 +31,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
-    "@tauri-apps/cli": "^2.12.6",
     "@types/node": "^26.6.6",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",

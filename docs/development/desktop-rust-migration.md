@@ -14,7 +14,7 @@
 | `rust/diting-desktop-app` | 运行时组合：引擎生命周期、DNS 起停、后台维护、管理控制器 |
 | `rust/diting-desktop-ipc` | HTTP/WebSocket 管理 API、鉴权/CORS |
 | `rust/diting-desktop-service` | 二进制 `diting-service`：CLI、服务入口、自愈与还原 |
-| `desktop/ui` | Tauri + React 桌面管理端；同一份构建产物由服务嵌入为 Web 管理页 |
+| `desktop/ui` | React Web 管理端；构建产物由服务嵌入并托管为 Web 管理页 |
 
 `desktop/service` 仅保留构建与打包资产（`build/`、`build_linux.sh`、`VERSION`）与安装脚本。
 旧的 Flutter 桌面前端已移除，管理界面由新的 `desktop/ui` 工程提供；服务在编译期嵌入

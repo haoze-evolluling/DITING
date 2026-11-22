@@ -7,14 +7,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Skeleton } from "../components/ui/skeleton";
 import { useAuthStatus } from "../hooks/use-api";
-import {
-  api,
-  defaultBaseUrl,
-  describeError,
-  getBaseUrl,
-  isTauri,
-  setBaseUrl,
-} from "../lib/api";
+import { api, describeError } from "../lib/api";
 import { useAuthStore } from "../stores/auth";
 
 const capabilities = [
@@ -36,12 +29,11 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [address, setAddress] = useState(getBaseUrl() || defaultBaseUrl());
 
   const initialized = authStatus.data?.initialized ?? false;
   const setupMode = authStatus.data ? !initialized : false;
   const locked = authStatus.data?.locked ?? false;
-  const serviceAddress = getBaseUrl() || window.location.origin;
+  const serviceAddress = window.location.origin;
 
   if (token && !expired) return <Navigate to="/" replace />;
 
@@ -78,7 +70,6 @@ export function LoginPage() {
   };
 
   const retryConnection = () => {
-    if (isTauri) setBaseUrl(address);
     void authStatus.refetch();
   };
 
@@ -156,7 +147,7 @@ export function LoginPage() {
           </h2>
           <p className="mt-1.5 text-[12.5px] leading-5 text-text-3">
             {setupMode
-              ? "首次使用需要设置管理凭据，用于保护桌面端与 Web 管理页。"
+              ? "首次使用需要设置管理凭据，用于保护 Web 管理页。"
               : "使用管理员凭据连接本机谛听桌面服务。"}
           </p>
 
@@ -176,15 +167,6 @@ export function LoginPage() {
                 请确认 diting-service 正在运行。当前管理地址：
               </p>
               <p className="mono mt-1 break-all text-[11px] text-warn/80">{serviceAddress}</p>
-              {isTauri ? (
-                <Input
-                  className="mt-2.5 h-8 bg-surface text-[11.5px]"
-                  value={address}
-                  onChange={(event) => setAddress(event.target.value)}
-                  placeholder="http://127.0.0.1:15353"
-                  aria-label="管理服务地址"
-                />
-              ) : null}
               <Button
                 size="sm"
                 variant="ghost"

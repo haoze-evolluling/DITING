@@ -1,7 +1,6 @@
 import { lazy, useEffect } from "react";
 import {
   BrowserRouter,
-  HashRouter,
   Navigate,
   Outlet,
   Route,
@@ -12,7 +11,6 @@ import { ErrorBoundary } from "./components/error-boundary";
 import { AppShell } from "./components/layout/app-shell";
 import { useLiveStream } from "./hooks/use-live-stream";
 import { useApplyTheme } from "./hooks/use-theme";
-import { isTauri } from "./lib/api";
 import { LoginPage } from "./pages/login-page";
 import { useAuthStore } from "./stores/auth";
 
@@ -25,8 +23,6 @@ const LogsPage = lazy(async () => ({
 const SettingsPage = lazy(async () => ({
   default: (await import("./pages/settings-page")).SettingsPage,
 }));
-
-const Router = isTauri ? HashRouter : BrowserRouter;
 
 function ProtectedRoute() {
   const token = useAuthStore((state) => state.token);
@@ -50,7 +46,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <Router>
+      <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
@@ -62,7 +58,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }

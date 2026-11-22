@@ -1,31 +1,28 @@
-# 桌面管理端（Tauri + React）
+# 桌面管理端（Web）
 
-桌面端管理界面位于 `desktop/ui/`，替代已移除的 Flutter 桌面前端。工程同时产出两种形态：
+桌面端管理界面位于 `desktop/ui/`，替代已移除的 Flutter 桌面前端。工程只产出一份 Vite 构建
+产物：由 `diting-service` 在管理端口直接托管，用户通过浏览器访问 Web 管理页。
 
-- **Tauri 桌面客户端**：独立窗口，直接连接本机已安装的 `diting-service`；
-- **Web 管理页**：同一份 Vite 构建产物由 `diting-service` 在管理端口直接托管。
-
-两者共享同一套 API 客户端、页面与设计系统，不存在两套界面实现。
+- 后端保持独立进程/系统服务，前端不内嵌 DNS 运行时，也不负责提权。
+- 安装包会在公共桌面创建“谛听 DNS 管理页”快捷方式，指向 `http://127.0.0.1:15353/`。
 
 ## 架构
 
 ```
 ┌─────────────────────┐        HTTP /api/v1/*        ┌──────────────────────────┐
-│ Tauri 窗口 (WebView)│ ───────────────────────────▶ │ diting-service           │
+│ 浏览器 Web 管理页   │ ───────────────────────────▶ │ diting-service           │
 │ React SPA           │        WebSocket /events     │ 127.0.0.1:15353          │
 └─────────────────────┘                              │ ├─ 管理 API              │
-┌─────────────────────┐                              │ ├─ 静态 Web 管理页       │
-│ 浏览器 Web 管理页   │ ───────────────────────────▶ │ └─ DNS 数据面            │
-└─────────────────────┘                              └──────────────────────────┘
+                                                     │ ├─ 静态 Web 管理页       │
+                                                     │ └─ DNS 数据面            │
+                                                     └──────────────────────────┘
 ```
 
-- 后端保持独立进程/系统服务，前端不内嵌 DNS 运行时，也不负责提权。
-- 桌面客户端与 Web 管理页都通过 `Authorization: Bearer <token>` 访问管理 API；WebSocket
-  使用 `?token=` 查询参数，因为浏览器 WebSocket 无法设置自定义请求头。
-- IPC 默认监听 `127.0.0.1:15353`，可在服务启动参数或配置中修改；桌面客户端可在登录失败时
+- 管理页通过 `Authorization: Bearer <token>` 访问管理 API；WebSocket 使用 `?token=`
+  查询参数，因为浏览器 WebSocket 无法设置自定义请求头。
+- IPC 默认监听 `127.0.0.1:15353`，可在服务启动参数或配置中修改；管理页可在登录失败时
   修改管理地址，也可在“设置 → 账户与连接”中修改。
-- Tauri 客户端的 Origin 为 `tauri://localhost` 或 `http(s)://tauri.localhost`，后端
-  `cors.rs` 显式信任这两个保留来源；普通网页无法伪造。
+- 管理页与服务同源，CORS 只信任回环地址与 `localhost` 来源。
 
 ## 工程结构
 
@@ -42,7 +39,6 @@ desktop/ui/
 │  ├─ lib/            API 客户端、类型、格式化、文案映射
 │  ├─ pages/          登录/初始化、概览、查询日志、设置
 │  └─ stores/         认证、外观、实时数据（Zustand）
-├─ src-tauri/         Tauri 2 壳、窗口配置、权限与图标
 └─ dist/              Vite 构建产物（不入库，服务构建时嵌入）
 ```
 
@@ -71,7 +67,6 @@ desktop/ui/
 cd desktop/ui
 npm install
 npm run dev          # 浏览器开发模式，默认代理到 127.0.0.1:15353
-npm run tauri:dev    # 桌面窗口
 ```
 
 `npm run dev` 的代理目标可通过 `DITING_DEV_API` 覆盖，便于连接测试端口上的服务。Vite
@@ -90,21 +85,9 @@ cargo build --release -p diting-desktop-service
 覆盖），把文件表嵌入服务二进制；未构建前端时 `HAS_ASSETS=false`，服务返回“前端静态资源包未加载”占位页。
 因此更新 Web 管理页必须重新编译服务。
 
-界面显示的版本号由 Vite 在构建期读取 `desktop/service/VERSION` 注入；Tauri 安装包版本读取
-`desktop/ui/package.json`。`npm run dev` / `npm run build` 前会执行
-`scripts/check-version.mjs`，校验 `package.json` 与 `src-tauri/Cargo.toml` 的版本和
-`VERSION` 一致，避免发版时版本漂移。
-
-Tauri 客户端单独构建：
-
-```bash
-cd desktop/ui
-npm run tauri:build
-```
-
-Windows 也可直接运行 `desktop\build_client.bat`，`--debug` 生成不打包的调试版本。
-产物由 Tauri 生成（Windows 为 `.msi` / `.exe`，Linux 为 `.deb` / AppImage），与
-`desktop/build_installer.bat` 生成的服务安装包相互独立。
+界面显示的版本号由 Vite 在构建期读取 `desktop/service/VERSION` 注入。`npm run dev` /
+`npm run build` 前会执行 `scripts/check-version.mjs`，校验 `desktop/ui/package.json` 的版本
+和 `VERSION` 一致，避免发版时版本漂移。
 
 服务安装包流水线 `desktop/build_installer.bat` 会自动先执行 `npm run build` 并嵌入 Web
 管理页；没有 Node.js 时可加 `--skip-ui` 退化为纯服务安装包。

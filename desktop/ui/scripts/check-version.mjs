@@ -14,15 +14,10 @@ function versionFileVersion() {
 
 const expected = versionFileVersion();
 const packageJson = JSON.parse(read("../package.json"));
-const cargo = read("../src-tauri/Cargo.toml");
-const cargoVersion = cargo.match(/^version\s*=\s*"([^"]+)"/m)?.[1] ?? "";
 
 const mismatches = [];
 if (packageJson.version !== expected) {
   mismatches.push(`desktop/ui/package.json: ${packageJson.version} ≠ ${expected}`);
-}
-if (cargoVersion !== expected) {
-  mismatches.push(`desktop/ui/src-tauri/Cargo.toml: ${cargoVersion} ≠ ${expected}`);
 }
 
 if (mismatches.length > 0) {

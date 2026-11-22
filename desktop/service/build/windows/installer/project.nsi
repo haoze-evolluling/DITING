@@ -4,7 +4,7 @@ SetCompressorDictSize 32
 
 ####
 ## 谛听 (DITING) Windows 服务安装包配置
-## 仅包含 diting-service.exe 特权服务；桌面前端与浏览器控制台已移除
+## 仅包含 diting-service.exe 特权服务；管理界面由服务内嵌并托管的 Web 管理页提供
 ####
 !define INFO_PROJECTNAME    "diting-desktop"
 !define INFO_COMPANYNAME    "Diting"
@@ -219,6 +219,12 @@ Section
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service start'
     nsExec::Exec 'net.exe start ${SERVICE_NAME}'
 
+    # 桌面快捷方式：用默认浏览器打开服务内嵌的 Web 管理页。
+    # SetShellVarContext all 下 $DESKTOP 为公共桌面（C:\Users\Public\Desktop）。
+    WriteINIStr "$DESKTOP\谛听 DNS 管理页.url" "InternetShortcut" "URL" "http://127.0.0.1:15353/"
+    WriteINIStr "$DESKTOP\谛听 DNS 管理页.url" "InternetShortcut" "IconFile" "$INSTDIR\${SERVICE_EXECUTABLE}"
+    WriteINIStr "$DESKTOP\谛听 DNS 管理页.url" "InternetShortcut" "IconIndex" "0"
+
     # 写入卸载信息
     WriteUninstaller "$INSTDIR\uninstall.exe"
 
@@ -259,7 +265,9 @@ Section "uninstall"
     nsExec::Exec '"$INSTDIR\${SERVICE_EXECUTABLE}" -service uninstall'
     nsExec::Exec 'sc.exe delete ${SERVICE_NAME}'
 
-    # 清除用户数据、残留状态与自启动注册表项
+    # 清除用户数据、残留状态与自启动注册表项。
+    # SetShellVarContext all 下 $APPDATA 与 $LOCALAPPDATA 都映射到 C:\ProgramData，
+    # 正好覆盖服务默认数据目录 %ProgramData%\DITING。
     ${If} $DeleteConfig == "1"
         DetailPrint $(UNINST_DETAIL_CLEAN_DATA)
         RMDir /r "$APPDATA\DITING"
@@ -273,9 +281,10 @@ Section "uninstall"
     Delete "$INSTDIR\uninstall.exe"
     RMDir /r $INSTDIR
 
-    # 删除旧版快捷方式并注销卸载信息
+    # 删除快捷方式并注销卸载信息
     Delete "$SMPROGRAMS\谛听 DNS.lnk"
     Delete "$DESKTOP\谛听 DNS.lnk"
+    Delete "$DESKTOP\谛听 DNS 管理页.url"
 
     SetRegView 64
     DeleteRegKey HKLM "${UNINST_KEY}"

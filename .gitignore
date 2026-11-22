@@ -48,10 +48,8 @@ app.*.map.json
 desktop/service/build/bin/
 node_modules/
 
-# 桌面管理端：Vite 产物、Tauri 编译产物与生成的权限 schema 不入库。
+# 桌面管理端：Vite 构建产物不入库（服务编译时嵌入为 Web 管理页）。
 desktop/ui/dist/
-desktop/ui/src-tauri/target/
-desktop/ui/src-tauri/gen/
 
 # Flutter tool generates this registrant for the workspace root's `android/`
 # container when a root-level `flutter analyze` runs. The real Android registrant

@@ -26,14 +26,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import { Switch } from "../components/ui/switch";
 import { useQueryLogConfig, useServiceStatus, useStatus } from "../hooks/use-api";
 import { useLogout } from "../hooks/use-logout";
-import {
-  api,
-  defaultBaseUrl,
-  describeError,
-  getBaseUrl,
-  isTauri,
-  setBaseUrl,
-} from "../lib/api";
+import { api, describeError } from "../lib/api";
 import { formatNumber, formatUptime, formatUnixSeconds } from "../lib/format";
 import {
   autoStartMechanismLabel,
@@ -141,15 +134,6 @@ function AccountCard() {
   const username = useAuthStore((state) => state.username);
   const expiresAt = useAuthStore((state) => state.expiresAt);
   const logout = useLogout();
-  const [address, setAddress] = useState(getBaseUrl() || defaultBaseUrl());
-  const queryClient = useQueryClient();
-
-  const saveAddress = () => {
-    setBaseUrl(address);
-    queryClient.clear();
-    toast.success("管理地址已保存，正在重新连接");
-    window.setTimeout(() => window.location.reload(), 400);
-  };
 
   return (
     <Card>
@@ -158,21 +142,8 @@ function AccountCard() {
         <InfoRow label="管理员">{username ?? "admin"}</InfoRow>
         <InfoRow label="会话到期">{formatUnixSeconds(expiresAt ?? 0)}</InfoRow>
         <InfoRow label="管理服务" mono>
-          {getBaseUrl() || window.location.origin}
+          {window.location.origin}
         </InfoRow>
-        {isTauri ? (
-          <div className="mt-3 flex gap-2">
-            <Input
-              value={address}
-              onChange={(event) => setAddress(event.target.value)}
-              placeholder={`http://127.0.0.1:15353`}
-              aria-label="管理服务地址"
-            />
-            <Button size="sm" variant="secondary" onClick={saveAddress}>
-              保存
-            </Button>
-          </div>
-        ) : null}
       </CardContent>
       <CardFooter>
         <span className="text-[10.5px] text-text-3">

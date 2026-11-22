@@ -11,11 +11,6 @@ pub fn is_trusted_origin(origin: &str, host: Option<&str>) -> bool {
     if origin.is_empty() {
         return true;
     }
-    // Tauri serves the desktop client from a reserved custom-protocol origin.
-    // A regular web page cannot forge either scheme, so these stay local-only.
-    if origin.eq_ignore_ascii_case("tauri://localhost") {
-        return true;
-    }
     let Some(rest) = origin
         .strip_prefix("http://")
         .or_else(|| origin.strip_prefix("https://"))
@@ -28,9 +23,7 @@ pub fn is_trusted_origin(origin: &str, host: Option<&str>) -> bool {
     if hostname.is_empty() {
         return false;
     }
-    if hostname.eq_ignore_ascii_case("localhost")
-        || hostname.eq_ignore_ascii_case("tauri.localhost")
-    {
+    if hostname.eq_ignore_ascii_case("localhost") {
         return true;
     }
     if let Ok(ip) = hostname
@@ -127,11 +120,10 @@ mod tests {
     }
 
     #[test]
-    fn tauri_client_origins_are_trusted() {
-        assert!(is_trusted_origin("tauri://localhost", None));
-        assert!(is_trusted_origin("http://tauri.localhost", None));
-        assert!(is_trusted_origin("https://tauri.localhost", None));
-        assert!(!is_trusted_origin("tauri://evil.example", None));
+    fn tauri_client_origins_are_rejected() {
+        assert!(!is_trusted_origin("tauri://localhost", None));
+        assert!(!is_trusted_origin("http://tauri.localhost", None));
+        assert!(!is_trusted_origin("https://tauri.localhost", None));
     }
 
     #[test]

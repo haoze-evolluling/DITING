@@ -16,35 +16,6 @@ import type {
   StatusResponse,
 } from "./types";
 
-const BASE_KEY = "diting.desktop.base";
-const DEFAULT_PORT = 15353;
-
-export const isTauri =
-  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-
-export function defaultBaseUrl(): string {
-  return isTauri ? `http://127.0.0.1:${DEFAULT_PORT}` : "";
-}
-
-export function getBaseUrl(): string {
-  try {
-    const stored = window.localStorage.getItem(BASE_KEY)?.trim();
-    if (stored) return stored.replace(/\/+$/, "");
-  } catch {
-    // localStorage can be unavailable in hardened webviews.
-  }
-  return defaultBaseUrl();
-}
-
-export function setBaseUrl(value: string): void {
-  const trimmed = value.trim().replace(/\/+$/, "");
-  if (trimmed) {
-    window.localStorage.setItem(BASE_KEY, trimmed);
-  } else {
-    window.localStorage.removeItem(BASE_KEY);
-  }
-}
-
 export class ApiError extends Error {
   status: number;
   conflict?: unknown;
@@ -66,8 +37,7 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const base = getBaseUrl();
-  const url = `${base}${path}`;
+  const url = path;
   if (!query) return url;
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
@@ -188,9 +158,9 @@ export const api = {
 };
 
 export function websocketUrl(token: string): string {
-  const base = getBaseUrl();
-  const origin = base || window.location.origin;
-  const wsOrigin = origin.replace(/^http:/i, "ws:").replace(/^https:/i, "wss:");
+  const wsOrigin = window.location.origin
+    .replace(/^http:/i, "ws:")
+    .replace(/^https:/i, "wss:");
   return `${wsOrigin}/api/v1/events?token=${encodeURIComponent(token)}`;
 }
 
