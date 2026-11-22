@@ -1,3 +1,3 @@
 # 谛听 (DITING) 桌面端版本号唯一真源。
 # 由 toolbox、NSIS 打包与 rust/diting-desktop-api/build.rs 在构建期读取。
-2.2.11
+2.7.0

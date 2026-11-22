@@ -1,7 +1,7 @@
 {
   "name": "diting-desktop-ui",
   "private": true,
-  "version": "2.2.11",
+  "version": "2.7.0",
   "type": "module",
   "scripts": {
     "predev": "node scripts/check-version.mjs",
