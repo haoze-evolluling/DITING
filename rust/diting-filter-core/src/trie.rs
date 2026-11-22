@@ -36,11 +36,12 @@ impl DomainTrie {
     }
 
     pub fn match_domain(&self, domain: &str) -> Option<u32> {
-        if domain.is_empty() {
+        // 空树直接短路：每次查询要查四棵树，其中常有三棵是空的，
+        // 原来的 `collect::<Vec<&str>>()` 会让它们照样付一次堆分配。
+        if domain.is_empty() || self.root.children.is_empty() {
             return None;
         }
-        let labels: Vec<&str> = domain.split('.').collect();
-        match_node(&self.root, &labels, labels.len() as isize - 1)
+        match_node(&self.root, domain.rsplit('.'))
     }
 
     pub fn size(&self) -> usize {
@@ -48,24 +49,29 @@ impl DomainTrie {
     }
 }
 
-fn match_node(node: &Node, labels: &[&str], index: isize) -> Option<u32> {
+/// 自右向左逐标签下降。`RSplit` 是 `Clone` 的，回溯时可以直接复制迭代器，全程零分配。
+fn match_node<'a, I>(node: &Node, labels: I) -> Option<u32>
+where
+    I: Iterator<Item = &'a str> + Clone,
+{
     if let Some(terminal) = node.terminal {
         if !terminal.exact_only {
             return Some(terminal.rule);
         }
     }
-    if index < 0 {
+    let mut rest = labels;
+    let Some(label) = rest.next() else {
         return node.terminal.map(|terminal| terminal.rule);
-    }
+    };
 
-    let label = labels[index as usize];
+    // 精确标签优先于同级通配。
     if let Some(child) = node.children.get(label) {
-        if let Some(hit) = match_node(child, labels, index - 1) {
+        if let Some(hit) = match_node(child, rest.clone()) {
             return Some(hit);
         }
     }
     if let Some(child) = node.children.get("*") {
-        if let Some(hit) = match_node(child, labels, index - 1) {
+        if let Some(hit) = match_node(child, rest) {
             return Some(hit);
         }
     }

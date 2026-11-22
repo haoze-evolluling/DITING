@@ -141,6 +141,21 @@ impl FilterIndex {
                 (false, false) => (&mut block_trie, &mut block_patterns),
             };
             if rule.is_pattern() {
+                // `*.foo.com` 的语义（任意层级子域命中、顶点不命中）与后缀树的 `*` 标签完全一致。
+                // 原先这类规则被编译成正则并留在 `patterns`，于是**每个**未被 trie 命中的查询
+                // 都要把全部通配规则逐条跑一遍 `regex.is_match`，几千条通配就是每次查询几百微秒。
+                // 只有中缀星号 / 多星号 / 真正则才需要留在扫描列表里。
+                // `regex.is_none()` 表示该通配规则编译失败，旧语义是永不匹配，故不能塞进 trie。
+                if let Some(pattern) = leading_label_wildcard(&rule.pattern) {
+                    if rule.regex.is_some() {
+                        trie.insert(pattern, id, false);
+                        if !rule.is_allow() {
+                            // bloom 只索引去掉 `*` 的后缀，否则会把顶点也误判为可能命中。
+                            block_domains.push(&pattern[2..]);
+                        }
+                        continue;
+                    }
+                }
                 patterns.push(id);
                 continue;
             }
@@ -221,8 +236,17 @@ impl FilterIndex {
 
         if self.bloom.might_contain_domain_or_parent(domain) {
             if let Some(rule) = self.block_trie.match_domain(domain) {
-                if self.rules[rule as usize].applicable(domain, qtype) {
-                    return Decision::verdict(Action::Block, Reason::Blacklist, rule);
+                let hit = &self.rules[rule as usize];
+                if hit.applicable(domain, qtype) {
+                    // 通配规则现在也走 trie，命中原因仍要如实区分，日志里才能看出是哪种规则。
+                    let reason = if hit.is_wildcard() {
+                        Reason::WildcardBlock
+                    } else if hit.is_regex() {
+                        Reason::RegexBlock
+                    } else {
+                        Reason::Blacklist
+                    };
+                    return Decision::verdict(Action::Block, reason, rule);
                 }
             }
         }
@@ -368,6 +392,16 @@ impl FilterIndex {
     pub fn uncompiled_patterns(&self) -> u32 {
         self.uncompiled_patterns
     }
+}
+
+/// 只有「首个标签是 `*`、其余部分不含 `*`」的通配能由后缀树精确表达。
+/// `*.foo.com` 原样交给 trie 的 `*` 标签；`a.*.com`、`*a.foo.com` 之类仍留给正则。
+fn leading_label_wildcard(pattern: &str) -> Option<&str> {
+    let rest = pattern.strip_prefix("*.")?;
+    if rest.is_empty() || rest.contains('*') {
+        return None;
+    }
+    Some(pattern)
 }
 
 #[cfg(test)]
