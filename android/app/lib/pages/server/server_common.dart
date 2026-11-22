@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 PowerState serverPowerState(ServerStatus status) {
+  if (status.stopping) return PowerState.stopping;
   if (status.running) return PowerState.running;
   if (status.starting) return PowerState.starting;
   if (status.error != null) return PowerState.error;

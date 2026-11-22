@@ -1,12 +1,12 @@
+use std::collections::VecDeque;
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Local, LocalResult, NaiveDate, TimeZone};
-use tokio::sync::mpsc;
 
 use super::types::Record;
 
@@ -190,53 +190,104 @@ impl WriterState {
     }
 }
 
-fn run_writer(
-    mut records: mpsc::Receiver<Record>,
-    mut controls: mpsc::UnboundedReceiver<Control>,
-    mut state: WriterState,
-) {
+struct QueueState {
+    records: VecDeque<Record>,
+    controls: VecDeque<Control>,
+    closed: bool,
+}
+
+struct SharedQueue {
+    state: Mutex<QueueState>,
+    notify: Condvar,
+}
+
+impl SharedQueue {
+    fn new() -> Self {
+        Self {
+            state: Mutex::new(QueueState {
+                records: VecDeque::new(),
+                controls: VecDeque::new(),
+                closed: false,
+            }),
+            notify: Condvar::new(),
+        }
+    }
+
+    fn drain_records(&self) -> VecDeque<Record> {
+        let mut guard = self.state.lock().unwrap_or_else(|e| e.into_inner());
+        std::mem::take(&mut guard.records)
+    }
+}
+
+fn run_writer(queue: Arc<SharedQueue>, mut state: WriterState) {
     state.cleanup();
     let mut last_flush = Instant::now();
     loop {
-        let mut idle = true;
-        while let Ok(record) = records.try_recv() {
-            state.write_record(&record);
-            idle = false;
+        let (records, control, closed) = {
+            let mut guard = queue.state.lock().unwrap_or_else(|e| e.into_inner());
+            loop {
+                if !guard.records.is_empty() || !guard.controls.is_empty() || guard.closed {
+                    break;
+                }
+                if state.pending > 0 || state.file.is_some() {
+                    let elapsed = last_flush.elapsed();
+                    if elapsed >= FLUSH_INTERVAL {
+                        break;
+                    }
+                    let wait_for = FLUSH_INTERVAL - elapsed;
+                    let (next_guard, timeout) = queue
+                        .notify
+                        .wait_timeout(guard, wait_for)
+                        .unwrap_or_else(|e| e.into_inner());
+                    guard = next_guard;
+                    if timeout.timed_out() {
+                        break;
+                    }
+                } else {
+                    guard = queue.notify.wait(guard).unwrap_or_else(|e| e.into_inner());
+                }
+            }
+            let records = std::mem::take(&mut guard.records);
+            let control = guard.controls.pop_front();
+            let closed = guard.closed && guard.controls.is_empty();
+            (records, control, closed)
+        };
+
+        for record in &records {
+            state.write_record(record);
         }
 
-        match controls.try_recv() {
-            Ok(Control::Flush(ack)) => {
+        match control {
+            Some(Control::Flush(ack)) => {
                 state.flush();
                 let _ = ack.send(());
-                idle = false;
             }
-            Ok(Control::Clear(ack)) => {
-                while let Ok(record) = records.try_recv() {
-                    state.write_record(&record);
+            Some(Control::Clear(ack)) => {
+                for record in &queue.drain_records() {
+                    state.write_record(record);
                 }
                 let result = state.remove_files();
                 let _ = ack.send(result);
                 last_flush = Instant::now();
-                idle = false;
             }
-            Ok(Control::Shutdown(ack)) => {
-                while let Ok(record) = records.try_recv() {
-                    state.write_record(&record);
+            Some(Control::Shutdown(ack)) => {
+                for record in &queue.drain_records() {
+                    state.write_record(record);
                 }
                 state.flush();
                 state.close_file();
                 let _ = ack.send(());
                 return;
             }
-            Err(tokio::sync::mpsc::error::TryRecvError::Empty) => {}
-            Err(tokio::sync::mpsc::error::TryRecvError::Disconnected) => {
-                while let Ok(record) = records.try_recv() {
-                    state.write_record(&record);
+            None if closed => {
+                for record in &queue.drain_records() {
+                    state.write_record(record);
                 }
                 state.flush();
                 state.close_file();
                 return;
             }
+            None => {}
         }
 
         if last_flush.elapsed() >= FLUSH_INTERVAL {
@@ -244,15 +295,11 @@ fn run_writer(
             state.flush();
             last_flush = Instant::now();
         }
-        if idle {
-            std::thread::sleep(Duration::from_millis(10));
-        }
     }
 }
 
 pub(crate) struct Writer {
-    records: mpsc::Sender<Record>,
-    controls: mpsc::UnboundedSender<Control>,
+    queue: Arc<SharedQueue>,
     handle: Mutex<Option<JoinHandle<()>>>,
     dir: PathBuf,
     retention_days: i32,
@@ -280,16 +327,15 @@ impl Writer {
         fs::write(&probe, [])?;
         let _ = fs::remove_file(&probe);
 
-        let (records, records_rx) = mpsc::channel(QUEUE_SIZE);
-        let (controls, controls_rx) = mpsc::unbounded_channel();
+        let queue = Arc::new(SharedQueue::new());
+        let worker_queue = Arc::clone(&queue);
         let state = WriterState::new(dir.clone(), retention_days, clock);
         let handle = std::thread::Builder::new()
             .name("diting-querylog-writer".into())
-            .spawn(move || run_writer(records_rx, controls_rx, state))?;
+            .spawn(move || run_writer(worker_queue, state))?;
 
         Ok(Self {
-            records,
-            controls,
+            queue,
             handle: Mutex::new(Some(handle)),
             dir,
             retention_days,
@@ -297,7 +343,35 @@ impl Writer {
     }
 
     pub(crate) fn enqueue(&self, record: Record) -> bool {
-        self.records.try_send(record).is_ok()
+        let accepted = {
+            let mut guard = self.queue.state.lock().unwrap_or_else(|e| e.into_inner());
+            if guard.closed || guard.records.len() >= QUEUE_SIZE {
+                false
+            } else {
+                guard.records.push_back(record);
+                true
+            }
+        };
+        if accepted {
+            self.queue.notify.notify_one();
+        }
+        accepted
+    }
+
+    fn send_control(&self, control: Control) -> bool {
+        let accepted = {
+            let mut guard = self.queue.state.lock().unwrap_or_else(|e| e.into_inner());
+            if guard.closed {
+                false
+            } else {
+                guard.controls.push_back(control);
+                true
+            }
+        };
+        if accepted {
+            self.queue.notify.notify_one();
+        }
+        accepted
     }
 
     pub(crate) fn dir(&self) -> &Path {
@@ -311,7 +385,7 @@ impl Writer {
     #[allow(dead_code)]
     pub(crate) fn flush_blocking(&self) -> io::Result<()> {
         let (ack, wait) = std::sync::mpsc::channel();
-        if self.controls.send(Control::Flush(ack)).is_err() {
+        if !self.send_control(Control::Flush(ack)) {
             return Ok(());
         }
         wait.recv_timeout(Duration::from_secs(10))
@@ -320,7 +394,7 @@ impl Writer {
 
     pub(crate) fn clear(&self) -> io::Result<()> {
         let (ack, wait) = std::sync::mpsc::channel();
-        if self.controls.send(Control::Clear(ack)).is_err() {
+        if !self.send_control(Control::Clear(ack)) {
             return Ok(());
         }
         match wait.recv_timeout(Duration::from_secs(10)) {
@@ -339,9 +413,13 @@ impl Writer {
             return Ok(());
         };
         let (ack, wait) = std::sync::mpsc::channel();
-        if self.controls.send(Control::Shutdown(ack)).is_ok() {
-            let _ = wait.recv_timeout(Duration::from_secs(10));
+        {
+            let mut guard = self.queue.state.lock().unwrap_or_else(|e| e.into_inner());
+            guard.closed = true;
+            guard.controls.push_back(Control::Shutdown(ack));
         }
+        self.queue.notify.notify_one();
+        let _ = wait.recv_timeout(Duration::from_secs(10));
         handle
             .join()
             .map_err(|_| io::Error::other("查询日志写入线程异常退出"))
@@ -475,5 +553,21 @@ mod tests {
             .timestamp_millis();
         assert_eq!(file_date_ms(&path), Some(expected));
         assert_eq!(file_date_ms(Path::new("garbage.txt")), None);
+    }
+
+    #[test]
+    fn close_wakes_immediately_when_idle() {
+        let dir = unique_temp_dir("writer-fast-close");
+        let (_, clock) = fixed_clock(1_792_000_000_000);
+        let writer = Writer::new_with_clock(&dir, 7, clock).expect("writer");
+        std::thread::sleep(Duration::from_millis(20));
+        let started = Instant::now();
+        writer.close().expect("close");
+        assert!(
+            started.elapsed() < Duration::from_millis(200),
+            "close took {:?}",
+            started.elapsed()
+        );
+        let _ = fs::remove_dir_all(&dir);
     }
 }

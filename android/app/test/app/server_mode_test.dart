@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,13 +7,61 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../support/fake_server_client.dart';
 
+class _AsyncTransitionServerClient extends FakeServerClient {
+  _AsyncTransitionServerClient({
+    required this.startDelay,
+    required this.stopDelay,
+  });
+
+  final Duration startDelay;
+  final Duration stopDelay;
+
+  @override
+  Future<bool> start({required bool preferRoot}) async {
+    emitStatus(
+      ServerStatus(
+        starting: true,
+        root: preferRoot,
+        port: preferRoot ? 53 : 1053,
+      ),
+    );
+    unawaited(
+      Future<void>.delayed(startDelay, () {
+        emitStatus(
+          ServerStatus(
+            running: true,
+            root: preferRoot,
+            port: preferRoot ? 53 : 1053,
+            addresses: [preferRoot ? '0.0.0.0:53' : '0.0.0.0:1053'],
+          ),
+        );
+      }),
+    );
+    return true;
+  }
+
+  @override
+  Future<bool> stop() async {
+    emitStatus(const ServerStatus(stopping: true));
+    unawaited(
+      Future<void>.delayed(stopDelay, () {
+        emitStatus(const ServerStatus());
+      }),
+    );
+    return true;
+  }
+}
+
 void main() {
   test('server controller follows start and stop state', () async {
     final client = FakeServerClient();
     final container = ProviderContainer(
       overrides: [serverClientProvider.overrideWithValue(client)],
     );
-    addTearDown(container.dispose);
+    addTearDown(() {
+      container.dispose();
+      client.dispose();
+    });
 
     final initial = await container.read(serverControllerProvider.future);
     expect(initial.status.running, isFalse);
@@ -34,10 +84,59 @@ void main() {
     expect(stopped.status.running, isFalse);
   });
 
+  test('start and stop settle immediately from status stream events', () async {
+    final client = _AsyncTransitionServerClient(
+      startDelay: const Duration(milliseconds: 30),
+      stopDelay: const Duration(milliseconds: 30),
+    );
+    final container = ProviderContainer(
+      overrides: [serverClientProvider.overrideWithValue(client)],
+    );
+    addTearDown(() {
+      container.dispose();
+      client.dispose();
+    });
+
+    await container.read(serverControllerProvider.future);
+
+    final startWatch = Stopwatch()..start();
+    await container
+        .read(serverControllerProvider.notifier)
+        .start(preferRoot: false);
+    startWatch.stop();
+
+    final running = container.read(serverControllerProvider).value!;
+    expect(running.status.running, isTrue);
+    expect(running.status.starting, isFalse);
+    expect(startWatch.elapsedMilliseconds, lessThan(500));
+
+    final stopFuture = container.read(serverControllerProvider.notifier).stop();
+    expect(
+      container.read(serverControllerProvider).value!.status.stopping,
+      isTrue,
+    );
+    final stopWatch = Stopwatch()..start();
+    await stopFuture;
+    stopWatch.stop();
+
+    final stopped = container.read(serverControllerProvider).value!;
+    expect(stopped.status.running, isFalse);
+    expect(stopped.status.stopping, isFalse);
+    expect(stopWatch.elapsedMilliseconds, lessThan(500));
+  });
+
   test('log query values are stable Riverpod family keys', () {
     const first = ServerLogQuery(domain: 'a.example', status: 'blocked');
     const second = ServerLogQuery(domain: 'a.example', status: 'blocked');
+    const memoryOnly = ServerLogQuery(
+      domain: 'a.example',
+      status: 'blocked',
+      includeFile: false,
+    );
     expect(first, second);
     expect(first.hashCode, second.hashCode);
+    expect(first, isNot(memoryOnly));
+    expect(first.toJson()['includeFile'], isTrue);
+    expect(memoryOnly.toJson()['includeFile'], isFalse);
   });
 }

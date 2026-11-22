@@ -1,5 +1,6 @@
 library;
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:diting_android/data/server/server_models.dart';
@@ -8,6 +9,7 @@ import 'package:diting_shared/data/errors.dart';
 import 'package:flutter/services.dart';
 
 const serverChannelName = 'com.haoze.diting/server';
+const serverStatusChannelName = 'com.haoze.diting/server_status';
 
 class ServerException implements Exception {
   const ServerException(this.message);
@@ -20,6 +22,7 @@ class ServerException implements Exception {
 
 abstract class ServerClient {
   Future<ServerStatus> status();
+  Stream<ServerStatus> watchStatus();
   Future<bool> start({required bool preferRoot});
   Future<bool> stop();
   Future<ServerRootStatus> probeRoot();
@@ -35,10 +38,15 @@ abstract class ServerClient {
 }
 
 class MethodChannelServerClient implements ServerClient {
-  MethodChannelServerClient({MethodChannel? channel})
-    : _channel = channel ?? const MethodChannel(serverChannelName);
+  MethodChannelServerClient({
+    MethodChannel? channel,
+    EventChannel? statusChannel,
+  }) : _channel = channel ?? const MethodChannel(serverChannelName),
+       _statusChannel =
+           statusChannel ?? const EventChannel(serverStatusChannelName);
 
   final MethodChannel _channel;
+  final EventChannel _statusChannel;
 
   Future<Object?> _invoke(String method, [Map<String, Object?>? args]) async {
     try {
@@ -72,6 +80,18 @@ class MethodChannelServerClient implements ServerClient {
       ServerStatus.fromMap(await _invoke('status'));
 
   @override
+  Stream<ServerStatus> watchStatus() {
+    try {
+      return _statusChannel
+          .receiveBroadcastStream()
+          .map(ServerStatus.fromMap)
+          .handleError((Object _) {});
+    } on MissingPluginException {
+      return const Stream.empty();
+    }
+  }
+
+  @override
   Future<bool> start({required bool preferRoot}) async =>
       await _invoke('start', {'preferRoot': preferRoot}) == true;
 
@@ -83,8 +103,7 @@ class MethodChannelServerClient implements ServerClient {
       ServerRootStatus.fromMap(await _invoke('probe_root'));
 
   @override
-  Future<String?> readConfig() async =>
-      await _invoke('read_config') as String?;
+  Future<String?> readConfig() async => await _invoke('read_config') as String?;
 
   @override
   Future<void> writeConfig(ServerConfig config) async {

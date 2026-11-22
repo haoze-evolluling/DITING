@@ -3,7 +3,6 @@ use std::fs::File;
 use std::os::fd::AsRawFd;
 use std::os::raw::{c_char, c_int, c_void};
 use std::os::unix::ffi::OsStrExt;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 type ServerMain = unsafe extern "C" fn(c_int, *const *const c_char) -> c_int;
@@ -65,7 +64,6 @@ fn library_path(executable: &Path) -> Result<PathBuf, String> {
         .ok_or_else(|| format!("启动器路径没有父目录: {}", executable.display()))?;
     let candidate = directory.join(NATIVE_LIBRARY);
     if candidate.is_file() {
-        let _ = std::fs::set_permissions(&candidate, std::fs::Permissions::from_mode(0o755));
         return Ok(candidate);
     }
     Err(format!(

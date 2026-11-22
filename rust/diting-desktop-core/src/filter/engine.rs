@@ -29,11 +29,16 @@ pub struct RuleEngine {
 
 impl RuleEngine {
     pub fn new(config: FilterConfig) -> Self {
+        Self::new_with_groups(config, GroupConfig::default())
+    }
+
+    pub fn new_with_groups(config: FilterConfig, groups: GroupConfig) -> Self {
         let config = normalize_config(config);
+        let groups = normalize_groups(groups);
         let engine = Self {
             inner: Arc::new(Inner {
                 config: RwLock::new(config.clone()),
-                groups: RwLock::new(GroupConfig::default()),
+                groups: RwLock::new(groups.clone()),
                 schedules: RwLock::new(ScheduleSet::default()),
                 matchers: RwLock::new(Arc::new(MatcherSnapshot::default())),
                 rebuild_lock: Mutex::new(()),
@@ -45,9 +50,7 @@ impl RuleEngine {
                 stopped: AtomicBool::new(false),
             }),
         };
-        engine
-            .inner
-            .sync_schedules(&config, &GroupConfig::default());
+        engine.inner.sync_schedules(&config, &groups);
         engine.inner.sync_bogus(&config);
         engine.inner.rebuild_now();
         engine
@@ -259,7 +262,13 @@ impl RuleEngine {
 
     pub fn set_groups(&self, groups: GroupConfig) {
         let groups = normalize_groups(groups);
-        *self.inner.groups.write().unwrap() = groups.clone();
+        {
+            let mut stored = self.inner.groups.write().unwrap();
+            if *stored == groups {
+                return;
+            }
+            *stored = groups.clone();
+        }
         let config = self.inner.config.read().unwrap().clone();
         self.inner.sync_schedules(&config, &groups);
         self.inner.rebuild_now();
@@ -417,4 +426,36 @@ pub fn now_ms() -> i64 {
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_millis() as i64)
         .unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_with_groups_builds_once_and_skips_identical_group_updates() {
+        let mut config = FilterConfig::default();
+        config.enabled = true;
+        config.custom_rules = vec!["@@||allowed.example^".to_string()];
+        let groups = GroupConfig {
+            enabled: true,
+            groups: vec![ClientGroup {
+                id: "kids".into(),
+                name: "Kids".into(),
+                clients: vec!["192.168.1.50".into()],
+                allowlist_only: true,
+                enabled: true,
+                ..ClientGroup::default()
+            }],
+        };
+        let engine = RuleEngine::new_with_groups(config, groups.clone());
+        let initial_snapshot = Arc::clone(&engine.inner.matchers.read().unwrap());
+        assert!(!engine.check("allowed.example", 1, "kids").blocked);
+        assert!(engine.check("other.example", 1, "kids").blocked);
+
+        // Identical group update must skip rebuild and keep the exact snapshot Arc.
+        engine.set_groups(groups);
+        let after_snapshot = Arc::clone(&engine.inner.matchers.read().unwrap());
+        assert!(Arc::ptr_eq(&initial_snapshot, &after_snapshot));
+    }
 }

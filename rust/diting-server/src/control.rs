@@ -50,8 +50,12 @@ fn update_config(runtime: &Arc<ServerRuntime>, params: Value) -> Result<ServerCo
 }
 
 fn query_log(runtime: &Arc<ServerRuntime>, params: Value) -> Result<Value, String> {
-    let query = serde_json::from_value::<diting_desktop_core::querylog::SearchQuery>(params)
+    let has_include_file = params.get("includeFile").is_some();
+    let mut query = serde_json::from_value::<diting_desktop_core::querylog::SearchQuery>(params)
         .map_err(|error| format!("无效的日志筛选条件: {error}"))?;
+    if !has_include_file {
+        query.include_file = true;
+    }
     Ok(runtime.query_log(query))
 }
 
@@ -150,5 +154,53 @@ mod tests {
         .await;
         assert!(!response.ok);
         assert!(response.error.unwrap().message.contains("域名"));
+    }
+
+    #[tokio::test]
+    async fn query_log_respects_explicit_include_file_flag() {
+        let root =
+            std::env::temp_dir().join(format!("diting-server-control-qlog-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let paths = ServerPaths::new(&root);
+        let mut config = ServerConfig::default();
+        config.normalize(&paths, 1053, false, "0.0.0.0").unwrap();
+        let log_dir = std::path::PathBuf::from(&config.query_log.data_dir);
+        std::fs::create_dir_all(&log_dir).unwrap();
+        let line = serde_json::to_string(&diting_desktop_core::querylog::Record {
+            timestamp: 1_700_000_000_000,
+            domain: "from-file.example".to_string(),
+            status: "allowed".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+        std::fs::write(log_dir.join("querylog-20261122.jsonl"), format!("{line}\n")).unwrap();
+
+        let runtime = Arc::new(ServerRuntime::new(paths, config).unwrap());
+        let (default_res, _) = handle_request(
+            &runtime,
+            Request {
+                id: Value::from(4),
+                method: "query_log".to_string(),
+                params: json!({"limit": 10}),
+            },
+        )
+        .await;
+        assert!(default_res.ok);
+        assert_eq!(default_res.result.unwrap()["total"], 1);
+
+        let (mem_only_res, _) = handle_request(
+            &runtime,
+            Request {
+                id: Value::from(5),
+                method: "query_log".to_string(),
+                params: json!({"limit": 10, "includeFile": false}),
+            },
+        )
+        .await;
+        assert!(mem_only_res.ok);
+        assert_eq!(mem_only_res.result.unwrap()["total"], 0);
+
+        runtime.shutdown().await;
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

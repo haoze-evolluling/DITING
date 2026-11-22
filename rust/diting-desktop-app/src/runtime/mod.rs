@@ -108,8 +108,7 @@ impl AppRuntime {
             enabled: config.client.groups_enabled,
             groups: config.client.groups.clone(),
         };
-        let filter = RuleEngine::new(config.filter.clone());
-        filter.set_groups(groups);
+        let filter = RuleEngine::new_with_groups(config.filter.clone(), groups);
         let resolver = Arc::new(DesktopResolver::new());
         resolver.configure(
             &settings::resolver_settings(&config.upstream),

@@ -44,7 +44,10 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     _pollTimer?.cancel();
     _pollTimer = visible
         ? Timer.periodic(const Duration(seconds: 5), (_) {
-            ref.read(serverControllerProvider.notifier).refreshLive();
+            if (ref.read(serverControllerProvider).value?.status.running ==
+                true) {
+              ref.read(serverControllerProvider.notifier).refreshLive();
+            }
           })
         : null;
   }

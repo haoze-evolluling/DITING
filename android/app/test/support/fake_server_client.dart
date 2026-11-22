@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:diting_android/data/server/server_client.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
@@ -11,27 +13,44 @@ class FakeServerClient implements ServerClient {
        _config = config ?? ServerConfig.defaults(),
        _stats = stats ?? const ServerStats();
 
+  final _statusController = StreamController<ServerStatus>.broadcast();
   ServerStatus _status;
   ServerConfig _config;
   final ServerStats _stats;
+
+  void emitStatus(ServerStatus next) {
+    _status = next;
+    if (!_statusController.isClosed) {
+      _statusController.add(next);
+    }
+  }
+
+  void dispose() {
+    _statusController.close();
+  }
 
   @override
   Future<ServerStatus> status() async => _status;
 
   @override
+  Stream<ServerStatus> watchStatus() => _statusController.stream;
+
+  @override
   Future<bool> start({required bool preferRoot}) async {
-    _status = ServerStatus(
-      running: true,
-      root: preferRoot,
-      port: preferRoot ? 53 : 1053,
-      addresses: [preferRoot ? '0.0.0.0:53' : '0.0.0.0:1053'],
+    emitStatus(
+      ServerStatus(
+        running: true,
+        root: preferRoot,
+        port: preferRoot ? 53 : 1053,
+        addresses: [preferRoot ? '0.0.0.0:53' : '0.0.0.0:1053'],
+      ),
     );
     return true;
   }
 
   @override
   Future<bool> stop() async {
-    _status = const ServerStatus();
+    emitStatus(const ServerStatus());
     return true;
   }
 

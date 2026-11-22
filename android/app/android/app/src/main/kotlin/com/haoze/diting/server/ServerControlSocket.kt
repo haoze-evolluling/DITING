@@ -6,13 +6,19 @@ import android.net.LocalSocketAddress
 import org.json.JSONObject
 
 object ServerControlSocket {
-    fun request(context: Context, method: String, params: JSONObject, id: Long = 1): String {
+    fun request(
+        context: Context,
+        method: String,
+        params: JSONObject,
+        id: Long = 1,
+        timeoutMs: Int = 5_000,
+    ): String {
         val payload = JSONObject()
             .put("id", id)
             .put("method", method)
             .put("params", params)
             .toString()
-        return transact(context, payload)
+        return transact(context, payload, timeoutMs)
     }
 
     fun transact(context: Context, payload: String, timeoutMs: Int = 5_000): String {

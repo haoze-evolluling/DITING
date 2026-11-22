@@ -31,12 +31,14 @@ class ServerStatusOverview extends StatelessWidget {
         : status.addresses.join('  ·  ');
     final state = running
         ? l10n.serverListening
+        : status.stopping
+        ? l10n.stateStopping
         : status.starting
         ? l10n.serverStarting
         : l10n.serverStopped;
     final dotColor = running
         ? scheme.success
-        : status.starting
+        : status.isBusy
         ? scheme.warning
         : status.error != null
         ? scheme.error

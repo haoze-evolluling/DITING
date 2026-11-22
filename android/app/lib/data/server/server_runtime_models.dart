@@ -4,6 +4,7 @@ class ServerStatus {
   const ServerStatus({
     this.running = false,
     this.starting = false,
+    this.stopping = false,
     this.root = false,
     this.port = 1053,
     this.addresses = const [],
@@ -13,6 +14,7 @@ class ServerStatus {
 
   final bool running;
   final bool starting;
+  final bool stopping;
   final bool root;
   final int port;
   final List<String> addresses;
@@ -20,6 +22,7 @@ class ServerStatus {
   final String? error;
 
   bool get active => running || starting;
+  bool get isBusy => starting || stopping;
 
   factory ServerStatus.fromMap(Object? raw) {
     final map = raw is Map ? raw : const {};
@@ -27,6 +30,7 @@ class ServerStatus {
     return ServerStatus(
       running: map['running'] == true,
       starting: map['starting'] == true,
+      stopping: map['stopping'] == true,
       root: map['root'] == true,
       port: (map['port'] as num?)?.toInt() ?? 1053,
       addresses: [
@@ -43,6 +47,7 @@ class ServerStatus {
   ServerStatus copyWith({
     bool? running,
     bool? starting,
+    bool? stopping,
     bool? root,
     int? port,
     List<String>? addresses,
@@ -52,11 +57,44 @@ class ServerStatus {
   }) => ServerStatus(
     running: running ?? this.running,
     starting: starting ?? this.starting,
+    stopping: stopping ?? this.stopping,
     root: root ?? this.root,
     port: port ?? this.port,
     addresses: addresses ?? this.addresses,
     startedAt: startedAt ?? this.startedAt,
     error: clearError ? null : error ?? this.error,
+  );
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! ServerStatus) return false;
+    if (other.running != running ||
+        other.starting != starting ||
+        other.stopping != stopping ||
+        other.root != root ||
+        other.port != port ||
+        other.startedAt != startedAt ||
+        other.error != error ||
+        other.addresses.length != addresses.length) {
+      return false;
+    }
+    for (var i = 0; i < addresses.length; i++) {
+      if (other.addresses[i] != addresses[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    running,
+    starting,
+    stopping,
+    root,
+    port,
+    startedAt,
+    error,
+    Object.hashAll(addresses),
   );
 }
 
@@ -274,6 +312,7 @@ class ServerLogQuery {
     this.status = '',
     this.limit = 50,
     this.offset = 0,
+    this.includeFile = true,
   });
 
   final String domain;
@@ -281,6 +320,7 @@ class ServerLogQuery {
   final String status;
   final int limit;
   final int offset;
+  final bool includeFile;
 
   Map<String, Object?> toJson() => {
     'domain': domain,
@@ -288,7 +328,7 @@ class ServerLogQuery {
     'status': status,
     'limit': limit,
     'offset': offset,
-    'includeFile': true,
+    'includeFile': includeFile,
   };
 
   @override
@@ -298,10 +338,12 @@ class ServerLogQuery {
       other.client == client &&
       other.status == status &&
       other.limit == limit &&
-      other.offset == offset;
+      other.offset == offset &&
+      other.includeFile == includeFile;
 
   @override
-  int get hashCode => Object.hash(domain, client, status, limit, offset);
+  int get hashCode =>
+      Object.hash(domain, client, status, limit, offset, includeFile);
 }
 
 class ServerFilterCheck {

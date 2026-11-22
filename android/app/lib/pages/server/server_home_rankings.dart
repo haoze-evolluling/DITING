@@ -191,7 +191,9 @@ class ServerRecentQueries extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (!running) return const SizedBox.shrink();
     final recent = ref.watch(
-      serverQueryLogProvider(const ServerLogQuery(limit: 3)),
+      serverQueryLogProvider(
+        const ServerLogQuery(limit: 3, includeFile: false),
+      ),
     );
     final scheme = context.colorScheme;
     final l10n = context.l10n;

@@ -2,12 +2,15 @@ package com.haoze.diting.server
 
 import android.content.Context
 import java.io.File
+import java.util.concurrent.CopyOnWriteArraySet
 
 object ServerProcessState {
     private val lock = Any()
+    private val listeners = CopyOnWriteArraySet<(Map<String, Any?>) -> Unit>()
 
     @Volatile private var runningFlag = false
     @Volatile private var startingFlag = false
+    @Volatile private var stoppingFlag = false
     @Volatile private var rootFlag = false
     @Volatile private var portValue = 1053
     @Volatile private var addressesValue = listOf<String>()
@@ -17,62 +20,107 @@ object ServerProcessState {
 
     val running: Boolean get() = runningFlag
     val starting: Boolean get() = startingFlag
+    val stopping: Boolean get() = stoppingFlag
+    val active: Boolean get() = runningFlag || startingFlag || stoppingFlag
     val pid: Long get() = pidValue
 
-    fun begin(preferRoot: Boolean) = synchronized(lock) {
-        runningFlag = false
-        startingFlag = true
-        rootFlag = preferRoot
-        portValue = if (preferRoot) 53 else 1053
-        addressesValue = emptyList()
-        startedAtValue = 0L
-        errorValue = null
-        pidValue = 0L
+    fun addListener(listener: (Map<String, Any?>) -> Unit) {
+        listeners.add(listener)
     }
 
-    fun ready(root: Boolean, port: Int, addresses: List<String>, pid: Long) =
-        synchronized(lock) {
+    fun removeListener(listener: (Map<String, Any?>) -> Unit) {
+        listeners.remove(listener)
+    }
+
+    fun begin(preferRoot: Boolean) {
+        val current = synchronized(lock) {
+            runningFlag = false
+            startingFlag = true
+            stoppingFlag = false
+            rootFlag = preferRoot
+            portValue = if (preferRoot) 53 else 1053
+            addressesValue = emptyList()
+            startedAtValue = 0L
+            errorValue = null
+            pidValue = 0L
+            snapshotLocked()
+        }
+        notifyListeners(current)
+    }
+
+    fun ready(root: Boolean, port: Int, addresses: List<String>, pid: Long) {
+        val current = synchronized(lock) {
             runningFlag = true
             startingFlag = false
+            stoppingFlag = false
             rootFlag = root
             portValue = port
             addressesValue = addresses
             startedAtValue = System.currentTimeMillis()
             errorValue = null
             pidValue = pid
+            snapshotLocked()
         }
+        notifyListeners(current)
+    }
 
-    fun failed(message: String, root: Boolean = rootFlag, port: Int = portValue) =
-        synchronized(lock) {
+    fun stopping() {
+        val current = synchronized(lock) {
             runningFlag = false
             startingFlag = false
+            stoppingFlag = true
+            snapshotLocked()
+        }
+        notifyListeners(current)
+    }
+
+    fun failed(message: String, root: Boolean = rootFlag, port: Int = portValue) {
+        val current = synchronized(lock) {
+            runningFlag = false
+            startingFlag = false
+            stoppingFlag = false
             rootFlag = root
             portValue = port
             addressesValue = emptyList()
             startedAtValue = 0L
             errorValue = message
             pidValue = 0L
+            snapshotLocked()
         }
-
-    fun stopped() = synchronized(lock) {
-        runningFlag = false
-        startingFlag = false
-        addressesValue = emptyList()
-        startedAtValue = 0L
-        pidValue = 0L
+        notifyListeners(current)
     }
 
-    fun snapshot(): Map<String, Any?> = synchronized(lock) {
-        mapOf(
-            "running" to runningFlag,
-            "starting" to startingFlag,
-            "root" to rootFlag,
-            "port" to portValue,
-            "bindAddress" to "0.0.0.0",
-            "addresses" to addressesValue,
-            "startedAt" to startedAtValue,
-            "error" to errorValue,
-        )
+    fun stopped() {
+        val current = synchronized(lock) {
+            runningFlag = false
+            startingFlag = false
+            stoppingFlag = false
+            addressesValue = emptyList()
+            startedAtValue = 0L
+            pidValue = 0L
+            snapshotLocked()
+        }
+        notifyListeners(current)
+    }
+
+    fun snapshot(): Map<String, Any?> = synchronized(lock) { snapshotLocked() }
+
+    private fun snapshotLocked(): Map<String, Any?> = mapOf(
+        "running" to runningFlag,
+        "starting" to startingFlag,
+        "stopping" to stoppingFlag,
+        "root" to rootFlag,
+        "port" to portValue,
+        "bindAddress" to "0.0.0.0",
+        "addresses" to addressesValue,
+        "startedAt" to startedAtValue,
+        "error" to errorValue,
+    )
+
+    private fun notifyListeners(state: Map<String, Any?>) {
+        for (listener in listeners) {
+            runCatching { listener(state) }
+        }
     }
 }
 

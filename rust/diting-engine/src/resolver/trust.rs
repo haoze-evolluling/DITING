@@ -12,8 +12,8 @@ pub const ISRG_ROOT_X2_PEM: &str = include_str!("res/isrg-root-x2.pem");
 pub const BUNDLED_ROOTS: [&str; 2] = [ISRG_ROOT_X1_PEM, ISRG_ROOT_X2_PEM];
 
 pub const ANDROID_CERT_DIRECTORIES: [&str; 2] = [
-    "/system/etc/security/cacerts",
     "/apex/com.android.conscrypt/cacerts",
+    "/system/etc/security/cacerts",
 ];
 
 pub const DOH_ALPN: [&[u8]; 2] = [b"h2", b"http/1.1"];
@@ -35,6 +35,10 @@ pub struct UpstreamTrust {
 }
 
 impl UpstreamTrust {
+    pub fn empty() -> Self {
+        Self::build(RootCertStore::empty(), RootStoreReport::default())
+    }
+
     pub fn platform() -> Self {
         let mut roots = RootCertStore::empty();
         let mut report = RootStoreReport::default();
@@ -44,6 +48,9 @@ impl UpstreamTrust {
                 report.directories += 1;
                 report.files += files;
                 report.system_certs += certs;
+                if certs > 0 {
+                    break;
+                }
             }
         }
         report.bundled_certs = add_pem_roots(&mut roots, &BUNDLED_ROOTS);
@@ -184,6 +191,13 @@ pub fn certificate_from_pem(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn empty_trust_starts_without_roots() {
+        let trust = UpstreamTrust::empty();
+        assert!(trust.roots().is_empty());
+        assert_eq!(trust.report(), RootStoreReport::default());
+    }
 
     #[test]
     fn bundled_roots_parse() {

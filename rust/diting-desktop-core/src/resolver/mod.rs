@@ -2,7 +2,7 @@ pub mod settings;
 pub mod trust;
 
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 
 use diting_config_core::protocol::Protocol;
@@ -13,7 +13,7 @@ use diting_engine::config::{
 };
 use diting_engine::logs::{BootstrapEvent, BootstrapSink};
 use diting_engine::protect::ProtectorHandle;
-use diting_engine::resolver::{Bootstrap, Resolver, ResolverDeps, StatsStore};
+use diting_engine::resolver::{Bootstrap, Resolver, ResolverDeps, StatsStore, UpstreamTrust};
 
 pub use settings::{
     BootstrapServerSettings, BootstrapSettings, ProviderSettings, ResolverSettings,
@@ -137,7 +137,8 @@ impl ResolverSet {
 
 pub struct DesktopResolver {
     current: RwLock<Arc<ResolverSet>>,
-    trust: Arc<diting_engine::resolver::UpstreamTrust>,
+    trust: OnceLock<Arc<UpstreamTrust>>,
+    empty_trust: Arc<UpstreamTrust>,
     stats: Arc<StatsStore>,
     bootstrap: Arc<Bootstrap>,
     protector: ProtectorHandle,
@@ -150,10 +151,11 @@ impl DesktopResolver {
             Arc::new(SilentBootstrap),
             protector.clone(),
         ));
+        let empty_trust = Arc::new(UpstreamTrust::empty());
         Self {
             current: RwLock::new(Arc::new(ResolverSet {
                 primary: Resolver::empty(ResolverDeps {
-                    trust: os_trust(),
+                    trust: Arc::clone(&empty_trust),
                     bootstrap: Arc::clone(&bootstrap),
                     stats: Arc::new(StatsStore::default()),
                     protector: protector.clone(),
@@ -169,11 +171,16 @@ impl DesktopResolver {
                 skipped: Vec::new(),
                 provider_count: 0,
             })),
-            trust: os_trust(),
+            trust: OnceLock::new(),
+            empty_trust,
             stats: Arc::new(StatsStore::default()),
             bootstrap,
             protector,
         }
+    }
+
+    fn platform_trust(&self) -> Arc<UpstreamTrust> {
+        Arc::clone(self.trust.get_or_init(os_trust))
     }
 
     pub fn current(&self) -> Arc<ResolverSet> {
@@ -198,10 +205,22 @@ impl DesktopResolver {
                 Some((host, pin))
             })
             .collect();
-        let trust = if pins.is_empty() {
-            Arc::clone(&self.trust)
+        let needs_tls = !pins.is_empty()
+            || settings
+                .providers
+                .iter()
+                .chain(settings.fallback_providers.iter())
+                .any(provider_uses_tls)
+            || settings
+                .conditional_routes
+                .values()
+                .any(|upstream| route_uses_tls(upstream));
+        let trust = if !needs_tls {
+            Arc::clone(&self.empty_trust)
+        } else if pins.is_empty() {
+            self.platform_trust()
         } else {
-            Arc::new(self.trust.with_pin_hashes(pins))
+            Arc::new(self.platform_trust().with_pin_hashes(pins))
         };
 
         let primary_config = dns_config(settings, &settings.providers);
@@ -356,6 +375,21 @@ fn dns_config(settings: &ResolverSettings, providers: &[ProviderSettings]) -> Dn
         connection_rate_limit: diting_engine::connection_limit::Config::default(),
         race_max_parallel: settings.race_max_parallel,
     }
+}
+
+fn provider_uses_tls(provider: &ProviderSettings) -> bool {
+    matches!(
+        provider.protocol.trim().to_ascii_uppercase().as_str(),
+        "DOH" | "DOH3" | "H3" | "DOT" | "TLS"
+    )
+}
+
+fn route_uses_tls(upstream: &str) -> bool {
+    let trimmed = upstream.trim();
+    trimmed.starts_with("https://")
+        || trimmed.starts_with("h3://")
+        || trimmed.starts_with("tls://")
+        || trimmed.starts_with("dot://")
 }
 
 fn engine_provider(

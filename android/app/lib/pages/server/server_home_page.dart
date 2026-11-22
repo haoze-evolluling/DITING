@@ -34,7 +34,11 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
     _timer?.cancel();
     _timer = visible
         ? Timer.periodic(const Duration(seconds: 5), (_) {
-            if (!_busy) {
+            if (_busy) return;
+            final running =
+                ref.read(serverControllerProvider).value?.status.running ??
+                false;
+            if (running) {
               ref.read(serverControllerProvider.notifier).refreshLive();
             }
           })
@@ -48,7 +52,7 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
   }
 
   Future<void> _toggle(ServerStatus status) async {
-    if (_busy) return;
+    if (_busy || status.isBusy) return;
     if (status.active) {
       await _stop();
     } else {
@@ -126,7 +130,9 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
               onPressed: () => _toggle(value.status),
               runningLabel: context.l10n.serverStop,
               stoppedLabel: context.l10n.serverStart,
-              busyLabel: context.l10n.serverStarting,
+              busyLabel: value.status.stopping
+                  ? context.l10n.stateStopping
+                  : context.l10n.serverStarting,
             ),
             ServerStatusOverview(status: value.status, config: value.config),
             ServerQuickActions(config: value.config),

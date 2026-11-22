@@ -1,6 +1,8 @@
 package com.haoze.diting
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.haoze.diting.platform.ChannelResults
 import com.haoze.diting.server.ServerControlSocket
 import com.haoze.diting.server.ServerDnsService
@@ -9,20 +11,29 @@ import com.haoze.diting.server.ServerPreference
 import com.haoze.diting.server.ServerProcessState
 import com.haoze.diting.server.ServerRoot
 import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import org.json.JSONObject
 
 class ServerBridge(
     private val context: Context,
     private val messenger: BinaryMessenger,
 ) : MethodChannel.MethodCallHandler {
-    private val io = Executors.newSingleThreadExecutor()
+    private val threadId = AtomicInteger(1)
+    private val io = Executors.newFixedThreadPool(4) { runnable ->
+        Thread(runnable, "diting-server-bridge-${threadId.getAndIncrement()}").apply {
+            isDaemon = true
+        }
+    }
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     fun register() {
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
+        EventChannel(messenger, STATUS_CHANNEL).setStreamHandler(StatusStreamHandler())
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -31,7 +42,7 @@ class ServerBridge(
             "stop" -> result.success(ServerDnsService.stop(context))
             "status" -> result.success(ServerDnsService.status())
             "probe_root" -> probeRoot(result)
-            "read_config" -> result.success(readConfig())
+            "read_config" -> readConfig(result)
             "write_config" -> writeConfig(call, result)
             "request" -> request(call, result)
             else -> result.notImplemented()
@@ -57,13 +68,20 @@ class ServerBridge(
         }
     }
 
-    private fun readConfig(): String? {
-        val file = ServerPaths.configFile(context)
-        return if (file.isFile) file.readText() else null
+    private fun readConfig(result: MethodChannel.Result) {
+        io.execute {
+            runCatching {
+                val file = ServerPaths.configFile(context)
+                if (file.isFile) file.readText() else null
+            }.fold(
+                onSuccess = { ChannelResults.success(result, it) },
+                onFailure = { ChannelResults.error(result, "config_read_failed", it) },
+            )
+        }
     }
 
     private fun writeConfig(call: MethodCall, result: MethodChannel.Result) {
-        if (ServerProcessState.running) {
+        if (ServerProcessState.active) {
             result.error("server_running", "服务运行时请通过控制协议保存配置", null)
             return
         }
@@ -108,7 +126,26 @@ class ServerBridge(
         }
     }
 
+    private inner class StatusStreamHandler : EventChannel.StreamHandler {
+        private var listener: ((Map<String, Any?>) -> Unit)? = null
+
+        override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+            val callback: (Map<String, Any?>) -> Unit = { snapshot ->
+                mainHandler.post { runCatching { events.success(snapshot) } }
+            }
+            listener = callback
+            ServerProcessState.addListener(callback)
+            callback(ServerProcessState.snapshot())
+        }
+
+        override fun onCancel(arguments: Any?) {
+            listener?.let { ServerProcessState.removeListener(it) }
+            listener = null
+        }
+    }
+
     companion object {
         const val CHANNEL = "com.haoze.diting/server"
+        const val STATUS_CHANNEL = "com.haoze.diting/server_status"
     }
 }

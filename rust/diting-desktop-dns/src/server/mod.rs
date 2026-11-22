@@ -227,14 +227,24 @@ impl DnsServer {
 
     async fn stop_tasks(&self, tasks: &mut Vec<JoinHandle<()>>) {
         let drained: Vec<JoinHandle<()>> = tasks.drain(..).collect();
-        for mut task in drained {
-            if tokio::time::timeout(Duration::from_secs(1), &mut task)
-                .await
-                .is_err()
-            {
-                task.abort();
-                let _ = task.await;
+        if drained.is_empty() {
+            return;
+        }
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(1);
+        let mut iter = drained.into_iter();
+        let mut remaining = Vec::new();
+        while let Some(mut task) = iter.next() {
+            if tokio::time::timeout_at(deadline, &mut task).await.is_err() {
+                remaining.push(task);
+                remaining.extend(iter);
+                break;
             }
+        }
+        for task in &remaining {
+            task.abort();
+        }
+        for task in remaining {
+            let _ = task.await;
         }
     }
 
@@ -518,5 +528,22 @@ mod tests {
         let header = diting_dns_wire::parse_header(&buffer[..length]).unwrap();
         assert!(header.is_response());
         server.shutdown().await;
+    }
+
+    #[tokio::test]
+    async fn stop_tasks_uses_shared_deadline_for_multiple_stuck_tasks() {
+        let pipeline = Arc::new(Pipeline::new(vec![Arc::new(Answer)]));
+        let server = DnsServer::new(ServerConfig::default(), pipeline);
+        let mut tasks = (0..4)
+            .map(|_| tokio::spawn(std::future::pending::<()>()))
+            .collect::<Vec<_>>();
+        let started = tokio::time::Instant::now();
+        server.stop_tasks(&mut tasks).await;
+        assert!(tasks.is_empty());
+        assert!(
+            started.elapsed() < Duration::from_millis(2200),
+            "expected shared 1s deadline, got {:?}",
+            started.elapsed()
+        );
     }
 }

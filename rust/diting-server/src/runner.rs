@@ -1,9 +1,5 @@
 use std::path::PathBuf;
-#[cfg(unix)]
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-#[cfg(unix)]
-use std::time::Duration;
 
 use diting_desktop_app::dns_server_config;
 use diting_desktop_dns::server::BoundDnsSockets;
@@ -73,15 +69,14 @@ fn serve(
     control: BoundControlSocket,
 ) -> Result<(), String> {
     config.save(&paths.config_path)?;
-    install_signal_handlers()?;
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .map_err(|error| format!("创建服务器运行时失败: {error}"))?;
     runtime.block_on(async move {
+        let mut signals = SignalWaiter::install()?;
         let server = Arc::new(ServerRuntime::new(paths, config)?);
         server.start(dns_sockets).await?;
-        server.save_initial_config()?;
         let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
         let control_server = Arc::clone(&server);
         let control_tx = shutdown_tx.clone();
@@ -106,7 +101,7 @@ fn serve(
             changed = shutdown_rx.changed() => {
                 let _ = changed;
             }
-            _ = wait_for_signal() => {}
+            _ = signals.wait() => {}
             result = &mut control_task => {
                 control_done = true;
                 if let Ok(Err(error)) = result {
@@ -126,49 +121,43 @@ fn serve(
     })
 }
 
-async fn wait_for_signal() {
-    #[cfg(unix)]
-    {
-        while !STOP_SIGNAL.load(Ordering::SeqCst) {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    }
-    #[cfg(not(unix))]
-    {
-        let _ = tokio::signal::ctrl_c().await;
-    }
+#[cfg(unix)]
+struct SignalWaiter {
+    sigterm: tokio::signal::unix::Signal,
+    sigint: tokio::signal::unix::Signal,
 }
 
 #[cfg(unix)]
-static STOP_SIGNAL: AtomicBool = AtomicBool::new(false);
+impl SignalWaiter {
+    fn install() -> Result<Self, String> {
+        use tokio::signal::unix::{signal, SignalKind};
+        let sigterm = signal(SignalKind::terminate())
+            .map_err(|error| format!("安装 SIGTERM 信号处理器失败: {error}"))?;
+        let sigint = signal(SignalKind::interrupt())
+            .map_err(|error| format!("安装 SIGINT 信号处理器失败: {error}"))?;
+        Ok(Self { sigterm, sigint })
+    }
 
-#[cfg(unix)]
-extern "C" fn handle_stop_signal(_signal: libc::c_int) {
-    STOP_SIGNAL.store(true, Ordering::SeqCst);
-}
-
-#[cfg(unix)]
-fn install_signal_handlers() -> Result<(), String> {
-    unsafe {
-        let mut action: libc::sigaction = std::mem::zeroed();
-        action.sa_sigaction = handle_stop_signal as *const () as libc::sighandler_t;
-        action.sa_flags = libc::SA_RESTART;
-        libc::sigemptyset(&mut action.sa_mask);
-        for signal in [libc::SIGTERM, libc::SIGINT] {
-            if libc::sigaction(signal, &action, std::ptr::null_mut()) != 0 {
-                return Err(format!(
-                    "安装信号处理器失败 (signal {signal}): {}",
-                    std::io::Error::last_os_error()
-                ));
-            }
+    async fn wait(&mut self) {
+        tokio::select! {
+            _ = self.sigterm.recv() => {}
+            _ = self.sigint.recv() => {}
         }
     }
-    Ok(())
 }
 
 #[cfg(not(unix))]
-fn install_signal_handlers() -> Result<(), String> {
-    Ok(())
+struct SignalWaiter;
+
+#[cfg(not(unix))]
+impl SignalWaiter {
+    fn install() -> Result<Self, String> {
+        Ok(Self)
+    }
+
+    async fn wait(&mut self) {
+        let _ = tokio::signal::ctrl_c().await;
+    }
 }
 
 fn parse_args(args: impl Iterator<Item = String>) -> Result<Cli, String> {

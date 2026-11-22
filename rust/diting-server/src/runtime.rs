@@ -197,8 +197,7 @@ impl ServerRuntime {
         }
     }
 
-    pub fn query_log(&self, mut query: SearchQuery) -> Value {
-        query.include_file = true;
+    pub fn query_log(&self, query: SearchQuery) -> Value {
         serde_json::to_value(self.desktop.querylog.search(query)).unwrap_or(Value::Null)
     }
 

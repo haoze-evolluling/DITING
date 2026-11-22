@@ -118,7 +118,7 @@ pub struct BlockResponseConfig {
     pub blocking_ipv6: String,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct GroupConfig {
     pub enabled: bool,
     pub groups: Vec<ClientGroup>,
