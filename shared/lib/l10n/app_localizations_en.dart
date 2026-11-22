@@ -515,7 +515,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, simple and server. Normal and simple both take over all traffic through a full tunnel, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and simple modes take over traffic through the Android local VPN interface and never connect to a remote VPN server. The two modes are functionally identical and each keeps its own rules, cache and logs. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, simple and server. Normal and simple both take over all traffic through a full tunnel, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and simple modes take over traffic through the Android local VPN interface and never connect to a remote VPN server. The two modes are functionally identical and each keeps its own rules, cache and logs; simple mode\'s feature hub shows fewer categories by default and they can be restored at any time. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -1536,7 +1536,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get workModeNormalSummary =>
-      'Full DNS resolution, block/allow lists, HTTPS inspection and network control';
+      'Takes over all traffic in a full tunnel, with rules, HTTPS inspection and traffic stats; functionally identical to simple mode';
 
   @override
   String get workModeServerTitle => 'Server mode';
@@ -1556,7 +1556,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get workModeExpressSummary =>
-      'Same full-tunnel feature set as normal mode, with its own rules and logs';
+      'Exactly the same features as normal mode; only its data is separate and its feature hub starts out leaner';
 
   @override
   String get workModeSettingTitle => 'Work mode';
@@ -2970,7 +2970,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get rootTakeoverFooter =>
-      'When on, normal mode uses root to redirect device port-53 queries to the local DNS engine. App routing, HTTPS inspection and the outbound proxy need the VPN tunnel and are unavailable in this mode.';
+      'When on, the current work mode uses root to redirect device port-53 queries to the local DNS engine, reading that mode\'s own rules, logs and preferences. App routing, HTTPS inspection and the outbound proxy need the VPN tunnel and are unavailable in this mode.';
 
   @override
   String get rootTakeoverProbeTitle => 'Check root permission';
@@ -5327,7 +5327,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      'Both modes are functionally identical; only their data is separate: each keeps its own rules, cache and logs.';
+      'Both modes are functionally identical, with only two differences: their data is separate (each keeps its own rules, cache and logs), and the feature hub in simple mode shows fewer categories by default — restore them any time under Hidden features.';
 
   @override
   String get modeNormalFeature1 => 'Full tunnel';
@@ -5358,32 +5358,32 @@ class AppL10nEn extends AppL10n {
       'Records upload, download and query counts per app';
 
   @override
-  String get modeExpressFeature1 => 'Full tunnel';
+  String get modeExpressFeature1 => 'Same features as normal mode';
 
   @override
   String get modeExpressFeature1Body =>
-      'The Rust engine handles all traffic, with per-app routing';
+      'Full tunnel, rules, HTTPS inspection and traffic stats are all identical';
 
   @override
-  String get modeExpressFeature2 => 'All rule features';
+  String get modeExpressFeature2 => 'Separate data';
 
   @override
   String get modeExpressFeature2Body =>
-      'Blocklists, allowlists, rewrites and HTTPS inspection are all available';
+      'Rules, cache, logs and preferences are stored separately from normal mode';
 
   @override
-  String get modeExpressFeature3 => 'Optional HTTPS inspection';
+  String get modeExpressFeature3 => 'Leaner feature hub by default';
 
   @override
   String get modeExpressFeature3Body =>
-      'Requires installing and trusting the local CA certificate';
+      'Network, Advanced & diagnostics and Data & maintenance start hidden';
 
   @override
-  String get modeExpressFeature4 => 'Separate data';
+  String get modeExpressFeature4 => 'Restore any time';
 
   @override
   String get modeExpressFeature4Body =>
-      'Rules, cache and logs are stored separately from normal mode';
+      'Bring every card back from Feature hub → Hidden features';
 
   @override
   String get onboardingTitle => 'Setup';
@@ -5417,7 +5417,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get onboardingSharedRulesBody =>
-      'Each mode keeps its own lists and DNS cache without affecting the others.';
+      'Each mode keeps its own rules, cache and logs without affecting the others; the features themselves are identical.';
 
   @override
   String get onboardingExclusive => 'Modes are exclusive';
@@ -5490,7 +5490,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get onboardingTipExpress1 =>
-      'Simple mode has the same features as normal mode, with its own rules, cache and logs.';
+      'Simple mode has exactly the same features as normal mode; only its data is separate and its feature hub starts out leaner.';
 
   @override
   String get onboardingTipExpress2 => 'Racing needs at least two providers.';
@@ -6391,7 +6391,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get hiddenFeaturesNote =>
-      'Choose which cards the feature hub shows. Turning a switch off hides that card from the hub; everything is shown by default. Hiding only changes the UI and never affects background behaviour or rule enforcement. The setting is stored on this device and survives restarts.';
+      'Choose which cards the feature hub shows. Turning a switch off hides that card from the hub; every card is shown by default (simple mode hides a few categories on first use). Hiding only changes the UI and never affects background behaviour or rule enforcement. The setting is stored on this device and survives restarts.';
 
   @override
   String get hiddenFeaturesFooter =>
@@ -6599,7 +6599,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get logRetentionOverlayNote =>
-      'The bubble hides automatically when the app returns to the foreground. Normal mode only.';
+      'The bubble hides automatically when the app returns to the foreground.';
 
   @override
   String get logRetentionCleanup => 'Automatic cleanup';

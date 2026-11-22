@@ -491,7 +491,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、简洁模式与服务器模式；普通与简洁模式都通过全隧道接管全部流量，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与简洁模式依赖 Android 本地 VPN 接口接管流量，不连接任何远程 VPN 服务器。两种模式功能相同，各自保存独立的规则、缓存与日志。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、简洁模式与服务器模式；普通与简洁模式都通过全隧道接管全部流量，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与简洁模式依赖 Android 本地 VPN 接口接管流量，不连接任何远程 VPN 服务器。两种模式功能相同，各自保存独立的规则、缓存与日志；简洁模式的功能中心默认少显示几个分类，随时可以恢复。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -1471,7 +1471,8 @@ class AppL10nZh extends AppL10n {
   String get workModeNormalBadge => '推荐';
 
   @override
-  String get workModeNormalSummary => '全量域名解析、黑白名单、HTTPS 检查、网络管控';
+  String get workModeNormalSummary =>
+      '全隧道接管全部流量，规则、HTTPS 检查与流量统计齐全；功能与简洁模式完全一致';
 
   @override
   String get workModeServerTitle => '服务器模式';
@@ -1489,7 +1490,7 @@ class AppL10nZh extends AppL10n {
   String get workModeExpressBadge => '简洁';
 
   @override
-  String get workModeExpressSummary => '与普通模式相同的全功能接管，规则与日志独立存放';
+  String get workModeExpressSummary => '功能与普通模式完全相同，只是数据独立存放，功能中心默认更精简';
 
   @override
   String get workModeSettingTitle => '运行模式';
@@ -2802,7 +2803,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get rootTakeoverFooter =>
-      '开启后，普通模式会通过 Root 将本机 53 端口查询重定向到本地 DNS。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。';
+      '开启后，当前工作模式会通过 Root 将本机 53 端口查询重定向到本地 DNS，读取的是该模式自己的规则库、日志库与偏好。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。';
 
   @override
   String get rootTakeoverProbeTitle => '检测 Root 权限';
@@ -5063,7 +5064,8 @@ class AppL10nZh extends AppL10n {
   String get modeSwitchNote => '随时可以在设置里重新选择；切换模式会先停止当前模式的服务，两个模式不会同时运行。';
 
   @override
-  String get modeSharedNote => '两种模式功能完全相同，区别只在数据：各自的规则、缓存与日志独立保存。';
+  String get modeSharedNote =>
+      '两种模式功能完全相同，区别只有两点：数据互不相通——各自的规则、缓存与日志独立保存；简洁模式的功能中心默认少显示几个分类，随时可以在「隐藏功能」里恢复。';
 
   @override
   String get modeNormalFeature1 => '全隧道接管';
@@ -5090,28 +5092,28 @@ class AppL10nZh extends AppL10n {
   String get modeNormalFeature4Body => '按应用记录上下行与查询数';
 
   @override
-  String get modeExpressFeature1 => '全隧道接管';
+  String get modeExpressFeature1 => '功能与普通模式完全一致';
 
   @override
-  String get modeExpressFeature1Body => 'Rust 引擎接管全部流量，可按应用分流';
+  String get modeExpressFeature1Body => '全隧道接管、规则、HTTPS 检查与流量统计全部相同';
 
   @override
-  String get modeExpressFeature2 => '全功能规则';
+  String get modeExpressFeature2 => '独立数据存储';
 
   @override
-  String get modeExpressFeature2Body => '黑白名单、覆写、HTTPS 检查全部可用';
+  String get modeExpressFeature2Body => '规则、缓存、日志与偏好单独保存，与普通模式互不影响';
 
   @override
-  String get modeExpressFeature3 => '可选 HTTPS 检查';
+  String get modeExpressFeature3 => '默认更精简的功能中心';
 
   @override
-  String get modeExpressFeature3Body => '需要安装并信任本地 CA 证书';
+  String get modeExpressFeature3Body => '「应用与网络」「高级与诊断」「数据与维护」默认收起';
 
   @override
-  String get modeExpressFeature4 => '独立数据存储';
+  String get modeExpressFeature4 => '随时可恢复';
 
   @override
-  String get modeExpressFeature4Body => '规则、缓存与日志单独保存，与普通模式互不影响';
+  String get modeExpressFeature4Body => '在功能中心「隐藏功能」里一键恢复全部卡片';
 
   @override
   String get onboardingTitle => '引导';
@@ -5143,7 +5145,7 @@ class AppL10nZh extends AppL10n {
   String get onboardingSharedRules => '规则与缓存独立';
 
   @override
-  String get onboardingSharedRulesBody => '每种模式保留独立的黑白名单与 DNS 缓存，互不影响。';
+  String get onboardingSharedRulesBody => '两种模式的规则、缓存与日志各存一份，互不影响；功能上完全一致。';
 
   @override
   String get onboardingExclusive => '模式互斥';
@@ -5205,7 +5207,7 @@ class AppL10nZh extends AppL10n {
   String get onboardingTipNormal3 => '首页句子和透明度都能在设置里改。';
 
   @override
-  String get onboardingTipExpress1 => '简洁模式与普通模式功能相同，规则、缓存与日志各自独立。';
+  String get onboardingTipExpress1 => '简洁模式与普通模式功能完全一致，只是数据各存一份、功能中心默认少显示几类卡片。';
 
   @override
   String get onboardingTipExpress2 => '多路竞速至少要选 2 家服务商。';
@@ -6054,7 +6056,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get hiddenFeaturesNote =>
-      '自定义在功能中心显示的功能卡片。关闭开关将从功能中心隐藏该卡片，默认全部显示。隐藏仅调整界面展示，不会影响功能的后台运行与规则生效。设置会保存到本机，重启后仍然有效。';
+      '自定义在功能中心显示的功能卡片。关闭开关将从功能中心隐藏该卡片，默认显示全部卡片（简洁模式首次进入时会收起几个分类）。隐藏仅调整界面展示，不会影响功能的后台运行与规则生效。设置会保存到本机，重启后仍然有效。';
 
   @override
   String get hiddenFeaturesFooter => '「隐藏功能」卡片固定常驻，确保随时可以在这里恢复。';
@@ -6253,7 +6255,7 @@ class AppL10nZh extends AppL10n {
   String get logRetentionOverlayBody => 'VPN 运行且应用在后台时显示悬浮球，点按查看实时请求';
 
   @override
-  String get logRetentionOverlayNote => '回到应用前台时悬浮窗会自动隐藏。仅普通模式可用。';
+  String get logRetentionOverlayNote => '回到应用前台时悬浮窗会自动隐藏。';
 
   @override
   String get logRetentionCleanup => '自动清理时间';
