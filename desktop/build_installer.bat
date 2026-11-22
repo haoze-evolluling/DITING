@@ -14,11 +14,13 @@ title DITING Installer Build
 ::
 :: Any argument after the optional target is forwarded to
 :: desktop\toolbox\core\build_manager.py, which runs the whole pipeline:
-::   diting-service.exe (Rust) -> NSIS installer.
+::   desktop/ui (Vite/React) -> diting-service.exe (Rust) -> NSIS installer.
 :: Only the final installers are kept, in desktop\service\build\bin.
+:: Pass --skip-ui to skip the embedded web UI build.
 ::
 :: Requirements:
 ::   - Python 3.10+ on PATH
+::   - Node.js 20+ and npm on PATH (desktop/ui build; skip with --skip-ui)
 ::   - Rust (cargo) on PATH: diting-service is compiled from rust/diting-desktop-service
 ::     (the deb target needs cargo inside WSL as well)
 ::   - MSVC C++ build tools for the default Rust MSVC toolchain

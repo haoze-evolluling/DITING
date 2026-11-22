@@ -11,6 +11,7 @@
 #     ./build_linux.sh -v 2.3.0           # 指定 deb 版本号（默认读 ./VERSION）
 #     ./build_linux.sh --package          # 打包为 .deb 发行包
 #     ./build_linux.sh --clean            # 先清理旧产物
+#     ./build_linux.sh --skip-ui          # 跳过前端构建（使用现有 dist）
 # ============================================================================
 
 set -euo pipefail
@@ -23,10 +24,11 @@ VERSION=""
 BUILD_TYPE="release"
 CLEAN=0
 PACKAGE=0
+SKIP_UI=0
 OUTPUT_DIR="$SCRIPT_DIR/build/bin"
 
 usage() {
-    sed -n '2,16p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '2,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit "${1:-0}"
 }
 
@@ -38,6 +40,7 @@ while [ $# -gt 0 ]; do
         -o|--output)  OUTPUT_DIR="$2"; shift 2 ;;
         --clean)      CLEAN=1; shift ;;
         --package)    PACKAGE=1; shift ;;
+        --skip-ui)    SKIP_UI=1; shift ;;
         -h|--help)    usage ;;
         *) echo "[错误] 未知参数: $1" >&2; usage 1 ;;
     esac
@@ -69,6 +72,20 @@ echo "============================================================"
 echo " 谛听 (DITING) Linux 构建"
 echo " 目标架构: linux/$ARCH   版本: $VERSION   类型: $BUILD_TYPE"
 echo "============================================================"
+
+UI_DIR="$SCRIPT_DIR/../../desktop/ui"
+if [ "$SKIP_UI" -eq 0 ] && [ -d "$UI_DIR" ]; then
+    if command -v npm >/dev/null 2>&1; then
+        if [ ! -d "$UI_DIR/node_modules" ]; then
+            echo ">>> 正在安装桌面管理端依赖 (npm ci)..."
+            ( cd "$UI_DIR" && npm ci ) || exit 1
+        fi
+        echo ">>> 正在构建桌面管理端前端 (npm run build)..."
+        ( cd "$UI_DIR" && npm run build ) || exit 1
+    else
+        echo "[警告] 未找到 npm，跳过 Web 管理页构建；服务将返回占位页。" >&2
+    fi
+fi
 
 RUST_DIR="$SCRIPT_DIR/../../rust"
 case "$ARCH" in

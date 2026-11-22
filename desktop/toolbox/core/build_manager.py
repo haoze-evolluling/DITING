@@ -136,12 +136,40 @@ def build_windows_service(
     return True
 
 
+def build_desktop_ui(
+    root: str,
+    on_log: Callable[[str, str], None],
+    is_cancelled: Callable[[], bool],
+    skip: bool = False,
+) -> bool:
+    """构建桌面管理端前端，供 diting-service 在编译期嵌入为 Web 管理页。"""
+    if skip:
+        on_log("warn", "已跳过桌面管理端构建，服务安装包将不包含 Web 管理页。")
+        return True
+    ui_dir = os.path.join(root, "desktop", "ui")
+    if not os.path.isdir(ui_dir):
+        on_log("warn", f"未找到桌面管理端目录，跳过 Web 管理页构建: {ui_dir}")
+        return True
+    npm = shutil.which("npm")
+    if not npm:
+        on_log("error", "未找到 npm。构建内嵌 Web 管理页需要 Node.js 20+，或使用 --skip-ui 跳过。")
+        return False
+    node_modules = os.path.join(ui_dir, "node_modules")
+    if not os.path.isdir(node_modules):
+        on_log("info", ">>> 正在安装桌面管理端依赖 (npm ci)...")
+        if not run_cmd_live([npm, "ci"], cwd=ui_dir, on_log=on_log, is_cancelled=is_cancelled):
+            return False
+    on_log("info", ">>> 正在构建桌面管理端前端 (npm run build)...")
+    return run_cmd_live([npm, "run", "build"], cwd=ui_dir, on_log=on_log, is_cancelled=is_cancelled)
+
+
 def build_pipeline(
     target: str = "all",
     version: Optional[str] = None,
     build_type: str = "release",
     clean: bool = False,
     skip_check: bool = False,
+    skip_ui: bool = False,
     on_log: Optional[Callable[[str, str], None]] = None,
     is_cancelled: Optional[Callable[[], bool]] = None,
     arch: str = "amd64",
@@ -214,6 +242,9 @@ def build_pipeline(
         shutil.rmtree(bin_dir, ignore_errors=True)
     os.makedirs(bin_dir, exist_ok=True)
 
+    if not build_desktop_ui(root, on_log, is_cancelled, skip_ui):
+        return _fail("桌面管理端构建失败")
+
     built_artifacts = []
 
     if need_win:
@@ -276,10 +307,10 @@ def build_pipeline(
         on_log("info", f">>> 正在打包 Linux 发行包 (.deb, linux/{arch})...")
         if sys.platform == "win32":
             wsl_dir = server_dir.replace("\\", "/")
-            cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package -a {arch} -v {version} -b {build_type}"]
+            cmd_pkg = ["wsl.exe", "-e", "bash", "-c", f"cd \"$(wslpath '{wsl_dir}')\" && exec bash ./build_linux.sh --package -a {arch} -v {version} -b {build_type} --skip-ui"]
             ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
         else:
-            cmd_pkg = ["bash", "./build_linux.sh", "--package", "-a", arch, "-v", version, "-b", build_type]
+            cmd_pkg = ["bash", "./build_linux.sh", "--package", "-a", arch, "-v", version, "-b", build_type, "--skip-ui"]
             ok = run_cmd_live(cmd_pkg, cwd=server_dir, on_log=on_log, is_cancelled=is_cancelled)
 
         if not ok:
@@ -328,9 +359,10 @@ def main():
     parser.add_argument("-a", "--arch", choices=["amd64", "arm64", "arm"], default="amd64", help="Linux 目标架构")
     parser.add_argument("--clean", action="store_true")
     parser.add_argument("--skip-check", action="store_true")
+    parser.add_argument("--skip-ui", action="store_true", help="跳过桌面管理端前端构建（不嵌入 Web 管理页）")
     args = parser.parse_args()
 
-    res = build_pipeline(target=args.target, version=args.version, build_type=args.build_type, clean=args.clean, skip_check=args.skip_check, arch=args.arch)
+    res = build_pipeline(target=args.target, version=args.version, build_type=args.build_type, clean=args.clean, skip_check=args.skip_check, skip_ui=args.skip_ui, arch=args.arch)
     sys.exit(0 if res["success"] else 1)
 
 

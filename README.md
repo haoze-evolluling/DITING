@@ -5,7 +5,7 @@
 项目包含 Android 客户端与桌面端服务：
 
 - Android 客户端：Flutter 界面、Kotlin 系统集成与 Rust 数据面，提供普通、简洁、服务器三种工作模式。
-- 桌面端：仅保留 Rust 特权服务后端，负责系统 DNS 接管、局域网 DNS 服务与管理 API；Flutter 前端界面已移除。
+- 桌面端：Rust 特权服务负责系统 DNS 接管、局域网 DNS 服务与管理 API；管理界面由 Tauri + React 桌面客户端与内嵌 Web 管理页提供。
 
 Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 
@@ -70,6 +70,7 @@ Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 - 上游解析、缓存、自定义重写、规则订阅、自定义规则、时间计划与应用拦截。
 - 安全隐私：协议加固、ECS 隐私、DNS 重绑定与 hosts 防御。
 - 查询日志、客户端分组流量统计与规则检测。
+- 桌面管理端：Tauri + React 客户端，提供运行概览、DNS 启停、系统 DNS 接管、网络诊断、查询日志检索与 24 小时统计；同一套前端可由服务直接托管为 Web 管理页。
 - 管理 API：HTTP/WebSocket，带认证与 CORS。
 - 服务托管：Windows 通过 SCM 注册系统服务，Linux 提供 deb 安装包与服务注册命令。
 
@@ -106,6 +107,7 @@ Root 免 VPN DNS 接管在普通模式与简洁模式下都可启用，接管期
 | `shared/` | `diting_shared`：Flutter 设计系统、主题、双语本地化、路由分支，以及共用的偏好与数据库封装 |
 | `android/app/` | `diting_android`：Android Flutter 界面、Kotlin 系统集成、Gradle 工程与 APK 构建脚本 |
 | `desktop/service/` | 桌面服务构建与打包资产、版本真源 `VERSION` 与 Linux 打包脚本 |
+| `desktop/ui/` | Tauri + React 桌面管理端；Vite 构建产物同时由服务嵌入为 Web 管理页 |
 | `desktop/toolbox/` | Python 构建、版本管理、打包与环境预检工具 |
 | `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎、桌面服务与服务器进程 |
 | `docs/development/` | 构建环境、Root 接管、服务器模式、桌面迁移与存储迁移说明 |
@@ -131,7 +133,9 @@ Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策�
 - 接管系统 DNS、配置防火墙、诊断端口占用，并在退出或异常时恢复原配置。
 - 提供 HTTP/WebSocket 管理 API，默认监听 `127.0.0.1:15353`，包含认证与 CORS。
 
-桌面端不再内置前端界面，管理 API 由外部调用方直接访问。
+服务同时托管内嵌的 Web 管理页：`rust/diting-desktop-ipc/build.rs` 在编译期读取
+`desktop/ui/dist`，未构建前端时返回占位页；桌面管理端则是独立的 Tauri + React 客户端，
+通过回环地址访问同一套管理 API。
 
 桌面端数据目录：
 
@@ -157,7 +161,9 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 | --- | --- |
 | Flutter / Dart | Flutter 3.50（beta 频道）与 Dart 3.14；工作区通过 `pubspec.yaml` 的 `workspace` 统一解析依赖 |
 | Rust | 稳定版工具链与 Cargo，edition 2021 |
+| Node.js | 20 或更高，用于桌面管理端与 Tauri CLI |
 | Python | 3.10 或更高，用于构建与验证脚本 |
+| Tauri | Windows 使用系统 WebView2（Windows 11 自带）；Linux 需安装 WebKitGTK 等 Tauri 系统依赖 |
 | Android | JDK 17+、Android SDK、NDK；应用 `minSdk` 为 28，交叉编译使用 API 28 工具链 |
 | Windows 打包 | Visual Studio 的“使用 C++ 的桌面开发”工作负载（提供 Rust MSVC 链接器）；生成 EXE 安装包还需 NSIS |
 | Linux 打包 | Cargo；在 Windows 上生成 deb 需要 WSL |
@@ -204,6 +210,8 @@ NDK 从 `ANDROID_NDK_HOME`、`ANDROID_NDK_ROOT` 或 `android/local.properties` �
 
 ### 桌面端
 
+#### 桌面服务
+
 启动 Rust 服务：
 
 ```bash
@@ -211,7 +219,8 @@ cd rust
 cargo run -p diting-desktop-service -- -run
 ```
 
-服务默认在 `127.0.0.1:15353` 提供管理 API。系统 DNS 接管等特权操作需要管理员或 root 权限。
+服务默认在 `127.0.0.1:15353` 提供管理 API 与 Web 管理页。系统 DNS 接管等特权操作需要管理员
+或 root 权限。
 
 生成安装包：
 
@@ -220,7 +229,7 @@ desktop\build_installer.bat
 desktop\build_installer.bat both
 ```
 
-第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。完整流水线为：`diting-service` → NSIS / deb 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。
+第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。完整流水线为：`desktop/ui` 前端构建 → `diting-service` 编译（嵌入 Web 管理页）→ NSIS / deb 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。构建前端需要 Node.js 与 npm，可用 `--skip-ui` 跳过并生成不带 Web 管理页的服务安装包。
 
 Linux 单独构建：
 
@@ -231,6 +240,25 @@ sudo diting-service -service install
 ```
 
 `diting-service` 还提供 `-check-ports`、`-restore`、`-service install|uninstall`、`-config`、`-port`、`-ipc-addr` 与 `-token` 等参数。
+
+#### 桌面管理端
+
+管理端位于 `desktop/ui/`，使用 Vite + React 19 + TypeScript，Tauri 提供桌面窗口，同一份构建产物
+也会被服务嵌入为 Web 管理页。
+
+```bash
+cd desktop/ui
+npm install
+npm run dev            # 浏览器开发模式，/api 代理到 127.0.0.1:15353
+npm run tauri:dev      # Tauri 桌面窗口（同时启动 Vite 与 Rust 壳）
+npm run build          # 类型检查并构建前端到 desktop/ui/dist
+npm run tauri:build    # 生成桌面客户端安装包
+```
+
+Windows 下也可运行 `desktop\build_client.bat`（`--debug` 参数生成不打包的调试版本）。
+需要连接其他端口的探测服务时，可设置 `DITING_DEV_API`，例如
+`DITING_DEV_API=http://127.0.0.1:15355 npm run dev`。前端的 `npm run build` 必须在
+`cargo build -p diting-desktop-service` 之前执行，服务才会嵌入最新的 Web 管理页。
 
 ### Rust 验证
 
@@ -248,6 +276,9 @@ cargo test
 python rust/verify.py
 python rust/verify.py --all
 ```
+
+桌面管理端执行 `cd desktop/ui && npm run build` 进行类型检查与生产构建。前端开发说明见
+`docs/development/desktop-ui.md`。
 
 `verify.py` 默认运行格式检查、Clippy（警告视为错误）与所有 crate 的测试；可追加 `--android`、`--desktop`、`--engine`、`--smoke`、`--dart`、`--bench`。`--all` 依次运行 `--engine`、`--android`、`--desktop`、`--dart` 与 `--bench`，`--smoke` 需要单独指定。
 
