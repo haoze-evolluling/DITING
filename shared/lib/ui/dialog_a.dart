@@ -110,6 +110,8 @@ class CommonDialog extends StatelessWidget {
 
   final EdgeInsets? insetPadding;
 
+  final TextAlign? titleAlign;
+
   const CommonDialog({
     super.key,
     required this.title,
@@ -121,6 +123,7 @@ class CommonDialog extends StatelessWidget {
     this.destructive = false,
     this.width,
     this.insetPadding,
+    this.titleAlign,
   });
 
   double? _resolvedWidth(BuildContext context) {
@@ -225,10 +228,10 @@ class CommonDialog extends StatelessWidget {
     final trailing = this.trailing;
     if (!hasFields) {
       return trailing == null
-          ? Text(title)
+          ? Text(title, textAlign: titleAlign)
           : Row(
               children: [
-                Expanded(child: Text(title)),
+                Expanded(child: Text(title, textAlign: titleAlign)),
                 trailing,
               ],
             );

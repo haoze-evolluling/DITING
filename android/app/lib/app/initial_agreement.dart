@@ -113,6 +113,7 @@ class InitialAgreementDialog extends StatelessWidget {
       width: double.infinity,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.fromLTRB(30, 8, 30, 16),
+      titleAlign: TextAlign.center,
       actions: [
         TextButton(
           onPressed: onDecline,
