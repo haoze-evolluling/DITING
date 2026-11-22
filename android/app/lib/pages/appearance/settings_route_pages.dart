@@ -72,13 +72,6 @@ class SettingsRouteListPage extends ConsumerWidget {
         children: [
           generateSection(
             title: title,
-            actions: [
-              IconButtonData(
-                glyph: TablerIcons.plus,
-                tooltip: l10n.routeCidrAddTitle,
-                onPressed: add,
-              ),
-            ],
             items: [
               if (routes.isEmpty)
                 ListItem(
@@ -151,10 +144,7 @@ class _CidrDialogState extends State<_CidrDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: Text(context.l10n.configCancel),
         ),
-        TextButton(
-          onPressed: _submit,
-          child: Text(context.l10n.commonSave),
-        ),
+        TextButton(onPressed: _submit, child: Text(context.l10n.commonSave)),
       ],
       child: Column(
         mainAxisSize: MainAxisSize.min,
