@@ -2,11 +2,15 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Check,
   Gauge,
+  Globe2,
+  LockKeyhole,
   LogOut,
   Monitor,
   Moon,
+  Network,
   ScrollText,
   Settings2,
+  ShieldBan,
   Sun,
   UserRound,
 } from "lucide-react";
@@ -34,10 +38,14 @@ function MobileNav() {
   const items = [
     { to: "/", label: "概览", icon: Gauge, end: true },
     { to: "/logs", label: "日志", icon: ScrollText, end: false },
+    { to: "/filter", label: "规则", icon: ShieldBan, end: false },
+    { to: "/upstream", label: "上游", icon: Globe2, end: false },
+    { to: "/lan", label: "局域网", icon: Network, end: false },
+    { to: "/encrypted", label: "加密", icon: LockKeyhole, end: false },
     { to: "/settings", label: "设置", icon: Settings2, end: false },
   ];
   return (
-    <nav className="flex items-center gap-0.5 md:hidden">
+    <nav className="flex max-w-[calc(100vw-150px)] items-center gap-0.5 overflow-x-auto md:hidden">
       {items.map((item) => (
         <NavLink
           key={item.to}

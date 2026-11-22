@@ -135,6 +135,14 @@ export interface StatusResponse {
   metrics: MetricsStatus;
   cache: CacheStats;
   filter: FilterStats;
+  hosts?: HostsConfig;
+  rebind?: RebindConfig;
+  access?: AccessControlConfig;
+  rateLimit?: RateLimitConfig;
+  dns64?: DNS64Config;
+  ecs?: ECSConfig;
+  safeSearch?: SafeSearchConfig;
+  safeBrowsing?: SafeBrowsingConfig;
   clients?: ClientSummary[];
 }
 
@@ -292,4 +300,294 @@ export interface StreamEvent<T = unknown> {
   type: "query" | "metrics" | "dns" | "takeover" | string;
   timestamp: number;
   data: T;
+}
+
+// ---------------------------------------------------------------------------
+// 上游解析
+// ---------------------------------------------------------------------------
+
+export interface ProviderConfig {
+  id: string;
+  protocol: string;
+  server: string;
+  url: string;
+  weight?: number;
+  pin?: string;
+}
+
+export interface ResolverConfig {
+  mode: string;
+  providers: ProviderConfig[];
+  bootstrap: BootstrapConfig;
+  conditionalRoutes?: Record<string, string>;
+  ednsPadding?: number;
+  fallbackProviders?: ProviderConfig[];
+  fallbackTimeoutMs?: number;
+  fallbackOnRcode?: number[] | null;
+  fallbackOnError?: boolean | null;
+}
+
+export interface UpstreamTestResult {
+  success: boolean;
+  latencyMs: number;
+  error?: string;
+}
+
+export interface StampParseResult {
+  protocol: string;
+  server: string;
+  url: string;
+  providerName?: string;
+  path?: string;
+  serverAddr?: string;
+  bootstrapIps?: string[];
+  pin?: string;
+  protoName?: string;
+}
+
+// ---------------------------------------------------------------------------
+// 规则与拦截
+// ---------------------------------------------------------------------------
+
+export interface BlockingSchedule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  weekdays: string[];
+  start: string;
+  end: string;
+}
+
+export interface FilterList {
+  id: string;
+  name: string;
+  url: string;
+  enabled: boolean;
+  rulesCount: number;
+  lastUpdated: number;
+  checksum?: string;
+  etag?: string;
+  lastModified?: string;
+  lastStatus?: string;
+  lastError?: string;
+}
+
+export interface FilterConfig {
+  enabled: boolean;
+  blockMode: string;
+  blockingIPv4: string;
+  blockingIPv6: string;
+  customRules: string[];
+  lists: FilterList[];
+  updateIntervalHours: number;
+  dataDir: string;
+  scheduleEnabled: boolean;
+  schedules: BlockingSchedule[];
+  filterResponse: boolean;
+  allowlistOnly: boolean;
+  bogusNxDomain: boolean;
+  bogusNxDomainNetworks: string[];
+  blockedServices: string[];
+  blockedServiceGroups: string[];
+  serviceSchedules: Record<string, BlockingSchedule[]>;
+}
+
+export interface FilterListsResponse {
+  total: number;
+  lists: FilterList[];
+}
+
+export interface FilterRulesResponse {
+  rules: string[];
+}
+
+export interface ScheduleConfigResponse {
+  enabled: boolean;
+  schedules: BlockingSchedule[];
+  active: boolean;
+  activeId: string;
+}
+
+export interface FilterPauseResponse {
+  paused: boolean;
+  remainingSeconds: number;
+  pausedUntilMs: number;
+  blockingEnabled: boolean;
+}
+
+export interface BlockedService {
+  id: string;
+  name: string;
+  group: string;
+  rules: string[];
+  ruleCount: number;
+  source: string;
+}
+
+export interface BlockedServiceGroup {
+  id: string;
+  name: string;
+  count: number;
+}
+
+export interface ServiceScheduleState {
+  serviceId: string;
+  active: boolean;
+  hasSchedule: boolean;
+  activeName?: string;
+}
+
+export interface BlockedServicesResponse {
+  services: BlockedService[];
+  groups: BlockedServiceGroup[];
+  blockedIds: string[];
+  blockedGroups: string[];
+  activeRules: number;
+  schedules: Record<string, BlockingSchedule[]>;
+  scheduleStates: ServiceScheduleState[];
+}
+
+export interface CheckHostResult {
+  blocked: boolean;
+  action: string;
+  matchedRule: string;
+  listName: string;
+  reason: string;
+  rewritten?: {
+    rcode: number;
+    records: { type: string; value: string; ttl: number }[];
+    summary: string[];
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 局域网与客户端
+// ---------------------------------------------------------------------------
+
+export interface LanStatus {
+  allowLAN: boolean;
+  listenAddresses: string[];
+  lanAddresses: string[];
+  firewallAllowed: boolean;
+  firewallBackend: string;
+}
+
+export interface AccessControlConfig {
+  allowedClients: string[];
+  blockedClients: string[];
+}
+
+export interface RateLimitConfig {
+  enabled: boolean;
+  rate: number;
+  burst: number;
+  ipv4Prefix: number;
+  ipv6Prefix: number;
+  exemptIPs: string[];
+}
+
+export interface HostsConfig {
+  enabled: boolean;
+  useSystemHost: boolean;
+  customFiles: string[];
+  ttl: number;
+}
+
+export interface RebindConfig {
+  enabled: boolean;
+  allowedDomains: string[];
+}
+
+export interface DNS64Config {
+  enabled: boolean;
+  prefixes: string[];
+}
+
+export interface ECSConfig {
+  enabled: boolean;
+  stripECS: boolean;
+  customSubnet: string;
+}
+
+export interface SafeSearchConfig {
+  enabled: boolean;
+  disabled: string[];
+  ttl: number;
+}
+
+export interface SafeBrowsingConfig {
+  enabled: boolean;
+  parentalEnabled: boolean;
+  timeoutMs: number;
+  cacheSize: number;
+  cacheTTLSeconds: number;
+}
+
+// ---------------------------------------------------------------------------
+// 加密 DNS
+// ---------------------------------------------------------------------------
+
+export interface CertConfig {
+  source: string;
+  certFile: string;
+  keyFile: string;
+  pkcs12Password: string;
+  keyType: string;
+  commonName: string;
+  dnsNames: string[];
+  ipAddresses: string[];
+  validDays: number;
+}
+
+export interface ReverseProxyConfig {
+  enabled: boolean;
+  trustedSources: string[];
+  clientIpHeader: string;
+}
+
+export interface EncryptedDNSConfig {
+  enabled: boolean;
+  cert: CertConfig;
+  dotEnabled: boolean;
+  dohEnabled: boolean;
+  listenAddress: string;
+  dotPort: number;
+  dohPort: number;
+  dohPath: string;
+  serverName: string;
+  ddrEnabled: boolean;
+  uuid: string;
+  reverseProxy: ReverseProxyConfig;
+}
+
+export interface CertInfo {
+  source: string;
+  subject: string;
+  issuer: string;
+  serialNumber: string;
+  notBefore: string;
+  notAfter: string;
+  dnsNames: string[];
+  ipAddresses: string[];
+  daysRemaining: number;
+  fingerprint: string;
+  chainLength: number;
+  loaded: boolean;
+  error?: string;
+  selfSigned: boolean;
+}
+
+export interface EncryptedDNSStatus {
+  config: EncryptedDNSConfig;
+  cert: CertInfo;
+  certDir: string;
+  defaultDotPort: number;
+  defaultDohPort: number;
+  defaultDohPath: string;
+  dotListen: string;
+  dohListen: string;
+  dohUrls: string[];
+  unrestrictedTrust: boolean;
+  certExpiresSoon: boolean;
+  certExpired: boolean;
 }

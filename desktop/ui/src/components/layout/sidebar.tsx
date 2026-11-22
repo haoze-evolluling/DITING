@@ -1,17 +1,44 @@
 import { NavLink } from "react-router-dom";
-import { Gauge, ScrollText, Settings2 } from "lucide-react";
+import {
+  Gauge,
+  Globe2,
+  LockKeyhole,
+  Network,
+  ScrollText,
+  Settings2,
+  ShieldBan,
+} from "lucide-react";
 
 import { useStatus } from "../../hooks/use-api";
 import { cn } from "../../lib/cn";
 import { resolverModeLabel } from "../../lib/labels";
 import { useLiveStore } from "../../stores/live";
 
-const primaryNav = [
-  { to: "/", label: "概览", icon: Gauge, end: true },
-  { to: "/logs", label: "查询日志", icon: ScrollText, end: false },
+const navGroups = [
+  {
+    label: "运行",
+    items: [
+      { to: "/", label: "概览", icon: Gauge, end: true },
+      { to: "/logs", label: "查询日志", icon: ScrollText, end: false },
+    ],
+  },
+  {
+    label: "防护",
+    items: [{ to: "/filter", label: "规则与拦截", icon: ShieldBan, end: false }],
+  },
+  {
+    label: "网络",
+    items: [
+      { to: "/upstream", label: "上游解析", icon: Globe2, end: false },
+      { to: "/lan", label: "局域网与客户端", icon: Network, end: false },
+      { to: "/encrypted", label: "加密 DNS", icon: LockKeyhole, end: false },
+    ],
+  },
+  {
+    label: "管理",
+    items: [{ to: "/settings", label: "设置", icon: Settings2, end: false }],
+  },
 ];
-
-const secondaryNav = [{ to: "/settings", label: "设置", icon: Settings2, end: false }];
 
 function NavItem({
   to,
@@ -72,23 +99,17 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-2">
-        <div>
-          <p className="px-3 pb-1.5 text-[10.5px] font-medium text-text-3">运行</p>
-          <div className="space-y-0.5">
-            {primaryNav.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-2">
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-3 pb-1.5 text-[10.5px] font-medium text-text-3">{group.label}</p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavItem key={item.to} {...item} />
+              ))}
+            </div>
           </div>
-        </div>
-        <div>
-          <p className="px-3 pb-1.5 text-[10.5px] font-medium text-text-3">管理</p>
-          <div className="space-y-0.5">
-            {secondaryNav.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
-          </div>
-        </div>
+        ))}
       </nav>
 
       <div className="px-3 pb-3">

@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowRight,
   Copy,
   Database,
   Info,
@@ -14,6 +15,7 @@ import {
   ShieldAlert,
   Sun,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import { PageHeader } from "../components/layout/page-header";
@@ -443,23 +445,31 @@ export function SettingsPage() {
         <AboutCard />
         <Card className="hidden xl:block">
           <CardHeader
-            title="后续模块"
-            description="规则订阅、上游管理、加密 DNS 与客户端控制将在下一阶段接入同一套管理 API。"
+            title="管理模块"
+            description="控制面已接入上游、防护、局域网与加密解析。"
             actions={<Server className="h-4 w-4 text-text-3" />}
           />
-          <CardContent className="pt-1">
-            <div className="flex flex-wrap gap-2">
-              {["规则订阅", "自定义规则", "上游解析", "加密 DNS", "客户端控制", "网络档案"].map(
-                (name) => (
-                  <span
-                    key={name}
-                    className="rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-[11px] text-text-3"
-                  >
-                    {name}
+          <CardContent className="space-y-1 pt-2">
+            {[
+              { to: "/upstream", label: "上游解析", hint: "调度策略、上游服务器与 Bootstrap" },
+              { to: "/filter", label: "规则与拦截", hint: "订阅源、自定义规则、服务与时间计划" },
+              { to: "/lan", label: "局域网与客户端", hint: "对外 53 端口、访问控制与限速" },
+              { to: "/encrypted", label: "加密 DNS", hint: "DoT / DoH、证书与反向代理来源" },
+            ].map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-3"
+              >
+                <span className="min-w-0">
+                  <span className="block text-[12px] font-medium text-text">{item.label}</span>
+                  <span className="mt-0.5 block truncate text-[10.5px] text-text-3">
+                    {item.hint}
                   </span>
-                ),
-              )}
-            </div>
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-3" />
+              </Link>
+            ))}
           </CardContent>
         </Card>
       </div>

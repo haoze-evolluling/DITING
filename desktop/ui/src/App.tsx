@@ -20,6 +20,18 @@ const DashboardPage = lazy(async () => ({
 const LogsPage = lazy(async () => ({
   default: (await import("./pages/logs-page")).LogsPage,
 }));
+const FilterPage = lazy(async () => ({
+  default: (await import("./pages/filter-page")).FilterPage,
+}));
+const UpstreamPage = lazy(async () => ({
+  default: (await import("./pages/upstream-page")).UpstreamPage,
+}));
+const LanPage = lazy(async () => ({
+  default: (await import("./pages/lan-page")).LanPage,
+}));
+const EncryptedPage = lazy(async () => ({
+  default: (await import("./pages/encrypted-page")).EncryptedPage,
+}));
 const SettingsPage = lazy(async () => ({
   default: (await import("./pages/settings-page")).SettingsPage,
 }));
@@ -53,6 +65,10 @@ export default function App() {
             <Route element={<AppShell />}>
               <Route index element={<DashboardPage />} />
               <Route path="logs" element={<LogsPage />} />
+              <Route path="filter" element={<FilterPage />} />
+              <Route path="upstream" element={<UpstreamPage />} />
+              <Route path="lan" element={<LanPage />} />
+              <Route path="encrypted" element={<EncryptedPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
