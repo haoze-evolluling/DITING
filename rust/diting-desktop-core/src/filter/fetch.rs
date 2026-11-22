@@ -1,5 +1,6 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::Once;
 use std::time::Duration;
 
 use reqwest::header::{ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED};
@@ -9,6 +10,16 @@ pub(crate) const MAX_LIST_BYTES: usize = 50 * 1024 * 1024;
 
 const USER_AGENT: &str = "DITING-DNS-Engine/1.0";
 const TIMEOUT: Duration = Duration::from_secs(15);
+
+/// reqwest 以 `rustls-no-provider` 编译，未安装默认 provider 时
+/// `Client::builder()` 会直接 panic。这里与 workspace 其余 rustls 用法保持一致，
+/// 进程内只安装一次 ring provider。
+fn ensure_crypto_provider() {
+    static INSTALL: Once = Once::new();
+    INSTALL.call_once(|| {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+    });
+}
 
 pub(crate) struct FetchOutcome {
     pub(crate) data: Option<Vec<u8>>,
@@ -73,6 +84,8 @@ pub(crate) async fn fetch_conditional(
             not_modified: false,
         });
     }
+
+    ensure_crypto_provider();
 
     let client = reqwest::Client::builder()
         .timeout(TIMEOUT)
@@ -211,6 +224,12 @@ pub(crate) fn list_checksum(data: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reqwest_client_builds_after_installing_crypto_provider() {
+        ensure_crypto_provider();
+        assert!(reqwest::Client::builder().build().is_ok());
+    }
 
     #[test]
     fn atomic_write_replaces_the_cache() {
