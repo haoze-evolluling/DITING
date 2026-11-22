@@ -39,7 +39,7 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
     if domain == DDR_HOST || domain.ends_with(DDR_SUFFIX) {
         let plan = reply::ddr(query)?;
         engine.note_query(true);
-        engine.log_row(row(&domain, true, qtype, started, app_name).blocked_by("ddr_blocked"));
+        engine.log_row(|| row(&domain, true, qtype, started, app_name).blocked_by("ddr_blocked"));
         return reply::render(query, &plan);
     }
 
@@ -53,11 +53,11 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
             if !ip.is_empty() {
                 if let Some(plan) = reply::rewrite_ip(query, &ip) {
                     engine.note_query(false);
-                    engine.log_row(
+                    engine.log_row(|| {
                         row(&domain, false, qtype, started, app_name)
                             .resolved_ips(ip.clone())
-                            .blocked_by(format!("rewrite={ip}")),
-                    );
+                            .blocked_by(format!("rewrite={ip}"))
+                    });
                     return reply::render(query, &plan);
                 }
             }
@@ -82,19 +82,19 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
     if engine.block_ipv6() && qtype == TYPE_AAAA {
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
         engine.note_query(false);
-        engine.log_row(
-            row(&domain, false, qtype, started, app_name).blocked_by("ipv6_disabled".to_string()),
-        );
+        engine.log_row(|| {
+            row(&domain, false, qtype, started, app_name).blocked_by("ipv6_disabled".to_string())
+        });
         return reply::render(query, &plan);
     }
 
     if engine.records_blocked(qtype) {
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
         engine.note_query(true);
-        engine.log_row(
+        engine.log_row(|| {
             row(&domain, true, qtype, started, app_name)
-                .blocked_by("record_type_blocked".to_string()),
-        );
+                .blocked_by("record_type_blocked".to_string())
+        });
         return reply::render(query, &plan);
     }
 
@@ -153,11 +153,11 @@ async fn standalone_rewrite(
     let wire = reply::render(query, &plan)?;
     engine.note_query(false);
     let resolved = first_address_text(&plan, qtype);
-    engine.log_row(
+    engine.log_row(|| {
         row(domain, false, qtype, started, app_name)
             .resolved_ips(resolved)
-            .blocked_by(format!("rewrite={target}")),
-    );
+            .blocked_by(format!("rewrite={target}"))
+    });
     Some(wire)
 }
 
@@ -174,7 +174,8 @@ pub fn block(
     let plan = reply::block(query, mode as u8)?;
     let wire = reply::render(query, &plan)?;
     engine.note_query(true);
-    engine.log_row(row(domain, true, qtype, started, app_name).blocked_by(blocked_by.to_string()));
+    engine
+        .log_row(|| row(domain, true, qtype, started, app_name).blocked_by(blocked_by.to_string()));
     Some(wire)
 }
 
@@ -190,7 +191,8 @@ pub fn servfail(
     let plan = reply::servfail(query)?;
     let wire = reply::render(query, &plan)?;
     engine.note_query(false);
-    engine.log_row(row(domain, false, qtype, started, app_name).error_message(error.to_string()));
+    engine
+        .log_row(|| row(domain, false, qtype, started, app_name).error_message(error.to_string()));
     Some(wire)
 }
 

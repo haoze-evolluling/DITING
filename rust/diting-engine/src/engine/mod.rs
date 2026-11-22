@@ -288,8 +288,15 @@ impl Engine {
         self.runtime.handle().block_on(future)
     }
 
-    pub fn log_row(&self, row: LogRow) {
-        self.logs.push(row.build(now_ms()));
+    /// 构造一行 DNS 日志。
+    ///
+    /// 参数是闭包而不是 `LogRow`：DNS 每查询至少要造 2~3 个 `String`，而 `Logs::push` 的第一件事
+    /// 就是「没有 sink 直接丢」。没有 sink 时连行对象都不构造。
+    pub fn log_row(&self, build: impl FnOnce() -> LogRow) {
+        if !self.logs.wants() {
+            return;
+        }
+        self.logs.push(build().build(now_ms()));
     }
 
     pub fn log_error(&self, message: &str) {

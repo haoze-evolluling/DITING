@@ -106,6 +106,11 @@ impl Logs {
         self.sink.read().map(|sink| sink.is_some()).unwrap_or(false)
     }
 
+    /// 是否有 sink 真正想要这批日志。无锁读取，供热路径在构造日志行之前短路。
+    pub fn wants(&self) -> bool {
+        self.wanted.load(Ordering::Acquire)
+    }
+
     pub fn set_sink(&self, sink: Option<Arc<dyn EventSink>>) {
         let wanted = sink.as_ref().is_some_and(|sink| sink.wants_batch());
         self.wanted.store(wanted, Ordering::Release);

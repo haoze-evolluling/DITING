@@ -30,6 +30,10 @@ impl IpDevice {
     pub fn pending_rx(&self) -> usize {
         self.rx.len()
     }
+
+    pub fn pending_tx(&self) -> usize {
+        self.tx.len()
+    }
 }
 
 impl Device for IpDevice {

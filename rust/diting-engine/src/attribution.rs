@@ -73,10 +73,9 @@ impl Attribution {
         let app_len = crate::netstack::address_bytes_into(app.addr, &mut app_bytes);
         let server_len = crate::netstack::address_bytes_into(server.addr, &mut server_bytes);
         let (app_bytes, server_bytes) = (&app_bytes[..app_len], &server_bytes[..server_len]);
-        let (Some(app_addr), Some(server_addr)) = (
-            Addr::from_bytes(app_bytes),
-            Addr::from_bytes(server_bytes),
-        ) else {
+        let (Some(app_addr), Some(server_addr)) =
+            (Addr::from_bytes(app_bytes), Addr::from_bytes(server_bytes))
+        else {
             return UID_UNKNOWN;
         };
         let key = FlowKey::new(

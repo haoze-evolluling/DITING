@@ -160,6 +160,18 @@ impl Netstack {
         self.collect();
     }
 
+    /// poll 一次并报告是否真的发出了包。
+    ///
+    /// 写回队列一次可能积压几百 KB，而单个 socket 的发送缓冲只有 32 KB；
+    /// 写不进去时用它发一次包腾出窗口再重试，否则积压会一直留在队列里，
+    /// 而 `poll_delay` 看不到队列，循环就会白白空等一个超时周期。
+    pub fn poll_transmit(&mut self, now: Instant) -> bool {
+        let before = self.device.pending_tx();
+        self.iface.poll(now, &mut self.device, &mut self.sockets);
+        self.collect();
+        self.device.pending_tx() > before
+    }
+
     /// 逐个取走出站包，避免每轮收集一次 `Vec`。
     pub fn take_egress(&mut self) -> Option<Vec<u8>> {
         let packet = self.device.tx_pop()?;

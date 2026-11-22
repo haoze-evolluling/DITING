@@ -39,11 +39,11 @@ pub async fn forward(
                     );
                 }
                 engine.note_query(false);
-                engine.log_row(
+                engine.log_row(|| {
                     row(domain, false, qtype, started, app_name)
                         .resolved_ips(hit.resolved_ips.clone())
-                        .cached(true),
-                );
+                        .cached(true)
+                });
                 return Some(hit.wire);
             }
 
@@ -52,11 +52,11 @@ pub async fn forward(
                     return block(engine, query, domain, qtype, &reason, started, app_name);
                 }
                 engine.note_query(false);
-                engine.log_row(
+                engine.log_row(|| {
                     row(domain, false, qtype, started, app_name)
                         .resolved_ips(hit.resolved_ips.clone())
-                        .cached(true),
-                );
+                        .cached(true)
+                });
                 if cache.begin_stale_refresh(query) {
                     let shared = Arc::clone(engine);
                     let query = query.to_vec();
@@ -98,11 +98,11 @@ pub async fn forward(
 
             if extracted.blocked {
                 engine.note_query(true);
-                engine.log_row(
+                engine.log_row(|| {
                     row(domain, true, qtype, started, app_name)
                         .blocked_by("upstream_dns".to_string())
-                        .cached(shared),
-                );
+                        .cached(shared)
+                });
             } else {
                 if let Some(reason) =
                     blocked_chain(engine, &extracted.chain_targets, qtype, app_name)
@@ -127,19 +127,19 @@ pub async fn forward(
                         .await
                 {
                     engine.note_query(false);
-                    engine.log_row(
+                    engine.log_row(|| {
                         row(domain, false, qtype, started, app_name)
                             .resolved_ips(synthesized)
-                            .cached(shared),
-                    );
+                            .cached(shared)
+                    });
                     return Some(with_client_id(wire, query));
                 }
                 engine.note_query(false);
-                engine.log_row(
+                engine.log_row(|| {
                     row(domain, false, qtype, started, app_name)
                         .resolved_ips(extracted.resolved_ips.clone())
-                        .cached(shared),
-                );
+                        .cached(shared)
+                });
             }
 
             Some(with_client_id(response, query))

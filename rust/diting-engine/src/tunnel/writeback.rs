@@ -77,14 +77,19 @@ impl Drop for WriteBacklog {
 /// 把积压的数据塞进 smoltcp 的发送缓冲。**不** poll：发送由会话循环在一批写完之后统一做，
 /// 否则一次 `flush` 里每写一块就要遍历一遍整个 socket 表。
 fn flush(key: &TcpKey, entry: &mut Entry, net: &mut Netstack) {
-    let now = crate::netstack::now();
     let before = entry.at;
     while entry.at < entry.data.len() {
+        let now = crate::netstack::now();
         let written = net.tcp_write_now(key, &entry.data[entry.at..], now);
-        if written == 0 {
+        if written > 0 {
+            entry.at += written;
+            continue;
+        }
+        // 发送缓冲满了：发一次包腾出窗口再重试。腾不出来说明对端窗口也满了，
+        // 剩下的留到下一轮；此时 smoltcp 自己有定时器，循环不会被无限占用。
+        if !net.poll_transmit(now) {
             break;
         }
-        entry.at += written;
     }
     let flushed = entry.at - before;
     if flushed > 0 {
