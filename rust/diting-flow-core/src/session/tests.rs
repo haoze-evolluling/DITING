@@ -145,8 +145,7 @@ fn snapshot_json_has_expected_shape() {
     e.package = "com.example".to_string();
     e.domain = "api.example.com".to_string();
     table.record(e);
-    let value: serde_json::Value =
-        serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
+    let value: serde_json::Value = serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
     assert_eq!(value["sessions"][0]["domain"], "api.example.com");
     assert_eq!(value["sessions"][0]["status"], "active");
     assert_eq!(value["sessions"][0]["uid"], 7);
@@ -160,8 +159,7 @@ fn the_direct_writer_escapes_string_fields() {
     e.package = "com.ex\tample".to_string();
     e.domain = "odd\"name\ntrailing\\".to_string();
     table.record(e);
-    let value: serde_json::Value =
-        serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
+    let value: serde_json::Value = serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
     assert_eq!(value["sessions"][0]["package"], "com.ex\tample");
     assert_eq!(value["sessions"][0]["domain"], "odd\"name\ntrailing\\");
     assert_eq!(value["sessions"][0]["upBytes"], 3);

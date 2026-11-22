@@ -123,7 +123,9 @@ fn match_private_reverse_suffix(clean: &str) -> Option<&'static str> {
     let mut best: Option<&'static str> = None;
     for &suffix in candidates {
         if domain_or_suffix(clean, suffix)
-            && best.map(|current| suffix.len() > current.len()).unwrap_or(true)
+            && best
+                .map(|current| suffix.len() > current.len())
+                .unwrap_or(true)
         {
             best = Some(suffix);
         }

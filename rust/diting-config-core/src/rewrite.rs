@@ -2,7 +2,9 @@ use std::borrow::Cow;
 
 use diting_go_compat::ip::{go_ip_string, to4};
 use diting_go_compat::netaddr::parse_ip;
-use diting_go_compat::text::{go_lower_trim_dot, go_trim_space, normalize_domain as compat_normalize};
+use diting_go_compat::text::{
+    go_lower_trim_dot, go_trim_space, normalize_domain as compat_normalize,
+};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Entry {
