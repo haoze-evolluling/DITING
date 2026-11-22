@@ -266,9 +266,11 @@
 
   /*
    * 卡片宽度以 25% 为基本单位。
-   * - card-grid-2：两列，每张卡片 50%
-   * - card-grid-4：四列，每张卡片 25%（窄窗口回落为 2 × 50%）
-   * - card-grid-3-1：主卡 75% + 辅卡 25%（宽窗口）
+   * - card-grid-2：宽窗口 2 × 50%，与四等分网格共用同一套列轨道
+   * - card-grid-4：宽窗口 4 × 25%（1024px 起为 2 × 50%）
+   * - card-grid-3-1：主卡跨 3 条轨道 = 75%，辅卡占第 4 条轨道 = 25%
+   * 三个网格在 1280px 以上都使用相同的 4 列轨道，确保 75/25、50/50
+   * 与 25% 指标卡的分界线完全对齐。
    * 窄于 1024px 时统一单列，避免卡片被挤压导致内容溢出。
    */
   .card-grid-2,
@@ -291,15 +293,30 @@
     .card-grid-3-1 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .card-grid-2 > *,
+    .card-grid-3-1 > * {
+      grid-column: span 1 / span 1;
+    }
   }
 
   @media (min-width: 80rem) {
+    .card-grid-2,
+    .card-grid-3-1,
     .card-grid-4 {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .card-grid-3-1 {
-      grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    .card-grid-2 > * {
+      grid-column: span 2 / span 2;
+    }
+
+    .card-grid-3-1 > :first-child {
+      grid-column: span 3 / span 3;
+    }
+
+    .card-grid-3-1 > :last-child {
+      grid-column: span 1 / span 1;
     }
   }
 }
