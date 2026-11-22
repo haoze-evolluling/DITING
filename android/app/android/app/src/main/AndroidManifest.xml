@@ -261,6 +261,14 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- 开机后按「前后台行为 → 开机自启动」恢复上次使用的数据面。 -->
+        <receiver
+            android:name=".control.BootAutoStartReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Package visibility for ACTION_PROCESS_TEXT, which the Flutter engine's
          ProcessTextPlugin queries. See https://developer.android.com/training/package-visibility -->

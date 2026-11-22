@@ -1772,9 +1772,7 @@ abstract class AppL10n {
 
   String get foregroundTitle;
 
-  String get foregroundPrivacySection;
-
-  String get foregroundPrivacyFooter;
+  String get foregroundStartupSection;
 
   String get foregroundHide;
 
@@ -1786,7 +1784,7 @@ abstract class AppL10n {
 
   String get foregroundBypassLanSubtitle;
 
-  String get foregroundStability;
+  String get foregroundBackgroundPermissions;
 
   String get foregroundBatteryFooter;
 
@@ -5356,6 +5354,10 @@ abstract class AppL10n {
   String get settingsRunSection;
 
   String get settingsForegroundSubtitle;
+
+  String get settingsBootAutoStartTitle;
+
+  String get settingsBootAutoStartSubtitle;
 
   String get settingsAutoStartTitle;
 

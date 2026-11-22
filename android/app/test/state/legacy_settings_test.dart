@@ -111,11 +111,15 @@ void _legacySettings() {
       expect(settings.componentOpacity, 1);
       expect(
         settings.homeSentences.running,
-        LegacySettings.defaultRunningSentence(lookupAppL10n(const Locale('zh'))),
+        LegacySettings.defaultRunningSentence(
+          lookupAppL10n(const Locale('zh')),
+        ),
       );
       expect(
         settings.homeSentences.stopped,
-        LegacySettings.defaultStoppedSentence(lookupAppL10n(const Locale('zh'))),
+        LegacySettings.defaultStoppedSentence(
+          lookupAppL10n(const Locale('zh')),
+        ),
       );
       expect(settings.bottomBarIds, LegacySettings.defaultBottomBarIds);
       expect(settings.hapticEnabled, isTrue);
@@ -418,6 +422,15 @@ void _settingsCatalog() {
 
       notifier.setDnsAaaa(true);
       expect(c.read(foregroundBackgroundProvider).dnsAaaa, isTrue);
+    });
+
+    test('开机自启动开关默认关闭且可独立切换', () {
+      final c = container();
+      expect(c.read(autoStartOnBootProvider), isFalse);
+
+      c.read(autoStartOnBootProvider.notifier).toggle(true);
+      expect(c.read(autoStartOnBootProvider), isTrue);
+      expect(c.read(autoStartOnLaunchProvider), isFalse);
     });
 
     test('路由列表去空去重并排序', () {

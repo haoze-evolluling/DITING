@@ -382,40 +382,29 @@ class SettingsBackgroundPage extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
-            title: context.l10n.foregroundPrivacySection,
-            footer: context.l10n.foregroundPrivacyFooter,
+            title: context.l10n.foregroundStartupSection,
             items: [
               ListItem.toggle(
-                title: Text(context.l10n.foregroundHide),
-                subtitle: Text(context.l10n.foregroundHideSubtitle),
-                leading: const Icon(TablerIcons.eye_off),
-                value: state.hideFromRecents,
-                onChanged: notifier.setHideFromRecents,
+                title: Text(context.l10n.settingsBootAutoStartTitle),
+                subtitle: Text(context.l10n.settingsBootAutoStartSubtitle),
+                leading: const Icon(TablerIcons.power),
+                value: ref.watch(autoStartOnBootProvider),
+                onChanged: ref.read(autoStartOnBootProvider.notifier).toggle,
               ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.rootTakeoverSection,
-            footer: context.l10n.rootTakeoverFooter,
-            items: [
               ListItem.toggle(
-                title: Text(context.l10n.rootTakeoverTitle),
-                subtitle: Text(
-                  tunnelMode
-                      ? context.l10n.rootTakeoverSubtitle
-                      : context.l10n.rootTakeoverTunnelModesOnly,
-                ),
-                leading: const Icon(TablerIcons.shield),
-                value: rootTakeover,
-                onChanged: tunnelMode
-                    ? (value) =>
-                          ref.read(rootDnsTakeoverProvider.notifier).set(value)
-                    : null,
+                title: Text(context.l10n.settingsAutoStartTitle),
+                subtitle: Text(context.l10n.settingsAutoStartSubtitle),
+                leading: const Icon(TablerIcons.rotate_clockwise),
+                value: ref.watch(autoStartOnLaunchProvider),
+                onChanged: ref.read(autoStartOnLaunchProvider.notifier).toggle,
               ),
-              if (tunnelMode && rootTakeover)
-                _RootTakeoverProbeRow(
-                  onRefresh: () => ref.invalidate(rootDnsProbeProvider),
-                ),
+              ListItem.toggle(
+                title: Text(context.l10n.settingsVpnWatchdogTitle),
+                subtitle: Text(context.l10n.settingsVpnWatchdogSubtitle),
+                leading: const Icon(TablerIcons.shield_lock),
+                value: ref.watch(vpnWatchdogProvider),
+                onChanged: ref.read(vpnWatchdogProvider.notifier).toggle,
+              ),
             ],
           ),
           generateSection(
@@ -448,9 +437,7 @@ class SettingsBackgroundPage extends ConsumerWidget {
                   title: context.l10n.routeIncludeTitle,
                   subtitle: state.routeAddress.isEmpty
                       ? context.l10n.routeIncludeAll
-                      : context.l10n.routeCidrCount(
-                          state.routeAddress.length,
-                        ),
+                      : context.l10n.routeCidrCount(state.routeAddress.length),
                   onPressed: () => context.push(SystemPaths.routeInclude),
                 ),
                 NavEntryRow(
@@ -467,22 +454,15 @@ class SettingsBackgroundPage extends ConsumerWidget {
             ],
           ),
           generateSection(
-            title: context.l10n.foregroundStability,
+            title: context.l10n.foregroundBackgroundPermissions,
             footer: context.l10n.foregroundBatteryFooter,
             items: [
               ListItem.toggle(
-                title: Text(context.l10n.settingsAutoStartTitle),
-                subtitle: Text(context.l10n.settingsAutoStartSubtitle),
-                leading: const Icon(TablerIcons.rotate_clockwise),
-                value: ref.watch(autoStartOnLaunchProvider),
-                onChanged: ref.read(autoStartOnLaunchProvider.notifier).toggle,
-              ),
-              ListItem.toggle(
-                title: Text(context.l10n.settingsVpnWatchdogTitle),
-                subtitle: Text(context.l10n.settingsVpnWatchdogSubtitle),
-                leading: const Icon(TablerIcons.shield_lock),
-                value: ref.watch(vpnWatchdogProvider),
-                onChanged: ref.read(vpnWatchdogProvider.notifier).toggle,
+                title: Text(context.l10n.foregroundHide),
+                subtitle: Text(context.l10n.foregroundHideSubtitle),
+                leading: const Icon(TablerIcons.eye_off),
+                value: state.hideFromRecents,
+                onChanged: notifier.setHideFromRecents,
               ),
               NavEntryRow(
                 glyph: TablerIcons.battery,
@@ -492,6 +472,30 @@ class SettingsBackgroundPage extends ConsumerWidget {
                     .read(permissionStatesProvider.notifier)
                     .request(AppPermission.batteryOptimization),
               ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.rootTakeoverSection,
+            footer: context.l10n.rootTakeoverFooter,
+            items: [
+              ListItem.toggle(
+                title: Text(context.l10n.rootTakeoverTitle),
+                subtitle: Text(
+                  tunnelMode
+                      ? context.l10n.rootTakeoverSubtitle
+                      : context.l10n.rootTakeoverTunnelModesOnly,
+                ),
+                leading: const Icon(TablerIcons.shield),
+                value: rootTakeover,
+                onChanged: tunnelMode
+                    ? (value) =>
+                          ref.read(rootDnsTakeoverProvider.notifier).set(value)
+                    : null,
+              ),
+              if (tunnelMode && rootTakeover)
+                _RootTakeoverProbeRow(
+                  onRefresh: () => ref.invalidate(rootDnsProbeProvider),
+                ),
             ],
           ),
         ],

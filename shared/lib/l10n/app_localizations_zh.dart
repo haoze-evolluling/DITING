@@ -2795,10 +2795,7 @@ class AppL10nZh extends AppL10n {
   String get foregroundTitle => '前后台行为';
 
   @override
-  String get foregroundPrivacySection => '后台与隐私';
-
-  @override
-  String get foregroundPrivacyFooter => '「后台隐藏」会从最近任务列表里移除本应用；下次从桌面图标进入即可。';
+  String get foregroundStartupSection => '启动与连接';
 
   @override
   String get foregroundHide => '后台隐藏';
@@ -2807,7 +2804,7 @@ class AppL10nZh extends AppL10n {
   String get foregroundHideSubtitle => '不在最近任务列表中显示';
 
   @override
-  String get foregroundRouting => '路由';
+  String get foregroundRouting => '路由与协议';
 
   @override
   String get foregroundBypassLan => '绕过局域网';
@@ -2816,7 +2813,7 @@ class AppL10nZh extends AppL10n {
   String get foregroundBypassLanSubtitle => '本地网段与本机地址不走隧道';
 
   @override
-  String get foregroundStability => '稳定性';
+  String get foregroundBackgroundPermissions => '后台与权限';
 
   @override
   String get foregroundBatteryFooter => '关闭电池优化后，系统在后台更不容易回收服务进程。';
@@ -8750,7 +8747,13 @@ class AppL10nZh extends AppL10n {
   String get settingsRunSection => '运行设置';
 
   @override
-  String get settingsForegroundSubtitle => '后台隐藏、通知常驻、绕过局域网';
+  String get settingsForegroundSubtitle => '开机自启、后台隐藏、路由与协议';
+
+  @override
+  String get settingsBootAutoStartTitle => '开机自启动';
+
+  @override
+  String get settingsBootAutoStartSubtitle => '设备重启后自动恢复上次使用的模式与连接';
 
   @override
   String get settingsAutoStartTitle => '启动时自动开启';

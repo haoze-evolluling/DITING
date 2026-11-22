@@ -18,6 +18,7 @@ object DataPlaneControl {
     private const val KEY_WORK_MODE = "app_work_mode"
     private const val KEY_INITIAL_AGREEMENT_ACCEPTED = "initial_agreement_accepted"
     private const val KEY_ROOT_TAKEOVER = "root_dns_takeover_enabled"
+    private const val KEY_AUTO_START_ON_BOOT = "auto_start_on_boot_enabled"
 
     const val WORK_MODE_NORMAL = "normal"
     const val WORK_MODE_EXPRESS = "express"
@@ -39,6 +40,10 @@ object DataPlaneControl {
     fun isAgreementAccepted(context: Context): Boolean =
         context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_INITIAL_AGREEMENT_ACCEPTED, false)
+
+    fun autoStartOnBootEnabled(context: Context): Boolean =
+        context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_AUTO_START_ON_BOOT, false)
 
     /**
      * Root 免 VPN 接管是否生效。

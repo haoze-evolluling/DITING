@@ -49,6 +49,12 @@ extension LegacySettingsParity on LegacySettings {
   void setAutoStartOnLaunchEnabled(bool value) =>
       _store.putBool(_ui, 'auto_start_on_launch_enabled', value);
 
+  bool get autoStartOnBootEnabled =>
+      _bool(_ui, 'auto_start_on_boot_enabled', false);
+
+  void setAutoStartOnBootEnabled(bool value) =>
+      _store.putBool(_ui, 'auto_start_on_boot_enabled', value);
+
   void setBypassLanEnabled(bool value) =>
       _store.putBool(_ui, 'bypass_lan_enabled', value);
 
@@ -62,11 +68,7 @@ extension LegacySettingsParity on LegacySettings {
       _store.putStringSet(_ui, 'vpn_route_address', _routeSet(values));
 
   void setVpnRouteExcludeAddress(Iterable<String> values) =>
-      _store.putStringSet(
-        _ui,
-        'vpn_route_exclude_address',
-        _routeSet(values),
-      );
+      _store.putStringSet(_ui, 'vpn_route_exclude_address', _routeSet(values));
 
   Set<String> _routeSet(Iterable<String> values) => {
     for (final item in values)

@@ -2961,11 +2961,7 @@ class AppL10nEn extends AppL10n {
   String get foregroundTitle => 'Foreground and background';
 
   @override
-  String get foregroundPrivacySection => 'Background and privacy';
-
-  @override
-  String get foregroundPrivacyFooter =>
-      'Hiding in the background removes the app from the recent tasks list; open it again from the home screen.';
+  String get foregroundStartupSection => 'Startup and connection';
 
   @override
   String get foregroundHide => 'Hide in background';
@@ -2974,7 +2970,7 @@ class AppL10nEn extends AppL10n {
   String get foregroundHideSubtitle => 'Not shown in the recent tasks list';
 
   @override
-  String get foregroundRouting => 'Routing';
+  String get foregroundRouting => 'Routing and protocol';
 
   @override
   String get foregroundBypassLan => 'Bypass LAN';
@@ -2984,7 +2980,7 @@ class AppL10nEn extends AppL10n {
       'Local subnets and this device stay off the tunnel';
 
   @override
-  String get foregroundStability => 'Stability';
+  String get foregroundBackgroundPermissions => 'Background and permissions';
 
   @override
   String get foregroundBatteryFooter =>
@@ -9302,7 +9298,14 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get settingsForegroundSubtitle =>
-      'Hide in the background, keep the notification, bypass the LAN';
+      'Boot start, background options, routing and protocol';
+
+  @override
+  String get settingsBootAutoStartTitle => 'Start on boot';
+
+  @override
+  String get settingsBootAutoStartSubtitle =>
+      'Restore the last used mode and connection after the device restarts';
 
   @override
   String get settingsAutoStartTitle => 'Start on launch';

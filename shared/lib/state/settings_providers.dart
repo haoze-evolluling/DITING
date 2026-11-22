@@ -475,6 +475,21 @@ final autoStartOnLaunchProvider =
       AutoStartOnLaunchNotifier.new,
     );
 
+class AutoStartOnBootNotifier extends Notifier<bool> {
+  @override
+  bool build() => _settings(ref).autoStartOnBootEnabled;
+
+  void toggle(bool value) {
+    state = value;
+    _settings(ref).setAutoStartOnBootEnabled(value);
+    _bump(ref);
+  }
+}
+
+final autoStartOnBootProvider = NotifierProvider<AutoStartOnBootNotifier, bool>(
+  AutoStartOnBootNotifier.new,
+);
+
 class InitialAgreementNotifier extends Notifier<bool> {
   @override
   bool build() => _settings(ref).initialAgreementAccepted;
