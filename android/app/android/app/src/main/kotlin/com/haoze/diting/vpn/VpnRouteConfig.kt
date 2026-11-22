@@ -8,7 +8,6 @@ import android.util.Log
 
 internal data class VpnEstablishResult(
     val fd: ParcelFileDescriptor?,
-    val ipv6Enabled: Boolean,
     val clatOnly: Boolean,
 )
 
@@ -17,26 +16,27 @@ internal object VpnRouteConfig {
         service: VpnService,
         excludedPackages: Set<String>,
         proxyPackage: String?,
-        bypassLan: Boolean,
-        ipv6Mode: String,
-        routeMode: String = VpnModeProfile.ROUTE_MODE_FULL_TUNNEL,
+        bypassPrivate: Boolean,
+        tunnelIpv6: Boolean,
+        routeAddress: Collection<String>,
+        routeExcludeAddress: Collection<String>,
         logTag: String = "VpnRouteConfig",
     ): VpnEstablishResult {
         val clat = clatDetected(service)
         val plan = VpnPlanNative.routePlan(
-            mode = routeMode,
-            ipv6Mode = ipv6Mode,
-            ipv6Supported = ipv6SupportFor(service, ipv6Mode, clat),
+            tunnelIpv6 = tunnelIpv6,
+            routeAddress = routeAddress,
+            routeExcludeAddress = routeExcludeAddress,
+            bypassPrivate = bypassPrivate,
             clat = clat,
-            bypassLan = bypassLan,
             excludedPackages = excludedPackages,
             selfPackage = service.packageName,
             proxyPackage = proxyPackage.orEmpty(),
         )
         Log.i(
             logTag,
-            "establish: mode=$routeMode, ipv6Mode=$ipv6Mode, enableIpv6=${plan.enableIpv6}, " +
-                "clat=$clat, bypassLan=$bypassLan",
+            "establish: tunnelIpv6=$tunnelIpv6, enableIpv6=${plan.enableIpv6}, " +
+                "clat=$clat, bypassPrivate=$bypassPrivate",
         )
 
         val builder = service.Builder()
@@ -48,19 +48,8 @@ internal object VpnRouteConfig {
             Log.e(logTag, "Failed to establish VPN interface", e)
             null
         }
-        return VpnEstablishResult(fd, plan.enableIpv6, clat)
+        return VpnEstablishResult(fd, clat)
     }
-
-    fun ipv6SupportFor(service: VpnService, ipv6Mode: String, clat: Boolean): Boolean =
-        clat ||
-            (VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && hasPhysicalIpv6Support(service))
-
-    fun hasPhysicalIpv6Support(context: Context): Boolean = runCatching {
-        val manager = context.getSystemService(ConnectivityManager::class.java) ?: return false
-        NetworkTopology.physicalLinks(manager).any { link ->
-            NetworkTopology.hasGlobalIpv6(link) && NetworkTopology.hasIpv6DefaultRoute(link)
-        }
-    }.getOrDefault(false)
 
     /** 物理网络是否只能在 CLAT 之上提供 IPv4。 */
     fun clatDetected(context: Context): Boolean = runCatching {

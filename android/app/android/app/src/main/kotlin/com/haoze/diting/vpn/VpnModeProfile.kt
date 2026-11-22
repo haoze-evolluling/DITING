@@ -40,16 +40,12 @@ internal class VpnModeProfile(
     val tunnelThreadName: String,
     val teardownThreadName: String,
     val reloadThreadName: String,
-    /** Rust 路由计划模式：两种模式都走全隧道，保留常量便于将来单侧调整。 */
-    val routeMode: String = ROUTE_MODE_FULL_TUNNEL,
     val showSpeedLine: Boolean = true,
     val pauseAction: Boolean = true,
 ) {
     val startConfig = VpnStartConfigStore(statePrefs)
 
     companion object {
-        const val ROUTE_MODE_FULL_TUNNEL = "normal"
-
         val NORMAL = VpnModeProfile(
             workMode = "normal",
             eventDomain = "vpn",

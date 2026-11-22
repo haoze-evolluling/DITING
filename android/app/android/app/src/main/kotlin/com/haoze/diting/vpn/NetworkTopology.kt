@@ -41,13 +41,6 @@ internal object NetworkTopology {
                 !address.isMulticastAddress
         }
 
-    fun hasIpv6DefaultRoute(link: LinkProperties): Boolean =
-        link.routes.any { route ->
-            val destination = route.destination.address
-            destination is Inet6Address &&
-                (route.isDefaultRoute || route.hasGateway() || route.destination.prefixLength == 0)
-        }
-
     /**
      * 物理网络是否只在 CLAT 之上提供 IPv4：有全局 IPv6、没有原生 IPv4，
      * 且存在 NAT64 前缀或 192.0.0.4/29 / v4- 虚拟接口。

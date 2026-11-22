@@ -57,6 +57,53 @@ void _legacySettings() {
       expect(settings.resolutionModeRaw, 'parallel_race');
     });
 
+    test('旧 ipv6_mode=prefer 映射为两个开关开启', () {
+      final settings = LegacySettings(
+        MemoryLegacyPrefsStore({
+          'dns_vpn_prefs': {'ipv6_mode': 'prefer'},
+        }),
+      );
+      expect(settings.tunnelIpv6Enabled, isTrue);
+      expect(settings.dnsAaaaEnabled, isTrue);
+    });
+
+    test('旧 ipv6_mode 的其他值与缺省都映射为关闭', () {
+      for (final raw in ['auto', 'disable', 'enabled', 'disabled', '']) {
+        final settings = LegacySettings(
+          MemoryLegacyPrefsStore({
+            'dns_vpn_prefs': {'ipv6_mode': raw},
+          }),
+        );
+        expect(settings.tunnelIpv6Enabled, isFalse, reason: raw);
+        expect(settings.dnsAaaaEnabled, isFalse, reason: raw);
+      }
+      final empty = LegacySettings(MemoryLegacyPrefsStore());
+      expect(empty.tunnelIpv6Enabled, isFalse);
+      expect(empty.dnsAaaaEnabled, isFalse);
+    });
+
+    test('新键优先于旧 ipv6_mode', () {
+      final settings = LegacySettings(
+        MemoryLegacyPrefsStore({
+          'dns_vpn_prefs': {
+            'ipv6_mode': 'prefer',
+            'vpn_ipv6_enabled': false,
+            'dns_aaaa_enabled': true,
+          },
+        }),
+      );
+      expect(settings.tunnelIpv6Enabled, isFalse);
+      expect(settings.dnsAaaaEnabled, isTrue);
+    });
+
+    test('路由列表读写去重并排序', () {
+      final settings = LegacySettings(MemoryLegacyPrefsStore());
+      settings.setVpnRouteAddress([' 10.0.0.0/8 ', '10.0.0.0/8', '::/0']);
+      settings.setVpnRouteExcludeAddress(['192.168.0.0/16']);
+      expect(settings.vpnRouteAddress, ['10.0.0.0/8', '::/0']);
+      expect(settings.vpnRouteExcludeAddress, ['192.168.0.0/16']);
+    });
+
     test('空存储返回 1.4.3 的默认值', () {
       final settings = LegacySettings(MemoryLegacyPrefsStore());
       expect(settings.themeModeRaw, isNull);
@@ -359,18 +406,32 @@ void _settingsCatalog() {
       expect(c.read(logModeProvider), LegacyLogMode.off);
     });
 
-    test('IPv6 三档，未知值回退 auto', () {
-      expect(LegacyIpv6Mode.fromStorageValue('nonsense'), LegacyIpv6Mode.auto);
-      expect(
-        [for (final mode in LegacyIpv6Mode.values) mode.storageValue],
-        ['auto', 'disable', 'prefer'],
-      );
-      expect(LegacyIpv6Mode.fromStorageValue('enabled'), LegacyIpv6Mode.auto);
-      expect(LegacyIpv6Mode.fromStorageValue('disabled'), LegacyIpv6Mode.auto);
-      expect(
-        LegacyIpv6Mode.fromStorageValue(' disable '),
-        LegacyIpv6Mode.disable,
-      );
+    test('IPv6 双开关默认关闭且可独立切换', () {
+      final c = container();
+      final notifier = c.read(foregroundBackgroundProvider.notifier);
+      expect(c.read(foregroundBackgroundProvider).tunnelIpv6, isFalse);
+      expect(c.read(foregroundBackgroundProvider).dnsAaaa, isFalse);
+
+      notifier.setTunnelIpv6(true);
+      expect(c.read(foregroundBackgroundProvider).tunnelIpv6, isTrue);
+      expect(c.read(foregroundBackgroundProvider).dnsAaaa, isFalse);
+
+      notifier.setDnsAaaa(true);
+      expect(c.read(foregroundBackgroundProvider).dnsAaaa, isTrue);
+    });
+
+    test('路由列表去空去重并排序', () {
+      final c = container();
+      c.read(foregroundBackgroundProvider.notifier).setRouteAddress([
+        ' 10.0.0.0/8 ',
+        '10.0.0.0/8',
+        '::/0',
+        ' ',
+      ]);
+      expect(c.read(foregroundBackgroundProvider).routeAddress, [
+        '10.0.0.0/8',
+        '::/0',
+      ]);
     });
 
     test('背景图：添加会同时更新当前与清单，移除当前会退到清单末尾', () {

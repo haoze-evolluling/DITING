@@ -310,7 +310,14 @@ fn system(source: &Value) -> Value {
     let dynamic_flag = flag(&dynamic, "enabled", false);
     json!({
         "bypassLan": boolean(source, "bypassLan").unwrap_or(false),
-        "ipv6Mode": text(source, "ipv6Mode"),
+        "tunnelIpv6": boolean(source, "tunnelIpv6").unwrap_or(false),
+        "dnsAaaa": boolean(source, "dnsAaaa").unwrap_or(false),
+        "routeAddress": sorted_strings(
+            &get(source, "routeAddress").cloned().unwrap_or(Value::Null),
+        ),
+        "routeExcludeAddress": sorted_strings(
+            &get(source, "routeExcludeAddress").cloned().unwrap_or(Value::Null),
+        ),
         "logRetentionDays": integer(source, "logRetentionDays"),
         "dnsLogMode": text(source, "dnsLogMode"),
         "hideFromRecents": boolean(source, "hideFromRecents").unwrap_or(false),

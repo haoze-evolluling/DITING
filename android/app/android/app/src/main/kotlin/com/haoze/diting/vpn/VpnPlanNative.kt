@@ -24,7 +24,10 @@ internal data class VpnStartDefaults(
     val outboundProxy: String,
     val proxyAppPackage: String,
     val bypassLan: Boolean,
-    val ipv6Mode: String,
+    val tunnelIpv6: Boolean,
+    val dnsAaaa: Boolean,
+    val routeAddress: List<String>,
+    val routeExcludeAddress: List<String>,
     val excludedPackages: List<String>,
     val blockedPackages: List<String>,
     val inspectionPackages: List<String>,
@@ -33,17 +36,15 @@ internal data class VpnStartDefaults(
 
 internal class VpnPlanNative private constructor() {
     external fun routePlan(
-        mode: String,
-        ipv6Mode: String,
-        ipv6Supported: Boolean,
+        tunnelIpv6: Boolean,
+        routeAddress: String,
+        routeExcludeAddress: String,
+        bypassPrivate: Boolean,
         clat: Boolean,
-        bypassLan: Boolean,
         excluded: String,
         selfPackage: String,
         proxyPackage: String,
     ): String?
-
-    external fun ipv6ProbeNeeded(ipv6Mode: String): Boolean
 
     external fun startDefaults(): String?
 
@@ -62,22 +63,22 @@ internal class VpnPlanNative private constructor() {
         }
 
         fun routePlan(
-            mode: String,
-            ipv6Mode: String,
-            ipv6Supported: Boolean,
+            tunnelIpv6: Boolean,
+            routeAddress: Collection<String>,
+            routeExcludeAddress: Collection<String>,
+            bypassPrivate: Boolean,
             clat: Boolean,
-            bypassLan: Boolean,
             excludedPackages: Collection<String>,
             selfPackage: String,
             proxyPackage: String,
         ): VpnPlan {
             val raw = requireNotNull(
                 instance.routePlan(
-                    mode = mode,
-                    ipv6Mode = ipv6Mode,
-                    ipv6Supported = ipv6Supported,
+                    tunnelIpv6 = tunnelIpv6,
+                    routeAddress = routeAddress.joinToString("\n"),
+                    routeExcludeAddress = routeExcludeAddress.joinToString("\n"),
+                    bypassPrivate = bypassPrivate,
                     clat = clat,
-                    bypassLan = bypassLan,
                     excluded = excludedPackages.joinToString("\n"),
                     selfPackage = selfPackage,
                     proxyPackage = proxyPackage,
@@ -85,8 +86,6 @@ internal class VpnPlanNative private constructor() {
             ) { "native VPN route plan rejected the request" }
             return parsePlan(raw)
         }
-
-        fun ipv6ProbeNeeded(ipv6Mode: String): Boolean = instance.ipv6ProbeNeeded(ipv6Mode)
 
         val startDefaults: VpnStartDefaults by lazy {
             val raw = requireNotNull(instance.startDefaults()) {
@@ -118,7 +117,10 @@ internal class VpnPlanNative private constructor() {
                 outboundProxy = json.getString("outboundProxy"),
                 proxyAppPackage = json.optString("proxyAppPackage", ""),
                 bypassLan = json.optBoolean("bypassLan", true),
-                ipv6Mode = json.optString("ipv6Mode", "auto"),
+                tunnelIpv6 = json.optBoolean("tunnelIpv6", false),
+                dnsAaaa = json.optBoolean("dnsAaaa", false),
+                routeAddress = json.optJSONArray("routeAddress").strings(),
+                routeExcludeAddress = json.optJSONArray("routeExcludeAddress").strings(),
                 excludedPackages = json.optJSONArray("excludedPackages").strings(),
                 blockedPackages = json.optJSONArray("blockedPackages").strings(),
                 inspectionPackages = json.optJSONArray("inspectionPackages").strings(),

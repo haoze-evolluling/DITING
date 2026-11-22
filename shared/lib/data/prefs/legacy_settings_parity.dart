@@ -52,8 +52,26 @@ extension LegacySettingsParity on LegacySettings {
   void setBypassLanEnabled(bool value) =>
       _store.putBool(_ui, 'bypass_lan_enabled', value);
 
-  void setIpv6ModeRaw(String storageValue) =>
-      _store.putString(dnsContainer, 'ipv6_mode', storageValue);
+  void setTunnelIpv6Enabled(bool value) =>
+      _store.putBool(dnsContainer, 'vpn_ipv6_enabled', value);
+
+  void setDnsAaaaEnabled(bool value) =>
+      _store.putBool(dnsContainer, 'dns_aaaa_enabled', value);
+
+  void setVpnRouteAddress(Iterable<String> values) =>
+      _store.putStringSet(_ui, 'vpn_route_address', _routeSet(values));
+
+  void setVpnRouteExcludeAddress(Iterable<String> values) =>
+      _store.putStringSet(
+        _ui,
+        'vpn_route_exclude_address',
+        _routeSet(values),
+      );
+
+  Set<String> _routeSet(Iterable<String> values) => {
+    for (final item in values)
+      if (item.trim().isNotEmpty) item.trim(),
+  };
 
   String get appLanguageModeRaw =>
       _string(_ui, 'app_language_mode') ?? 'system';

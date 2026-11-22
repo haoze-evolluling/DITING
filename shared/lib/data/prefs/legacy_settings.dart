@@ -224,7 +224,24 @@ class LegacySettings {
 
   bool get bypassLanEnabled => _bool(uiContainer, 'bypass_lan_enabled', true);
 
-  String get ipv6ModeRaw => _string(dnsContainer, 'ipv6_mode') ?? 'auto';
+  bool get _legacyIpv6Prefer =>
+      (_string(dnsContainer, 'ipv6_mode') ?? '').trim().toLowerCase() == 'prefer';
+
+  bool get tunnelIpv6Enabled =>
+      _bool(dnsContainer, 'vpn_ipv6_enabled', _legacyIpv6Prefer);
+
+  bool get dnsAaaaEnabled =>
+      _bool(dnsContainer, 'dns_aaaa_enabled', _legacyIpv6Prefer);
+
+  List<String> get vpnRouteAddress => _routeAddress('vpn_route_address');
+
+  List<String> get vpnRouteExcludeAddress =>
+      _routeAddress('vpn_route_exclude_address');
+
+  List<String> _routeAddress(String key) {
+    final values = _stringSet(key, container: uiContainer) ?? const <String>{};
+    return values.toList()..sort();
+  }
 
   Set<String> get excludedPackages {
     final value = _store.read(uiContainer, 'excluded_app_packages');

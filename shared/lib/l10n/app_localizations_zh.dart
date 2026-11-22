@@ -1538,22 +1538,60 @@ class AppL10nZh extends AppL10n {
   String get logModeOffDescription => '不记录任何请求，节省空间';
 
   @override
-  String get ipv6AutoLabel => '自动';
+  String get tunnelIpv6Title => '隧道 IPv6';
 
   @override
-  String get ipv6AutoDescription => '按当前网络能力决定是否启用';
+  String get tunnelIpv6Subtitle => '在 VPN 接口内启用 IPv6 地址、路由与 DNS';
 
   @override
-  String get ipv6DisableLabel => '关闭';
+  String get dnsAaaaTitle => 'DNS 返回 AAAA';
 
   @override
-  String get ipv6DisableDescription => '隧道内不启用 IPv6';
+  String get dnsAaaaSubtitle => '关闭时 AAAA 查询返回空，与隧道开关相互独立';
 
   @override
-  String get ipv6PreferLabel => '优先';
+  String get routeIncludeTitle => '自定义路由';
 
   @override
-  String get ipv6PreferDescription => '尽量走 IPv6，失败再回落';
+  String get routeIncludeSubtitle => '仅让这些网段走隧道；为空表示全部';
+
+  @override
+  String get routeExcludeTitle => '排除路由';
+
+  @override
+  String get routeExcludeSubtitle => '这些网段不走隧道，优先级高于包含列表';
+
+  @override
+  String get routeIncludeAll => '全部流量';
+
+  @override
+  String get routeCidrAddTitle => '添加网段';
+
+  @override
+  String get routeCidrLabel => 'CIDR';
+
+  @override
+  String get routeCidrHint => '例如 10.0.0.0/8 或 2001:db8::/32';
+
+  @override
+  String get routeCidrInvalid => '请输入合法的 CIDR';
+
+  @override
+  String get routeCidrDuplicate => '该网段已存在';
+
+  @override
+  String get routeCidrEmpty => '还没有自定义网段';
+
+  @override
+  String get routeCidrEmptySubtitle => '点击右上角 + 添加';
+
+  @override
+  String routeCidrCount(int count) {
+    return '已添加 $count 条';
+  }
+
+  @override
+  String get routeCidrFooter => '包含列表为空时视为全部流量；排除规则优先。';
 
   @override
   String get commonToday => '今日';

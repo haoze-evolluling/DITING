@@ -9,7 +9,10 @@ internal object VpnServiceApi {
     const val EXTRA_OUTBOUND_PROXY = "outbound_proxy"
     const val EXTRA_PROXY_APP = "proxy_app_package"
     const val EXTRA_BYPASS_LAN = "bypass_lan"
-    const val EXTRA_IPV6_MODE = "ipv6_mode"
+    const val EXTRA_TUNNEL_IPV6 = "tunnel_ipv6"
+    const val EXTRA_DNS_AAAA = "dns_aaaa"
+    const val EXTRA_ROUTE_ADDRESS = "route_address"
+    const val EXTRA_ROUTE_EXCLUDE_ADDRESS = "route_exclude_address"
     const val EXTRA_EXCLUDED_PACKAGES = "excluded_packages"
     const val EXTRA_BLOCKED_PACKAGES = "blocked_packages"
     const val EXTRA_INSPECTION_PACKAGES = "inspection_packages"
@@ -25,7 +28,10 @@ internal object VpnServiceApi {
         putExtra(EXTRA_OUTBOUND_PROXY, args.proxyJson)
         putExtra(EXTRA_PROXY_APP, args.proxyAppPackage)
         putExtra(EXTRA_BYPASS_LAN, args.bypassLan)
-        putExtra(EXTRA_IPV6_MODE, args.ipv6Mode)
+        putExtra(EXTRA_TUNNEL_IPV6, args.tunnelIpv6)
+        putExtra(EXTRA_DNS_AAAA, args.dnsAaaa)
+        putStringArrayListExtra(EXTRA_ROUTE_ADDRESS, ArrayList(args.routeAddress))
+        putStringArrayListExtra(EXTRA_ROUTE_EXCLUDE_ADDRESS, ArrayList(args.routeExcludeAddress))
         putStringArrayListExtra(EXTRA_EXCLUDED_PACKAGES, ArrayList(args.excludedPackages))
         putStringArrayListExtra(EXTRA_BLOCKED_PACKAGES, ArrayList(args.blockedPackages))
         putStringArrayListExtra(EXTRA_INSPECTION_PACKAGES, ArrayList(args.inspectionPackages))

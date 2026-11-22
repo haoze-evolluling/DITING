@@ -1606,22 +1606,65 @@ class AppL10nEn extends AppL10n {
   String get logModeOffDescription => 'Nothing is recorded, saving space';
 
   @override
-  String get ipv6AutoLabel => 'Auto';
+  String get tunnelIpv6Title => 'Tunnel IPv6';
 
   @override
-  String get ipv6AutoDescription => 'Enable depending on the current network';
+  String get tunnelIpv6Subtitle =>
+      'Add IPv6 addresses, routes and DNS to the VPN interface';
 
   @override
-  String get ipv6DisableLabel => 'Off';
+  String get dnsAaaaTitle => 'DNS AAAA answers';
 
   @override
-  String get ipv6DisableDescription => 'No IPv6 inside the tunnel';
+  String get dnsAaaaSubtitle =>
+      'When off, AAAA queries return empty; independent of the tunnel switch';
 
   @override
-  String get ipv6PreferLabel => 'Prefer';
+  String get routeIncludeTitle => 'Custom routes';
 
   @override
-  String get ipv6PreferDescription => 'Prefer IPv6 and fall back when it fails';
+  String get routeIncludeSubtitle =>
+      'Only these networks use the tunnel; empty means all';
+
+  @override
+  String get routeExcludeTitle => 'Excluded routes';
+
+  @override
+  String get routeExcludeSubtitle =>
+      'These networks bypass the tunnel; takes precedence';
+
+  @override
+  String get routeIncludeAll => 'All traffic';
+
+  @override
+  String get routeCidrAddTitle => 'Add network';
+
+  @override
+  String get routeCidrLabel => 'CIDR';
+
+  @override
+  String get routeCidrHint => 'e.g. 10.0.0.0/8 or 2001:db8::/32';
+
+  @override
+  String get routeCidrInvalid => 'Enter a valid CIDR';
+
+  @override
+  String get routeCidrDuplicate => 'That network is already listed';
+
+  @override
+  String get routeCidrEmpty => 'No custom networks yet';
+
+  @override
+  String get routeCidrEmptySubtitle => 'Tap + in the top right to add one';
+
+  @override
+  String routeCidrCount(int count) {
+    return '$count added';
+  }
+
+  @override
+  String get routeCidrFooter =>
+      'An empty include list means all traffic; excludes win.';
 
   @override
   String get commonToday => 'Today';

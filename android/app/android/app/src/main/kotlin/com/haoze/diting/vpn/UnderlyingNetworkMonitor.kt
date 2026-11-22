@@ -11,7 +11,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.haoze.diting.engine.Engine
-import java.net.Inet6Address
 
 /**
  * 跟踪 VPN 底层的物理网络：把当前网络下发的 DNS 交给引擎做兜底，
@@ -24,8 +23,6 @@ internal class UnderlyingNetworkMonitor(
 ) {
     data class State(
         val dnsServers: List<String>,
-        val physicalIpv6: Boolean,
-        val clat: Boolean,
     )
 
     private val handler = Handler(Looper.getMainLooper())
@@ -81,11 +78,7 @@ internal class UnderlyingNetworkMonitor(
             lastNetwork = physical
         }
         val link = manager.getLinkProperties(physical) ?: return
-        val state = State(
-            dnsServers = dnsServersOf(link),
-            physicalIpv6 = hasGlobalIpv6(link),
-            clat = NetworkTopology.clatOnly(link),
-        )
+        val state = State(dnsServers = dnsServersOf(link))
         if (state == lastState) return
         lastState = state
         onChanged(state)
@@ -124,16 +117,6 @@ internal class UnderlyingNetworkMonitor(
             }
         }.distinct()
 
-    private fun hasGlobalIpv6(link: LinkProperties): Boolean =
-        link.linkAddresses.any { linkAddress ->
-            val address = linkAddress.address
-            address is Inet6Address &&
-                !address.isAnyLocalAddress &&
-                !address.isLoopbackAddress &&
-                !address.isLinkLocalAddress &&
-                !address.isMulticastAddress
-        }
-
     companion object {
         private const val TAG = "UnderlyingNetworkMonitor"
     }
@@ -143,10 +126,7 @@ internal class UnderlyingNetworkMonitor(
  * 把当前物理网络状态写入引擎；网络切换后重置上游健康度与加密连接池，
  * 避免继续复用旧链路上的 DoT/DoH 连接。
  */
-internal fun UnderlyingNetworkMonitor.State.applyTo(engine: Engine, ipv6Mode: String) {
+internal fun UnderlyingNetworkMonitor.State.applyTo(engine: Engine) {
     engine.setSystemDns(dnsServers.joinToString("\n"))
     engine.resetResolverHealth()
-    if (physicalIpv6 && VpnPlanNative.ipv6ProbeNeeded(ipv6Mode)) {
-        engine.setBlockIpv6(false)
-    }
 }

@@ -5,7 +5,6 @@ import android.net.VpnService
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
-import android.os.SystemClock
 import android.util.Log
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.core.rule.StorageGate
@@ -22,7 +21,7 @@ import com.haoze.diting.watchdog.VpnReclaimer
  * 普通模式与简洁模式共用的全隧道 VpnService。
  *
  * 子类只提供 [modeProfile]；两种模式的规则库、日志库与偏好容器由 profile 注入，
- * 其余行为（建隧道、装数据面、通知、重建、回收、诊断）完全一致。
+ * 其余行为（建隧道、装数据面、通知、回收、诊断）完全一致。
  */
 internal abstract class FullTunnelVpnService : VpnService() {
     protected abstract fun modeProfile(): VpnModeProfile
@@ -46,10 +45,6 @@ internal abstract class FullTunnelVpnService : VpnService() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var tunnelGeneration = 0
-    private var tunnelIpv6Enabled = false
-    private var tunnelClatOnly = false
-    private var pendingRebuild = false
-    private var lastRebuildAtMs = 0L
 
     private val speedTicker by lazy {
         SpeedTicker(
@@ -113,7 +108,19 @@ internal abstract class FullTunnelVpnService : VpnService() {
             proxyJson = intent.getStringExtra(VpnServiceApi.EXTRA_OUTBOUND_PROXY).orEmpty(),
             proxyAppPackage = intent.getStringExtra(VpnServiceApi.EXTRA_PROXY_APP).orEmpty(),
             bypassLan = intent.getBooleanExtra(VpnServiceApi.EXTRA_BYPASS_LAN, defaults.bypassLan),
-            ipv6Mode = intent.getStringExtra(VpnServiceApi.EXTRA_IPV6_MODE) ?: defaults.ipv6Mode,
+            tunnelIpv6 = intent.getBooleanExtra(
+                VpnServiceApi.EXTRA_TUNNEL_IPV6,
+                defaults.tunnelIpv6,
+            ),
+            dnsAaaa = intent.getBooleanExtra(VpnServiceApi.EXTRA_DNS_AAAA, defaults.dnsAaaa),
+            routeAddress = intent
+                .getStringArrayListExtra(VpnServiceApi.EXTRA_ROUTE_ADDRESS)
+                .orEmpty()
+                .toSet(),
+            routeExcludeAddress = intent
+                .getStringArrayListExtra(VpnServiceApi.EXTRA_ROUTE_EXCLUDE_ADDRESS)
+                .orEmpty()
+                .toSet(),
             excludedPackages = intent
                 .getStringArrayListExtra(VpnServiceApi.EXTRA_EXCLUDED_PACKAGES)
                 .orEmpty()
@@ -150,20 +157,19 @@ internal abstract class FullTunnelVpnService : VpnService() {
             service = this,
             excludedPackages = args.excludedPackages,
             proxyPackage = args.proxyAppPackage.ifBlank { null },
-            bypassLan = args.bypassLan,
-            ipv6Mode = args.ipv6Mode,
-            routeMode = profile.routeMode,
+            bypassPrivate = args.bypassLan,
+            tunnelIpv6 = args.tunnelIpv6,
+            routeAddress = args.routeAddress,
+            routeExcludeAddress = args.routeExcludeAddress,
             logTag = profile.logTag,
         )
         val pfd = established.fd
-        val ipv6Enabled = established.ipv6Enabled
         if (pfd == null) {
             fail("无法建立 VPN 接口")
             return
         }
         tun = pfd
-        tunnelIpv6Enabled = ipv6Enabled
-        tunnelClatOnly = established.clatOnly
+        val blockIpv6 = !args.dnsAaaa && !established.clatOnly
 
         val rustEngine = try {
             Engine()
@@ -193,7 +199,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
                 dataset = profile.dataset,
                 engine = rustEngine,
                 args = args,
-                ipv6Enabled = ipv6Enabled,
+                blockIpv6 = blockIpv6,
                 logMode = logMode,
                 httpsBypassRules = httpsBypassRules,
                 logTag = profile.logTag,
@@ -211,8 +217,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
         }
 
         networkMonitor = UnderlyingNetworkMonitor(this, this) { state ->
-            state.applyTo(rustEngine, args.ipv6Mode)
-            if (topologyChanged(state, args.ipv6Mode)) requestTunnelRebuild()
+            state.applyTo(rustEngine)
         }.also { it.start() }
 
         runtime.isRunning = true
@@ -256,29 +261,9 @@ internal abstract class FullTunnelVpnService : VpnService() {
         )
     }
 
-    private fun topologyChanged(
-        state: UnderlyingNetworkMonitor.State,
-        ipv6Mode: String,
-    ): Boolean {
-        val ipv6Changed =
-            VpnPlanNative.ipv6ProbeNeeded(ipv6Mode) && state.physicalIpv6 != tunnelIpv6Enabled
-        return ipv6Changed || state.clat != tunnelClatOnly
-    }
-
-    private fun requestTunnelRebuild() {
-        if (stopping || pendingRebuild || engine == null) return
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastRebuildAtMs < REBUILD_COOLDOWN_MS) return
-        lastRebuildAtMs = now
-        pendingRebuild = true
-        RuntimeEventLog.warn(profile.eventDomain, "tunnel.rebuild", "reason" to "network-topology")
-        stopTunnel(rebuild = true)
-    }
-
     @Synchronized
-    private fun stopTunnel(rebuild: Boolean = false) {
+    private fun stopTunnel() {
         reclaimer.cancel()
-        if (!rebuild) pendingRebuild = false
         stopping = true
         val generation = tunnelGeneration
         val current = engine
@@ -298,14 +283,6 @@ internal abstract class FullTunnelVpnService : VpnService() {
                 if (generation != tunnelGeneration) return@post
                 releaseResources()
                 runtime.setPersistedRunning(this@FullTunnelVpnService, false)
-                if (pendingRebuild) {
-                    pendingRebuild = false
-                    val intent = VpnServiceApi.restoreIntent(this@FullTunnelVpnService, profile)
-                    if (intent != null && runCatching { startService(intent) }.isSuccess) {
-                        return@post
-                    }
-                    Log.w(profile.logTag, "tunnel rebuild could not restart the service")
-                }
                 VpnServiceForeground.stop(this@FullTunnelVpnService)
                 stopSelf()
             }
@@ -355,7 +332,6 @@ internal abstract class FullTunnelVpnService : VpnService() {
 
     private fun fail(message: String) {
         RuntimeEventLog.error(profile.eventDomain, "tunnel.fail", "message" to message)
-        pendingRebuild = false
         runtime.lastError = message
         runtime.isRunning = false
         runtime.startedAt = 0L
@@ -410,8 +386,5 @@ internal abstract class FullTunnelVpnService : VpnService() {
         const val KEY_LOG_MODE = "dns_log_mode"
 
         const val KEY_HTTPS_BYPASS_RULES = "https_bypass_rules"
-
-        /** 网络拓扑快速抖动时避免反复重建 TUN。 */
-        const val REBUILD_COOLDOWN_MS = 15_000L
     }
 }

@@ -120,39 +120,6 @@ final floatingLogOpacityProvider =
       FloatingLogOpacityNotifier.new,
     );
 
-enum LegacyIpv6Mode {
-  auto('auto'),
-  disable('disable'),
-  prefer('prefer');
-
-  const LegacyIpv6Mode(this.storageValue);
-
-  final String storageValue;
-
-  String label(AppL10n l10n) => switch (this) {
-    LegacyIpv6Mode.auto => l10n.ipv6AutoLabel,
-    LegacyIpv6Mode.disable => l10n.ipv6DisableLabel,
-    LegacyIpv6Mode.prefer => l10n.ipv6PreferLabel,
-  };
-
-  String description(AppL10n l10n) => switch (this) {
-    LegacyIpv6Mode.auto => l10n.ipv6AutoDescription,
-    LegacyIpv6Mode.disable => l10n.ipv6DisableDescription,
-    LegacyIpv6Mode.prefer => l10n.ipv6PreferDescription,
-  };
-
-  static LegacyIpv6Mode fromStorageValue(String? value) {
-    switch (value?.trim().toLowerCase()) {
-      case 'prefer':
-        return LegacyIpv6Mode.prefer;
-      case 'disable':
-        return LegacyIpv6Mode.disable;
-      default:
-        return LegacyIpv6Mode.auto;
-    }
-  }
-}
-
 class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
   @override
   ForegroundBackgroundState build() {
@@ -161,7 +128,10 @@ class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
     return ForegroundBackgroundState(
       hideFromRecents: settings.hideFromRecentsEnabled,
       bypassLan: settings.bypassLanEnabled,
-      ipv6Mode: LegacyIpv6Mode.fromStorageValue(settings.ipv6ModeRaw),
+      tunnelIpv6: settings.tunnelIpv6Enabled,
+      dnsAaaa: settings.dnsAaaaEnabled,
+      routeAddress: settings.vpnRouteAddress,
+      routeExcludeAddress: settings.vpnRouteExcludeAddress,
     );
   }
 
@@ -177,10 +147,38 @@ class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
     _bump(ref);
   }
 
-  void setIpv6Mode(LegacyIpv6Mode mode) {
-    state = state.copyWith(ipv6Mode: mode);
-    _settings(ref).setIpv6ModeRaw(mode.storageValue);
+  void setTunnelIpv6(bool value) {
+    state = state.copyWith(tunnelIpv6: value);
+    _settings(ref).setTunnelIpv6Enabled(value);
     _bump(ref);
+  }
+
+  void setDnsAaaa(bool value) {
+    state = state.copyWith(dnsAaaa: value);
+    _settings(ref).setDnsAaaaEnabled(value);
+    _bump(ref);
+  }
+
+  void setRouteAddress(Iterable<String> values) {
+    final routes = _routeList(values);
+    state = state.copyWith(routeAddress: routes);
+    _settings(ref).setVpnRouteAddress(routes);
+    _bump(ref);
+  }
+
+  void setRouteExclude(Iterable<String> values) {
+    final routes = _routeList(values);
+    state = state.copyWith(routeExcludeAddress: routes);
+    _settings(ref).setVpnRouteExcludeAddress(routes);
+    _bump(ref);
+  }
+
+  static List<String> _routeList(Iterable<String> values) {
+    final routes = {
+      for (final item in values)
+        if (item.trim().isNotEmpty) item.trim(),
+    };
+    return routes.toList()..sort();
   }
 }
 
@@ -188,21 +186,33 @@ class ForegroundBackgroundState {
   const ForegroundBackgroundState({
     required this.hideFromRecents,
     required this.bypassLan,
-    required this.ipv6Mode,
+    required this.tunnelIpv6,
+    required this.dnsAaaa,
+    required this.routeAddress,
+    required this.routeExcludeAddress,
   });
 
   final bool hideFromRecents;
   final bool bypassLan;
-  final LegacyIpv6Mode ipv6Mode;
+  final bool tunnelIpv6;
+  final bool dnsAaaa;
+  final List<String> routeAddress;
+  final List<String> routeExcludeAddress;
 
   ForegroundBackgroundState copyWith({
     bool? hideFromRecents,
     bool? bypassLan,
-    LegacyIpv6Mode? ipv6Mode,
+    bool? tunnelIpv6,
+    bool? dnsAaaa,
+    List<String>? routeAddress,
+    List<String>? routeExcludeAddress,
   }) => ForegroundBackgroundState(
     hideFromRecents: hideFromRecents ?? this.hideFromRecents,
     bypassLan: bypassLan ?? this.bypassLan,
-    ipv6Mode: ipv6Mode ?? this.ipv6Mode,
+    tunnelIpv6: tunnelIpv6 ?? this.tunnelIpv6,
+    dnsAaaa: dnsAaaa ?? this.dnsAaaa,
+    routeAddress: routeAddress ?? this.routeAddress,
+    routeExcludeAddress: routeExcludeAddress ?? this.routeExcludeAddress,
   );
 }
 

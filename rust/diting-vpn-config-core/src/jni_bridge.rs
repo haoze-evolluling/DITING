@@ -3,7 +3,7 @@ use jni::objects::{JObject, JString};
 use jni::sys::jboolean;
 use jni::{Env, EnvUnowned};
 
-use crate::route::{ipv6_probe_needed, route_plan};
+use crate::route::route_plan;
 use crate::start::start_defaults;
 
 fn resolve<'local, T: Default>(
@@ -24,57 +24,51 @@ fn answer_string<'local>(env: &mut Env<'local>, value: String) -> JObject<'local
     }
 }
 
+fn split_list(value: &str) -> Vec<String> {
+    value.split('\n').map(str::to_owned).collect()
+}
+
 #[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>(
     mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
-    mode: JString<'local>,
-    ipv6_mode: JString<'local>,
-    ipv6_supported: jboolean,
+    tunnel_ipv6: jboolean,
+    route_address: JString<'local>,
+    route_exclude_address: JString<'local>,
+    bypass_private: jboolean,
     clat: jboolean,
-    bypass_lan: jboolean,
     excluded: JString<'local>,
     self_package: JString<'local>,
     proxy_package: JString<'local>,
 ) -> JObject<'local> {
     resolve(&mut env, |env| {
-        let (Some(mode), Some(ipv6_mode), Some(excluded), Some(self_package), Some(proxy_package)) = (
-            read(env, &mode),
-            read(env, &ipv6_mode),
+        let (
+            Some(route_address),
+            Some(route_exclude_address),
+            Some(excluded),
+            Some(self_package),
+            Some(proxy_package),
+        ) = (
+            read(env, &route_address),
+            read(env, &route_exclude_address),
             read(env, &excluded),
             read(env, &self_package),
             read(env, &proxy_package),
-        ) else {
+        )
+        else {
             return Ok(JObject::null());
         };
-        let packages: Vec<String> = excluded.split('\n').map(str::to_owned).collect();
-        match route_plan(
-            &mode,
-            &ipv6_mode,
-            ipv6_supported,
+        let plan = route_plan(
+            tunnel_ipv6,
+            &split_list(&route_address),
+            &split_list(&route_exclude_address),
+            bypass_private,
             clat,
-            bypass_lan,
-            &packages,
+            &split_list(&excluded),
             &self_package,
             &proxy_package,
-        ) {
-            Some(plan) => Ok(answer_string(env, plan.to_string())),
-            None => Ok(JObject::null()),
-        }
-    })
-}
-
-#[no_mangle]
-pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_ipv6ProbeNeeded<'local>(
-    mut env: EnvUnowned<'local>,
-    _this: JObject<'local>,
-    ipv6_mode: JString<'local>,
-) -> jboolean {
-    resolve(&mut env, |env| {
-        let Some(ipv6_mode) = read(env, &ipv6_mode) else {
-            return Ok(false);
-        };
-        Ok(ipv6_probe_needed(&ipv6_mode))
+        );
+        Ok(answer_string(env, plan.to_string()))
     })
 }
 
@@ -94,15 +88,16 @@ mod tests {
     use crate::route::route_plan;
 
     #[test]
-    fn route_plan_is_dispatched_by_mode() {
-        assert!(route_plan("express", "auto", true, false, false, &[], "a", "b").is_some());
-        assert!(route_plan("server", "auto", true, false, false, &[], "a", "b").is_none());
+    fn route_plan_returns_the_planner_output() {
+        let plan = route_plan(false, &[], &[], false, false, &[], "a", "b");
+        assert_eq!(plan["enableIpv6"], false);
     }
 
     #[test]
     fn defaults_have_the_restore_fields() {
         let defaults = start_defaults();
-        assert_eq!(defaults["ipv6Mode"], "auto");
+        assert_eq!(defaults["tunnelIpv6"], false);
+        assert_eq!(defaults["dnsAaaa"], false);
         assert!(defaults["outboundProxy"]
             .as_str()
             .unwrap()

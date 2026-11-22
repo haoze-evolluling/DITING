@@ -843,12 +843,31 @@
   "logModeBlockedDescription": "只记录被拦截与出错的请求",
   "logModeOffLabel": "关闭日志",
   "logModeOffDescription": "不记录任何请求，节省空间",
-  "ipv6AutoLabel": "自动",
-  "ipv6AutoDescription": "按当前网络能力决定是否启用",
-  "ipv6DisableLabel": "关闭",
-  "ipv6DisableDescription": "隧道内不启用 IPv6",
-  "ipv6PreferLabel": "优先",
-  "ipv6PreferDescription": "尽量走 IPv6，失败再回落",
+  "tunnelIpv6Title": "隧道 IPv6",
+  "tunnelIpv6Subtitle": "在 VPN 接口内启用 IPv6 地址、路由与 DNS",
+  "dnsAaaaTitle": "DNS 返回 AAAA",
+  "dnsAaaaSubtitle": "关闭时 AAAA 查询返回空，与隧道开关相互独立",
+  "routeIncludeTitle": "自定义路由",
+  "routeIncludeSubtitle": "仅让这些网段走隧道；为空表示全部",
+  "routeExcludeTitle": "排除路由",
+  "routeExcludeSubtitle": "这些网段不走隧道，优先级高于包含列表",
+  "routeIncludeAll": "全部流量",
+  "routeCidrAddTitle": "添加网段",
+  "routeCidrLabel": "CIDR",
+  "routeCidrHint": "例如 10.0.0.0/8 或 2001:db8::/32",
+  "routeCidrInvalid": "请输入合法的 CIDR",
+  "routeCidrDuplicate": "该网段已存在",
+  "routeCidrEmpty": "还没有自定义网段",
+  "routeCidrEmptySubtitle": "点击右上角 + 添加",
+  "routeCidrCount": "已添加 {count} 条",
+  "@routeCidrCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "routeCidrFooter": "包含列表为空时视为全部流量；排除规则优先。",
   "commonToday": "今日",
   "logWindowSevenDays": "7 天",
   "logWindowSevenDaysRecent": "近 7 天",

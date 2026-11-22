@@ -88,7 +88,10 @@ extension _BackupImportSnapshot on BackupImporter {
       },
       'system': {
         'bypassLan': settings.bypassLanEnabled,
-        'ipv6Mode': settings.ipv6ModeRaw,
+        'tunnelIpv6': settings.tunnelIpv6Enabled,
+        'dnsAaaa': settings.dnsAaaaEnabled,
+        'routeAddress': settings.vpnRouteAddress,
+        'routeExcludeAddress': settings.vpnRouteExcludeAddress,
         'logRetentionDays': settings.logRetentionDays,
         'dnsLogMode': settings.dnsLogModeRaw,
         'hideFromRecents': settings.hideFromRecentsEnabled,

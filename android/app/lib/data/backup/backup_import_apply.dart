@@ -153,8 +153,14 @@ extension _BackupImportApply on BackupImporter {
         );
       case 'system.bypassLan':
         settings.setBypassLanEnabled(value == true);
-      case 'system.ipv6Mode':
-        settings.setIpv6ModeRaw('$value');
+      case 'system.tunnelIpv6':
+        settings.setTunnelIpv6Enabled(value == true);
+      case 'system.dnsAaaa':
+        settings.setDnsAaaaEnabled(value == true);
+      case 'system.routeAddress':
+        settings.setVpnRouteAddress(_strings(value));
+      case 'system.routeExcludeAddress':
+        settings.setVpnRouteExcludeAddress(_strings(value));
       case 'system.logRetentionDays':
         settings.setLogRetentionDays(value as int);
       case 'system.dnsLogMode':

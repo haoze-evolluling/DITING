@@ -984,17 +984,41 @@ abstract class AppL10n {
 
   String get logModeOffDescription;
 
-  String get ipv6AutoLabel;
+  String get tunnelIpv6Title;
 
-  String get ipv6AutoDescription;
+  String get tunnelIpv6Subtitle;
 
-  String get ipv6DisableLabel;
+  String get dnsAaaaTitle;
 
-  String get ipv6DisableDescription;
+  String get dnsAaaaSubtitle;
 
-  String get ipv6PreferLabel;
+  String get routeIncludeTitle;
 
-  String get ipv6PreferDescription;
+  String get routeIncludeSubtitle;
+
+  String get routeExcludeTitle;
+
+  String get routeExcludeSubtitle;
+
+  String get routeIncludeAll;
+
+  String get routeCidrAddTitle;
+
+  String get routeCidrLabel;
+
+  String get routeCidrHint;
+
+  String get routeCidrInvalid;
+
+  String get routeCidrDuplicate;
+
+  String get routeCidrEmpty;
+
+  String get routeCidrEmptySubtitle;
+
+  String routeCidrCount(int count);
+
+  String get routeCidrFooter;
 
   String get commonToday;
 

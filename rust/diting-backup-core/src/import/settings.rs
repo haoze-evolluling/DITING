@@ -2,7 +2,7 @@ use serde_json::{json, Value};
 
 use super::{same_order, strings, Outcome, Plan};
 use crate::groups::Group;
-use crate::value::{boolean, decimal, get, integer, number, text};
+use crate::value::{boolean, decimal, get, integer, number, sorted_strings, text};
 
 const BOTTOM_BAR_MIN: usize = 2;
 
@@ -39,6 +39,46 @@ fn apply_bool(
         return;
     };
     if boolean(current, key).unwrap_or(false) == incoming {
+        outcome.skipped += 1;
+    } else {
+        plan.write(field, json!(incoming));
+        outcome.added += 1;
+    }
+}
+
+fn apply_bool_value(
+    outcome: &mut Outcome,
+    plan: &mut Plan,
+    field: &str,
+    key: &str,
+    incoming: bool,
+    current: &Value,
+) {
+    if boolean(current, key).unwrap_or(false) == incoming {
+        outcome.skipped += 1;
+    } else {
+        plan.write(field, json!(incoming));
+        outcome.added += 1;
+    }
+}
+
+fn apply_strings(
+    outcome: &mut Outcome,
+    plan: &mut Plan,
+    field: &str,
+    value: &Value,
+    key: &str,
+    current: &Value,
+) {
+    let Some(incoming) = get(value, key) else {
+        return;
+    };
+    if !incoming.is_array() && !incoming.is_object() {
+        return;
+    }
+    let incoming = sorted_strings(incoming);
+    let current = sorted_strings(get(current, key).unwrap_or(&Value::Null));
+    if current == incoming {
         outcome.skipped += 1;
     } else {
         plan.write(field, json!(incoming));
@@ -220,6 +260,8 @@ pub fn system(
 
     for (key, field) in [
         ("bypassLan", "system.bypassLan"),
+        ("tunnelIpv6", "system.tunnelIpv6"),
+        ("dnsAaaa", "system.dnsAaaa"),
         ("hideFromRecents", "system.hideFromRecents"),
         ("floatingLogEnabled", "system.floatingLogEnabled"),
         (
@@ -233,12 +275,29 @@ pub fn system(
         apply_bool(&mut outcome, plan, field, value, key, current);
     }
     for (key, field) in [
-        ("ipv6Mode", "system.ipv6Mode"),
         ("dnsLogMode", "system.dnsLogMode"),
         ("appLanguageMode", "system.appLanguageMode"),
         ("blockResponseMode", "system.blockResponseMode"),
     ] {
         apply_text(&mut outcome, plan, field, value, key, current);
+    }
+    let legacy_prefer =
+        text(value, "ipv6Mode").map(|mode| mode.trim().eq_ignore_ascii_case("prefer"));
+    for (key, field) in [
+        ("tunnelIpv6", "system.tunnelIpv6"),
+        ("dnsAaaa", "system.dnsAaaa"),
+    ] {
+        if boolean(value, key).is_none() {
+            if let Some(incoming) = legacy_prefer {
+                apply_bool_value(&mut outcome, plan, field, key, incoming, current);
+            }
+        }
+    }
+    for (key, field) in [
+        ("routeAddress", "system.routeAddress"),
+        ("routeExcludeAddress", "system.routeExcludeAddress"),
+    ] {
+        apply_strings(&mut outcome, plan, field, value, key, current);
     }
     apply_int(
         &mut outcome,

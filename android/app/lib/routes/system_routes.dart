@@ -5,6 +5,7 @@ import 'package:diting_android/pages/appearance/font_family_page.dart';
 import 'package:diting_android/pages/appearance/font_size_page.dart';
 import 'package:diting_android/pages/appearance/launcher_icon_page.dart';
 import 'package:diting_android/pages/appearance/settings_parity_pages.dart';
+import 'package:diting_android/pages/appearance/settings_route_pages.dart';
 import 'package:diting_android/pages/appearance/theme_page.dart';
 import 'package:diting_android/pages/system/developer_page.dart';
 import 'package:diting_android/pages/system/ip_quality_page.dart';
@@ -32,6 +33,10 @@ abstract final class SystemPaths {
   static const fontSize = '/font-size';
 
   static const foregroundBackground = '/settings/background';
+
+  static const routeInclude = '/settings/route-include';
+
+  static const routeExclude = '/settings/route-exclude';
 
   static const language = '/settings/language';
 
@@ -61,6 +66,14 @@ List<RouteBase> systemRoutes() => [
   _route(SystemPaths.fontFamily, const FontFamilyPage()),
   _route(SystemPaths.fontSize, const FontSizePage()),
   _route(SystemPaths.foregroundBackground, const SettingsBackgroundPage()),
+  _route(
+    SystemPaths.routeInclude,
+    const SettingsRouteListPage(kind: RouteListKind.include),
+  ),
+  _route(
+    SystemPaths.routeExclude,
+    const SettingsRouteListPage(kind: RouteListKind.exclude),
+  ),
   _route(SystemPaths.language, const SettingsLanguagePage()),
   _route(SystemPaths.developer, const DeveloperPage()),
   _route(SystemPaths.sponsor, const SponsorPage()),

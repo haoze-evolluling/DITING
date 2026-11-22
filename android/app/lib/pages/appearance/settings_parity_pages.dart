@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/notification_bridge.dart';
+import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/data/native/permissions_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/appearance/appearance_inputs.dart';
@@ -19,6 +20,7 @@ import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 class ThemeNotificationPage extends ConsumerStatefulWidget {
@@ -426,15 +428,42 @@ class SettingsBackgroundPage extends ConsumerWidget {
                 value: state.bypassLan,
                 onChanged: notifier.setBypassLan,
               ),
-              ListItem<LegacyIpv6Mode>.options(
-                title: const Text('IPv6'),
-                subtitle: Text(state.ipv6Mode.description(context.l10n)),
-                leading: const Icon(TablerIcons.link),
-                options: LegacyIpv6Mode.values,
-                value: state.ipv6Mode,
-                textBuilder: (mode) => mode.label(context.l10n),
-                onChanged: notifier.setIpv6Mode,
-              ),
+              if (tunnelMode) ...[
+                ListItem.toggle(
+                  title: Text(context.l10n.tunnelIpv6Title),
+                  subtitle: Text(context.l10n.tunnelIpv6Subtitle),
+                  leading: const Icon(TablerIcons.link),
+                  value: state.tunnelIpv6,
+                  onChanged: notifier.setTunnelIpv6,
+                ),
+                ListItem.toggle(
+                  title: Text(context.l10n.dnsAaaaTitle),
+                  subtitle: Text(context.l10n.dnsAaaaSubtitle),
+                  leading: const Icon(TablerIcons.world),
+                  value: state.dnsAaaa,
+                  onChanged: notifier.setDnsAaaa,
+                ),
+                NavEntryRow(
+                  glyph: TablerIcons.route,
+                  title: context.l10n.routeIncludeTitle,
+                  subtitle: state.routeAddress.isEmpty
+                      ? context.l10n.routeIncludeAll
+                      : context.l10n.routeCidrCount(
+                          state.routeAddress.length,
+                        ),
+                  onPressed: () => context.push(SystemPaths.routeInclude),
+                ),
+                NavEntryRow(
+                  glyph: TablerIcons.route_off,
+                  title: context.l10n.routeExcludeTitle,
+                  subtitle: state.routeExcludeAddress.isEmpty
+                      ? context.l10n.routeIncludeAll
+                      : context.l10n.routeCidrCount(
+                          state.routeExcludeAddress.length,
+                        ),
+                  onPressed: () => context.push(SystemPaths.routeExclude),
+                ),
+              ],
             ],
           ),
           generateSection(

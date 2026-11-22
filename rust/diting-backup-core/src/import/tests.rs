@@ -550,6 +550,65 @@ fn system_clamps_the_dynamic_block_policy_and_keeps_raw_defaults() {
 }
 
 #[test]
+fn system_migrates_legacy_ipv6_and_imports_route_lists() {
+    let content = json!({
+        "format": "diting-backup",
+        "version": 2,
+        "data": {
+            "system": {
+                "ipv6Mode": "prefer",
+                "routeAddress": ["2001:db8::/32", "10.0.0.0/8", "10.0.0.0/8"],
+                "routeExcludeAddress": ["192.168.0.0/16"],
+            },
+        },
+    })
+    .to_string();
+    let plan = run_import(
+        &content,
+        json!({"system": {
+            "tunnelIpv6": false,
+            "dnsAaaa": false,
+            "routeAddress": [],
+            "routeExcludeAddress": [],
+        }}),
+        false,
+    );
+    assert_eq!(write_of(&plan, "system.tunnelIpv6"), Some(&json!(true)));
+    assert_eq!(write_of(&plan, "system.dnsAaaa"), Some(&json!(true)));
+    assert_eq!(
+        write_of(&plan, "system.routeAddress"),
+        Some(&json!(["10.0.0.0/8", "2001:db8::/32"]))
+    );
+    assert_eq!(
+        write_of(&plan, "system.routeExcludeAddress"),
+        Some(&json!(["192.168.0.0/16"]))
+    );
+}
+
+#[test]
+fn explicit_ipv6_booleans_win_over_the_legacy_mode() {
+    let content = json!({
+        "format": "diting-backup",
+        "version": 2,
+        "data": {
+            "system": {
+                "ipv6Mode": "prefer",
+                "tunnelIpv6": false,
+                "dnsAaaa": true,
+            },
+        },
+    })
+    .to_string();
+    let plan = run_import(
+        &content,
+        json!({"system": {"tunnelIpv6": false, "dnsAaaa": false}}),
+        false,
+    );
+    assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
+    assert_eq!(write_of(&plan, "system.dnsAaaa"), Some(&json!(true)));
+}
+
+#[test]
 fn a_system_group_with_nothing_to_say_still_reports_one_skip() {
     let content = "{\"format\":\"diting-backup\",\"version\":2,\"data\":{\"system\":{}}}";
     let content: String = content.to_string();

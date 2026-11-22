@@ -178,7 +178,8 @@ void _expressMode() {
         },
         'diting_express_prefs': {
           'selected_provider_id': 'preset_dnspod_dns',
-          'ipv6_mode': 'disabled',
+          'vpn_ipv6_enabled': true,
+          'dns_aaaa_enabled': true,
         },
         'express_vpn_prefs': {'express_vpn_running': true},
       });
@@ -186,7 +187,8 @@ void _expressMode() {
       final express = normal.forExpress();
 
       expect(express.selectedProviderId, 'preset_dnspod_dns');
-      expect(express.ipv6ModeRaw, 'disabled');
+      expect(express.tunnelIpv6Enabled, isTrue);
+      expect(express.dnsAaaaEnabled, isTrue);
       expect(express.excludedPackages, {'com.example.skip'});
       expect(express.expressVpnRunning, isTrue);
       expect(express.paletteRaw, 'moss');
@@ -201,7 +203,8 @@ void _expressMode() {
       expect(express.resolutionModeRaw, 'single');
       expect(express.cacheEnabled, isTrue);
       expect(express.bootstrapEnabled, isTrue);
-      expect(express.ipv6ModeRaw, 'auto');
+      expect(express.tunnelIpv6Enabled, isFalse);
+      expect(express.dnsAaaaEnabled, isFalse);
       expect(express.expressVpnRunning, isFalse);
     });
   });
@@ -217,7 +220,8 @@ void _expressMode() {
         'diting_settings': {'app_work_mode': 'express'},
         'diting_express_prefs': {
           'selected_provider_id': 'preset_dnspod_dns',
-          'ipv6_mode': 'disabled',
+          'vpn_ipv6_enabled': true,
+          'dns_aaaa_enabled': true,
           ...dnsPrefs,
         },
         'express_vpn_prefs': expressRunning,
@@ -248,7 +252,10 @@ void _expressMode() {
       final settings = c.read(legacySettingsProvider);
       // 简洁模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
       expect(request.bypassLan, settings.bypassLanEnabled);
-      expect(request.ipv6Mode, 'disabled');
+      expect(request.tunnelIpv6, isTrue);
+      expect(request.dnsAaaa, isTrue);
+      expect(request.routeAddress, isEmpty);
+      expect(request.routeExcludeAddress, isEmpty);
       expect(request.blockedPackages, settings.blockedAppPackages.toList());
       expect(
         request.inspectionPackages,

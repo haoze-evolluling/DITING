@@ -20,18 +20,27 @@ void main() {
     return container;
   }
 
-  group('IPv6 旧落盘拼写不再适配', () {
-    test('enabled / disabled 按未知值回退 auto，当前拼写仍可读', () {
-      expect(LegacyIpv6Mode.fromStorageValue('enabled'), LegacyIpv6Mode.auto);
-      expect(LegacyIpv6Mode.fromStorageValue('disabled'), LegacyIpv6Mode.auto);
-      expect(LegacyIpv6Mode.fromStorageValue('ENABLED'), LegacyIpv6Mode.auto);
-      expect(LegacyIpv6Mode.fromStorageValue('prefer'), LegacyIpv6Mode.prefer);
-      expect(
-        LegacyIpv6Mode.fromStorageValue('disable'),
-        LegacyIpv6Mode.disable,
-      );
-      expect(LegacyIpv6Mode.fromStorageValue(null), LegacyIpv6Mode.auto);
-      expect(LegacyIpv6Mode.fromStorageValue('  '), LegacyIpv6Mode.auto);
+  group('IPv6 旧三态迁移', () {
+    LegacySettings settingsWith(Object? value) => LegacySettings(
+      MemoryLegacyPrefsStore({
+        'dns_vpn_prefs': {
+          'ipv6_mode': ?value,
+        },
+      }),
+    );
+
+    test('prefer 映射为两个开关开启', () {
+      final settings = settingsWith('prefer');
+      expect(settings.tunnelIpv6Enabled, isTrue);
+      expect(settings.dnsAaaaEnabled, isTrue);
+    });
+
+    test('其他旧值与空值映射为关闭', () {
+      for (final value in <Object?>['auto', 'disable', 'enabled', 'disabled', ' ', null]) {
+        final settings = settingsWith(value);
+        expect(settings.tunnelIpv6Enabled, isFalse, reason: '$value');
+        expect(settings.dnsAaaaEnabled, isFalse, reason: '$value');
+      }
     });
   });
 
