@@ -13,11 +13,11 @@ export function LanPage() {
         description="对外 DNS 服务、访问控制、速率限制与客户端识别"
       />
       <div className="space-y-3.5">
-        <div className="grid gap-3.5 xl:grid-cols-2">
+        <div className="card-grid-2">
           <LanServiceCard />
           <AccessControlCard />
         </div>
-        <div className="grid gap-3.5 xl:grid-cols-[1.2fr_1fr]">
+        <div className="card-grid-2">
           <RateLimitCard />
           <ClientsCard />
         </div>

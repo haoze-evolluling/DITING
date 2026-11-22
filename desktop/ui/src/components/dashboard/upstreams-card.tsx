@@ -97,11 +97,11 @@ export function UpstreamsCard({
                 { label: "缓存命中", value: summary?.cached, color: "text-violet" },
                 { label: "规则拦截", value: summary?.blocked, color: "text-danger" },
               ].map((item, index) => (
-                <div key={item.label} className={index === 0 ? "pr-2" : "px-2"}>
-                  <div className="num text-[17px] font-semibold leading-6 tracking-[-0.02em] text-text">
+                <div key={item.label} className={index === 0 ? "min-w-0 pr-2" : "min-w-0 px-2"}>
+                  <div className="num truncate text-[17px] font-semibold leading-6 tracking-[-0.02em] text-text">
                     {formatNumber(item.value)}
                   </div>
-                  <div className={`mt-0.5 text-[10px] ${item.color}`}>{item.label}</div>
+                  <div className={`mt-0.5 truncate text-[10px] ${item.color}`}>{item.label}</div>
                 </div>
               ))}
             </div>

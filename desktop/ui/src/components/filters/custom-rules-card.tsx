@@ -88,20 +88,21 @@ export function CustomRulesCard() {
             <Input
               value={domain}
               placeholder="输入域名，例如 example.com"
-              className="mono"
+              className="mono sm:flex-1"
               onChange={(event) => setDomain(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && domain.trim()) check.mutate();
               }}
             />
             <Select
-              className="sm:w-[130px]"
+              className="shrink-0 sm:w-[130px]"
               value={qtype}
               options={qtypeOptions.filter((option) => option.value !== "all")}
               onValueChange={setQtype}
               ariaLabel="查询类型"
             />
             <Button
+              className="shrink-0"
               variant="secondary"
               loading={check.isPending}
               disabled={!domain.trim()}

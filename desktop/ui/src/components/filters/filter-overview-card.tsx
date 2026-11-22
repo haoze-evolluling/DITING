@@ -139,7 +139,7 @@ export function FilterOverviewCard() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <Select
-                      className="h-8 w-[118px]"
+                      className="h-8 w-[118px] shrink-0"
                       value={duration}
                       options={durationOptions}
                       onValueChange={setDuration}
@@ -148,6 +148,7 @@ export function FilterOverviewCard() {
                     <Button
                       size="sm"
                       variant="secondary"
+                      className="shrink-0"
                       loading={setPause.isPending}
                       onClick={() => setPause.mutate({ paused: true, duration: Number(duration) })}
                     >

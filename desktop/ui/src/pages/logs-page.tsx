@@ -110,86 +110,84 @@ export function LogsPage() {
       />
 
       <div className="space-y-3.5">
-        <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <TrafficChart
-            points={stats.data?.perHour ?? []}
-            loading={stats.isLoading}
-            title="查询趋势"
-            description="最近 24 小时的查询、拦截与缓存命中"
-          />
+        <TrafficChart
+          points={stats.data?.perHour ?? []}
+          loading={stats.isLoading}
+          title="查询趋势"
+          description="最近 24 小时的查询、拦截与缓存命中"
+        />
+
+        <div className="card-grid-2">
           <LogSummary stats={stats.data} loading={stats.isLoading} />
+          <TopLists stats={stats.data} loading={stats.isLoading} />
         </div>
 
-        <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="min-w-0 space-y-3.5">
-            <LogToolbar
-              filters={filters}
-              onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
+        <div className="min-w-0 space-y-3.5">
+          <LogToolbar
+            filters={filters}
+            onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
+            live={live}
+            onLiveChange={(next) => {
+              setLive(next);
+              if (next) setPage(0);
+            }}
+            onSubmit={submit}
+            onReset={reset}
+            onClear={() => setConfirmClear(true)}
+            clearing={actions.clearQueryLog.isPending}
+          />
+
+          <Card className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+              <div className="flex items-center gap-2 text-[12px] text-text-2">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    live && connected ? "bg-good" : "bg-text-3"
+                  }`}
+                />
+                {live ? "实时查询流" : "历史查询结果"}
+                <span className="text-text-3">共 {formatNumber(total)} 条</span>
+              </div>
+              <span className="text-[10.5px] text-text-3">
+                {live
+                  ? "仅保留本次会话最近 400 条"
+                  : `第 ${Math.min(page + 1, pages)} / ${pages} 页 · 每页 ${PAGE_SIZE} 条`}
+              </span>
+            </div>
+
+            <QueryTable
+              rows={rows}
+              loading={!live && search.isLoading}
               live={live}
-              onLiveChange={(next) => {
-                setLive(next);
-                if (next) setPage(0);
-              }}
-              onSubmit={submit}
-              onReset={reset}
-              onClear={() => setConfirmClear(true)}
-              clearing={actions.clearQueryLog.isPending}
+              onSelect={setSelected}
             />
 
-            <Card className="overflow-hidden">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-2.5">
-                <div className="flex items-center gap-2 text-[12px] text-text-2">
-                  <span
-                    className={`h-1.5 w-1.5 rounded-full ${
-                      live && connected ? "bg-good" : "bg-text-3"
-                    }`}
-                  />
-                  {live ? "实时查询流" : "历史查询结果"}
-                  <span className="text-text-3">共 {formatNumber(total)} 条</span>
-                </div>
+            {!live ? (
+              <CardFooter className="bg-surface-2/60">
                 <span className="text-[10.5px] text-text-3">
-                  {live
-                    ? "仅保留本次会话最近 400 条"
-                    : `第 ${Math.min(page + 1, pages)} / ${pages} 页 · 每页 ${PAGE_SIZE} 条`}
+                  数据来源包含内存与按日落盘的查询日志
                 </span>
-              </div>
-
-              <QueryTable
-                rows={rows}
-                loading={!live && search.isLoading}
-                live={live}
-                onSelect={setSelected}
-              />
-
-              {!live ? (
-                <CardFooter className="bg-surface-2/60">
-                  <span className="text-[10.5px] text-text-3">
-                    数据来源包含内存与按日落盘的查询日志
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={page === 0 || search.isFetching}
-                      onClick={() => setPage((current) => Math.max(current - 1, 0))}
-                    >
-                      上一页
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      disabled={page + 1 >= pages || search.isFetching}
-                      onClick={() => setPage((current) => current + 1)}
-                    >
-                      下一页
-                    </Button>
-                  </div>
-                </CardFooter>
-              ) : null}
-            </Card>
-          </div>
-
-          <TopLists stats={stats.data} loading={stats.isLoading} />
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={page === 0 || search.isFetching}
+                    onClick={() => setPage((current) => Math.max(current - 1, 0))}
+                  >
+                    上一页
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={page + 1 >= pages || search.isFetching}
+                    onClick={() => setPage((current) => current + 1)}
+                  >
+                    下一页
+                  </Button>
+                </div>
+              </CardFooter>
+            ) : null}
+          </Card>
         </div>
       </div>
 

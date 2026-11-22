@@ -11,7 +11,7 @@ export function EncryptedPage() {
         description="DoT / DoH 监听、服务证书与反向代理来源"
       />
       <div className="space-y-3.5">
-        <div className="grid gap-3.5 xl:grid-cols-[1.4fr_1fr]">
+        <div className="card-grid-2">
           <EncryptedServiceCard />
           <CertCard />
         </div>

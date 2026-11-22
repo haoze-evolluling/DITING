@@ -64,9 +64,15 @@ function InfoRow({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border/60 py-2 last:border-b-0">
+    <div className="flex min-w-0 items-start justify-between gap-4 border-b border-border/60 py-2 last:border-b-0">
       <span className="shrink-0 text-[11.5px] text-text-3">{label}</span>
-      <span className={mono ? "mono break-all text-right text-[11px] text-text-2" : "text-right text-[12px] text-text-2"}>
+      <span
+        className={
+          mono
+            ? "mono min-w-0 break-all text-right text-[11px] text-text-2"
+            : "min-w-0 break-words text-right text-[12px] text-text-2"
+        }
+      >
         {children}
       </span>
     </div>
@@ -140,9 +146,9 @@ function AccountCard() {
   const logout = useLogout();
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader title="账户与连接" description="当前管理凭据和桌面服务地址。" />
-      <CardContent className="pt-1">
+      <CardContent className="flex-1 pt-1">
         <InfoRow label="管理员">{username ?? "admin"}</InfoRow>
         <InfoRow label="会话到期">{formatUnixSeconds(expiresAt ?? 0)}</InfoRow>
         <InfoRow label="管理服务" mono>
@@ -199,13 +205,13 @@ function QueryLogCard() {
     draft.retentionDays <= 365;
 
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader
         title="查询日志"
         description="控制内存日志容量、落盘与保留周期。"
         actions={<Database className="h-4 w-4 text-text-3" />}
       />
-      <CardContent className="pt-2">
+      <CardContent className="flex-1 pt-2">
         {config.isLoading || !draft ? (
           <div className="space-y-2">
             <Skeleton className="h-8 w-full" />
@@ -419,7 +425,7 @@ function AboutCard() {
             <button
               type="button"
               onClick={() => copyText("https://github.com/haoze-evolluling/DITING", "地址")}
-              className="inline-flex items-center gap-1 hover:text-text"
+              className="inline-flex max-w-full items-center gap-1 break-all text-right hover:text-text"
             >
               github.com/haoze-evolluling/DITING
               <Copy className="h-3 w-3" />
@@ -439,21 +445,19 @@ export function SettingsPage() {
   return (
     <>
       <PageHeader title="设置" description="外观、日志、桌面服务与连接信息" />
-      <div className="grid gap-3.5 xl:grid-cols-2">
+      <div className="card-grid-2">
         <AppearanceCard />
         <AccountCard />
         <QueryLogCard />
         <ServiceCard />
         <WebAccessCard />
-        <PasswordCard />
-        <AboutCard />
-        <Card className="hidden xl:block">
+        <Card className="flex flex-col">
           <CardHeader
             title="管理模块"
             description="控制面已覆盖解析、缓存、防护、重写、局域网与加密解析。"
             actions={<Server className="h-4 w-4 text-text-3" />}
           />
-          <CardContent className="space-y-1 pt-2">
+          <CardContent className="flex-1 space-y-1 pt-2">
             {[
               { to: "/upstream", label: "上游解析", hint: "调度策略、上游服务器与 Bootstrap" },
               { to: "/cache", label: "解析缓存", hint: "命中统计、缓存策略与落盘恢复" },
@@ -480,6 +484,8 @@ export function SettingsPage() {
             ))}
           </CardContent>
         </Card>
+        <PasswordCard />
+        <AboutCard />
       </div>
     </>
   );

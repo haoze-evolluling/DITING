@@ -71,7 +71,7 @@ export function CachePage() {
       />
 
       <div className="space-y-3.5">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="card-grid-4">
           <StatTile
             label="缓存条目"
             value={formatNumber(data?.entryCount)}
@@ -110,12 +110,12 @@ export function CachePage() {
           />
         </div>
 
-        <div className="grid gap-3.5 xl:grid-cols-[1.15fr_1fr]">
+        <div className="card-grid-3-1">
           <CacheEntriesCard />
           <CacheTopCard />
         </div>
 
-        <div className="grid gap-3.5 xl:grid-cols-[1.25fr_1fr]">
+        <div className="card-grid-2">
           <CacheConfigCard />
           <CachePersistCard />
         </div>

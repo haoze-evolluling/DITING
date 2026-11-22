@@ -14,7 +14,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={cn(
-            "h-9 w-full rounded-lg border border-border bg-surface-2 px-3 text-[13px] text-text placeholder:text-text-3 transition-colors hover:border-border-strong focus:border-accent focus:bg-surface focus:outline-none",
+            "h-9 w-full min-w-0 rounded-lg border border-border bg-surface-2 px-3 text-[13px] text-text placeholder:text-text-3 transition-colors hover:border-border-strong focus:border-accent focus:bg-surface focus:outline-none",
             className,
           )}
           {...props}
@@ -24,7 +24,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div
         className={cn(
-          "flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 transition-colors focus-within:border-accent focus-within:bg-surface hover:border-border-strong",
+          "flex h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 transition-colors focus-within:border-accent focus-within:bg-surface hover:border-border-strong",
           className,
         )}
       >

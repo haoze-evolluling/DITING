@@ -23,7 +23,7 @@ export function StatGrid({
   const cache = status?.cache;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="card-grid-4">
       <StatTile
         label="查询总量"
         value={formatNumber(effective?.totalQueries)}

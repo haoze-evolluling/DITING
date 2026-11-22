@@ -57,7 +57,7 @@ export function DashboardPage() {
       />
 
       <div className="space-y-3.5">
-        <div className="grid gap-3.5 xl:grid-cols-[1.5fr_1fr]">
+        <div className="card-grid-2">
           <HeroStatus
             status={status.data}
             metrics={liveMetrics}
@@ -69,7 +69,7 @@ export function DashboardPage() {
           <TrafficChart
             points={stats.data?.perHour ?? []}
             loading={stats.isLoading}
-            className="xl:min-h-[248px]"
+            className="min-h-[248px]"
           />
         </div>
 
@@ -79,7 +79,7 @@ export function DashboardPage() {
           loading={status.isLoading}
         />
 
-        <div className="grid gap-3.5 xl:grid-cols-2">
+        <div className="card-grid-2">
           <UpstreamsCard
             status={status.data}
             stats={stats.data}

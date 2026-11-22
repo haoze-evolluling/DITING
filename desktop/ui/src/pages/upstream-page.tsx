@@ -176,7 +176,7 @@ export function UpstreamPage() {
           </CardContent>
         </Card>
 
-        <div className="grid gap-3.5 xl:grid-cols-[1.35fr_1fr]">
+        <div className="card-grid-2">
           <Card className="flex flex-col">
             <CardHeader
               title="上游服务器"

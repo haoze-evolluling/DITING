@@ -115,7 +115,11 @@ export function LanServiceCard() {
                 <div className="text-[10.5px] text-text-3">监听地址</div>
                 <div className="mono mt-1 space-y-0.5 text-[10.5px] text-text-2">
                   {data.listenAddresses.length > 0 ? (
-                    data.listenAddresses.map((address) => <div key={address}>{address}</div>)
+                    data.listenAddresses.map((address) => (
+                      <div key={address} className="truncate" title={address}>
+                        {address}
+                      </div>
+                    ))
                   ) : (
                     <div>—</div>
                   )}
@@ -131,7 +135,9 @@ export function LanServiceCard() {
                 <div className="mono mt-1 space-y-0.5 text-[10.5px] text-text-2">
                   {data.lanAddresses.length > 0 ? (
                     data.lanAddresses.map((address) => (
-                      <div key={address}>{address}:53</div>
+                      <div key={address} className="truncate" title={`${address}:53`}>
+                        {address}:53
+                      </div>
                     ))
                   ) : (
                     <div className="text-text-3">未检测到局域网地址</div>
@@ -143,7 +149,7 @@ export function LanServiceCard() {
             {data.lanAddresses.length > 0 && allowLAN ? (
               <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-4 text-text-3">
                 路由器或终端可将 DNS 指向
-                <span className="mono ml-1 text-text-2">{data.lanAddresses[0]}</span>。修改开关会重启
+                <span className="mono ml-1 break-all text-text-2">{data.lanAddresses[0]}</span>。修改开关会重启
                 DNS 监听器并保持系统接管状态。
               </p>
             ) : null}

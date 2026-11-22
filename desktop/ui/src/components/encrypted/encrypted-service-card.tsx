@@ -96,7 +96,7 @@ export function EncryptedServiceCard() {
               checked={draft.enabled}
               onCheckedChange={(enabled) => update({ enabled })}
             />
-            <div className="grid gap-3 pt-3 sm:grid-cols-2">
+            <div className="grid gap-3 pt-3 xl:grid-cols-2">
               <div className="rounded-xl border border-border bg-surface-2 p-3">
                 <SwitchRow
                   title="DoT（DNS over TLS）"

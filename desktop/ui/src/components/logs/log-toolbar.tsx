@@ -63,20 +63,20 @@ export function LogToolbar({
             value={filters.status || "all"}
             onValueChange={(value) => onChange({ status: value === "all" ? "" : value })}
             options={statusOptions}
-            className="w-[136px]"
+            className="w-[136px] shrink-0"
             ariaLabel="筛选状态"
           />
           <Select
             value={filters.qtype || "all"}
             onValueChange={(value) => onChange({ qtype: value === "all" ? "" : value })}
             options={qtypeOptions}
-            className="w-[118px]"
+            className="w-[118px] shrink-0"
             ariaLabel="筛选记录类型"
           />
-          <Button type="submit" size="sm" variant="primary">
+          <Button type="submit" size="sm" variant="primary" className="shrink-0">
             查询
           </Button>
-          <Button type="button" size="sm" variant="ghost" onClick={onReset}>
+          <Button type="button" size="sm" variant="ghost" className="shrink-0" onClick={onReset}>
             重置
           </Button>
         </div>

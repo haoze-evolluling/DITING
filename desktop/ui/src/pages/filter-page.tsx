@@ -13,11 +13,11 @@ export function FilterPage() {
         description="订阅源、自定义规则、内置服务与时间计划"
       />
       <div className="space-y-3.5">
-        <div className="grid gap-3.5 xl:grid-cols-2">
+        <div className="card-grid-2">
           <FilterOverviewCard />
           <ScheduleCard />
         </div>
-        <div className="grid gap-3.5 xl:grid-cols-[1.2fr_1fr]">
+        <div className="card-grid-2">
           <FilterListsCard />
           <CustomRulesCard />
         </div>

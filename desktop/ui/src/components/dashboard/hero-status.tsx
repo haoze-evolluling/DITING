@@ -109,13 +109,13 @@ export function HeroStatus({
         aria-hidden
         className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
       />
-      <div className="relative flex items-start justify-between gap-4 px-5 pt-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 pt-4">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="text-[12px] font-medium text-text-3">DNS 核心</span>
           <Badge tone="neutral">{resolverModeLabel(status?.dns.mode)}</Badge>
           {takeover?.active ? <Badge tone="accent">系统 DNS 已接管</Badge> : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <Button size="sm" variant="ghost" onClick={onOpenDiagnostics}>
             <Activity className="h-3.5 w-3.5" />
             网络诊断
@@ -196,9 +196,11 @@ export function HeroStatus({
           { label: "活跃上游", value: `${activeUpstreams}/${upstreams.length}` },
           { label: "累计查询", value: formatNumber(status?.metrics.totalQueries) },
         ].map((item) => (
-          <div key={item.label} className="px-4 py-2.5">
-            <div className="text-[10.5px] text-text-3">{item.label}</div>
-            <div className="num mt-0.5 text-[12.5px] font-medium text-text">{item.value}</div>
+          <div key={item.label} className="min-w-0 px-4 py-2.5">
+            <div className="truncate text-[10.5px] text-text-3">{item.label}</div>
+            <div className="num mt-0.5 truncate text-[12.5px] font-medium text-text">
+              {item.value}
+            </div>
           </div>
         ))}
       </div>

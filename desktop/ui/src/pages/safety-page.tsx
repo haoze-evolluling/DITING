@@ -9,7 +9,7 @@ export function SafetyPage() {
         title="安全搜索与浏览"
         description="强制安全搜索结果、威胁情报拦截与家长控制"
       />
-      <div className="grid gap-3.5 xl:grid-cols-2">
+      <div className="card-grid-2">
         <SafeSearchCard />
         <SafeBrowsingCard />
       </div>

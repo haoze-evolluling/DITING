@@ -13,9 +13,9 @@ function Item({
   hint: string;
 }) {
   return (
-    <div>
-      <div className="text-[11px] text-text-3">{label}</div>
-      <div className="num mt-1 text-[20px] font-semibold leading-6 tracking-[-0.03em] text-text">
+    <div className="min-w-0">
+      <div className="truncate text-[11px] text-text-3">{label}</div>
+      <div className="num mt-1 truncate text-[20px] font-semibold leading-6 tracking-[-0.03em] text-text">
         {value}
       </div>
       <div className="mt-0.5 truncate text-[10.5px] text-text-3">{hint}</div>

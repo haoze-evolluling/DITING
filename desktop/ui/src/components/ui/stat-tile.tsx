@@ -36,20 +36,25 @@ export function StatTile({
   return (
     <Card className={cn("relative overflow-hidden px-4 py-3.5", className)}>
       <span className={cn("absolute left-0 top-4 h-6 w-0.5 rounded-r-full", styles.bar)} />
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-[12px] text-text-3">{label}</span>
-        <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", styles.icon)}>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <span className="min-w-0 truncate text-[12px] text-text-3">{label}</span>
+        <span
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+            styles.icon,
+          )}
+        >
           <Icon className="h-3.5 w-3.5" />
         </span>
       </div>
       {loading ? (
         <Skeleton className="mt-3 h-7 w-24" />
       ) : (
-        <div className="mt-2.5 text-[25px] font-semibold leading-7 tracking-[-0.03em] text-text">
+        <div className="mt-2.5 truncate text-[25px] font-semibold leading-7 tracking-[-0.03em] text-text">
           {value}
         </div>
       )}
-      <div className="mt-1 min-h-[16px] text-[11.5px] text-text-3">{hint}</div>
+      <div className="mt-1 min-h-[16px] break-words text-[11.5px] leading-4 text-text-3">{hint}</div>
     </Card>
   );
 }

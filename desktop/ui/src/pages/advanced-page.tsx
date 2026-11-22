@@ -14,11 +14,11 @@ export function AdvancedPage() {
       />
       <div className="space-y-3.5">
         <PrivacyCard />
-        <div className="grid gap-3.5 xl:grid-cols-2">
+        <div className="card-grid-2">
           <RebindCard />
           <HostsCard />
         </div>
-        <div className="grid gap-3.5 xl:grid-cols-2">
+        <div className="card-grid-2">
           <EcsCard />
           <Dns64Card />
         </div>

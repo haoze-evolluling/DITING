@@ -54,47 +54,53 @@ export function RecentQueries({
               description="DNS 服务运行时，最新解析会实时出现在这里。"
             />
           ) : (
-            <table className="w-full">
-              <caption className="sr-only">最近解析请求</caption>
-              <thead>
-                <tr className="text-left text-[10.5px] text-text-3">
-                  <th className="w-[72px] pb-1.5 font-medium">时间</th>
-                  <th className="pb-1.5 font-medium">域名</th>
-                  <th className="w-[130px] pb-1.5 font-medium">客户端</th>
-                  <th className="w-[84px] pb-1.5 font-medium">状态</th>
-                  <th className="w-[72px] pb-1.5 text-right font-medium">耗时</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((record, index) => (
-                  <tr
-                    key={`${record.ts}-${record.domain}-${index}`}
-                    tabIndex={0}
-                    onClick={() => setSelected(record)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") setSelected(record);
-                    }}
-                    className={cn(
-                      "cursor-pointer border-t border-border/60 text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
-                    )}
-                  >
-                    <td className="num py-1.5 pr-2 text-text-3">{formatClock(record.ts)}</td>
-                    <td className="max-w-0 py-1.5 pr-3">
-                      <span className="mono block truncate text-text">{displayDomain(record.domain)}</span>
-                    </td>
-                    <td className="truncate py-1.5 pr-2 text-text-3">
-                      {record.clientName || record.clientIP || "—"}
-                    </td>
-                    <td className="py-1.5">
-                      <StatusBadge status={record.status} />
-                    </td>
-                    <td className="num py-1.5 text-right text-text-2">
-                      {formatLatency(record.durationMs)}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px]">
+                <caption className="sr-only">最近解析请求</caption>
+                <thead>
+                  <tr className="text-left text-[10.5px] text-text-3">
+                    <th className="w-[72px] pb-1.5 font-medium">时间</th>
+                    <th className="pb-1.5 font-medium">域名</th>
+                    <th className="w-[130px] pb-1.5 font-medium">客户端</th>
+                    <th className="w-[84px] pb-1.5 font-medium">状态</th>
+                    <th className="w-[72px] pb-1.5 text-right font-medium">耗时</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((record, index) => (
+                    <tr
+                      key={`${record.ts}-${record.domain}-${index}`}
+                      tabIndex={0}
+                      onClick={() => setSelected(record)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") setSelected(record);
+                      }}
+                      className={cn(
+                        "cursor-pointer border-t border-border/60 text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
+                      )}
+                    >
+                      <td className="num whitespace-nowrap py-1.5 pr-2 text-text-3">
+                        {formatClock(record.ts)}
+                      </td>
+                      <td className="max-w-0 py-1.5 pr-3">
+                        <span className="mono block truncate text-text">
+                          {displayDomain(record.domain)}
+                        </span>
+                      </td>
+                      <td className="truncate py-1.5 pr-2 text-text-3">
+                        {record.clientName || record.clientIP || "—"}
+                      </td>
+                      <td className="whitespace-nowrap py-1.5">
+                        <StatusBadge status={record.status} />
+                      </td>
+                      <td className="num whitespace-nowrap py-1.5 text-right text-text-2">
+                        {formatLatency(record.durationMs)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardContent>
       </Card>

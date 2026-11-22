@@ -48,6 +48,7 @@ export function CacheEntriesCard() {
       <CardContent className="flex flex-1 flex-col pt-2">
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
+            className="sm:flex-1"
             leading={<Search className="h-3.5 w-3.5" />}
             value={input}
             placeholder="搜索域名"
@@ -57,13 +58,18 @@ export function CacheEntriesCard() {
             }}
           />
           <Select
-            className="sm:w-[110px]"
+            className="shrink-0 sm:w-[110px]"
             value={String(limit)}
             options={limitOptions}
             onValueChange={(value) => setLimit(Number(value))}
             ariaLabel="条目数量"
           />
-          <Button variant="secondary" onClick={submit} loading={entries.isFetching}>
+          <Button
+            className="shrink-0"
+            variant="secondary"
+            onClick={submit}
+            loading={entries.isFetching}
+          >
             搜索
           </Button>
         </div>
@@ -87,8 +93,8 @@ export function CacheEntriesCard() {
               }
             />
           ) : (
-            <div className="max-h-[420px] overflow-y-auto pr-1">
-              <table className="w-full border-collapse text-left">
+            <div className="max-h-[420px] overflow-auto pr-1">
+              <table className="w-full min-w-[340px] border-collapse text-left">
                 <thead>
                   <tr className="text-[10.5px] text-text-3">
                     <th className="pb-1.5 font-medium">域名</th>
@@ -119,10 +125,10 @@ export function CacheEntriesCard() {
                         <td className="py-2 text-center">
                           <Badge tone="neutral">{entry.qtype}</Badge>
                         </td>
-                        <td className="num py-2 text-right text-[11.5px] text-text-2">
+                        <td className="num whitespace-nowrap py-2 text-right text-[11.5px] text-text-2">
                           {formatNumber(entry.remainingTtl)}s
                         </td>
-                        <td className="num py-2 text-right text-[11.5px] text-text-2">
+                        <td className="num whitespace-nowrap py-2 text-right text-[11.5px] text-text-2">
                           {formatNumber(entry.hitCount)}
                         </td>
                         <td className="py-2 text-right">
