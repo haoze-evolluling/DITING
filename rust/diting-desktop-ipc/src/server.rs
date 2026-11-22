@@ -85,7 +85,7 @@ impl Server {
     }
 
     pub fn ipc_config(&self) -> IPCConfig {
-        self.runtime.config().ipc
+        self.runtime.with_config(|config| config.ipc.clone())
     }
 
     pub fn query_observer(&self) -> Arc<dyn QueryObserver> {
@@ -180,15 +180,18 @@ impl Server {
     }
 
     pub fn verify_token(&self, token: &str, remote: SocketAddr, headers: &HeaderMap) -> bool {
-        let config = self.runtime.config();
-        let ipc_token = config.ipc.auth_token;
-        if !ipc_token.is_empty() && token == ipc_token {
+        // 每个请求都会走这里，只从配置里取需要的两项，而不是整份 `Config` 克隆。
+        let (configured, matches) = self.runtime.with_config(|config| {
+            let auth = &config.ipc.auth_token;
+            (!auth.is_empty(), auth == token)
+        });
+        if configured && matches {
             return true;
         }
-        if !token.is_empty() && self.auth.validate_session(token).is_some() {
+        if !token.is_empty() && self.auth.is_authenticated(token) {
             return true;
         }
-        if ipc_token.is_empty() && remote.ip().is_loopback() {
+        if !configured && remote.ip().is_loopback() {
             let origin = headers
                 .get("origin")
                 .and_then(|value| value.to_str().ok())

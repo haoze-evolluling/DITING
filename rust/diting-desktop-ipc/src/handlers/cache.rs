@@ -96,7 +96,7 @@ pub fn handle_dump(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
     match server.runtime().dump_cache() {
         Ok(status) => {
-            server.hub().broadcast(crate::ws::Event::new(
+            server.hub().broadcast(&crate::ws::Event::new(
                 "filter",
                 serde_json::json!("cache_dumped"),
             ));

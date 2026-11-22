@@ -135,6 +135,21 @@ impl DesktopCache {
         self.cache.config().enabled
     }
 
+    /// 热路径开关：只取一个 bool，不克隆整份 `CacheSettings`（含 `mode` 与 `Vec<String>`）。
+    pub fn stale_fallback_enabled(&self) -> bool {
+        self.settings
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .stale_fallback_enabled
+    }
+
+    pub fn optimistic(&self) -> bool {
+        self.settings
+            .read()
+            .unwrap_or_else(|error| error.into_inner())
+            .optimistic
+    }
+
     pub fn is_excluded(&self, domain: &str) -> bool {
         self.excluder
             .read()

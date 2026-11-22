@@ -201,7 +201,7 @@ async fn websocket_handshake_receives_broadcast_events() {
     let url = format!("ws://{addr}/api/v1/events");
     let (mut socket, _) = tokio_tungstenite::connect_async(url).await.unwrap();
 
-    server.hub().broadcast(Event::new(
+    server.hub().broadcast(&Event::new(
         "query",
         serde_json::json!({"domain": "example.com"}),
     ));

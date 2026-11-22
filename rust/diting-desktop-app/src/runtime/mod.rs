@@ -244,6 +244,16 @@ impl AppRuntime {
             .clone()
     }
 
+    /// 只读一小块配置时用它：`Config` 有二十多个子配置，每请求整份克隆代价很高。
+    pub fn with_config<T>(&self, read: impl FnOnce(&Config) -> T) -> T {
+        read(
+            &self
+                .config
+                .read()
+                .unwrap_or_else(|error| error.into_inner()),
+        )
+    }
+
     pub fn config_handle(&self) -> Arc<RwLock<Config>> {
         Arc::clone(&self.config)
     }

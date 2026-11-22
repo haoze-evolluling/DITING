@@ -34,7 +34,7 @@ pub async fn handle_dns_start(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
     match server.runtime().start_dns_checked().await {
         Ok(()) => {
-            server.hub().broadcast(Event::new("dns", json!("started")));
+            server.hub().broadcast(&Event::new("dns", json!("started")));
             ok_message("DNS 服务已成功启动")
         }
         Err(error) => controller_error(error),
@@ -47,7 +47,7 @@ pub async fn handle_dns_stop(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
     match server.runtime().stop_dns_checked().await {
         Ok(()) => {
-            server.hub().broadcast(Event::new("dns", json!("stopped")));
+            server.hub().broadcast(&Event::new("dns", json!("stopped")));
             ok_message("DNS 服务已停止")
         }
         Err(error) => controller_error(error),
@@ -62,7 +62,7 @@ pub async fn handle_takeover_enable(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Ok(()) => {
             server
                 .hub()
-                .broadcast(Event::new("takeover", json!("enabled")));
+                .broadcast(&Event::new("takeover", json!("enabled")));
             ok_message("物理网卡 DNS 已成功接管")
         }
         Err(error) => controller_error(error),
@@ -77,7 +77,7 @@ pub async fn handle_takeover_disable(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Ok(()) => {
             server
                 .hub()
-                .broadcast(Event::new("takeover", json!("disabled")));
+                .broadcast(&Event::new("takeover", json!("disabled")));
             ok_message("系统 DNS 接管已还原")
         }
         Err(error) => controller_error(error),
@@ -106,7 +106,7 @@ pub async fn handle_adapter_takeover(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Ok(()) => {
             server
                 .hub()
-                .broadcast(Event::new("takeover", json!(request)));
+                .broadcast(&Event::new("takeover", json!(request)));
             ok_message("网卡接管状态已更新")
         }
         Err(error) => internal_error(error.message),
@@ -144,7 +144,7 @@ pub async fn handle_port_autofix(server: &Server, ctx: &Ctx<'_>) -> Resp {
     match server.runtime().port_autofix(request.start_dns).await {
         Ok(result) => {
             if request.start_dns && result.available {
-                server.hub().broadcast(Event::new("dns", json!("started")));
+                server.hub().broadcast(&Event::new("dns", json!("started")));
             }
             crate::handlers::ok_data_message(result, "端口冲突已成功自动修复")
         }

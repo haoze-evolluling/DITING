@@ -26,7 +26,7 @@ pub async fn handle_configure(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Ok(()) => {
             server
                 .hub()
-                .broadcast(Event::new("dns", json!("lan_updated")));
+                .broadcast(&Event::new("dns", json!("lan_updated")));
             ok_message("局域网 DNS 服务配置已更新")
         }
         Err(error) => internal_error(error.message),

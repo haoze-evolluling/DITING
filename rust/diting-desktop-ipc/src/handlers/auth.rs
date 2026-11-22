@@ -184,7 +184,7 @@ pub fn handle_background(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(response) => {
                     server
                         .hub()
-                        .broadcast(Event::new("background", json!("updated")));
+                        .broadcast(&Event::new("background", json!("updated")));
                     handlers::ok_data_message(response, "全局登录背景已保存并应用")
                 }
                 Err(error) => bad_request(error.message),
@@ -202,7 +202,7 @@ pub fn handle_background(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(response) => {
                     server
                         .hub()
-                        .broadcast(Event::new("background", json!("reset")));
+                        .broadcast(&Event::new("background", json!("reset")));
                     handlers::ok_data_message(response, "已恢复系统默认背景")
                 }
                 Err(error) => crate::handlers::internal_error(error.message),

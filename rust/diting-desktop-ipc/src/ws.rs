@@ -35,7 +35,9 @@ impl Event {
 
 pub struct WsHub {
     next_id: AtomicU64,
-    clients: Mutex<HashMap<u64, mpsc::Sender<Event>>>,
+    /// 通道里放已序列化好的 JSON 文本：一次广播只序列化一次，
+    /// 而不是每个客户端各深拷贝一份 `Event`、各自再序列化一遍。
+    clients: Mutex<HashMap<u64, mpsc::Sender<Arc<str>>>>,
 }
 
 impl Default for WsHub {
@@ -52,7 +54,7 @@ impl WsHub {
         }
     }
 
-    pub fn register(&self) -> (u64, mpsc::Receiver<Event>) {
+    pub fn register(&self) -> (u64, mpsc::Receiver<Arc<str>>) {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         let (sender, receiver) = mpsc::channel(64);
         self.clients
@@ -69,14 +71,18 @@ impl WsHub {
             .remove(&id);
     }
 
-    pub fn broadcast(&self, event: Event) {
+    pub fn broadcast(&self, event: &Event) {
+        let payload: Arc<str> = match serde_json::to_string(event) {
+            Ok(text) => Arc::from(text),
+            Err(_) => Arc::from("{}"),
+        };
         let mut clients = self
             .clients
             .lock()
             .unwrap_or_else(|error| error.into_inner());
         let mut stale = Vec::new();
         for (id, sender) in clients.iter() {
-            if sender.try_send(event.clone()).is_err() {
+            if sender.try_send(Arc::clone(&payload)).is_err() {
                 stale.push(*id);
             }
         }
@@ -93,7 +99,7 @@ impl WsHub {
     }
 }
 
-pub async fn run_client<S>(stream: S, mut receiver: mpsc::Receiver<Event>)
+pub async fn run_client<S>(stream: S, mut receiver: mpsc::Receiver<Arc<str>>)
 where
     S: futures_util::Sink<Message, Error = tokio_tungstenite::tungstenite::Error>
         + futures_util::Stream<Item = Result<Message, tokio_tungstenite::tungstenite::Error>>
@@ -114,8 +120,7 @@ where
                     let _ = sink.send(Message::Close(None)).await;
                     break;
                 };
-                let payload = serde_json::to_string(&event).unwrap_or_else(|_| "{}".to_string());
-                if sink.send(Message::Text(payload.into())).await.is_err() {
+                if sink.send(Message::Text(event.as_ref().into())).await.is_err() {
                     break;
                 }
             }
@@ -312,7 +317,7 @@ impl QueryObserver for DesktopQueryObserver {
             error: event.error.clone(),
         });
 
-        self.hub.broadcast(Event::new(
+        self.hub.broadcast(&Event::new(
             "query",
             serde_json::to_value(QueryEventData {
                 domain: event.domain,
@@ -347,7 +352,7 @@ impl DesktopQueryObserver {
         }
         *last = Instant::now();
         drop(last);
-        self.hub.broadcast(Event::new(
+        self.hub.broadcast(&Event::new(
             "metrics",
             serde_json::to_value(self.runtime.metrics_status()).unwrap_or(Value::Null),
         ));
@@ -368,7 +373,7 @@ impl DesktopQueryObserver {
         } else {
             "stopped"
         };
-        self.hub.broadcast(Event::new("dns", json!(state)));
+        self.hub.broadcast(&Event::new("dns", json!(state)));
     }
 }
 
@@ -442,14 +447,15 @@ mod tests {
 
         observer.observe(&ctx);
 
-        let event = receiver.try_recv().expect("query event");
-        assert_eq!(event.kind, "query");
-        assert_eq!(event.data["domain"], "ads.example.com.");
-        assert_eq!(event.data["qtype"], "A");
-        assert_eq!(event.data["clientIP"], "127.0.0.1");
-        assert_eq!(event.data["clientName"], "laptop");
-        assert_eq!(event.data["filterRule"], "||ads.example.com^");
-        assert_eq!(event.data["blocked"], true);
+        let payload = receiver.try_recv().expect("query event");
+        let event: serde_json::Value = serde_json::from_str(&payload).expect("event json");
+        assert_eq!(event["type"], "query");
+        assert_eq!(event["data"]["domain"], "ads.example.com.");
+        assert_eq!(event["data"]["qtype"], "A");
+        assert_eq!(event["data"]["clientIP"], "127.0.0.1");
+        assert_eq!(event["data"]["clientName"], "laptop");
+        assert_eq!(event["data"]["filterRule"], "||ads.example.com^");
+        assert_eq!(event["data"]["blocked"], true);
 
         let result = runtime.querylog.search(SearchQuery {
             domain: "ads.example.com".to_string(),
@@ -472,7 +478,7 @@ mod tests {
         let hub = WsHub::new();
         let (_id, _receiver) = hub.register();
         for _ in 0..100 {
-            hub.broadcast(Event::new("query", json!(1)));
+            hub.broadcast(&Event::new("query", json!(1)));
         }
         assert_eq!(hub.client_count(), 0);
     }

@@ -23,7 +23,7 @@ pub fn handle_upstream(server: &Server, ctx: &Ctx<'_>) -> Resp {
                 Ok(()) => {
                     server
                         .hub()
-                        .broadcast(Event::new("upstream", json!("configured")));
+                        .broadcast(&Event::new("upstream", json!("configured")));
                     ok_message("上游配置已成功更新")
                 }
                 Err(error) => bad_request(error.message),
@@ -65,7 +65,7 @@ pub fn handle_bootstrap(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Ok(()) => {
             server
                 .hub()
-                .broadcast(Event::new("upstream", json!("bootstrap_configured")));
+                .broadcast(&Event::new("upstream", json!("bootstrap_configured")));
             ok_message("Bootstrap DNS 配置已成功更新")
         }
         Err(error) => internal_error(error.message),

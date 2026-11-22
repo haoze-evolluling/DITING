@@ -189,7 +189,7 @@ pub fn handle_pause(server: &Server, ctx: &Ctx<'_>) -> Resp {
             match server.runtime().set_filter_pause(&request) {
                 Ok(()) => {
                     let state = if request.paused { "paused" } else { "resumed" };
-                    server.hub().broadcast(Event::new("filter", json!(state)));
+                    server.hub().broadcast(&Event::new("filter", json!(state)));
                     ok_message(if request.paused {
                         "拦截已暂停"
                     } else {

@@ -232,6 +232,23 @@ impl AuthManager {
         (false, 0)
     }
 
+    /// 鉴权路径只需要一个布尔，不必为此克隆 `SessionInfo` 的 3 个 `String`。
+    pub fn is_authenticated(&self, token: &str) -> bool {
+        if token.is_empty() {
+            return false;
+        }
+        let mut state = self.lock();
+        let now = Instant::now();
+        match state.sessions.get(token) {
+            Some(session) if now < session.expires => true,
+            Some(_) => {
+                state.sessions.remove(token);
+                false
+            }
+            None => false,
+        }
+    }
+
     pub fn validate_session(&self, token: &str) -> Option<SessionInfo> {
         if token.is_empty() {
             return None;
