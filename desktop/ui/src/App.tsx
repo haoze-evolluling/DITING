@@ -26,6 +26,18 @@ const FilterPage = lazy(async () => ({
 const UpstreamPage = lazy(async () => ({
   default: (await import("./pages/upstream-page")).UpstreamPage,
 }));
+const CachePage = lazy(async () => ({
+  default: (await import("./pages/cache-page")).CachePage,
+}));
+const SafetyPage = lazy(async () => ({
+  default: (await import("./pages/safety-page")).SafetyPage,
+}));
+const AdvancedPage = lazy(async () => ({
+  default: (await import("./pages/advanced-page")).AdvancedPage,
+}));
+const RewritePage = lazy(async () => ({
+  default: (await import("./pages/rewrite-page")).RewritePage,
+}));
 const LanPage = lazy(async () => ({
   default: (await import("./pages/lan-page")).LanPage,
 }));
@@ -65,8 +77,12 @@ export default function App() {
             <Route element={<AppShell />}>
               <Route index element={<DashboardPage />} />
               <Route path="logs" element={<LogsPage />} />
+              <Route path="cache" element={<CachePage />} />
               <Route path="filter" element={<FilterPage />} />
+              <Route path="safety" element={<SafetyPage />} />
+              <Route path="advanced" element={<AdvancedPage />} />
               <Route path="upstream" element={<UpstreamPage />} />
+              <Route path="rewrite" element={<RewritePage />} />
               <Route path="lan" element={<LanPage />} />
               <Route path="encrypted" element={<EncryptedPage />} />
               <Route path="settings" element={<SettingsPage />} />

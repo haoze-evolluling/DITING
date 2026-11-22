@@ -1,3 +1,14 @@
+import type { CacheStats } from "./types/cache";
+import type {
+  RewriteConfig,
+  SafeBrowsingConfig,
+  SafeSearchConfig,
+  ZoneConfig,
+} from "./types/advanced";
+
+export * from "./types/cache";
+export * from "./types/advanced";
+
 export interface ApiEnvelope<T> {
   success: boolean;
   message?: string;
@@ -92,19 +103,6 @@ export interface MetricsStatus {
   qps: number;
 }
 
-export interface CacheStats {
-  enabled: boolean;
-  totalHits: number;
-  totalMisses: number;
-  staleHits: number;
-  negativeHits: number;
-  hitRatio: number;
-  entryCount: number;
-  maxEntries: number;
-  evictionCount: number;
-  prefetchCount: number;
-}
-
 export interface FilterStats {
   enabled: boolean;
   totalRules: number;
@@ -126,6 +124,38 @@ export interface ClientSummary {
   lastSeen: number;
 }
 
+export interface ClientGroup {
+  id: string;
+  name: string;
+  enabled: boolean;
+  clients: string[];
+  ruleListIds?: string[];
+  blockMode?: string;
+  upstreamIds?: string[];
+  scheduleEnabled?: boolean;
+  schedules?: BlockingSchedule[];
+  allowlistOnly?: boolean;
+}
+
+export interface ClientGroupRuleListOption {
+  id: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface ClientGroupUpstreamOption {
+  id: string;
+  protocol: string;
+  server: string;
+}
+
+export interface ClientGroupConfigResponse {
+  enabled: boolean;
+  groups: ClientGroup[];
+  ruleLists: ClientGroupRuleListOption[];
+  upstreams: ClientGroupUpstreamOption[];
+}
+
 export interface StatusResponse {
   version: string;
   pid: number;
@@ -143,6 +173,8 @@ export interface StatusResponse {
   ecs?: ECSConfig;
   safeSearch?: SafeSearchConfig;
   safeBrowsing?: SafeBrowsingConfig;
+  rewrite?: RewriteConfig;
+  zone?: ZoneConfig;
   clients?: ClientSummary[];
 }
 
@@ -507,87 +539,4 @@ export interface ECSConfig {
   enabled: boolean;
   stripECS: boolean;
   customSubnet: string;
-}
-
-export interface SafeSearchConfig {
-  enabled: boolean;
-  disabled: string[];
-  ttl: number;
-}
-
-export interface SafeBrowsingConfig {
-  enabled: boolean;
-  parentalEnabled: boolean;
-  timeoutMs: number;
-  cacheSize: number;
-  cacheTTLSeconds: number;
-}
-
-// ---------------------------------------------------------------------------
-// 加密 DNS
-// ---------------------------------------------------------------------------
-
-export interface CertConfig {
-  source: string;
-  certFile: string;
-  keyFile: string;
-  pkcs12Password: string;
-  keyType: string;
-  commonName: string;
-  dnsNames: string[];
-  ipAddresses: string[];
-  validDays: number;
-}
-
-export interface ReverseProxyConfig {
-  enabled: boolean;
-  trustedSources: string[];
-  clientIpHeader: string;
-}
-
-export interface EncryptedDNSConfig {
-  enabled: boolean;
-  cert: CertConfig;
-  dotEnabled: boolean;
-  dohEnabled: boolean;
-  listenAddress: string;
-  dotPort: number;
-  dohPort: number;
-  dohPath: string;
-  serverName: string;
-  ddrEnabled: boolean;
-  uuid: string;
-  reverseProxy: ReverseProxyConfig;
-}
-
-export interface CertInfo {
-  source: string;
-  subject: string;
-  issuer: string;
-  serialNumber: string;
-  notBefore: string;
-  notAfter: string;
-  dnsNames: string[];
-  ipAddresses: string[];
-  daysRemaining: number;
-  fingerprint: string;
-  chainLength: number;
-  loaded: boolean;
-  error?: string;
-  selfSigned: boolean;
-}
-
-export interface EncryptedDNSStatus {
-  config: EncryptedDNSConfig;
-  cert: CertInfo;
-  certDir: string;
-  defaultDotPort: number;
-  defaultDohPort: number;
-  defaultDohPath: string;
-  dotListen: string;
-  dohListen: string;
-  dohUrls: string[];
-  unrestrictedTrust: boolean;
-  certExpiresSoon: boolean;
-  certExpired: boolean;
 }

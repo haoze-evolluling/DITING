@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
+  Database,
   Gauge,
   Globe2,
   LockKeyhole,
@@ -7,6 +8,9 @@ import {
   ScrollText,
   Settings2,
   ShieldBan,
+  ShieldCheck,
+  SlidersHorizontal,
+  Waypoints,
 } from "lucide-react";
 
 import { useStatus } from "../../hooks/use-api";
@@ -20,16 +24,22 @@ const navGroups = [
     items: [
       { to: "/", label: "概览", icon: Gauge, end: true },
       { to: "/logs", label: "查询日志", icon: ScrollText, end: false },
+      { to: "/cache", label: "解析缓存", icon: Database, end: false },
     ],
   },
   {
     label: "防护",
-    items: [{ to: "/filter", label: "规则与拦截", icon: ShieldBan, end: false }],
+    items: [
+      { to: "/filter", label: "规则与拦截", icon: ShieldBan, end: false },
+      { to: "/safety", label: "安全搜索与浏览", icon: ShieldCheck, end: false },
+      { to: "/advanced", label: "DNS 高级与隐私", icon: SlidersHorizontal, end: false },
+    ],
   },
   {
     label: "网络",
     items: [
       { to: "/upstream", label: "上游解析", icon: Globe2, end: false },
+      { to: "/rewrite", label: "重写与区文件", icon: Waypoints, end: false },
       { to: "/lan", label: "局域网与客户端", icon: Network, end: false },
       { to: "/encrypted", label: "加密 DNS", icon: LockKeyhole, end: false },
     ],

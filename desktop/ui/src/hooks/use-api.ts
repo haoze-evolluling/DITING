@@ -9,6 +9,12 @@ import type {
   AdapterInfo,
   AuthStatus,
   BlockedServicesResponse,
+  CacheConfig,
+  CacheDomainStat,
+  CacheEntriesResponse,
+  CachePersistStatus,
+  CacheStats,
+  ClientGroupConfigResponse,
   EncryptedDNSStatus,
   FilterConfig,
   FilterListsResponse,
@@ -20,9 +26,14 @@ import type {
   QuerySearchParams,
   QuerySearchResult,
   ResolverConfig,
+  RewriteRule,
+  SafeBrowsingResponse,
+  SafeSearchConfig,
   ScheduleConfigResponse,
   ServiceStatus,
   StatusResponse,
+  WebStatus,
+  ZoneConfigResponse,
 } from "../lib/types";
 import { useAuthStore } from "../stores/auth";
 
@@ -196,6 +207,129 @@ export function useEncryptedStatus(): UseQueryResult<EncryptedDNSStatus> {
     queryFn: api.encryptedStatus,
     enabled: Boolean(token),
     refetchInterval: 60_000,
+    retry: 1,
+  });
+}
+
+export function useCacheStats(): UseQueryResult<CacheStats> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["cache-stats"],
+    queryFn: api.cacheStats,
+    enabled: Boolean(token),
+    refetchInterval: 10_000,
+    retry: 1,
+  });
+}
+
+export function useCacheConfig(): UseQueryResult<CacheConfig> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["cache-config"],
+    queryFn: api.cacheConfig,
+    enabled: Boolean(token),
+    retry: 1,
+  });
+}
+
+export function useCacheEntries(
+  query: string,
+  limit: number,
+): UseQueryResult<CacheEntriesResponse> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["cache-entries", query, limit],
+    queryFn: () => api.cacheEntries(query, limit),
+    enabled: Boolean(token),
+    placeholderData: keepPreviousData,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+}
+
+export function useCacheTop(limit = 10): UseQueryResult<CacheDomainStat[]> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["cache-top", limit],
+    queryFn: () => api.cacheTop(limit),
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useCachePersistStatus(): UseQueryResult<CachePersistStatus> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["cache-persist"],
+    queryFn: api.cachePersistStatus,
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useRewriteRules(): UseQueryResult<RewriteRule[]> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["rewrite-rules"],
+    queryFn: api.rewriteRules,
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useZoneConfig(): UseQueryResult<ZoneConfigResponse> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["zone-config"],
+    queryFn: api.zoneConfig,
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useSafeSearchConfig(): UseQueryResult<SafeSearchConfig> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["safesearch-config"],
+    queryFn: api.safeSearchConfig,
+    enabled: Boolean(token),
+    retry: 1,
+  });
+}
+
+export function useSafeBrowsing(): UseQueryResult<SafeBrowsingResponse> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["safebrowsing"],
+    queryFn: api.safeBrowsingStatus,
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useClientGroups(): UseQueryResult<ClientGroupConfigResponse> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["client-groups"],
+    queryFn: api.clientGroups,
+    enabled: Boolean(token),
+    refetchInterval: 60_000,
+    retry: 1,
+  });
+}
+
+export function useWebStatus(): UseQueryResult<WebStatus> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["web-status"],
+    queryFn: api.webStatus,
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
     retry: 1,
   });
 }

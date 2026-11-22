@@ -1,4 +1,5 @@
 import { AccessControlCard } from "../components/lan/access-control-card";
+import { ClientGroupsCard } from "../components/lan/client-groups-card";
 import { ClientsCard } from "../components/lan/clients-card";
 import { LanServiceCard } from "../components/lan/lan-service-card";
 import { RateLimitCard } from "../components/lan/rate-limit-card";
@@ -20,6 +21,7 @@ export function LanPage() {
           <RateLimitCard />
           <ClientsCard />
         </div>
+        <ClientGroupsCard />
       </div>
     </>
   );

@@ -6,7 +6,15 @@ import type {
   AuthStatus,
   BlockedServicesResponse,
   BlockingSchedule,
+  CacheConfig,
+  CacheDomainStat,
+  CacheEntriesResponse,
+  CachePersistStatus,
+  CacheStats,
   CheckHostResult,
+  ClientGroup,
+  ClientGroupConfigResponse,
+  ECSConfig,
   EmergencyRestoreResult,
   EncryptedDNSStatus,
   FilterConfig,
@@ -15,6 +23,7 @@ import type {
   FilterPauseResponse,
   FilterRulesResponse,
   FilterStats,
+  HostsConfig,
   LanStatus,
   LoginResult,
   MetaInfo,
@@ -25,11 +34,17 @@ import type {
   QuerySearchParams,
   QuerySearchResult,
   ResolverConfig,
+  RewriteRule,
+  SafeBrowsingResponse,
+  SafeSearchConfig,
   ScheduleConfigResponse,
   ServiceStatus,
   StampParseResult,
   StatusResponse,
   UpstreamTestResult,
+  WebStatus,
+  ZoneConfigResponse,
+  ZoneTestResponse,
 } from "./types";
 
 export class ApiError extends Error {
@@ -134,6 +149,12 @@ export const api = {
 
   logout: () => request<void>("/api/v1/auth/logout", { method: "POST" }),
 
+  changePassword: (username: string, oldPassword: string, newPassword: string) =>
+    request<void>("/api/v1/auth/password", {
+      method: "POST",
+      body: { username, oldPassword, newPassword },
+    }),
+
   status: () => request<StatusResponse>("/api/v1/status"),
   serviceStatus: () => request<ServiceStatus>("/api/v1/service/status"),
   adapters: () => request<AdapterInfo[]>("/api/v1/adapters"),
@@ -171,6 +192,25 @@ export const api = {
     request<void>("/api/v1/querylog/config", { method: "POST", body: patch }),
   clearQueryLog: () =>
     request<void>("/api/v1/querylog/clear", { method: "POST" }),
+
+  // 解析缓存
+  cacheStats: () => request<CacheStats>("/api/v1/cache/stats"),
+  cacheEntries: (query = "", limit = 100) =>
+    request<CacheEntriesResponse>("/api/v1/cache/entries", {
+      query: { query, limit },
+    }),
+  cacheTop: (limit = 10) =>
+    request<CacheDomainStat[]>("/api/v1/cache/top", { query: { limit } }),
+  clearCache: () => request<void>("/api/v1/cache/clear", { method: "POST" }),
+  cacheConfig: () => request<CacheConfig>("/api/v1/cache/config"),
+  updateCacheConfig: (patch: Partial<CacheConfig>) =>
+    request<void>("/api/v1/cache/config", { method: "POST", body: patch }),
+  cachePersistStatus: () =>
+    request<CachePersistStatus>("/api/v1/cache/persist"),
+  dumpCache: () =>
+    request<CachePersistStatus>("/api/v1/cache/dump", { method: "POST" }),
+  loadCache: () =>
+    request<CachePersistStatus>("/api/v1/cache/load", { method: "POST" }),
 
   // 上游解析
   upstreamConfig: () => request<ResolverConfig>("/api/v1/upstream"),
@@ -242,6 +282,105 @@ export const api = {
       body: patch,
     }),
 
+  // DNS 高级与隐私
+  configureDns64: (patch: { enabled: boolean; prefixes: string[] }) =>
+    request<void>("/api/v1/dns/dns64/configure", {
+      method: "POST",
+      body: patch,
+    }),
+  configureUnqualified: (blockUnqualified: boolean) =>
+    request<void>("/api/v1/dns/unqualified/configure", {
+      method: "POST",
+      body: { blockUnqualified },
+    }),
+  configurePrivacy: (patch: {
+    enableEDE?: boolean;
+    blockPrivatePTR?: boolean;
+    blockIPv6?: boolean;
+    blockECH?: boolean;
+    ednsPadding?: number;
+    blockANY?: boolean;
+    blockANYMode?: string;
+  }) =>
+    request<void>("/api/v1/dns/privacy/configure", {
+      method: "POST",
+      body: patch,
+    }),
+  configureRebind: (patch: { enabled?: boolean; allowedDomains?: string[] }) =>
+    request<void>("/api/v1/dns/rebind/configure", {
+      method: "POST",
+      body: patch,
+    }),
+  configureHosts: (patch: Partial<HostsConfig>) =>
+    request<void>("/api/v1/dns/hosts/configure", {
+      method: "POST",
+      body: patch,
+    }),
+  configureEcs: (patch: Partial<ECSConfig>) =>
+    request<void>("/api/v1/dns/ecs/configure", {
+      method: "POST",
+      body: patch,
+    }),
+
+  // 域名重写与区文件
+  rewriteRules: () => request<RewriteRule[]>("/api/v1/dns/rewrite/rules"),
+  addRewriteRule: (rule: RewriteRule) =>
+    request<void>("/api/v1/dns/rewrite/rules", { method: "POST", body: rule }),
+  deleteRewriteRule: (domain: string) =>
+    request<void>("/api/v1/dns/rewrite/rules", {
+      method: "DELETE",
+      query: { domain },
+    }),
+  configureRewrite: (patch: {
+    enabled?: boolean;
+    ttl?: number;
+    rules?: RewriteRule[];
+  }) =>
+    request<void>("/api/v1/dns/rewrite/configure", {
+      method: "POST",
+      body: patch,
+    }),
+  zoneConfig: () =>
+    request<ZoneConfigResponse>("/api/v1/dns/zone/config"),
+  configureZone: (patch: {
+    enabled?: boolean;
+    ttl?: number;
+    zones?: { id: string; origin: string; content: string; enabled: boolean }[];
+  }) =>
+    request<ZoneConfigResponse>("/api/v1/dns/zone/config", {
+      method: "POST",
+      body: patch,
+    }),
+  testZone: (origin: string, content: string, ttl: number) =>
+    request<ZoneTestResponse>("/api/v1/dns/zone/test", {
+      method: "POST",
+      body: { origin, content, ttl },
+    }),
+
+  // 安全搜索与安全浏览
+  safeSearchConfig: () =>
+    request<SafeSearchConfig>("/api/v1/safesearch/config"),
+  configureSafeSearch: (patch: {
+    enabled?: boolean;
+    disabled?: string[];
+    ttl?: number;
+  }) =>
+    request<void>("/api/v1/safesearch/config", { method: "POST", body: patch }),
+  safeBrowsingStatus: () =>
+    request<SafeBrowsingResponse>("/api/v1/filter/safebrowsing"),
+  configureSafeBrowsing: (patch: {
+    enabled?: boolean;
+    parentalEnabled?: boolean;
+    timeoutMs?: number;
+    cacheSize?: number;
+    // 服务端请求结构体按 camelCase 推导为 cacheTtlSeconds。
+    cacheTtlSeconds?: number;
+  }) =>
+    request<SafeBrowsingResponse>("/api/v1/filter/safebrowsing", {
+      method: "POST",
+      body: patch,
+    }),
+
   // 局域网与客户端
   lanStatus: () => request<LanStatus>("/api/v1/dns/lan"),
   configureLan: (allowLAN: boolean, configureFirewall: boolean) =>
@@ -284,6 +423,24 @@ export const api = {
       method: "POST",
       body: { ip, name },
     }),
+  clientGroups: () =>
+    request<ClientGroupConfigResponse>("/api/v1/clients/groups"),
+  configureClientGroups: (patch: {
+    enabled?: boolean;
+    groups?: ClientGroup[];
+  }) =>
+    request<void>("/api/v1/clients/groups", { method: "POST", body: patch }),
+
+  // Web 远程管理
+  webStatus: () => request<WebStatus>("/api/v1/web/status"),
+  configureWeb: (patch: {
+    enabled: boolean;
+    port: number;
+    configureFirewall: boolean;
+  }) =>
+    request<void>("/api/v1/web/configure", { method: "POST", body: patch }),
+  configureWebFirewall: (enable: boolean) =>
+    request<void>("/api/v1/web/firewall", { method: "POST", body: { enable } }),
 
   // 加密 DNS
   encryptedStatus: () =>
