@@ -34,6 +34,12 @@ class SettingsPage extends StatelessWidget {
                 subtitle: context.l10n.settingsModeSubtitle,
                 onPressed: () => context.push(Routes.modeSelect),
               ),
+              NavEntryRow(
+                glyph: TablerIcons.info_circle,
+                title: context.l10n.workModeGuideTitle,
+                subtitle: context.l10n.settingsWizardSubtitle,
+                onPressed: () => context.push(Routes.modeOnboarding),
+              ),
             ],
           ),
           generateSection(
@@ -44,17 +50,6 @@ class SettingsPage extends StatelessWidget {
                 title: context.l10n.languageTitle,
                 subtitle: context.l10n.settingsLanguageSubtitle,
                 onPressed: () => context.push(SystemPaths.language),
-              ),
-            ],
-          ),
-          generateSection(
-            title: context.l10n.settingsGuideSection,
-            items: [
-              NavEntryRow(
-                glyph: TablerIcons.info_circle,
-                title: context.l10n.workModeGuideTitle,
-                subtitle: context.l10n.settingsWizardSubtitle,
-                onPressed: () => context.push(Routes.modeOnboarding),
               ),
             ],
           ),

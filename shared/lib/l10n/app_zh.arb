@@ -5169,8 +5169,7 @@
   "settingsVpnWatchdogSubtitle": "VPN 通道被其他应用占用时持续监测，释放后自动重新连接",
   "settingsSystemSection": "应用与系统",
   "settingsLanguageSubtitle": "选择应用界面语言",
-  "settingsWizardSubtitle": "查看当前工作模式的架构原理、权限配置与上手指引",
-  "settingsGuideSection": "上手引导",
+  "settingsWizardSubtitle": "架构原理、权限配置与上手指引",
   "backupErrEmpty": "文件内容为空",
   "backupErrInvalidJson": "不是合法的 JSON：{error}",
   "@backupErrInvalidJson": {

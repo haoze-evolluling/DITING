@@ -9329,10 +9329,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get settingsWizardSubtitle =>
-      'See how the current work mode works, its permissions and a getting-started guide';
-
-  @override
-  String get settingsGuideSection => 'Getting started';
+      'Architecture, permissions and a getting-started guide';
 
   @override
   String get backupErrEmpty => 'The file is empty';

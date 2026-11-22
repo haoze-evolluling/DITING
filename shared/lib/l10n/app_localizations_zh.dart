@@ -8774,10 +8774,7 @@ class AppL10nZh extends AppL10n {
   String get settingsLanguageSubtitle => '选择应用界面语言';
 
   @override
-  String get settingsWizardSubtitle => '查看当前工作模式的架构原理、权限配置与上手指引';
-
-  @override
-  String get settingsGuideSection => '上手引导';
+  String get settingsWizardSubtitle => '架构原理、权限配置与上手指引';
 
   @override
   String get backupErrEmpty => '文件内容为空';

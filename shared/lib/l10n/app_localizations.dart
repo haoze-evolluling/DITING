@@ -5373,8 +5373,6 @@ abstract class AppL10n {
 
   String get settingsWizardSubtitle;
 
-  String get settingsGuideSection;
-
   String get backupErrEmpty;
 
   String backupErrInvalidJson(String error);

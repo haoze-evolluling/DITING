@@ -19,17 +19,13 @@
     "应用与系统",
     "App & system"
   ],
-  "settingsGuideSection": [
-    "上手引导",
-    "Getting started"
-  ],
   "settingsLanguageSubtitle": [
     "选择应用界面语言",
     "Choose the app language"
   ],
   "settingsWizardSubtitle": [
-    "查看当前工作模式的架构原理、权限配置与上手指引",
-    "See how the current work mode works, its permissions and a getting-started guide"
+    "架构原理、权限配置与上手指引",
+    "Architecture, permissions and a getting-started guide"
   ],
   "hubOtherSettings": [
     "其他设置",
