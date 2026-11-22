@@ -76,7 +76,7 @@ impl Stage for SudnStage {
 }
 
 fn matches_suffix(name: &str, suffix: &str) -> bool {
-    name == suffix || name.ends_with(&format!(".{suffix}"))
+    crate::stages::util::domain_or_suffix(name, suffix)
 }
 
 #[cfg(test)]

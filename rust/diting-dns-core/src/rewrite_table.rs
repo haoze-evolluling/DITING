@@ -16,20 +16,21 @@ impl RewriteTable {
                 continue;
             }
             if let Some(entry) = classify(targets) {
-                table.insert(key, entry);
+                table.insert(key.into_owned(), entry);
             }
         }
         Self { entries: table }
     }
 
     pub fn lookup(&self, domain: &str) -> Option<&Entry> {
-        let mut candidate = normalize_domain(domain);
+        let normalized = normalize_domain(domain);
+        let mut candidate = normalized.as_ref();
         while !candidate.is_empty() {
-            if let Some(entry) = self.entries.get(&candidate) {
+            if let Some(entry) = self.entries.get(candidate) {
                 return Some(entry);
             }
             match candidate.find('.') {
-                Some(dot) => candidate = candidate[dot + 1..].to_string(),
+                Some(dot) => candidate = &candidate[dot + 1..],
                 None => break,
             }
         }

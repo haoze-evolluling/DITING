@@ -4,6 +4,7 @@ pub mod gate;
 pub mod link;
 pub mod queue;
 pub mod relay;
+mod ring;
 pub mod session;
 pub mod stats;
 pub mod writeback;

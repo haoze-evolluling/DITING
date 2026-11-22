@@ -1,6 +1,6 @@
 use diting_dns_wire::{
-    parse_header, parse_question, read_u16, read_u32, unpack_name, ChainKind, ChainTarget,
-    MessageHeader, Question,
+    parse_header, parse_question, read_u16, read_u32, skip_name, unpack_name, ChainKind,
+    ChainTarget, MessageHeader, Question,
 };
 
 use crate::answer::{self, AnswerEntry};
@@ -169,7 +169,7 @@ pub fn extract(response: &[u8]) -> Option<Extracted> {
         if offset == response.len() {
             break;
         }
-        let (_, cursor) = unpack_name(response, offset, response.len())?;
+        let cursor = skip_name(response, offset, response.len())?;
         if cursor + 10 > response.len() {
             return None;
         }
@@ -331,7 +331,7 @@ fn parse_sections(wire: &[u8]) -> Option<Sections> {
         if offset == wire.len() {
             break;
         }
-        let (_, cursor) = unpack_name(wire, offset, wire.len())?;
+        let cursor = skip_name(wire, offset, wire.len())?;
         if cursor + 10 > wire.len() {
             return None;
         }

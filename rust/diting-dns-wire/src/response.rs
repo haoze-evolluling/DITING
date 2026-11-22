@@ -1,5 +1,5 @@
 use crate::bits::{read_u16, read_u32};
-use crate::name::unpack_name;
+use crate::name::{skip_name, unpack_name};
 
 const TYPE_A: u16 = 1;
 const TYPE_CNAME: u16 = 5;
@@ -70,7 +70,7 @@ pub fn parse_response(wire: &[u8]) -> Option<ResponseMeta> {
 
     let mut offset = 12usize;
     for _ in 0..question_count {
-        let (_, next) = unpack_name(wire, offset, wire.len())?;
+        let next = skip_name(wire, offset, wire.len())?;
         if next + 4 > wire.len() {
             return None;
         }
@@ -89,7 +89,7 @@ pub fn parse_response(wire: &[u8]) -> Option<ResponseMeta> {
         if offset == wire.len() {
             break;
         }
-        let (_, header) = unpack_name(wire, offset, wire.len())?;
+        let header = skip_name(wire, offset, wire.len())?;
         if header + 10 > wire.len() {
             return None;
         }
@@ -231,11 +231,11 @@ fn parse_soa(
     if rd_length == 0 {
         return Some((ttl, 0));
     }
-    let (_, offset) = unpack_name(wire, rdata, rdata_end)?;
+    let offset = skip_name(wire, rdata, rdata_end)?;
     if offset == rdata_end {
         return Some((ttl, 0));
     }
-    let (_, offset) = unpack_name(wire, offset, rdata_end)?;
+    let offset = skip_name(wire, offset, rdata_end)?;
     let remaining = rdata_end - offset;
     match remaining {
         0 | 4 | 8 | 12 | 16 => Some((ttl, 0)),

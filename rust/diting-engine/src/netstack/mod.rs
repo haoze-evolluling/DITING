@@ -45,6 +45,16 @@ pub fn socket_addr(endpoint: smoltcp::wire::IpEndpoint) -> std::net::SocketAddr 
     std::net::SocketAddr::new(address, endpoint.port)
 }
 
+pub fn flow_addr(address: smoltcp::wire::IpAddress) -> diting_flow_core::FlowAddr {
+    match address {
+        smoltcp::wire::IpAddress::Ipv4(v4) => diting_flow_core::FlowAddr::V4(v4),
+        smoltcp::wire::IpAddress::Ipv6(v6) => match v6.to_ipv4_mapped() {
+            Some(v4) => diting_flow_core::FlowAddr::V4(v4),
+            None => diting_flow_core::FlowAddr::V6(v6),
+        },
+    }
+}
+
 pub fn address_text(address: smoltcp::wire::IpAddress) -> String {
     let mut bytes = [0u8; 16];
     let len = address_bytes_into(address, &mut bytes);

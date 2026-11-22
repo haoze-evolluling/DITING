@@ -4,10 +4,10 @@ use diting_dns_wire::{CLASS_IN, TYPE_PTR as TYPE_PTR_QUERY};
 
 use crate::context::{DnsContext, RCODE_NXDOMAIN};
 use crate::pipeline::{Stage, StageResult};
-use crate::stages::util::{negative_soa, normalized_name, respond, start_reply};
+use crate::stages::util::{domain_or_suffix, negative_soa, normalized_name, respond, start_reply};
 use crate::stages::ConfigHandle;
 
-const PRIVATE_REVERSE_SUFFIXES: &[&str] = &[
+const PRIVATE_V4_REVERSE_SUFFIXES: &[&str] = &[
     "10.in-addr.arpa",
     "168.192.in-addr.arpa",
     "16.172.in-addr.arpa",
@@ -97,6 +97,9 @@ const PRIVATE_REVERSE_SUFFIXES: &[&str] = &[
     "2.0.192.in-addr.arpa",
     "100.51.198.in-addr.arpa",
     "113.0.203.in-addr.arpa",
+];
+
+const PRIVATE_V6_REVERSE_SUFFIXES: &[&str] = &[
     "c.f.ip6.arpa",
     "d.f.ip6.arpa",
     "8.e.f.ip6.arpa",
@@ -108,50 +111,70 @@ const PRIVATE_REVERSE_SUFFIXES: &[&str] = &[
     "8.b.d.0.1.0.0.2.ip6.arpa",
 ];
 
-pub fn is_private_reverse_zone(domain: &str) -> bool {
-    let clean = normalized_name(domain);
-    PRIVATE_REVERSE_SUFFIXES
-        .iter()
-        .any(|suffix| clean == *suffix || clean.ends_with(&format!(".{suffix}")))
-}
+fn match_private_reverse_suffix(clean: &str) -> Option<&'static str> {
+    let candidates = if clean.ends_with(".in-addr.arpa") {
+        PRIVATE_V4_REVERSE_SUFFIXES
+    } else if clean.ends_with(".ip6.arpa") {
+        PRIVATE_V6_REVERSE_SUFFIXES
+    } else {
+        return None;
+    };
 
-pub fn private_reverse_zone_apex(domain: &str) -> Option<String> {
-    let clean = normalized_name(domain);
-    let mut best: Option<&str> = None;
-    for suffix in PRIVATE_REVERSE_SUFFIXES {
-        if (clean == *suffix || clean.ends_with(&format!(".{suffix}")))
-            && best
-                .map(|current| suffix.len() > current.len())
-                .unwrap_or(true)
+    let mut best: Option<&'static str> = None;
+    for &suffix in candidates {
+        if domain_or_suffix(clean, suffix)
+            && best.map(|current| suffix.len() > current.len()).unwrap_or(true)
         {
             best = Some(suffix);
         }
     }
-    best.map(|suffix| format!("{suffix}."))
+    best
+}
+
+pub fn is_private_reverse_zone(domain: &str) -> bool {
+    let clean = normalized_name(domain);
+    match_private_reverse_suffix(&clean).is_some()
+}
+
+pub fn private_reverse_zone_apex(domain: &str) -> Option<String> {
+    let clean = normalized_name(domain);
+    match_private_reverse_suffix(&clean).map(|suffix| format!("{suffix}."))
 }
 
 pub fn parse_ptr_ip(name: &str) -> Option<std::net::IpAddr> {
     let clean = normalized_name(name);
     if let Some(rest) = clean.strip_suffix(".in-addr.arpa") {
-        let labels: Vec<&str> = rest.split('.').collect();
-        if labels.len() != 4 {
-            return None;
-        }
         let mut octets = [0u8; 4];
-        for (index, label) in labels.iter().enumerate() {
-            octets[3 - index] = label.parse::<u8>().ok()?;
+        let mut count = 0usize;
+        for label in rest.split('.') {
+            if count >= 4 {
+                return None;
+            }
+            octets[3 - count] = label.parse::<u8>().ok()?;
+            count += 1;
+        }
+        if count != 4 {
+            return None;
         }
         return Some(std::net::IpAddr::V4(std::net::Ipv4Addr::from(octets)));
     }
     if let Some(rest) = clean.strip_suffix(".ip6.arpa") {
-        let nibbles: Vec<&str> = rest.split('.').collect();
-        if nibbles.len() != 32 {
+        let mut nibbles = [0u8; 32];
+        let mut count = 0usize;
+        for label in rest.split('.') {
+            if count >= 32 || label.len() != 1 {
+                return None;
+            }
+            nibbles[count] = u8::from_str_radix(label, 16).ok()?;
+            count += 1;
+        }
+        if count != 32 {
             return None;
         }
         let mut octets = [0u8; 16];
         for (index, octet) in octets.iter_mut().enumerate() {
-            let high = u8::from_str_radix(nibbles[31 - index * 2], 16).ok()?;
-            let low = u8::from_str_radix(nibbles[31 - index * 2 - 1], 16).ok()?;
+            let high = nibbles[31 - index * 2];
+            let low = nibbles[31 - index * 2 - 1];
             *octet = (high << 4) | low;
         }
         return Some(std::net::IpAddr::V6(std::net::Ipv6Addr::from(octets)));
@@ -186,14 +209,12 @@ impl Stage for PrivatePtrStage {
         if !enabled || ctx.question.qtype != TYPE_PTR_QUERY {
             return StageResult::Continue;
         }
-        if !is_private_reverse_zone(&ctx.question.name) {
+        let Some(zone) = private_reverse_zone_apex(&ctx.question.name) else {
             return StageResult::Continue;
-        }
+        };
         let Some(builder) = start_reply(ctx) else {
             return StageResult::Fail("空查询报文".to_string());
         };
-        let zone = private_reverse_zone_apex(&ctx.question.name)
-            .unwrap_or_else(|| crate::stages::util::normalize_trailing_dot(&ctx.question.name));
         let builder = builder
             .set_rcode(RCODE_NXDOMAIN)
             .push_authority(negative_soa(&zone, 300));
@@ -247,5 +268,6 @@ mod tests {
         );
         assert!(is_private_reverse_zone("c.f.ip6.arpa"));
         assert!(!is_private_reverse_zone("example.com"));
+        assert!(!is_private_reverse_zone("110.in-addr.arpa"));
     }
 }

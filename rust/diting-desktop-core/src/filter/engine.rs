@@ -5,6 +5,7 @@ use super::schedule::first_active;
 use super::state::{Inner, MatcherSnapshot, ScheduleSet};
 use super::types::*;
 
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::net::IpAddr;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -14,7 +15,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use chrono::{Local, TimeZone};
 use diting_desktop_api::config::filter::is_valid_block_mode;
 use diting_desktop_api::config::{BlockingSchedule, FilterConfig};
-use diting_go_compat::text::{go_lower, go_trim_space};
+use diting_go_compat::text::normalize_domain as compat_normalize_domain;
 use diting_response_core::chain::plan_strs;
 
 pub const MAX_RESPONSE_ALIAS_DEPTH: usize = 8;
@@ -330,13 +331,13 @@ pub fn extract_response_check_names(qname: &str, records: &[ResponseRecord]) -> 
             continue;
         };
         let name = normalize_domain(raw);
-        if name.is_empty() || name == origin || !seen.insert(name.clone()) {
+        if name.is_empty() || name == origin || !seen.insert(name.as_ref().to_string()) {
             continue;
         }
         if names.len() >= MAX_RESPONSE_ALIAS_DEPTH {
             break;
         }
-        names.push(name);
+        names.push(name.into_owned());
     }
     names
 }
@@ -407,12 +408,8 @@ fn dedup_trimmed(values: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-pub fn normalize_domain(domain: &str) -> String {
-    let lowered = go_lower(go_trim_space(domain));
-    lowered
-        .strip_suffix('.')
-        .unwrap_or(lowered.as_ref())
-        .to_string()
+pub fn normalize_domain(domain: &str) -> Cow<'_, str> {
+    compat_normalize_domain(domain)
 }
 
 pub fn now_ms() -> i64 {

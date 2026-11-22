@@ -127,7 +127,10 @@ impl SafeBrowsingStage {
         ctx.set("cache_hit", "safebrowsing");
         ctx.set("filter_action", "block");
         ctx.set("filter_blocked", "true");
-        ctx.set("filter_rule", normalized_name(&ctx.question.name));
+        ctx.set(
+            "filter_rule",
+            normalized_name(&ctx.question.name).into_owned(),
+        );
         ctx.set("filter_reason", service);
         ctx.set("filter_list", service);
         StageResult::Stop

@@ -114,12 +114,12 @@ fn is_unique_local(octets: &[u8; 16]) -> bool {
 pub fn is_domain_allowed(domain: &str, allowed: &[String]) -> bool {
     let domain = normalized_name(domain);
     allowed.iter().any(|entry| {
-        let entry = entry
-            .trim()
-            .trim_start_matches('*')
-            .trim_matches('.')
-            .to_ascii_lowercase();
-        !entry.is_empty() && (domain == entry || domain.ends_with(&format!(".{entry}")))
+        let trimmed = entry.trim().trim_start_matches('*').trim_matches('.');
+        if trimmed.is_empty() {
+            return false;
+        }
+        let normalized = normalized_name(trimmed);
+        crate::stages::util::domain_or_suffix(&domain, &normalized)
     })
 }
 

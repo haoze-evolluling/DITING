@@ -1,5 +1,6 @@
 mod rules;
 
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::sync::RwLock;
@@ -95,7 +96,7 @@ impl SafeSearchEngine {
         if !state.enabled {
             return None;
         }
-        let rule = state.by_domain.get(&normalized)?;
+        let rule = state.by_domain.get(normalized.as_ref())?;
         if state.disabled.contains(&rule.service) {
             return None;
         }
@@ -207,7 +208,7 @@ fn parse_rule_line(line: &str, service: &str) -> Option<(String, Rule)> {
         }
         _ => return None,
     }
-    Some((domain, rule))
+    Some((domain.into_owned(), rule))
 }
 
 fn parse_ipv4(value: &str) -> Option<Ipv4Addr> {
@@ -224,8 +225,17 @@ fn parse_ipv6(value: &str) -> Option<Ipv6Addr> {
     value.parse::<Ipv6Addr>().ok()
 }
 
-fn normalize_domain(domain: &str) -> String {
-    domain.trim().to_lowercase().trim_matches('.').to_string()
+fn normalize_domain(domain: &str) -> Cow<'_, str> {
+    let trimmed = domain.trim().trim_matches('.');
+    if trimmed.is_ascii() {
+        if trimmed.bytes().any(|byte| byte.is_ascii_uppercase()) {
+            Cow::Owned(trimmed.to_ascii_lowercase())
+        } else {
+            Cow::Borrowed(trimmed)
+        }
+    } else {
+        Cow::Owned(trimmed.to_lowercase())
+    }
 }
 
 fn fqdn(name: &str) -> String {

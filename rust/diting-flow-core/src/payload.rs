@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::session::{FlowEvent, FlowKey, FlowStatus};
+use crate::session::{FlowAddr, FlowEvent, FlowKey, FlowProtocol, FlowStatus};
 
 fn text(value: &Value, field: &str) -> String {
     value
@@ -8,6 +8,10 @@ fn text(value: &Value, field: &str) -> String {
         .and_then(Value::as_str)
         .unwrap_or("")
         .to_string()
+}
+
+fn text_ref<'a>(value: &'a Value, field: &str) -> &'a str {
+    value.get(field).and_then(Value::as_str).unwrap_or("")
 }
 
 fn u64_of(value: &Value, field: &str) -> u64 {
@@ -34,13 +38,13 @@ fn i32_of(value: &Value, field: &str) -> i32 {
 
 pub fn decode_event(request: &Value) -> Option<FlowEvent> {
     let key = request.get("key")?;
-    let protocol = key.get("protocol")?.as_str()?.to_string();
+    let protocol = FlowProtocol::parse(key.get("protocol")?.as_str()?);
     Some(FlowEvent {
         key: FlowKey {
             protocol,
-            src_ip: text(key, "srcIp"),
+            src_ip: FlowAddr::parse(text_ref(key, "srcIp")),
             src_port: u16_of(key, "srcPort"),
-            dst_ip: text(key, "dstIp"),
+            dst_ip: FlowAddr::parse(text_ref(key, "dstIp")),
             dst_port: u16_of(key, "dstPort"),
             uid: i32_of(key, "uid"),
         },
@@ -48,7 +52,7 @@ pub fn decode_event(request: &Value) -> Option<FlowEvent> {
         package: text(request, "package"),
         up_delta: u64_of(request, "upDelta"),
         down_delta: u64_of(request, "downDelta"),
-        status: FlowStatus::parse(&text(request, "status")),
+        status: FlowStatus::parse(text_ref(request, "status")),
         at_ms: i64_of(request, "atMs"),
     })
 }

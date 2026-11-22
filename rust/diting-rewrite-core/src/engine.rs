@@ -1,8 +1,9 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 use diting_go_compat::dns_type;
-use diting_go_compat::text::{go_lower, go_trim_space, go_upper};
+use diting_go_compat::text::{domain_or_suffix, go_lower, go_trim_space, go_upper};
 
 use crate::record::{self, mapped_ipv4, Record, TYPE_A, TYPE_AAAA, TYPE_CNAME, TYPE_TXT};
 
@@ -170,7 +171,7 @@ impl Engine {
         }
         self.wildcard
             .iter()
-            .find(|rule| norm == rule.suffix || norm.ends_with(&format!(".{}", rule.suffix)))
+            .find(|rule| domain_or_suffix(norm, &rule.suffix))
     }
 
     fn shortcut(
@@ -217,10 +218,10 @@ impl Engine {
             return;
         }
         let norm = normalize_domain(target);
-        if norm.is_empty() || visited.contains(&norm) {
+        if norm.is_empty() || visited.iter().any(|seen| seen == norm.as_ref()) {
             return;
         }
-        visited.push(norm.clone());
+        visited.push(norm.as_ref().to_string());
         let Some(rule) = self.find_rule(&norm) else {
             return;
         };
@@ -353,7 +354,7 @@ fn compile_rule(
     }
 
     Some(Compiled {
-        domain,
+        domain: domain.into_owned(),
         rule: CompiledRule {
             is_wildcard,
             suffix,
@@ -416,10 +417,12 @@ fn answer(owner: &str, ttl: u32, record: Record) -> Answer {
     }
 }
 
-pub fn normalize_domain(domain: &str) -> String {
-    go_trim_space(&go_lower(domain))
-        .trim_matches('.')
-        .to_string()
+pub fn normalize_domain(domain: &str) -> Cow<'_, str> {
+    let trimmed = go_trim_space(domain).trim_matches('.');
+    match go_lower(trimmed) {
+        Cow::Borrowed(value) => Cow::Borrowed(value),
+        Cow::Owned(value) => Cow::Owned(go_trim_space(&value).trim_matches('.').to_string()),
+    }
 }
 
 fn query_fqdn(domain: &str) -> String {

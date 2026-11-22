@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use regex::{Regex, RegexSet};
@@ -103,8 +104,13 @@ impl CacheExcluder {
     }
 }
 
-pub fn normalize_domain(domain: &str) -> String {
-    domain.trim().trim_end_matches('.').to_ascii_lowercase()
+pub fn normalize_domain(domain: &str) -> Cow<'_, str> {
+    let trimmed = domain.trim().trim_end_matches('.');
+    if trimmed.bytes().any(|byte| byte.is_ascii_uppercase()) {
+        Cow::Owned(trimmed.to_ascii_lowercase())
+    } else {
+        Cow::Borrowed(trimmed)
+    }
 }
 
 fn truncate(text: &str) -> String {

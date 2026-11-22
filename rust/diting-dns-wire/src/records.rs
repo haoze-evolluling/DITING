@@ -1,5 +1,5 @@
 use crate::bits::{read_u16, read_u32};
-use crate::name::unpack_name;
+use crate::name::{skip_name, unpack_name};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Record {
@@ -19,7 +19,7 @@ pub fn parse_answer_records(wire: &[u8]) -> Option<Vec<Record>> {
 
     let mut offset = 12usize;
     for _ in 0..question_count {
-        let (_, next) = unpack_name(wire, offset, wire.len())?;
+        let next = skip_name(wire, offset, wire.len())?;
         if next + 4 > wire.len() {
             return None;
         }

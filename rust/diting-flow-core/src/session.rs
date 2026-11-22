@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::fmt;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 pub const DEFAULT_CAPACITY: usize = 1024;
 
@@ -27,12 +29,98 @@ impl FlowStatus {
     }
 }
 
+/// 传输层协议：热路径用 `Tcp`/`Udp` 零分配；FFI JSON 透传未知协议时落到 `Other`。
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum FlowProtocol {
+    Tcp,
+    Udp,
+    Other(Box<str>),
+}
+
+impl FlowProtocol {
+    pub fn parse(value: &str) -> Self {
+        match value {
+            "tcp" => Self::Tcp,
+            "udp" => Self::Udp,
+            other => Self::Other(other.into()),
+        }
+    }
+
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Tcp => "tcp",
+            Self::Udp => "udp",
+            Self::Other(text) => text,
+        }
+    }
+}
+
+impl fmt::Display for FlowProtocol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+/// 流端点地址：数据面热路径直接存 `V4`/`V6`，创建与拷贝零堆分配；
+/// 仅 FFI JSON 传入非标准地址字符串时落到 `Other`。
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum FlowAddr {
+    V4(Ipv4Addr),
+    V6(Ipv6Addr),
+    Other(Box<str>),
+}
+
+impl FlowAddr {
+    pub fn parse(value: &str) -> Self {
+        match value.parse::<IpAddr>() {
+            Ok(IpAddr::V4(v4)) => Self::V4(v4),
+            Ok(IpAddr::V6(v6)) => Self::V6(v6),
+            Err(_) => Self::Other(value.into()),
+        }
+    }
+
+    pub fn from_ip(ip: IpAddr) -> Self {
+        match ip {
+            IpAddr::V4(v4) => Self::V4(v4),
+            IpAddr::V6(v6) => Self::V6(v6),
+        }
+    }
+}
+
+impl From<Ipv4Addr> for FlowAddr {
+    fn from(value: Ipv4Addr) -> Self {
+        Self::V4(value)
+    }
+}
+
+impl From<Ipv6Addr> for FlowAddr {
+    fn from(value: Ipv6Addr) -> Self {
+        Self::V6(value)
+    }
+}
+
+impl From<IpAddr> for FlowAddr {
+    fn from(value: IpAddr) -> Self {
+        Self::from_ip(value)
+    }
+}
+
+impl fmt::Display for FlowAddr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::V4(v4) => write!(f, "{v4}"),
+            Self::V6(v6) => write!(f, "{v6}"),
+            Self::Other(text) => f.write_str(text),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct FlowKey {
-    pub protocol: String,
-    pub src_ip: String,
+    pub protocol: FlowProtocol,
+    pub src_ip: FlowAddr,
     pub src_port: u16,
-    pub dst_ip: String,
+    pub dst_ip: FlowAddr,
     pub dst_port: u16,
     pub uid: i32,
 }
@@ -78,6 +166,48 @@ pub struct Snapshot<'a> {
     pub total: usize,
     pub truncated: bool,
     pub sessions: Vec<&'a FlowSession>,
+}
+
+/// 持有所有权的快照，供调用方在释放表锁之后再做排序、截断和 JSON 序列化。
+#[derive(Clone, Debug)]
+pub struct OwnedSnapshot {
+    pub base_seq: u64,
+    pub next_seq: u64,
+    pub total: usize,
+    pub truncated: bool,
+    pub sessions: Vec<FlowSession>,
+}
+
+impl OwnedSnapshot {
+    pub fn from_collected(
+        since_seq: u64,
+        next_seq: u64,
+        mut items: Vec<FlowSession>,
+        limit: usize,
+    ) -> Self {
+        items.sort_by_key(|session| session.seq);
+        let total = items.len();
+        let cap = if limit == 0 { total } else { limit };
+        let truncated = total > cap;
+        items.truncate(cap);
+        Self {
+            base_seq: since_seq,
+            next_seq,
+            total,
+            truncated,
+            sessions: items,
+        }
+    }
+
+    pub fn to_json(&self) -> String {
+        format_snapshot_json(
+            self.base_seq,
+            self.next_seq,
+            self.total,
+            self.truncated,
+            self.sessions.iter(),
+        )
+    }
 }
 
 #[derive(Debug)]
@@ -181,6 +311,20 @@ impl FlowTable {
         self.by_key.clear();
     }
 
+    /// 锁内只做最小扫描拷贝，把排序与 JSON 序列化留给调用方释放锁之后再做。
+    pub fn collect_since(&self, since_seq: u64) -> (u64, Vec<FlowSession>) {
+        if self.next_seq <= since_seq {
+            return (self.next_seq, Vec::new());
+        }
+        let items = self
+            .by_key
+            .values()
+            .filter(|session| session.seq > since_seq)
+            .cloned()
+            .collect();
+        (self.next_seq, items)
+    }
+
     pub fn snapshot(&self, since_seq: u64, limit: usize) -> Snapshot<'_> {
         let mut items: Vec<&FlowSession> = self
             .by_key
@@ -191,35 +335,52 @@ impl FlowTable {
         let total = items.len();
         let cap = if limit == 0 { total } else { limit };
         let truncated = total > cap;
+        items.truncate(cap);
         Snapshot {
             base_seq: since_seq,
             next_seq: self.next_seq,
             total,
             truncated,
-            sessions: items.into_iter().take(cap).collect(),
+            sessions: items,
         }
     }
 }
 
 impl Snapshot<'_> {
     pub fn to_json(&self) -> String {
-        use std::fmt::Write;
-
-        let mut out = String::with_capacity(96 + self.sessions.len() * 224);
-        let _ = write!(
-            out,
-            "{{\"baseSeq\":{},\"nextSeq\":{},\"total\":{},\"truncated\":{},\"sessions\":[",
-            self.base_seq, self.next_seq, self.total, self.truncated
-        );
-        for (index, session) in self.sessions.iter().enumerate() {
-            if index > 0 {
-                out.push(',');
-            }
-            write_session(&mut out, session);
-        }
-        out.push_str("]}");
-        out
+        format_snapshot_json(
+            self.base_seq,
+            self.next_seq,
+            self.total,
+            self.truncated,
+            self.sessions.iter().copied(),
+        )
     }
+}
+
+fn format_snapshot_json<'a>(
+    base_seq: u64,
+    next_seq: u64,
+    total: usize,
+    truncated: bool,
+    sessions: impl ExactSizeIterator<Item = &'a FlowSession>,
+) -> String {
+    use std::fmt::Write;
+
+    let mut out = String::with_capacity(96 + sessions.len() * 224);
+    let _ = write!(
+        out,
+        "{{\"baseSeq\":{},\"nextSeq\":{},\"total\":{},\"truncated\":{},\"sessions\":[",
+        base_seq, next_seq, total, truncated
+    );
+    for (index, session) in sessions.enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+        write_session(&mut out, session);
+    }
+    out.push_str("]}");
+    out
 }
 
 fn write_session(out: &mut String, session: &FlowSession) {
@@ -227,12 +388,12 @@ fn write_session(out: &mut String, session: &FlowSession) {
 
     let key = &session.key;
     out.push('{');
-    write_string_field(out, "protocol", &key.protocol);
+    write_string_field(out, "protocol", key.protocol.as_str());
     out.push(',');
-    write_string_field(out, "srcIp", &key.src_ip);
+    write_addr_field(out, "srcIp", &key.src_ip);
     let _ = write!(out, ",\"srcPort\":{}", key.src_port);
     out.push(',');
-    write_string_field(out, "dstIp", &key.dst_ip);
+    write_addr_field(out, "dstIp", &key.dst_ip);
     let _ = write!(out, ",\"dstPort\":{},\"uid\":{}", key.dst_port, key.uid);
     out.push(',');
     write_string_field(out, "package", &session.package);
@@ -249,6 +410,23 @@ fn write_session(out: &mut String, session: &FlowSession) {
         ",\"firstSeenMs\":{},\"lastSeenMs\":{},\"seq\":{}}}",
         session.first_seen_ms, session.last_seen_ms, session.seq
     );
+}
+
+fn write_addr_field(out: &mut String, name: &str, addr: &FlowAddr) {
+    use std::fmt::Write;
+
+    out.push('"');
+    out.push_str(name);
+    out.push_str("\":");
+    match addr {
+        FlowAddr::V4(v4) => {
+            let _ = write!(out, "\"{v4}\"");
+        }
+        FlowAddr::V6(v6) => {
+            let _ = write!(out, "\"{v6}\"");
+        }
+        FlowAddr::Other(text) => write_json_string(out, text),
+    }
 }
 
 fn write_string_field(out: &mut String, name: &str, value: &str) {
@@ -279,164 +457,4 @@ fn write_json_string(out: &mut String, value: &str) {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn key(protocol: &str, dst: &str, port: u16, uid: i32) -> FlowKey {
-        FlowKey {
-            protocol: protocol.to_string(),
-            src_ip: "10.0.0.2".to_string(),
-            src_port: 40000,
-            dst_ip: dst.to_string(),
-            dst_port: port,
-            uid,
-        }
-    }
-
-    fn event(key: FlowKey, up: u64, down: u64, status: FlowStatus, at: i64) -> FlowEvent {
-        FlowEvent {
-            key,
-            domain: String::new(),
-            package: String::new(),
-            up_delta: up,
-            down_delta: down,
-            status,
-            at_ms: at,
-        }
-    }
-
-    #[test]
-    fn record_accumulates_bytes_and_bumps_sequence() {
-        let mut table = FlowTable::new(8);
-        let k = key("tcp", "1.1.1.1", 443, 1000);
-        let s1 = table.record(event(k.clone(), 10, 20, FlowStatus::Active, 1));
-        let s2 = table.record(event(k.clone(), 5, 7, FlowStatus::Active, 2));
-        assert!(s2 > s1);
-        assert_eq!(table.len(), 1);
-        let snapshot = table.snapshot(0, 0);
-        let session = &snapshot.sessions[0];
-        assert_eq!(session.up_bytes, 15);
-        assert_eq!(session.down_bytes, 27);
-        assert_eq!(session.last_seen_ms, 2);
-    }
-
-    #[test]
-    fn domain_is_filled_but_not_erased() {
-        let mut table = FlowTable::new(8);
-        let k = key("tcp", "1.1.1.1", 443, 1000);
-        let mut first = event(k.clone(), 1, 1, FlowStatus::Active, 1);
-        first.domain = "example.com".to_string();
-        table.record(first);
-        table.record(event(k.clone(), 1, 1, FlowStatus::Active, 2));
-        assert_eq!(table.snapshot(0, 0).sessions[0].domain, "example.com");
-    }
-
-    #[test]
-    fn incremental_snapshot_only_returns_newer_changes() {
-        let mut table = FlowTable::new(8);
-        let a = key("tcp", "1.1.1.1", 443, 1);
-        let b = key("udp", "2.2.2.2", 53, 2);
-        let seq_a = table.record(event(a, 1, 1, FlowStatus::Active, 1));
-        table.record(event(b, 1, 1, FlowStatus::Active, 2));
-        let delta = table.snapshot(seq_a, 0);
-        assert_eq!(delta.sessions.len(), 1);
-        assert_eq!(delta.sessions[0].key.dst_ip, "2.2.2.2");
-        assert_eq!(delta.next_seq, 2);
-    }
-
-    #[test]
-    fn snapshot_limit_reports_truncation() {
-        let mut table = FlowTable::new(8);
-        for i in 0..5u16 {
-            table.record(event(
-                key("tcp", "1.1.1.1", 1000 + i, 1),
-                1,
-                1,
-                FlowStatus::Active,
-                1,
-            ));
-        }
-        let snapshot = table.snapshot(0, 2);
-        assert_eq!(snapshot.total, 5);
-        assert_eq!(snapshot.sessions.len(), 2);
-        assert!(snapshot.truncated);
-    }
-
-    #[test]
-    fn new_key_at_capacity_evicts_oldest() {
-        let mut table = FlowTable::new(2);
-        table.record(event(
-            key("tcp", "1.1.1.1", 443, 1),
-            1,
-            1,
-            FlowStatus::Active,
-            1,
-        ));
-        table.record(event(
-            key("tcp", "2.2.2.2", 443, 2),
-            1,
-            1,
-            FlowStatus::Active,
-            2,
-        ));
-        table.record(event(
-            key("tcp", "3.3.3.3", 443, 3),
-            1,
-            1,
-            FlowStatus::Active,
-            3,
-        ));
-        assert_eq!(table.len(), 2);
-        assert_eq!(table.dropped(), 1);
-        let ips: Vec<String> = table
-            .snapshot(0, 0)
-            .sessions
-            .iter()
-            .map(|s| s.key.dst_ip.clone())
-            .collect();
-        assert!(!ips.contains(&"1.1.1.1".to_string()));
-    }
-
-    #[test]
-    fn prune_removes_closed_and_idle_active() {
-        let mut table = FlowTable::new(8);
-        let active = key("tcp", "1.1.1.1", 443, 1);
-        let closed = key("tcp", "2.2.2.2", 443, 2);
-        let idle = key("tcp", "3.3.3.3", 443, 3);
-        table.record(event(active, 1, 1, FlowStatus::Active, 900));
-        table.record(event(closed, 1, 1, FlowStatus::Closed, 900));
-        table.record(event(idle, 1, 1, FlowStatus::Active, 10));
-        let removed = table.prune_idle(1000, 500);
-        assert_eq!(removed, 2);
-        assert_eq!(table.len(), 1);
-    }
-
-    #[test]
-    fn snapshot_json_has_expected_shape() {
-        let mut table = FlowTable::new(8);
-        let mut e = event(key("tcp", "1.1.1.1", 443, 7), 3, 4, FlowStatus::Active, 42);
-        e.package = "com.example".to_string();
-        e.domain = "api.example.com".to_string();
-        table.record(e);
-        let value: serde_json::Value =
-            serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
-        assert_eq!(value["sessions"][0]["domain"], "api.example.com");
-        assert_eq!(value["sessions"][0]["status"], "active");
-        assert_eq!(value["sessions"][0]["uid"], 7);
-        assert_eq!(value["total"], 1);
-    }
-
-    #[test]
-    fn the_direct_writer_escapes_string_fields() {
-        let mut table = FlowTable::new(8);
-        let mut e = event(key("tcp", "1.1.1.1", 443, 7), 3, 4, FlowStatus::Active, 42);
-        e.package = "com.ex\tample".to_string();
-        e.domain = "odd\"name\ntrailing\\".to_string();
-        table.record(e);
-        let value: serde_json::Value =
-            serde_json::from_str(&table.snapshot(0, 0).to_json()).unwrap();
-        assert_eq!(value["sessions"][0]["package"], "com.ex\tample");
-        assert_eq!(value["sessions"][0]["domain"], "odd\"name\ntrailing\\");
-        assert_eq!(value["sessions"][0]["upBytes"], 3);
-    }
-}
+mod tests;

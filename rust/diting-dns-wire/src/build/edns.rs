@@ -5,7 +5,7 @@ use crate::build::types::{
     OPTION_COOKIE, OPTION_ECS, OPTION_EDE, OPTION_NSID, OPTION_PADDING, TYPE_OPT,
 };
 use crate::message::parse_header;
-use crate::name::unpack_name;
+use crate::name::skip_name;
 
 const FLAG_TC: u16 = 0x0200;
 
@@ -355,7 +355,7 @@ fn walk(wire: &[u8]) -> Option<Walk> {
     let header = parse_header(wire)?;
     let mut offset = 12usize;
     for _ in 0..header.question_count {
-        let (_, next) = unpack_name(wire, offset, wire.len())?;
+        let next = skip_name(wire, offset, wire.len())?;
         offset = next.checked_add(4)?;
         if offset > wire.len() {
             return None;
@@ -369,7 +369,7 @@ fn walk(wire: &[u8]) -> Option<Walk> {
 
     for index in 0..total {
         let record_start = offset;
-        let (_, name_end) = unpack_name(wire, offset, wire.len())?;
+        let name_end = skip_name(wire, offset, wire.len())?;
         let rrtype = read_u16(wire, name_end)?;
         let udp_size = read_u16(wire, name_end + 2)?;
         let ttl = read_u32(wire, name_end + 4)?;

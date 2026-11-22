@@ -132,14 +132,13 @@ fn record_flow(
     );
     let flow_key = diting_flow_core::FlowKey {
         protocol: if protocol == PROTOCOL_UDP {
-            "udp"
+            diting_flow_core::FlowProtocol::Udp
         } else {
-            "tcp"
-        }
-        .to_string(),
-        src_ip: crate::netstack::address_text(key.remote.addr),
+            diting_flow_core::FlowProtocol::Tcp
+        },
+        src_ip: crate::netstack::flow_addr(key.remote.addr),
         src_port: key.remote.port,
-        dst_ip: crate::netstack::address_text(key.local.addr),
+        dst_ip: crate::netstack::flow_addr(key.local.addr),
         dst_port: port,
         uid: context.uid,
     };

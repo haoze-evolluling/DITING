@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::net::IpAddr;
 
 use diting_dns_wire::build::{
@@ -46,8 +47,21 @@ pub fn normalize_trailing_dot(name: &str) -> String {
     }
 }
 
-pub fn normalized_name(name: &str) -> String {
-    name.trim().trim_end_matches('.').to_ascii_lowercase()
+pub fn normalized_name(name: &str) -> Cow<'_, str> {
+    let trimmed = name.trim().trim_end_matches('.');
+    if trimmed.bytes().any(|byte| byte.is_ascii_uppercase()) {
+        Cow::Owned(trimmed.to_ascii_lowercase())
+    } else {
+        Cow::Borrowed(trimmed)
+    }
+}
+
+#[inline]
+pub fn domain_or_suffix(name: &str, suffix: &str) -> bool {
+    name == suffix
+        || (name.len() > suffix.len()
+            && name.ends_with(suffix)
+            && name.as_bytes()[name.len() - suffix.len() - 1] == b'.')
 }
 
 pub fn attr_is_true(ctx: &DnsContext, key: &str) -> bool {

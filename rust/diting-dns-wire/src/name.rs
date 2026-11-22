@@ -61,6 +61,59 @@ pub fn unpack_name(wire: &[u8], start: usize, limit: usize) -> Option<(String, u
     Some((text, consumed?))
 }
 
+/// 校验并跳过一个压缩或非压缩 DNS 域名，返回它在 `wire` 中的结束偏移，不构造 `String`。
+pub fn skip_name(wire: &[u8], start: usize, limit: usize) -> Option<usize> {
+    let limit = limit.min(wire.len());
+    let mut offset = start;
+    let mut budget = MAX_NAME_WIRE_OCTETS;
+    let mut pointers = 0usize;
+    let mut consumed: Option<usize> = None;
+
+    loop {
+        if offset >= limit {
+            return None;
+        }
+        let byte = wire[offset] as usize;
+        offset += 1;
+        match byte & 0xc0 {
+            0x00 => {
+                if byte == 0 {
+                    if consumed.is_none() {
+                        consumed = Some(offset);
+                    }
+                    break;
+                }
+                if offset + byte > limit {
+                    return None;
+                }
+                budget -= (byte + 1) as i32;
+                if budget <= 0 {
+                    return None;
+                }
+                offset += byte;
+            }
+            0xc0 => {
+                if offset >= limit {
+                    return None;
+                }
+                let low = wire[offset] as usize;
+                offset += 1;
+                if consumed.is_none() {
+                    consumed = Some(offset);
+                }
+                pointers += 1;
+                if pointers > MAX_COMPRESSION_POINTERS {
+                    return None;
+                }
+                offset = ((byte & 0x3f) << 8) | low;
+            }
+            _ => return None,
+        }
+    }
+
+    consumed
+}
+
 fn push_escaped(text: &mut String, byte: u8) {
     if matches!(
         byte,
@@ -165,4 +218,35 @@ pub fn pack_name(name: &str, out: &mut Vec<u8>) -> bool {
         return false;
     }
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn skip_name_matches_unpack_name_on_valid_and_invalid_inputs() {
+        let mut wire = Vec::new();
+        assert!(pack_name("www.example.com.", &mut wire));
+        let second_start = wire.len();
+        // 压缩指针：sub + 指向偏移 4 ("example.com.")
+        wire.extend_from_slice(&[3, b's', b'u', b'b', 0xc0, 0x04]);
+        let root_start = wire.len();
+        wire.push(0);
+
+        for start in [0, second_start, root_start] {
+            let expected = unpack_name(&wire, start, wire.len()).map(|(_, end)| end);
+            assert_eq!(skip_name(&wire, start, wire.len()), expected);
+        }
+
+        // 自指压缩循环必须返回 None
+        let loop_wire = [0xc0, 0x00];
+        assert_eq!(unpack_name(&loop_wire, 0, loop_wire.len()), None);
+        assert_eq!(skip_name(&loop_wire, 0, loop_wire.len()), None);
+
+        // 截断标签必须返回 None
+        let truncated = [5, b'a', b'b'];
+        assert_eq!(unpack_name(&truncated, 0, truncated.len()), None);
+        assert_eq!(skip_name(&truncated, 0, truncated.len()), None);
+    }
 }

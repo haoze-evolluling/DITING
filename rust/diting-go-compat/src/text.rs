@@ -58,10 +58,12 @@ pub fn normalize_domain(domain: &str) -> Cow<'_, str> {
     };
     match lowered {
         Cow::Borrowed(value) => Cow::Borrowed(value.strip_suffix('.').unwrap_or(value)),
-        Cow::Owned(value) => match value.strip_suffix('.') {
-            Some(trimmed) => Cow::Owned(trimmed.to_string()),
-            None => Cow::Owned(value),
-        },
+        Cow::Owned(mut value) => {
+            if value.ends_with('.') {
+                value.pop();
+            }
+            Cow::Owned(value)
+        }
     }
 }
 

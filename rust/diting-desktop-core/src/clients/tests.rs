@@ -252,3 +252,32 @@ async fn reverse_lookup_disabled_returns_none() {
         None
     );
 }
+
+#[tokio::test]
+async fn concurrent_identify_aggregates_counts_in_background() {
+    let config = ClientConfig {
+        aliases: vec![alias("10.0.0.1", "Worker")],
+        ..ClientConfig::default()
+    };
+    let directory = std::sync::Arc::new(ClientDirectory::new(&config));
+    let ip: std::net::IpAddr = "10.0.0.1".parse().unwrap();
+
+    let mut handles = Vec::new();
+    for _ in 0..8 {
+        let dir = std::sync::Arc::clone(&directory);
+        handles.push(tokio::spawn(async move {
+            for _ in 0..250 {
+                assert_eq!(dir.identify(ip), "Worker");
+            }
+        }));
+    }
+    for handle in handles {
+        handle.await.unwrap();
+    }
+
+    assert_eq!(directory.query_count(ip), 2_000);
+    let info = directory.info();
+    assert_eq!(info.len(), 1);
+    assert_eq!(info[0].name, "Worker");
+    assert_eq!(info[0].query_count, 2_000);
+}

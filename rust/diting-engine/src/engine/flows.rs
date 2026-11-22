@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use diting_connlog_core::ConnLogDedup;
-use diting_flow_core::{FlowEvent, FlowKey, FlowStatus};
+use diting_flow_core::{FlowEvent, FlowKey, FlowStatus, OwnedSnapshot};
 use smoltcp::wire::IpEndpoint;
 
 use super::{now_ms, Engine};
@@ -36,14 +36,16 @@ impl Engine {
     }
 
     pub fn flow_snapshot_json(&self, since_seq: u64, limit: usize) -> String {
-        match self.flows.lock() {
-            Ok(table) => table.snapshot(since_seq, limit).to_json(),
-            Err(_) => concat!(
+        let Ok(table) = self.flows.lock() else {
+            return concat!(
                 "{\"baseSeq\":0,\"nextSeq\":0,\"total\":0,",
                 "\"truncated\":false,\"sessions\":[]}"
             )
-            .to_string(),
-        }
+            .to_string();
+        };
+        let (next_seq, items) = table.collect_since(since_seq);
+        drop(table);
+        OwnedSnapshot::from_collected(since_seq, next_seq, items, limit).to_json()
     }
 
     pub fn flow_uid(&self, protocol: i32, app: IpEndpoint, server: IpEndpoint) -> i32 {
