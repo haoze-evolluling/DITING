@@ -1,4 +1,3 @@
-use crate::addr::to4;
 use crate::prefix::{
     is_unspecified, parse_cidr, parse_dns64_prefix, well_known_prefix, Net, Prefix, PrefixError,
 };
@@ -94,9 +93,6 @@ impl Engine {
     }
 }
 
-pub fn fold_v4(bytes: &[u8]) -> Option<[u8; 4]> {
-    to4(bytes)
-}
 
 #[cfg(test)]
 mod tests;

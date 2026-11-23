@@ -193,39 +193,3 @@ class EntryButton extends StatelessWidget {
     );
   }
 }
-
-class InfoMessageButton extends StatelessWidget {
-  const InfoMessageButton({super.key, required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return CommonMinIconButtonTheme(
-      child: IconButton(
-        tooltip: context.l10n.formHelp,
-        onPressed: () => showMessageDialog(context, message),
-        icon: Icon(
-          TablerIcons.info_circle_filled,
-          size: 20,
-          color: context.colorScheme.error,
-        ),
-      ),
-    );
-  }
-}
-
-Future<void> showMessageDialog(BuildContext context, String message) =>
-    showFloatingDialog<void>(
-      context: context,
-      child: CommonDialog(
-        title: context.l10n.formHelp,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(context.l10n.formGotIt),
-          ),
-        ],
-        child: Text(message),
-      ),
-    );

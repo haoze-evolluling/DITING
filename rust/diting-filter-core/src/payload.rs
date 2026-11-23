@@ -91,11 +91,6 @@ impl<'a> Reader<'a> {
         Ok(out)
     }
 
-    pub(crate) fn text32(&mut self, field: &str) -> Result<String, DecodeError> {
-        let slice = self.bytes32(field)?;
-        String::from_utf8(slice.to_vec())
-            .map_err(|_| DecodeError::invalid(format!("{field} is not valid UTF-8")))
-    }
 
     pub(crate) fn bytes32(&mut self, field: &str) -> Result<&'a [u8], DecodeError> {
         let length = self.u32(field)? as usize;

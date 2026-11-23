@@ -116,7 +116,6 @@ impl DnsContext {
     }
 }
 
-pub const RCODE_FORMERR: u8 = 1;
 pub const RCODE_SERVFAIL: u8 = 2;
 pub const RCODE_NXDOMAIN: u8 = 3;
 pub const RCODE_NOTIMP: u8 = 4;

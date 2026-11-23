@@ -314,44 +314,6 @@ class _ElasticHoverState extends State<ElasticHover> {
   }
 }
 
-class ElasticButton extends StatelessWidget {
-  const ElasticButton({super.key, this.enabled = true, required this.child});
-
-  final bool enabled;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ElasticPress(
-      enabled: enabled,
-      child: Theme(
-        data: theme.copyWith(
-          splashFactory: NoSplash.splashFactory,
-          highlightColor: Colors.transparent,
-        ),
-        child: IconTheme(
-          data: IconTheme.of(context),
-          child: IconButtonTheme(
-            data: IconButtonThemeData(
-              style: ElasticPress.buttonStyle.merge(
-                IconButtonTheme.of(context).style,
-              ),
-            ),
-            child: FilledButtonTheme(
-              data: FilledButtonThemeData(
-                style: ElasticPress.buttonStyle.merge(
-                  FilledButtonTheme.of(context).style,
-                ),
-              ),
-              child: child,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _PressTransform extends SingleChildRenderObjectWidget {
   const _PressTransform({

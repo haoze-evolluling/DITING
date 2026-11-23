@@ -143,18 +143,6 @@ class DavNotifier extends Notifier<DavState> {
 
 final davProvider = NotifierProvider<DavNotifier, DavState>(DavNotifier.new);
 
-class DisclaimerNotifier extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  void agree() => state = true;
-
-  void reset() => state = false;
-}
-
-final disclaimerAcceptedProvider = NotifierProvider<DisclaimerNotifier, bool>(
-  DisclaimerNotifier.new,
-);
 
 class DeveloperModeNotifier extends Notifier<bool> {
   static const _key = 'developer_mode_enabled';

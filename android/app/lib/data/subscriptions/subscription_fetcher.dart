@@ -360,13 +360,3 @@ bool _isAsciiSpace(int byte) =>
     byte == 0x0d ||
     byte == 0x0b ||
     byte == 0x0c;
-
-class UnavailableSubscriptionFetcher implements SubscriptionFetcher {
-  const UnavailableSubscriptionFetcher();
-
-  @override
-  Future<SubscriptionFetchResult> fetch(
-    SubscriptionRecord record, {
-    bool useValidators = true,
-  }) async => SubscriptionFetchResult.failed(currentL10n.subsErrUnsupported);
-}

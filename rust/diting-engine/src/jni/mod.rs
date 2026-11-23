@@ -21,7 +21,6 @@ use crate::logs::EventSink;
 
 use callbacks::CallbackSink;
 
-pub const ENGINE_CLASS: &str = "com/haoze/diting/engine/Engine";
 
 pub(super) struct Instance {
     engine: Arc<Engine>,
@@ -66,12 +65,6 @@ fn remove(handle: jlong) -> Option<Arc<Instance>> {
         .remove(&handle)
 }
 
-pub fn live_engines() -> usize {
-    registry()
-        .lock()
-        .unwrap_or_else(|error| error.into_inner())
-        .len()
-}
 
 pub(super) fn resolve<'local, T: Default>(
     env: &mut EnvUnowned<'local>,

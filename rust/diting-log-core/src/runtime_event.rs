@@ -2,9 +2,6 @@ use std::collections::HashMap;
 
 pub const MAX_DEDUP_ENTRIES: usize = 1024;
 
-pub const EVENT_MAX_FILE_BYTES: i64 = 512 * 1024;
-
-pub const EVENT_MAX_FILES: usize = 2;
 
 pub const MAX_FIELDS: usize = 24;
 

@@ -4,14 +4,6 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 
-const mirrorPlaceholders = <String>{
-  '{url}',
-  '{urlEncoded}',
-  '{scheme}',
-  '{host}',
-  '{path}',
-  '{pathAndQuery}',
-};
 
 const _placeholderList =
     '{url}、{urlEncoded}、{scheme}、{host}、{path} 或 {pathAndQuery}';

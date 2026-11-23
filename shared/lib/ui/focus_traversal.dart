@@ -1,79 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
 part of 'focus.dart';
 
-class PageTraversalPolicy extends ReadingOrderTraversalPolicy
-    with _CrossScopeFocus {
-  @override
-  bool inDirection(FocusNode currentNode, TraversalDirection direction) {
-    final scope = currentNode.nearestScope;
-    if (scope == null) {
-      return super.inDirection(currentNode, direction);
-    }
-    final rowEnds =
-        !_isVertical(direction) &&
-        _isRemote(currentNode) &&
-        !_hasTargetInBand(scope, direction);
-    if (!rowEnds && super.inDirection(currentNode, direction)) {
-      return true;
-    }
-    final found = _findOutside(scope, currentNode.rect, direction);
-    if (found == null) {
-      return false;
-    }
-    _focusAcross(scope, found, direction);
-    return true;
-  }
-
-  static bool _hasTargetInBand(
-    FocusScopeNode scope,
-    TraversalDirection direction,
-  ) {
-    final focused = scope.focusedChild;
-    if (focused == null) {
-      return true;
-    }
-    final from = focused.rect;
-    return scope.traversalDescendants.any(
-      (node) =>
-          node != focused &&
-          _isAhead(from, node.rect, direction) &&
-          _isInBand(from, node.rect, direction) &&
-          _isUncovered(node, scope),
-    );
-  }
-
-  FocusNode? _findOutside(
-    FocusScopeNode scope,
-    Rect from,
-    TraversalDirection direction,
-  ) {
-    final root = FocusManager.instance.rootScope;
-    for (
-      var parent = scope.enclosingScope;
-      parent != null && parent != root;
-      parent = parent.enclosingScope
-    ) {
-      final level = parent;
-      final candidates = level.traversalDescendants.where(
-        (node) => node != scope && _isOutside(node, scope, level),
-      );
-      final found = _nearestInDirection(from, candidates, direction);
-      if (found != null) {
-        return found;
-      }
-    }
-    return null;
-  }
-
-  static bool _isOutside(
-    FocusNode node,
-    FocusScopeNode scope,
-    FocusScopeNode level,
-  ) =>
-      !node.ancestors.contains(scope) &&
-      !scope.ancestors.contains(node) &&
-      _isUncovered(node, level);
-}
 
 class _RemoteTraversalPolicy extends ReadingOrderTraversalPolicy
     with _CrossScopeFocus {
@@ -137,9 +64,6 @@ mixin _CrossScopeFocus on FocusTraversalPolicy {
   }
 }
 
-bool _isRemote(FocusNode node) =>
-    node.context?.getInheritedWidgetOfExactType<_RemoteScope>()?.enabled ??
-    false;
 
 bool _isVertical(TraversalDirection direction) =>
     direction == TraversalDirection.up || direction == TraversalDirection.down;

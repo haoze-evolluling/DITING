@@ -4,34 +4,6 @@ use async_trait::async_trait;
 
 use crate::context::DnsContext;
 
-pub const PIPELINE_ORDER: &[&str] = &[
-    "metrics",
-    "ede",
-    "ech",
-    "client",
-    "access",
-    "ratelimit",
-    "ddr",
-    "sudn",
-    "zone",
-    "hosts",
-    "rewrite",
-    "safesearch",
-    "ipv6",
-    "private_ptr",
-    "unqualified",
-    "any",
-    "filter",
-    "safebrowsing",
-    "rebind",
-    "filter_response",
-    "dns64",
-    "ecs",
-    "cache",
-    "bogus_nxdomain",
-    "upstream_route",
-    "forward",
-];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StageResult {

@@ -209,9 +209,6 @@ pub fn controller_error(error: ControllerError) -> Resp {
     internal_error(error.message)
 }
 
-pub fn client_error(error: ControllerError) -> Resp {
-    bad_request(error.message)
-}
 
 pub fn plain(status: StatusCode, body: Vec<u8>, content_type: &str) -> Resp {
     let mut response = Response::new(Full::new(Bytes::from(body)));

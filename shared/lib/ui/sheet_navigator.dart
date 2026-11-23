@@ -5,8 +5,6 @@ class SheetPagesNavigator extends Navigator {
   const SheetPagesNavigator({super.key, super.onGenerateInitialRoutes});
 }
 
-bool isSheetPage(BuildContext context) =>
-    Navigator.maybeOf(context)?.widget is SheetPagesNavigator;
 
 NavigatorState sheetNavigatorOf(BuildContext context) {
   var navigator = Navigator.of(context);

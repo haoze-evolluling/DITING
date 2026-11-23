@@ -2,10 +2,7 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/dns_cache_repository.dart';
-import 'package:diting_android/data/db/dns_log_repository.dart';
 import 'package:diting_shared/data/db/app_database.dart';
-import 'package:diting_android/data/db/race_log_repository.dart';
-import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,14 +44,6 @@ Map<String, String> providerDisplayNames(LegacySettings settings) => {
     provider.id: provider.name,
 };
 
-final dnsLogsProvider = FutureProvider<List<DnsLogRecord>>((ref) async {
-  ref.watch(dnsLogRevisionProvider);
-  return _viaDatabase(
-    ref,
-    (db) => DnsLogRepository(db).recent(),
-    const <DnsLogRecord>[],
-  );
-});
 
 final dnsCacheProvider = FutureProvider<List<DnsCacheRecord>>((ref) async {
   ref.watch(dnsLogRevisionProvider);
@@ -65,37 +54,6 @@ final dnsCacheProvider = FutureProvider<List<DnsCacheRecord>>((ref) async {
   );
 });
 
-final raceRankingProvider = FutureProvider<RaceRankingBoard>((ref) async {
-  ref.watch(dnsLogRevisionProvider);
-  final names = providerDisplayNames(ref.watch(legacySettingsProvider));
-  final db = await ref.watch(activeLogDatabaseProvider.future);
-  if (db == null) return const RaceRankingBoard.empty();
-  final repository = RaceLogRepository(db);
-  final entries = await repository.ranking();
-  final summary = await repository.summary();
-  final board = await deriveOffThread('race.board', {
-    'summary': summary.toKernel(),
-    'ranking': [for (final entry in entries) entry.toKernel()],
-    'names': names,
-  });
-  final boardSummary = (board['summary'] as Map?) ?? const {};
-  return RaceRankingBoard(
-    summary: RaceSummary(
-      requests: (boardSummary['requests'] as num?)?.toInt() ?? 0,
-      failures: (boardSummary['failures'] as num?)?.toInt() ?? 0,
-      averageLatencyMs:
-          (boardSummary['averageLatencyMs'] as num?)?.toInt() ?? 0,
-    ),
-    entries: [
-      for (final entry in board['entries'] as List? ?? const [])
-        RaceRanking(
-          provider: (entry as Map)['provider'] as String? ?? '',
-          wins: (entry['wins'] as num?)?.toInt() ?? 0,
-          averageLatencyMs: (entry['averageLatencyMs'] as num?)?.toInt() ?? 0,
-        ),
-    ],
-  );
-});
 
 class RaceRankingBoard {
   const RaceRankingBoard({required this.summary, required this.entries});

@@ -21,11 +21,9 @@ enum DashboardDensity {
 
 const minDesktopWidth = 640.0;
 
-const minTwoColumnWidth = 760.0;
 const minStandardHeight = 824.0;
 const mobileMaxWidth = 560.0;
 
-int dashboardColumnsOf(double width) => width < minTwoColumnWidth ? 1 : 2;
 
 double dashboardMobileSideOf(double width) =>
     math.max(16, (width - mobileMaxWidth) / 2);

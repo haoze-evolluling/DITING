@@ -1,6 +1,5 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -43,15 +42,6 @@ Future<void> openLinkOrCopy(
   await copyToClipboard(context, url, fallbackMessage);
 }
 
-Future<void> joinQqGroup(BuildContext context) async {
-  if (await openExternalLink(qqGroupUri)) return;
-  if (!context.mounted) return;
-  await copyToClipboard(
-    context,
-    qqGroupNumber,
-    context.l10n.aboutQqCopied(qqGroupNumber),
-  );
-}
 
 Future<void> copyToClipboard(
   BuildContext context,

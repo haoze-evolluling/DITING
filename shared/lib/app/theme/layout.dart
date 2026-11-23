@@ -1,6 +1,5 @@
 const maxMobileWidth = 600.0;
 
-const maxLaptopWidth = 840.0;
 
 const maxTextScale = 1.4;
 

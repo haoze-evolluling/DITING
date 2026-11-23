@@ -86,69 +86,6 @@ class MiniScreen extends StatelessWidget {
   }
 }
 
-class MiniScreenThumb extends StatelessWidget {
-  const MiniScreenThumb({
-    super.key,
-    required this.screen,
-    this.height = _shownHeight,
-  });
-
-  static const Size _logicalSize = Size(90, 170);
-  static const double _shownHeight = 30;
-
-  final Widget screen;
-
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      width: height * _logicalSize.width / _logicalSize.height,
-      child: ClipRSuperellipse(
-        borderRadius: AppRadius.standard,
-        child: FittedBox(
-          child: SizedBox(
-            width: _logicalSize.width,
-            height: _logicalSize.height,
-            child: screen,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class MiniSplitScreen extends StatelessWidget {
-  const MiniSplitScreen({super.key, required this.light, required this.dark});
-
-  final Widget light;
-  final Widget dark;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        light,
-        ClipPath(clipper: _DiagonalClipper(), child: dark),
-      ],
-    );
-  }
-}
-
-class _DiagonalClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) => Path()
-    ..moveTo(size.width * 0.7, 0)
-    ..lineTo(size.width, 0)
-    ..lineTo(size.width, size.height)
-    ..lineTo(size.width * 0.3, size.height)
-    ..close();
-
-  @override
-  bool shouldReclip(_DiagonalClipper oldClipper) => false;
-}
 
 class _MiniGeometry {
   _MiniGeometry(this.size, {required bool floatingBar})

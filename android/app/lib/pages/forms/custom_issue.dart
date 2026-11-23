@@ -1,6 +1,5 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -87,61 +86,4 @@ class ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InfoBanner.error(message: message);
-}
-
-class CustomIssuesBanner extends StatelessWidget {
-  const CustomIssuesBanner({super.key, required this.issues, this.title});
-
-  final List<String> issues;
-  final String? title;
-
-  @override
-  Widget build(BuildContext context) {
-    if (issues.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    final colorScheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-        decoration: ShapeDecoration(
-          shape: AppShape.standard,
-          color: colorScheme.errorContainer,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 6,
-          children: [
-            Row(
-              spacing: 8,
-              children: [
-                Icon(
-                  TablerIcons.alert_triangle,
-                  size: 20,
-                  color: colorScheme.onErrorContainer,
-                ),
-                Text(
-                  title ?? context.l10n.formIssuesTitle,
-                  style: AppTextRole.bodyStrong
-                      .of(context)
-                      .copyWith(color: colorScheme.onErrorContainer),
-                ),
-              ],
-            ),
-            for (final issue in issues)
-              Padding(
-                padding: const EdgeInsets.only(left: 28),
-                child: Text(
-                  '· $issue',
-                  style: AppTextRole.supportingText
-                      .of(context)
-                      .copyWith(color: colorScheme.onErrorContainer),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }

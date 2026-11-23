@@ -20,7 +20,6 @@ pub const REASON_SERVICE_SCHEDULE_INACTIVE: &str = "SERVICE_SCHEDULE_INACTIVE";
 pub const REASON_ALLOWLIST_ONLY: &str = "ALLOWLIST_ONLY";
 pub const REASON_DNSREWRITE: &str = "DNSREWRITE";
 pub const REASON_RESPONSE_BLOCKED: &str = "RESPONSE_CNAME_BLOCKED";
-pub const REASON_BOGUS_NXDOMAIN: &str = "BOGUS_NXDOMAIN";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum VerdictAction {

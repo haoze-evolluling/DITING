@@ -2,34 +2,6 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
-class RingBuffer<T> {
-  RingBuffer(this.maxLength, {List<T>? initial})
-    : _items = [...?initial].take(maxLength).toList();
-
-  final int maxLength;
-  final List<T> _items;
-
-  int _revision = 0;
-
-  int get revision => _revision;
-
-  List<T> get list => List.unmodifiable(_items);
-
-  T? get last => _items.isEmpty ? null : _items.last;
-
-  void add(T value) {
-    _items.add(value);
-    if (_items.length > maxLength) {
-      _items.removeAt(0);
-    }
-    _revision++;
-  }
-
-  void clear() {
-    _items.clear();
-    _revision++;
-  }
-}
 
 class SpeedSample {
   const SpeedSample({required this.up, required this.down});

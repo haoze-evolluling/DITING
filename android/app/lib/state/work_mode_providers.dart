@@ -11,7 +11,6 @@ import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/data/vpn/power_state.dart';
 import 'package:diting_android/data/vpn/root_dns_bridge.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
 import 'package:diting_android/state/outbound_proxy_providers.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
 import 'package:diting_android/state/server_providers.dart';
@@ -241,10 +240,6 @@ final onboardingProvider = NotifierProvider<OnboardingNotifier, bool>(
   OnboardingNotifier.new,
 );
 
-String raceProviderSummary(Set<String> ids) =>
-    summaryOfProviders(ids, defaultProviderCatalog());
 
 String providerEndpointOf(String id) =>
     endpointOfProvider(id, defaultProviderCatalog());
-
-ResolutionMode resolutionModeOf(Ref ref) => ref.read(resolutionModeProvider);

@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use diting_dns_wire::build::{RData, ResourceRecord, TYPE_PTR};
-use diting_dns_wire::{CLASS_IN, TYPE_PTR as TYPE_PTR_QUERY};
+use diting_dns_wire::TYPE_PTR as TYPE_PTR_QUERY;
 
 use crate::context::{DnsContext, RCODE_NXDOMAIN};
 use crate::pipeline::{Stage, StageResult};
@@ -227,18 +226,6 @@ impl Stage for PrivatePtrStage {
     }
 }
 
-pub fn ptr_answer(ctx: &DnsContext, host: &str, ttl: u32) -> Option<Vec<u8>> {
-    let target = crate::stages::util::normalize_trailing_dot(host);
-    start_reply(ctx)?
-        .push_answer(ResourceRecord::new(
-            &ctx.question.name,
-            TYPE_PTR,
-            CLASS_IN,
-            ttl,
-            RData::Ptr(target),
-        ))
-        .finish()
-}
 
 #[cfg(test)]
 mod tests {

@@ -30,10 +30,6 @@ export function normalizeQueryStatus(status: string | undefined): QueryStatus {
   return "allowed";
 }
 
-export function statusLabel(status: string | undefined): string {
-  return meta[normalizeQueryStatus(status)].label;
-}
-
 export function StatusBadge({ status }: { status: string | undefined }) {
   const current = meta[normalizeQueryStatus(status)];
   const Icon = current.icon;

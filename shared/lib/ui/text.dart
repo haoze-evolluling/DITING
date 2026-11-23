@@ -1,52 +1,6 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-import 'package:diting_shared/ui/measure.dart';
 import 'package:material_ui/material_ui.dart';
 
-class TooltipText extends StatelessWidget {
-  final Text text;
-
-  const TooltipText({super.key, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-        final isOverflow = MeasureScope.of(context)
-            .computeTextIsOverflow(text, maxWidth: maxWidth);
-        if (isOverflow) {
-          return Tooltip(
-            triggerMode: TooltipTriggerMode.longPress,
-            preferBelow: false,
-            message: text.data,
-            child: text,
-          );
-        }
-        return text;
-      },
-    );
-  }
-}
-
-class TooltipLabel extends StatelessWidget {
-  final String text;
-  final TextStyle? style;
-  final int maxLines;
-
-  const TooltipLabel(this.text, {super.key, this.style, this.maxLines = 2});
-
-  @override
-  Widget build(BuildContext context) {
-    return TooltipText(
-      text: Text(
-        text,
-        maxLines: maxLines,
-        overflow: TextOverflow.ellipsis,
-        style: DefaultTextStyle.of(context).style.merge(style),
-      ),
-    );
-  }
-}
 
 class EmojiText extends StatelessWidget {
   final String text;

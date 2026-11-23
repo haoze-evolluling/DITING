@@ -98,16 +98,6 @@ fn zero_timestamp() -> String {
     "0001-01-01T00:00:00Z".to_string()
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LANAddressInfo {
-    #[serde(default)]
-    pub ip: String,
-    #[serde(default)]
-    pub interface_name: String,
-    #[serde(default, rename = "isIPv6")]
-    pub is_ipv6: bool,
-}
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

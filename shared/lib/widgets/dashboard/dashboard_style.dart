@@ -149,6 +149,3 @@ String dashboardCount(int count) {
   }
   return buffer.toString();
 }
-
-String dashboardSpeed(num bytesPerSecond) =>
-    '${dashboardTraffic(bytesPerSecond)}/s';

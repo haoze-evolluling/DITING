@@ -14,11 +14,9 @@ pub mod upstream;
 pub mod web;
 
 use std::fmt;
-use std::net::SocketAddr;
 
 use diting_desktop_api::config::{Config, DNSConfig};
 use diting_desktop_api::platform_types::PortCheckResult;
-use diting_desktop_dns::context::Transport;
 
 #[derive(Debug, Clone)]
 pub struct ControllerError {
@@ -105,13 +103,6 @@ pub fn error_message(result: Result<(), ControllerError>) -> Option<ControllerEr
     result.err()
 }
 
-pub fn client_host(remote: SocketAddr) -> String {
-    remote.ip().to_string()
-}
-
-pub fn transport_name(transport: Transport) -> &'static str {
-    transport.as_str()
-}
 
 pub fn config_snapshot(runtime: &crate::AppRuntime) -> Config {
     runtime.config()

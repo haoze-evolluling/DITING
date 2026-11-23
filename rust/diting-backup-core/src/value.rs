@@ -83,20 +83,11 @@ pub fn string_set(value: &Value) -> BTreeMap<String, ()> {
     set
 }
 
-pub fn set_of_strings(values: &[String]) -> BTreeMap<String, ()> {
-    values
-        .iter()
-        .map(|value| (value.clone(), ()))
-        .collect::<BTreeMap<_, _>>()
-}
 
 pub fn same_string_set(left: &Value, right: &Value) -> bool {
     string_set(left) == string_set(right)
 }
 
-pub fn encode_json(value: &Value) -> String {
-    serde_json::to_string(value).unwrap_or_else(|_| String::from("null"))
-}
 
 pub fn config_signature(value: &Value) -> String {
     let mut entries: Vec<(String, Value)> = match value {
@@ -165,9 +156,6 @@ pub fn round_opacity(value: f64) -> Value {
     Value::from(rounded)
 }
 
-pub fn i64_value(value: i64) -> Value {
-    Value::from(value)
-}
 
 #[cfg(test)]
 mod tests {

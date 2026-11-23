@@ -102,12 +102,6 @@ Future<void> whenRouteSettled(BuildContext context) async {
 bool isRouteArriving(BuildContext context) => routesCarrying(context)
     .any((route) => route.offstage || (route.animation?.isAnimating ?? false));
 
-Future<void> whenRouteUncovered(BuildContext context) async {
-  final animation = ModalRoute.of(context)?.secondaryAnimation;
-  if (animation != null) {
-    await _whenStill(animation);
-  }
-}
 
 Future<void> _whenSettled(ModalRoute<Object?> route) async {
   while (route.offstage && route.isActive) {

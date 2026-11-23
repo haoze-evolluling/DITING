@@ -1,55 +1,9 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
 import 'inherited.dart';
 
-class CommonPopScope extends StatelessWidget {
-  final Widget child;
-
-  final FutureOr<bool> Function(BuildContext context)? onPop;
-  final FutureOr<void> Function()? onPopSuccess;
-
-  const CommonPopScope({
-    super.key,
-    required this.child,
-    this.onPop,
-    this.onPopSuccess,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final route = ModalRoute.of(context);
-    final hasBackLayer = route?.willHandlePopInternally == true;
-    return PopScope(
-      canPop: onPop == null || hasBackLayer,
-      onPopInvokedWithResult: onPop == null
-          ? null
-          : (didPop, _) async {
-              if (didPop) {
-                return;
-              }
-              if (route?.willHandlePopInternally == true) {
-                Navigator.of(context).pop();
-                return;
-              }
-              final res = await onPop!(context);
-              if (!context.mounted) {
-                return;
-              }
-              if (!res) {
-                return;
-              }
-              Navigator.of(context).pop();
-              if (onPopSuccess != null) {
-                await onPopSuccess!();
-              }
-            },
-      child: child,
-    );
-  }
-}
 
 class BackLayerScope extends StatefulWidget {
   final Widget child;

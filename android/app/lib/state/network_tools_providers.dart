@@ -69,16 +69,6 @@ String latencyEndpointLabel(DnsLatencyProviderSpec spec) {
   return '[${spec.protocol.label}] ${spec.host}:${spec.port}';
 }
 
-final latencyProvidersOfProtocolProvider =
-    Provider.family<List<DnsLatencyProviderSpec>, DnsLatencyProtocol>((
-      ref,
-      protocol,
-    ) {
-      return [
-        for (final spec in ref.watch(latencyTestCatalogProvider))
-          if (spec.protocol == protocol) spec,
-      ];
-    });
 
 final latencyTestProtocolsProvider = Provider<List<DnsLatencyProtocol>>((ref) {
   final present = {

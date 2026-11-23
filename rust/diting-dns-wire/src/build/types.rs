@@ -16,9 +16,6 @@ pub const TYPE_ANY: u16 = 255;
 pub const TYPE_CAA: u16 = 257;
 
 pub const CLASS_IN: u16 = 1;
-pub const CLASS_CH: u16 = 3;
-pub const CLASS_ANY: u16 = 255;
-pub const CLASS_NONE: u16 = 254;
 
 pub const OPTION_NSID: u16 = 3;
 pub const OPTION_ECS: u16 = 8;

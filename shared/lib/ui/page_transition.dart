@@ -65,8 +65,6 @@ Rect _scaleTowardCenter(Rect rect, Size size, double scale) {
 Rect recededRect(Rect rect, Size size, double covered) =>
     _scaleTowardCenter(rect, size, 1 - _recededShrinkOf(size) * covered);
 
-Rect unrecededRect(Rect rect, Size size, double covered) =>
-    _scaleTowardCenter(rect, size, 1 / (1 - _recededShrinkOf(size) * covered));
 
 var _measuringAtRest = false;
 
@@ -389,30 +387,5 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
       final DragBackRouteMixin<T> route => route.dragBackDetector(transition),
       _ => transition,
     };
-  }
-}
-
-class HomeRoute<T> extends PageRoute<T> with CardRouteMixin<T> {
-  HomeRoute({required this.builder, super.settings});
-
-  final WidgetBuilder builder;
-
-  @override
-  Color settledFillOf(Color surface) => Colors.transparent;
-
-  @override
-  bool get snapshotWhileMoving => false;
-
-  @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) {
-    return Semantics(
-      scopesRoute: true,
-      explicitChildNodes: true,
-      child: builder(context),
-    );
   }
 }

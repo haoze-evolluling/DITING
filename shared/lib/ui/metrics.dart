@@ -12,8 +12,6 @@ extension AdaptiveSizeExt on num {
 double _adaptiveScaleOf(BuildContext context) =>
     1 + (MediaQuery.textScalerOf(context).scale(1) - 1) * 0.5;
 
-EdgeInsets baseInfoEdgeInsetsOf(BuildContext context) =>
-    EdgeInsets.all(16.mAp(context));
 
 EdgeInsets listHeaderPaddingOf(BuildContext context) =>
     const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8) *

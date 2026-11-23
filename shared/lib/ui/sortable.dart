@@ -66,44 +66,6 @@ class _SortableItemScope extends InheritedWidget {
       data != oldWidget.data;
 }
 
-class DisclosureIndicator extends StatelessWidget {
-  const DisclosureIndicator({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox.square(
-      dimension: kMinInteractiveDimension,
-      child: Center(child: Icon(TablerIcons.chevron_right)),
-    );
-  }
-}
-
-class DetailButton extends StatelessWidget {
-  const DetailButton({
-    super.key,
-    required this.glyph,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  final IconData glyph;
-  final String tooltip;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox.square(
-      dimension: kMinInteractiveDimension,
-      child: Center(
-        child: IconButton(
-          tooltip: tooltip,
-          onPressed: onPressed,
-          icon: Icon(glyph),
-        ),
-      ),
-    );
-  }
-}
 
 class SortHandle extends StatefulWidget {
   const SortHandle({super.key, required this.index});

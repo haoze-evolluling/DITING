@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use diting_dns_wire::build::{MessageBuilder, RData, ResourceRecord, TYPE_ANY, TYPE_HINFO};
 use diting_dns_wire::CLASS_IN;
@@ -88,9 +86,6 @@ pub fn minimal_response(query: &[u8], mode: &str) -> Option<Vec<u8>> {
     message.response
 }
 
-pub fn shared_config(config: ConfigHandle) -> Arc<dyn Stage> {
-    Arc::new(AnyStage::new(config))
-}
 
 #[cfg(test)]
 mod tests {

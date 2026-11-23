@@ -2,55 +2,19 @@
 import 'dart:math' as math;
 
 import 'package:diting_shared/ui/context.dart';
-import 'package:diting_shared/ui/icons/icons.dart';
 import 'package:diting_shared/ui/inherited.dart';
-import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
-import 'package:diting_shared/ui/typography.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/physics.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'card.dart';
 import 'goo.dart';
 import 'liquid_glass.dart';
 import 'navigation_dock.dart';
 
 part 'button_hover_mark.dart';
 
-class MoreActionButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final String label;
-  final Widget? trailing;
-
-  const MoreActionButton({
-    super.key,
-    this.onPressed,
-    required this.label,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: CommonCard(
-        radius: AppCorner.standard,
-        onPressed: onPressed,
-        child: ListTile(
-          minTileHeight: listRowMinHeight,
-          minVerticalPadding: listRowVerticalPadding,
-          titleTextStyle: AppTextRole.rowTitle.of(context),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          title: Text(label),
-          trailing:
-              trailing ?? const Icon(TablerIcons.chevron_right, size: 18),
-        ),
-      ),
-    );
-  }
-}
 
 enum TonalButtonSize {
   bar(button: 44, icon: 24),

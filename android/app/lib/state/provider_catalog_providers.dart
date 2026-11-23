@@ -43,8 +43,6 @@ String endpointOfProvider(String id, List<MockProvider> catalog) {
   return '${provider.protocol.label} · ${provider.address}';
 }
 
-String providerEndpointFromCatalog(WidgetRef ref, String id) =>
-    endpointOfProvider(id, ref.watch(dnsProviderCatalogProvider));
 
 String providerLatencyLabel(MockProvider provider) => provider.latencyMs < 0
     ? currentL10n.providerNotTested

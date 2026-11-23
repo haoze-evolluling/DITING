@@ -4,8 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/physics.dart';
 import 'package:flutter/widgets.dart';
 
-const fadeTabDuration = Duration(milliseconds: 220);
-const fadeTabCurve = Curves.easeInOut;
 
 Duration frameIntervalOf(BuildContext context) {
   final rate = View.maybeOf(context)?.display.refreshRate ?? 0;

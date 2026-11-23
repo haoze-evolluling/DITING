@@ -1,7 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr};
 use std::sync::OnceLock;
 
-use diting_desktop_api::platform_types::{AdapterState, LANAddressInfo};
+use diting_desktop_api::platform_types::AdapterState;
 use regex::Regex;
 
 const VIRTUAL_PATTERN: &str = "(?i)(Hyper-V|Virtual|VMware|VirtualBox|TAP|TUN|singbox|sing-tun|VPN|Tailscale|WireGuard|ZeroTier|Loopback|Npcap|Clat|WFP|WAN Miniport|Default Switch|Host-Only|vEthernet|WSL|Docker|Bluetooth|蓝牙|Radmin|Hamachi|veth|virbr|br-|docker0|wg[0-9])";
@@ -133,21 +133,6 @@ pub fn extract_lan_addresses(interfaces: &[InterfaceAddress]) -> Vec<String> {
     result
 }
 
-pub fn extract_lan_address_info(interfaces: &[InterfaceAddress]) -> Vec<LANAddressInfo> {
-    let allowed: Vec<String> = extract_lan_addresses(interfaces);
-    interfaces
-        .iter()
-        .filter(|entry| {
-            !is_virtual_adapter(&entry.interface, "", false)
-                && allowed.contains(&entry.address.to_string())
-        })
-        .map(|entry| LANAddressInfo {
-            ip: entry.address.to_string(),
-            interface_name: entry.interface.clone(),
-            is_ipv6: entry.address.is_ipv6(),
-        })
-        .collect()
-}
 
 fn host_part(text: &str) -> &str {
     if let Some(rest) = text.strip_prefix('[') {

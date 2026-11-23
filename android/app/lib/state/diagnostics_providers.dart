@@ -264,6 +264,3 @@ String networkInterfaceLabel(NetworkInfoSnapshot snapshot) =>
     snapshot.interfaceName.isEmpty
     ? currentL10n.diagnosticsNoActiveNetwork
     : snapshot.interfaceName;
-
-String latencyText(double? value) =>
-    value == null ? '—' : '${value.toStringAsFixed(1)} ms';

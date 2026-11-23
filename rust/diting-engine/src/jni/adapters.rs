@@ -10,10 +10,6 @@ use crate::attribution::{AppUidResolver, UidResolver};
 use crate::engine::TrafficSink;
 use crate::protect::Protector;
 
-pub const PROTECT_SIGNATURE: &str = "(J)Z";
-pub const UID_SIGNATURE: &str = "(J[BJ[BJ)J";
-pub const APP_SIGNATURE: &str = "(J)Ljava/lang/String;";
-pub const TRAFFIC_SIGNATURE: &str = "([B)V";
 
 type GlobalObject = Global<JObject<'static>>;
 
@@ -195,7 +191,6 @@ pub fn protector(env: &mut Env<'_>, callback: &JObject<'_>) -> Option<Arc<dyn Pr
         .map(|protector| Arc::new(protector) as Arc<dyn Protector>)
 }
 
-pub const OUTBOUND_SIGNATURE: &str = "(Ljava/lang/String;Ljava/lang/String;)V";
 
 pub struct JniOutboundStatus {
     vm: JavaVM,
@@ -230,7 +225,6 @@ impl crate::outbound::StatusSink for JniOutboundStatus {
     }
 }
 
-pub const HTTP_LOG_SIGNATURE: &str = "([B)V";
 
 const HTTP_BATCH_SIZE: usize = 64;
 const HTTP_FLUSH_INTERVAL: Duration = Duration::from_millis(200);

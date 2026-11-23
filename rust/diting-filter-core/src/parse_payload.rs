@@ -38,45 +38,6 @@ pub fn encode_parsed_lines(lines: &[ParsedLine]) -> Vec<u8> {
     out
 }
 
-pub fn decode_parsed_lines(data: &[u8]) -> Result<Vec<ParsedLine>, DecodeError> {
-    let mut reader = Reader::new(data);
-    let layout = reader.u8("layout")?;
-    if layout != LAYOUT_VERSION {
-        return Err(DecodeError::invalid(format!(
-            "parse reply layout {layout}, expected {LAYOUT_VERSION}"
-        )));
-    }
-    let count = reader.u32("parse rule count")? as usize;
-    let mut lines = Vec::with_capacity(count.min(1 << 16));
-    for _ in 0..count {
-        let raw = reader.text32("rule raw")?;
-        let pattern = reader.text32("rule pattern")?;
-        let flags = reader.u8("rule flags")?;
-        let dns_type = reader.u16("rule dnstype")?;
-        let deny_allow = read_texts(&mut reader, "rule denyallow")?;
-        let to = read_texts(&mut reader, "rule to")?;
-        let rewrite = if flags & FLAG_REWRITE != 0 {
-            Some(reader.text32("rewrite value")?)
-        } else {
-            None
-        };
-        lines.push(ParsedLine {
-            raw,
-            pattern,
-            is_allow: flags & FLAG_ALLOW != 0,
-            important: flags & FLAG_IMPORTANT != 0,
-            is_regex: flags & FLAG_REGEX != 0,
-            dns_type,
-            is_wildcard: flags & FLAG_WILDCARD != 0,
-            is_exact: flags & FLAG_EXACT != 0,
-            deny_allow,
-            to,
-            rewrite,
-        });
-    }
-    reader.expect_end()?;
-    Ok(lines)
-}
 
 fn flags_of(line: &ParsedLine) -> u8 {
     let mut flags = 0u8;
@@ -111,13 +72,4 @@ fn push_texts(out: &mut Vec<u8>, values: &[String]) {
     for value in values {
         push_text(out, value);
     }
-}
-
-fn read_texts(reader: &mut Reader<'_>, field: &str) -> Result<Vec<String>, DecodeError> {
-    let count = reader.u16(field)? as usize;
-    let mut out = Vec::with_capacity(count);
-    for _ in 0..count {
-        out.push(reader.text32(field)?);
-    }
-    Ok(out)
 }

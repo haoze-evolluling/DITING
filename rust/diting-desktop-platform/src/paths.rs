@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub const ENV_DATA_DIR: &str = "DITING_DATA_DIR";
 pub const CONFIG_FILE: &str = "config.json";
@@ -97,13 +97,11 @@ pub fn resolve_state_path(explicit: &str) -> PathBuf {
     }
 }
 
-pub fn parent_of(path: &Path) -> PathBuf {
-    path.parent().map(Path::to_path_buf).unwrap_or_default()
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn override_wins() {

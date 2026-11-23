@@ -1,6 +1,6 @@
 use serde_json::Value;
 
-use crate::catalog::{find, CATALOG};
+use crate::catalog::find;
 
 struct Rule {
     pattern: String,
@@ -62,9 +62,6 @@ pub fn expand(service_ids: &[String], kind: &str) -> Value {
     })
 }
 
-pub fn catalog_size() -> usize {
-    CATALOG.len()
-}
 
 #[cfg(test)]
 mod tests {

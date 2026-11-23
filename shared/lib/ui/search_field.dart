@@ -10,7 +10,6 @@ import 'package:diting_shared/ui/surface.dart';
 import 'package:diting_shared/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 
-const sheetSearchMinItemCount = 10;
 
 const double _glyphInset = 12;
 const double _textInset = 41;

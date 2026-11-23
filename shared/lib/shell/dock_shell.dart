@@ -70,12 +70,6 @@ String destinationLocation(BottomBarDestination destination) =>
       BottomBarDestination.settings => Routes.settings,
     };
 
-BottomBarDestination destinationOfBranch(String location) {
-  for (final destination in BottomBarDestination.values) {
-    if (destinationLocation(destination) == location) return destination;
-  }
-  throw StateError('No bottom-bar destination for branch $location');
-}
 
 class _Dock extends StatelessWidget {
   const _Dock({

@@ -85,11 +85,6 @@ export function formatUnixSeconds(seconds: number): string {
   return formatDateTime(seconds * 1000);
 }
 
-export function shortId(value: string, head = 8, tail = 6): string {
-  if (!value || value.length <= head + tail + 1) return value;
-  return `${value.slice(0, head)}…${value.slice(-tail)}`;
-}
-
 export function hourRangeLabel(points: { hourMs: number }[]): string {
   if (points.length === 0) return "过去 24 小时";
   const first = new Date(points[0].hourMs);

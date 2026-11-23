@@ -1,20 +1,13 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-import 'dart:math' as math;
 
 import 'package:diting_shared/ui/context.dart';
 import 'package:diting_shared/ui/focus.dart';
-import 'package:diting_shared/ui/icons/icons.dart';
-import 'package:diting_shared/ui/measure.dart';
-import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/shape.dart';
 import 'package:diting_shared/ui/surface.dart';
-import 'package:diting_shared/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import 'fade_box.dart';
-import 'scaffold.dart';
-import 'text.dart';
 
 class Info {
   final String label;
@@ -23,81 +16,6 @@ class Info {
   const Info({required this.label, this.glyph});
 }
 
-class InfoHeader extends StatelessWidget {
-  final Info info;
-  final List<Widget> actions;
-  final EdgeInsets? padding;
-  final double? space;
-
-  const InfoHeader({
-    super.key,
-    required this.info,
-    this.padding,
-    this.space,
-    List<Widget>? actions,
-  }) : actions = actions ?? const [];
-
-  @override
-  Widget build(BuildContext context) {
-    final actionInset = 8.mAp(context);
-    EdgeInsetsGeometry nextPadding = (padding ?? baseInfoEdgeInsetsOf(context));
-    if (actions.isNotEmpty) {
-      nextPadding = nextPadding.subtract(
-        EdgeInsets.symmetric(vertical: actionInset),
-      );
-    }
-    final lineHeight = MeasureScope.of(context).cardHeaderHeight;
-    final rowHeight = info.glyph == null
-        ? lineHeight
-        : math.max(lineHeight, IconTheme.of(context).size ?? appIconSize);
-    return Padding(
-      padding: nextPadding,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            flex: 1,
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                if (info.glyph case final glyph?) ...[
-                  Icon(
-                    glyph,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                Flexible(
-                  flex: 1,
-                  child: TooltipText(
-                    text: Text(
-                      info.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextRole.cardTitle.of(context),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          if (actions.isNotEmpty)
-            SizedBox(
-              height: rowHeight + actionInset * 2,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                spacing: space ?? appBarActionSpace,
-                children: [...actions],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
 
 const commonCardIconSize = 20.0;
 
@@ -262,9 +180,4 @@ class CommonCard extends StatelessWidget {
       false => card,
     };
   }
-}
-
-class SkipTraversalFocusNode extends FocusNode {
-  @override
-  bool get skipTraversal => true;
 }

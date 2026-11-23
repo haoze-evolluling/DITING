@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::net::IpAddr;
 
 use diting_dns_wire::build::{
-    MessageBuilder, ParsedMessage, RData, ResourceRecord, SvcParam, OPTION_EDE, SVCB_KEY_IPV4HINT,
+    MessageBuilder, ParsedMessage, RData, ResourceRecord, SvcParam, SVCB_KEY_IPV4HINT,
     SVCB_KEY_IPV6HINT, TYPE_HTTPS, TYPE_SOA, TYPE_SVCB,
 };
 use diting_dns_wire::CLASS_IN;
@@ -68,9 +68,6 @@ pub fn attr_is_true(ctx: &DnsContext, key: &str) -> bool {
     ctx.get(key) == Some("true")
 }
 
-pub fn set_true(ctx: &mut DnsContext, key: &str) {
-    ctx.set(key, "true");
-}
 
 pub fn message_ips(message: &ParsedMessage) -> Vec<IpAddr> {
     let mut result = Vec::new();
@@ -85,13 +82,6 @@ pub fn message_ips(message: &ParsedMessage) -> Vec<IpAddr> {
     result
 }
 
-pub fn answer_ips(message: &ParsedMessage) -> Vec<IpAddr> {
-    let mut result = Vec::new();
-    for record in &message.answers {
-        collect_record_ips(record, &mut result);
-    }
-    result
-}
 
 #[allow(clippy::chunks_exact_to_as_chunks)]
 fn collect_record_ips(record: &ResourceRecord, result: &mut Vec<IpAddr>) {
@@ -176,12 +166,6 @@ pub fn add_ede(message: &mut ParsedMessage, code: u16, text: &str) {
     ));
 }
 
-pub fn has_ede(message: &ParsedMessage) -> bool {
-    message
-        .opt_options()
-        .iter()
-        .any(|option| option.code() == OPTION_EDE)
-}
 
 #[cfg(test)]
 mod tests {

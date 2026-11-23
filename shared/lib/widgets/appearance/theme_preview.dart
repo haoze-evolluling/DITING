@@ -3,9 +3,7 @@ library;
 import 'dart:async';
 
 import 'package:diting_shared/app/theme/colors.dart';
-import 'package:diting_shared/state/appearance_extra_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/appearance/mini_screen.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -47,25 +45,5 @@ void warmDemoSchemes({
     seed: seed,
     brightness: Brightness.dark,
     pureBlack: pureBlack,
-  ),
-);
-
-Widget miniScreenThumb({
-  required ColorScheme colorScheme,
-  required bool floatingBar,
-  bool liquidGlass = false,
-  int selected = 0,
-  int? previous,
-  double progress = 1,
-  TabTransition transition = TabTransition.slide,
-}) => MiniScreenThumb(
-  screen: MiniScreen(
-    colorScheme: colorScheme,
-    floatingBar: floatingBar,
-    liquidGlass: liquidGlass,
-    selected: selected,
-    previous: previous,
-    progress: progress,
-    transition: transition,
   ),
 );

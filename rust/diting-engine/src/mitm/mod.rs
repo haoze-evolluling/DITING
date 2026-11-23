@@ -20,7 +20,6 @@ pub use upstream::UpstreamTls;
 pub const CA_CERT_FILE: &str = "ca.crt";
 pub const CA_KEY_FILE: &str = "ca.key";
 pub const BLACKLIST_FILE: &str = "mitm_blacklist.txt";
-pub const DEFAULT_CERT_DIR: &str = "go-mitm";
 
 pub struct Mitm {
     certs: Arc<CertStore>,

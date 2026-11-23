@@ -1,5 +1,5 @@
 use smoltcp::time::Instant;
-use smoltcp::wire::{IpAddress, IpEndpoint, TcpControl};
+use smoltcp::wire::{IpAddress, TcpControl};
 
 use diting_netstack_spike::wire::{emit_tcp, emit_udp, endpoint_v4, endpoint_v6, parse_tcp};
 use diting_netstack_spike::{Limits, Netstack};
@@ -271,12 +271,6 @@ pub fn replay(bytes: &[u8]) -> Result<usize, String> {
     Ok(captured.len())
 }
 
-pub fn replay_flow() -> (IpEndpoint, IpEndpoint) {
-    (
-        endpoint_v4([93, 184, 216, 34], 443),
-        endpoint_v4([10, 0, 0, 2], 40_000),
-    )
-}
 
 #[cfg(test)]
 mod tests {

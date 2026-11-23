@@ -7,7 +7,6 @@ import 'package:diting_shared/ui/metrics.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'inherited.dart';
-import 'list.dart';
 
 class EntryTransitions<K> {
   final TickerProvider vsync;
@@ -225,18 +224,4 @@ class _AnimatedEntriesState extends State<AnimatedEntries>
       ],
     );
   }
-}
-
-Widget generateAnimatedSection({
-  String? title,
-  required List<Widget> items,
-  String? footer,
-}) {
-  return Column(
-    children: [
-      if (items.isNotEmpty && title != null) ListHeader(title: title),
-      AnimatedEntries(grouped: true, children: items),
-      if (items.isNotEmpty && footer != null) ListFooter(text: footer),
-    ],
-  );
 }

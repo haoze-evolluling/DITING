@@ -33,7 +33,6 @@ const branchOrder = <String>[
   Routes.settings,
 ];
 
-const desktopBranchOrder = <String>[Routes.home, Routes.hub, Routes.about];
 
 int branchIndexOf(String location) {
   var bestIndex = 0;
