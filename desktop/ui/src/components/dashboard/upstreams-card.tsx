@@ -4,7 +4,7 @@ import { formatLatency, formatNumber } from "../../lib/format";
 import { protocolLabel, resolverModeLabel } from "../../lib/labels";
 import type { QueryLogStats, StatusResponse } from "../../lib/types";
 import { cn } from "../../lib/cn";
-import { ListRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
@@ -36,7 +36,7 @@ export function UpstreamsCard({
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {loading ? (
-          <ListRowsSkeleton rows={3} className="py-1" />
+          <LoadingState label="正在加载上游状态…" className="min-h-[160px]" />
         ) : upstreams.length === 0 ? (
           <EmptyState
             icon={Globe2}

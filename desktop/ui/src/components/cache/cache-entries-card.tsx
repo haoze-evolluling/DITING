@@ -4,7 +4,7 @@ import { Database, Search } from "lucide-react";
 import { useCacheEntries } from "../../hooks/use-api";
 import { formatNumber, formatRelative } from "../../lib/format";
 import type { CacheEntry } from "../../lib/types";
-import { TableRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
@@ -76,7 +76,7 @@ export function CacheEntriesCard() {
 
         <div className="mt-3 min-h-0 flex-1">
           {entries.isLoading ? (
-            <TableRowsSkeleton rows={4} columns={5} />
+            <LoadingState label="正在加载缓存条目…" className="min-h-[220px]" />
           ) : !data || data.entries.length === 0 ? (
             <EmptyState
               icon={Database}

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Skeleton } from "../components/ui/skeleton";
+import { LoadingState } from "../components/ui/loading";
 import { Collapse, Swap } from "../components/ui/swap";
 import { useAuthStatus } from "../hooks/use-api";
 import { MOTION_EASE_OUT, useMotion } from "../hooks/use-motion";
@@ -168,11 +168,7 @@ export function LoginPage() {
             swapKey={authStatus.isLoading ? "loading" : authStatus.isError ? "error" : "form"}
           >
             {authStatus.isLoading ? (
-            <div className="mt-8 space-y-3">
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-9 w-full" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+            <LoadingState label="正在连接管理服务…" className="mt-8 min-h-[120px]" />
           ) : authStatus.isError ? (
             <div className="mt-7 rounded-xl border border-warn/30 bg-warn-soft p-3.5">
               <div className="flex items-center gap-2 text-[12.5px] font-medium text-warn">

@@ -7,7 +7,7 @@ import { cn } from "../../lib/cn";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
 import { Segmented } from "../ui/segmented";
-import { Skeleton } from "../ui/skeleton";
+import { LoadingState } from "../ui/loading";
 import { Swap } from "../ui/swap";
 
 type Tab = "domains" | "blocked" | "clients";
@@ -72,11 +72,7 @@ export function TopLists({ stats, loading }: { stats?: QueryLogStats; loading: b
       />
       <CardContent className="flex-1 pt-1">
         {loading ? (
-          <div className="space-y-1.5">
-            {Array.from({ length: 7 }).map((_, index) => (
-              <Skeleton key={index} className="h-7 rounded-md" />
-            ))}
-          </div>
+          <LoadingState label="正在加载排行…" className="min-h-[210px]" />
         ) : (
           <Swap swapKey={tab}>
             <Rows items={items} tone={tab} />

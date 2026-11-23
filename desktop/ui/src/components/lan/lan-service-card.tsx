@@ -8,7 +8,7 @@ import { api, describeError } from "../../lib/api";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { FieldGridSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 function firewallBackendLabel(backend: string | undefined): string {
@@ -85,10 +85,7 @@ export function LanServiceCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {lan.isLoading || !data ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={2} />
-            <FieldGridSkeleton fields={2} />
-          </div>
+          <LoadingState label="正在加载局域网服务配置…" />
         ) : (
           <>
             <SwitchRow

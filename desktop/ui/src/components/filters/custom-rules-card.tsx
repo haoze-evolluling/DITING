@@ -13,7 +13,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
-import { TextareaSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Textarea } from "../ui/field";
 
 export function CustomRulesCard() {
@@ -68,7 +68,7 @@ export function CustomRulesCard() {
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {rules.isLoading ? (
-          <TextareaSkeleton className="h-40" />
+          <LoadingState label="正在加载自定义规则…" className="min-h-[180px]" />
         ) : (
           <Textarea
             className="min-h-[180px] font-mono text-[11.5px] leading-5"

@@ -9,7 +9,7 @@ import { joinLines, parseLines } from "../../lib/strings";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field, Textarea } from "../ui/field";
-import { FieldGridSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 export function Dns64Card() {
@@ -55,10 +55,7 @@ export function Dns64Card() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {status.isLoading ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={1} />
-            <FieldGridSkeleton fields={2} />
-          </div>
+          <LoadingState label="正在加载 DNS64 配置…" />
         ) : (
           <>
             <SwitchRow

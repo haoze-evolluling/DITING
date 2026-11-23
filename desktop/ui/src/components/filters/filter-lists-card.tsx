@@ -21,7 +21,7 @@ import {
 import { EmptyState } from "../ui/empty";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { ListRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Switch } from "../ui/switch";
 import { SwitchRow } from "../ui/switch-row";
 
@@ -189,7 +189,7 @@ export function FilterListsCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {lists.isLoading ? (
-          <ListRowsSkeleton rows={2} />
+          <LoadingState label="正在加载订阅源…" className="min-h-[140px]" />
         ) : items.length === 0 ? (
           <EmptyState
             icon={ListPlus}

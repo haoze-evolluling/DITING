@@ -1,7 +1,7 @@
 import { formatLatency, formatNumber, formatRatio } from "../../lib/format";
 import type { QueryLogStats } from "../../lib/types";
 import { Card, CardContent, CardHeader } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
+import { LoadingState } from "../ui/loading";
 
 function Item({
   label,
@@ -36,12 +36,7 @@ export function LogSummary({
       <CardHeader title="解析概览" description="最近 24 小时" />
       <CardContent className="grid flex-1 grid-cols-2 content-center gap-x-4 gap-y-6 pt-3">
         {loading ? (
-          Array.from({ length: 4 }).map((_, index) => (
-            <div key={index}>
-              <Skeleton className="h-3 w-14" />
-              <Skeleton className="mt-2 h-6 w-20" />
-            </div>
-          ))
+          <LoadingState label="正在加载解析概览…" className="col-span-2 min-h-[120px]" />
         ) : (
           <>
             <Item

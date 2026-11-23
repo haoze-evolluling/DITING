@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "../../lib/cn";
 import { Card } from "./card";
-import { Skeleton } from "./skeleton";
+import { InlineLoading } from "./loading";
 
 type Tone = "accent" | "good" | "danger" | "violet" | "neutral";
 
@@ -48,7 +48,9 @@ export function StatTile({
         </span>
       </div>
       {loading ? (
-        <Skeleton className="mt-3 h-7 w-24" />
+        <span className="mt-3 flex h-7 items-center">
+          <InlineLoading className="h-4 w-4" />
+        </span>
       ) : (
         <div className="mt-2.5 truncate text-[25px] font-semibold leading-7 tracking-[-0.03em] text-text">
           {value}

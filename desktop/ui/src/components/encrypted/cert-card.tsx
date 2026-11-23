@@ -20,7 +20,7 @@ import {
 import { Field, Textarea } from "../ui/field";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
-import { InfoRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 const keyTypeOptions = [
@@ -311,7 +311,7 @@ export function CertCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {status.isLoading ? (
-          <InfoRowsSkeleton rows={4} />
+          <LoadingState label="正在加载证书状态…" />
         ) : cert ? (
           <>
             <div className="flex flex-wrap items-center gap-2">

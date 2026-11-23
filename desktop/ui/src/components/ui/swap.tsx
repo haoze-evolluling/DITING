@@ -5,7 +5,7 @@ import { MOTION_EASE_OUT, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 
 /**
- * 同一区域内两种状态的交叉淡化（图表/表格、骨架/表单等）。
+ * 同一区域内两种状态的交叉淡化（图表/表格、加载/表单等）。
  * 低档位或不支持页面动效时退化为直接替换，不产生任何动画开销。
  */
 export function Swap({

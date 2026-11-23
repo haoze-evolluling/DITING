@@ -10,7 +10,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { ConfirmDialog } from "../ui/confirm-dialog";
-import { Skeleton } from "../ui/skeleton";
+import { LoadingState } from "../ui/loading";
 
 export function CachePersistCard() {
   const status = useCachePersistStatus();
@@ -68,14 +68,7 @@ export function CachePersistCard() {
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {status.isLoading || !data ? (
-          <div className="space-y-3">
-            <Skeleton className="h-[52px] w-full rounded-xl" />
-            <div className="grid grid-cols-3 gap-2">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className="h-14 w-full rounded-xl" />
-              ))}
-            </div>
-          </div>
+          <LoadingState label="正在加载落盘状态…" />
         ) : (
           <>
             <div className="rounded-xl border border-border bg-surface-2 px-3 py-2.5">

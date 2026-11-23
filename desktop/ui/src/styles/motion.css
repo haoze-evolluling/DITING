@@ -124,25 +124,6 @@
   }
 }
 
-@keyframes motion-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.48;
-  }
-}
-
-@keyframes motion-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
 @keyframes motion-ambient-breathe {
   0%,
   100% {
@@ -268,11 +249,6 @@
   animation: motion-pop-out 120ms var(--motion-ease-out) both;
 }
 
-/* 骨架屏 */
-.motion-skeleton {
-  animation: motion-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
 /* 加载指示：属于必要反馈，最低档位仍保留旋转，避免看起来像卡死 */
 @keyframes motion-spin {
   to {
@@ -284,6 +260,22 @@
   animation: motion-spin 0.9s linear infinite;
 }
 
+/* 路由顶部进度条：不确定进度，用滑块往复表示，完成即淡出 */
+@keyframes motion-route-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.route-progress-bar {
+  width: 40%;
+  background-image: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: motion-route-progress 1.1s ease-in-out infinite;
+}
+
 /* 图表悬浮提示 */
 .motion-tooltip {
   animation: motion-fade-in 120ms var(--motion-ease-out) both;
@@ -291,7 +283,7 @@
 
 /* ============ 档位分级控制（data-motion） ============ */
 
-/* 1. 关闭档（off）：零动效 + 停用毛玻璃、模糊光晕、脉冲与骨架动画 */
+/* 1. 关闭档（off）：零动效 + 停用毛玻璃、模糊光晕与循环动画 */
 :root[data-motion="off"] *,
 :root[data-motion="off"] *::before,
 :root[data-motion="off"] *::after {
@@ -321,17 +313,23 @@
   display: none !important;
 }
 
-:root[data-motion="off"] .motion-skeleton {
-  animation: none !important;
-}
-
 :root[data-motion="off"] .motion-spinner,
 :root[data-motion="minimal"] .motion-spinner {
   animation-duration: 0.9s !important;
   animation-iteration-count: infinite !important;
 }
 
-/* 2. 简约档（minimal）：停用循环动画、大光晕与骨架动画；弹层降为极速纯淡入淡出 */
+/* 关闭与简约档不播放滑动进度，改为静态横条 */
+:root[data-motion="off"] .route-progress-bar,
+:root[data-motion="minimal"] .route-progress-bar {
+  width: 100%;
+  background-image: none;
+  background-color: var(--accent);
+  opacity: 0.65;
+  animation: none !important;
+}
+
+/* 2. 简约档（minimal）：停用循环动画与大光晕；弹层降为极速纯淡入淡出 */
 :root[data-motion="minimal"] {
   --motion-fast: 100ms;
   --motion-base: 120ms;
@@ -340,10 +338,6 @@
 :root[data-motion="minimal"] .motion-glow,
 :root[data-motion="minimal"] .live-dot::after {
   display: none !important;
-}
-
-:root[data-motion="minimal"] .motion-skeleton {
-  animation: none !important;
 }
 
 :root[data-motion="minimal"] .motion-switch-thumb {
@@ -371,7 +365,7 @@
   border-color: var(--border-strong);
 }
 
-/* 4. 丰富档（rich）：卡片微浮、骨架扫光、氛围光呼吸、雷达微动、新行高亮、错峰入场、主题过渡 */
+/* 4. 丰富档（rich）：卡片微浮、进度条流光、氛围光呼吸、雷达微动、新行高亮、错峰入场、主题过渡 */
 :root[data-motion="rich"] .motion-dialog[data-state="open"] {
   animation: motion-dialog-in 250ms var(--motion-ease-spring) both;
 }
@@ -392,17 +386,6 @@
   box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.42),
     0 22px 46px -24px rgba(0, 0, 0, 0.88);
-}
-
-:root[data-motion="rich"] .motion-skeleton {
-  background-image: linear-gradient(
-    105deg,
-    var(--surface-3) 25%,
-    color-mix(in oklab, var(--surface) 70%, var(--surface-3) 30%) 50%,
-    var(--surface-3) 75%
-  );
-  background-size: 220% 100%;
-  animation: motion-shimmer 1.65s ease-in-out infinite;
 }
 
 :root[data-motion="rich"] .motion-glow-ambient {
@@ -473,7 +456,6 @@
 @media (prefers-reduced-motion: reduce) {
   .motion-glow-ambient,
   .motion-radar,
-  .motion-skeleton,
   .live-dot::after {
     animation: none !important;
   }
@@ -481,13 +463,21 @@
   .motion-spinner {
     animation-duration: 1.6s !important;
   }
+
+  .route-progress-bar {
+    width: 100%;
+    background-image: none;
+    background-color: var(--accent);
+    opacity: 0.65;
+    animation: none !important;
+  }
 }
 
 /* 窗口隐藏时暂停常驻循环，避免后台持续占用合成资源 */
 :root[data-visibility="hidden"] .motion-glow-ambient,
 :root[data-visibility="hidden"] .motion-radar,
-:root[data-visibility="hidden"] .motion-skeleton,
 :root[data-visibility="hidden"] .motion-spinner,
+:root[data-visibility="hidden"] .route-progress-bar,
 :root[data-visibility="hidden"] .live-dot::after {
   animation-play-state: paused;
 }

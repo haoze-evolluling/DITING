@@ -3,7 +3,7 @@ import { Flame } from "lucide-react";
 
 import { useCacheTop } from "../../hooks/use-api";
 import { formatNumber, formatRelative } from "../../lib/format";
-import { ListRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
@@ -37,7 +37,7 @@ export function CacheTopCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {top.isLoading ? (
-          <ListRowsSkeleton rows={3} />
+          <LoadingState label="正在加载命中排行…" className="min-h-[160px]" />
         ) : items.length === 0 ? (
           <EmptyState
             icon={Flame}

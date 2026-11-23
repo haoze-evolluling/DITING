@@ -8,7 +8,7 @@ import type { BootstrapConfig, BootstrapServer } from "../../lib/types";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
-import { ListRowsSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 let counter = 0;
@@ -68,10 +68,7 @@ export function BootstrapCard({
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {loading ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={1} />
-            <ListRowsSkeleton rows={2} />
-          </div>
+          <LoadingState label="正在加载 Bootstrap 配置…" />
         ) : (
           <>
             <SwitchRow

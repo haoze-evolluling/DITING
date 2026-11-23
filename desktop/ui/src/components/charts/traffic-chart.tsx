@@ -21,7 +21,7 @@ import {
   hourRangeLabel,
 } from "../../lib/format";
 import type { HourPoint } from "../../lib/types";
-import { ChartSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Swap } from "../ui/swap";
@@ -149,7 +149,7 @@ export function TrafficChart({
 
       <CardContent className="pt-2">
         {loading ? (
-          <ChartSkeleton />
+          <LoadingState label="正在加载趋势数据…" className="min-h-[228px]" />
         ) : (
           <Swap swapKey={showTable ? "table" : "chart"}>
             {showTable ? (

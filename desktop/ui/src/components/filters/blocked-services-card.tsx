@@ -10,7 +10,7 @@ import { cn } from "../../lib/cn";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { ListRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 
 function sameSet(a: Set<string>, b: Set<string>): boolean {
   if (a.size !== b.size) return false;
@@ -91,7 +91,7 @@ export function BlockedServicesCard({ onSchedule }: { onSchedule?: () => void })
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {data.isLoading ? (
-          <ListRowsSkeleton rows={3} />
+          <LoadingState label="正在加载服务拦截…" className="min-h-[160px]" />
         ) : (
           groupsInfo.map((group) => {
             const members = services.filter((service) => service.group === group.id);

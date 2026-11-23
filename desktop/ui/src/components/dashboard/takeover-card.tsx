@@ -6,7 +6,7 @@ import { useRuntimeActions } from "../../hooks/use-runtime-actions";
 import { adapterStatusLabel } from "../../lib/labels";
 import type { StatusResponse } from "../../lib/types";
 import { cn } from "../../lib/cn";
-import { ListRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
@@ -65,7 +65,7 @@ export function TakeoverCard({
         ) : null}
 
         {adapters.isLoading || loading ? (
-          <ListRowsSkeleton rows={2} />
+          <LoadingState label="正在加载网卡状态…" className="min-h-[120px]" />
         ) : physical.length === 0 ? (
           <EmptyState
             icon={Network}

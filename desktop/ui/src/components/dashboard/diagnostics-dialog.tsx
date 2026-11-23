@@ -15,7 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "../ui/dialog";
-import { Skeleton } from "../ui/skeleton";
+import { LoadingState } from "../ui/loading";
 
 export function DiagnosticsDialog({
   open,
@@ -49,10 +49,7 @@ export function DiagnosticsDialog({
           />
           <DialogBody className="space-y-4">
             {check.isLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-14 w-full" />
-              </div>
+              <LoadingState label="正在执行网络诊断…" className="min-h-[112px]" />
             ) : check.isError ? (
               <div className="rounded-xl border border-danger/25 bg-danger-soft px-3.5 py-3 text-[12px] text-danger">
                 {describeError(check.error)}

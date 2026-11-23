@@ -19,7 +19,7 @@ import {
 import { EmptyState } from "../ui/empty";
 import { Field, Textarea } from "../ui/field";
 import { Input } from "../ui/input";
-import { SwitchRowsSkeleton, TextareaSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 function ZoneDialog({
@@ -216,10 +216,7 @@ export function ZoneCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {config.isLoading ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={1} />
-            <TextareaSkeleton className="h-32" />
-          </div>
+          <LoadingState label="正在加载区文件…" />
         ) : (
           <>
             <SwitchRow

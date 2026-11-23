@@ -13,11 +13,7 @@ import { ConfirmDialog } from "../ui/confirm-dialog";
 import { EmptyState } from "../ui/empty";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import {
-  FieldGridSkeleton,
-  ListRowsSkeleton,
-  SwitchRowsSkeleton,
-} from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 import { RewriteRuleDialog } from "./rewrite-rule-dialog";
 
@@ -125,10 +121,7 @@ export function RewriteRulesCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {status.isLoading ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={1} />
-            <FieldGridSkeleton fields={2} />
-          </div>
+          <LoadingState label="正在加载重写配置…" />
         ) : (
           <>
             <SwitchRow
@@ -154,7 +147,7 @@ export function RewriteRulesCard() {
 
             <div className="mt-2 min-h-0 flex-1">
               {rules.isLoading ? (
-                <ListRowsSkeleton rows={2} />
+                <LoadingState label="正在加载重写规则…" className="min-h-[140px]" />
               ) : list.length === 0 ? (
                 <EmptyState
                   icon={Waypoints}

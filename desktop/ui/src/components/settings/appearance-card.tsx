@@ -64,7 +64,7 @@ function MotionPreviewStage({ level }: { level: MotionLevel }) {
         <div className="flex items-center gap-2">
           <span className="live-dot h-2 w-2 rounded-full bg-good text-good" />
           <span className="text-[11px] font-medium text-text">实时状态</span>
-          <span className="motion-skeleton inline-block h-2 w-10 rounded-full bg-surface-3" />
+          <span className="inline-block h-2 w-10 rounded-full bg-surface-3" />
         </div>
         <span className="num text-[11.5px] font-semibold text-accent">
           {(animatedQps ?? targetQps).toFixed(1)} QPS

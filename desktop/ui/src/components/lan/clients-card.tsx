@@ -19,7 +19,7 @@ import {
 import { EmptyState } from "../ui/empty";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { TableRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 
 export function ClientsCard() {
   const status = useStatus();
@@ -53,7 +53,7 @@ export function ClientsCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {status.isLoading ? (
-          <TableRowsSkeleton rows={3} columns={4} />
+          <LoadingState label="正在加载客户端…" className="min-h-[180px]" />
         ) : clients.length === 0 ? (
           <EmptyState
             icon={Users}

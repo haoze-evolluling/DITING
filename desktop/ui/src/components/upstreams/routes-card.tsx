@@ -9,7 +9,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
 import { Input } from "../ui/input";
-import { ListRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 
 interface RouteRow {
   id: string;
@@ -175,7 +175,7 @@ export function RoutesCard({
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {loading ? (
-          <ListRowsSkeleton rows={2} />
+          <LoadingState label="正在加载分流规则…" className="min-h-[120px]" />
         ) : rows.length === 0 ? (
           <EmptyState
             icon={Route}

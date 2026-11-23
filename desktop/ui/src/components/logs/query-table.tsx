@@ -5,7 +5,7 @@ import { cn } from "../../lib/cn";
 import { displayDomain, formatDateTime, formatLatency } from "../../lib/format";
 import { cacheHitLabel } from "../../lib/labels";
 import type { QueryRecord } from "../../lib/types";
-import { TableRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { EmptyState } from "../ui/empty";
 import { StatusBadge } from "../ui/status-badge";
 
@@ -25,11 +25,7 @@ export function QueryTable({
   const flashKey = useThrottledRowFlash(topKey, live && allowLiveRow);
 
   if (loading) {
-    return (
-      <div className="px-2 py-2">
-        <TableRowsSkeleton rows={9} columns={7} />
-      </div>
-    );
+    return <LoadingState label="正在加载查询记录…" className="min-h-[420px]" />;
   }
 
   if (rows.length === 0) {

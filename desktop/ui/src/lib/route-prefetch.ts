@@ -1,6 +1,6 @@
 /**
  * 路由级 chunk 预取：导航项悬停/聚焦时提前加载对应页面模块，
- * 让日常跳转直接命中缓存，避免 Suspense 骨架与内容之间的二次闪烁。
+ * 让日常跳转直接命中缓存，避免路由切换时出现顶部进度条与空白等待。
  */
 const routeLoaders: Record<string, () => Promise<unknown>> = {
   "/": () => import("../pages/dashboard-page"),

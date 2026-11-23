@@ -7,11 +7,7 @@ import { useCacheConfig } from "../../hooks/use-api";
 import { api, describeError } from "../../lib/api";
 import { joinLines, parseLines } from "../../lib/strings";
 import type { CacheConfig } from "../../lib/types";
-import {
-  FieldGridSkeleton,
-  SwitchRowsSkeleton,
-  TextareaSkeleton,
-} from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field, Textarea } from "../ui/field";
@@ -96,11 +92,7 @@ export function CacheConfigCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {config.isLoading || !draft ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={2} />
-            <FieldGridSkeleton fields={2} />
-            <TextareaSkeleton className="h-[72px]" />
-          </div>
+          <LoadingState label="正在加载缓存策略…" />
         ) : (
           <>
             <SwitchRow

@@ -11,7 +11,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { FieldGridSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 function Subset(config: EncryptedDNSConfig) {
@@ -83,10 +83,7 @@ export function EncryptedServiceCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {status.isLoading || !draft ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={2} />
-            <FieldGridSkeleton fields={2} />
-          </div>
+          <LoadingState label="正在加载加密 DNS 配置…" />
         ) : (
           <>
             <SwitchRow

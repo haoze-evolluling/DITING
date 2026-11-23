@@ -19,7 +19,7 @@ import {
 } from "../ui/dialog";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { FieldGridSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { Switch } from "../ui/switch";
 import { SwitchRow } from "../ui/switch-row";
 
@@ -234,10 +234,7 @@ export function ScheduleCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {schedule.isLoading ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={1} />
-            <FieldGridSkeleton fields={2} />
-          </div>
+          <LoadingState label="正在加载时间计划…" />
         ) : (
           <>
             <SwitchRow

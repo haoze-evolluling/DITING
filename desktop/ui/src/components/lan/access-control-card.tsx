@@ -9,7 +9,7 @@ import { joinLines, parseLines } from "../../lib/strings";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field, Textarea } from "../ui/field";
-import { TextareaSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 
 export function AccessControlCard() {
   const status = useStatus();
@@ -55,10 +55,7 @@ export function AccessControlCard() {
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {status.isLoading ? (
-          <div className="space-y-3">
-            <TextareaSkeleton />
-            <TextareaSkeleton />
-          </div>
+          <LoadingState label="正在加载访问控制…" className="min-h-[200px]" />
         ) : (
           <>
             <Field

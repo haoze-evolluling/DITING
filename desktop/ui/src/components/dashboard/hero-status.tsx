@@ -6,11 +6,10 @@ import { formatNumber, formatUptime } from "../../lib/format";
 import { resolverModeLabel } from "../../lib/labels";
 import type { MetricsStatus, StatusResponse } from "../../lib/types";
 import { cn } from "../../lib/cn";
-import { HeroStatusSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
+import { LoadingState } from "../ui/loading";
 
 function QpsSparkline({ qps }: { qps: number }) {
   const [history, setHistory] = useState<number[]>([]);
@@ -119,8 +118,30 @@ export function HeroStatus({
   const activeUpstreams = upstreams.filter((upstream) => upstream.active).length;
   const takeover = status?.takeover;
 
-  // 首屏状态未就绪时直接输出与真实卡片同构的骨架，避免数值区先显示 0 再跳变。
-  if (loading && !status) return <HeroStatusSkeleton />;
+  // 首屏状态未就绪时保留卡片外壳与操作区，仅数据区显示加载指示。
+  if (loading && !status) {
+    return (
+      <Card className="card-sheen relative flex min-h-[248px] flex-col overflow-hidden">
+        <div className="relative flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 pt-4">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="text-[12px] font-medium text-text-3">DNS 核心</span>
+            <Badge tone="neutral">{resolverModeLabel(undefined)}</Badge>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={onOpenDiagnostics}>
+              <Activity className="h-3.5 w-3.5" />
+              网络诊断
+            </Button>
+            <Button size="sm" variant="primary" disabled>
+              <Play className="h-3 w-3" />
+              启动解析
+            </Button>
+          </div>
+        </div>
+        <LoadingState label="正在读取运行状态…" className="min-h-[180px] pb-4" />
+      </Card>
+    );
+  }
 
   return (
     <Card className="card-sheen relative flex min-h-[248px] flex-col overflow-hidden">
@@ -155,25 +176,21 @@ export function HeroStatus({
       <div className="relative flex flex-1 flex-col justify-between gap-4 px-5 pb-4 pt-3">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            {loading ? (
-              <Skeleton className="h-10 w-40" />
-            ) : (
-              <div className="flex items-center gap-2.5">
-                <span
-                  className={cn(
-                    "live-dot h-2.5 w-2.5 rounded-full",
-                    !status
-                      ? "bg-text-3 text-text-3"
-                      : running
-                        ? "bg-good text-good"
-                        : "bg-text-3 text-text-3",
-                  )}
-                />
-                <span className="text-[32px] font-semibold leading-none tracking-[-0.045em] text-text">
-                  {!status ? "状态未知" : running ? "运行中" : "已停止"}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2.5">
+              <span
+                className={cn(
+                  "live-dot h-2.5 w-2.5 rounded-full",
+                  !status
+                    ? "bg-text-3 text-text-3"
+                    : running
+                      ? "bg-good text-good"
+                      : "bg-text-3 text-text-3",
+                )}
+              />
+              <span className="text-[32px] font-semibold leading-none tracking-[-0.045em] text-text">
+                {!status ? "状态未知" : running ? "运行中" : "已停止"}
+              </span>
+            </div>
             <p className="mt-2 text-[12px] text-text-3">
               {!status
                 ? "无法读取运行状态，请检查本机管理服务连接。"

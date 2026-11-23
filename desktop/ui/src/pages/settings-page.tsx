@@ -18,11 +18,7 @@ import { PageHeader } from "../components/layout/page-header";
 import { AppearanceCard } from "../components/settings/appearance-card";
 import { PasswordCard } from "../components/settings/password-card";
 import { WebAccessCard } from "../components/settings/web-access-card";
-import {
-  FieldGridSkeleton,
-  InfoRowsSkeleton,
-  SwitchRowsSkeleton,
-} from "../components/skeletons/parts";
+import { LoadingState } from "../components/ui/loading";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
@@ -145,10 +141,7 @@ function QueryLogCard() {
       />
       <CardContent className="flex-1 pt-2">
         {config.isLoading || !draft ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={3} />
-            <FieldGridSkeleton fields={2} />
-          </div>
+          <LoadingState label="正在加载日志配置…" />
         ) : (
           <div className="space-y-1">
             <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2">
@@ -276,7 +269,7 @@ function ServiceCard() {
       />
       <CardContent className="pt-1">
         {service.isLoading ? (
-          <InfoRowsSkeleton rows={4} />
+          <LoadingState label="正在加载服务信息…" />
         ) : data ? (
           <>
             <InfoRow label="服务状态">

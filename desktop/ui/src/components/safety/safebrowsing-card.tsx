@@ -12,7 +12,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { SwitchRowsSkeleton, TextareaSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 
 const blockModeLabels: Record<string, string> = {
@@ -81,10 +81,7 @@ export function SafeBrowsingCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {data.isLoading || !draft ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={2} />
-            <TextareaSkeleton className="h-20" />
-          </div>
+          <LoadingState label="正在加载安全浏览配置…" />
         ) : (
           <>
             <SwitchRow

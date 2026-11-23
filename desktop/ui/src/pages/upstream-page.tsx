@@ -12,7 +12,7 @@ import { RoutesCard } from "../components/upstreams/routes-card";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
-import { ListRowsSkeleton } from "../components/skeletons/parts";
+import { LoadingState } from "../components/ui/loading";
 import { EmptyState } from "../components/ui/empty";
 import { Segmented } from "../components/ui/segmented";
 import { useUpstreamConfig } from "../hooks/use-api";
@@ -183,7 +183,7 @@ export function UpstreamPage() {
             />
             <CardContent className="flex flex-1 flex-col pt-2">
               {config.isLoading ? (
-                <ListRowsSkeleton rows={3} />
+                <LoadingState label="正在加载上游服务器…" className="min-h-[160px]" />
               ) : providers.length === 0 ? (
                 <EmptyState
                   icon={Globe2}

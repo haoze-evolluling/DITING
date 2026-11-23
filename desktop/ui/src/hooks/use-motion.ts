@@ -28,7 +28,7 @@ export const MOTION_LEVEL_OPTIONS: MotionLevelOption[] = [
   {
     value: "minimal",
     label: "简约",
-    summary: "仅保留轻量交互反馈与弹层淡入，停用循环光效、骨架与图表动画。",
+    summary: "仅保留轻量交互反馈与弹层淡入，停用循环光效、进度条滑动与图表动画。",
     performance: "低占用",
   },
   {
@@ -40,7 +40,7 @@ export const MOTION_LEVEL_OPTIONS: MotionLevelOption[] = [
   {
     value: "rich",
     label: "丰富",
-    summary: "完整视觉质感：卡片错峰入场、数字缓动、微光骨架、氛围光与主题渐变。",
+    summary: "完整视觉质感：卡片错峰入场、数字缓动、氛围光与主题渐变。",
     performance: "完整体验",
   },
 ];

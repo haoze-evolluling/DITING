@@ -9,6 +9,7 @@ import { describeError } from "../../lib/api";
 import { cn } from "../../lib/cn";
 import { Button } from "../ui/button";
 import { Collapse } from "../ui/swap";
+import { RouteProgress } from "./route-progress";
 import { PageSuspense } from "./route-suspense";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
@@ -74,6 +75,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-full bg-bg">
+      <RouteProgress />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
@@ -94,14 +96,14 @@ export function AppShell() {
                   transition={{ duration: pageDuration, ease: MOTION_EASE_OUT }}
                   className={cn(staggerThisRoute && "motion-stagger")}
                 >
-                  <PageSuspense pathname={location.pathname}>
+                  <PageSuspense>
                     <FrozenOutlet />
                   </PageSuspense>
                 </m.div>
               </AnimatePresence>
             ) : (
               <div key={location.pathname}>
-                <PageSuspense pathname={location.pathname}>
+                <PageSuspense>
                   <FrozenOutlet />
                 </PageSuspense>
               </div>

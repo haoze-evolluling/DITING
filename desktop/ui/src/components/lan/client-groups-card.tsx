@@ -10,7 +10,7 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
-import { SwitchRowsSkeleton, TextareaSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 import { ClientGroupDialog } from "./client-group-dialog";
 
@@ -93,10 +93,7 @@ export function ClientGroupsCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {data.isLoading ? (
-          <div className="space-y-3">
-            <SwitchRowsSkeleton rows={1} />
-            <TextareaSkeleton className="h-14" />
-          </div>
+          <LoadingState label="正在加载客户端分组…" />
         ) : (
           <>
             <SwitchRow

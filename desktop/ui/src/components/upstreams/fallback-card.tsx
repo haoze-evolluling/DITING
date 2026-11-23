@@ -12,7 +12,7 @@ import { ConfirmDialog } from "../ui/confirm-dialog";
 import { EmptyState } from "../ui/empty";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { FieldGridSkeleton, ListRowsSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
+import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
 import { ProviderDialog } from "./provider-dialog";
 import { ProviderRow, type TestState } from "./provider-row";
@@ -227,11 +227,7 @@ export function FallbackCard({
         />
         <CardContent className="flex flex-1 flex-col pt-2">
           {loading ? (
-            <div className="space-y-3">
-              <ListRowsSkeleton rows={2} />
-              <SwitchRowsSkeleton rows={1} />
-              <FieldGridSkeleton fields={2} />
-            </div>
+            <LoadingState label="正在加载回退配置…" />
           ) : fallbackProviders.length === 0 ? (
             <EmptyState
               icon={ArrowLeftRight}
