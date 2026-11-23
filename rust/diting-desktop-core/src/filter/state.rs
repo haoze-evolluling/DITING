@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::{Arc, Mutex, RwLock};
 
 use chrono::{DateTime, Local};
 use diting_desktop_api::config::FilterConfig;
 
+use super::cache::ListCache;
 use super::engine::now_ms;
 use super::schedule::{any_active, compile_all, has_enabled, CompiledSchedule};
 use super::types::*;
@@ -13,8 +13,8 @@ use super::{bogus, fetch, ruleset};
 
 use bogus::BogusNXDomainMatcher;
 use ruleset::{
-    expand_services, parse_custom_rules, parse_list_file, parse_list_text, CompiledRule,
-    RuleMatcher, RuleSet, SERVICE_SOURCE_PREFIX,
+    expand_services, parse_custom_rules, parse_list_text, CompiledRule, RuleMatcher, RuleSet,
+    SERVICE_SOURCE_PREFIX,
 };
 
 pub(super) const LIST_STATUS_OK: &str = "ok";
@@ -47,6 +47,7 @@ pub(super) struct ScheduleSet {
 
 pub(super) struct Inner {
     pub(super) config: RwLock<FilterConfig>,
+    pub(super) list_cache: Arc<dyn ListCache>,
     pub(super) groups: RwLock<GroupConfig>,
     pub(super) schedules: RwLock<ScheduleSet>,
     pub(super) matchers: RwLock<Arc<MatcherSnapshot>>,
@@ -189,7 +190,11 @@ impl Inner {
             if !list.enabled {
                 continue;
             }
-            let rules = parse_list_file(&PathBuf::from(&config.data_dir), &list.id);
+            let rules = self
+                .list_cache
+                .read(&list.id)
+                .map(|data| parse_list_text(&String::from_utf8_lossy(&data), &list.id))
+                .unwrap_or_default();
             counts.push((list.id.clone(), rules.len() as i32));
             rule_set.lists.extend(rules);
         }
@@ -233,7 +238,7 @@ impl Inner {
     }
 
     pub(super) async fn refresh_list_inner(&self, id: &str) -> Result<bool, FilterError> {
-        let (url, etag, last_modified, data_dir) = {
+        let (url, etag, last_modified) = {
             let config = self.config.read().unwrap();
             let Some(list) = config.lists.iter().find(|list| list.id == id) else {
                 return Err(FilterError::ListNotFound(id.to_string()));
@@ -242,14 +247,13 @@ impl Inner {
                 list.url.clone(),
                 list.etag.clone(),
                 list.last_modified.clone(),
-                config.data_dir.clone(),
             )
         };
 
         let outcome = match fetch::fetch_conditional(&url, &etag, &last_modified).await {
             Ok(outcome) => outcome,
             Err(error) => {
-                let cached = fetch::read_cache(&data_dir, id).is_some();
+                let cached = self.list_cache.read(id).is_some();
                 let transient = error.is_transient();
                 {
                     let mut config = self.config.write().unwrap();
@@ -285,14 +289,12 @@ impl Inner {
         }
 
         let data = outcome.data.unwrap_or_default();
-        let write_dir = data_dir.clone();
+        let cache = Arc::clone(&self.list_cache);
         let write_id = id.to_string();
         let write_data = data.clone();
-        let write = tokio::task::spawn_blocking(move || {
-            fetch::write_cache_atomic(&write_dir, &write_id, &write_data)
-        })
-        .await
-        .map_err(|error| FilterError::Join(error.to_string()))?;
+        let write = tokio::task::spawn_blocking(move || cache.write(&write_id, &write_data))
+            .await
+            .map_err(|error| FilterError::Join(error.to_string()))?;
         if let Err(error) = write {
             let mut config = self.config.write().unwrap();
             if let Some(list) = config.lists.iter_mut().find(|list| list.id == id) {

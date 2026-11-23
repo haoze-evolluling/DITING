@@ -34,6 +34,8 @@ export interface LoginResult {
 
 export interface MetaInfo {
   os: string;
+  storageBackend?: string;
+  databasePath?: string | null;
 }
 
 export interface UpstreamInfo {

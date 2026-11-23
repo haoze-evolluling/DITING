@@ -3,4 +3,4 @@ pub mod maintenance;
 pub mod runtime;
 pub mod settings;
 
-pub use runtime::{dns_server_config, AppRuntime, PlatformHandles};
+pub use runtime::{dns_server_config, AppRuntime, PlatformHandles, RuntimeStores};

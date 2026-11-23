@@ -85,7 +85,7 @@ export function LogToolbar({
           <span className="text-[10.5px] text-text-3">
             {live
               ? "实时模式仅显示本次会话收到的请求，最多保留 400 条。"
-              : "历史模式检索内存与按日落盘的查询日志。"}
+              : "历史模式检索内存与 SQLite 数据库中的查询日志。"}
           </span>
           <div className="flex items-center gap-2">
             <label className="flex cursor-pointer items-center gap-2 text-[11.5px] text-text-2">

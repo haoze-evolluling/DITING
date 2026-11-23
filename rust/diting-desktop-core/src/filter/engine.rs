@@ -1,3 +1,4 @@
+use super::cache::{FileListCache, ListCache};
 use super::ruleset::{
     apply_allowlist_only, count_service_rules, service_exists, service_group_exists,
 };
@@ -34,10 +35,22 @@ impl RuleEngine {
 
     pub fn new_with_groups(config: FilterConfig, groups: GroupConfig) -> Self {
         let config = normalize_config(config);
+        let cache = Arc::new(FileListCache::new(&config.data_dir));
+        Self::new_with_list_cache(config, groups, cache)
+    }
+
+    pub fn new_with_list_cache(
+        config: FilterConfig,
+        groups: GroupConfig,
+        list_cache: Arc<dyn ListCache>,
+    ) -> Self {
+        let config = normalize_config(config);
         let groups = normalize_groups(groups);
+        list_cache.set_data_dir(&config.data_dir);
         let engine = Self {
             inner: Arc::new(Inner {
                 config: RwLock::new(config.clone()),
+                list_cache,
                 groups: RwLock::new(groups.clone()),
                 schedules: RwLock::new(ScheduleSet::default()),
                 matchers: RwLock::new(Arc::new(MatcherSnapshot::default())),
@@ -62,6 +75,7 @@ impl RuleEngine {
         let inputs_changed = !matcher_inputs_equal(&old, &next)
             || self.inner.matchers.read().unwrap().global.total_rules() == 0;
 
+        self.inner.list_cache.set_data_dir(&next.data_dir);
         *self.inner.config.write().unwrap() = next.clone();
         let groups = self.inner.groups.read().unwrap().clone();
         self.inner.sync_schedules(&next, &groups);
@@ -434,9 +448,11 @@ mod tests {
 
     #[test]
     fn new_with_groups_builds_once_and_skips_identical_group_updates() {
-        let mut config = FilterConfig::default();
-        config.enabled = true;
-        config.custom_rules = vec!["@@||allowed.example^".to_string()];
+        let config = FilterConfig {
+            enabled: true,
+            custom_rules: vec!["@@||allowed.example^".to_string()],
+            ..FilterConfig::default()
+        };
         let groups = GroupConfig {
             enabled: true,
             groups: vec![ClientGroup {

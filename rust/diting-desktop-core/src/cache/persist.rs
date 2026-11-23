@@ -45,6 +45,31 @@ pub struct PersistStatus {
     pub saved_at: i64,
 }
 
+#[derive(Debug, Clone)]
+pub struct PersistRow {
+    pub key: Vec<u8>,
+    pub domain: Vec<u8>,
+    pub qtype: u16,
+    pub qclass: u16,
+    pub wire: Vec<u8>,
+    pub original_ttl: u32,
+    pub created_at: i64,
+    pub expires_at: i64,
+    pub stale_until: i64,
+    pub is_negative: bool,
+    pub ip_list: Vec<String>,
+    pub hit_count: u64,
+    pub last_hit_at: i64,
+}
+
+#[derive(Debug)]
+pub struct LegacySnapshot {
+    pub version: i32,
+    pub saved_at: i64,
+    pub max_entries: usize,
+    pub rows: Vec<PersistRow>,
+}
+
 pub fn save(cache: &Cache, path: &Path) -> Result<PersistStatus, String> {
     if path.as_os_str().is_empty() {
         return Err("cache persist: empty path".to_string());
@@ -106,29 +131,31 @@ pub fn load(cache: &Cache, path: &Path) -> Result<usize, String> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(0),
         Err(error) => return Err(format!("cache load: read: {error}")),
     };
+    let snapshot = parse_legacy(&data)?;
+    let entries: Vec<PersistEntry> = snapshot
+        .rows
+        .into_iter()
+        .filter_map(entry_from_row)
+        .collect();
+    Ok(cache.import(entries))
+}
+
+/// 解析旧版 `cache.json`，供文件后端与迁移共享。
+pub fn parse_legacy(data: &[u8]) -> Result<LegacySnapshot, String> {
     let payload: PersistFile =
-        serde_json::from_slice(&data).map_err(|error| format!("cache load: unmarshal: {error}"))?;
+        serde_json::from_slice(data).map_err(|error| format!("cache load: unmarshal: {error}"))?;
     if payload.version != VERSION {
         return Err(format!(
             "cache load: unsupported version {} (want {VERSION})",
             payload.version
         ));
     }
-    let mut entries = Vec::with_capacity(payload.entries.len());
+    let mut rows = Vec::with_capacity(payload.entries.len());
     for record in payload.entries {
-        let wire = match BASE64.decode(record.message.as_bytes()) {
-            Ok(wire) => wire,
-            Err(_) => continue,
-        };
-        let Some(meta) = diting_dns_wire::parse_response(&wire) else {
+        let Ok(wire) = BASE64.decode(record.message.as_bytes()) else {
             continue;
         };
-        let ttl_offsets = if meta.answer_count == 0 {
-            meta.authority_ttl_offsets.clone()
-        } else {
-            meta.answer_ttl_offsets.clone()
-        };
-        entries.push(PersistEntry {
+        rows.push(PersistRow {
             key: record.key.into_bytes(),
             domain: record
                 .domain
@@ -138,20 +165,49 @@ pub fn load(cache: &Cache, path: &Path) -> Result<usize, String> {
             qtype: record.qtype,
             qclass: record.qclass,
             wire,
-            ttl_offsets,
             original_ttl: record.original_ttl,
-            created_at_ms: record.last_hit_at,
-            expires_at_ms: record.expires_at,
-            stale_until_ms: record.stale_until,
+            created_at: record.last_hit_at,
+            expires_at: record.expires_at,
+            stale_until: record.stale_until,
             is_negative: record.is_negative,
-            chain_targets: meta.chain_targets,
             ip_list: record.ip_list,
-            resolved_ips: meta.resolved_ips,
             hit_count: record.hit_count,
-            last_hit_at_ms: record.last_hit_at,
+            last_hit_at: record.last_hit_at,
         });
     }
-    Ok(cache.import(entries))
+    Ok(LegacySnapshot {
+        version: payload.version,
+        saved_at: payload.saved_at,
+        max_entries: payload.max_entries,
+        rows,
+    })
+}
+
+pub fn entry_from_row(row: PersistRow) -> Option<PersistEntry> {
+    let meta = diting_dns_wire::parse_response(&row.wire)?;
+    let ttl_offsets = if meta.answer_count == 0 {
+        meta.authority_ttl_offsets.clone()
+    } else {
+        meta.answer_ttl_offsets.clone()
+    };
+    Some(PersistEntry {
+        key: row.key,
+        domain: row.domain,
+        qtype: row.qtype,
+        qclass: row.qclass,
+        wire: row.wire,
+        ttl_offsets,
+        original_ttl: row.original_ttl,
+        created_at_ms: row.created_at,
+        expires_at_ms: row.expires_at,
+        stale_until_ms: row.stale_until,
+        is_negative: row.is_negative,
+        chain_targets: meta.chain_targets,
+        ip_list: row.ip_list,
+        resolved_ips: meta.resolved_ips,
+        hit_count: row.hit_count,
+        last_hit_at_ms: row.last_hit_at,
+    })
 }
 
 fn domain_text(bytes: &[u8]) -> String {

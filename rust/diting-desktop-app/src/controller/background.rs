@@ -39,11 +39,7 @@ pub struct BackgroundImage {
 }
 
 fn storage_dir(runtime: &AppRuntime) -> PathBuf {
-    let path = runtime.config_path();
-    path.parent()
-        .filter(|parent| !parent.as_os_str().is_empty())
-        .map(Path::to_path_buf)
-        .unwrap_or_else(|| PathBuf::from("."))
+    runtime.background_dir().to_path_buf()
 }
 
 fn detect_image(data: &[u8]) -> Option<(&'static str, &'static str)> {

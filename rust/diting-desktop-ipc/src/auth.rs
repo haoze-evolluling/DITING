@@ -1,10 +1,12 @@
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use sha2::{Digest, Sha256};
 
 use diting_desktop_api::config::WebConfig;
+
+use crate::session::SessionStore;
 
 pub const MAX_FAILED_ATTEMPTS: u32 = 5;
 pub const LOCKOUT: Duration = Duration::from_secs(5 * 60);
@@ -46,6 +48,7 @@ struct State {
 
 pub struct AuthManager {
     state: Mutex<State>,
+    store: Option<Arc<dyn SessionStore>>,
 }
 
 fn hex_encode(bytes: &[u8]) -> String {
@@ -98,6 +101,10 @@ fn now_unix() -> i64 {
 
 impl AuthManager {
     pub fn from_web(config: &WebConfig) -> Self {
+        Self::from_web_with_store(config, None)
+    }
+
+    pub fn from_web_with_store(config: &WebConfig, store: Option<Arc<dyn SessionStore>>) -> Self {
         let nanos = config.session_timeout.0.max(0) as u64;
         let session_timeout = if nanos == 0 {
             DEFAULT_SESSION_TTL
@@ -109,7 +116,7 @@ impl AuthManager {
         } else {
             config.username.trim().to_string()
         };
-        Self {
+        let manager = Self {
             state: Mutex::new(State {
                 username,
                 password_hash: config.password_hash.clone(),
@@ -118,7 +125,10 @@ impl AuthManager {
                 attempts: HashMap::new(),
                 sessions: HashMap::new(),
             }),
-        }
+            store: store.clone(),
+        };
+        manager.hydrate_sessions();
+        manager
     }
 
     pub fn new(username: &str, password_hash: &str, salt: &str, session_timeout: Duration) -> Self {
@@ -139,7 +149,35 @@ impl AuthManager {
                 attempts: HashMap::new(),
                 sessions: HashMap::new(),
             }),
+            store: None,
         }
+    }
+
+    fn hydrate_sessions(&self) {
+        let Some(store) = self.store.clone() else {
+            return;
+        };
+        let now_unix = now_unix();
+        store.prune(now_unix);
+        let now = Instant::now();
+        let mut state = self.lock();
+        for info in store.load() {
+            let remaining = info.expires_at_unix.saturating_sub(now_unix);
+            if remaining <= 0 {
+                continue;
+            }
+            state.sessions.insert(
+                info.token,
+                Session {
+                    username: info.username,
+                    client_ip: info.client_ip,
+                    expires: now + Duration::from_secs(remaining as u64),
+                    created_at_unix: info.created_at_unix,
+                    expires_at_unix: info.expires_at_unix,
+                },
+            );
+        }
+        Self::prune(&mut state, now);
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, State> {
@@ -272,6 +310,9 @@ impl AuthManager {
     pub fn revoke_session(&self, token: &str) {
         if !token.is_empty() {
             self.lock().sessions.remove(token);
+            if let Some(store) = &self.store {
+                store.remove(token);
+            }
         }
     }
 
@@ -281,6 +322,9 @@ impl AuthManager {
         password: &str,
         client_ip: &str,
     ) -> Result<SessionInfo, String> {
+        if let Some(store) = &self.store {
+            store.prune(now_unix());
+        }
         let mut state = self.lock();
         let now = Instant::now();
         Self::prune(&mut state, now);
@@ -330,6 +374,11 @@ impl AuthManager {
                 expires_at_unix,
             },
         );
+        let store = self.store.clone();
+        drop(state);
+        if let Some(store) = store {
+            store.insert(&info);
+        }
         Ok(info)
     }
 
@@ -422,6 +471,11 @@ impl AuthManager {
         state.password_hash = hash.clone();
         state.salt = salt.clone();
         state.sessions.clear();
+        let store = self.store.clone();
+        drop(state);
+        if let Some(store) = store {
+            store.clear();
+        }
         Ok((username, hash, salt))
     }
 

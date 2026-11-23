@@ -4,6 +4,7 @@ use std::path::PathBuf;
 pub const ENV_DATA_DIR: &str = "DITING_DATA_DIR";
 
 pub const DEFAULT_CONFIG_FILE_NAME: &str = "config.json";
+pub const DEFAULT_DB_FILE_NAME: &str = "diting.db";
 pub const DEFAULT_STATE_FILE_NAME: &str = "dns_state.json";
 pub const DEFAULT_FILTER_DIR_NAME: &str = "filters";
 pub const DEFAULT_QUERY_LOG_DIR_NAME: &str = "querylog";
@@ -19,6 +20,10 @@ pub fn default_config_dir() -> PathBuf {
 
 pub fn default_config_path() -> PathBuf {
     default_config_dir().join(DEFAULT_CONFIG_FILE_NAME)
+}
+
+pub fn default_db_path() -> PathBuf {
+    default_data_dir().join(DEFAULT_DB_FILE_NAME)
 }
 
 pub fn default_state_file_path() -> PathBuf {
@@ -124,6 +129,7 @@ mod tests {
             default_state_file_path(),
             data.join(DEFAULT_STATE_FILE_NAME)
         );
+        assert_eq!(default_db_path(), data.join(DEFAULT_DB_FILE_NAME));
         assert_eq!(
             default_config_path(),
             default_config_dir().join(DEFAULT_CONFIG_FILE_NAME)

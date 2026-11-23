@@ -5,7 +5,7 @@ use diting_desktop_api::config::FilterList;
 
 use super::engine::now_ms;
 use super::types::FilterError;
-use super::{fetch, RuleEngine};
+use super::RuleEngine;
 
 impl RuleEngine {
     pub async fn add_list(&self, mut list: FilterList) -> Result<(), FilterError> {
@@ -40,17 +40,16 @@ impl RuleEngine {
     }
 
     pub async fn delete_list(&self, id: &str) -> Result<(), FilterError> {
-        let data_dir;
         {
             let mut config = self.inner.config.write().unwrap();
             let Some(index) = config.lists.iter().position(|item| item.id == id) else {
                 return Err(FilterError::ListNotFound(id.to_string()));
             };
             config.lists.remove(index);
-            data_dir = config.data_dir.clone();
         }
+        let cache = std::sync::Arc::clone(&self.inner.list_cache);
         let id = id.to_string();
-        tokio::task::spawn_blocking(move || fetch::remove_cache(&data_dir, &id))
+        tokio::task::spawn_blocking(move || cache.remove(&id))
             .await
             .map_err(|error| FilterError::Join(error.to_string()))?;
         self.rebuild_async().await

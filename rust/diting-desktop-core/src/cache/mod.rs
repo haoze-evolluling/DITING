@@ -1,5 +1,8 @@
 pub mod exclude;
 pub mod persist;
+pub mod persistence;
+
+pub use persistence::{CachePersistence, FileCachePersistence};
 
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};

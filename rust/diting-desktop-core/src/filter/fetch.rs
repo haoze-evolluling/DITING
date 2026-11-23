@@ -211,7 +211,7 @@ pub(crate) fn write_cache_atomic(data_dir: &str, id: &str, data: &[u8]) -> std::
     result
 }
 
-pub(crate) fn list_checksum(data: &[u8]) -> String {
+pub fn list_checksum(data: &[u8]) -> String {
     use std::fmt::Write as _;
     let digest = Sha256::digest(data);
     let mut out = String::with_capacity(64);

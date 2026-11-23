@@ -144,6 +144,11 @@ Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策�
 - Linux 非 root：`~/.diting`
 - 可用环境变量 `DITING_DATA_DIR` 覆盖
 
+配置、规则正文、DNS 缓存、查询日志、接管状态与管理端会话统一保存在数据目录下的
+`diting.db`（SQLite，WAL 模式）。证书 PEM/私钥、登录背景图与 `service.log` 仍保留为文件。
+首次启动会把旧的 `config.json`、`filters/`、`querylog/`、`cache.json`、`dns_state.json`
+导入数据库，成功后删除旧文件；导入失败时保留旧文件并在本次运行回退文件后端。
+
 ### Rust 工作区
 
 Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
@@ -152,7 +157,7 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 | --- | --- | --- |
 | 共用 DNS/规则内核 | `diting-dns-wire`、`diting-rule-core`、`diting-policy-core`、`diting-dns-cache-core`、`diting-filter-core`、`diting-rewrite-core`、`diting-upstream-core`、`diting-resolver-core`、`diting-mitm-core`、`diting-cert-core`、`diting-log-core` 等 | 解析、规则解析与匹配、缓存、上游传输、HTTPS 检查、日志与统计 |
 | Android 数据面与内核 | `diting-engine`、`diting-kernels`、`diting-native`、`diting-server`、`diting-server-launcher` | 隧道引擎、UI 侧内核、合并原生库与服务器进程 |
-| 桌面服务 | `diting-desktop-api`、`diting-desktop-core`、`diting-desktop-dns`、`diting-desktop-platform`、`diting-desktop-app`、`diting-desktop-ipc`、`diting-desktop-service` | 配置模型、引擎门面、DNS 数据面、平台能力、运行时、管理 API 与服务二进制 |
+| 桌面服务 | `diting-desktop-api`、`diting-desktop-core`、`diting-desktop-dns`、`diting-desktop-platform`、`diting-desktop-app`、`diting-desktop-ipc`、`diting-desktop-sqlite`、`diting-desktop-service` | 配置模型、引擎门面、DNS 数据面、平台能力、运行时、SQLite 存储、管理 API 与服务二进制 |
 | 测试与兼容支持 | `diting-corpus`、`diting-mitm-spike`、`diting-netstack-spike`、`diting-tun-spike`、`diting-go-compat` | 基线语料、迁移阶段验证与 Go 标准库兼容辅助 |
 
 ## 环境要求
@@ -301,7 +306,7 @@ flutter config --enable-native-assets
 - AI 分析功能需要用户自行配置兼容 OpenAI 接口的服务地址与密钥；只有在用户主动发起分析时才访问该服务。
 - 赞助者名单与头像从项目 GitHub 仓库的 `recognition_members.json` 与 `avatars/` 拉取，并缓存到本地；网络异常时使用上一次成功的缓存。
 - 应用更新检查访问 GitHub Releases；Android 下载更新包后交给系统安装器处理。
-- 桌面端配置文件、规则、缓存、证书与查询日志保存在上述数据目录，可通过 `DITING_DATA_DIR` 迁移。
+- 桌面端的配置、规则、缓存、查询日志与会话保存在数据目录的 `diting.db` 中，证书与登录背景图保留为文件；可通过 `DITING_DATA_DIR` 迁移整个数据目录。
 
 ## 参与与反馈
 

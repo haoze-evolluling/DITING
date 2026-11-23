@@ -16,8 +16,12 @@ pub fn handle_meta(server: &Server, ctx: &Ctx<'_>) -> Resp {
     if let Err(response) = ctx.require_method(&[Method::GET], "method not allowed") {
         return response;
     }
+    let runtime = server.runtime();
+    let backend = runtime.storage_backend();
     ok(MetaResponse {
-        os: server.runtime().platform_name(),
+        os: runtime.platform_name(),
+        storage_backend: backend.to_string(),
+        database_path: (backend == "sqlite").then(|| runtime.storage_location()),
     })
 }
 

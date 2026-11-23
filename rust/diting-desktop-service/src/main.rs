@@ -9,7 +9,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use cli::{Cli, Command, ServiceAction};
+use diting_desktop_api::config::paths as config_paths;
 use diting_desktop_api::config::store;
+use diting_desktop_api::config::ConfigStore;
 use diting_desktop_api::platform_types::AdapterState;
 use diting_desktop_app::AppRuntime;
 use diting_desktop_platform::error::PlatformResult;
@@ -65,19 +67,48 @@ fn print_version() {
     );
 }
 
-fn load_cli_config(cli: &Cli) -> diting_desktop_api::config::Config {
-    let path = if cli.config_path.is_empty() {
+struct PreparedStorage {
+    config: diting_desktop_api::config::Config,
+    stores: diting_desktop_app::RuntimeStores,
+    background_dir: std::path::PathBuf,
+    db: Option<Arc<diting_desktop_sqlite::SqliteDb>>,
+}
+
+fn is_json(path: &std::path::Path) -> bool {
+    path.extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
+}
+
+fn db_path(cli: &Cli) -> std::path::PathBuf {
+    if cli.config_path.is_empty() {
+        return config_paths::default_db_path();
+    }
+    let path = std::path::PathBuf::from(&cli.config_path);
+    if is_json(&path) {
+        path.parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .map(|parent| parent.join("diting.db"))
+            .unwrap_or_else(config_paths::default_db_path)
+    } else {
+        path
+    }
+}
+
+fn legacy_config_path(cli: &Cli) -> std::path::PathBuf {
+    if cli.config_path.is_empty() {
         paths::default_config_path()
     } else {
-        std::path::PathBuf::from(&cli.config_path)
-    };
-    let mut config = match store::load_config(&path) {
-        Ok(config) => config,
-        Err(error) => {
-            eprintln!("[配置] 加载配置失败，使用默认配置: {error}");
-            diting_desktop_api::config::Config::default()
+        let path = std::path::PathBuf::from(&cli.config_path);
+        if is_json(&path) {
+            path
+        } else {
+            paths::default_config_path()
         }
-    };
+    }
+}
+
+fn apply_cli_overrides(config: &mut diting_desktop_api::config::Config, cli: &Cli) {
     if cli.dns_port > 0 {
         let v4 = format!("127.0.0.1:{}", cli.dns_port);
         let v6 = format!("[::1]:{}", cli.dns_port);
@@ -90,7 +121,175 @@ fn load_cli_config(cli: &Cli) -> diting_desktop_api::config::Config {
     if !cli.token.is_empty() {
         config.ipc.auth_token = cli.token.clone();
     }
+}
+
+fn has_legacy_files(cli: &Cli) -> bool {
+    let data_dir = paths::default_data_dir();
+    legacy_config_path(cli).is_file()
+        || data_dir.join("dns_state.json").is_file()
+        || data_dir.join("cache.json").is_file()
+        || data_dir.join("filters").is_dir()
+        || data_dir.join("querylog").is_dir()
+}
+
+fn prepare_file_storage(cli: &Cli) -> PreparedStorage {
+    let config_path = legacy_config_path(cli);
+    let mut config = match store::load_config(&config_path) {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("[配置] 加载配置失败，使用默认配置: {error}");
+            diting_desktop_api::config::Config::default()
+        }
+    };
+    apply_cli_overrides(&mut config, cli);
+    let stores = diting_desktop_app::RuntimeStores::file(config_path.clone(), &config);
+    let background_dir = config_path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .map(std::path::Path::to_path_buf)
+        .unwrap_or_else(|| std::path::PathBuf::from("."));
+    PreparedStorage {
+        config,
+        stores,
+        background_dir,
+        db: None,
+    }
+}
+
+fn prepare_storage(cli: &Cli, include_querylog: bool) -> Result<PreparedStorage, String> {
+    let data_dir = paths::default_data_dir();
+    let config_dir = paths::default_config_dir();
+    let legacy_path = legacy_config_path(cli);
+    let legacy_config_existed = legacy_path.is_file();
+    let db_path = db_path(cli);
+    let db = match diting_desktop_sqlite::SqliteDb::open(&db_path) {
+        Ok(db) => db,
+        Err(error) => {
+            eprintln!("[存储] 打开数据库失败: {error}");
+            if has_legacy_files(cli) {
+                return Ok(prepare_file_storage(cli));
+            }
+            return Err(error);
+        }
+    };
+    match diting_desktop_sqlite::migrate(&db, &legacy_path, &data_dir, include_querylog) {
+        Ok(report) => {
+            if report.imported_config
+                || report.imported_state
+                || report.imported_cache > 0
+                || report.imported_lists > 0
+                || report.imported_logs > 0
+            {
+                println!(
+                    "[迁移] 完成：配置={} 状态={} 缓存={} 规则源={} 日志={}（跳过 {} 条）删除文件 {} 个",
+                    report.imported_config,
+                    report.imported_state,
+                    report.imported_cache,
+                    report.imported_lists,
+                    report.imported_logs,
+                    report.skipped_logs,
+                    report.deleted_files
+                );
+            }
+            for error in &report.errors {
+                eprintln!("[迁移] {error}");
+            }
+        }
+        Err(error) => {
+            eprintln!("[存储] 迁移失败: {error}");
+            // 旧配置一旦已被导入并删除，就不能安全回退文件后端（会丢失自定义路径）。
+            let config_available = !legacy_config_existed || legacy_path.is_file();
+            if config_available && has_legacy_files(cli) {
+                return Ok(prepare_file_storage(cli));
+            }
+            return Err(error);
+        }
+    }
+
+    let mut config = match diting_desktop_sqlite::SqliteConfigStore::new(Arc::clone(&db)).load() {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("[存储] 读取配置失败: {error}");
+            if legacy_path.is_file() {
+                return Ok(prepare_file_storage(cli));
+            }
+            return Err(error.to_string());
+        }
+    };
+    apply_cli_overrides(&mut config, cli);
+    let querylog = diting_desktop_app::settings::querylog_settings(&config.query_log);
+    let stores = diting_desktop_sqlite::runtime_stores(Arc::clone(&db), &querylog);
+    Ok(PreparedStorage {
+        config,
+        stores,
+        background_dir: config_dir,
+        db: Some(db),
+    })
+}
+
+fn prepared_state_store(prepared: &PreparedStorage) -> Arc<dyn StateStore> {
+    match &prepared.db {
+        Some(db) => Arc::new(diting_desktop_sqlite::SqliteStateStore::new(Arc::clone(db))),
+        None => {
+            let path = paths::resolve_state_path(&prepared.config.takeover.state_file_path);
+            Arc::new(FileStateStore::new(path))
+        }
+    }
+}
+
+fn load_config_for_restore(cli: &Cli) -> diting_desktop_api::config::Config {
+    let db_path = db_path(cli);
+    let mut config = if db_path.is_file() {
+        match diting_desktop_sqlite::SqliteDb::open(&db_path) {
+            Ok(db) => match diting_desktop_sqlite::SqliteConfigStore::new(db).load() {
+                Ok(config) => config,
+                Err(error) => {
+                    eprintln!("[配置] 读取数据库配置失败: {error}");
+                    diting_desktop_api::config::Config::default()
+                }
+            },
+            Err(error) => {
+                eprintln!("[配置] 打开数据库失败: {error}");
+                diting_desktop_api::config::Config::default()
+            }
+        }
+    } else {
+        match store::load_config(&legacy_config_path(cli)) {
+            Ok(config) => config,
+            Err(error) => {
+                eprintln!("[配置] 加载配置失败，使用默认配置: {error}");
+                diting_desktop_api::config::Config::default()
+            }
+        }
+    };
+    apply_cli_overrides(&mut config, cli);
     config
+}
+
+fn restore_state_store(
+    cli: &Cli,
+    config: &diting_desktop_api::config::Config,
+) -> Arc<dyn StateStore> {
+    let db_path = db_path(cli);
+    let legacy_path = paths::resolve_state_path(&config.takeover.state_file_path);
+    if db_path.is_file() {
+        if let Ok(db) = diting_desktop_sqlite::SqliteDb::open(&db_path) {
+            let store = diting_desktop_sqlite::SqliteStateStore::new(Arc::clone(&db));
+            let has_state = store.load().ok().flatten().is_some();
+            if !has_state {
+                if let Ok(bytes) = std::fs::read(&legacy_path) {
+                    if let Ok(state) = serde_json::from_slice::<
+                        diting_desktop_api::platform_types::TakeoverState,
+                    >(&bytes)
+                    {
+                        let _ = store.save(&state);
+                    }
+                }
+            }
+            return Arc::new(store);
+        }
+    }
+    Arc::new(FileStateStore::new(legacy_path))
 }
 
 async fn run_command(cli: &Cli) -> Result<(), String> {
@@ -105,33 +304,38 @@ pub(crate) async fn run(
     cli: &Cli,
     shutdown: impl std::future::Future<Output = ()>,
 ) -> Result<(), String> {
-    let config = load_cli_config(cli);
-    let config_path = if cli.config_path.is_empty() {
-        paths::default_config_path()
-    } else {
-        std::path::PathBuf::from(&cli.config_path)
-    };
-    let state_path = paths::resolve_state_path(&config.takeover.state_file_path);
-    let store = Arc::new(FileStateStore::new(state_path));
+    let prepared = prepare_storage(cli, true)?;
+    let config = prepared.config.clone();
+    let db = prepared.db.clone();
+    let state = prepared_state_store(&prepared);
     let manager =
-        platform_backend::dns_manager(store.clone(), diting_desktop_api::version::VERSION);
+        platform_backend::dns_manager(Arc::clone(&state), diting_desktop_api::version::VERSION);
     let restorer = ManagerRestorer(Arc::clone(&manager));
-    match store.check_and_self_heal(Some(&restorer)).await {
+    match state.check_and_self_heal(Some(&restorer)).await {
         Ok(true) => println!("[自愈] 已恢复上次残留的 DNS 接管配置"),
         Ok(false) => {}
         Err(error) => eprintln!("[自愈检查] 异常: {error}"),
     }
 
-    let handles = platform_backend::platform_handles(store.clone(), Arc::clone(&manager));
-    let runtime = Arc::new(AppRuntime::with_platform(
+    let handles = platform_backend::platform_handles(state, Arc::clone(&manager));
+    let runtime = Arc::new(AppRuntime::with_stores(
         config.clone(),
-        config_path,
-        handles,
+        prepared.stores,
+        prepared.background_dir,
+        Some(handles),
     ));
     if let Err(error) = runtime.load_cache() {
         eprintln!("[缓存] 恢复缓存失败，将以空缓存启动: {error}");
     }
-    let ipc = Arc::new(diting_desktop_ipc::Server::new(Arc::clone(&runtime)));
+    let session_store = db.as_ref().map(|db| {
+        Arc::new(diting_desktop_sqlite::SqliteSessionStore::new(Arc::clone(
+            db,
+        ))) as Arc<dyn diting_desktop_ipc::session::SessionStore>
+    });
+    let ipc = Arc::new(diting_desktop_ipc::Server::new_with_session_store(
+        Arc::clone(&runtime),
+        session_store,
+    ));
     runtime.set_observer(ipc.query_observer());
     let maintenance = diting_desktop_app::maintenance::Maintenance::spawn(Arc::clone(&runtime));
 
@@ -168,8 +372,16 @@ pub(crate) async fn run(
     ipc.shutdown().await;
     maintenance.shutdown().await;
     runtime.stop_dns().await;
+    if let Err(error) = runtime.querylog.close() {
+        eprintln!("[查询日志] 关闭失败: {error}");
+    }
     if let Err(error) = runtime.save_cache() {
         eprintln!("[缓存] 保存失败: {error}");
+    }
+    if let Some(db) = &db {
+        if let Err(error) = db.checkpoint() {
+            eprintln!("[存储] 数据库检查点失败: {error}");
+        }
     }
     if manager.is_takeover_active() {
         if let Err(error) = manager.restore().await {
@@ -229,11 +441,10 @@ async fn run_port_check() -> Result<(), String> {
 
 async fn run_restore(cli: &Cli) -> Result<(), String> {
     println!("[谛听] 正在执行独立离线 DNS 紧急恢复...");
-    let config = load_cli_config(cli);
-    let state_path = paths::resolve_state_path(&config.takeover.state_file_path);
-    let store = Arc::new(FileStateStore::new(state_path));
+    let config = load_config_for_restore(cli);
+    let store = restore_state_store(cli, &config);
     let manager =
-        platform_backend::dns_manager(store.clone(), diting_desktop_api::version::VERSION);
+        platform_backend::dns_manager(Arc::clone(&store), diting_desktop_api::version::VERSION);
     let restorer = ManagerRestorer(Arc::clone(&manager));
     match store.check_and_self_heal(Some(&restorer)).await {
         Ok(true) => println!("[成功] 已根据残留状态成功恢复系统网卡 DNS！"),
@@ -334,5 +545,40 @@ mod tests {
             ..Cli::default()
         };
         assert!(service_install_args(&cli).is_empty());
+    }
+
+    #[test]
+    fn json_config_path_maps_to_sibling_database() {
+        let cli = Cli {
+            config_path: std::path::Path::new("data")
+                .join("config.json")
+                .to_string_lossy()
+                .into_owned(),
+            ..Cli::default()
+        };
+        assert_eq!(
+            db_path(&cli),
+            std::path::Path::new("data").join("diting.db")
+        );
+        assert_eq!(
+            legacy_config_path(&cli),
+            std::path::Path::new("data").join("config.json")
+        );
+    }
+
+    #[test]
+    fn database_path_is_used_directly_and_legacy_config_falls_back() {
+        let cli = Cli {
+            config_path: std::path::Path::new("store")
+                .join("custom.db")
+                .to_string_lossy()
+                .into_owned(),
+            ..Cli::default()
+        };
+        assert_eq!(
+            db_path(&cli),
+            std::path::Path::new("store").join("custom.db")
+        );
+        assert_eq!(legacy_config_path(&cli), paths::default_config_path());
     }
 }

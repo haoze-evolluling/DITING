@@ -23,6 +23,7 @@ use diting_desktop_dns::stages::metrics::QueryObserver;
 use crate::auth::AuthManager;
 use crate::handlers::{self, Ctx, Resp};
 use crate::router;
+use crate::session::SessionStore;
 use crate::ws::{self, DesktopQueryObserver, WsHub};
 use crate::AppRuntime;
 
@@ -43,23 +44,27 @@ pub struct Server {
 
 impl Server {
     pub fn new(runtime: Arc<AppRuntime>) -> Self {
-        let config = runtime.config();
-        let auth = Arc::new(AuthManager::from_web(&config.web));
-        Self {
-            runtime,
-            auth,
-            hub: Arc::new(WsHub::new()),
-            listener_addr: Mutex::new(None),
-            shutdown: Mutex::new(None),
-            join: Mutex::new(None),
-            started: AtomicBool::new(false),
-            self_ref: OnceLock::new(),
-        }
+        Self::new_with_session_store(runtime, None)
+    }
+
+    pub fn new_with_session_store(
+        runtime: Arc<AppRuntime>,
+        session_store: Option<Arc<dyn SessionStore>>,
+    ) -> Self {
+        Self::with_hub_and_session_store(runtime, Arc::new(WsHub::new()), session_store)
     }
 
     pub fn with_hub(runtime: Arc<AppRuntime>, hub: Arc<WsHub>) -> Self {
+        Self::with_hub_and_session_store(runtime, hub, None)
+    }
+
+    pub fn with_hub_and_session_store(
+        runtime: Arc<AppRuntime>,
+        hub: Arc<WsHub>,
+        session_store: Option<Arc<dyn SessionStore>>,
+    ) -> Self {
         let config = runtime.config();
-        let auth = Arc::new(AuthManager::from_web(&config.web));
+        let auth = Arc::new(AuthManager::from_web_with_store(&config.web, session_store));
         Self {
             runtime,
             auth,

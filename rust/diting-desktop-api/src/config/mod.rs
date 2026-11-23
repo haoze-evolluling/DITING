@@ -26,7 +26,7 @@ pub use rewrite_zone::{RewriteConfig, RewriteRecord, RewriteRule, ZoneConfig, Zo
 pub use security::{
     CertConfig, EncryptedDNSConfig, ReverseProxyConfig, SafeBrowsingConfig, SafeSearchConfig,
 };
-pub use store::{default_config_path, load_config, save_config};
+pub use store::{default_config_path, load_config, save_config, ConfigStore, FileConfigStore};
 pub use upstream::{BootstrapConfig, BootstrapServer, ProviderConfig, ResolverConfig};
 
 use serde::{Deserialize, Serialize};

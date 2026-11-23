@@ -24,7 +24,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Switch } from "../components/ui/switch";
-import { useQueryLogConfig, useServiceStatus, useStatus } from "../hooks/use-api";
+import { useMeta, useQueryLogConfig, useServiceStatus, useStatus } from "../hooks/use-api";
 import { useLogout } from "../hooks/use-logout";
 import { api, describeError } from "../lib/api";
 import { formatNumber, formatUptime, formatUnixSeconds } from "../lib/format";
@@ -98,6 +98,7 @@ function AccountCard() {
 
 function QueryLogCard() {
   const config = useQueryLogConfig();
+  const meta = useMeta();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<QueryLogConfig | null>(null);
 
@@ -136,7 +137,7 @@ function QueryLogCard() {
     <Card className="flex flex-col">
       <CardHeader
         title="查询日志"
-        description="控制内存日志容量、落盘与保留周期。"
+        description="控制内存日志容量、持久化与保留周期。"
         actions={<Database className="h-4 w-4 text-text-3" />}
       />
       <CardContent className="flex-1 pt-2">
@@ -157,13 +158,13 @@ function QueryLogCard() {
             </div>
             <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2">
               <div>
-                <div className="text-[12px] text-text">写入按日文件</div>
-                <div className="text-[10.5px] text-text-3">querylog-YYYYMMDD.jsonl</div>
+                <div className="text-[12px] text-text">持久化查询日志</div>
+                <div className="text-[10.5px] text-text-3">写入 SQLite 数据库，服务重启后可检索</div>
               </div>
               <Switch
                 checked={draft.fileEnabled}
                 onCheckedChange={(value) => update({ fileEnabled: value })}
-                label="写入按日文件"
+                label="持久化查询日志"
               />
             </div>
             <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2">
@@ -208,17 +209,23 @@ function QueryLogCard() {
               </label>
             </div>
             <div className="py-2">
-              <div className="text-[11px] text-text-3">落盘目录</div>
+              <div className="text-[11px] text-text-3">数据库位置</div>
               <div className="mt-1.5 flex items-center gap-2 rounded-lg bg-surface-2 px-2.5 py-1.5">
-                <span className="mono min-w-0 flex-1 truncate text-[10.5px] text-text-2" title={draft.dataDir}>
-                  {draft.dataDir}
+                <span
+                  className="mono min-w-0 flex-1 truncate text-[10.5px] text-text-2"
+                  title={meta.data?.databasePath ?? undefined}
+                >
+                  {meta.data?.databasePath ?? "—"}
                 </span>
                 <button
                   type="button"
-                  onClick={() => copyText(draft.dataDir, "目录")}
-                  className="shrink-0 rounded p-0.5 text-text-3 hover:text-text"
-                  title="复制目录"
-                  aria-label="复制落盘目录"
+                  disabled={!meta.data?.databasePath}
+                  onClick={() => {
+                    if (meta.data?.databasePath) copyText(meta.data.databasePath, "数据库位置");
+                  }}
+                  className="shrink-0 rounded p-0.5 text-text-3 hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
+                  title="复制数据库位置"
+                  aria-label="复制数据库位置"
                 >
                   <Copy className="h-3 w-3" />
                 </button>
@@ -323,7 +330,7 @@ function ServiceCard() {
 
 function AboutCard() {
   const status = useStatus();
-  const config = useQueryLogConfig();
+  const meta = useMeta();
 
   return (
     <Card>
@@ -353,8 +360,8 @@ function AboutCard() {
             </button>
           </InfoRow>
           <InfoRow label="许可证">GNU General Public License v3.0</InfoRow>
-          <InfoRow label="数据目录" mono>
-            {config.data?.dataDir ?? "—"}
+          <InfoRow label="数据库位置" mono>
+            {meta.data?.databasePath ?? "—"}
           </InfoRow>
         </div>
       </CardContent>

@@ -147,22 +147,8 @@ impl AppRuntime {
         self.config().cache
     }
 
-    fn cache_persist_path(&self, config: &CacheConfig) -> String {
-        if config.persist_path.trim().is_empty() {
-            diting_desktop_platform::paths::default_data_dir()
-                .join("cache.json")
-                .to_string_lossy()
-                .into_owned()
-        } else {
-            config.persist_path.clone()
-        }
-    }
-
     pub fn update_cache_config(&self, mut config: CacheConfig) -> Result<(), ControllerError> {
         config.normalize();
-        if config.persist_enabled && config.persist_path.trim().is_empty() {
-            config.persist_path = self.cache_persist_path(&config);
-        }
         self.update_config(|next| next.cache = config)
             .map(|_| ())
             .map_err(ControllerError::new)
@@ -172,7 +158,7 @@ impl AppRuntime {
         let config = self.config();
         let stats = self.cache_stats();
         CachePersistResponse {
-            path: self.cache_persist_path(&config.cache),
+            path: self.cache_location(),
             restored: 0,
             entry_count: stats.entry_count,
             persist_on: config.cache.persist_enabled,
@@ -184,16 +170,12 @@ impl AppRuntime {
     }
 
     pub fn dump_cache(&self) -> Result<CachePersistResponse, ControllerError> {
-        let config = self.config();
-        let path = std::path::PathBuf::from(self.cache_persist_path(&config.cache));
-        self.cache.save(&path).map_err(ControllerError::new)?;
+        self.dump_cache_to_store().map_err(ControllerError::new)?;
         Ok(self.cache_persist_status())
     }
 
     pub fn load_cache_from_disk(&self) -> Result<CachePersistResponse, ControllerError> {
-        let config = self.config();
-        let path = std::path::PathBuf::from(self.cache_persist_path(&config.cache));
-        let restored = self.cache.load(&path).map_err(ControllerError::new)?;
+        let restored = self.load_cache_from_store().map_err(ControllerError::new)?;
         let mut status = self.cache_persist_status();
         status.restored = restored as i32;
         Ok(status)

@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 
-use diting_desktop_api::config::{store, Config};
+use diting_desktop_api::config::Config;
 use diting_desktop_core::access::AccessControl;
 use diting_desktop_core::cache::DesktopCache;
 use diting_desktop_core::cert::CertManager;
@@ -30,6 +30,9 @@ use tokio::sync::Mutex;
 use crate::settings;
 
 mod encrypted;
+mod stores;
+
+pub use stores::RuntimeStores;
 
 pub struct PlatformHandles {
     pub adapters: Option<Arc<dyn AdapterScanner>>,
@@ -75,7 +78,8 @@ impl PlatformHandles {
 
 pub struct AppRuntime {
     config: Arc<RwLock<Config>>,
-    config_path: PathBuf,
+    stores: RuntimeStores,
+    background_dir: PathBuf,
     config_op: std::sync::Mutex<()>,
     platform: RwLock<Option<Arc<PlatformHandles>>>,
     pub resolver: Arc<DesktopResolver>,
@@ -104,18 +108,52 @@ impl AppRuntime {
     }
 
     fn with_paths(config: Config, config_path: PathBuf) -> Self {
+        let stores = RuntimeStores::file(config_path.clone(), &config);
+        let background_dir = parent_dir(&config_path);
+        Self::with_stores_internal(config, stores, background_dir, None)
+    }
+
+    pub fn with_platform(config: Config, config_path: PathBuf, platform: PlatformHandles) -> Self {
+        let stores = RuntimeStores::file(config_path.clone(), &config);
+        let background_dir = parent_dir(&config_path);
+        Self::with_stores_internal(config, stores, background_dir, Some(platform))
+    }
+
+    pub fn with_stores(
+        config: Config,
+        stores: RuntimeStores,
+        background_dir: PathBuf,
+        platform: Option<PlatformHandles>,
+    ) -> Self {
+        Self::with_stores_internal(config, stores, background_dir, platform)
+    }
+
+    fn with_stores_internal(
+        config: Config,
+        stores: RuntimeStores,
+        background_dir: PathBuf,
+        platform: Option<PlatformHandles>,
+    ) -> Self {
         let groups = GroupConfig {
             enabled: config.client.groups_enabled,
             groups: config.client.groups.clone(),
         };
-        let filter = RuleEngine::new_with_groups(config.filter.clone(), groups);
+        let filter = RuleEngine::new_with_list_cache(
+            config.filter.clone(),
+            groups,
+            Arc::clone(&stores.list_cache),
+        );
+        let querylog = QueryLog::with_storage(
+            settings::querylog_settings(&config.query_log),
+            stores.querylog.clone(),
+        );
         let resolver = Arc::new(DesktopResolver::new());
         resolver.configure(
             &settings::resolver_settings(&config.upstream),
             &settings::group_upstreams(&config),
         );
         let cert_dir = paths::default_cert_dir();
-        Self {
+        let runtime = Self {
             cache: Arc::new(DesktopCache::new(settings::cache_settings(&config.cache))),
             filter,
             hosts: Arc::new(HostsResolver::new(&config.hosts)),
@@ -126,26 +164,23 @@ impl AppRuntime {
             clients: Arc::new(ClientDirectory::new(&config.client)),
             access: Arc::new(AccessControl::new(&config.access)),
             ratelimit: Arc::new(RateLimiter::new(&config.rate_limit)),
-            querylog: Arc::new(QueryLog::new(settings::querylog_settings(
-                &config.query_log,
-            ))),
+            querylog: Arc::new(querylog),
             metrics: Arc::new(MetricsTracker::new()),
             cert: Arc::new(CertManager::new(cert_dir, config.encrypted.cert.clone())),
             observer: RwLock::new(None),
             dns: Mutex::new(None),
             encrypted: Arc::new(RwLock::new(None)),
             dns_lifecycle: Mutex::new(()),
-            config_path,
+            stores,
+            background_dir,
             config_op: std::sync::Mutex::new(()),
             platform: RwLock::new(None),
             resolver,
             config: Arc::new(RwLock::new(config)),
+        };
+        if let Some(platform) = platform {
+            runtime.set_platform(platform);
         }
-    }
-
-    pub fn with_platform(config: Config, config_path: PathBuf, platform: PlatformHandles) -> Self {
-        let runtime = Self::with_paths(config, config_path);
-        runtime.set_platform(platform);
         runtime
     }
 
@@ -170,12 +205,23 @@ impl AppRuntime {
     }
 
     pub fn config_path(&self) -> PathBuf {
-        self.config_path.clone()
+        self.stores.config.location()
+    }
+
+    pub fn background_dir(&self) -> &Path {
+        &self.background_dir
+    }
+
+    pub fn storage_backend(&self) -> &'static str {
+        self.stores.backend
     }
 
     pub fn persist_config(&self) -> Result<(), String> {
         let config = self.config();
-        store::save_config(&self.config_path, &config).map_err(|error| error.to_string())
+        self.stores
+            .config
+            .save(&config)
+            .map_err(|error| error.to_string())
     }
 
     pub fn update_config(&self, mutate: impl FnOnce(&mut Config)) -> Result<Config, String> {
@@ -201,7 +247,10 @@ impl AppRuntime {
         let mut next = self.config();
         let outcome = update(&mut next)?;
         self.apply_config(next.clone());
-        store::save_config(&self.config_path, &next).map_err(|error| error.to_string())?;
+        self.stores
+            .config
+            .save(&next)
+            .map_err(|error| error.to_string())?;
         Ok(outcome)
     }
 
@@ -349,23 +398,49 @@ impl AppRuntime {
         if !config.cache.persist_enabled {
             return Ok(None);
         }
-        let path = if config.cache.persist_path.trim().is_empty() {
-            paths::default_data_dir().join("cache.json")
-        } else {
-            std::path::PathBuf::from(&config.cache.persist_path)
-        };
-        self.cache.save(&path).map(Some)
+        self.stores
+            .cache
+            .save(self.cache.raw().as_ref(), &config.cache)
+            .map(Some)
     }
 
     pub fn load_cache(&self) -> Result<usize, String> {
         let config = self.config();
-        let path = if config.cache.persist_path.trim().is_empty() {
-            paths::default_data_dir().join("cache.json")
-        } else {
-            std::path::PathBuf::from(&config.cache.persist_path)
-        };
-        self.cache.load(&path)
+        self.stores
+            .cache
+            .load(self.cache.raw().as_ref(), &config.cache)
     }
+
+    pub fn dump_cache_to_store(
+        &self,
+    ) -> Result<diting_desktop_core::cache::persist::PersistStatus, String> {
+        let config = self.config();
+        self.stores
+            .cache
+            .save(self.cache.raw().as_ref(), &config.cache)
+    }
+
+    pub fn load_cache_from_store(&self) -> Result<usize, String> {
+        let config = self.config();
+        self.stores
+            .cache
+            .load(self.cache.raw().as_ref(), &config.cache)
+    }
+
+    pub fn cache_location(&self) -> String {
+        self.stores.cache.location(&self.config().cache)
+    }
+
+    pub fn storage_location(&self) -> String {
+        self.config_path().to_string_lossy().into_owned()
+    }
+}
+
+fn parent_dir(path: &Path) -> PathBuf {
+    path.parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 pub fn dns_server_config(config: &Config) -> ServerConfig {

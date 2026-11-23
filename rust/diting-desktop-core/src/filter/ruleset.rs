@@ -1,6 +1,4 @@
 use std::collections::HashSet;
-use std::fs;
-use std::path::Path;
 
 use diting_filter_core::parse::{parse_document, parse_line, ParsedLine};
 use diting_filter_core::rule::{
@@ -176,15 +174,6 @@ pub(crate) fn parse_custom_rules(lines: &[String]) -> Vec<CompiledRule> {
         .filter_map(|line| parse_line(line))
         .filter_map(|parsed| compile_line(parsed, CUSTOM_SOURCE))
         .collect()
-}
-
-pub(crate) fn parse_list_file(data_dir: &Path, list_id: &str) -> Vec<CompiledRule> {
-    let path = data_dir.join(format!("{list_id}.txt"));
-    let Ok(data) = fs::read(path) else {
-        return Vec::new();
-    };
-    let text = String::from_utf8_lossy(&data);
-    parse_list_text(&text, list_id)
 }
 
 pub(crate) fn parse_list_text(text: &str, source: &str) -> Vec<CompiledRule> {

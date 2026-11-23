@@ -37,7 +37,7 @@ export function CachePersistCard() {
   const load = useMutation({
     mutationFn: api.loadCache,
     onSuccess: (result) => {
-      toast.success(`已从落盘文件恢复 ${formatNumber(result.restored ?? result.entryCount)} 条缓存`);
+      toast.success(`已从数据库恢复 ${formatNumber(result.restored ?? result.entryCount)} 条缓存`);
       setConfirmLoad(false);
       invalidate();
     },
@@ -51,7 +51,7 @@ export function CachePersistCard() {
     if (!data?.path) return;
     navigator.clipboard
       .writeText(data.path)
-      .then(() => toast.success("缓存文件路径已复制"))
+      .then(() => toast.success("数据库路径已复制"))
       .catch(() => toast.error("无法访问剪贴板"));
   };
 
@@ -59,7 +59,7 @@ export function CachePersistCard() {
     <Card className="flex flex-col">
       <CardHeader
         title="落盘与恢复"
-        description="手动把内存缓存写入磁盘，或在需要时从落盘文件恢复。"
+        description="手动把内存缓存写入 SQLite 数据库，或在需要时从数据库恢复。"
         actions={
           <Badge tone={data?.persistOn ? "good" : "neutral"} dot>
             {data?.persistOn ? "自动落盘已开启" : "自动落盘已关闭"}
@@ -72,7 +72,7 @@ export function CachePersistCard() {
         ) : (
           <>
             <div className="rounded-xl border border-border bg-surface-2 px-3 py-2.5">
-              <div className="text-[10.5px] text-text-3">缓存文件</div>
+              <div className="text-[10.5px] text-text-3">数据库位置</div>
               <div className="mt-1 flex items-center gap-2">
                 <span className="mono min-w-0 flex-1 break-all text-[11px] text-text-2">
                   {data.path || "—"}
@@ -82,7 +82,7 @@ export function CachePersistCard() {
                   onClick={copyPath}
                   className="shrink-0 rounded p-0.5 text-text-3 hover:text-text"
                   title="复制路径"
-                  aria-label="复制缓存文件路径"
+                  aria-label="复制数据库路径"
                 >
                   <Copy className="h-3 w-3" />
                 </button>
@@ -144,7 +144,7 @@ export function CachePersistCard() {
                 onClick={() => setConfirmLoad(true)}
               >
                 <Upload className="h-3.5 w-3.5" />
-                从文件恢复
+                从数据库恢复
               </Button>
               <span className="ml-auto inline-flex items-center gap-1 text-[10px] text-text-3">
                 <HardDriveDownload className="h-3 w-3" />
@@ -158,8 +158,8 @@ export function CachePersistCard() {
       <ConfirmDialog
         open={confirmLoad}
         onOpenChange={setConfirmLoad}
-        title="从落盘文件恢复缓存"
-        description="将读取落盘文件并把条目加载到内存缓存，不会修改当前缓存配置。确定继续吗？"
+        title="从数据库恢复缓存"
+        description="将从 SQLite 数据库读取缓存条目并加载到内存，不会修改当前缓存配置。确定继续吗？"
         confirmLabel="恢复"
         tone="primary"
         loading={load.isPending}

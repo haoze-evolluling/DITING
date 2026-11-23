@@ -87,7 +87,7 @@ export function CacheConfigCard() {
     <Card className="flex flex-col">
       <CardHeader
         title="缓存策略"
-        description="条目容量、TTL 上落限、过期回退、预取与落盘持久化。"
+        description="条目容量、TTL 上下限、过期回退、预取与持久化。"
         actions={<DatabaseZap className="h-4 w-4 text-text-3" />}
       />
       <CardContent className="flex flex-1 flex-col pt-1">
@@ -268,8 +268,8 @@ export function CacheConfigCard() {
 
             <div className="mt-1 space-y-1">
               <SwitchRow
-                title="落盘持久化"
-                description="定期把缓存写入磁盘，服务重启后可恢复"
+                title="持久化缓存"
+                description="定期把缓存写入 SQLite 数据库，服务重启后可恢复"
                 checked={draft.persistEnabled}
                 onCheckedChange={(persistEnabled) =>
                   update({
@@ -292,14 +292,6 @@ export function CacheConfigCard() {
                       onChange={(event) =>
                         update({ persistIntervalSeconds: Number(event.target.value) })
                       }
-                    />
-                  </Field>
-                  <Field label="文件路径" hint="留空使用默认数据目录下的 cache.json">
-                    <Input
-                      className="mono text-[11.5px]"
-                      value={draft.persistPath ?? ""}
-                      placeholder="默认：数据目录/cache.json"
-                      onChange={(event) => update({ persistPath: event.target.value })}
                     />
                   </Field>
                 </div>

@@ -165,7 +165,7 @@ export function LogsPage() {
             {!live ? (
               <CardFooter className="bg-surface-2/60">
                 <span className="text-[10.5px] text-text-3">
-                  数据来源包含内存与按日落盘的查询日志
+                  数据来源包含内存与 SQLite 数据库中的查询日志
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Button
@@ -203,7 +203,7 @@ export function LogsPage() {
         open={confirmClear}
         onOpenChange={setConfirmClear}
         title="清空查询日志"
-        description="将删除内存中的查询记录与统计，并按配置清理落盘日志。此操作不可撤销。"
+        description="将删除内存中的查询记录与统计，并清理数据库中的日志。此操作不可撤销。"
         confirmLabel="清空日志"
         loading={actions.clearQueryLog.isPending}
         onConfirm={() =>

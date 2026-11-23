@@ -36,12 +36,10 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 
 保持不变：
 
-- `config.json` 的字段名、默认值与归一化规则，旧配置可直接使用；
 - 数据目录（Windows `%ProgramData%\DITING`；Linux root `/etc/diting` + `/var/lib/diting`，非 root
-  `~/.diting`；`DITING_DATA_DIR` 覆盖）、`dns_state.json`、`filters/`、`querylog/`、`certs/`、
-  `restore-dns.*` 的位置；
-- `querylog-YYYYMMDD.jsonl` 文件名与行字段、24 小时本地时区桶与 Top-N；
-- 缓存落盘文件的 v1 格式（旧缓存可读，Rust 写出的缓存旧版本同样可读）；
+  `~/.diting`；`DITING_DATA_DIR` 覆盖）、证书、登录背景图与 `restore-dns.*` 的位置；
+- 配置字段名、默认值与归一化规则，旧 `config.json` 会在首次启动时自动导入；
+- 24 小时本地时区桶与 Top-N、查询日志字段、缓存 v1 格式的语义；
 - HTTP/WebSocket API、JSON 信封、鉴权/CORS、事件类型与状态码；
 - 加密 DNS 证书支持自签生成（ECDSA P-256 与 RSA-3072），并支持 PEM 与 PKCS#12
   （PBES2/AES，兼容传统 3DES/RC2）导入。
@@ -50,6 +48,9 @@ deb 目标在 WSL 内直接编译，因此 WSL 需要已安装 Rust 工具链。
 
 - 服务实现由 Go 改为 Rust；不再安装或加载七个内核动态库（`libditing_*.so` / `diting_*_core.dll`），
   相关环境变量（如 `DITING_FILTER_CORE_LIB`）不再生效；
+- 桌面端结构化数据统一写入 `diting.db`（SQLite/WAL）；旧 `config.json`、`dns_state.json`、
+  `cache.json`、`filters/*.txt`、`querylog/*.jsonl` 只作为首次迁移来源，导入成功后删除；
+- `querylog-YYYYMMDD.jsonl` 与 `cache.json` 不再由 Rust 版本写出；
 - Windows 系统服务由原生 SCM API 直接注册，服务命令行为 `"diting-service.exe" -run`（安装时附加的
   `-config`/`-port`/`-ipc-addr`/`-token` 会一并写入）；SCM 托管的服务没有控制台，运行日志追加到数据目录的
   `service.log`，文件超过 2 MiB 时在下次启动前轮换；

@@ -1,17 +1,19 @@
 mod collector;
 mod reader;
 mod ring;
+mod storage;
 mod types;
 mod writer;
 
 use std::io;
-use std::path::{Path, PathBuf};
+#[cfg(test)]
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
 
 use chrono::Local;
 
 use ring::Ring;
-use writer::Writer;
+pub use storage::{FileQueryLogStorage, QueryLogStorage};
 
 pub use collector::Collector;
 pub use types::{
@@ -21,12 +23,14 @@ pub use types::{
     STATUS_CACHED, STATUS_ERROR, STATUS_STALE,
 };
 
+const HYDRATE_WINDOW_MS: i64 = 24 * 60 * 60 * 1000;
+const HYDRATE_LIMIT: usize = 500_000;
+
 struct Inner {
     cfg: Config,
     ring: Arc<Ring>,
     collector: Arc<Collector>,
-    writer: Option<Arc<Writer>>,
-    file_ok: bool,
+    storage: Arc<dyn QueryLogStorage>,
 }
 
 pub struct QueryLog {
@@ -36,33 +40,57 @@ pub struct QueryLog {
 
 impl QueryLog {
     pub fn new(config: Config) -> Self {
+        Self::with_storage(config, None)
+    }
+
+    pub fn with_storage(config: Config, storage: Option<Arc<dyn QueryLogStorage>>) -> Self {
         let mut cfg = config;
         cfg.normalize(default_querylog_dir());
         let ring = Arc::new(Ring::new(cfg.max_entries));
         let collector = Arc::new(Collector::new());
-        let (writer, file_ok) = build_writer(&cfg);
-        Self {
+        let storage = storage.unwrap_or_else(|| Arc::new(FileQueryLogStorage::new(&cfg)));
+        storage.configure(&cfg);
+        let log = Self {
             inner: RwLock::new(Inner {
                 cfg,
-                ring,
-                collector,
-                writer,
-                file_ok,
+                ring: Arc::clone(&ring),
+                collector: Arc::clone(&collector),
+                storage,
             }),
             lifecycle: Mutex::new(()),
+        };
+        log.hydrate();
+        log
+    }
+
+    fn hydrate(&self) {
+        let (storage, ring, collector) = {
+            let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
+            (
+                Arc::clone(&inner.storage),
+                Arc::clone(&inner.ring),
+                Arc::clone(&inner.collector),
+            )
+        };
+        if !storage.is_persistent() {
+            return;
+        }
+        let since = Local::now().timestamp_millis() - HYDRATE_WINDOW_MS;
+        for record in storage.recent(since, HYDRATE_LIMIT) {
+            ring.append(record.clone());
+            collector.record(&record);
         }
     }
 
     pub fn record(&self, mut record: Record) {
-        let (enabled, log_clients, ring, collector, writer, file_ok) = {
+        let (enabled, log_clients, ring, collector, storage) = {
             let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
             (
                 inner.cfg.enabled,
                 inner.cfg.log_clients,
                 Arc::clone(&inner.ring),
                 Arc::clone(&inner.collector),
-                inner.writer.clone(),
-                inner.file_ok,
+                Arc::clone(&inner.storage),
             )
         };
         if !enabled {
@@ -78,16 +106,9 @@ impl QueryLog {
             record.client_name.clear();
         }
 
-        if file_ok {
-            if let Some(writer) = writer {
-                ring.append(record.clone());
-                collector.record(&record);
-                writer.enqueue(record);
-                return;
-            }
-        }
+        ring.append(record.clone());
         collector.record(&record);
-        ring.append(record);
+        storage.append(record);
     }
 
     pub fn search(&self, mut query: SearchQuery) -> SearchResult {
@@ -98,28 +119,26 @@ impl QueryLog {
             query.offset = 0;
         }
 
-        let (ring, writer, file_ok) = {
+        let (ring, storage) = {
             let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
-            (Arc::clone(&inner.ring), inner.writer.clone(), inner.file_ok)
+            (Arc::clone(&inner.ring), Arc::clone(&inner.storage))
         };
 
         let (memory, mem_total) = ring.search_all(&query);
         let mem_total = mem_total as i64;
 
-        let (file_hits, file_total) = if query.include_file
-            && file_ok
-            && query.offset + query.limit + 1 > mem_total
-        {
-            match writer {
-                Some(writer) => {
-                    reader::search_files(writer.dir(), &query, mem_total, ring.oldest_timestamp())
-                }
-                None => (Vec::new(), 0),
-            }
-        } else {
-            (Vec::new(), 0)
-        };
+        if !query.include_file {
+            return ring_result(memory, mem_total, &query);
+        }
+        if let Some(result) = storage.search(&query) {
+            return result;
+        }
+        if !storage.is_persistent() || query.offset + query.limit < mem_total {
+            return ring_result(memory, mem_total, &query);
+        }
 
+        let (file_hits, file_total) =
+            storage.search_older(&query, mem_total, ring.oldest_timestamp());
         let total = mem_total + file_total;
         let mut combined = file_hits;
         combined.extend(memory);
@@ -174,78 +193,60 @@ impl QueryLog {
         let mut cfg = config;
         cfg.normalize(default_querylog_dir());
 
-        let stale = {
+        let storage = {
             let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
             inner.cfg = cfg.clone();
             inner.ring.resize(cfg.max_entries);
-
-            let need_reinit = inner.writer.is_none() != !cfg.file_enabled
-                || inner.writer.as_ref().is_some_and(|writer| {
-                    writer.dir() != Path::new(&cfg.data_dir)
-                        || writer.retention_days() != cfg.retention_days
-                });
-            if !need_reinit {
-                return;
-            }
-
-            inner.file_ok = false;
-            inner.writer.take()
+            Arc::clone(&inner.storage)
         };
-
-        if let Some(writer) = stale {
-            let _ = writer.close();
-        }
-        let (writer, file_ok) = build_writer(&cfg);
-        let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
-        inner.writer = writer;
-        inner.file_ok = file_ok;
+        storage.configure(&cfg);
     }
 
     pub fn clear(&self, remove_files: bool) -> io::Result<()> {
-        let (ring, collector, writer, file_ok) = {
+        let (ring, collector, storage) = {
             let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
             (
                 Arc::clone(&inner.ring),
                 Arc::clone(&inner.collector),
-                inner.writer.clone(),
-                inner.file_ok,
+                Arc::clone(&inner.storage),
             )
         };
         ring.clear();
         collector.clear();
-        if remove_files && file_ok {
-            if let Some(writer) = writer {
-                return writer.clear();
-            }
+        if remove_files {
+            return storage.clear();
         }
         Ok(())
     }
 
     pub fn close(&self) -> io::Result<()> {
         let _lifecycle = self.lifecycle.lock().unwrap_or_else(|e| e.into_inner());
-        let writer = {
-            let mut inner = self.inner.write().unwrap_or_else(|e| e.into_inner());
-            inner.file_ok = false;
-            inner.writer.take()
+        let storage = {
+            let inner = self.inner.read().unwrap_or_else(|e| e.into_inner());
+            Arc::clone(&inner.storage)
         };
-        match writer {
-            Some(writer) => writer.close(),
-            None => Ok(()),
-        }
+        storage.close()
     }
 
     pub fn is_file_enabled(&self) -> bool {
-        self.inner.read().unwrap_or_else(|e| e.into_inner()).file_ok
+        self.inner
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .storage
+            .is_persistent()
+    }
+
+    pub fn is_persistent(&self) -> bool {
+        self.is_file_enabled()
     }
 }
 
-fn build_writer(cfg: &Config) -> (Option<Arc<Writer>>, bool) {
-    if !cfg.file_enabled {
-        return (None, false);
-    }
-    match Writer::new(PathBuf::from(&cfg.data_dir), cfg.retention_days) {
-        Ok(writer) => (Some(Arc::new(writer)), true),
-        Err(_) => (None, false),
+fn ring_result(memory: Vec<Record>, total: i64, query: &SearchQuery) -> SearchResult {
+    let start = (query.offset as usize).min(memory.len());
+    let end = (start + query.limit as usize).min(memory.len());
+    SearchResult {
+        total,
+        entries: memory[start..end].to_vec(),
     }
 }
 

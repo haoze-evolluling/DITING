@@ -5,6 +5,41 @@ use std::path::{Path, PathBuf};
 use super::paths;
 use super::Config;
 
+pub trait ConfigStore: Send + Sync {
+    fn load(&self) -> io::Result<Config>;
+    fn save(&self, config: &Config) -> io::Result<()>;
+    fn location(&self) -> PathBuf;
+}
+
+#[derive(Debug, Clone)]
+pub struct FileConfigStore {
+    path: PathBuf,
+}
+
+impl FileConfigStore {
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        Self { path: path.into() }
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl ConfigStore for FileConfigStore {
+    fn load(&self) -> io::Result<Config> {
+        load_config(&self.path)
+    }
+
+    fn save(&self, config: &Config) -> io::Result<()> {
+        save_config(&self.path, config)
+    }
+
+    fn location(&self) -> PathBuf {
+        normalize_path(&self.path)
+    }
+}
+
 pub fn default_config_path() -> PathBuf {
     paths::default_config_path()
 }

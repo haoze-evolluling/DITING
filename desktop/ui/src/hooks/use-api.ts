@@ -21,6 +21,7 @@ import type {
   FilterPauseResponse,
   FilterRulesResponse,
   LanStatus,
+  MetaInfo,
   QueryLogConfig,
   QueryLogStats,
   QuerySearchParams,
@@ -43,6 +44,15 @@ export function useAuthStatus(): UseQueryResult<AuthStatus> {
     queryFn: api.authStatus,
     retry: 1,
     refetchInterval: 30_000,
+  });
+}
+
+export function useMeta(): UseQueryResult<MetaInfo> {
+  return useQuery({
+    queryKey: ["meta"],
+    queryFn: api.meta,
+    staleTime: 60_000,
+    retry: 1,
   });
 }
 

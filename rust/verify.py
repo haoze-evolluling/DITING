@@ -168,6 +168,8 @@ def main() -> int:
                     "-p",
                     "diting-desktop-ipc",
                     "-p",
+                    "diting-desktop-sqlite",
+                    "-p",
                     "diting-desktop-service",
                 ],
                 RUST_DIR,
