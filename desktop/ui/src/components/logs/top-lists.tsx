@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { ListOrdered } from "lucide-react";
-import { m } from "motion/react";
 
-import { MOTION_EASE_OUT, useMotion } from "../../hooks/use-motion";
 import { displayDomain, formatNumber } from "../../lib/format";
 import type { NameCount, QueryLogStats } from "../../lib/types";
 import { cn } from "../../lib/cn";
@@ -10,6 +8,7 @@ import { Card, CardContent, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
 import { Segmented } from "../ui/segmented";
 import { Skeleton } from "../ui/skeleton";
+import { Swap } from "../ui/swap";
 
 type Tab = "domains" | "blocked" | "clients";
 
@@ -25,15 +24,7 @@ const toneClass: Record<Tab, string> = {
   clients: "bg-violet/12",
 };
 
-function Rows({
-  items,
-  tone,
-  allowPageEnter,
-}: {
-  items: NameCount[];
-  tone: Tab;
-  allowPageEnter: boolean;
-}) {
+function Rows({ items, tone }: { items: NameCount[]; tone: Tab }) {
   if (items.length === 0) {
     return <EmptyState icon={ListOrdered} title="暂无数据" description="统计窗口内还没有记录。" />;
   }
@@ -59,26 +50,11 @@ function Rows({
     </div>
   ));
 
-  if (!allowPageEnter) {
-    return <div className="space-y-0.5">{content}</div>;
-  }
-
-  return (
-    <m.div
-      key={tone}
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: MOTION_EASE_OUT }}
-      className="space-y-0.5"
-    >
-      {content}
-    </m.div>
-  );
+  return <div className="space-y-0.5">{content}</div>;
 }
 
 export function TopLists({ stats, loading }: { stats?: QueryLogStats; loading: boolean }) {
   const [tab, setTab] = useState<Tab>("domains");
-  const { allowPageEnter } = useMotion();
   const items =
     tab === "domains"
       ? stats?.topDomains ?? []
@@ -102,7 +78,9 @@ export function TopLists({ stats, loading }: { stats?: QueryLogStats; loading: b
             ))}
           </div>
         ) : (
-          <Rows items={items} tone={tab} allowPageEnter={allowPageEnter} />
+          <Swap swapKey={tab}>
+            <Rows items={items} tone={tab} />
+          </Swap>
         )}
       </CardContent>
     </Card>

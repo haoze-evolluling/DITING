@@ -3,7 +3,6 @@
   --motion-ease-spring: cubic-bezier(0.34, 1.32, 0.64, 1);
   --motion-fast: 140ms;
   --motion-base: 200ms;
-  --motion-slow: 260ms;
 }
 
 /* ============ 基础关键帧（仅使用 transform / opacity / background-position） ============ */
@@ -176,14 +175,19 @@
   }
 }
 
+/*
+ * 错峰入场使用独立的 translate 属性，而不是 transform：
+ * animation 的优先级高于普通声明，若这里落在 transform 上，
+ * fill-mode: both 会和 .motion-card-hover:hover 的上浮 transform 相互覆盖。
+ */
 @keyframes motion-card-stagger {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    translate: 0 8px;
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    translate: 0 0;
   }
 }
 
@@ -269,6 +273,22 @@
   animation: motion-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* 加载指示：属于必要反馈，最低档位仍保留旋转，避免看起来像卡死 */
+@keyframes motion-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.motion-spinner {
+  animation: motion-spin 0.9s linear infinite;
+}
+
+/* 图表悬浮提示 */
+.motion-tooltip {
+  animation: motion-fade-in 120ms var(--motion-ease-out) both;
+}
+
 /* ============ 档位分级控制（data-motion） ============ */
 
 /* 1. 关闭档（off）：零动效 + 停用毛玻璃、模糊光晕、脉冲与骨架动画 */
@@ -305,11 +325,16 @@
   animation: none !important;
 }
 
+:root[data-motion="off"] .motion-spinner,
+:root[data-motion="minimal"] .motion-spinner {
+  animation-duration: 0.9s !important;
+  animation-iteration-count: infinite !important;
+}
+
 /* 2. 简约档（minimal）：停用循环动画、大光晕与骨架动画；弹层降为极速纯淡入淡出 */
 :root[data-motion="minimal"] {
   --motion-fast: 100ms;
   --motion-base: 120ms;
-  --motion-slow: 140ms;
 }
 
 :root[data-motion="minimal"] .motion-glow,
@@ -440,4 +465,29 @@
     color 220ms var(--motion-ease-out),
     fill 220ms var(--motion-ease-out),
     stroke 220ms var(--motion-ease-out) !important;
+}
+
+/* ============ 系统无障碍与后台暂停 ============ */
+
+/* 系统声明「减弱动态效果」时，即使应用内显式选了高档位也停用常驻循环动画 */
+@media (prefers-reduced-motion: reduce) {
+  .motion-glow-ambient,
+  .motion-radar,
+  .motion-skeleton,
+  .live-dot::after {
+    animation: none !important;
+  }
+
+  .motion-spinner {
+    animation-duration: 1.6s !important;
+  }
+}
+
+/* 窗口隐藏时暂停常驻循环，避免后台持续占用合成资源 */
+:root[data-visibility="hidden"] .motion-glow-ambient,
+:root[data-visibility="hidden"] .motion-radar,
+:root[data-visibility="hidden"] .motion-skeleton,
+:root[data-visibility="hidden"] .motion-spinner,
+:root[data-visibility="hidden"] .live-dot::after {
+  animation-play-state: paused;
 }

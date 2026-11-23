@@ -18,6 +18,7 @@ import { useStatus } from "../../hooks/use-api";
 import { MOTION_SPRING_SNAPPY, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 import { resolverModeLabel } from "../../lib/labels";
+import { prefetchRoute } from "../../lib/route-prefetch";
 import { useLiveStore } from "../../stores/live";
 
 const navGroups = [
@@ -69,6 +70,8 @@ function NavItem({
     <NavLink
       to={to}
       end={end}
+      onMouseEnter={() => prefetchRoute(to)}
+      onFocus={() => prefetchRoute(to)}
       className={({ isActive }) =>
         cn(
           "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors",

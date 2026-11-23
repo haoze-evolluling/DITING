@@ -212,6 +212,8 @@
   .app-canvas {
     position: relative;
     isolation: isolate;
+    /* 预留滚动条宽度，避免长短页面切换时内容横向抖动 */
+    scrollbar-gutter: stable;
   }
 
   .app-canvas::before {
@@ -235,10 +237,6 @@
 
   .text-balance {
     text-wrap: balance;
-  }
-
-  .animate-rise {
-    animation: rise-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
   .live-dot {
@@ -319,17 +317,6 @@
     .card-grid-3-1 > :last-child {
       grid-column: span 1 / span 1;
     }
-  }
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 

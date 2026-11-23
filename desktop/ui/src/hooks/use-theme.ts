@@ -1,7 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useUIStore } from "../stores/ui";
 import { useMotion } from "./use-motion";
+
+function readSystemDark(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return false;
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+/** 供 React 树外的组件（如 Toaster）读取解析后的深浅色。 */
+export function useIsDark(): boolean {
+  const theme = useUIStore((state) => state.theme);
+  const [systemDark, setSystemDark] = useState<boolean>(readSystemDark);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = () => setSystemDark(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return theme === "dark" || (theme === "system" && systemDark);
+}
 
 export function useApplyTheme(): void {
   const theme = useUIStore((state) => state.theme);

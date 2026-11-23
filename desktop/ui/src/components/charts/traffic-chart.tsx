@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -10,10 +10,9 @@ import {
   YAxis,
 } from "recharts";
 import { ChartSpline, Table2 } from "lucide-react";
-import { m } from "motion/react";
 import type { TooltipProps } from "recharts";
 
-import { MOTION_EASE_OUT, useMotion } from "../../hooks/use-motion";
+import { useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 import {
   formatCompact,
@@ -25,6 +24,7 @@ import type { HourPoint } from "../../lib/types";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
+import { Swap } from "../ui/swap";
 
 const series = [
   { key: "queries", label: "查询", color: "var(--chart-blue)" },
@@ -38,7 +38,7 @@ function ChartTooltip({ active, payload }: TooltipProps<number, string>) {
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0]?.payload as { fullLabel?: string } | undefined;
   return (
-    <div className="rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-pop)]">
+    <div className="motion-tooltip rounded-xl border border-border bg-surface px-3 py-2 shadow-[var(--shadow-pop)]">
       <div className="mb-1 text-[10.5px] text-text-3">{point?.fullLabel}</div>
       {series.map((item) => {
         const entry = payload.find((candidate) => candidate.dataKey === item.key);
@@ -73,8 +73,19 @@ export function TrafficChart({
   className?: string;
 }) {
   const [showTable, setShowTable] = useState(false);
-  const { allowChart, allowPageEnter, chartDuration } = useMotion();
+  const [animatedOnce, setAnimatedOnce] = useState(false);
+  const { allowChart, chartDuration } = useMotion();
   const gradientId = `traffic-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+
+  // 仅在首屏数据就绪后播放一次绘制动画；后续轮询刷新不再重播，
+  // 避免每 15 秒整张曲线从头重绘造成闪动。
+  useEffect(() => {
+    if (!allowChart || points.length === 0) return;
+    const timer = window.setTimeout(() => setAnimatedOnce(true), 800);
+    return () => window.clearTimeout(timer);
+  }, [allowChart, points.length]);
+
+  const animateChart = allowChart && !animatedOnce;
 
   const data = useMemo(
     () =>
@@ -139,133 +150,105 @@ export function TrafficChart({
       <CardContent className="pt-2">
         {loading ? (
           <Skeleton className="h-[228px] w-full" />
-        ) : showTable ? (
-          allowPageEnter ? (
-            <m.div
-              key="table"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.18, ease: MOTION_EASE_OUT }}
-              className="h-[228px] overflow-y-auto rounded-lg border border-border"
-            >
-              <table className="w-full text-[11.5px]">
-                <caption className="sr-only">最近 24 小时解析趋势数据表</caption>
-                <thead className="sticky top-0 bg-surface-2 text-text-3">
-                  <tr>
-                    <th className="px-3 py-1.5 text-left font-medium">时间</th>
-                    <th className="px-3 py-1.5 text-right font-medium">查询</th>
-                    <th className="px-3 py-1.5 text-right font-medium">拦截</th>
-                    <th className="px-3 py-1.5 text-right font-medium">缓存</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((point) => (
-                    <tr key={point.hourMs} className="border-t border-border/70">
-                      <td className="mono px-3 py-1 text-text-2">{point.label}</td>
-                      <td className="num px-3 py-1 text-right text-text">{formatNumber(point.queries)}</td>
-                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.blocked)}</td>
-                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.cached)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </m.div>
-          ) : (
-            <div className="h-[228px] overflow-y-auto rounded-lg border border-border">
-              <table className="w-full text-[11.5px]">
-                <caption className="sr-only">最近 24 小时解析趋势数据表</caption>
-                <thead className="sticky top-0 bg-surface-2 text-text-3">
-                  <tr>
-                    <th className="px-3 py-1.5 text-left font-medium">时间</th>
-                    <th className="px-3 py-1.5 text-right font-medium">查询</th>
-                    <th className="px-3 py-1.5 text-right font-medium">拦截</th>
-                    <th className="px-3 py-1.5 text-right font-medium">缓存</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((point) => (
-                    <tr key={point.hourMs} className="border-t border-border/70">
-                      <td className="mono px-3 py-1 text-text-2">{point.label}</td>
-                      <td className="num px-3 py-1 text-right text-text">{formatNumber(point.queries)}</td>
-                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.blocked)}</td>
-                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.cached)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )
         ) : (
-          <div className="h-[228px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--chart-blue)" stopOpacity={0.26} />
-                    <stop offset="100%" stopColor="var(--chart-blue)" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  vertical={false}
-                  stroke="var(--chart-grid)"
-                  strokeDasharray="3 5"
-                />
-                <XAxis
-                  dataKey="label"
-                  interval={3}
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fill: "var(--chart-axis)", fontSize: 10 }}
-                  tickMargin={8}
-                />
-                <YAxis
-                  width={40}
-                  tickLine={false}
-                  axisLine={false}
-                  allowDecimals={false}
-                  tickFormatter={(value: number) => formatCompact(value)}
-                  tick={{ fill: "var(--chart-axis)", fontSize: 10 }}
-                />
-                <Tooltip
-                  content={<ChartTooltip />}
-                  cursor={{ stroke: "var(--chart-axis)", strokeDasharray: "3 4", strokeWidth: 1 }}
-                />
-                <Area
-                  type="linear"
-                  dataKey="queries"
-                  stroke="var(--chart-blue)"
-                  strokeWidth={2}
-                  fill={`url(#${gradientId})`}
-                  isAnimationActive={allowChart}
-                  animationDuration={chartDuration}
-                  animationEasing="ease-out"
-                  activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
-                />
-                <Line
-                  type="linear"
-                  dataKey="blocked"
-                  stroke="var(--chart-red)"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={allowChart}
-                  animationDuration={chartDuration}
-                  animationEasing="ease-out"
-                  activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
-                />
-                <Line
-                  type="linear"
-                  dataKey="cached"
-                  stroke="var(--chart-violet)"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={allowChart}
-                  animationDuration={chartDuration}
-                  animationEasing="ease-out"
-                  activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <Swap swapKey={showTable ? "table" : "chart"}>
+            {showTable ? (
+              <div className="h-[228px] overflow-y-auto rounded-lg border border-border">
+                <table className="w-full text-[11.5px]">
+                  <caption className="sr-only">最近 24 小时解析趋势数据表</caption>
+                  <thead className="sticky top-0 bg-surface-2 text-text-3">
+                    <tr>
+                      <th className="px-3 py-1.5 text-left font-medium">时间</th>
+                      <th className="px-3 py-1.5 text-right font-medium">查询</th>
+                      <th className="px-3 py-1.5 text-right font-medium">拦截</th>
+                      <th className="px-3 py-1.5 text-right font-medium">缓存</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map((point) => (
+                      <tr key={point.hourMs} className="border-t border-border/70">
+                        <td className="mono px-3 py-1 text-text-2">{point.label}</td>
+                        <td className="num px-3 py-1 text-right text-text">{formatNumber(point.queries)}</td>
+                        <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.blocked)}</td>
+                        <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.cached)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="h-[228px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--chart-blue)" stopOpacity={0.26} />
+                        <stop offset="100%" stopColor="var(--chart-blue)" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      vertical={false}
+                      stroke="var(--chart-grid)"
+                      strokeDasharray="3 5"
+                    />
+                    <XAxis
+                      dataKey="label"
+                      interval={3}
+                      tickLine={false}
+                      axisLine={false}
+                      tick={{ fill: "var(--chart-axis)", fontSize: 10 }}
+                      tickMargin={8}
+                    />
+                    <YAxis
+                      width={40}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                      tickFormatter={(value: number) => formatCompact(value)}
+                      tick={{ fill: "var(--chart-axis)", fontSize: 10 }}
+                    />
+                    <Tooltip
+                      content={<ChartTooltip />}
+                      cursor={{ stroke: "var(--chart-axis)", strokeDasharray: "3 4", strokeWidth: 1 }}
+                    />
+                    <Area
+                      type="linear"
+                      dataKey="queries"
+                      stroke="var(--chart-blue)"
+                      strokeWidth={2}
+                      fill={`url(#${gradientId})`}
+                      isAnimationActive={animateChart}
+                      animationDuration={chartDuration}
+                      animationEasing="ease-out"
+                      activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+                    />
+                    <Line
+                      type="linear"
+                      dataKey="blocked"
+                      stroke="var(--chart-red)"
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={animateChart}
+                      animationDuration={chartDuration}
+                      animationEasing="ease-out"
+                      activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+                    />
+                    <Line
+                      type="linear"
+                      dataKey="cached"
+                      stroke="var(--chart-violet)"
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={animateChart}
+                      animationDuration={chartDuration}
+                      animationEasing="ease-out"
+                      activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </Swap>
         )}
       </CardContent>
     </Card>

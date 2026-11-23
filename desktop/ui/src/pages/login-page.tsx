@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Skeleton } from "../components/ui/skeleton";
+import { Collapse, Swap } from "../components/ui/swap";
 import { useAuthStatus } from "../hooks/use-api";
 import { MOTION_EASE_OUT, useMotion } from "../hooks/use-motion";
 import { api, describeError } from "../lib/api";
@@ -163,7 +164,10 @@ export function LoginPage() {
               : "使用管理员凭据连接本机谛听桌面服务。"}
           </p>
 
-          {authStatus.isLoading ? (
+          <Swap
+            swapKey={authStatus.isLoading ? "loading" : authStatus.isError ? "error" : "form"}
+          >
+            {authStatus.isLoading ? (
             <div className="mt-8 space-y-3">
               <Skeleton className="h-9 w-full" />
               <Skeleton className="h-9 w-full" />
@@ -257,18 +261,18 @@ export function LoginPage() {
                 </div>
               ) : null}
 
-              {locked ? (
+              <Collapse show={locked}>
                 <p className="rounded-lg bg-danger-soft px-3 py-2 text-[11.5px] text-danger">
                   尝试次数过多，请在 {authStatus.data?.lockoutRemainingSec ?? 0} 秒后重试。
                 </p>
-              ) : null}
+              </Collapse>
 
-              {error ? (
+              <Collapse show={Boolean(error)}>
                 <p className="flex items-start gap-1.5 rounded-lg bg-danger-soft px-3 py-2 text-[11.5px] leading-5 text-danger">
                   <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   {error}
                 </p>
-              ) : null}
+              </Collapse>
 
               <Button
                 type="submit"
@@ -282,6 +286,7 @@ export function LoginPage() {
               </Button>
             </form>
           )}
+          </Swap>
 
           <div className="mt-8 flex items-center justify-between border-t border-border pt-4 text-[10.5px] text-text-3">
             <span className="truncate">服务地址 {serviceAddress || "同源"}</span>

@@ -2,6 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useUIStore, type MotionLevel } from "../stores/ui";
 
+/**
+ * 页面级动效时长（秒），与 styles/motion.css 的 --motion-fast / --motion-base
+ * 保持同一量级；CSS 负责组件级动画，这里只维护 Motion 驱动的时间轴，避免两处漂移。
+ */
+export const MOTION_PAGE_TIMING = {
+  standard: { enter: 0.18, exit: 0.11 },
+  rich: { enter: 0.24, exit: 0.14 },
+} as const;
+
 export interface MotionLevelOption {
   value: MotionLevel;
   label: string;
@@ -13,13 +22,13 @@ export const MOTION_LEVEL_OPTIONS: MotionLevelOption[] = [
   {
     value: "off",
     label: "关闭",
-    summary: "停用全部动画、毛玻璃模糊与状态光效，零动效开销。",
+    summary: "停用装饰性动画、毛玻璃模糊与状态光效，仅保留必要的加载指示。",
     performance: "极低占用",
   },
   {
     value: "minimal",
     label: "简约",
-    summary: "仅保留轻量点击与弹层淡入反馈，停用循环光效与图表动画。",
+    summary: "仅保留轻量交互反馈与弹层淡入，停用循环光效、骨架与图表动画。",
     performance: "低占用",
   },
   {
@@ -83,6 +92,8 @@ export function useMotion() {
 
   const effective: MotionLevel = preferred ?? (systemReduced ? "off" : "standard");
   const isSystemDefault = preferred === null;
+  const pageTiming =
+    effective === "rich" ? MOTION_PAGE_TIMING.rich : MOTION_PAGE_TIMING.standard;
 
   return useMemo(
     () => ({
@@ -104,11 +115,28 @@ export function useMotion() {
       allowLiveRow: effective === "rich",
       allowAmbient: effective === "rich",
       allowThemeTransition: effective === "rich",
-      pageDuration: effective === "rich" ? 0.24 : 0.18,
+      pageDuration: pageTiming.enter,
+      pageExitDuration: pageTiming.exit,
       chartDuration: effective === "rich" ? 620 : 420,
     }),
-    [preferred, effective, isSystemDefault, systemReduced, setMotion],
+    [preferred, effective, isSystemDefault, systemReduced, setMotion, pageTiming.enter, pageTiming.exit],
   );
+}
+
+/**
+ * 把窗口可见性同步到 <html data-visibility>，用于暂停常驻循环动画，
+ * 避免应用最小化/切到后台时仍持续占用合成器。
+ */
+export function useDocumentVisibility(): void {
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => {
+      root.dataset.visibility = document.hidden ? "hidden" : "visible";
+    };
+    update();
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
+  }, []);
 }
 
 /**

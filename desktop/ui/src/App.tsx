@@ -11,7 +11,7 @@ import {
 import { ErrorBoundary } from "./components/error-boundary";
 import { AppShell } from "./components/layout/app-shell";
 import { useLiveStream } from "./hooks/use-live-stream";
-import { useMotion } from "./hooks/use-motion";
+import { useDocumentVisibility, useMotion } from "./hooks/use-motion";
 import { useApplyTheme } from "./hooks/use-theme";
 import { LoginPage } from "./pages/login-page";
 import { useAuthStore } from "./stores/auth";
@@ -69,6 +69,7 @@ function ProtectedRoute() {
 
 export default function App() {
   useApplyTheme();
+  useDocumentVisibility();
   const { isOff } = useMotion();
 
   return (

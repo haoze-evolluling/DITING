@@ -7,6 +7,30 @@
     <meta name="description" content="谛听 DITING 桌面端 DNS 过滤管理器" />
     <link rel="icon" type="image/webp" href="/icon.webp" />
     <title>谛听 DITING</title>
+    <script>
+      // React 挂载前同步应用主题 / 强调色 / 动效档位，避免启动闪白与满配动效闪帧
+      (function () {
+        try {
+          var raw = localStorage.getItem("diting.desktop.ui");
+          var state = raw ? JSON.parse(raw).state || {} : {};
+          var root = document.documentElement;
+          var dark =
+            state.theme === "dark" ||
+            ((state.theme === "system" || !state.theme) &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) root.classList.add("dark");
+          root.style.colorScheme = dark ? "dark" : "light";
+          if (state.accent) root.dataset.accent = state.accent;
+          if (state.motion) {
+            root.dataset.motion = state.motion;
+          } else if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            root.dataset.motion = "off";
+          }
+        } catch (error) {
+          /* 存储损坏时回退到默认外观 */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

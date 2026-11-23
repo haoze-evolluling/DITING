@@ -21,6 +21,7 @@ import { useStatus } from "../../hooks/use-api";
 import { useLogout } from "../../hooks/use-logout";
 import { MOTION_LEVEL_OPTIONS, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
+import { prefetchRoute } from "../../lib/route-prefetch";
 import { useAuthStore } from "../../stores/auth";
 import { useLiveStore } from "../../stores/live";
 import { useUIStore, type ThemeMode } from "../../stores/ui";
@@ -53,6 +54,8 @@ function MobileNav() {
           key={item.to}
           to={item.to}
           end={item.end}
+          onMouseEnter={() => prefetchRoute(item.to)}
+          onFocus={() => prefetchRoute(item.to)}
           className={({ isActive }) =>
             cn(
               "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",

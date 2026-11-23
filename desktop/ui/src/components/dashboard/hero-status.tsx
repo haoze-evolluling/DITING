@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Activity, Play, Square } from "lucide-react";
 
 import { useAnimatedNumber, useMotion } from "../../hooks/use-motion";
@@ -13,10 +13,20 @@ import { Skeleton } from "../ui/skeleton";
 
 function QpsSparkline({ qps }: { qps: number }) {
   const [history, setHistory] = useState<number[]>([]);
+  const qpsRef = useRef(qps);
+  qpsRef.current = qps;
 
+  // 按秒推进历史，而不是按数值变化推进：
+  // 空闲时 QPS 长期为 0，按值触发会让走势图停在原地。
   useEffect(() => {
-    setHistory((previous) => [...previous, qps].slice(-32));
-  }, [qps]);
+    const append = () => {
+      if (document.hidden) return;
+      setHistory((previous) => [...previous, qpsRef.current].slice(-32));
+    };
+    append();
+    const timer = window.setInterval(append, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const width = 560;
   const height = 40;

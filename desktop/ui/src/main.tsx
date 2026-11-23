@@ -5,7 +5,20 @@ import { Toaster } from "sonner";
 
 import App from "./App";
 import { TooltipProvider } from "./components/ui/tooltip";
+import { useIsDark } from "./hooks/use-theme";
 import "./styles.css";
+
+function AppToaster() {
+  const dark = useIsDark();
+  return (
+    <Toaster
+      position="bottom-right"
+      theme={dark ? "dark" : "light"}
+      closeButton
+      toastOptions={{ className: "text-[12.5px]" }}
+    />
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,12 +38,7 @@ createRoot(root).render(
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={220}>
         <App />
-        <Toaster
-          position="bottom-right"
-          theme="system"
-          closeButton
-          toastOptions={{ className: "text-[12.5px]" }}
-        />
+        <AppToaster />
       </TooltipProvider>
     </QueryClientProvider>
   </StrictMode>,
