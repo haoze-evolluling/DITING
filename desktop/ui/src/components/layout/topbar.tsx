@@ -106,7 +106,7 @@ export function Topbar() {
                 running ? "bg-good" : "bg-text-3",
               )}
             />
-            {running ? "DNS 运行中" : "DNS 已停止"}
+            {running ? "DNS 运行中" : "DNS 未启动"}
           </span>
           <span className="text-[11.5px] text-text-3">实时链路</span>
           <span

@@ -153,7 +153,11 @@ export function HeroStatus({
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="text-[12px] font-medium text-text-3">DNS 核心</span>
           <Badge tone="neutral">{resolverModeLabel(status?.dns.mode)}</Badge>
-          {takeover?.active ? <Badge tone="accent">系统 DNS 已接管</Badge> : null}
+          {takeover?.active ? (
+            <Badge tone="accent">系统 DNS 已接管</Badge>
+          ) : running ? (
+            <Badge tone="warn">系统 DNS 未接管</Badge>
+          ) : null}
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Button size="sm" variant="ghost" onClick={onOpenDiagnostics}>
@@ -188,28 +192,34 @@ export function HeroStatus({
                 )}
               />
               <span className="text-[32px] font-semibold leading-none tracking-[-0.045em] text-text">
-                {!status ? "状态未知" : running ? "运行中" : "已停止"}
+                {!status ? "状态未知" : running ? "运行中" : "准备开始解析"}
               </span>
             </div>
             <p className="mt-2 text-[12px] text-text-3">
               {!status
                 ? "无法读取运行状态，请检查本机管理服务连接。"
                 : running
-                  ? `已稳定运行 ${formatUptime(uptime)}，正在为${takeover?.active ? "本机与局域网" : "本机"}提供解析`
-                  : "解析服务当前未运行，点击右上角按钮启动"}
+                  ? takeover?.active
+                    ? `已稳定运行 ${formatUptime(uptime)}，正在为${status?.dns.allowLAN ? "本机与局域网" : "本机"}提供解析`
+                    : `已稳定运行 ${formatUptime(uptime)}，系统 DNS 尚未接管，本机程序仍走原有 DNS`
+                  : "解析服务尚未启动，点击右上角「启动解析」开始解析并接管系统 DNS"}
             </p>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {addresses.length > 0 ? (
-                addresses.slice(0, 3).map((address) => (
-                  <span
-                    key={address}
-                    className="mono rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10.5px] text-text-2"
-                  >
-                    {address}
-                  </span>
-                ))
+              {running ? (
+                addresses.length > 0 ? (
+                  addresses.slice(0, 3).map((address) => (
+                    <span
+                      key={address}
+                      className="mono rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10.5px] text-text-2"
+                    >
+                      {address}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-[11px] text-text-3">未监听任何地址</span>
+                )
               ) : (
-                <span className="text-[11px] text-text-3">未监听任何地址</span>
+                <span className="text-[11px] text-text-3">尚未开始监听</span>
               )}
             </div>
           </div>
@@ -228,7 +238,7 @@ export function HeroStatus({
       <div className="relative grid grid-cols-2 divide-x divide-border border-t border-border bg-surface-2/65 sm:grid-cols-4">
         {[
           { label: "版本", value: status?.version ? `v${status.version}` : "—" },
-          { label: "运行时长", value: formatUptime(uptime) },
+          { label: "服务运行", value: formatUptime(uptime) },
           { label: "活跃上游", value: `${activeUpstreams}/${upstreams.length}` },
           {
             label: "累计查询",

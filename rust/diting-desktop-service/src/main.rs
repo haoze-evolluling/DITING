@@ -339,13 +339,19 @@ pub(crate) async fn run(
     runtime.set_observer(ipc.query_observer());
     let maintenance = diting_desktop_app::maintenance::Maintenance::spawn(Arc::clone(&runtime));
 
-    match runtime.start_dns_checked().await {
-        Ok(()) => {
-            let (udp, tcp) =
-                diting_desktop_app::controller::effective_listen_addresses(&config.dns);
-            println!("[DNS] 已启动: UDP {udp:?} / TCP {tcp:?}");
+    // 默认不自动启动 DNS 监听：刚安装或服务重启后网卡 DNS 并未指向本机，
+    // 自动监听只会让管理页误报“正在解析”。仅当显式开启自动接管时才启动，
+    // 且必须监听成功后再接管，避免把网卡指向一个未工作的解析器。
+    let auto_start = config.takeover.auto_takeover_on_start;
+    if auto_start {
+        match runtime.start_dns_checked().await {
+            Ok(()) => {
+                let (udp, tcp) =
+                    diting_desktop_app::controller::effective_listen_addresses(&config.dns);
+                println!("[DNS] 已启动: UDP {udp:?} / TCP {tcp:?}");
+            }
+            Err(error) => eprintln!("[DNS] 启动监听器失败: {error}"),
         }
-        Err(error) => eprintln!("[DNS] 启动监听器失败: {error}"),
     }
 
     ipc.start().await?;
@@ -353,7 +359,7 @@ pub(crate) async fn run(
         println!("[IPC] 管理 API 已监听: http://{address}");
     }
 
-    if config.takeover.auto_takeover_on_start {
+    if auto_start && runtime.is_dns_running() {
         let scanner = platform_backend::adapter_scanner();
         match scanner.active_physical_adapters().await {
             Ok(adapters) => {

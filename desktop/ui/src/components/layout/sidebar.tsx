@@ -171,7 +171,7 @@ export function Sidebar() {
             <span className="text-[10px] tracking-[0.12em] text-text-3">WS</span>
           </div>
           <div className="mt-1.5 flex items-center justify-between text-[11px] text-text-3">
-            <span>{running ? "DNS 运行中" : "DNS 已停止"}</span>
+            <span>{running ? "DNS 运行中" : "DNS 未启动"}</span>
             <span className="num">{qps.toFixed(1)} QPS</span>
           </div>
         </div>
