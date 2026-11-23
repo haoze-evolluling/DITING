@@ -1,20 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  FlaskConical,
-  Globe2,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Save,
-  Trash2,
-} from "lucide-react";
+import { FlaskConical, Globe2, Plus, RefreshCw, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageHeader } from "../components/layout/page-header";
 import { BootstrapCard } from "../components/upstreams/bootstrap-card";
+import { FallbackCard } from "../components/upstreams/fallback-card";
 import { ProviderDialog } from "../components/upstreams/provider-dialog";
-import { Badge } from "../components/ui/badge";
+import { ProviderRow, type TestState } from "../components/upstreams/provider-row";
+import { RoutesCard } from "../components/upstreams/routes-card";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
@@ -24,15 +18,8 @@ import { Segmented } from "../components/ui/segmented";
 import { useUpstreamConfig } from "../hooks/use-api";
 import { api, describeError } from "../lib/api";
 import { formatLatency } from "../lib/format";
-import { protocolLabel, resolverModeOptions } from "../lib/labels";
-import type { ProviderConfig, UpstreamTestResult } from "../lib/types";
-import { cn } from "../lib/cn";
-
-interface TestState {
-  loading: boolean;
-  result?: UpstreamTestResult;
-  error?: string;
-}
+import { resolverModeOptions } from "../lib/labels";
+import type { ProviderConfig } from "../lib/types";
 
 export function UpstreamPage() {
   const config = useUpstreamConfig();
@@ -211,79 +198,16 @@ export function UpstreamPage() {
                 />
               ) : (
                 <div className="divide-y divide-border/70">
-                  {providers.map((provider) => {
-                    const test = tests[provider.id];
-                    return (
-                      <div key={provider.id} className="flex items-start gap-3 py-3">
-                        <span
-                          className={cn(
-                            "mt-2 h-1.5 w-1.5 shrink-0 rounded-full",
-                            test?.loading
-                              ? "animate-pulse bg-warn"
-                              : test?.result?.success
-                                ? "bg-good"
-                                : test?.result || test?.error
-                                  ? "bg-danger"
-                                  : "bg-text-3",
-                          )}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="truncate text-[12.5px] font-medium text-text">
-                              {provider.id}
-                            </span>
-                            <Badge tone="neutral">{protocolLabel(provider.protocol)}</Badge>
-                            {(provider.weight ?? 1) > 1 ? (
-                              <Badge tone="accent">权重 {provider.weight}</Badge>
-                            ) : null}
-                            {provider.pin ? <Badge tone="violet">指纹固定</Badge> : null}
-                          </div>
-                          <div className="mono mt-1 truncate text-[10.5px] text-text-3">
-                            {provider.server || provider.url || "—"}
-                          </div>
-                          {test && !test.loading ? (
-                            <div
-                              className={cn(
-                                "mt-1 text-[10.5px]",
-                                test.result?.success ? "text-good" : "text-danger",
-                              )}
-                            >
-                              {test.result?.success
-                                ? `连接正常 · ${formatLatency(test.result.latencyMs)}`
-                                : test.error ?? test.result?.error ?? "连接失败"}
-                            </div>
-                          ) : null}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-0.5">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`测试 ${provider.id}`}
-                            loading={test?.loading}
-                            onClick={() => void testProvider(provider)}
-                          >
-                            <FlaskConical className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`编辑 ${provider.id}`}
-                            onClick={() => editProvider(provider)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label={`删除 ${provider.id}`}
-                            onClick={() => setDeleteTarget(provider)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {providers.map((provider) => (
+                    <ProviderRow
+                      key={provider.id}
+                      provider={provider}
+                      test={tests[provider.id]}
+                      onTest={() => void testProvider(provider)}
+                      onEdit={() => editProvider(provider)}
+                      onDelete={() => setDeleteTarget(provider)}
+                    />
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -305,6 +229,19 @@ export function UpstreamPage() {
           </Card>
 
           <BootstrapCard config={config.data?.bootstrap} loading={config.isLoading} />
+        </div>
+
+        <div className="card-grid-2">
+          <RoutesCard
+            routes={config.data?.conditionalRoutes}
+            providers={providers}
+            loading={config.isLoading}
+          />
+          <FallbackCard
+            config={config.data}
+            providers={providers}
+            loading={config.isLoading}
+          />
         </div>
       </div>
 

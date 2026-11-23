@@ -336,6 +336,24 @@ export function UpstreamSkeleton() {
             <CardFooterSkeleton action={false} />
           </CardSkeleton>
         </div>
+        <div className="card-grid-2">
+          <CardSkeleton>
+            <CardHeaderSkeleton titleWidth="w-28" action />
+            <div className="flex flex-1 flex-col px-5 pb-3 pt-3">
+              <ListRowsSkeleton rows={2} />
+            </div>
+            <CardFooterSkeleton action={false} />
+          </CardSkeleton>
+          <CardSkeleton>
+            <CardHeaderSkeleton titleWidth="w-28" action />
+            <div className="flex flex-1 flex-col gap-3 px-5 pb-4 pt-3">
+              <ListRowsSkeleton rows={2} />
+              <FieldGridSkeleton fields={2} />
+              <SwitchRowsSkeleton rows={1} />
+            </div>
+            <CardFooterSkeleton action={false} />
+          </CardSkeleton>
+        </div>
       </div>
     </>
   );

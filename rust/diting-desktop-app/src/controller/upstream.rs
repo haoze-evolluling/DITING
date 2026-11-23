@@ -66,6 +66,44 @@ fn valid_mode(mode: &str) -> bool {
     )
 }
 
+fn normalize_route_suffix(pattern: &str) -> String {
+    pattern
+        .trim()
+        .trim_start_matches('*')
+        .trim_matches('.')
+        .to_ascii_lowercase()
+}
+
+fn validate_conditional_routes(
+    routes: HashMap<String, String>,
+) -> Result<HashMap<String, String>, String> {
+    let mut out = HashMap::with_capacity(routes.len());
+    for (pattern, upstream) in routes {
+        let suffix = normalize_route_suffix(&pattern);
+        if suffix.is_empty() {
+            return Err("条件分流的匹配域名不能为空".to_string());
+        }
+        if suffix.contains('/')
+            || suffix.contains(':')
+            || suffix.contains('*')
+            || suffix.chars().any(char::is_whitespace)
+        {
+            return Err(format!("条件分流匹配域名不合法: {pattern}"));
+        }
+        let upstream = upstream.trim();
+        if upstream.is_empty() {
+            return Err(format!("条件分流 {suffix} 缺少目标 DNS 地址"));
+        }
+        if upstream.starts_with("quic://") || upstream.starts_with("doq://") {
+            return Err(format!("条件分流 {suffix} 不支持 DoQ 目标"));
+        }
+        if out.insert(suffix.clone(), upstream.to_string()).is_some() {
+            return Err(format!("条件分流匹配域名重复: {suffix}"));
+        }
+    }
+    Ok(out)
+}
+
 fn validate_providers(
     providers: &[ProviderConfig],
     seen: &mut std::collections::HashSet<String>,
@@ -172,7 +210,7 @@ impl AppRuntime {
                 upstream.bootstrap = bootstrap;
             }
             if let Some(routes) = request.conditional_routes {
-                upstream.conditional_routes = routes;
+                upstream.conditional_routes = validate_conditional_routes(routes)?;
             }
 
             upstream.normalize();
@@ -348,6 +386,33 @@ fn plain_query(name: &str, qtype: u16) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn conditional_routes_are_normalized() {
+        let mut routes = HashMap::new();
+        routes.insert("*.Internal.".to_string(), " tls://192.168.1.1 ".to_string());
+        let out = validate_conditional_routes(routes).unwrap();
+        assert_eq!(
+            out.get("internal").map(String::as_str),
+            Some("tls://192.168.1.1")
+        );
+    }
+
+    #[test]
+    fn conditional_routes_reject_invalid_entries() {
+        let mut duplicated = HashMap::new();
+        duplicated.insert("*.internal".to_string(), "1.1.1.1:53".to_string());
+        duplicated.insert("internal".to_string(), "8.8.8.8:53".to_string());
+        assert!(validate_conditional_routes(duplicated).is_err());
+
+        let mut doq = HashMap::new();
+        doq.insert("internal".to_string(), "quic://1.1.1.1".to_string());
+        assert!(validate_conditional_routes(doq).is_err());
+
+        let mut blank = HashMap::new();
+        blank.insert(" ".to_string(), "1.1.1.1:53".to_string());
+        assert!(validate_conditional_routes(blank).is_err());
+    }
 
     #[test]
     fn probe_endpoints_get_their_default_ports() {
