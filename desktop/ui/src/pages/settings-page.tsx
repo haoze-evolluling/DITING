@@ -18,11 +18,15 @@ import { PageHeader } from "../components/layout/page-header";
 import { AppearanceCard } from "../components/settings/appearance-card";
 import { PasswordCard } from "../components/settings/password-card";
 import { WebAccessCard } from "../components/settings/web-access-card";
+import {
+  FieldGridSkeleton,
+  InfoRowsSkeleton,
+  SwitchRowsSkeleton,
+} from "../components/skeletons/parts";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Skeleton } from "../components/ui/skeleton";
 import { Switch } from "../components/ui/switch";
 import { useQueryLogConfig, useServiceStatus, useStatus } from "../hooks/use-api";
 import { useLogout } from "../hooks/use-logout";
@@ -141,10 +145,9 @@ function QueryLogCard() {
       />
       <CardContent className="flex-1 pt-2">
         {config.isLoading || !draft ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
+          <div className="space-y-3">
+            <SwitchRowsSkeleton rows={3} />
+            <FieldGridSkeleton fields={2} />
           </div>
         ) : (
           <div className="space-y-1">
@@ -273,10 +276,7 @@ function ServiceCard() {
       />
       <CardContent className="pt-1">
         {service.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-7 w-full" />
-            <Skeleton className="h-7 w-full" />
-          </div>
+          <InfoRowsSkeleton rows={4} />
         ) : data ? (
           <>
             <InfoRow label="服务状态">

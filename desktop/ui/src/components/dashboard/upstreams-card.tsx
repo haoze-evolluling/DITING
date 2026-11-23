@@ -4,10 +4,10 @@ import { formatLatency, formatNumber } from "../../lib/format";
 import { protocolLabel, resolverModeLabel } from "../../lib/labels";
 import type { QueryLogStats, StatusResponse } from "../../lib/types";
 import { cn } from "../../lib/cn";
+import { ListRowsSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
-import { Skeleton } from "../ui/skeleton";
 
 export function UpstreamsCard({
   status,
@@ -36,11 +36,7 @@ export function UpstreamsCard({
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {loading ? (
-          <div className="space-y-3 py-2">
-            <Skeleton className="h-11 w-full" />
-            <Skeleton className="h-11 w-full" />
-            <Skeleton className="h-11 w-full" />
-          </div>
+          <ListRowsSkeleton rows={3} className="py-1" />
         ) : upstreams.length === 0 ? (
           <EmptyState
             icon={Globe2}

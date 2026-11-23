@@ -6,6 +6,7 @@ import { formatNumber, formatUptime } from "../../lib/format";
 import { resolverModeLabel } from "../../lib/labels";
 import type { MetricsStatus, StatusResponse } from "../../lib/types";
 import { cn } from "../../lib/cn";
+import { HeroStatusSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -117,6 +118,9 @@ export function HeroStatus({
   const upstreams = status?.dns.upstreams ?? [];
   const activeUpstreams = upstreams.filter((upstream) => upstream.active).length;
   const takeover = status?.takeover;
+
+  // 首屏状态未就绪时直接输出与真实卡片同构的骨架，避免数值区先显示 0 再跳变。
+  if (loading && !status) return <HeroStatusSkeleton />;
 
   return (
     <Card className="card-sheen relative flex min-h-[248px] flex-col overflow-hidden">

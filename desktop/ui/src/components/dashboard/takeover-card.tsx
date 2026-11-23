@@ -6,12 +6,12 @@ import { useRuntimeActions } from "../../hooks/use-runtime-actions";
 import { adapterStatusLabel } from "../../lib/labels";
 import type { StatusResponse } from "../../lib/types";
 import { cn } from "../../lib/cn";
+import { ListRowsSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { ConfirmDialog } from "../ui/confirm-dialog";
 import { EmptyState } from "../ui/empty";
-import { Skeleton } from "../ui/skeleton";
 import { Switch } from "../ui/switch";
 import { Hint } from "../ui/tooltip";
 
@@ -65,10 +65,7 @@ export function TakeoverCard({
         ) : null}
 
         {adapters.isLoading || loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <ListRowsSkeleton rows={2} />
         ) : physical.length === 0 ? (
           <EmptyState
             icon={Network}

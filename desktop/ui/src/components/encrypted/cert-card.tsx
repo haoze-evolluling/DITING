@@ -20,7 +20,7 @@ import {
 import { Field, Textarea } from "../ui/field";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
-import { Skeleton } from "../ui/skeleton";
+import { InfoRowsSkeleton } from "../skeletons/parts";
 import { SwitchRow } from "../ui/switch-row";
 
 const keyTypeOptions = [
@@ -311,11 +311,7 @@ export function CertCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {status.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
+          <InfoRowsSkeleton rows={4} />
         ) : cert ? (
           <>
             <div className="flex flex-wrap items-center gap-2">

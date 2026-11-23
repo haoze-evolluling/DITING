@@ -4,13 +4,13 @@ import { Database, Search } from "lucide-react";
 import { useCacheEntries } from "../../hooks/use-api";
 import { formatNumber, formatRelative } from "../../lib/format";
 import type { CacheEntry } from "../../lib/types";
+import { TableRowsSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
-import { Skeleton } from "../ui/skeleton";
 
 const limitOptions = [
   { value: "50", label: "50 条" },
@@ -76,12 +76,7 @@ export function CacheEntriesCard() {
 
         <div className="mt-3 min-h-0 flex-1">
           {entries.isLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-              <Skeleton className="h-11 w-full" />
-            </div>
+            <TableRowsSkeleton rows={4} columns={5} />
           ) : !data || data.entries.length === 0 ? (
             <EmptyState
               icon={Database}

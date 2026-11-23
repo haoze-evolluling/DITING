@@ -19,7 +19,7 @@ import {
 import { EmptyState } from "../ui/empty";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { Skeleton } from "../ui/skeleton";
+import { TableRowsSkeleton } from "../skeletons/parts";
 
 export function ClientsCard() {
   const status = useStatus();
@@ -53,11 +53,7 @@ export function ClientsCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {status.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
+          <TableRowsSkeleton rows={3} columns={4} />
         ) : clients.length === 0 ? (
           <EmptyState
             icon={Users}

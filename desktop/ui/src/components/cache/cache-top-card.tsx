@@ -3,11 +3,11 @@ import { Flame } from "lucide-react";
 
 import { useCacheTop } from "../../hooks/use-api";
 import { formatNumber, formatRelative } from "../../lib/format";
+import { ListRowsSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { EmptyState } from "../ui/empty";
 import { Select } from "../ui/select";
-import { Skeleton } from "../ui/skeleton";
 
 const topOptions = [
   { value: "10", label: "前 10" },
@@ -37,11 +37,7 @@ export function CacheTopCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {top.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
+          <ListRowsSkeleton rows={3} />
         ) : items.length === 0 ? (
           <EmptyState
             icon={Flame}

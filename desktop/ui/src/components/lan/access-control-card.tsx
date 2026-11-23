@@ -9,7 +9,7 @@ import { joinLines, parseLines } from "../../lib/strings";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field, Textarea } from "../ui/field";
-import { Skeleton } from "../ui/skeleton";
+import { TextareaSkeleton } from "../skeletons/parts";
 
 export function AccessControlCard() {
   const status = useStatus();
@@ -55,9 +55,9 @@ export function AccessControlCard() {
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {status.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
+          <div className="space-y-3">
+            <TextareaSkeleton />
+            <TextareaSkeleton />
           </div>
         ) : (
           <>

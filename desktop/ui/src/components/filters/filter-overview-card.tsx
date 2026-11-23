@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useFilterConfig, useFilterPause, useStatus } from "../../hooks/use-api";
 import { api, describeError } from "../../lib/api";
 import { formatNumber, formatPercent } from "../../lib/format";
+import { SwitchRowsSkeleton } from "../skeletons/parts";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
@@ -74,10 +75,14 @@ export function FilterOverviewCard() {
       />
       <CardContent className="pt-1">
         {status.isLoading || config.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
+          <div className="space-y-3">
+            <SwitchRowsSkeleton rows={1} />
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-[62px] w-full rounded-xl" />
+              ))}
+            </div>
+            <Skeleton className="h-[68px] w-full rounded-xl" />
           </div>
         ) : (
           <>

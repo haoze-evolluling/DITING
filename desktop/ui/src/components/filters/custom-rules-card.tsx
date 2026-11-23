@@ -13,7 +13,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
-import { Skeleton } from "../ui/skeleton";
+import { TextareaSkeleton } from "../skeletons/parts";
 import { Textarea } from "../ui/field";
 
 export function CustomRulesCard() {
@@ -68,7 +68,7 @@ export function CustomRulesCard() {
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {rules.isLoading ? (
-          <Skeleton className="h-40 w-full" />
+          <TextareaSkeleton className="h-40" />
         ) : (
           <Textarea
             className="min-h-[180px] font-mono text-[11.5px] leading-5"

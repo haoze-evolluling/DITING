@@ -5,8 +5,8 @@ import { cn } from "../../lib/cn";
 import { displayDomain, formatDateTime, formatLatency } from "../../lib/format";
 import { cacheHitLabel } from "../../lib/labels";
 import type { QueryRecord } from "../../lib/types";
+import { TableRowsSkeleton } from "../skeletons/parts";
 import { EmptyState } from "../ui/empty";
-import { Skeleton } from "../ui/skeleton";
 import { StatusBadge } from "../ui/status-badge";
 
 export function QueryTable({
@@ -26,10 +26,8 @@ export function QueryTable({
 
   if (loading) {
     return (
-      <div className="space-y-1.5 px-2 py-3">
-        {Array.from({ length: 9 }).map((_, index) => (
-          <Skeleton key={index} className="h-8 w-full" />
-        ))}
+      <div className="px-2 py-2">
+        <TableRowsSkeleton rows={9} columns={7} />
       </div>
     );
   }

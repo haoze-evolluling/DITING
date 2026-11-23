@@ -10,7 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
 import { Select } from "../ui/select";
-import { Skeleton } from "../ui/skeleton";
+import { SwitchRowsSkeleton } from "../skeletons/parts";
 import { SwitchRow } from "../ui/switch-row";
 
 const anyModeOptions = [
@@ -105,11 +105,7 @@ export function PrivacyCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {status.isLoading || !draft ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
+          <SwitchRowsSkeleton rows={4} />
         ) : (
           <>
             <SwitchRow

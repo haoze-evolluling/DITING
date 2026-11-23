@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import { useLocation, useOutlet } from "react-router-dom";
@@ -9,12 +9,9 @@ import { describeError } from "../../lib/api";
 import { cn } from "../../lib/cn";
 import { Button } from "../ui/button";
 import { Collapse } from "../ui/swap";
-import { PageFallback } from "./page-fallback";
+import { PageSuspense } from "./route-suspense";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
-
-/** 内容淡入时长：兜住懒加载 chunk 就绪后「骨架 → 内容」的硬切。 */
-const CONTENT_FADE = 0.14;
 
 function ConnectionBanner() {
   const status = useStatus();
@@ -97,22 +94,16 @@ export function AppShell() {
                   transition={{ duration: pageDuration, ease: MOTION_EASE_OUT }}
                   className={cn(staggerThisRoute && "motion-stagger")}
                 >
-                  <Suspense fallback={<PageFallback />}>
-                    <m.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: CONTENT_FADE, ease: MOTION_EASE_OUT }}
-                    >
-                      <FrozenOutlet />
-                    </m.div>
-                  </Suspense>
+                  <PageSuspense pathname={location.pathname}>
+                    <FrozenOutlet />
+                  </PageSuspense>
                 </m.div>
               </AnimatePresence>
             ) : (
               <div key={location.pathname}>
-                <Suspense fallback={<PageFallback />}>
+                <PageSuspense pathname={location.pathname}>
                   <FrozenOutlet />
-                </Suspense>
+                </PageSuspense>
               </div>
             )}
           </div>

@@ -8,7 +8,7 @@ import type { BootstrapConfig, BootstrapServer } from "../../lib/types";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
-import { Skeleton } from "../ui/skeleton";
+import { ListRowsSkeleton, SwitchRowsSkeleton } from "../skeletons/parts";
 import { SwitchRow } from "../ui/switch-row";
 
 let counter = 0;
@@ -68,10 +68,9 @@ export function BootstrapCard({
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {loading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-11 w-full" />
-            <Skeleton className="h-11 w-full" />
+          <div className="space-y-3">
+            <SwitchRowsSkeleton rows={1} />
+            <ListRowsSkeleton rows={2} />
           </div>
         ) : (
           <>

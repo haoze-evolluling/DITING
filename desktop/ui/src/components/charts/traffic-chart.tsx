@@ -21,9 +21,9 @@ import {
   hourRangeLabel,
 } from "../../lib/format";
 import type { HourPoint } from "../../lib/types";
+import { ChartSkeleton } from "../skeletons/parts";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
 import { Swap } from "../ui/swap";
 
 const series = [
@@ -149,7 +149,7 @@ export function TrafficChart({
 
       <CardContent className="pt-2">
         {loading ? (
-          <Skeleton className="h-[228px] w-full" />
+          <ChartSkeleton />
         ) : (
           <Swap swapKey={showTable ? "table" : "chart"}>
             {showTable ? (

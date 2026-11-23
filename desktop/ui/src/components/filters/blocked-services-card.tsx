@@ -10,7 +10,7 @@ import { cn } from "../../lib/cn";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
+import { ListRowsSkeleton } from "../skeletons/parts";
 
 function sameSet(a: Set<string>, b: Set<string>): boolean {
   if (a.size !== b.size) return false;
@@ -91,11 +91,7 @@ export function BlockedServicesCard({ onSchedule }: { onSchedule?: () => void })
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {data.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </div>
+          <ListRowsSkeleton rows={3} />
         ) : (
           groupsInfo.map((group) => {
             const members = services.filter((service) => service.group === group.id);

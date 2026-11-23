@@ -18,9 +18,9 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
+import { ListRowsSkeleton } from "../components/skeletons/parts";
 import { EmptyState } from "../components/ui/empty";
 import { Segmented } from "../components/ui/segmented";
-import { Skeleton } from "../components/ui/skeleton";
 import { useUpstreamConfig } from "../hooks/use-api";
 import { api, describeError } from "../lib/api";
 import { formatLatency } from "../lib/format";
@@ -196,11 +196,7 @@ export function UpstreamPage() {
             />
             <CardContent className="flex flex-1 flex-col pt-2">
               {config.isLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-14 w-full" />
-                  <Skeleton className="h-14 w-full" />
-                  <Skeleton className="h-14 w-full" />
-                </div>
+                <ListRowsSkeleton rows={3} />
               ) : providers.length === 0 ? (
                 <EmptyState
                   icon={Globe2}

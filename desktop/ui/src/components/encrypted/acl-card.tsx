@@ -10,7 +10,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Field, Textarea } from "../ui/field";
 import { Input } from "../ui/input";
-import { Skeleton } from "../ui/skeleton";
+import { SwitchRowsSkeleton, TextareaSkeleton } from "../skeletons/parts";
 import { SwitchRow } from "../ui/switch-row";
 
 function isUnrestricted(entries: string[]): boolean {
@@ -83,9 +83,9 @@ export function EncryptedAclCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-1">
         {status.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-24 w-full" />
+          <div className="space-y-3">
+            <SwitchRowsSkeleton rows={1} />
+            <TextareaSkeleton />
           </div>
         ) : (
           <>

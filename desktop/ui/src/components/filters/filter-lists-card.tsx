@@ -21,7 +21,7 @@ import {
 import { EmptyState } from "../ui/empty";
 import { Field } from "../ui/field";
 import { Input } from "../ui/input";
-import { Skeleton } from "../ui/skeleton";
+import { ListRowsSkeleton } from "../skeletons/parts";
 import { Switch } from "../ui/switch";
 import { SwitchRow } from "../ui/switch-row";
 
@@ -189,10 +189,7 @@ export function FilterListsCard() {
       />
       <CardContent className="flex flex-1 flex-col pt-2">
         {lists.isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <ListRowsSkeleton rows={2} />
         ) : items.length === 0 ? (
           <EmptyState
             icon={ListPlus}

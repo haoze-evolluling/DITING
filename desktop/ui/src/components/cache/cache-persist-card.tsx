@@ -68,10 +68,13 @@ export function CachePersistCard() {
       />
       <CardContent className="flex flex-1 flex-col gap-3 pt-2">
         {status.isLoading || !data ? (
-          <div className="space-y-2">
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-9 w-full" />
-            <Skeleton className="h-16 w-full" />
+          <div className="space-y-3">
+            <Skeleton className="h-[52px] w-full rounded-xl" />
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="h-14 w-full rounded-xl" />
+              ))}
+            </div>
           </div>
         ) : (
           <>
