@@ -22,7 +22,7 @@ export function Switch({ checked, onCheckedChange, disabled, label, className }:
         className,
       )}
     >
-      <SwitchPrimitive.Thumb className="block h-[18px] w-[18px] translate-x-[2px] rounded-full bg-white shadow-sm transition-transform data-[state=checked]:translate-x-[18px]" />
+      <SwitchPrimitive.Thumb className="motion-switch-thumb block h-[18px] w-[18px] translate-x-[2px] rounded-full bg-white shadow-sm data-[state=checked]:translate-x-[18px]" />
     </SwitchPrimitive.Root>
   );
 }

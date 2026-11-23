@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Activity, Play, Square } from "lucide-react";
 
+import { useAnimatedNumber, useMotion } from "../../hooks/use-motion";
 import { formatNumber, formatUptime } from "../../lib/format";
 import { resolverModeLabel } from "../../lib/labels";
 import type { MetricsStatus, StatusResponse } from "../../lib/types";
@@ -95,8 +96,12 @@ export function HeroStatus({
   onToggleDns: () => void;
   onOpenDiagnostics: () => void;
 }) {
+  const { allowNumbers } = useMotion();
   const running = status?.dns.running ?? false;
   const qps = metrics?.qps ?? status?.metrics.qps ?? 0;
+  const displayQps = useAnimatedNumber(qps, allowNumbers) ?? qps;
+  const totalQueries = status?.metrics.totalQueries;
+  const displayTotalQueries = useAnimatedNumber(totalQueries, allowNumbers);
   const uptime = status?.uptimeSeconds ?? 0;
   const addresses = status?.dns.listenAddresses ?? [];
   const upstreams = status?.dns.upstreams ?? [];
@@ -107,7 +112,7 @@ export function HeroStatus({
     <Card className="card-sheen relative flex min-h-[248px] flex-col overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
+        className="motion-glow motion-glow-ambient pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
       />
       <div className="relative flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 pt-4">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -180,7 +185,7 @@ export function HeroStatus({
 
           <div className="shrink-0 text-right">
             <div className="num text-[28px] font-semibold leading-none tracking-[-0.035em] text-text">
-              {qps.toFixed(1)}
+              {displayQps.toFixed(1)}
             </div>
             <div className="mt-1 text-[10.5px] text-text-3">当前 QPS</div>
           </div>
@@ -194,7 +199,12 @@ export function HeroStatus({
           { label: "版本", value: status?.version ? `v${status.version}` : "—" },
           { label: "运行时长", value: formatUptime(uptime) },
           { label: "活跃上游", value: `${activeUpstreams}/${upstreams.length}` },
-          { label: "累计查询", value: formatNumber(status?.metrics.totalQueries) },
+          {
+            label: "累计查询",
+            value: formatNumber(
+              displayTotalQueries !== undefined ? Math.round(displayTotalQueries) : undefined,
+            ),
+          },
         ].map((item) => (
           <div key={item.label} className="min-w-0 px-4 py-2.5">
             <div className="truncate text-[10.5px] text-text-3">{item.label}</div>

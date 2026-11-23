@@ -1,5 +1,8 @@
+import { useId } from "react";
 import type { LucideIcon } from "lucide-react";
+import { m } from "motion/react";
 
+import { MOTION_SPRING_SNAPPY, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 
 export interface SegmentOption<T extends string> {
@@ -19,6 +22,9 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   className?: string;
 }) {
+  const groupId = useId();
+  const { allowLayout } = useMotion();
+
   return (
     <div
       role="radiogroup"
@@ -38,14 +44,27 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
-              active
-                ? "bg-surface text-text shadow-sm"
-                : "text-text-3 hover:text-text",
+              "relative inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-medium transition-colors",
+              active ? "text-text" : "text-text-3 hover:text-text",
             )}
           >
-            {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-            {option.label}
+            {active ? (
+              allowLayout ? (
+                <m.span
+                  layoutId={`segmented-${groupId}`}
+                  transition={MOTION_SPRING_SNAPPY}
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-md bg-surface shadow-sm"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-md bg-surface shadow-sm"
+                />
+              )
+            ) : null}
+            {Icon ? <Icon className="relative z-[1] h-3.5 w-3.5" /> : null}
+            <span className="relative z-[1]">{option.label}</span>
           </button>
         );
       })}

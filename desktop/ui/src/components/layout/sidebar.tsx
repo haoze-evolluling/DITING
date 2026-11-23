@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { m } from "motion/react";
 import {
   Database,
   Gauge,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useStatus } from "../../hooks/use-api";
+import { MOTION_SPRING_SNAPPY, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 import { resolverModeLabel } from "../../lib/labels";
 import { useLiveStore } from "../../stores/live";
@@ -55,11 +57,13 @@ function NavItem({
   label,
   icon: Icon,
   end,
+  allowLayout,
 }: {
   to: string;
   label: string;
   icon: typeof Gauge;
   end: boolean;
+  allowLayout: boolean;
 }) {
   return (
     <NavLink
@@ -69,7 +73,7 @@ function NavItem({
         cn(
           "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] transition-colors",
           isActive
-            ? "bg-accent-soft font-medium text-accent"
+            ? "font-medium text-accent"
             : "text-text-2 hover:bg-surface-2 hover:text-text",
         )
       }
@@ -77,10 +81,36 @@ function NavItem({
       {({ isActive }) => (
         <>
           {isActive ? (
-            <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
+            allowLayout ? (
+              <>
+                <m.span
+                  layoutId="sidebar-nav-bg"
+                  transition={MOTION_SPRING_SNAPPY}
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-lg bg-accent-soft"
+                />
+                <m.span
+                  layoutId="sidebar-nav-bar"
+                  transition={MOTION_SPRING_SNAPPY}
+                  aria-hidden
+                  className="pointer-events-none absolute left-0 top-1/2 z-[1] h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent"
+                />
+              </>
+            ) : (
+              <>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 rounded-lg bg-accent-soft"
+                />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-0 top-1/2 z-[1] h-4 w-0.5 -translate-y-1/2 rounded-full bg-accent"
+                />
+              </>
+            )
           ) : null}
-          <Icon className="h-4 w-4 shrink-0" />
-          <span>{label}</span>
+          <Icon className="relative z-[1] h-4 w-4 shrink-0" />
+          <span className="relative z-[1]">{label}</span>
         </>
       )}
     </NavLink>
@@ -91,6 +121,7 @@ export function Sidebar() {
   const status = useStatus();
   const connected = useLiveStore((state) => state.connected);
   const metrics = useLiveStore((state) => state.metrics);
+  const { allowLayout } = useMotion();
   const dns = status.data?.dns;
   const running = dns?.running ?? false;
   const qps = metrics?.qps ?? status.data?.metrics.qps ?? 0;
@@ -115,7 +146,7 @@ export function Sidebar() {
             <p className="px-3 pb-1.5 text-[10.5px] font-medium text-text-3">{group.label}</p>
             <div className="space-y-0.5">
               {group.items.map((item) => (
-                <NavItem key={item.to} {...item} />
+                <NavItem key={item.to} {...item} allowLayout={allowLayout} />
               ))}
             </div>
           </div>

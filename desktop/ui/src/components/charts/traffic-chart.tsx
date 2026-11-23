@@ -10,8 +10,10 @@ import {
   YAxis,
 } from "recharts";
 import { ChartSpline, Table2 } from "lucide-react";
+import { m } from "motion/react";
 import type { TooltipProps } from "recharts";
 
+import { MOTION_EASE_OUT, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 import {
   formatCompact,
@@ -71,6 +73,7 @@ export function TrafficChart({
   className?: string;
 }) {
   const [showTable, setShowTable] = useState(false);
+  const { allowChart, allowPageEnter, chartDuration } = useMotion();
   const gradientId = `traffic-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
   const data = useMemo(
@@ -137,29 +140,61 @@ export function TrafficChart({
         {loading ? (
           <Skeleton className="h-[228px] w-full" />
         ) : showTable ? (
-          <div className="h-[228px] overflow-y-auto rounded-lg border border-border">
-            <table className="w-full text-[11.5px]">
-              <caption className="sr-only">最近 24 小时解析趋势数据表</caption>
-              <thead className="sticky top-0 bg-surface-2 text-text-3">
-                <tr>
-                  <th className="px-3 py-1.5 text-left font-medium">时间</th>
-                  <th className="px-3 py-1.5 text-right font-medium">查询</th>
-                  <th className="px-3 py-1.5 text-right font-medium">拦截</th>
-                  <th className="px-3 py-1.5 text-right font-medium">缓存</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((point) => (
-                  <tr key={point.hourMs} className="border-t border-border/70">
-                    <td className="mono px-3 py-1 text-text-2">{point.label}</td>
-                    <td className="num px-3 py-1 text-right text-text">{formatNumber(point.queries)}</td>
-                    <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.blocked)}</td>
-                    <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.cached)}</td>
+          allowPageEnter ? (
+            <m.div
+              key="table"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: MOTION_EASE_OUT }}
+              className="h-[228px] overflow-y-auto rounded-lg border border-border"
+            >
+              <table className="w-full text-[11.5px]">
+                <caption className="sr-only">最近 24 小时解析趋势数据表</caption>
+                <thead className="sticky top-0 bg-surface-2 text-text-3">
+                  <tr>
+                    <th className="px-3 py-1.5 text-left font-medium">时间</th>
+                    <th className="px-3 py-1.5 text-right font-medium">查询</th>
+                    <th className="px-3 py-1.5 text-right font-medium">拦截</th>
+                    <th className="px-3 py-1.5 text-right font-medium">缓存</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {data.map((point) => (
+                    <tr key={point.hourMs} className="border-t border-border/70">
+                      <td className="mono px-3 py-1 text-text-2">{point.label}</td>
+                      <td className="num px-3 py-1 text-right text-text">{formatNumber(point.queries)}</td>
+                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.blocked)}</td>
+                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.cached)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </m.div>
+          ) : (
+            <div className="h-[228px] overflow-y-auto rounded-lg border border-border">
+              <table className="w-full text-[11.5px]">
+                <caption className="sr-only">最近 24 小时解析趋势数据表</caption>
+                <thead className="sticky top-0 bg-surface-2 text-text-3">
+                  <tr>
+                    <th className="px-3 py-1.5 text-left font-medium">时间</th>
+                    <th className="px-3 py-1.5 text-right font-medium">查询</th>
+                    <th className="px-3 py-1.5 text-right font-medium">拦截</th>
+                    <th className="px-3 py-1.5 text-right font-medium">缓存</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((point) => (
+                    <tr key={point.hourMs} className="border-t border-border/70">
+                      <td className="mono px-3 py-1 text-text-2">{point.label}</td>
+                      <td className="num px-3 py-1 text-right text-text">{formatNumber(point.queries)}</td>
+                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.blocked)}</td>
+                      <td className="num px-3 py-1 text-right text-text-2">{formatNumber(point.cached)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : (
           <div className="h-[228px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -201,6 +236,9 @@ export function TrafficChart({
                   stroke="var(--chart-blue)"
                   strokeWidth={2}
                   fill={`url(#${gradientId})`}
+                  isAnimationActive={allowChart}
+                  animationDuration={chartDuration}
+                  animationEasing="ease-out"
                   activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
                 />
                 <Line
@@ -209,6 +247,9 @@ export function TrafficChart({
                   stroke="var(--chart-red)"
                   strokeWidth={2}
                   dot={false}
+                  isAnimationActive={allowChart}
+                  animationDuration={chartDuration}
+                  animationEasing="ease-out"
                   activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
                 />
                 <Line
@@ -217,6 +258,9 @@ export function TrafficChart({
                   stroke="var(--chart-violet)"
                   strokeWidth={2}
                   dot={false}
+                  isAnimationActive={allowChart}
+                  animationDuration={chartDuration}
+                  animationEasing="ease-out"
                   activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface)" }}
                 />
               </AreaChart>

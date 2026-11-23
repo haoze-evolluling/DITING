@@ -6,26 +6,22 @@ import {
   Database,
   Info,
   LogOut,
-  Monitor,
-  Moon,
-  Palette,
   RefreshCw,
   Save,
   Server,
   ShieldAlert,
-  Sun,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import { PageHeader } from "../components/layout/page-header";
+import { AppearanceCard } from "../components/settings/appearance-card";
 import { PasswordCard } from "../components/settings/password-card";
 import { WebAccessCard } from "../components/settings/web-access-card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Segmented } from "../components/ui/segmented";
 import { Skeleton } from "../components/ui/skeleton";
 import { Switch } from "../components/ui/switch";
 import { useQueryLogConfig, useServiceStatus, useStatus } from "../hooks/use-api";
@@ -39,20 +35,6 @@ import {
 } from "../lib/labels";
 import type { QueryLogConfig } from "../lib/types";
 import { useAuthStore } from "../stores/auth";
-import { useUIStore, type Accent, type ThemeMode } from "../stores/ui";
-
-const themeOptions: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { value: "system", label: "跟随系统", icon: Monitor },
-  { value: "light", label: "浅色", icon: Sun },
-  { value: "dark", label: "深色", icon: Moon },
-];
-
-const accentOptions: { value: Accent; label: string; color: string }[] = [
-  { value: "blue", label: "信号蓝", color: "#2F7BF6" },
-  { value: "jade", label: "青玉", color: "#0E9B70" },
-  { value: "violet", label: "星紫", color: "#7C5CF0" },
-  { value: "amber", label: "琥珀", color: "#C07808" },
-];
 
 function InfoRow({
   label,
@@ -84,60 +66,6 @@ function copyText(value: string, label: string) {
     .writeText(value)
     .then(() => toast.success(`${label}已复制`))
     .catch(() => toast.error("无法访问剪贴板"));
-}
-
-function AppearanceCard() {
-  const theme = useUIStore((state) => state.theme);
-  const accent = useUIStore((state) => state.accent);
-  const setTheme = useUIStore((state) => state.setTheme);
-  const setAccent = useUIStore((state) => state.setAccent);
-
-  return (
-    <Card>
-      <CardHeader title="外观" description="主题与强调色立即生效，并保存在本机。" />
-      <CardContent className="space-y-4 pt-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="flex items-center gap-2 text-[12px] text-text-2">
-            <Monitor className="h-3.5 w-3.5 text-text-3" />
-            主题
-          </span>
-          <Segmented value={theme} options={themeOptions} onChange={setTheme} />
-        </div>
-        <div>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-[12px] text-text-2">
-              <Palette className="h-3.5 w-3.5 text-text-3" />
-              强调色
-            </span>
-            <span className="text-[11px] text-text-3">
-              {accentOptions.find((option) => option.value === accent)?.label}
-            </span>
-          </div>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {accentOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={accent === option.value}
-                onClick={() => setAccent(option.value)}
-                className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11.5px] transition-colors ${
-                  accent === option.value
-                    ? "border-accent bg-accent-soft text-text"
-                    : "border-border text-text-2 hover:bg-surface-2"
-                }`}
-              >
-                <span
-                  className="h-3 w-3 rounded-full ring-1 ring-black/10"
-                  style={{ backgroundColor: option.color }}
-                />
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function AccountCard() {
@@ -471,7 +399,7 @@ export function SettingsPage() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-3"
+                className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2.5 transition-colors hover:border-border-strong hover:bg-surface-3"
               >
                 <span className="min-w-0">
                   <span className="block text-[12px] font-medium text-text">{item.label}</span>
@@ -479,7 +407,7 @@ export function SettingsPage() {
                     {item.hint}
                   </span>
                 </span>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-3" />
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-3 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-text-2" />
               </Link>
             ))}
           </CardContent>

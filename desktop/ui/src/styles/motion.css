@@ -1,0 +1,443 @@
+:root {
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-spring: cubic-bezier(0.34, 1.32, 0.64, 1);
+  --motion-fast: 140ms;
+  --motion-base: 200ms;
+  --motion-slow: 260ms;
+}
+
+/* ============ 基础关键帧（仅使用 transform / opacity / background-position） ============ */
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motion-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes motion-dialog-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+@keyframes motion-sheet-in {
+  from {
+    opacity: 0.72;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes motion-sheet-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0.72;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes motion-pop-down {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes motion-pop-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes motion-pop-left {
+  from {
+    opacity: 0;
+    transform: translateX(4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes motion-pop-right {
+  from {
+    opacity: 0;
+    transform: translateX(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes motion-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes motion-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.48;
+  }
+}
+
+@keyframes motion-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes motion-ambient-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+}
+
+@keyframes motion-radar-drift {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes motion-row-flash {
+  0% {
+    background-color: color-mix(in oklab, var(--accent) 13%, transparent);
+    opacity: 0.65;
+  }
+  100% {
+    background-color: transparent;
+    opacity: 1;
+  }
+}
+
+@keyframes motion-card-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============ 语义动效类 ============ */
+
+.motion-btn {
+  transition:
+    background-color var(--motion-fast) var(--motion-ease-out),
+    border-color var(--motion-fast) var(--motion-ease-out),
+    color var(--motion-fast) var(--motion-ease-out),
+    opacity var(--motion-fast) var(--motion-ease-out),
+    box-shadow var(--motion-fast) var(--motion-ease-out),
+    transform 120ms var(--motion-ease-out);
+}
+
+.motion-btn:active:not(:disabled) {
+  transform: scale(0.975);
+}
+
+.motion-switch-thumb {
+  transition: transform 200ms var(--motion-ease-spring);
+}
+
+.motion-card {
+  transition:
+    border-color var(--motion-base) var(--motion-ease-out),
+    box-shadow var(--motion-base) var(--motion-ease-out),
+    transform var(--motion-base) var(--motion-ease-out);
+}
+
+.motion-bar {
+  transition: width 360ms var(--motion-ease-out);
+}
+
+/* 遮罩与弹层 */
+.motion-overlay[data-state="open"] {
+  animation: motion-fade-in 180ms var(--motion-ease-out) both;
+}
+
+.motion-overlay[data-state="closed"] {
+  animation: motion-fade-out 140ms var(--motion-ease-out) both;
+}
+
+.motion-dialog[data-state="open"] {
+  animation: motion-dialog-in 210ms var(--motion-ease-out) both;
+}
+
+.motion-dialog[data-state="closed"] {
+  animation: motion-dialog-out 150ms var(--motion-ease-out) both;
+}
+
+.motion-sheet[data-state="open"] {
+  animation: motion-sheet-in 240ms var(--motion-ease-out) both;
+}
+
+.motion-sheet[data-state="closed"] {
+  animation: motion-sheet-out 180ms var(--motion-ease-out) both;
+}
+
+.motion-popover[data-state="open"][data-side="bottom"],
+.motion-popover[data-state="open"]:not([data-side]) {
+  animation: motion-pop-down 160ms var(--motion-ease-out) both;
+}
+
+.motion-popover[data-state="open"][data-side="top"] {
+  animation: motion-pop-up 160ms var(--motion-ease-out) both;
+}
+
+.motion-popover[data-state="open"][data-side="left"] {
+  animation: motion-pop-left 160ms var(--motion-ease-out) both;
+}
+
+.motion-popover[data-state="open"][data-side="right"] {
+  animation: motion-pop-right 160ms var(--motion-ease-out) both;
+}
+
+.motion-popover[data-state="closed"] {
+  animation: motion-pop-out 120ms var(--motion-ease-out) both;
+}
+
+/* 骨架屏 */
+.motion-skeleton {
+  animation: motion-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============ 档位分级控制（data-motion） ============ */
+
+/* 1. 关闭档（off）：零动效 + 停用毛玻璃、模糊光晕、脉冲与骨架动画 */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-motion="off"] .motion-btn:active:not(:disabled) {
+  transform: none;
+}
+
+:root[data-motion="off"] .motion-glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--surface) !important;
+}
+
+:root[data-motion="off"] .motion-overlay {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-motion="off"] .motion-glow,
+:root[data-motion="off"] .live-dot::after {
+  display: none !important;
+}
+
+:root[data-motion="off"] .motion-skeleton {
+  animation: none !important;
+}
+
+/* 2. 简约档（minimal）：停用循环动画、大光晕与骨架动画；弹层降为极速纯淡入淡出 */
+:root[data-motion="minimal"] {
+  --motion-fast: 100ms;
+  --motion-base: 120ms;
+  --motion-slow: 140ms;
+}
+
+:root[data-motion="minimal"] .motion-glow,
+:root[data-motion="minimal"] .live-dot::after {
+  display: none !important;
+}
+
+:root[data-motion="minimal"] .motion-skeleton {
+  animation: none !important;
+}
+
+:root[data-motion="minimal"] .motion-switch-thumb {
+  transition: transform 120ms ease-out;
+}
+
+:root[data-motion="minimal"] .motion-bar {
+  transition: none;
+}
+
+:root[data-motion="minimal"] .motion-dialog[data-state="open"],
+:root[data-motion="minimal"] .motion-sheet[data-state="open"],
+:root[data-motion="minimal"] .motion-popover[data-state="open"] {
+  animation: motion-fade-in 120ms ease-out both;
+}
+
+:root[data-motion="minimal"] .motion-dialog[data-state="closed"],
+:root[data-motion="minimal"] .motion-sheet[data-state="closed"],
+:root[data-motion="minimal"] .motion-popover[data-state="closed"] {
+  animation: motion-fade-out 100ms ease-out both;
+}
+
+/* 3. 标准档（standard）：卡片悬停轻边框强化 */
+:root[data-motion="standard"] .motion-card-hover:hover {
+  border-color: var(--border-strong);
+}
+
+/* 4. 丰富档（rich）：卡片微浮、骨架扫光、氛围光呼吸、雷达微动、新行高亮、错峰入场、主题过渡 */
+:root[data-motion="rich"] .motion-dialog[data-state="open"] {
+  animation: motion-dialog-in 250ms var(--motion-ease-spring) both;
+}
+
+:root[data-motion="rich"] .motion-sheet[data-state="open"] {
+  animation: motion-sheet-in 270ms var(--motion-ease-out) both;
+}
+
+:root[data-motion="rich"] .motion-card-hover:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 6px rgba(16, 32, 56, 0.05),
+    0 18px 36px -22px rgba(16, 32, 56, 0.34);
+}
+
+:root.dark[data-motion="rich"] .motion-card-hover:hover {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.42),
+    0 22px 46px -24px rgba(0, 0, 0, 0.88);
+}
+
+:root[data-motion="rich"] .motion-skeleton {
+  background-image: linear-gradient(
+    105deg,
+    var(--surface-3) 25%,
+    color-mix(in oklab, var(--surface) 70%, var(--surface-3) 30%) 50%,
+    var(--surface-3) 75%
+  );
+  background-size: 220% 100%;
+  animation: motion-shimmer 1.65s ease-in-out infinite;
+}
+
+:root[data-motion="rich"] .motion-glow-ambient {
+  animation: motion-ambient-breathe 8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+:root[data-motion="rich"] .motion-radar {
+  animation: motion-radar-drift 56s linear infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+:root[data-motion="rich"] .motion-row-flash {
+  animation: motion-row-flash 650ms var(--motion-ease-out) both;
+}
+
+/* 丰富档页面卡片轻量错峰入场（仅在路由挂载容器拥有 .motion-stagger 时生效，延迟上限 168ms） */
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > *,
+:root[data-motion="rich"] .motion-stagger .card-grid-4 > *,
+:root[data-motion="rich"] .motion-stagger .card-grid-3-1 > * {
+  animation: motion-card-stagger 280ms var(--motion-ease-out) both;
+}
+
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > :nth-child(2),
+:root[data-motion="rich"] .motion-stagger .card-grid-4 > :nth-child(2),
+:root[data-motion="rich"] .motion-stagger .card-grid-3-1 > :nth-child(2) {
+  animation-delay: 28ms;
+}
+
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > :nth-child(3),
+:root[data-motion="rich"] .motion-stagger .card-grid-4 > :nth-child(3) {
+  animation-delay: 56ms;
+}
+
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > :nth-child(4),
+:root[data-motion="rich"] .motion-stagger .card-grid-4 > :nth-child(4) {
+  animation-delay: 84ms;
+}
+
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > :nth-child(5) {
+  animation-delay: 112ms;
+}
+
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > :nth-child(6) {
+  animation-delay: 140ms;
+}
+
+:root[data-motion="rich"] .motion-stagger .card-grid-2 > :nth-child(n + 7) {
+  animation-delay: 168ms;
+}
+
+/* 丰富档主题与强调色切换柔滑渐变（仅在切换瞬间挂载 240ms，不常驻影响滚动性能） */
+:root[data-motion="rich"][data-theme-transition="true"] *,
+:root[data-motion="rich"][data-theme-transition="true"] *::before,
+:root[data-motion="rich"][data-theme-transition="true"] *::after {
+  transition:
+    background-color 220ms var(--motion-ease-out),
+    border-color 220ms var(--motion-ease-out),
+    color 220ms var(--motion-ease-out),
+    fill 220ms var(--motion-ease-out),
+    stroke 220ms var(--motion-ease-out) !important;
+}

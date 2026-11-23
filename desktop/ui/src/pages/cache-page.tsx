@@ -12,6 +12,7 @@ import { Button } from "../components/ui/button";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
 import { StatTile } from "../components/ui/stat-tile";
 import { useCacheStats } from "../hooks/use-api";
+import { useAnimatedNumber, useMotion } from "../hooks/use-motion";
 import { api, describeError } from "../lib/api";
 import { formatNumber, formatRatio } from "../lib/format";
 
@@ -19,7 +20,15 @@ export function CachePage() {
   const stats = useCacheStats();
   const queryClient = useQueryClient();
   const [confirmClear, setConfirmClear] = useState(false);
+  const { allowNumbers } = useMotion();
   const data = stats.data;
+  const entryCount = useAnimatedNumber(data?.entryCount, allowNumbers);
+  const hitRatio = useAnimatedNumber(data?.hitRatio, allowNumbers);
+  const specialHits = useAnimatedNumber(
+    data ? (data.staleHits ?? 0) + (data.negativeHits ?? 0) : undefined,
+    allowNumbers,
+  );
+  const evictionCount = useAnimatedNumber(data?.evictionCount, allowNumbers);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ["cache-stats"] });
@@ -74,7 +83,7 @@ export function CachePage() {
         <div className="card-grid-4">
           <StatTile
             label="缓存条目"
-            value={formatNumber(data?.entryCount)}
+            value={formatNumber(entryCount !== undefined ? Math.round(entryCount) : undefined)}
             hint={`容量 ${formatNumber(data?.maxEntries)} • ${
               data?.enabled ? "缓存已启用" : "缓存已关闭"
             }`}
@@ -84,7 +93,7 @@ export function CachePage() {
           />
           <StatTile
             label="缓存命中率"
-            value={formatRatio(data?.hitRatio)}
+            value={formatRatio(hitRatio)}
             hint={`${formatNumber(data?.totalHits)} 命中 · ${formatNumber(data?.totalMisses)} 未命中`}
             icon={Target}
             tone="good"
@@ -92,7 +101,7 @@ export function CachePage() {
           />
           <StatTile
             label="特殊命中"
-            value={formatNumber((data?.staleHits ?? 0) + (data?.negativeHits ?? 0))}
+            value={formatNumber(specialHits !== undefined ? Math.round(specialHits) : undefined)}
             hint={`过期 ${formatNumber(data?.staleHits)} · 否定 ${formatNumber(
               data?.negativeHits,
             )}`}
@@ -102,7 +111,7 @@ export function CachePage() {
           />
           <StatTile
             label="淘汰与预取"
-            value={formatNumber(data?.evictionCount)}
+            value={formatNumber(evictionCount !== undefined ? Math.round(evictionCount) : undefined)}
             hint={`预取 ${formatNumber(data?.prefetchCount)} 次`}
             icon={Recycle}
             tone="neutral"

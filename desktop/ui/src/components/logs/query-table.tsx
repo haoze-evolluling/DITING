@@ -1,5 +1,7 @@
 import { SearchX } from "lucide-react";
 
+import { useMotion, useThrottledRowFlash } from "../../hooks/use-motion";
+import { cn } from "../../lib/cn";
 import { displayDomain, formatDateTime, formatLatency } from "../../lib/format";
 import { cacheHitLabel } from "../../lib/labels";
 import type { QueryRecord } from "../../lib/types";
@@ -18,6 +20,10 @@ export function QueryTable({
   live: boolean;
   onSelect: (record: QueryRecord) => void;
 }) {
+  const { allowLiveRow } = useMotion();
+  const topKey = rows[0] ? `${rows[0].ts}-${rows[0].domain}` : undefined;
+  const flashKey = useThrottledRowFlash(topKey, live && allowLiveRow);
+
   if (loading) {
     return (
       <div className="space-y-1.5 px-2 py-3">
@@ -46,7 +52,7 @@ export function QueryTable({
     <div className="max-h-[560px] overflow-auto">
       <table className="w-full min-w-[720px] border-collapse">
         <caption className="sr-only">查询日志</caption>
-        <thead className="sticky top-0 z-10 bg-surface/95 backdrop-blur">
+        <thead className="motion-glass sticky top-0 z-10 bg-surface/95 backdrop-blur">
           <tr className="text-left text-[10.5px] text-text-3">
             <th className="w-[122px] px-3 py-2 font-medium">时间</th>
             <th className="px-3 py-2 font-medium">域名</th>
@@ -58,44 +64,53 @@ export function QueryTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((record, index) => (
-            <tr
-              key={`${record.ts}-${record.domain}-${index}`}
-              tabIndex={0}
-              onClick={() => onSelect(record)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") onSelect(record);
-              }}
-              className="cursor-pointer border-t border-border/60 text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none"
-            >
-              <td className="num whitespace-nowrap px-3 py-1.5 text-text-3">
-                {formatDateTime(record.ts)}
-              </td>
-              <td className="max-w-0 px-3 py-1.5">
-                <span className="mono block truncate text-text" title={displayDomain(record.domain)}>
-                  {displayDomain(record.domain)}
-                </span>
-              </td>
-              <td className="hidden px-3 py-1.5 sm:table-cell">
-                <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-medium text-text-2">
-                  {record.qtype || "—"}
-                </span>
-              </td>
-              <td className="hidden max-w-0 truncate px-3 py-1.5 text-text-3 md:table-cell">
-                {record.clientName || record.clientIP || "—"}
-              </td>
-              <td className="hidden max-w-0 truncate px-3 py-1.5 text-text-3 lg:table-cell">
-                {record.upstreamProvider ||
-                  (record.cacheHit ? cacheHitLabel(record.cacheHit) : "—")}
-              </td>
-              <td className="px-3 py-1.5">
-                <StatusBadge status={record.status} />
-              </td>
-              <td className="num whitespace-nowrap px-3 py-1.5 text-right text-text-2">
-                {formatLatency(record.durationMs)}
-              </td>
-            </tr>
-          ))}
+          {rows.map((record, index) => {
+            const rowId = `${record.ts}-${record.domain}`;
+            return (
+              <tr
+                key={`${rowId}-${index}`}
+                tabIndex={0}
+                onClick={() => onSelect(record)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") onSelect(record);
+                }}
+                className={cn(
+                  "cursor-pointer border-t border-border/60 text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
+                  index === 0 && flashKey === rowId && "motion-row-flash",
+                )}
+              >
+                <td className="num whitespace-nowrap px-3 py-1.5 text-text-3">
+                  {formatDateTime(record.ts)}
+                </td>
+                <td className="max-w-0 px-3 py-1.5">
+                  <span
+                    className="mono block truncate text-text"
+                    title={displayDomain(record.domain)}
+                  >
+                    {displayDomain(record.domain)}
+                  </span>
+                </td>
+                <td className="hidden px-3 py-1.5 sm:table-cell">
+                  <span className="rounded bg-surface-3 px-1.5 py-0.5 text-[10px] font-medium text-text-2">
+                    {record.qtype || "—"}
+                  </span>
+                </td>
+                <td className="hidden max-w-0 truncate px-3 py-1.5 text-text-3 md:table-cell">
+                  {record.clientName || record.clientIP || "—"}
+                </td>
+                <td className="hidden max-w-0 truncate px-3 py-1.5 text-text-3 lg:table-cell">
+                  {record.upstreamProvider ||
+                    (record.cacheHit ? cacheHitLabel(record.cacheHit) : "—")}
+                </td>
+                <td className="px-3 py-1.5">
+                  <StatusBadge status={record.status} />
+                </td>
+                <td className="num whitespace-nowrap px-3 py-1.5 text-right text-text-2">
+                  {formatLatency(record.durationMs)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -15,8 +15,8 @@ export function Sheet({ open, onOpenChange, title, description, children, footer
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgba(6,14,26,0.4)] backdrop-blur-[1px]" />
-        <DialogPrimitive.Content className="fixed right-0 top-0 z-50 flex h-full w-[min(480px,94vw)] flex-col border-l border-border bg-surface shadow-[var(--shadow-pop)] focus:outline-none">
+        <DialogPrimitive.Overlay className="motion-overlay fixed inset-0 z-50 bg-[rgba(6,14,26,0.4)] backdrop-blur-[1px]" />
+        <DialogPrimitive.Content className="motion-sheet fixed right-0 top-0 z-50 flex h-full w-[min(480px,94vw)] flex-col border-l border-border bg-surface shadow-[var(--shadow-pop)] focus:outline-none">
           <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
             <div className="min-w-0">
               <DialogPrimitive.Title className="truncate text-[15px] font-semibold text-text">

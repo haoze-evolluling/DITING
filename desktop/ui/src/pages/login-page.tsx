@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { AlertCircle, Eye, EyeOff, LockKeyhole, RefreshCw, ShieldCheck, UserRound } from "lucide-react";
+import { m } from "motion/react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -7,6 +8,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Skeleton } from "../components/ui/skeleton";
 import { useAuthStatus } from "../hooks/use-api";
+import { MOTION_EASE_OUT, useMotion } from "../hooks/use-motion";
 import { api, describeError } from "../lib/api";
 import { useAuthStore } from "../stores/auth";
 
@@ -22,6 +24,7 @@ export function LoginPage() {
   const token = useAuthStore((state) => state.token);
   const expired = useAuthStore((state) => state.isExpired());
   const setSession = useAuthStore((state) => state.setSession);
+  const { allowPageEnter, isRich } = useMotion();
 
   const [username, setUsername] = useState("admin");
   const [password, setPassword] = useState("");
@@ -78,7 +81,7 @@ export function LoginPage() {
       <aside className="relative hidden overflow-hidden bg-[#08121f] px-12 py-10 text-white lg:flex lg:flex-col">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0"
+          className="motion-glow-ambient pointer-events-none absolute inset-0"
           style={{
             background:
               "radial-gradient(620px 420px at 18% 12%, rgba(47,123,246,0.28), transparent 62%), radial-gradient(520px 420px at 92% 88%, rgba(139,92,246,0.18), transparent 60%)",
@@ -87,7 +90,7 @@ export function LoginPage() {
         <svg
           aria-hidden
           viewBox="0 0 420 420"
-          className="pointer-events-none absolute -right-24 top-1/3 h-[420px] w-[420px] text-white/[0.075]"
+          className="motion-radar pointer-events-none absolute -right-24 top-1/3 h-[420px] w-[420px] text-white/[0.075]"
           fill="none"
           stroke="currentColor"
         >
@@ -133,7 +136,16 @@ export function LoginPage() {
       </aside>
 
       <main className="app-canvas flex min-h-full items-center justify-center bg-bg px-5 py-10 sm:px-8">
-        <div className="w-full max-w-[384px] animate-rise">
+        <m.div
+          initial={allowPageEnter ? { opacity: 0, y: isRich ? 12 : 8 } : false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={
+            allowPageEnter
+              ? { duration: isRich ? 0.34 : 0.24, ease: MOTION_EASE_OUT }
+              : { duration: 0 }
+          }
+          className="w-full max-w-[384px]"
+        >
           <div className="mb-8 flex items-center gap-2.5 lg:hidden">
             <img src="/icon.webp" alt="" className="h-9 w-9 rounded-xl ring-1 ring-border" />
             <div>
@@ -275,7 +287,7 @@ export function LoginPage() {
             <span className="truncate">服务地址 {serviceAddress || "同源"}</span>
             <span className="num">v{__APP_VERSION__}</span>
           </div>
-        </div>
+        </m.div>
       </main>
     </div>
   );

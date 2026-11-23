@@ -34,7 +34,7 @@ export function StatTile({
 }) {
   const styles = toneStyles[tone];
   return (
-    <Card className={cn("relative overflow-hidden px-4 py-3.5", className)}>
+    <Card className={cn("motion-card-hover relative overflow-hidden px-4 py-3.5", className)}>
       <span className={cn("absolute left-0 top-4 h-6 w-0.5 rounded-r-full", styles.bar)} />
       <div className="flex min-w-0 items-center justify-between gap-3">
         <span className="min-w-0 truncate text-[12px] text-text-3">{label}</span>

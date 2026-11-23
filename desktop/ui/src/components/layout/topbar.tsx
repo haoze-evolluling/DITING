@@ -11,6 +11,7 @@ import {
   ScrollText,
   Settings2,
   ShieldBan,
+  Sparkles,
   Sun,
   UserRound,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { NavLink } from "react-router-dom";
 
 import { useStatus } from "../../hooks/use-api";
 import { useLogout } from "../../hooks/use-logout";
+import { MOTION_LEVEL_OPTIONS, useMotion } from "../../hooks/use-motion";
 import { cn } from "../../lib/cn";
 import { useAuthStore } from "../../stores/auth";
 import { useLiveStore } from "../../stores/live";
@@ -30,7 +32,7 @@ const themeOptions: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
 ];
 
 const menuClass =
-  "z-[70] min-w-[190px] rounded-xl border border-border bg-surface p-1 shadow-[var(--shadow-pop)]";
+  "motion-popover z-[70] min-w-[208px] rounded-xl border border-border bg-surface p-1 shadow-[var(--shadow-pop)]";
 const itemClass =
   "flex cursor-pointer select-none items-center gap-2 rounded-lg px-2.5 py-1.5 text-[12.5px] text-text outline-none data-[highlighted]:bg-surface-3";
 
@@ -72,6 +74,7 @@ export function Topbar() {
   const connected = useLiveStore((state) => state.connected);
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
+  const { effective: motion, isSystemDefault, setMotion } = useMotion();
   const username = useAuthStore((state) => state.username);
   const logout = useLogout();
 
@@ -81,7 +84,7 @@ export function Topbar() {
     themeOptions.find((option) => option.value === theme)?.icon ?? Monitor;
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-[color-mix(in_oklab,var(--surface)_82%,transparent)] px-4 backdrop-blur-xl lg:px-6">
+    <header className="motion-glass flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border bg-[color-mix(in_oklab,var(--surface)_82%,transparent)] px-4 backdrop-blur-xl lg:px-6">
       <div className="flex items-center gap-2.5">
         <img src="/icon.webp" alt="" className="h-6 w-6 rounded-lg md:hidden" />
         <MobileNav />
@@ -119,8 +122,8 @@ export function Topbar() {
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              aria-label="切换主题"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-2 transition-colors hover:bg-surface-3 hover:text-text"
+              aria-label="外观与动画设置"
+              className="motion-btn flex h-8 w-8 items-center justify-center rounded-lg text-text-2 hover:bg-surface-3 hover:text-text"
             >
               <ThemeIcon className="h-4 w-4" />
             </button>
@@ -128,7 +131,7 @@ export function Topbar() {
           <DropdownMenu.Portal>
             <DropdownMenu.Content align="end" sideOffset={6} className={menuClass}>
               <DropdownMenu.Label className="px-2.5 py-1 text-[10.5px] text-text-3">
-                外观
+                外观主题
               </DropdownMenu.Label>
               {themeOptions.map((option) => (
                 <DropdownMenu.Item
@@ -141,6 +144,29 @@ export function Topbar() {
                   {theme === option.value ? <Check className="h-3.5 w-3.5 text-accent" /> : null}
                 </DropdownMenu.Item>
               ))}
+              <DropdownMenu.Separator className="my-1 h-px bg-border" />
+              <DropdownMenu.Label className="flex items-center justify-between px-2.5 py-1 text-[10.5px] text-text-3">
+                <span className="inline-flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3" />
+                  动画效果
+                </span>
+                {isSystemDefault ? <span>默认</span> : null}
+              </DropdownMenu.Label>
+              {MOTION_LEVEL_OPTIONS.map((option) => (
+                <DropdownMenu.Item
+                  key={option.value}
+                  onSelect={() => setMotion(option.value)}
+                  className={itemClass}
+                >
+                  <span className="flex-1">{option.label}</span>
+                  <span className="text-[10.5px] text-text-3">{option.performance}</span>
+                  {motion === option.value ? (
+                    <Check className="h-3.5 w-3.5 shrink-0 text-accent" />
+                  ) : (
+                    <span className="h-3.5 w-3.5 shrink-0" />
+                  )}
+                </DropdownMenu.Item>
+              ))}
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
@@ -151,7 +177,7 @@ export function Topbar() {
           <DropdownMenu.Trigger asChild>
             <button
               type="button"
-              className="flex h-8 items-center gap-2 rounded-lg pl-1 pr-2 transition-colors hover:bg-surface-3"
+              className="motion-btn flex h-8 items-center gap-2 rounded-lg pl-1 pr-2 hover:bg-surface-3"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft text-[11px] font-semibold text-accent">
                 {(username ?? "A").slice(0, 1).toUpperCase()}

@@ -24,7 +24,7 @@ export function Hint({
           side={side}
           sideOffset={6}
           className={cn(
-            "z-[80] max-w-[260px] rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11.5px] leading-4 text-text-2 shadow-[var(--shadow-pop)]",
+            "motion-popover z-[80] max-w-[260px] rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11.5px] leading-4 text-text-2 shadow-[var(--shadow-pop)]",
             className,
           )}
         >

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowRight, Radio } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
+import { useMotion, useThrottledRowFlash } from "../../hooks/use-motion";
 import { displayDomain, formatClock, formatLatency } from "../../lib/format";
 import type { QueryRecord } from "../../lib/types";
 import { cn } from "../../lib/cn";
@@ -22,7 +23,10 @@ export function RecentQueries({
   live: boolean;
 }) {
   const [selected, setSelected] = useState<QueryRecord | null>(null);
+  const { allowLiveRow } = useMotion();
   const rows = queries.slice(0, 7);
+  const topKey = rows[0] ? `${rows[0].ts}-${rows[0].domain}` : undefined;
+  const flashKey = useThrottledRowFlash(topKey, live && allowLiveRow);
 
   return (
     <>
@@ -67,18 +71,21 @@ export function RecentQueries({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((record, index) => (
-                    <tr
-                      key={`${record.ts}-${record.domain}-${index}`}
-                      tabIndex={0}
-                      onClick={() => setSelected(record)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") setSelected(record);
-                      }}
-                      className={cn(
-                        "cursor-pointer border-t border-border/60 text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
-                      )}
-                    >
+                  {rows.map((record, index) => {
+                    const rowId = `${record.ts}-${record.domain}`;
+                    return (
+                      <tr
+                        key={`${rowId}-${index}`}
+                        tabIndex={0}
+                        onClick={() => setSelected(record)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") setSelected(record);
+                        }}
+                        className={cn(
+                          "cursor-pointer border-t border-border/60 text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
+                          index === 0 && flashKey === rowId && "motion-row-flash",
+                        )}
+                      >
                       <td className="num whitespace-nowrap py-1.5 pr-2 text-text-3">
                         {formatClock(record.ts)}
                       </td>
@@ -97,7 +104,8 @@ export function RecentQueries({
                         {formatLatency(record.durationMs)}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
