@@ -26,11 +26,33 @@ export function DashboardPage() {
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
 
   const running = status.data?.dns.running ?? false;
-  const busy = actions.startDns.isPending || actions.stopDns.isPending;
+  const takeoverActive = status.data?.takeover.active ?? false;
+  const busy =
+    actions.startDns.isPending ||
+    actions.stopDns.isPending ||
+    actions.enableTakeover.isPending ||
+    actions.disableTakeover.isPending;
 
   const toggleDns = () => {
-    if (running) actions.stopDns.mutate();
-    else actions.startDns.mutate();
+    if (running) {
+      // 先还原系统 DNS 再停止解析：还原失败时中止停止操作，
+      // 避免网卡继续指向已经停止的本地解析服务。
+      if (takeoverActive) {
+        actions.disableTakeover.mutate(undefined, {
+          onSuccess: () => actions.stopDns.mutate(),
+        });
+        return;
+      }
+      actions.stopDns.mutate();
+      return;
+    }
+
+    // 启动解析成功后自动接管系统 DNS；接管失败只提示，不影响已启动的 DNS。
+    actions.startDns.mutate(undefined, {
+      onSuccess: () => {
+        if (!takeoverActive) actions.enableTakeover.mutate();
+      },
+    });
   };
 
   const refresh = () => {
