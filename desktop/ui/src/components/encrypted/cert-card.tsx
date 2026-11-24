@@ -290,105 +290,142 @@ export function CertCard() {
   const [generateOpen, setGenerateOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const cert = status.data?.cert;
+  const names = cert ? [...cert.dnsNames, ...cert.ipAddresses] : [];
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader
-        title="服务证书"
-        description="DoT 与 DoH 共用同一张证书。"
-        actions={
-          <>
-            <Button size="sm" variant="ghost" onClick={() => setImportOpen(true)}>
-              <Upload className="h-3.5 w-3.5" />
-              导入
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => setGenerateOpen(true)}>
-              <RefreshCw className="h-3.5 w-3.5" />
-              签发
-            </Button>
-          </>
-        }
-      />
-      <CardContent className="flex flex-1 flex-col pt-2">
-        {status.isLoading ? (
-          <LoadingState label="正在加载证书状态…" />
-        ) : cert ? (
-          <>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone={cert.loaded ? "good" : "danger"} dot>
-                {cert.loaded ? "已加载" : "未加载"}
-              </Badge>
-              {cert.selfSigned ? <Badge tone="violet">自签</Badge> : null}
-              <Badge
-                tone={
-                  status.data?.certExpired
-                    ? "danger"
-                    : status.data?.certExpiresSoon
-                      ? "warn"
-                      : "neutral"
-                }
-              >
-                {status.data?.certExpired
-                  ? "已过期"
-                  : `剩余 ${formatNumber(cert.daysRemaining)} 天`}
-              </Badge>
-              <Badge tone="neutral">{cert.source}</Badge>
-            </div>
-
-            {cert.error ? (
-              <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-[11px] text-danger">
-                {cert.error}
-              </p>
-            ) : null}
-
-            <div className="mt-3 space-y-1.5 text-[11.5px]">
-              <div className="flex items-start justify-between gap-4 border-b border-border/60 py-1.5">
-                <span className="shrink-0 text-text-3">主题</span>
-                <span className="mono break-all text-right text-text-2">{cert.subject || "—"}</span>
-              </div>
-              <div className="flex items-start justify-between gap-4 border-b border-border/60 py-1.5">
-                <span className="shrink-0 text-text-3">签发者</span>
-                <span className="mono break-all text-right text-text-2">{cert.issuer || "—"}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4 border-b border-border/60 py-1.5">
-                <span className="text-text-3">有效期至</span>
-                <span className="text-right text-text-2">{cert.notAfter || "—"}</span>
-              </div>
-              <div className="flex items-start justify-between gap-4 border-b border-border/60 py-1.5">
-                <span className="shrink-0 text-text-3">指纹</span>
-                <span className="mono break-all text-right text-[10px] text-text-3">
-                  {cert.fingerprint || "—"}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {[...cert.dnsNames, ...cert.ipAddresses].slice(0, 10).map((name) => (
-                <span
-                  key={name}
-                  className="mono rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] text-text-2"
+    <>
+      <Card className="flex flex-col">
+        <CardHeader
+          title="服务证书"
+          description="DoT 与 DoH 共用同一张证书。"
+          actions={
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setImportOpen(true)}>
+                <Upload className="h-3.5 w-3.5" />
+                导入
+              </Button>
+              <Button size="sm" variant="secondary" onClick={() => setGenerateOpen(true)}>
+                <RefreshCw className="h-3.5 w-3.5" />
+                签发
+              </Button>
+            </>
+          }
+        />
+        <CardContent className="flex flex-1 flex-col pt-2">
+          {status.isLoading ? (
+            <LoadingState label="正在加载证书状态…" />
+          ) : cert ? (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone={cert.loaded ? "good" : "danger"} dot>
+                  {cert.loaded ? "已加载" : "未加载"}
+                </Badge>
+                {cert.selfSigned ? <Badge tone="violet">自签</Badge> : null}
+                <Badge
+                  tone={
+                    status.data?.certExpired
+                      ? "danger"
+                      : status.data?.certExpiresSoon
+                        ? "warn"
+                        : "neutral"
+                  }
                 >
-                  {name}
-                </span>
-              ))}
-            </div>
-          </>
-        ) : (
-          <p className="text-[11.5px] text-text-3">无法读取证书状态。</p>
-        )}
-      </CardContent>
-      <CardFooter>
-        <span className="flex items-center gap-1.5 text-[10.5px] text-text-3">
-          <FileKey2 className="h-3 w-3" />
-          证书目录
-        </span>
-        <span className="mono max-w-[70%] truncate text-[10px] text-text-2" title={status.data?.certDir}>
-          {status.data?.certDir ?? "—"}
-        </span>
-      </CardFooter>
+                  {status.data?.certExpired
+                    ? "已过期"
+                    : `剩余 ${formatNumber(cert.daysRemaining)} 天`}
+                </Badge>
+                <Badge tone="neutral">{cert.source}</Badge>
+              </div>
+
+              {cert.error ? (
+                <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-[11px] text-danger">
+                  {cert.error}
+                </p>
+              ) : null}
+
+              <p className="mt-3 text-[11.5px] leading-5 text-text-3">
+                {cert.loaded
+                  ? "证书已加载，DoT 与 DoH 会使用该证书向客户端提供加密解析。"
+                  : "证书尚未加载，启用加密 DNS 前需要先签发或导入证书。"}
+              </p>
+            </>
+          ) : (
+            <p className="text-[11.5px] text-text-3">无法读取证书状态。</p>
+          )}
+        </CardContent>
+        <CardFooter>
+          <span className="flex items-center gap-1.5 text-[10.5px] text-text-3">
+            <FileKey2 className="h-3 w-3" />
+            证书目录
+          </span>
+          <span
+            className="mono max-w-[70%] truncate text-[10px] text-text-2"
+            title={status.data?.certDir}
+          >
+            {status.data?.certDir ?? "—"}
+          </span>
+        </CardFooter>
+      </Card>
+
+      <Card className="flex flex-col">
+        <CardHeader
+          title="证书详情"
+          description="主题、签发者、有效期与指纹。"
+          actions={<FileKey2 className="h-4 w-4 text-text-3" />}
+        />
+        <CardContent className="flex flex-1 flex-col pt-2">
+          {status.isLoading ? (
+            <LoadingState label="正在加载证书详情…" />
+          ) : cert ? (
+            <>
+              <div className="space-y-1.5 text-[11.5px]">
+                <div className="flex items-start justify-between gap-4 border-b border-border/60 py-1.5">
+                  <span className="shrink-0 text-text-3">主题</span>
+                  <span className="mono break-all text-right text-text-2">
+                    {cert.subject || "—"}
+                  </span>
+                </div>
+                <div className="flex items-start justify-between gap-4 border-b border-border/60 py-1.5">
+                  <span className="shrink-0 text-text-3">签发者</span>
+                  <span className="mono break-all text-right text-text-2">
+                    {cert.issuer || "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-b border-border/60 py-1.5">
+                  <span className="text-text-3">有效期至</span>
+                  <span className="text-right text-text-2">{cert.notAfter || "—"}</span>
+                </div>
+                <div className="flex items-start justify-between gap-4 border-b border-border/60 py-1.5">
+                  <span className="shrink-0 text-text-3">指纹</span>
+                  <span className="mono break-all text-right text-[10px] text-text-3">
+                    {cert.fingerprint || "—"}
+                  </span>
+                </div>
+              </div>
+
+              {names.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {names.slice(0, 10).map((name) => (
+                    <span
+                      key={name}
+                      className="mono rounded-md border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] text-text-2"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-[10.5px] text-text-3">证书未包含额外 DNS 名称或 IP 地址。</p>
+              )}
+            </>
+          ) : (
+            <p className="text-[11.5px] text-text-3">无法读取证书详情。</p>
+          )}
+        </CardContent>
+      </Card>
 
       <GenerateDialog open={generateOpen} onOpenChange={setGenerateOpen} />
       <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
-    </Card>
+    </>
   );
 }

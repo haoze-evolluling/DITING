@@ -1,72 +1,20 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  Copy,
-  Database,
-  Info,
-  LogOut,
-  RefreshCw,
-  Save,
-  Server,
-  ShieldAlert,
-} from "lucide-react";
+import { ArrowRight, Copy, Info, LogOut, Server } from "lucide-react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 
 import { PageHeader } from "../components/layout/page-header";
 import { AppearanceCard } from "../components/settings/appearance-card";
 import { PasswordCard } from "../components/settings/password-card";
+import { QueryLogCard } from "../components/settings/query-log-card";
+import { ServiceCard } from "../components/settings/service-card";
 import { WebAccessCard } from "../components/settings/web-access-card";
-import { LoadingState } from "../components/ui/loading";
-import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
-import { Input } from "../components/ui/input";
-import { Switch } from "../components/ui/switch";
-import { useMeta, useQueryLogConfig, useServiceStatus, useStatus } from "../hooks/use-api";
+import { InfoRow } from "../components/ui/info-row";
+import { useMeta, useStatus } from "../hooks/use-api";
 import { useLogout } from "../hooks/use-logout";
-import { api, describeError } from "../lib/api";
-import { formatNumber, formatUptime, formatUnixSeconds } from "../lib/format";
-import {
-  autoStartMechanismLabel,
-  platformLabel,
-  serviceStateLabel,
-} from "../lib/labels";
-import type { QueryLogConfig } from "../lib/types";
+import { copyText } from "../lib/clipboard";
+import { formatUnixSeconds } from "../lib/format";
 import { useAuthStore } from "../stores/auth";
-
-function InfoRow({
-  label,
-  children,
-  mono = false,
-}: {
-  label: string;
-  children: ReactNode;
-  mono?: boolean;
-}) {
-  return (
-    <div className="flex min-w-0 items-start justify-between gap-4 border-b border-border/60 py-2 last:border-b-0">
-      <span className="shrink-0 text-[11.5px] text-text-3">{label}</span>
-      <span
-        className={
-          mono
-            ? "mono min-w-0 break-all text-right text-[11px] text-text-2"
-            : "min-w-0 break-words text-right text-[12px] text-text-2"
-        }
-      >
-        {children}
-      </span>
-    </div>
-  );
-}
-
-function copyText(value: string, label: string) {
-  navigator.clipboard
-    .writeText(value)
-    .then(() => toast.success(`${label}已复制`))
-    .catch(() => toast.error("无法访问剪贴板"));
-}
 
 function AccountCard() {
   const username = useAuthStore((state) => state.username);
@@ -84,246 +32,12 @@ function AccountCard() {
         </InfoRow>
       </CardContent>
       <CardFooter>
-        <span className="text-[10.5px] text-text-3">
-          退出后需要重新输入管理员密码
-        </span>
+        <span className="text-[10.5px] text-text-3">退出后需要重新输入管理员密码</span>
         <Button size="sm" variant="dangerSoft" onClick={() => void logout()}>
           <LogOut className="h-3.5 w-3.5" />
           退出登录
         </Button>
       </CardFooter>
-    </Card>
-  );
-}
-
-function QueryLogCard() {
-  const config = useQueryLogConfig();
-  const meta = useMeta();
-  const queryClient = useQueryClient();
-  const [draft, setDraft] = useState<QueryLogConfig | null>(null);
-
-  useEffect(() => {
-    if (config.data) setDraft(config.data);
-  }, [config.data]);
-
-  const save = useMutation({
-    mutationFn: (value: QueryLogConfig) =>
-      api.updateQueryConfig({
-        enabled: value.enabled,
-        fileEnabled: value.fileEnabled,
-        logClients: value.logClients,
-        maxEntries: value.maxEntries,
-        retentionDays: value.retentionDays,
-      }),
-    onSuccess: () => {
-      toast.success("查询日志配置已更新");
-      void queryClient.invalidateQueries({ queryKey: ["query-config"] });
-      void queryClient.invalidateQueries({ queryKey: ["query-stats"] });
-    },
-    onError: (error) => toast.error(describeError(error)),
-  });
-
-  const update = (patch: Partial<QueryLogConfig>) =>
-    setDraft((current) => (current ? { ...current, ...patch } : current));
-
-  const valid =
-    draft &&
-    draft.maxEntries >= 100 &&
-    draft.maxEntries <= 200_000 &&
-    draft.retentionDays >= 1 &&
-    draft.retentionDays <= 365;
-
-  return (
-    <Card className="flex flex-col">
-      <CardHeader
-        title="查询日志"
-        description="控制内存日志容量、持久化与保留周期。"
-        actions={<Database className="h-4 w-4 text-text-3" />}
-      />
-      <CardContent className="flex-1 pt-2">
-        {config.isLoading || !draft ? (
-          <LoadingState label="正在加载日志配置…" />
-        ) : (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2">
-              <div>
-                <div className="text-[12px] text-text">记录查询日志</div>
-                <div className="text-[10.5px] text-text-3">关闭后不再记录新的解析请求</div>
-              </div>
-              <Switch
-                checked={draft.enabled}
-                onCheckedChange={(value) => update({ enabled: value })}
-                label="记录查询日志"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2">
-              <div>
-                <div className="text-[12px] text-text">持久化查询日志</div>
-                <div className="text-[10.5px] text-text-3">写入 SQLite 数据库，服务重启后可检索</div>
-              </div>
-              <Switch
-                checked={draft.fileEnabled}
-                onCheckedChange={(value) => update({ fileEnabled: value })}
-                label="持久化查询日志"
-              />
-            </div>
-            <div className="flex items-center justify-between gap-4 border-b border-border/60 py-2">
-              <div>
-                <div className="text-[12px] text-text">记录客户端地址</div>
-                <div className="text-[10.5px] text-text-3">用于客户端排名与访问排查</div>
-              </div>
-              <Switch
-                checked={draft.logClients}
-                onCheckedChange={(value) => update({ logClients: value })}
-                label="记录客户端地址"
-              />
-            </div>
-            <div className="grid gap-3 border-b border-border/60 py-2 sm:grid-cols-2">
-              <label className="block">
-                <span className="text-[12px] text-text">内存最大条目</span>
-                <Input
-                  className="mt-1.5"
-                  type="number"
-                  min={100}
-                  max={200000}
-                  value={draft.maxEntries}
-                  onChange={(event) => update({ maxEntries: Number(event.target.value) })}
-                />
-                <span className="mt-1 block text-[10.5px] text-text-3">
-                  100 – 200,000 条，当前 {formatNumber(draft.maxEntries)}
-                </span>
-              </label>
-              <label className="block">
-                <span className="text-[12px] text-text">保留天数</span>
-                <Input
-                  className="mt-1.5"
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={draft.retentionDays}
-                  onChange={(event) => update({ retentionDays: Number(event.target.value) })}
-                />
-                <span className="mt-1 block text-[10.5px] text-text-3">
-                  1 – 365 天，当前 {draft.retentionDays} 天
-                </span>
-              </label>
-            </div>
-            <div className="py-2">
-              <div className="text-[11px] text-text-3">数据库位置</div>
-              <div className="mt-1.5 flex items-center gap-2 rounded-lg bg-surface-2 px-2.5 py-1.5">
-                <span
-                  className="mono min-w-0 flex-1 truncate text-[10.5px] text-text-2"
-                  title={meta.data?.databasePath ?? undefined}
-                >
-                  {meta.data?.databasePath ?? "—"}
-                </span>
-                <button
-                  type="button"
-                  disabled={!meta.data?.databasePath}
-                  onClick={() => {
-                    if (meta.data?.databasePath) copyText(meta.data.databasePath, "数据库位置");
-                  }}
-                  className="shrink-0 rounded p-0.5 text-text-3 hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
-                  title="复制数据库位置"
-                  aria-label="复制数据库位置"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-            {!valid ? (
-              <p className="rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
-                容量或保留天数超出允许范围，修正后才能保存。
-              </p>
-            ) : null}
-          </div>
-        )}
-      </CardContent>
-      <CardFooter>
-        <span className="text-[10.5px] text-text-3">保存后立即在服务端生效</span>
-        <Button
-          size="sm"
-          variant="primary"
-          disabled={!draft || !valid}
-          loading={save.isPending}
-          onClick={() => draft && save.mutate(draft)}
-        >
-          <Save className="h-3.5 w-3.5" />
-          保存
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
-
-function ServiceCard() {
-  const service = useServiceStatus();
-  const status = useStatus();
-  const meta = useQuery({ queryKey: ["meta"], queryFn: api.meta, retry: 1 });
-  const data = service.data;
-
-  return (
-    <Card>
-      <CardHeader
-        title="桌面服务"
-        description="系统级 DNS 服务的安装、权限与运行信息。"
-        actions={
-          <Button size="sm" variant="ghost" onClick={() => void service.refetch()}>
-            <RefreshCw className="h-3.5 w-3.5" />
-            刷新
-          </Button>
-        }
-      />
-      <CardContent className="pt-1">
-        {service.isLoading ? (
-          <LoadingState label="正在加载服务信息…" />
-        ) : data ? (
-          <>
-            <InfoRow label="服务状态">
-              <span className="flex items-center justify-end gap-2">
-                <Badge tone={data.running ? "good" : "warn"} dot>
-                  {serviceStateLabel(data.state, data.stateText)}
-                </Badge>
-                <span className="text-[10.5px] text-text-3">{data.installed ? "已安装" : "未安装"}</span>
-              </span>
-            </InfoRow>
-            <InfoRow label="运行权限">
-              <Badge tone={data.isElevated ? "good" : "warn"}>
-                {data.isElevated ? "管理员权限" : "普通权限"}
-              </Badge>
-            </InfoRow>
-            <InfoRow label="开机自启">
-              {data.autoStart?.enabled ? "已启用" : "未启用"}
-              {data.autoStart?.mechanism ? (
-                <span className="ml-1 text-[10.5px] text-text-3">
-                  {autoStartMechanismLabel(data.autoStart.mechanism)}
-                </span>
-              ) : null}
-            </InfoRow>
-            <InfoRow label="后端版本">{status.data ? `v${status.data.version}` : "—"}</InfoRow>
-            <InfoRow label="进程">{status.data ? `PID ${status.data.pid} · 运行 ${formatUptime(status.data.uptimeSeconds)}` : "—"}</InfoRow>
-            <InfoRow label="平台">{platformLabel(meta.data?.os)}</InfoRow>
-            <InfoRow label="可执行文件" mono>
-              {data.executablePath || "—"}
-            </InfoRow>
-            {data.message ? (
-              <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-5 text-text-3">
-                {data.message}
-              </p>
-            ) : null}
-            {!data.isElevated ? (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-warn-soft px-3 py-2 text-[11px] leading-5 text-warn">
-                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                系统 DNS 接管需要管理员权限。请安装为系统服务，或以管理员身份启动 diting-service。
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <p className="py-3 text-[11.5px] text-text-3">
-            {describeError(service.error)}
-          </p>
-        )}
-      </CardContent>
     </Card>
   );
 }
@@ -334,7 +48,11 @@ function AboutCard() {
 
   return (
     <Card>
-      <CardHeader title="关于" description="谛听桌面端与本地优先设计。" actions={<Info className="h-4 w-4 text-text-3" />} />
+      <CardHeader
+        title="关于"
+        description="谛听桌面端与本地优先设计。"
+        actions={<Info className="h-4 w-4 text-text-3" />}
+      />
       <CardContent className="pt-2">
         <div className="flex items-center gap-3">
           <img src="/icon.webp" alt="" className="h-11 w-11 rounded-xl ring-1 ring-border" />

@@ -318,6 +318,17 @@
       grid-column: span 1 / span 1;
     }
   }
+
+  /*
+   * 拆分后的整行卡片：用于字段较多、默认高度较低的设置卡，
+   * 使其独占整行横向铺开，避免与高位卡片并排后留下半行空白。
+   * 选择器权重高于上面的 `> *` 规则，可在宽窗口覆盖 50% 分栏。
+   */
+  .card-grid-2 > .card-grid-full,
+  .card-grid-4 > .card-grid-full,
+  .card-grid-3-1 > .card-grid-full {
+    grid-column: 1 / -1;
+  }
 }
 
 @keyframes pulse-ring {

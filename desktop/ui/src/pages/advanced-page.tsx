@@ -13,7 +13,9 @@ export function AdvancedPage() {
         description="协议加固、重绑定防御、Hosts、ECS 与 DNS64"
       />
       <div className="space-y-3.5">
-        <PrivacyCard />
+        <div className="card-grid-2">
+          <PrivacyCard />
+        </div>
         <div className="card-grid-2">
           <RebindCard />
           <HostsCard />

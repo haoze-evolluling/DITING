@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { DatabaseZap, Save } from "lucide-react";
+import { DatabaseZap, ListFilter, Save, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCacheConfig } from "../../hooks/use-api";
@@ -19,6 +19,36 @@ const modeOptions = [
   { value: "limit_max_ttl", label: "限制最大 TTL" },
   { value: "fixed_ttl", label: "固定 TTL" },
 ];
+
+function SaveFooter({
+  dirty,
+  valid,
+  pending,
+  onSave,
+}: {
+  dirty: boolean;
+  valid: boolean;
+  pending: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <CardFooter>
+      <span className="text-[10.5px] text-text-3">
+        {dirty ? "存在未保存修改" : "配置已同步"}
+      </span>
+      <Button
+        size="sm"
+        variant="primary"
+        disabled={!dirty || !valid}
+        loading={pending}
+        onClick={onSave}
+      >
+        <Save className="h-3.5 w-3.5" />
+        保存
+      </Button>
+    </CardFooter>
+  );
+}
 
 export function CacheConfigCard() {
   const config = useCacheConfig();
@@ -70,257 +100,299 @@ export function CacheConfigCard() {
   const update = (patch: Partial<CacheConfig>) =>
     setDraft((current) => (current ? { ...current, ...patch } : current));
 
-  const valid =
-    draft &&
+  if (config.isLoading || !draft) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader
+          title="缓存策略"
+          description="条目容量、TTL 上下限、过期回退、预取与持久化。"
+          actions={<DatabaseZap className="h-4 w-4 text-text-3" />}
+        />
+        <CardContent className="flex flex-1 flex-col pt-1">
+          <LoadingState label="正在加载缓存策略…" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const basicsValid =
     draft.maxEntries >= 64 &&
-    (draft.mode === "fixed_ttl"
-      ? draft.fixedTtlSeconds > 0
-      : draft.maxTtlSeconds > 0) &&
+    (draft.mode === "fixed_ttl" ? draft.fixedTtlSeconds > 0 : draft.maxTtlSeconds > 0);
+  const tuningValid =
     (!draft.minTtlEnabled || draft.minTtlSeconds > 0) &&
     (!draft.staleFallbackEnabled || draft.staleFallbackSeconds > 0) &&
     (!draft.negativeTtlEnabled || draft.negativeTtlSeconds > 0) &&
     (!draft.prefetchEnabled ||
-      (draft.prefetchThreshold > 0 && draft.prefetchBeforeExpiryMs >= 1_000)) &&
-    (!draft.persistEnabled || (draft.persistIntervalSeconds ?? 0) >= 30);
+      (draft.prefetchThreshold > 0 && draft.prefetchBeforeExpiryMs >= 1_000));
+  const persistValid = !draft.persistEnabled || (draft.persistIntervalSeconds ?? 0) >= 30;
+  const valid = basicsValid && tuningValid && persistValid;
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader
-        title="缓存策略"
-        description="条目容量、TTL 上下限、过期回退、预取与持久化。"
-        actions={<DatabaseZap className="h-4 w-4 text-text-3" />}
-      />
-      <CardContent className="flex flex-1 flex-col pt-1">
-        {config.isLoading || !draft ? (
-          <LoadingState label="正在加载缓存策略…" />
-        ) : (
-          <>
-            <SwitchRow
-              title="启用智能缓存"
-              description="关闭后所有查询直接转发上游"
-              checked={draft.enabled}
-              onCheckedChange={(enabled) => update({ enabled })}
-            />
-            <SwitchRow
-              title="乐观返回"
-              description="过期条目在后台刷新时先返回旧结果"
-              checked={draft.optimistic}
-              onCheckedChange={(optimistic) => update({ optimistic })}
-            />
+    <>
+      <Card className="flex flex-col">
+        <CardHeader
+          title="缓存基础"
+          description="启用状态、条目容量与 TTL 取值方式。"
+          actions={<DatabaseZap className="h-4 w-4 text-text-3" />}
+        />
+        <CardContent className="flex flex-1 flex-col pt-1">
+          <SwitchRow
+            title="启用智能缓存"
+            description="关闭后所有查询直接转发上游"
+            checked={draft.enabled}
+            onCheckedChange={(enabled) => update({ enabled })}
+          />
+          <SwitchRow
+            title="乐观返回"
+            description="过期条目在后台刷新时先返回旧结果"
+            checked={draft.optimistic}
+            onCheckedChange={(optimistic) => update({ optimistic })}
+          />
 
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              <Field label="条目容量" hint="最多保留的缓存条目数">
-                <Input
-                  type="number"
-                  min={64}
-                  max={1_000_000}
-                  value={draft.maxEntries}
-                  onChange={(event) => update({ maxEntries: Number(event.target.value) })}
-                />
-              </Field>
-              <Field label="TTL 模式" hint="限制上游 TTL 或统一固定">
-                <Select
-                  value={draft.mode}
-                  options={modeOptions}
-                  onValueChange={(mode) => update({ mode })}
-                  ariaLabel="缓存 TTL 模式"
-                />
-              </Field>
-              {draft.mode === "fixed_ttl" ? (
-                <Field label="固定 TTL（秒）" hint="所有应答统一使用该 TTL">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={86400}
-                    value={draft.fixedTtlSeconds}
-                    onChange={(event) =>
-                      update({ fixedTtlSeconds: Number(event.target.value) })
-                    }
-                  />
-                </Field>
-              ) : (
-                <Field label="最大 TTL（秒）" hint="超过该值的上游 TTL 会被截断">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={86400}
-                    value={draft.maxTtlSeconds}
-                    onChange={(event) =>
-                      update({ maxTtlSeconds: Number(event.target.value) })
-                    }
-                  />
-                </Field>
-              )}
-            </div>
-
-            <div className="mt-1 space-y-1">
-              <SwitchRow
-                title="设置最小 TTL"
-                description="抬高上游返回过短的 TTL"
-                checked={draft.minTtlEnabled}
-                onCheckedChange={(minTtlEnabled) => update({ minTtlEnabled })}
-              />
-              {draft.minTtlEnabled ? (
-                <div className="grid gap-3 pb-2 sm:grid-cols-2">
-                  <Field label="最小 TTL（秒）">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={86400}
-                      value={draft.minTtlSeconds}
-                      onChange={(event) =>
-                        update({ minTtlSeconds: Number(event.target.value) })
-                      }
-                    />
-                  </Field>
-                </div>
-              ) : null}
-              <SwitchRow
-                title="过期回退"
-                description="上游失败时继续使用已过期条目"
-                checked={draft.staleFallbackEnabled}
-                onCheckedChange={(staleFallbackEnabled) => update({ staleFallbackEnabled })}
-              />
-              {draft.staleFallbackEnabled ? (
-                <div className="grid gap-3 pb-2 sm:grid-cols-2">
-                  <Field label="回退时长（秒）">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={86400}
-                      value={draft.staleFallbackSeconds}
-                      onChange={(event) =>
-                        update({ staleFallbackSeconds: Number(event.target.value) })
-                      }
-                    />
-                  </Field>
-                </div>
-              ) : null}
-              <SwitchRow
-                title="缓存否定应答"
-                description="缓存 NXDOMAIN 与 NODATA 结果"
-                checked={draft.negativeTtlEnabled}
-                onCheckedChange={(negativeTtlEnabled) => update({ negativeTtlEnabled })}
-              />
-              {draft.negativeTtlEnabled ? (
-                <div className="grid gap-3 pb-2 sm:grid-cols-2">
-                  <Field label="否定 TTL（秒）">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={3600}
-                      value={draft.negativeTtlSeconds}
-                      onChange={(event) =>
-                        update({ negativeTtlSeconds: Number(event.target.value) })
-                      }
-                    />
-                  </Field>
-                </div>
-              ) : null}
-              <SwitchRow
-                title="热点预取"
-                description="在条目过期前主动向上游刷新"
-                checked={draft.prefetchEnabled}
-                onCheckedChange={(prefetchEnabled) => update({ prefetchEnabled })}
-              />
-              {draft.prefetchEnabled ? (
-                <div className="grid gap-3 pb-2 sm:grid-cols-2">
-                  <Field label="命中阈值" hint="达到该命中次数后参与预取">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={100000}
-                      value={draft.prefetchThreshold}
-                      onChange={(event) =>
-                        update({ prefetchThreshold: Number(event.target.value) })
-                      }
-                    />
-                  </Field>
-                  <Field label="提前量（毫秒）" hint="1000 – 3600000">
-                    <Input
-                      type="number"
-                      min={1000}
-                      max={3600000}
-                      step={1000}
-                      value={draft.prefetchBeforeExpiryMs}
-                      onChange={(event) =>
-                        update({ prefetchBeforeExpiryMs: Number(event.target.value) })
-                      }
-                    />
-                  </Field>
-                </div>
-              ) : null}
-            </div>
-
-            <Field
-              label="排除规则"
-              hint="每行一个域名或通配符，命中后不写入缓存。"
-              className="mt-1"
-            >
-              <Textarea
-                className="mono min-h-[72px] text-[11.5px]"
-                value={exclude}
-                spellCheck={false}
-                placeholder={"*.local\nlocalhost"}
-                onChange={(event) => setExclude(event.target.value)}
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <Field label="条目容量" hint="最多保留的缓存条目数">
+              <Input
+                type="number"
+                min={64}
+                max={1_000_000}
+                value={draft.maxEntries}
+                onChange={(event) => update({ maxEntries: Number(event.target.value) })}
               />
             </Field>
-
-            <div className="mt-1 space-y-1">
-              <SwitchRow
-                title="持久化缓存"
-                description="定期把缓存写入 SQLite 数据库，服务重启后可恢复"
-                checked={draft.persistEnabled}
-                onCheckedChange={(persistEnabled) =>
-                  update({
-                    persistEnabled,
-                    persistIntervalSeconds:
-                      persistEnabled && !draft.persistIntervalSeconds
-                        ? 300
-                        : draft.persistIntervalSeconds,
-                  })
-                }
+            <Field label="TTL 模式" hint="限制上游 TTL 或统一固定">
+              <Select
+                value={draft.mode}
+                options={modeOptions}
+                onValueChange={(mode) => update({ mode })}
+                ariaLabel="缓存 TTL 模式"
               />
-              {draft.persistEnabled ? (
-                <div className="grid gap-3 pb-2">
-                  <Field label="落盘间隔（秒）" hint="30 – 86400 秒">
-                    <Input
-                      type="number"
-                      min={30}
-                      max={86400}
-                      value={draft.persistIntervalSeconds ?? 0}
-                      onChange={(event) =>
-                        update({ persistIntervalSeconds: Number(event.target.value) })
-                      }
-                    />
-                  </Field>
-                </div>
-              ) : null}
-            </div>
+            </Field>
+            {draft.mode === "fixed_ttl" ? (
+              <Field label="固定 TTL（秒）" hint="所有应答统一使用该 TTL">
+                <Input
+                  type="number"
+                  min={1}
+                  max={86400}
+                  value={draft.fixedTtlSeconds}
+                  onChange={(event) =>
+                    update({ fixedTtlSeconds: Number(event.target.value) })
+                  }
+                />
+              </Field>
+            ) : (
+              <Field label="最大 TTL（秒）" hint="超过该值的上游 TTL 会被截断">
+                <Input
+                  type="number"
+                  min={1}
+                  max={86400}
+                  value={draft.maxTtlSeconds}
+                  onChange={(event) =>
+                    update({ maxTtlSeconds: Number(event.target.value) })
+                  }
+                />
+              </Field>
+            )}
+          </div>
 
-            {!valid ? (
-              <p className="rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
-                容量、TTL、预取与落盘间隔超出允许范围，修正后才能保存。
-              </p>
+          {!basicsValid ? (
+            <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
+              条目容量需至少为 64，TTL 需大于 0。
+            </p>
+          ) : null}
+        </CardContent>
+        <SaveFooter
+          dirty={dirty}
+          valid={valid}
+          pending={save.isPending}
+          onSave={() => save.mutate()}
+        />
+      </Card>
+
+      <Card className="flex flex-col">
+        <CardHeader
+          title="TTL 与预取优化"
+          description="最小 TTL、过期回退、否定缓存与热点预取。"
+          actions={<SlidersHorizontal className="h-4 w-4 text-text-3" />}
+        />
+        <CardContent className="flex flex-1 flex-col pt-1">
+          <div className="space-y-1">
+            <SwitchRow
+              title="设置最小 TTL"
+              description="抬高上游返回过短的 TTL"
+              checked={draft.minTtlEnabled}
+              onCheckedChange={(minTtlEnabled) => update({ minTtlEnabled })}
+            />
+            {draft.minTtlEnabled ? (
+              <div className="grid gap-3 pb-2 sm:grid-cols-2">
+                <Field label="最小 TTL（秒）">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={86400}
+                    value={draft.minTtlSeconds}
+                    onChange={(event) =>
+                      update({ minTtlSeconds: Number(event.target.value) })
+                    }
+                  />
+                </Field>
+              </div>
             ) : null}
-          </>
-        )}
-      </CardContent>
-      <CardFooter>
-        <span className="text-[10.5px] text-text-3">
-          {dirty ? "存在未保存修改" : "配置已同步"}
-        </span>
-        <Button
-          size="sm"
-          variant="primary"
-          disabled={!dirty || !valid}
-          loading={save.isPending}
-          onClick={() => save.mutate()}
-        >
-          <Save className="h-3.5 w-3.5" />
-          保存
-        </Button>
-      </CardFooter>
-    </Card>
+            <SwitchRow
+              title="过期回退"
+              description="上游失败时继续使用已过期条目"
+              checked={draft.staleFallbackEnabled}
+              onCheckedChange={(staleFallbackEnabled) => update({ staleFallbackEnabled })}
+            />
+            {draft.staleFallbackEnabled ? (
+              <div className="grid gap-3 pb-2 sm:grid-cols-2">
+                <Field label="回退时长（秒）">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={86400}
+                    value={draft.staleFallbackSeconds}
+                    onChange={(event) =>
+                      update({ staleFallbackSeconds: Number(event.target.value) })
+                    }
+                  />
+                </Field>
+              </div>
+            ) : null}
+            <SwitchRow
+              title="缓存否定应答"
+              description="缓存 NXDOMAIN 与 NODATA 结果"
+              checked={draft.negativeTtlEnabled}
+              onCheckedChange={(negativeTtlEnabled) => update({ negativeTtlEnabled })}
+            />
+            {draft.negativeTtlEnabled ? (
+              <div className="grid gap-3 pb-2 sm:grid-cols-2">
+                <Field label="否定 TTL（秒）">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={3600}
+                    value={draft.negativeTtlSeconds}
+                    onChange={(event) =>
+                      update({ negativeTtlSeconds: Number(event.target.value) })
+                    }
+                  />
+                </Field>
+              </div>
+            ) : null}
+            <SwitchRow
+              title="热点预取"
+              description="在条目过期前主动向上游刷新"
+              checked={draft.prefetchEnabled}
+              onCheckedChange={(prefetchEnabled) => update({ prefetchEnabled })}
+            />
+            {draft.prefetchEnabled ? (
+              <div className="grid gap-3 pb-2 sm:grid-cols-2">
+                <Field label="命中阈值" hint="达到该命中次数后参与预取">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={100000}
+                    value={draft.prefetchThreshold}
+                    onChange={(event) =>
+                      update({ prefetchThreshold: Number(event.target.value) })
+                    }
+                  />
+                </Field>
+                <Field label="提前量（毫秒）" hint="1000 – 3600000">
+                  <Input
+                    type="number"
+                    min={1000}
+                    max={3600000}
+                    step={1000}
+                    value={draft.prefetchBeforeExpiryMs}
+                    onChange={(event) =>
+                      update({ prefetchBeforeExpiryMs: Number(event.target.value) })
+                    }
+                  />
+                </Field>
+              </div>
+            ) : null}
+          </div>
+
+          {!tuningValid ? (
+            <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
+              TTL 优化参数需大于 0，预取提前量至少为 1000 毫秒。
+            </p>
+          ) : null}
+        </CardContent>
+        <SaveFooter
+          dirty={dirty}
+          valid={valid}
+          pending={save.isPending}
+          onSave={() => save.mutate()}
+        />
+      </Card>
+
+      <Card className="flex flex-col">
+        <CardHeader
+          title="排除与落盘"
+          description="命中排除规则的域名不写入缓存；持久化后可在重启后恢复。"
+          actions={<ListFilter className="h-4 w-4 text-text-3" />}
+        />
+        <CardContent className="flex flex-1 flex-col pt-1">
+          <Field
+            label="排除规则"
+            hint="每行一个域名或通配符，命中后不写入缓存。"
+          >
+            <Textarea
+              className="mono min-h-[72px] text-[11.5px]"
+              value={exclude}
+              spellCheck={false}
+              placeholder={"*.local\nlocalhost"}
+              onChange={(event) => setExclude(event.target.value)}
+            />
+          </Field>
+
+          <div className="mt-1 space-y-1">
+            <SwitchRow
+              title="持久化缓存"
+              description="定期把缓存写入 SQLite 数据库，服务重启后可恢复"
+              checked={draft.persistEnabled}
+              onCheckedChange={(persistEnabled) =>
+                update({
+                  persistEnabled,
+                  persistIntervalSeconds:
+                    persistEnabled && !draft.persistIntervalSeconds
+                      ? 300
+                      : draft.persistIntervalSeconds,
+                })
+              }
+            />
+            {draft.persistEnabled ? (
+              <div className="grid gap-3 pb-2 sm:grid-cols-2">
+                <Field label="落盘间隔（秒）" hint="30 – 86400 秒">
+                  <Input
+                    type="number"
+                    min={30}
+                    max={86400}
+                    value={draft.persistIntervalSeconds ?? 0}
+                    onChange={(event) =>
+                      update({ persistIntervalSeconds: Number(event.target.value) })
+                    }
+                  />
+                </Field>
+              </div>
+            ) : null}
+          </div>
+
+          {!persistValid ? (
+            <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
+              落盘间隔需在 30 – 86400 秒之间。
+            </p>
+          ) : null}
+        </CardContent>
+        <SaveFooter
+          dirty={dirty}
+          valid={valid}
+          pending={save.isPending}
+          onSave={() => save.mutate()}
+        />
+      </Card>
+    </>
   );
 }

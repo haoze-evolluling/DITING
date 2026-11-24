@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, FlaskConical, Plus, Save } from "lucide-react";
+import {
+  ArrowLeftRight,
+  FlaskConical,
+  Plus,
+  Save,
+  SlidersHorizontal,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { api, describeError } from "../../lib/api";
@@ -41,6 +47,36 @@ function canonicalProviders(providers: ProviderConfig[]): string {
 
 function canonicalCodes(codes: number[]): string {
   return JSON.stringify([...codes].sort((left, right) => left - right));
+}
+
+function SaveFooter({
+  dirty,
+  valid,
+  pending,
+  onSave,
+}: {
+  dirty: boolean;
+  valid: boolean;
+  pending: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <CardFooter>
+      <span className="text-[10.5px] text-text-3">
+        {dirty ? "存在未保存的修改" : "配置已与运行服务同步"}
+      </span>
+      <Button
+        size="sm"
+        variant="primary"
+        disabled={!dirty || !valid}
+        loading={pending}
+        onClick={onSave}
+      >
+        <Save className="h-3.5 w-3.5" />
+        保存
+      </Button>
+    </CardFooter>
+  );
 }
 
 export function FallbackCard({
@@ -200,6 +236,14 @@ export function FallbackCard({
     );
 
   const valid = conflicts.length === 0 && timeoutValid;
+  const footer = (
+    <SaveFooter
+      dirty={dirty}
+      valid={valid}
+      pending={save.isPending}
+      onSave={() => save.mutate()}
+    />
+  );
 
   return (
     <>
@@ -241,76 +285,18 @@ export function FallbackCard({
               }
             />
           ) : (
-            <>
-              <div className="divide-y divide-border/70">
-                {fallbackProviders.map((provider) => (
-                  <ProviderRow
-                    key={provider.id}
-                    provider={provider}
-                    test={tests[provider.id]}
-                    onTest={() => void testProvider(provider)}
-                    onEdit={() => editProvider(provider)}
-                    onDelete={() => setDeleteTarget(provider)}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Field
-                  label="主链路独立超时（毫秒）"
-                  hint="0 表示使用默认 2000ms；有效范围 100–30000。"
-                >
-                  <Input
-                    type="number"
-                    min={0}
-                    max={30000}
-                    value={timeoutMs}
-                    onChange={(event) => setTimeoutMs(event.target.value)}
-                  />
-                </Field>
-                <div>
-                  <span className="text-[12px] text-text">触发回退的应答码</span>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {rcodeOptions.map((option) => {
-                      const active = rcodes.includes(option.value);
-                      return (
-                        <button
-                          key={option.value}
-                          type="button"
-                          aria-pressed={active}
-                          onClick={() => toggleCode(option.value)}
-                          className={cn(
-                            "h-8 rounded-lg border px-2.5 text-[11.5px] transition-colors",
-                            active
-                              ? "border-accent bg-accent-soft text-accent"
-                              : "border-border bg-surface-2 text-text-3 hover:bg-surface-3",
-                          )}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <span className="mt-1 block text-[10.5px] text-text-3">
-                    {rcodes.length === 0
-                      ? "未选择应答码时，仅在超时或连接失败时回退。"
-                      : "NXDOMAIN 属于权威答案，谨慎勾选。"}
-                  </span>
-                </div>
-              </div>
-
-              <SwitchRow
-                className="mt-1"
-                title="超时与连接失败也触发回退"
-                description="主链路超时或网络错误时整链切换到回退上游"
-                checked={onError}
-                onCheckedChange={setOnError}
-              />
-
-              <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-4 text-text-3">
-                与主链路是两条独立链路：主链路先以独立超时尝试整条链，失败或命中上述应答码后，才整链切换到回退上游。
-              </p>
-            </>
+            <div className="divide-y divide-border/70">
+              {fallbackProviders.map((provider) => (
+                <ProviderRow
+                  key={provider.id}
+                  provider={provider}
+                  test={tests[provider.id]}
+                  onTest={() => void testProvider(provider)}
+                  onEdit={() => editProvider(provider)}
+                  onDelete={() => setDeleteTarget(provider)}
+                />
+              ))}
+            </div>
           )}
 
           {conflicts.length > 0 ? (
@@ -320,28 +306,83 @@ export function FallbackCard({
               ))}
             </div>
           ) : null}
-          {!timeoutValid ? (
-            <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
-              主链路超时需为 0，或处于 100–30000 毫秒之间。
-            </p>
-          ) : null}
         </CardContent>
-        <CardFooter>
-          <span className="text-[10.5px] text-text-3">
-            {dirty ? "存在未保存的修改" : "配置已与运行服务同步"}
-          </span>
-          <Button
-            size="sm"
-            variant="primary"
-            disabled={!dirty || !valid}
-            loading={save.isPending}
-            onClick={() => save.mutate()}
-          >
-            <Save className="h-3.5 w-3.5" />
-            保存
-          </Button>
-        </CardFooter>
+        {footer}
       </Card>
+
+      {!loading && fallbackProviders.length > 0 ? (
+        <Card className="card-grid-full flex flex-col">
+          <CardHeader
+            title="回退触发条件"
+            description="主链路超时、错误或返回指定应答码时整链切换。"
+            actions={<SlidersHorizontal className="h-4 w-4 text-text-3" />}
+          />
+          <CardContent className="flex flex-1 flex-col pt-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                label="主链路独立超时（毫秒）"
+                hint="0 表示使用默认 2000ms；有效范围 100–30000。"
+              >
+                <Input
+                  type="number"
+                  min={0}
+                  max={30000}
+                  value={timeoutMs}
+                  onChange={(event) => setTimeoutMs(event.target.value)}
+                />
+              </Field>
+              <div>
+                <span className="text-[12px] text-text">触发回退的应答码</span>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {rcodeOptions.map((option) => {
+                    const active = rcodes.includes(option.value);
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => toggleCode(option.value)}
+                        className={cn(
+                          "h-8 rounded-lg border px-2.5 text-[11.5px] transition-colors",
+                          active
+                            ? "border-accent bg-accent-soft text-accent"
+                            : "border-border bg-surface-2 text-text-3 hover:bg-surface-3",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="mt-1 block text-[10.5px] text-text-3">
+                  {rcodes.length === 0
+                    ? "未选择应答码时，仅在超时或连接失败时回退。"
+                    : "NXDOMAIN 属于权威答案，谨慎勾选。"}
+                </span>
+              </div>
+            </div>
+
+            <SwitchRow
+              className="mt-1"
+              title="超时与连接失败也触发回退"
+              description="主链路超时或网络错误时整链切换到回退上游"
+              checked={onError}
+              onCheckedChange={setOnError}
+            />
+
+            <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-4 text-text-3">
+              与主链路是两条独立链路：主链路先以独立超时尝试整条链，失败或命中上述应答码后，才整链切换到回退上游。
+            </p>
+
+            {!timeoutValid ? (
+              <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">
+                主链路超时需为 0，或处于 100–30000 毫秒之间。
+              </p>
+            ) : null}
+          </CardContent>
+          {footer}
+        </Card>
+      ) : null}
 
       <ProviderDialog
         open={dialogOpen}
