@@ -1,5 +1,6 @@
 import { useAuthStore } from "../stores/auth";
 
+import { downloadFile } from "./download";
 import type {
   AdapterInfo,
   ApiEnvelope,
@@ -240,6 +241,11 @@ export const api = {
     request<void>("/api/v1/querylog/config", { method: "POST", body: patch }),
   clearQueryLog: () =>
     request<void>("/api/v1/querylog/clear", { method: "POST" }),
+  exportQueryLog: (params: QuerySearchParams, format: "csv" | "json") =>
+    downloadFile(
+      buildUrl("/api/v1/querylog/export", { ...params, format }),
+      `DITING-querylog.${format}`,
+    ),
 
   // 解析缓存
   cacheStats: () => request<CacheStats>("/api/v1/cache/stats"),
@@ -552,26 +558,6 @@ export function websocketUrl(token: string): string {
     .replace(/^http:/i, "ws:")
     .replace(/^https:/i, "wss:");
   return `${wsOrigin}/api/v1/events?token=${encodeURIComponent(token)}`;
-}
-
-async function downloadFile(path: string, filename: string): Promise<void> {
-  const token = useAuthStore.getState().token;
-  const response = await fetch(path, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new ApiError(text || `下载失败（HTTP ${response.status}）`, response.status);
-  }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
 }
 
 export function describeError(error: unknown): string {

@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { RefreshCw, Settings2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import { toast } from "sonner";
 
 import { TrafficChart } from "../components/charts/traffic-chart";
+import { ExportMenu } from "../components/logs/export-menu";
 import { LogSummary } from "../components/logs/log-summary";
 import { LogToolbar, type LogFilters } from "../components/logs/log-toolbar";
 import { QueryDetailSheet } from "../components/logs/query-detail-sheet";
@@ -14,6 +16,7 @@ import { Card, CardFooter } from "../components/ui/card";
 import { ConfirmDialog } from "../components/ui/confirm-dialog";
 import { useQueryLogSearch, useQueryStats } from "../hooks/use-api";
 import { useRuntimeActions } from "../hooks/use-runtime-actions";
+import { api, describeError } from "../lib/api";
 import { formatNumber } from "../lib/format";
 import type { QueryRecord } from "../lib/types";
 import { useLiveStore } from "../stores/live";
@@ -48,6 +51,7 @@ export function LogsPage() {
   const [live, setLive] = useState(false);
   const [selected, setSelected] = useState<QueryRecord | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [exporting, setExporting] = useState<"csv" | "json" | null>(null);
 
   const search = useQueryLogSearch(
     { ...applied, limit: PAGE_SIZE, offset: page * PAGE_SIZE },
@@ -76,6 +80,24 @@ export function LogsPage() {
     setLive(false);
   };
 
+  const exportLog = async (format: "csv" | "json") => {
+    setExporting(format);
+    try {
+      const result = await api.exportQueryLog({ ...applied }, format);
+      if (result.truncated) {
+        toast.info(
+          `已导出前 ${formatNumber(result.exported)} 条日志，超出上限的记录未包含`,
+        );
+      } else {
+        toast.success(`已导出 ${formatNumber(result.exported)} 条日志`);
+      }
+    } catch (error) {
+      toast.error(describeError(error));
+    } finally {
+      setExporting(null);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -83,6 +105,10 @@ export function LogsPage() {
         description="实时请求、历史检索与最近 24 小时统计"
         actions={
           <>
+            <ExportMenu
+              onExport={(format) => void exportLog(format)}
+              loading={exporting !== null}
+            />
             <Button
               size="sm"
               variant="ghost"

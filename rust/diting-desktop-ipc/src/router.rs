@@ -50,6 +50,7 @@ fn known(path: &str) -> bool {
             | "/api/v1/cache/dump"
             | "/api/v1/cache/load"
             | "/api/v1/querylog/search"
+            | "/api/v1/querylog/export"
             | "/api/v1/querylog/stats"
             | "/api/v1/querylog/clear"
             | "/api/v1/querylog/config"
@@ -149,6 +150,7 @@ pub async fn dispatch(server: &Server, ctx: &Ctx<'_>, path: &str) -> Resp {
         "/api/v1/cache/load" => handlers::cache::handle_load(server, ctx),
 
         "/api/v1/querylog/search" => handlers::querylog::handle_search(server, ctx).await,
+        "/api/v1/querylog/export" => handlers::querylog::handle_export(server, ctx).await,
         "/api/v1/querylog/stats" => handlers::querylog::handle_stats(server, ctx),
         "/api/v1/querylog/clear" => handlers::querylog::handle_clear(server, ctx).await,
         "/api/v1/querylog/config" => handlers::querylog::handle_config(server, ctx).await,

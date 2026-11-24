@@ -237,6 +237,18 @@ pub fn plain_text(status: StatusCode, message: &str) -> Resp {
     )
 }
 
+pub fn attachment(body: Vec<u8>, content_type: &str, filename: &str) -> Resp {
+    let mut response = plain(StatusCode::OK, body, content_type);
+    if let Ok(value) =
+        hyper::header::HeaderValue::from_str(&format!("attachment; filename=\"{filename}\""))
+    {
+        response
+            .headers_mut()
+            .insert(hyper::header::CONTENT_DISPOSITION, value);
+    }
+    response
+}
+
 pub fn extract_token(ctx: &Ctx<'_>) -> String {
     if let Some(value) = ctx.header("authorization") {
         if let Some(token) = value.strip_prefix("Bearer ") {

@@ -8,6 +8,7 @@ use tokio::net::TcpStream;
 
 use diting_desktop_api::config::{store, Config};
 use diting_desktop_app::runtime::PlatformHandles;
+use diting_desktop_core::querylog::Record;
 use diting_desktop_ipc::ws::Event;
 use diting_desktop_ipc::{AppRuntime, Server};
 
@@ -148,6 +149,41 @@ async fn loopback_password_reset_returns_a_session_and_replaces_credentials() {
     assert!(text.contains("\"token\""));
     assert!(server.auth().verify_password("new-secret"));
     assert!(!server.auth().verify_password("secret"));
+
+    server.shutdown().await;
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[tokio::test]
+async fn query_log_export_returns_csv_and_json_files() {
+    let (server, root) = start("queryexport", test_config(Path::new("."))).await;
+    let addr = server.addr().await.unwrap();
+    server.runtime().querylog.record(Record {
+        timestamp: 1_700_000_000_000,
+        domain: "example.com".to_string(),
+        qtype: "A".to_string(),
+        client_ip: "192.168.1.10".to_string(),
+        duration_ms: 12.5,
+        status: "allowed".to_string(),
+        ..Record::default()
+    });
+
+    let (status, text) = get(addr, "/api/v1/querylog/export?format=csv").await;
+    assert_eq!(status, 200, "{text}");
+    let lower = text.to_ascii_lowercase();
+    assert!(lower.contains("content-type: text/csv"));
+    assert!(lower.contains("content-disposition: attachment; filename=\"diting-querylog-"));
+    assert!(lower.contains("x-diting-export-count: 1"));
+    assert!(text.contains("example.com"));
+
+    let (status, text) = get(addr, "/api/v1/querylog/export?format=json").await;
+    assert_eq!(status, 200, "{text}");
+    assert!(text.contains("\"exported\":1"));
+    assert!(text.contains("\"entries\""));
+    assert!(text.contains("example.com"));
+
+    let (status, text) = get(addr, "/api/v1/querylog/export?format=xml").await;
+    assert_eq!(status, 400, "{text}");
 
     server.shutdown().await;
     let _ = std::fs::remove_dir_all(root);
