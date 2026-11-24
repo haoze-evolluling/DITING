@@ -48,6 +48,8 @@ pub struct TestUpstreamRequest {
     pub server: String,
     #[serde(default)]
     pub url: String,
+    #[serde(default)]
+    pub domain: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -272,7 +274,12 @@ impl AppRuntime {
             return failed(format!("{protocol} 地址无效，无法建立上游连接"), 0.0);
         }
 
-        let query = plain_query("dns.alidns.com", 1);
+        let domain = if request.domain.trim().is_empty() {
+            "dns.alidns.com"
+        } else {
+            request.domain.trim()
+        };
+        let query = plain_query(domain, 1);
         let started = Instant::now();
         let result =
             tokio::time::timeout(Duration::from_secs(3), resolver.resolve(&query, "")).await;

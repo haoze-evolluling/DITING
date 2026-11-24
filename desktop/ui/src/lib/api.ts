@@ -15,6 +15,10 @@ import type {
   ClientGroup,
   ClientGroupConfigResponse,
   ConfigureOpenWrtPatch,
+  DiagnosticPingResult,
+  DiagnosticQueryResult,
+  DiagnosticTraceResult,
+  DiagnosticUpstreamResult,
   ECSConfig,
   EmergencyRestoreResult,
   EncryptedDNSStatus,
@@ -189,6 +193,28 @@ export const api = {
     request<PortCheckResult>("/api/v1/portcheck/autofix", {
       method: "POST",
       body: { startDNS: startDns },
+    }),
+
+  // 网络诊断
+  diagnoseQuery: (domain: string, qtype: string) =>
+    request<DiagnosticQueryResult>("/api/v1/diagnostics/query", {
+      method: "POST",
+      body: { domain, qtype },
+    }),
+  diagnoseUpstreams: (domain: string, attempts: number) =>
+    request<DiagnosticUpstreamResult[]>("/api/v1/diagnostics/upstreams", {
+      method: "POST",
+      body: { domain, attempts },
+    }),
+  diagnosePing: (target: string, count: number, timeoutSeconds: number) =>
+    request<DiagnosticPingResult>("/api/v1/diagnostics/ping", {
+      method: "POST",
+      body: { target, count, timeoutSeconds },
+    }),
+  diagnoseTrace: (target: string, maxHops: number) =>
+    request<DiagnosticTraceResult>("/api/v1/diagnostics/traceroute", {
+      method: "POST",
+      body: { target, maxHops },
     }),
 
   queryStats: () => request<QueryLogStats>("/api/v1/querylog/stats"),

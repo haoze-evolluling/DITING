@@ -3,6 +3,7 @@
 pub mod auth;
 pub mod cache;
 pub mod clients;
+pub mod diagnostics;
 pub mod encrypted;
 pub mod filter;
 pub mod lan;

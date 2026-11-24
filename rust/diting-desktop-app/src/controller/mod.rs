@@ -1,6 +1,7 @@
 pub mod background;
 pub mod cache;
 pub mod clients;
+pub mod diagnostics;
 pub mod dns;
 pub mod encrypted;
 pub mod filter;

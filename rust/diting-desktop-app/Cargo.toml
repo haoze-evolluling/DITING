@@ -10,11 +10,14 @@ diting-desktop-api = { path = "../diting-desktop-api" }
 diting-desktop-core = { path = "../diting-desktop-core" }
 diting-desktop-dns = { path = "../diting-desktop-dns" }
 diting-desktop-platform = { path = "../diting-desktop-platform" }
+diting-dns-wire = { path = "../diting-dns-wire" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros", "fs"] }
+tokio = { version = "1", features = ["rt-multi-thread", "time", "sync", "net", "io-util", "macros", "fs", "process"] }
 async-trait = "0.1"
+regex = "1"
+encoding_rs = "0.8"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["test-util"] }

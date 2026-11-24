@@ -92,6 +92,10 @@ fn known(path: &str) -> bool {
             | "/api/v1/dns/ecs/configure"
             | "/api/v1/portcheck"
             | "/api/v1/portcheck/autofix"
+            | "/api/v1/diagnostics/query"
+            | "/api/v1/diagnostics/upstreams"
+            | "/api/v1/diagnostics/ping"
+            | "/api/v1/diagnostics/traceroute"
             | "/api/v1/service/status"
             | "/api/v1/auth/logout"
             | "/api/v1/auth/password"
@@ -119,6 +123,13 @@ pub async fn dispatch(server: &Server, ctx: &Ctx<'_>, path: &str) -> Resp {
         }
         "/api/v1/portcheck" => handlers::status::handle_port_check(server, ctx).await,
         "/api/v1/portcheck/autofix" => handlers::status::handle_port_autofix(server, ctx).await,
+
+        "/api/v1/diagnostics/query" => handlers::diagnostics::handle_query(server, ctx).await,
+        "/api/v1/diagnostics/upstreams" => {
+            handlers::diagnostics::handle_upstreams(server, ctx).await
+        }
+        "/api/v1/diagnostics/ping" => handlers::diagnostics::handle_ping(server, ctx).await,
+        "/api/v1/diagnostics/traceroute" => handlers::diagnostics::handle_trace(server, ctx).await,
         "/api/v1/service/status" => handlers::status::handle_service_status(server, ctx).await,
 
         "/api/v1/upstream" | "/api/v1/upstream/configure" => {

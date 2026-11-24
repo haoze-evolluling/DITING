@@ -8,6 +8,7 @@ import type {
 
 export * from "./types/cache";
 export * from "./types/advanced";
+export * from "./types/diagnostics";
 export * from "./types/openwrt";
 
 export interface ApiEnvelope<T> {
