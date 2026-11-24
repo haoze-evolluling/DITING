@@ -248,6 +248,7 @@ fn system_keeps_traffic_defaults_and_the_nested_dynamic_block() {
         Group::System,
         &json!({
             "bypassLan": true,
+            "ipv6Mode": "ipv6",
             "tunnelIpv6": true,
             "dnsAaaa": true,
             "routeAddress": ["::/0", "10.0.0.0/8", "10.0.0.0/8"],
@@ -262,6 +263,7 @@ fn system_keeps_traffic_defaults_and_the_nested_dynamic_block() {
     )
     .unwrap();
     assert_eq!(value["bypassLan"], json!(true));
+    assert_eq!(value["ipv6Mode"], json!("ipv6"));
     assert_eq!(value["tunnelIpv6"], json!(true));
     assert_eq!(value["dnsAaaa"], json!(true));
     assert_eq!(value["routeAddress"], json!(["10.0.0.0/8", "::/0"]));

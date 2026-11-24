@@ -573,8 +573,9 @@ fn system_migrates_legacy_ipv6_and_imports_route_lists() {
         }}),
         false,
     );
-    assert_eq!(write_of(&plan, "system.tunnelIpv6"), Some(&json!(true)));
-    assert_eq!(write_of(&plan, "system.dnsAaaa"), Some(&json!(true)));
+    assert_eq!(write_of(&plan, "system.ipv6Mode"), Some(&json!("auto")));
+    assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
+    assert_eq!(write_of(&plan, "system.dnsAaaa"), None);
     assert_eq!(
         write_of(&plan, "system.routeAddress"),
         Some(&json!(["10.0.0.0/8", "2001:db8::/32"]))
@@ -586,7 +587,7 @@ fn system_migrates_legacy_ipv6_and_imports_route_lists() {
 }
 
 #[test]
-fn explicit_ipv6_booleans_win_over_the_legacy_mode() {
+fn the_ipv6_mode_wins_over_legacy_booleans() {
     let content = json!({
         "format": "diting-backup",
         "version": 2,
@@ -604,8 +605,25 @@ fn explicit_ipv6_booleans_win_over_the_legacy_mode() {
         json!({"system": {"tunnelIpv6": false, "dnsAaaa": false}}),
         false,
     );
+    assert_eq!(write_of(&plan, "system.ipv6Mode"), Some(&json!("auto")));
     assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
-    assert_eq!(write_of(&plan, "system.dnsAaaa"), Some(&json!(true)));
+    assert_eq!(write_of(&plan, "system.dnsAaaa"), None);
+}
+
+#[test]
+fn explicit_ipv6_modes_round_trip_without_the_legacy_pair() {
+    for mode in ["ipv4", "auto", "ipv6"] {
+        let content = json!({
+            "format": "diting-backup",
+            "version": 2,
+            "data": { "system": { "ipv6Mode": mode } },
+        })
+        .to_string();
+        let plan = run_import(&content, json!({"system": {}}), false);
+        assert_eq!(write_of(&plan, "system.ipv6Mode"), Some(&json!(mode)));
+        assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
+        assert_eq!(write_of(&plan, "system.dnsAaaa"), None);
+    }
 }
 
 #[test]
