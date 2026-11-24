@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use diting_dns_core::message::{extract, TYPE_AAAA};
+use diting_dns_wire::build::ParsedMessage;
 use diting_dns_wire::ChainTarget;
 
 use super::{block, row, servfail};
@@ -44,7 +45,7 @@ pub async fn forward(
                         .resolved_ips(hit.resolved_ips.clone())
                         .cached(true)
                 });
-                return Some(hit.wire);
+                return Some(with_client_id(strip_ipv6_hints(engine, qtype, hit.wire), query));
             }
 
             if cache.stale_fallback_enabled() {
@@ -65,7 +66,7 @@ pub async fn forward(
                         refresh(shared, query).await;
                     });
                 }
-                return Some(hit.wire);
+                return Some(with_client_id(strip_ipv6_hints(engine, qtype, hit.wire), query));
             }
         }
     }
@@ -142,7 +143,7 @@ pub async fn forward(
                 });
             }
 
-            Some(with_client_id(response, query))
+            Some(with_client_id(strip_ipv6_hints(engine, qtype, response), query))
         }
         Err(error) => {
             engine.log_error(&format!("DNS resolve failed standalone {domain}: {error}"));
@@ -180,6 +181,24 @@ fn blocked_chain(
     None
 }
 
+/// When IPv6 answers are blocked, HTTPS/SVCB records must not hand out
+/// ``ipv6hint`` addresses behind the client's back.
+fn strip_ipv6_hints(engine: &Engine, qtype: u16, response: Vec<u8>) -> Vec<u8> {
+    const TYPE_HTTPS: u16 = 65;
+    const TYPE_SVCB: u16 = 64;
+    const TYPE_ANY: u16 = 255;
+    if !engine.block_ipv6() || !matches!(qtype, TYPE_HTTPS | TYPE_SVCB | TYPE_ANY) {
+        return response;
+    }
+    let Some(mut message) = ParsedMessage::parse(&response) else {
+        return response;
+    };
+    if !message.strip_ipv6_hints() {
+        return response;
+    }
+    message.to_wire().unwrap_or(response)
+}
+
 fn with_client_id(mut response: Vec<u8>, query: &[u8]) -> Vec<u8> {
     if response.len() >= 2 && query.len() >= 2 {
         response[0] = query[0];
@@ -208,5 +227,49 @@ struct RefreshClaim {
 impl Drop for RefreshClaim {
     fn drop(&mut self) {
         self.engine.cache().end_stale_refresh(&self.query);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diting_dns_wire::build::{MessageBuilder, RData, ResourceRecord, SvcParam, SvcbRData};
+    use diting_dns_wire::{CLASS_IN, TYPE_HTTPS};
+
+    fn https_response() -> Vec<u8> {
+        let query = MessageBuilder::query("example.com", TYPE_HTTPS, CLASS_IN)
+            .finish()
+            .expect("query");
+        let svcb = SvcbRData::new(1, ".").push(SvcParam::ipv6hint(&["2001:db8::1"
+            .parse()
+            .expect("address")]));
+        MessageBuilder::reply_to(&query)
+            .expect("reply")
+            .push_answer(ResourceRecord::new(
+                "example.com",
+                TYPE_HTTPS,
+                CLASS_IN,
+                60,
+                RData::Https(svcb),
+            ))
+            .finish()
+            .expect("wire")
+    }
+
+    #[test]
+    fn ipv6_hints_are_only_stripped_when_ipv6_is_blocked() {
+        let engine = Engine::new();
+        let response = https_response();
+
+        let untouched = strip_ipv6_hints(&engine, TYPE_HTTPS, response.clone());
+        assert_eq!(untouched, response);
+
+        engine.set_block_ipv6(true);
+        let stripped = strip_ipv6_hints(&engine, TYPE_HTTPS, response);
+        let parsed = ParsedMessage::parse(&stripped).expect("parse");
+        let RData::Https(svcb) = &parsed.answers[0].rdata else {
+            panic!("expected HTTPS");
+        };
+        assert!(svcb.params.is_empty());
     }
 }

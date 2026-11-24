@@ -143,6 +143,19 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetBlockIpv6<'l
 }
 
 #[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetPreferIpv6<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
+    handle: jlong,
+    enabled: jboolean,
+) {
+    resolve(&mut env, |env| {
+        with_engine(env, handle, (), |engine| engine.set_prefer_ipv6(enabled));
+        Ok(())
+    })
+}
+
+#[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeSetSystemDns<'local>(
     mut env: EnvUnowned<'local>,
     _class: JObject<'local>,

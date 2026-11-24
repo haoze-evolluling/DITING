@@ -98,6 +98,15 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         return reply::render(query, &plan);
     }
 
+    if engine.prefer_ipv6() && qtype == TYPE_A && domain_has_aaaa(engine, &domain).await {
+        let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
+        engine.note_query(false);
+        engine.log_row(|| {
+            row(&domain, false, qtype, started, app_name).blocked_by("ipv6_preferred".to_string())
+        });
+        return reply::render(query, &plan);
+    }
+
     if !engine.filter_dns() {
         return forward::forward(engine, query, &domain, qtype, started, app_name).await;
     }
@@ -116,6 +125,38 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
     }
 
     forward::forward(engine, query, &domain, qtype, started, app_name).await
+}
+
+/// Resolves AAAA internally to decide whether suppressing A is safe.
+/// Failures count as "no AAAA" so IPv4-only names keep working.
+async fn domain_has_aaaa(engine: &Arc<Engine>, domain: &str) -> bool {
+    let query = crate::resolver::build_query(domain, TYPE_AAAA);
+    if let Some(hit) = engine.cache().get(&query) {
+        if !hit.stale {
+            if let Some(extracted) = diting_dns_core::message::extract(&hit.wire) {
+                return extracted.ips.iter().any(|ip| has_usable_aaaa(ip));
+            }
+        }
+    }
+    let Ok((response, _)) = flight::resolve(engine, &query).await else {
+        return false;
+    };
+    let Some(extracted) = diting_dns_core::message::extract(&response) else {
+        return false;
+    };
+    extracted.ips.iter().any(|ip| has_usable_aaaa(ip))
+}
+
+fn has_usable_aaaa(text: &str) -> bool {
+    let Ok(std::net::IpAddr::V6(address)) = text.trim().parse::<std::net::IpAddr>() else {
+        return false;
+    };
+    if address.is_unspecified() || address.is_loopback() || address.is_multicast() {
+        return false;
+    }
+    let octets = address.octets();
+    let link_local = octets[0] == 0xfe && (octets[1] & 0xc0) == 0x80;
+    !link_local
 }
 
 async fn standalone_rewrite(
@@ -318,6 +359,26 @@ mod tests {
             0,
             "NODATA carries no answer records"
         );
+    }
+
+    #[test]
+    fn usable_aaaa_ignores_null_loopback_link_local_and_multicast() {
+        assert!(has_usable_aaaa("2001:db8::1"));
+        assert!(!has_usable_aaaa("::"));
+        assert!(!has_usable_aaaa("::1"));
+        assert!(!has_usable_aaaa("fe80::1"));
+        assert!(!has_usable_aaaa("ff02::1"));
+        assert!(!has_usable_aaaa("192.0.2.1"));
+        assert!(!has_usable_aaaa("not-an-ip"));
+    }
+
+    #[test]
+    fn prefer_ipv6_can_be_toggled_independently_of_blocking() {
+        let engine = Engine::new();
+        assert!(!engine.prefer_ipv6());
+        engine.set_prefer_ipv6(true);
+        assert!(engine.prefer_ipv6());
+        assert!(!engine.block_ipv6());
     }
 
     #[test]

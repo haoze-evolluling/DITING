@@ -94,6 +94,15 @@ impl Engine {
         self.block_ipv6.load(Ordering::Acquire)
     }
 
+    /// 仅影响允许 IPv6 时的 DNS 优先级：为真时对存在 AAAA 的域名压制 A。
+    pub fn set_prefer_ipv6(&self, enabled: bool) {
+        self.prefer_ipv6.store(enabled, Ordering::Release);
+    }
+
+    pub fn prefer_ipv6(&self) -> bool {
+        self.prefer_ipv6.load(Ordering::Acquire)
+    }
+
     /// 由 Android 侧在启动和网络切换时写入当前物理网络下发的 DNS。
     pub fn set_system_dns(&self, raw: &str) {
         self.system_dns.set(raw);

@@ -6,7 +6,7 @@ use crate::build::message::{encode_record, ResourceRecord};
 use crate::build::name::NameWriter;
 use crate::build::parse_rdata::parse_rdata;
 use crate::build::rdata::RData;
-use crate::build::types::TYPE_OPT;
+use crate::build::types::{SVCB_KEY_IPV6HINT, TYPE_OPT};
 use crate::message::{parse_header, parse_question, Question};
 use crate::name::unpack_name;
 
@@ -179,6 +179,30 @@ impl ParsedMessage {
                 _ => None,
             })
             .collect()
+    }
+
+    /// Removes ``ipv6hint`` parameters from HTTPS/SVCB records in every section.
+    ///
+    /// Returns whether anything changed. Used when IPv6 answers are suppressed so
+    /// clients cannot learn addresses from service bindings.
+    pub fn strip_ipv6_hints(&mut self) -> bool {
+        let mut changed = false;
+        for record in self
+            .answers
+            .iter_mut()
+            .chain(self.authorities.iter_mut())
+            .chain(self.additionals.iter_mut())
+        {
+            match &mut record.rdata {
+                RData::Https(svcb) | RData::Svcb(svcb) => {
+                    let before = svcb.params.len();
+                    svcb.params.retain(|param| param.key != SVCB_KEY_IPV6HINT);
+                    changed |= svcb.params.len() != before;
+                }
+                _ => {}
+            }
+        }
+        changed
     }
 
     pub fn take_opt(&mut self) -> Option<OptBuilder> {

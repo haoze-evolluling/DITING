@@ -459,6 +459,26 @@ fn unknown_rdata_survives_as_raw() {
 }
 
 #[test]
+fn stripping_ipv6_hints_keeps_other_svcb_params() {
+    let svcb = SvcbRData::new(1, ".")
+        .push(SvcParam::alpn(&["h2"]))
+        .push(SvcParam::ipv6hint(&["2001:db8::1".parse().unwrap()]));
+    let wire = reply()
+        .push_answer(rr("www.example.com.", TYPE_HTTPS, RData::Https(svcb)))
+        .finish()
+        .expect("wire");
+    let mut parsed = ParsedMessage::parse(&wire).expect("parse");
+
+    assert!(parsed.strip_ipv6_hints());
+    let RData::Https(svcb) = &parsed.answers[0].rdata else {
+        panic!("expected HTTPS");
+    };
+    assert_eq!(svcb.params.len(), 1);
+    assert_eq!(svcb.params[0].key, SVCB_KEY_ALPN);
+    assert!(!parsed.strip_ipv6_hints(), "second pass is a no-op");
+}
+
+#[test]
 fn extended_rcode_is_split_across_header_and_opt() {
     let wire = reply().finish().expect("wire");
     let mut parsed = ParsedMessage::parse(&wire).expect("parse");
