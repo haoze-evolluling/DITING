@@ -950,6 +950,10 @@ abstract class AppL10n {
 
   String get ipv6ModeSubtitle;
 
+  String get ipv6ModeSectionTitle;
+
+  String get ipv6ModeFooter;
+
   String get ipv6ModeIpv4;
 
   String get ipv6ModeAuto;

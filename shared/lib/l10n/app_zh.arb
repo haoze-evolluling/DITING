@@ -805,6 +805,8 @@
   "logModeOffDescription": "不记录任何请求，节省空间",
   "ipv6ModeTitle": "IPv6",
   "ipv6ModeSubtitle": "同时作用于 VPN 接口与 DNS；自动模式仅在网络支持时启用",
+  "ipv6ModeSectionTitle": "IPv6 模式",
+  "ipv6ModeFooter": "自动模式仅在物理网络支持 IPv6 时启用；IPv6 优先会在域名存在 AAAA 记录时抑制 A 查询。",
   "ipv6ModeIpv4": "仅 IPv4",
   "ipv6ModeAuto": "自动",
   "ipv6ModeIpv6": "IPv6 优先",

@@ -23,6 +23,7 @@ final Map<String, String> topLevelRoutes = {
   '字体设置': SystemPaths.fontFamily,
   '字号': SystemPaths.fontSize,
   '前后台行为': SystemPaths.foregroundBackground,
+  'IPv6 设置': SystemPaths.ipv6Mode,
   '语言设置': SystemPaths.language,
   '开发者': SystemPaths.developer,
   '赞助': SystemPaths.sponsor,

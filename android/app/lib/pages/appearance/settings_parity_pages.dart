@@ -7,8 +7,8 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/notification_bridge.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/data/native/permissions_bridge.dart';
-import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/pages/appearance/ipv6_mode_labels.dart';
 import 'package:diting_android/pages/appearance/appearance_inputs.dart';
 import 'package:diting_android/pages/appearance/notification_stats_section.dart';
 import 'package:diting_android/state/notification_stats_providers.dart';
@@ -419,18 +419,11 @@ class SettingsBackgroundPage extends ConsumerWidget {
                 onChanged: notifier.setBypassLan,
               ),
               if (tunnelMode) ...[
-                ListItem.options(
-                  title: Text(context.l10n.ipv6ModeTitle),
-                  subtitle: Text(context.l10n.ipv6ModeSubtitle),
-                  leading: const Icon(TablerIcons.link),
-                  options: Ipv6Mode.values,
-                  value: state.ipv6Mode,
-                  textBuilder: (mode) => switch (mode) {
-                    Ipv6Mode.ipv4 => context.l10n.ipv6ModeIpv4,
-                    Ipv6Mode.auto => context.l10n.ipv6ModeAuto,
-                    Ipv6Mode.ipv6 => context.l10n.ipv6ModeIpv6,
-                  },
-                  onChanged: notifier.setIpv6Mode,
+                NavEntryRow(
+                  glyph: TablerIcons.link,
+                  title: context.l10n.ipv6ModeTitle,
+                  subtitle: ipv6ModeLabel(context.l10n, state.ipv6Mode),
+                  onPressed: () => context.push(SystemPaths.ipv6Mode),
                 ),
                 NavEntryRow(
                   glyph: TablerIcons.route,

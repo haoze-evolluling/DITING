@@ -1479,6 +1479,13 @@ class AppL10nZh extends AppL10n {
   String get ipv6ModeSubtitle => '同时作用于 VPN 接口与 DNS；自动模式仅在网络支持时启用';
 
   @override
+  @override
+  String get ipv6ModeSectionTitle => 'IPv6 模式';
+
+  @override
+  String get ipv6ModeFooter =>
+      '自动模式仅在物理网络支持 IPv6 时启用；IPv6 优先会在域名存在 AAAA 记录时抑制 A 查询。';
+
   String get ipv6ModeIpv4 => '仅 IPv4';
 
   @override

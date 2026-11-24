@@ -1543,6 +1543,13 @@ class AppL10nEn extends AppL10n {
       'Applies to both the VPN interface and DNS; Auto enables IPv6 only when the network supports it';
 
   @override
+  @override
+  String get ipv6ModeSectionTitle => 'IPv6 mode';
+
+  @override
+  String get ipv6ModeFooter =>
+      'Auto enables IPv6 only when the physical network supports it; Prefer IPv6 also suppresses A answers for names that have AAAA records.';
+
   String get ipv6ModeIpv4 => 'IPv4 only';
 
   @override

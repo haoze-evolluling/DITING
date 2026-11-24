@@ -469,6 +469,8 @@
   "logModeOffDescription": "Nothing is recorded, saving space",
   "ipv6ModeTitle": "IPv6",
   "ipv6ModeSubtitle": "Applies to both the VPN interface and DNS; Auto enables IPv6 only when the network supports it",
+  "ipv6ModeSectionTitle": "IPv6 mode",
+  "ipv6ModeFooter": "Auto enables IPv6 only when the physical network supports it; Prefer IPv6 also suppresses A answers for names that have AAAA records.",
   "ipv6ModeIpv4": "IPv4 only",
   "ipv6ModeAuto": "Auto",
   "ipv6ModeIpv6": "Prefer IPv6",

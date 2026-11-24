@@ -45,6 +45,8 @@
   "logModeOffDescription": ["不记录任何请求，节省空间", "Nothing is recorded, saving space"],
   "ipv6ModeTitle": ["IPv6", "IPv6"],
   "ipv6ModeSubtitle": ["同时作用于 VPN 接口与 DNS；自动模式仅在网络支持时启用", "Applies to both the VPN interface and DNS; Auto enables IPv6 only when the network supports it"],
+  "ipv6ModeSectionTitle": ["IPv6 模式", "IPv6 mode"],
+  "ipv6ModeFooter": ["自动模式仅在物理网络支持 IPv6 时启用；IPv6 优先会在域名存在 AAAA 记录时抑制 A 查询。", "Auto enables IPv6 only when the physical network supports it; Prefer IPv6 also suppresses A answers for names that have AAAA records."],
   "ipv6ModeIpv4": ["仅 IPv4", "IPv4 only"],
   "ipv6ModeAuto": ["自动", "Auto"],
   "ipv6ModeIpv6": ["IPv6 优先", "Prefer IPv6"],

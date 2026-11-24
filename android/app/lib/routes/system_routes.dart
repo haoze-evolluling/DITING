@@ -4,6 +4,7 @@ import 'package:diting_android/pages/appearance/feedback_motion_page.dart';
 import 'package:diting_android/pages/appearance/font_family_page.dart';
 import 'package:diting_android/pages/appearance/font_size_page.dart';
 import 'package:diting_android/pages/appearance/launcher_icon_page.dart';
+import 'package:diting_android/pages/appearance/settings_ipv6_page.dart';
 import 'package:diting_android/pages/appearance/settings_parity_pages.dart';
 import 'package:diting_android/pages/appearance/settings_route_pages.dart';
 import 'package:diting_android/pages/appearance/theme_page.dart';
@@ -33,6 +34,8 @@ abstract final class SystemPaths {
   static const fontSize = '/font-size';
 
   static const foregroundBackground = '/settings/background';
+
+  static const ipv6Mode = '/settings/ipv6';
 
   static const routeInclude = '/settings/route-include';
 
@@ -66,6 +69,7 @@ List<RouteBase> systemRoutes() => [
   _route(SystemPaths.fontFamily, const FontFamilyPage()),
   _route(SystemPaths.fontSize, const FontSizePage()),
   _route(SystemPaths.foregroundBackground, const SettingsBackgroundPage()),
+  _route(SystemPaths.ipv6Mode, const SettingsIpv6Page()),
   _route(
     SystemPaths.routeInclude,
     const SettingsRouteListPage(kind: RouteListKind.include),
