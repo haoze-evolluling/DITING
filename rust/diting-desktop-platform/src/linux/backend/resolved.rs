@@ -90,8 +90,8 @@ pub(crate) async fn restore(
 }
 
 pub(crate) async fn flush(executor: &dyn CommandExecutor) -> PlatformResult<()> {
-    executor
-        .run_checked("resolvectl", &["flush-caches"])
-        .await
-        .map(|_| ())
+    // 缓存刷新只是尽力而为：systemd-resolved 未运行或 D-Bus 不可用时，
+    // 不能让整个接管/还原流程因此失败。
+    let _ = executor.run("resolvectl", &["flush-caches"]).await;
+    Ok(())
 }

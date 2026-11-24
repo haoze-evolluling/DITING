@@ -16,6 +16,7 @@ pub(crate) const RESOLV_CONF_PATH: &str = "/etc/resolv.conf";
 pub(crate) const RESOLVED_DROP_DIR: &str = "/etc/systemd/resolved.conf.d";
 pub(crate) const RESOLVED_DROP_FILE: &str = "/etc/systemd/resolved.conf.d/diting.conf";
 pub(crate) const RESOLV_CONF_ORIGINAL_PATH: &str = "/etc/resolv.conf.diting.orig";
+pub(crate) const RESOLV_CONF_SYMLINK_RECORD: &str = "resolv.conf.symlink";
 
 pub(crate) const RESOLVED_DROP_IN_CONTENT: &str =
     "# 由谛听 (DITING) 写入：关闭 systemd-resolved 的本地 stub 监听器，
@@ -127,10 +128,35 @@ async fn servers_from_nmcli(executor: &dyn CommandExecutor) -> HashMap<String, V
     }
 }
 
+/// nmcli 的 terse 模式（`-t`）用 `:` 分隔字段，并把值中的 `:` 转义为 `\:`。
+/// 直接 `split(':')` 会截断 IPv6 地址，因此必须按转义规则解析。
+pub(crate) fn split_terse_fields(line: &str) -> Vec<String> {
+    let mut fields = Vec::new();
+    let mut current = String::new();
+    let mut escaped = false;
+    for character in line.chars() {
+        if escaped {
+            current.push(character);
+            escaped = false;
+            continue;
+        }
+        match character {
+            '\\' => escaped = true,
+            ':' => fields.push(std::mem::take(&mut current)),
+            other => current.push(other),
+        }
+    }
+    if escaped {
+        current.push('\\');
+    }
+    fields.push(current);
+    fields
+}
+
 pub(crate) fn parse_nmcli_dns(output: &str) -> HashMap<String, Vec<String>> {
     let mut result = HashMap::new();
     for line in output.lines() {
-        let fields: Vec<&str> = line.split(':').collect();
+        let fields = split_terse_fields(line);
         if fields.len() < 3 {
             continue;
         }
@@ -213,7 +239,7 @@ pub(crate) fn resolv_conf_is_symlink() -> (bool, String) {
 pub(crate) fn write_resolv_conf_atomically(content: &str) -> PlatformResult<()> {
     let (is_link, target) = resolv_conf_is_symlink();
     if is_link {
-        if !target.is_empty() {
+        if !target.is_empty() && !backup_exists("resolv.conf") {
             let _ = write_backup(&target, "resolv.conf");
         }
         files::remove_path(Path::new(RESOLV_CONF_PATH)).map_err(|error| {
@@ -235,6 +261,14 @@ pub(crate) fn write_resolv_conf_atomically(content: &str) -> PlatformResult<()> 
 
 pub(crate) fn backup_path_for(name: &str) -> PathBuf {
     paths::default_data_dir().join("backups").join(name)
+}
+
+pub(crate) fn backup_exists(name: &str) -> bool {
+    files::file_exists(&backup_path_for(name))
+}
+
+pub(crate) fn clear_backup(name: &str) {
+    let _ = files::remove_file_if_exists(&backup_path_for(name));
 }
 
 pub(crate) fn write_backup_content(name: &str, content: &str) -> io::Result<()> {
@@ -259,6 +293,60 @@ pub(crate) fn write_resolv_conf_original(content: &str) -> io::Result<()> {
         content.as_bytes(),
         0o600,
     )
+}
+
+/// 仅备份仍指向真实解析器的配置。若文件已被本服务接管（全是回环地址），
+/// 再次接管时不能覆盖首次备份，否则还原后会指向一个已经停止的解析器。
+pub(crate) fn should_preserve_resolv_conf(content: &str) -> bool {
+    parse_resolv_conf(content)
+        .iter()
+        .any(|server| !crate::netutil::is_loopback_or_local_ip(server))
+}
+
+/// 记录 /etc/resolv.conf 原本是否为符号链接及其目标，供还原时恢复原形态。
+/// 记录只写一次：后续接管时 resolv.conf 已被替换为普通文件。
+pub(crate) fn record_resolv_conf_symlink() -> io::Result<()> {
+    let record = backup_path_for(RESOLV_CONF_SYMLINK_RECORD);
+    if files::file_exists(&record) {
+        return Ok(());
+    }
+    let (is_link, target) = resolv_conf_is_symlink();
+    if !is_link || target.is_empty() {
+        return Ok(());
+    }
+    files::write_file_mode(&record, target.as_bytes(), 0o600)
+}
+
+pub(crate) fn recorded_resolv_conf_symlink() -> Option<String> {
+    let target = read_backup_content(RESOLV_CONF_SYMLINK_RECORD).ok()?;
+    let target = target.trim();
+    (!target.is_empty()).then(|| target.to_string())
+}
+
+pub(crate) fn clear_resolv_conf_symlink_record() {
+    let _ = files::remove_file_if_exists(&backup_path_for(RESOLV_CONF_SYMLINK_RECORD));
+}
+
+/// 还原 /etc/resolv.conf：优先恢复原来的符号链接形态，其次写入备份内容。
+pub(crate) fn restore_resolv_conf(content: &str) -> PlatformResult<()> {
+    if let Some(target) = recorded_resolv_conf_symlink() {
+        if Path::new(&target).is_file() {
+            files::remove_file_if_exists(Path::new(RESOLV_CONF_PATH)).map_err(|error| {
+                PlatformError::message(format!("移除 resolv.conf 失败: {error}"))
+            })?;
+            #[cfg(unix)]
+            std::os::unix::fs::symlink(&target, RESOLV_CONF_PATH).map_err(|error| {
+                PlatformError::message(format!("恢复 resolv.conf 符号链接失败: {error}"))
+            })?;
+            clear_resolv_conf_symlink_record();
+            return Ok(());
+        }
+    }
+    let result = write_resolv_conf_atomically(content);
+    if result.is_ok() {
+        clear_resolv_conf_symlink_record();
+    }
+    result
 }
 
 pub(crate) fn resolved_drop_in_supported() -> bool {
@@ -294,6 +382,17 @@ mod tests {
     }
 
     #[test]
+    fn loopback_only_resolv_conf_is_not_preserved_as_backup() {
+        assert!(!should_preserve_resolv_conf(
+            "nameserver 127.0.0.1\nnameserver ::1\noptions timeout:2\n"
+        ));
+        assert!(should_preserve_resolv_conf(
+            "nameserver 192.168.1.1\nnameserver 127.0.0.1\n"
+        ));
+        assert!(!should_preserve_resolv_conf("# empty\n"));
+    }
+
+    #[test]
     fn rendered_resolv_conf_round_trips() {
         let rendered = render_resolv_conf(&["127.0.0.1".to_string(), "::1".to_string()]);
         assert_eq!(
@@ -316,8 +415,36 @@ mod tests {
     }
 
     #[test]
-    fn nmcli_rows_are_parsed() {
-        let output = "eth0:1.1.1.1 8.8.8.8:2001:db8::1\nlo:127.0.0.1:\nbad-row\n";
+    fn terse_fields_unescape_colons_and_backslashes() {
+        assert_eq!(
+            split_terse_fields("Wired connection 1:eth0:activated"),
+            vec![
+                "Wired connection 1".to_string(),
+                "eth0".to_string(),
+                "activated".to_string()
+            ]
+        );
+        assert_eq!(
+            split_terse_fields(r"Office\: floor 2:eth0:activated"),
+            vec![
+                "Office: floor 2".to_string(),
+                "eth0".to_string(),
+                "activated".to_string()
+            ]
+        );
+        assert_eq!(
+            split_terse_fields(r"a\\b:eth0:activated"),
+            vec![
+                "a\\b".to_string(),
+                "eth0".to_string(),
+                "activated".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn nmcli_rows_are_parsed_with_escaped_ipv6() {
+        let output = "eth0:1.1.1.1 8.8.8.8:2001\\:db8\\:\\:1\nlo:127.0.0.1:\nbad-row\n";
         let parsed = parse_nmcli_dns(output);
         assert_eq!(
             parsed.get("eth0"),

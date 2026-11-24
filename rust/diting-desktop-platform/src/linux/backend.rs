@@ -119,6 +119,20 @@ pub(crate) fn is_residual_loopback_server(server: &str) -> bool {
     is_loopback_or_local_ip(server)
 }
 
+/// 汇总快照中所有非回环解析服务器（去重），用于 resolv.conf 还原兜底。
+pub(crate) fn collect_snapshot_servers(adapters: &[AdapterState]) -> Vec<String> {
+    let mut seen = HashSet::new();
+    let mut servers = Vec::new();
+    for raw in adapters {
+        for server in merge_dual_stack_servers(&crate::netutil::clean_adapter_state(raw)) {
+            if seen.insert(server.clone()) {
+                servers.push(server);
+            }
+        }
+    }
+    servers
+}
+
 pub(crate) fn merge_dual_stack_servers(adapter: &AdapterState) -> Vec<String> {
     let mut seen = HashSet::new();
     let mut servers = Vec::new();

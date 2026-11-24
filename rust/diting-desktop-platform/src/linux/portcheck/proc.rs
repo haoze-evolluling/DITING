@@ -159,16 +159,16 @@ mod tests {
 
     #[test]
     fn tcp_non_listen_rows_are_filtered() {
-        let non_listen = SAMPLE.replace(
-            "00000000:0016 00000000:0000 0A",
-            "00000000:0016 00000000:0000 01",
-        );
-        let sockets = parse_proc_net_content(&non_listen, "TCP");
+        let content = "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode\n\
+            0: 00000000:0035 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 111 0\n\
+            1: 00000000:0016 00000000:0000 01 00000000:00000000 00:00000000 00000000     0        0 222 0\n";
+        let sockets = parse_proc_net_content(content, "TCP");
         assert_eq!(sockets.len(), 2);
-        let collected: Vec<_> = sockets
+        let listening: Vec<_> = sockets
             .iter()
-            .filter(|socket| socket.protocol != "TCP" || socket.state == TCP_LISTEN_STATE)
+            .filter(|socket| socket.state == TCP_LISTEN_STATE)
             .collect();
-        assert_eq!(collected.len(), 1);
+        assert_eq!(listening.len(), 1);
+        assert_eq!(listening[0].inode, 111);
     }
 }

@@ -116,11 +116,12 @@ async fn check_firewall_rule_for_port(
                 .run(iptables_binary(protocol), &["-S", "INPUT"])
                 .await
             {
-                Ok(output) => output.text().contains(&format!("--dport {port}")),
+                Ok(output) => iptables_rule_present(&output.text(), port, protocol),
                 Err(_) => false,
             }
         }
-        FirewallBackend::Nftables | FirewallBackend::None => false,
+        FirewallBackend::Nftables => nft_rule_present(executor, port, protocol).await,
+        FirewallBackend::None => false,
     }
 }
 
@@ -180,17 +181,62 @@ async fn configure_iptables_rule(
     protocol: &str,
     enable: bool,
 ) -> PlatformResult<()> {
-    let operation = if enable { "-A" } else { "-D" };
+    let binary = iptables_binary(protocol);
     let port_arg = port.to_string();
-    let args = [
-        operation, "INPUT", "-p", protocol, "--dport", &port_arg, "-j", "ACCEPT",
-    ];
-    match executor.run(iptables_binary(protocol), &args).await {
-        Err(_) if !enable => Ok(()),
-        Err(error) => Err(PlatformError::message(format!(
-            "iptables 配置 {port}/{protocol} 失败: {error}"
-        ))),
-        Ok(_) => Ok(()),
+    if enable {
+        // -C 先探测，避免重复追加规则；-A 必须检查退出码，否则失败会被当成成功。
+        if let Ok(output) = executor
+            .run(
+                binary,
+                &[
+                    "-C", "INPUT", "-p", protocol, "--dport", &port_arg, "-j", "ACCEPT",
+                ],
+            )
+            .await
+        {
+            if output.success {
+                return Ok(());
+            }
+        }
+        return executor
+            .run_checked(
+                binary,
+                &[
+                    "-A", "INPUT", "-p", protocol, "--dport", &port_arg, "-j", "ACCEPT",
+                ],
+            )
+            .await
+            .map(|_| ())
+            .map_err(|error| {
+                PlatformError::message(format!("iptables 配置 {port}/{protocol} 失败: {error}"))
+            });
+    }
+
+    let _ = executor
+        .run(
+            binary,
+            &[
+                "-D", "INPUT", "-p", protocol, "--dport", &port_arg, "-j", "ACCEPT",
+            ],
+        )
+        .await;
+    Ok(())
+}
+
+const NFT_TABLE: &str = "diting";
+const NFT_CHAIN: &str = "input";
+
+fn nft_comment(port: i32, protocol: &str) -> String {
+    format!("diting-{port}-{protocol}")
+}
+
+async fn nft_rule_present(executor: &dyn CommandExecutor, port: i32, protocol: &str) -> bool {
+    match executor
+        .run("nft", &["list", "table", "inet", NFT_TABLE])
+        .await
+    {
+        Ok(output) if output.success => nft_rule_in_output(&output.text(), port, protocol),
+        _ => false,
     }
 }
 
@@ -201,24 +247,91 @@ async fn configure_nft_rule(
     enable: bool,
 ) -> PlatformResult<()> {
     if !enable {
-        let _ = executor
-            .run("nft", &["delete", "table", "inet", "diting"])
-            .await;
+        // 只删除本端口的规则，绝不能删除整张表（会连带移除 53 端口等规则）。
+        let output = match executor
+            .run("nft", &["-a", "list", "table", "inet", NFT_TABLE])
+            .await
+        {
+            Ok(output) if output.success => output,
+            _ => return Ok(()),
+        };
+        let comment = nft_comment(port, protocol);
+        for handle in nft_rule_handles(&output.text(), &comment) {
+            executor
+                .run_checked(
+                    "nft",
+                    &[
+                        "delete", "rule", "inet", NFT_TABLE, NFT_CHAIN, "handle", &handle,
+                    ],
+                )
+                .await
+                .map_err(|error| {
+                    PlatformError::message(format!(
+                        "nftables 删除 {port}/{protocol} 规则失败: {error}"
+                    ))
+                })?;
+        }
         return Ok(());
     }
 
-    let script = format!(
-        "nft 'add table inet diting' 2>/dev/null; \
-         nft 'add chain inet diting input {{ type filter hook input priority 0; }}' 2>/dev/null; \
-         nft 'add rule inet diting input {protocol} dport {port} accept' 2>/dev/null; true"
-    );
+    let ensure = "nft 'add table inet diting' 2>/dev/null || true; \
+                  nft 'add chain inet diting input { type filter hook input priority 0; }' 2>/dev/null || true";
     executor
-        .run_checked("sh", &["-c", &script])
+        .run_checked("sh", &["-c", ensure])
+        .await
+        .map_err(|error| PlatformError::message(format!("nftables 初始化表失败: {error}")))?;
+
+    if nft_rule_present(executor, port, protocol).await {
+        return Ok(());
+    }
+
+    let port_arg = port.to_string();
+    let comment = nft_comment(port, protocol);
+    executor
+        .run_checked(
+            "nft",
+            &[
+                "add", "rule", "inet", NFT_TABLE, NFT_CHAIN, protocol, "dport", &port_arg,
+                "accept", "comment", &comment,
+            ],
+        )
         .await
         .map(|_| ())
         .map_err(|error| {
             PlatformError::message(format!("nftables 配置 {port}/{protocol} 失败: {error}"))
         })
+}
+
+pub(crate) fn nft_rule_in_output(output: &str, port: i32, protocol: &str) -> bool {
+    let comment = nft_comment(port, protocol);
+    let dport = format!("dport {port}");
+    output.lines().any(|line| {
+        let lower = line.to_ascii_lowercase();
+        if lower.contains(&comment) {
+            return true;
+        }
+        lower.contains(&dport) && lower.contains(protocol) && lower.contains("accept")
+    })
+}
+
+pub(crate) fn nft_rule_handles(output: &str, comment: &str) -> Vec<String> {
+    output
+        .lines()
+        .filter(|line| line.contains(comment))
+        .filter_map(|line| {
+            let index = line.rfind("# handle ")?;
+            let handle = line[index + "# handle ".len()..].trim();
+            (!handle.is_empty()).then(|| handle.to_string())
+        })
+        .collect()
+}
+
+pub(crate) fn iptables_rule_present(output: &str, port: i32, protocol: &str) -> bool {
+    let dport = format!("--dport {port}");
+    let family = format!("-p {protocol}");
+    output
+        .lines()
+        .any(|line| line.contains(&dport) && line.contains(&family) && line.contains("-j ACCEPT"))
 }
 
 fn iptables_binary(protocol: &str) -> &'static str {
@@ -289,5 +402,36 @@ mod tests {
     fn iptables_binary_switches_for_ipv6() {
         assert_eq!(iptables_binary("udp"), "iptables");
         assert_eq!(iptables_binary("tcp6"), "ip6tables");
+    }
+
+    #[test]
+    fn nft_rules_are_detected_by_comment_or_signature() {
+        let output = "table inet diting {\n\
+                      \tchain input {\n\
+                      \t\ttype filter hook input priority filter; policy accept;\n\
+                      \t\ttcp dport 15353 accept comment \"diting-15353-tcp\"\n\
+                      \t}\n\
+                      }\n";
+        assert!(nft_rule_in_output(output, 15353, "tcp"));
+        assert!(!nft_rule_in_output(output, 53, "udp"));
+    }
+
+    #[test]
+    fn nft_handles_are_collected_per_comment() {
+        let output = "\t\ttcp dport 15353 accept comment \"diting-15353-tcp\" # handle 12\n\
+                      \t\tudp dport 53 accept comment \"diting-53-udp\" # handle 13\n\
+                      \t\ttcp dport 53 accept comment \"diting-53-tcp\" # handle 14\n";
+        assert_eq!(nft_rule_handles(output, "diting-53-udp"), vec!["13"]);
+        assert!(nft_rule_handles(output, "diting-9999-tcp").is_empty());
+    }
+
+    #[test]
+    fn iptables_rules_require_protocol_and_accept() {
+        let output = "-P INPUT ACCEPT\n\
+                      -A INPUT -p udp -m udp --dport 53 -j ACCEPT\n\
+                      -A INPUT -p tcp -m tcp --dport 53 -j DROP\n";
+        assert!(iptables_rule_present(output, 53, "udp"));
+        assert!(!iptables_rule_present(output, 53, "tcp"));
+        assert!(!iptables_rule_present(output, 15353, "tcp"));
     }
 }

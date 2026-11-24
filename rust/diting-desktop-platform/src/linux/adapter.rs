@@ -260,7 +260,7 @@ mod tests {
     #[test]
     fn hex_ipv4_is_little_endian() {
         assert_eq!(parse_hex_ipv4("0100007F"), "127.0.0.1");
-        assert_eq!(parse_hex_ipv4("010148C0"), "192.168.1.1");
+        assert_eq!(parse_hex_ipv4("0101A8C0"), "192.168.1.1");
         assert_eq!(parse_hex_ipv4("not-hex"), "");
     }
 

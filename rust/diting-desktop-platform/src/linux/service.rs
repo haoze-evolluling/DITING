@@ -162,6 +162,14 @@ impl ServiceManager for LinuxServiceManager {
     }
 
     async fn install(&self, exe_path: &str) -> PlatformResult<()> {
+        self.install_with_args(exe_path, &[]).await
+    }
+
+    async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()> {
+        self.install_and_start_with_args(exe_path, &[]).await
+    }
+
+    async fn install_with_args(&self, exe_path: &str, args: &[String]) -> PlatformResult<()> {
         require_root("安装服务")?;
         let exe_path = if exe_path.is_empty() {
             self.locate_executable().await?
@@ -169,7 +177,7 @@ impl ServiceManager for LinuxServiceManager {
             exe_path.to_string()
         };
 
-        let unit = render_systemd_unit(&abs_executable_path(&exe_path));
+        let unit = render_systemd_unit_with_args(&abs_executable_path(&exe_path), args);
         files::write_file_mode(Path::new(UNIT_PATH), unit.as_bytes(), 0o644)
             .map_err(|error| PlatformError::message(format!("写入 systemd 单元失败: {error}")))?;
         self.executor
@@ -183,8 +191,12 @@ impl ServiceManager for LinuxServiceManager {
         Ok(())
     }
 
-    async fn install_and_start(&self, exe_path: &str) -> PlatformResult<()> {
-        let _ = self.install(exe_path).await;
+    async fn install_and_start_with_args(
+        &self,
+        exe_path: &str,
+        args: &[String],
+    ) -> PlatformResult<()> {
+        self.install_with_args(exe_path, args).await?;
         self.start().await
     }
 
@@ -352,10 +364,32 @@ fn apply_service_status(status: &mut CoreServiceStatus, parsed: &ServiceStatus) 
     }
 }
 
-fn render_systemd_unit(executable: &str) -> String {
+fn render_systemd_unit_with_args(executable: &str, args: &[String]) -> String {
+    let mut exec_start = format!("{} -run", systemd_quote(executable));
+    for arg in args {
+        exec_start.push(' ');
+        exec_start.push_str(&systemd_quote(arg));
+    }
     format!(
-        "[Unit]\nDescription={SERVICE_DISPLAY_NAME}\nDocumentation=https://github.com/haoze-evolluling/diting\nAfter=syslog.target network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nExecStart={executable} -run\nRestart=always\nRestartSec=10\nLimitNOFILE=65536\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n"
+        "[Unit]\nDescription={SERVICE_DISPLAY_NAME}\nDocumentation=https://github.com/haoze-evolluling/diting\nAfter=syslog.target network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nEnvironmentFile=-/etc/default/diting\nEnvironmentFile=-/etc/sysconfig/diting\nExecStart={exec_start}\nRestart=always\nRestartSec=10\nLimitNOFILE=65536\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n"
     )
+}
+
+/// systemd 的 ExecStart 使用自己的引号规则：反斜杠、双引号需转义，
+/// `%` 是 specifier，`$` 是环境变量展开，都必须转义为字面量。
+fn systemd_quote(value: &str) -> String {
+    let mut quoted = String::from("\"");
+    for character in value.chars() {
+        match character {
+            '\\' => quoted.push_str("\\\\"),
+            '"' => quoted.push_str("\\\""),
+            '%' => quoted.push_str("%%"),
+            '$' => quoted.push_str("$$"),
+            other => quoted.push(other),
+        }
+    }
+    quoted.push('"');
+    quoted
 }
 
 #[cfg(test)]
@@ -387,6 +421,33 @@ mod tests {
         );
         assert_eq!(parse_exec_start_path(""), "");
         assert_eq!(parse_exec_start_path("unknown"), "");
+    }
+
+    #[test]
+    fn unit_persists_install_arguments() {
+        let unit = render_systemd_unit_with_args(
+            "/usr/local/bin/diting-service",
+            &[
+                "-config".to_string(),
+                "/etc/diting/config.json".to_string(),
+                "-port".to_string(),
+                "5353".to_string(),
+                "-token".to_string(),
+                "a$b%c".to_string(),
+            ],
+        );
+        assert!(unit.contains(
+            "ExecStart=\"/usr/local/bin/diting-service\" -run \"-config\" \"/etc/diting/config.json\" \"-port\" \"5353\" \"-token\" \"a$$b%%c\""
+        ));
+        assert!(unit.contains("EnvironmentFile=-/etc/default/diting"));
+        assert!(unit.contains("EnvironmentFile=-/etc/sysconfig/diting"));
+    }
+
+    #[test]
+    fn systemd_arguments_are_quoted_safely() {
+        assert_eq!(systemd_quote("/opt/a b/diting"), "\"/opt/a b/diting\"");
+        assert_eq!(systemd_quote("a\"b\\c"), "\"a\\\"b\\\\c\"");
+        assert_eq!(systemd_quote("100%"), "\"100%%\"");
     }
 
     #[test]

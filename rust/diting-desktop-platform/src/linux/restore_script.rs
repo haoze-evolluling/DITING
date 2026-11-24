@@ -6,7 +6,9 @@ use diting_desktop_api::platform_types::AdapterState;
 use crate::error::{PlatformError, PlatformResult};
 use crate::netutil::clean_adapter_state;
 
-use super::backend::{interface_name_from_state, merge_dual_stack_servers, DnsBackend};
+use super::backend::{
+    collect_snapshot_servers, interface_name_from_state, merge_dual_stack_servers, DnsBackend,
+};
 use super::files;
 
 pub fn generate_restore_script(
@@ -117,27 +119,15 @@ fn write_resolv_conf_restore(script: &mut String, adapters: &[AdapterState]) {
     script.push_str("    {\n");
     script.push_str("        echo '# Restored by DITING.'\n");
     if servers.is_empty() {
-        script.push_str("        echo 'nameserver 223.5.5.5'\n");
-        script.push_str("        echo 'nameserver 119.29.29.29'\n");
+        script.push_str(
+            "        echo '# 未记录原始解析服务器，请手动补充 nameserver 或恢复 DHCP。'\n",
+        );
     }
     for server in &servers {
         script.push_str(&format!("        echo 'nameserver {server}'\n"));
     }
     script.push_str("    } > /etc/resolv.conf\n");
     script.push_str("fi\n");
-}
-
-fn collect_snapshot_servers(adapters: &[AdapterState]) -> Vec<String> {
-    let mut seen = std::collections::HashSet::new();
-    let mut servers = Vec::new();
-    for raw in adapters {
-        for server in merge_dual_stack_servers(&clean_adapter_state(raw)) {
-            if seen.insert(server.clone()) {
-                servers.push(server);
-            }
-        }
-    }
-    servers
 }
 
 fn quote(value: &str) -> String {
