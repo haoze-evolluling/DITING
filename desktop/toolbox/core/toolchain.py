@@ -3,7 +3,7 @@
 
 """谛听 (DITING) 构建工具链探测。
 
-与 `desktop/build_installer.bat` 的预检保持同一口径：特权服务由纯 Rust 实现，
+与 `desktop/build_exe.bat` / `desktop/build_deb.bat` / `desktop/build_ipk.bat` 的预检保持同一口径：特权服务由纯 Rust 实现，
 打 EXE 需要 cargo、NSIS 与 MSVC 链接器，打 DEB 则依赖 WSL。
 结果带短时缓存，避免每次切换页面都重复探测。
 """

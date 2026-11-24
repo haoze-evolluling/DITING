@@ -23,8 +23,9 @@
 ## 构建
 
 ```bat
-desktop\build_installer.bat            :: Windows EXE
-desktop\build_installer.bat both       :: EXE + Linux deb（经 WSL）
+desktop\build_exe.bat                  :: Windows EXE
+desktop\build_deb.bat                  :: Linux deb（经 WSL）
+desktop\build_ipk.bat                  :: OpenWrt ipk（经 WSL）
 ```
 
 服务二进制由 `cargo build --release -p diting-desktop-service` 产出；Windows 安装包只包含一个

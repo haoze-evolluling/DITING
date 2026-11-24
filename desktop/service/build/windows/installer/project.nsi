@@ -10,10 +10,10 @@ SetCompressorDictSize 32
 !define INFO_COMPANYNAME    "Diting"
 # 沿用旧版产品名与安装目录，确保覆盖升级与卸载信息连续。
 !define INFO_PRODUCTNAME    "谛听 DNS"
-# 版本号不在本文件存副本：由 build_installer.bat / build_manager.py 从
+# 版本号不在本文件存副本：由 build_exe.bat / build_manager.py 从
 # desktop/service/VERSION 读取后以 -DINFO_PRODUCTVERSION 传入。
 !ifndef INFO_PRODUCTVERSION
-  !error "缺少 -DINFO_PRODUCTVERSION：请用 build_installer.bat 构建（版本号取自 desktop/service/VERSION）"
+  !error "缺少 -DINFO_PRODUCTVERSION：请用 build_exe.bat 构建（版本号取自 desktop/service/VERSION）"
 !endif
 !define INFO_COPYRIGHT      "Copyright 2026 DITING"
 

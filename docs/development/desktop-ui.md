@@ -107,7 +107,7 @@ cargo build --release -p diting-desktop-service
 `npm run build` 前会执行 `scripts/check-version.mjs`，校验 `desktop/ui/package.json` 的版本
 和 `VERSION` 一致，避免发版时版本漂移。
 
-服务安装包流水线 `desktop/build_installer.bat` 会自动先执行 `npm run build` 并嵌入 Web
+服务安装包流水线 `desktop/build_exe.bat`、`desktop/build_deb.bat`、`desktop/build_ipk.bat` 会自动先执行 `npm run build` 并嵌入 Web
 管理页；没有 Node.js 时可加 `--skip-ui` 退化为纯服务安装包。
 
 ## 当前范围

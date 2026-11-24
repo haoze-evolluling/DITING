@@ -230,12 +230,12 @@ cargo run -p diting-desktop-service -- -run
 生成安装包：
 
 ```bat
-desktop\build_installer.bat
-desktop\build_installer.bat both
-desktop\build_installer.bat ipk -a both
+desktop\build_exe.bat
+desktop\build_deb.bat
+desktop\build_ipk.bat -a both
 ```
 
-第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb，第三条通过 WSL 生成 OpenWrt `x86_64` 与 `aarch64` 的 `.ipk` 安装包。完整流水线为：`desktop/ui` 前端构建 → `diting-service` 编译（嵌入 Web 管理页）→ NSIS / deb / ipk 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。构建前端需要 Node.js 与 npm，可用 `--skip-ui` 跳过并生成不带 Web 管理页的服务安装包。Windows 安装完成后会在公共桌面创建“谛听 DNS 管理页”快捷方式，用默认浏览器打开 Web 管理页。
+第一条命令生成 Windows EXE 安装包，第二条生成 Linux deb（经 WSL），第三条通过 WSL 生成 OpenWrt `x86_64` 与 `aarch64` 的 `.ipk` 安装包。完整流水线为：`desktop/ui` 前端构建 → `diting-service` 编译（嵌入 Web 管理页）→ NSIS / deb / ipk 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。构建前端需要 Node.js 与 npm，可用 `--skip-ui` 跳过并生成不带 Web 管理页的服务安装包。Windows 安装完成后会在公共桌面创建“谛听 DNS 管理页”快捷方式，用默认浏览器打开 Web 管理页。
 
 Linux / OpenWrt 单独构建：
 

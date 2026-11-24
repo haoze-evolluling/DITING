@@ -242,7 +242,7 @@
       <section class="tab-pane" id="pane-build">
         <header class="pane-header">
           <h2>纯净安装包构建流水线 (Windows / Linux)</h2>
-          <p class="desc">极简一键输出生产级安装包。工具链预检对齐 desktop/build_installer.bat（Rust / NSIS，Windows 另需 MSVC，DEB 需要 WSL）。构建完成后自动剔除多余中间二进制，仅输出独立 EXE 安装包或 Linux DEB 安装包。</p>
+          <p class="desc">极简一键输出生产级安装包。工具链预检对齐 desktop/build_exe.bat、build_deb.bat、build_ipk.bat（Rust / NSIS，Windows 另需 MSVC，DEB / IPK 需要 WSL）。构建完成后自动剔除多余中间二进制，仅输出独立 EXE 安装包或 Linux DEB 安装包。</p>
         </header>
 
         <div class="card toolchain-card">
