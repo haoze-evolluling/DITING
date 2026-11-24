@@ -9,7 +9,7 @@
   * Windows 安装包：`makensis -DINFO_PRODUCTVERSION=<VERSION 版本名>`
   * Linux `.deb`：`build_linux.sh` 自己从 VERSION 读
 
-所以日常升级版本号只改这一行（或用 `set_version.bat` / 本工具写这一行），
+所以日常升级版本号只改这一行（或通过 `python -m toolbox.core.version_manager` 写入），
 派生位置一旦又被写回硬编码，`inspect_versions` / `-s` 会直接标出来。
 Android 客户端（`android/app/pubspec.yaml`）属于独立产品线，按需单独维护。
 """

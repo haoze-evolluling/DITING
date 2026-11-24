@@ -26,7 +26,6 @@
     })();
   </script>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/collapsible.css">
 </head>
 <body>
   <div class="app-layout">
@@ -44,7 +43,6 @@
         <button class="nav-item active" data-tab="dns">DNS 调试诊断</button>
         <button class="nav-item" data-tab="scanner">代码规模扫描</button>
         <button class="nav-item" data-tab="logo">品牌 Logo 工坊</button>
-        <button class="nav-item" data-tab="build">双平台构建打包</button>
         <button class="nav-item" data-tab="version">版本号维护</button>
       </nav>
 
@@ -238,169 +236,52 @@
         </div>
       </section>
 
-      <!-- 4. Windows / Linux 构建打包 -->
-      <section class="tab-pane" id="pane-build">
-        <header class="pane-header">
-          <h2>纯净安装包构建流水线 (Windows / Linux)</h2>
-          <p class="desc">极简一键输出生产级安装包。工具链预检对齐 desktop/build_exe.bat、build_deb.bat、build_ipk.bat（Rust / NSIS，Windows 另需 MSVC，DEB / IPK 需要 WSL）。构建完成后自动剔除多余中间二进制，仅输出独立 EXE 安装包或 Linux DEB 安装包。</p>
-        </header>
-
-        <div class="card toolchain-card">
-          <div class="card-title flex-between">
-            <span>环境工具链状态预检</span>
-            <button class="btn btn-sm btn-ghost" id="btn-refresh-toolchain">重新检测</button>
-          </div>
-          <div class="toolchain-grid" id="toolchain-grid"></div>
-        </div>
-
-        <div class="card form-card">
-          <div class="form-row">
-            <div class="form-group flex-2">
-              <label>构建目标</label>
-              <select id="build-target">
-                <option value="exe" selected>Windows EXE 安装包 (仅输出安装包)</option>
-                <option value="deb">Linux DEB 安装包 (仅输出安装包)</option>
-                <option value="ipk">OpenWrt IPK 安装包 (musl 静态链接)</option>
-                <option value="both">双平台安装包 (EXE + DEB)</option>
-                <option value="all">全平台安装包 (EXE + DEB + IPK)</option>
-              </select>
-            </div>
-            <div class="form-group flex-1">
-              <label>构建版本号</label>
-              <input type="text" id="build-version" placeholder="自动读取最新版本...">
-            </div>
-            <div class="form-group flex-1">
-              <label>构建模式</label>
-              <select id="build-type">
-                <option value="release" selected>Release (精简优化)</option>
-                <option value="debug">Debug (带调试符号)</option>
-              </select>
-            </div>
-            <div class="form-group flex-1">
-              <label>Linux / OpenWrt 架构</label>
-              <select id="build-arch">
-                <option value="amd64" selected>amd64 (x86_64)</option>
-                <option value="arm64">arm64 (aarch64)</option>
-                <option value="both">both (OpenWrt 双架构)</option>
-                <option value="arm">arm (32-bit, 仅 DEB)</option>
-              </select>
-            </div>
-            <div class="form-group flex-1 flex-center">
-              <label class="checkbox-label">
-                <input type="checkbox" id="build-clean" checked> 清理旧安装包
-              </label>
-            </div>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn-primary" id="btn-build-start">启动构建任务</button>
-            <button class="btn btn-danger" id="btn-build-cancel" disabled>中断构建</button>
-            <button class="btn btn-secondary" id="btn-build-open-bin">打开 build/bin 产物目录</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 5. 统一版本管理 -->
+      <!-- 4. 统一版本管理 -->
       <section class="tab-pane" id="pane-version">
         <header class="pane-header">
           <h2>版本号维护</h2>
-          <p class="desc">桌面端只有一处版本字面量：<code>desktop/service/VERSION</code>。服务端、NSIS 安装包与 Linux deb 都在构建期从这里取版本号，改这一处即全局生效。</p>
+          <p class="desc">Android 客户端的版本字面量位于 <code>android/app/pubspec.yaml</code>，与桌面端版本互不影响。</p>
         </header>
 
-        <!-- 5.1 桌面端唯一真源 -->
+        <!-- 4.1 Android 客户端版本 -->
         <div class="card form-card">
-          <div class="card-title">桌面端版本（唯一真源：desktop/service/VERSION）</div>
+          <div class="card-title">Android 客户端版本（独立产品线）</div>
           <p class="hint-text">
-            写入 <code>X.Y.Z</code> 语义化版本；服务、NSIS 安装包与 Linux deb 均从该文件派生。
+            写入 <code>X.Y.Z</code> 语义化版本；构建号由语义化版本自动推导。
           </p>
+
           <div class="form-row">
             <div class="form-group flex-2">
               <label>目标新版本号</label>
               <div class="version-input-wrap">
-                <input type="text" id="desktop-version-input" placeholder="例如 2.2.12">
-                <button type="button" class="btn btn-xs btn-chip" id="btn-ver-bump-patch">+0.0.1 (Patch)</button>
-                <button type="button" class="btn btn-xs btn-chip" id="btn-ver-bump-minor">+0.1.0 (Minor)</button>
+                <input type="text" id="android-version-input" placeholder="例如 2.2.12">
+                <button type="button" class="btn btn-xs btn-chip" id="btn-android-bump-patch">+0.0.1 (Patch)</button>
+                <button type="button" class="btn btn-xs btn-chip" id="btn-android-bump-minor">+0.1.0 (Minor)</button>
               </div>
             </div>
             <div class="form-group flex-1 flex-center">
               <label class="checkbox-label">
-                <input type="checkbox" id="ver-dry-run"> 仅预览 (DryRun)
+                <input type="checkbox" id="android-dry-run"> 仅预览 (DryRun)
               </label>
             </div>
             <div class="form-group flex-1 flex-center">
               <label class="checkbox-label">
-                <input type="checkbox" id="ver-verify"> 校验派生位置
-              </label>
-            </div>
-            <div class="form-group flex-1 flex-center">
-              <label class="checkbox-label">
-                <input type="checkbox" id="ver-commit"> 自动 Git 提交
+                <input type="checkbox" id="android-commit"> 自动 Git 提交
               </label>
             </div>
           </div>
           <div class="btn-group">
-            <button class="btn btn-primary" id="btn-ver-sync">同步桌面端版本号</button>
-            <button class="btn btn-secondary" id="btn-ver-refresh">刷新版本状态</button>
+            <button class="btn btn-primary" id="btn-android-sync">同步 Android 版本号</button>
+            <button class="btn btn-secondary" id="btn-android-refresh">刷新 Android 版本</button>
           </div>
-        </div>
 
-        <div class="card table-card">
-          <div class="card-title">真源与派生位置</div>
-          <table class="data-table" id="version-table">
+          <table class="data-table" id="android-version-table">
             <thead>
               <tr><th>位置</th><th>当前版本</th><th>版本号来源</th><th>文件相对路径</th></tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
-
-        <!-- 5.2 Android（独立产品线，折叠归档） -->
-        <details class="card collapsible-card" id="android-version-group">
-          <summary class="collapsible-head">
-            <span class="collapsible-arrow"></span>
-            <span class="collapsible-title">Android 客户端版本（独立产品线）</span>
-            <span class="collapsible-hint">
-              <span class="hint-closed">低频使用，点击展开</span>
-              <span class="hint-open">点击收起</span>
-            </span>
-          </summary>
-          <div class="collapsible-body">
-            <p class="hint-text">
-              Android 有自己的 <code>android/app/pubspec.yaml</code>，与桌面端版本号互不影响。
-            </p>
-
-            <div class="form-row">
-              <div class="form-group flex-2">
-                <label>目标新版本号</label>
-                <div class="version-input-wrap">
-                  <input type="text" id="android-version-input" placeholder="例如 2.2.12">
-                  <button type="button" class="btn btn-xs btn-chip" id="btn-android-bump-patch">+0.0.1 (Patch)</button>
-                  <button type="button" class="btn btn-xs btn-chip" id="btn-android-bump-minor">+0.1.0 (Minor)</button>
-                </div>
-              </div>
-              <div class="form-group flex-1 flex-center">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="android-dry-run"> 仅预览 (DryRun)
-                </label>
-              </div>
-              <div class="form-group flex-1 flex-center">
-                <label class="checkbox-label">
-                  <input type="checkbox" id="android-commit"> 自动 Git 提交
-                </label>
-              </div>
-            </div>
-            <div class="btn-group">
-              <button class="btn btn-primary" id="btn-android-sync">同步 Android 版本号</button>
-              <button class="btn btn-secondary" id="btn-android-refresh">刷新 Android 版本</button>
-            </div>
-
-            <table class="data-table" id="android-version-table">
-              <thead>
-                <tr><th>位置</th><th>当前版本</th><th>版本号来源</th><th>文件相对路径</th></tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </details>
       </section>
 
       <!-- 底部流式终端自适应抽屉控制台 -->

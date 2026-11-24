@@ -11,8 +11,7 @@ window.App = {
     window.addEventListener('pywebviewready', () => {
       this.log('system', 'PyWebView API 桥接层已成功挂载。');
       LogoModule.refreshPreview();
-      BuildModule.refreshToolchain();
-      VersionModule.refreshVersions();
+      VersionModule.refreshAndroidVersions();
     });
 
     window.onBackendEvent = (payload) => {
@@ -39,10 +38,8 @@ window.App = {
     });
     if (tabId === 'logo') {
       LogoModule.refreshPreview();
-    } else if (tabId === 'build') {
-      BuildModule.refreshToolchain();
     } else if (tabId === 'version') {
-      VersionModule.refreshVersions();
+      VersionModule.refreshAndroidVersions();
     }
   },
 
@@ -162,8 +159,6 @@ window.App = {
       ScannerModule.onScanDone(data);
     } else if (type === 'logo_export_done') {
       LogoModule.onExportDone(data);
-    } else if (type === 'build_done') {
-      BuildModule.onBuildDone(data);
     } else if (type === 'version_sync_done') {
       VersionModule.onSyncDone(data);
     }
@@ -192,20 +187,6 @@ window.App = {
     if (openBrandBtn) {
       openBrandBtn.addEventListener('click', () => App.openPath('desktop/toolbox/assets/brand'));
     }
-
-    document.getElementById('btn-refresh-toolchain').addEventListener('click', () => BuildModule.refreshToolchain(true));
-    document.getElementById('btn-build-start').addEventListener('click', () => BuildModule.startBuild());
-    document.getElementById('btn-build-cancel').addEventListener('click', () => BuildModule.cancelBuild());
-    document.getElementById('btn-build-open-bin').addEventListener('click', () => {
-      App.openPath('desktop/service/build/bin');
-    });
-
-    document.getElementById('btn-ver-refresh').addEventListener('click', () => VersionModule.refreshVersions());
-    document.getElementById('btn-ver-sync').addEventListener('click', () => VersionModule.syncVersion());
-    const bumpPatchBtn = document.getElementById('btn-ver-bump-patch');
-    if (bumpPatchBtn) bumpPatchBtn.addEventListener('click', () => VersionModule.bumpVersion('patch'));
-    const bumpMinorBtn = document.getElementById('btn-ver-bump-minor');
-    if (bumpMinorBtn) bumpMinorBtn.addEventListener('click', () => VersionModule.bumpVersion('minor'));
 
     document.getElementById('btn-android-refresh').addEventListener('click', () => VersionModule.refreshAndroidVersions());
     document.getElementById('btn-android-sync').addEventListener('click', () => VersionModule.syncAndroidVersion());

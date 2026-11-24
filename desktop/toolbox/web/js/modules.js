@@ -283,102 +283,6 @@ window.LogoModule = {
   },
 };
 
-window.BuildModule = {
-  _toolchainLoaded: false,
-  _refreshing: false,
-
-  async refreshToolchain(force = false) {
-    if (this._refreshing) return;
-    this._refreshing = true;
-    const grid = document.getElementById('toolchain-grid');
-    if (!this._toolchainLoaded) {
-      UI.clear(grid);
-      grid.appendChild(UI.note('正在检测工具链...', 'hint-text'));
-    }
-
-    try {
-      const res = await window.pywebview.api.build_get_toolchain(Boolean(force));
-      const tools = res.tools || {};
-      UI.clear(grid);
-      Object.entries(tools).forEach(([key, info]) => {
-        grid.appendChild(UI.el('div', { className: `tool-chip ${info.found ? '' : 'missing'}` },
-          UI.el('span', { className: 'chip-dot' }),
-          UI.el('span', { text: `${key.toUpperCase()}: ${info.version || (info.found ? '已就绪' : '未安装')}` }),
-        ));
-      });
-      if (!Object.keys(tools).length) {
-        grid.appendChild(UI.note('未获取到工具链状态。', 'hint-text'));
-      }
-      if (res.default_version) {
-        const input = document.getElementById('build-version');
-        if (input && !input.value) input.value = res.default_version;
-      }
-      this._toolchainLoaded = true;
-    } catch (e) {
-      UI.clear(grid);
-      grid.appendChild(UI.note('工具链检测失败，请查看日志。', 'hint-text is-fail'));
-      App.log('error', `工具链检测异常: ${e}`);
-    } finally {
-      this._refreshing = false;
-    }
-  },
-
-  async startBuild() {
-    const target = document.getElementById('build-target').value;
-    const version = document.getElementById('build-version').value.trim();
-    const buildType = document.getElementById('build-type').value;
-    const clean = document.getElementById('build-clean').checked;
-    const archEl = document.getElementById('build-arch');
-    const arch = archEl ? archEl.value : 'amd64';
-
-    const labelMap = { exe: 'Windows EXE 安装包', deb: 'Linux DEB 安装包', ipk: 'OpenWrt IPK 安装包', both: '双平台安装包 (EXE + DEB)', all: '全平台安装包 (EXE + DEB + IPK)' };
-    const taskLabel = labelMap[target] || `${target} 安装包`;
-
-    App.setBusy(true, `正在执行 ${taskLabel} 构建流水线...`);
-    try {
-      const res = await window.pywebview.api.build_start(target, version, buildType, clean, false, arch);
-      if (!res.started) {
-        App.setBusy(false);
-        App.toast(res.message || '构建未能启动', 'warn');
-        return;
-      }
-      document.getElementById('btn-build-cancel').disabled = false;
-    } catch (e) {
-      App.setBusy(false);
-      App.log('error', `构建启动异常: ${e}`);
-      App.toast(`构建启动异常: ${e}`, 'error');
-    }
-  },
-
-  async cancelBuild() {
-    try {
-      const res = await window.pywebview.api.cancel_current_task();
-      if (res.success) App.toast('已发送中断信号，等待当前步骤退出', 'warn');
-    } catch (e) {
-      App.log('error', `中断请求异常: ${e}`);
-    }
-  },
-
-  onBuildDone(payload) {
-    App.setBusy(false);
-    document.getElementById('btn-build-cancel').disabled = true;
-    if (!payload) return;
-
-    if (payload.cancelled) {
-      App.toast('构建已中断', 'warn');
-      return;
-    }
-    if (payload.success) {
-      const artifacts = payload.artifacts || [];
-      App.toast(`构建完成，已输出 ${artifacts.length} 个安装包至 build/bin`, 'ok');
-      artifacts.forEach(art => App.log('info', `产物: ${art}`));
-    } else {
-      App.toast(`构建未成功: ${payload.message || '未知错误'}`, 'error');
-    }
-  },
-};
-
-const VERSION_DESKTOP_GROUPS = ['desktop'];
 const VERSION_ANDROID_GROUPS = ['android'];
 
 function renderVersionRows(tbody, items) {
@@ -438,28 +342,7 @@ function markHardcodedDrift(items) {
 }
 
 window.VersionModule = {
-  latestDesktopVersion: '',
   latestAndroidVersion: '',
-
-  async refreshVersions() {
-    try {
-      const res = await window.pywebview.api.version_inspect(VERSION_DESKTOP_GROUPS);
-      if (!res.success) {
-        App.log('error', `桌面端版本读取失败: ${res.error || '未知错误'}`);
-        return;
-      }
-      renderVersionRows(document.querySelector('#version-table tbody'), res.items);
-      markHardcodedDrift(res.items);
-      const latest = pickSourceVersion(res.items);
-      if (latest) {
-        this.latestDesktopVersion = latest;
-        const buildInput = document.getElementById('build-version');
-        if (buildInput && !buildInput.value) buildInput.value = latest;
-      }
-    } catch (e) {
-      App.log('error', `桌面端版本读取异常: ${e}`);
-    }
-  },
 
   async refreshAndroidVersions() {
     try {
@@ -469,22 +352,12 @@ window.VersionModule = {
         return;
       }
       renderVersionRows(document.querySelector('#android-version-table tbody'), res.items);
+      markHardcodedDrift(res.items);
       const latest = pickSourceVersion(res.items);
       if (latest) this.latestAndroidVersion = latest;
     } catch (e) {
       App.log('error', `Android 版本读取异常: ${e}`);
     }
-  },
-
-  bumpVersion(type) {
-    if (!this.latestDesktopVersion) {
-      App.toast('版本状态尚未加载，请先刷新当前版本', 'warn');
-      return;
-    }
-    const nextVer = bumpSemver(this.latestDesktopVersion, type);
-    const input = document.getElementById('desktop-version-input');
-    if (input) input.value = nextVer;
-    App.toast(`已推导桌面端目标版本号: v${nextVer}`, 'ok');
   },
 
   bumpAndroidVersion(type) {
@@ -496,29 +369,6 @@ window.VersionModule = {
     const input = document.getElementById('android-version-input');
     if (input) input.value = nextVer;
     App.toast(`已推导 Android 目标版本号: v${nextVer}`, 'ok');
-  },
-
-  async syncVersion() {
-    const input = document.getElementById('desktop-version-input');
-    const ver = input ? input.value.trim() : '';
-    if (!ver) return App.toast('请输入目标新版本号 (例如 2.2.12)', 'warn');
-
-    const dryRun = document.getElementById('ver-dry-run').checked;
-    const verify = document.getElementById('ver-verify').checked;
-    const commit = document.getElementById('ver-commit').checked;
-
-    App.setBusy(true, `正在同步桌面端版本至 v${ver}...`);
-    try {
-      const res = await window.pywebview.api.version_sync(ver, dryRun, verify, commit, VERSION_DESKTOP_GROUPS);
-      if (!res.started) {
-        App.setBusy(false);
-        App.toast(res.message || '版本同步未能启动', 'warn');
-      }
-    } catch (e) {
-      App.setBusy(false);
-      App.log('error', `桌面端版本同步异常: ${e}`);
-      App.toast(`桌面端版本同步异常: ${e}`, 'error');
-    }
   },
 
   async syncAndroidVersion() {
@@ -547,25 +397,14 @@ window.VersionModule = {
     App.setBusy(false);
     if (!payload) return;
 
-    const groups = Array.isArray(payload.groups) ? payload.groups : [];
-    if (groups.includes('android')) {
-      this.refreshAndroidVersions();
-    } else {
-      this.refreshVersions();
-    }
+    this.refreshAndroidVersions();
 
     if (!payload.success) {
       App.toast(payload.message || '版本同步失败', 'error');
       return;
     }
 
-    if (groups.includes('android')) {
-      if (payload.target_version) this.latestAndroidVersion = payload.target_version;
-    } else if (payload.target_version) {
-      this.latestDesktopVersion = payload.target_version;
-      const buildInput = document.getElementById('build-version');
-      if (buildInput) buildInput.value = payload.target_version;
-    }
+    if (payload.target_version) this.latestAndroidVersion = payload.target_version;
 
     const count = payload.modified_files ? payload.modified_files.length : 0;
     const prefix = payload.dry_run ? '版本预览完成' : '版本号同步成功';

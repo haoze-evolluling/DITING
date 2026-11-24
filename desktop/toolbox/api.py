@@ -13,7 +13,6 @@ import sys
 from typing import List, Optional
 
 from toolbox.core import paths
-from toolbox.core.build_manager import build_pipeline, check_toolchain, get_current_project_version
 from toolbox.core.dns_engine import execute_benchmark, execute_dns_query
 from toolbox.core.file_scanner import DEFAULT_EXTENSIONS, run_scan_analysis
 from toolbox.core.logo_generator import brand_svgs, export_logo_assets
@@ -150,30 +149,6 @@ class ApiBridge:
             return {"success": True, "data": res}
 
         return self._start_task(_task, "logo_export_done")
-
-    def build_get_toolchain(self, force: bool = False) -> dict:
-        return {
-            "tools": check_toolchain(force=bool(force)),
-            "default_version": get_current_project_version(),
-        }
-
-    def build_get_default_version(self) -> str:
-        return get_current_project_version()
-
-    def build_start(self, target: str, version: str, build_type: str, clean: bool, skip_check: bool, arch: str = "amd64"):
-        def _task(log_cb, is_cancelled):
-            return build_pipeline(
-                target=target,
-                version=version,
-                build_type=build_type,
-                clean=clean,
-                skip_check=skip_check,
-                on_log=log_cb,
-                is_cancelled=is_cancelled,
-                arch=arch,
-            )
-
-        return self._start_task(_task, "build_done")
 
     def version_inspect(self, groups: Optional[List[str]] = None) -> dict:
         try:

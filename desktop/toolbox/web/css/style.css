@@ -412,21 +412,6 @@ input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--seal); c
 
 .tag-exceeded { font-size: 11px; }
 
-.toolchain-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-
-.tool-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border: 1px solid var(--line);
-  font-size: 12px;
-  color: var(--fg-muted);
-}
-
-.tool-chip .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--fg); flex-shrink: 0; }
-.tool-chip.missing .chip-dot { background: var(--seal); }
-
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

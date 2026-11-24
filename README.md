@@ -108,7 +108,7 @@ Root 免 VPN DNS 接管在普通模式与简洁模式下都可启用，接管期
 | `android/app/` | `diting_android`：Android Flutter 界面、Kotlin 系统集成、Gradle 工程与 APK 构建脚本 |
 | `desktop/service/` | 桌面服务构建与打包资产、版本真源 `VERSION` 与 Linux 打包脚本 |
 | `desktop/ui/` | React Web 管理端；Vite 构建产物由服务嵌入并托管为 Web 管理页 |
-| `desktop/toolbox/` | Python 构建、版本管理、打包与环境预检工具 |
+| `desktop/toolbox/` | Python 开发者工具箱（DNS 调试、代码扫描、Logo 工坊、Android 版本维护）与安装包构建引擎 |
 | `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎、桌面服务与服务器进程 |
 | `docs/development/` | 构建环境、Root 接管、服务器模式、桌面迁移与存储迁移说明 |
 | `avatars/`、`recognition_members.json` | 云控赞助者名单与头像 |
