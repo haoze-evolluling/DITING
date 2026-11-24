@@ -175,6 +175,13 @@ pub fn unauthorized(message: impl Into<String>) -> Resp {
     )
 }
 
+pub fn forbidden(message: impl Into<String>) -> Resp {
+    json_response(
+        StatusCode::FORBIDDEN,
+        &ApiResponse::<serde_json::Value>::error(message),
+    )
+}
+
 pub fn internal_error(message: impl Into<String>) -> Resp {
     json_response(
         StatusCode::INTERNAL_SERVER_ERROR,

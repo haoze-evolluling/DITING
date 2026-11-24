@@ -54,6 +54,8 @@ desktop/ui/
 ### 认证与实时链路
 
 - 首次启动时 `GET /api/v1/auth/status` 返回 `initialized=false`，界面进入管理员初始化流程。
+- 登录页在本机（`127.0.0.1` / `localhost`）提供“忘记密码”入口：仅回环地址且来源可信的
+  请求可重置管理员密码，成功后直接签发会话并自动登录；远程访问不显示入口，服务端也会拒绝。
 - 登录成功后 token 写入 `localStorage`，401 响应会清空会话并回到登录页。
 - `GET /api/v1/events` 的 WebSocket 事件用于实时查询流、QPS/指标与 DNS/接管状态变更；
   断线后指数退避重连。`dns`、`takeover` 事件会触发状态查询刷新。

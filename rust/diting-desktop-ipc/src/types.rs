@@ -47,6 +47,13 @@ pub struct SetupAuthRequest {
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ResetPasswordRequest {
+    #[serde(default)]
+    pub new_password: String,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ChangePasswordRequest {
     #[serde(default)]
     pub username: String,

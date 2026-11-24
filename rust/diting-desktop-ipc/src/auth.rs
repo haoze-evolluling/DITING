@@ -479,6 +479,30 @@ impl AuthManager {
         Ok((username, hash, salt))
     }
 
+    /// 仅用于本机管理页的“忘记密码”：无需旧密码即可替换凭据，
+    /// 同时清空会话与失败计数，避免重置后仍被临时锁定。
+    pub fn reset_password(&self, new_password: &str) -> Result<(String, String, String), String> {
+        if new_password.chars().count() < 4 {
+            return Err("新密码长度不能少于 4 位字符".to_string());
+        }
+        let mut state = self.lock();
+        if state.password_hash.is_empty() {
+            return Err("管理员账号尚未初始化，请先创建管理员账户".to_string());
+        }
+        let username = state.username.clone();
+        let (hash, salt) = hash_password(new_password, "");
+        state.password_hash = hash.clone();
+        state.salt = salt.clone();
+        state.sessions.clear();
+        state.attempts.clear();
+        let store = self.store.clone();
+        drop(state);
+        if let Some(store) = store {
+            store.clear();
+        }
+        Ok((username, hash, salt))
+    }
+
     pub fn reload(&self, username: &str, hash: &str, salt: &str, timeout: Duration) {
         let mut state = self.lock();
         state.username = if username.is_empty() {
@@ -553,5 +577,17 @@ mod tests {
         assert!(auth.setup("admin", "abcd").is_ok());
         assert!(auth.setup("admin", "abcde").is_err());
         assert!(auth.verify_password("abcd"));
+    }
+
+    #[test]
+    fn reset_password_replaces_credentials_and_revokes_sessions() {
+        let auth = manager();
+        let session = auth.login("admin", "secret", "127.0.0.1").unwrap();
+        assert!(auth.reset_password("abc").is_err());
+        let (username, _, _) = auth.reset_password("new-secret").unwrap();
+        assert_eq!(username, "admin");
+        assert!(auth.validate_session(&session.token).is_none());
+        assert!(auth.login("admin", "secret", "127.0.0.1").is_err());
+        assert!(auth.login("admin", "new-secret", "127.0.0.1").is_ok());
     }
 }

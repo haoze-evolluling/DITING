@@ -15,6 +15,7 @@ pub fn auth_requirement(path: &str) -> Auth {
         | "/api/v1/auth/status"
         | "/api/v1/auth/login"
         | "/api/v1/auth/setup"
+        | "/api/v1/auth/reset-password"
         | "/api/v1/auth/background/image" => Auth::Public,
         "/api/v1/events" | "/api/v1/encrypted/mobileconfig" | "/api/v1/auth/background" => {
             Auth::SelfHandled
@@ -193,6 +194,7 @@ pub async fn dispatch(server: &Server, ctx: &Ctx<'_>, path: &str) -> Resp {
         "/api/v1/auth/login" => handlers::auth::handle_login(server, ctx),
         "/api/v1/auth/logout" => handlers::auth::handle_logout(server, ctx),
         "/api/v1/auth/setup" => handlers::auth::handle_setup(server, ctx),
+        "/api/v1/auth/reset-password" => handlers::auth::handle_reset_password(server, ctx),
         "/api/v1/auth/password" => handlers::auth::handle_password(server, ctx),
         "/api/v1/auth/background" => handlers::auth::handle_background(server, ctx),
         "/api/v1/auth/background/image" => handlers::auth::handle_background_image(server, ctx),

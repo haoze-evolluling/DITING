@@ -33,11 +33,17 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [resetMode, setResetMode] = useState(false);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirm, setResetConfirm] = useState("");
 
   const initialized = authStatus.data?.initialized ?? false;
   const setupMode = authStatus.data ? !initialized : false;
   const locked = authStatus.data?.locked ?? false;
   const serviceAddress = window.location.origin;
+  const localHost = ["127.0.0.1", "localhost", "::1", "[::1]"].includes(
+    window.location.hostname,
+  );
 
   if (token && !expired) return <Navigate to="/" replace />;
 
@@ -71,6 +77,46 @@ export function LoginPage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const submitReset = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    if (resetPassword.length < 4) {
+      setError("新密码至少需要 4 位字符。");
+      return;
+    }
+    if (resetPassword !== resetConfirm) {
+      setError("两次输入的密码不一致。");
+      return;
+    }
+    setBusy(true);
+    try {
+      const session = await api.resetPassword(resetPassword);
+      setSession(session);
+      toast.success("密码已重置，已自动登录");
+      navigate("/", { replace: true });
+    } catch (cause) {
+      setError(describeError(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const enterReset = () => {
+    setResetMode(true);
+    setError("");
+    setPassword("");
+    setConfirm("");
+    setResetPassword("");
+    setResetConfirm("");
+  };
+
+  const leaveReset = () => {
+    setResetMode(false);
+    setError("");
+    setResetPassword("");
+    setResetConfirm("");
   };
 
   const retryConnection = () => {
@@ -156,12 +202,14 @@ export function LoginPage() {
           </div>
 
           <h2 className="text-[24px] font-semibold tracking-[-0.03em] text-text">
-            {setupMode ? "创建管理员账户" : "登录管理端"}
+            {setupMode ? "创建管理员账户" : resetMode ? "重置管理员密码" : "登录管理端"}
           </h2>
           <p className="mt-1.5 text-[12.5px] leading-5 text-text-3">
             {setupMode
               ? "首次使用需要设置管理凭据，用于保护 Web 管理页。"
-              : "使用管理员凭据连接本机谛听桌面服务。"}
+              : resetMode
+                ? "仅支持在本机管理页重置。重置后所有已有会话会失效，并自动登录管理端。"
+                : "使用管理员凭据连接本机谛听桌面服务。"}
           </p>
 
           <Swap
@@ -190,6 +238,80 @@ export function LoginPage() {
                 重新连接
               </Button>
             </div>
+          ) : resetMode ? (
+            <form className="mt-7 space-y-4" onSubmit={submitReset}>
+              <div className="rounded-xl border border-border bg-bg-soft px-3.5 py-3 text-[11.5px] leading-5 text-text-3">
+                将重置管理员账号{" "}
+                <span className="font-medium text-text-2">
+                  {authStatus.data?.username ?? "admin"}
+                </span>{" "}
+                的密码。
+              </div>
+
+              <div>
+                <label
+                  htmlFor="reset-password"
+                  className="mb-1.5 block text-[12px] font-medium text-text-2"
+                >
+                  新密码
+                </label>
+                <Input
+                  id="reset-password"
+                  type={showPassword ? "text" : "password"}
+                  value={resetPassword}
+                  onChange={(event) => setResetPassword(event.target.value)}
+                  autoComplete="new-password"
+                  leading={<LockKeyhole className="h-3.5 w-3.5" />}
+                  trailing={
+                    <button
+                      type="button"
+                      aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                      className="rounded p-0.5 hover:text-text-2"
+                      onClick={() => setShowPassword((value) => !value)}
+                    >
+                      {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                  }
+                  placeholder="至少 4 位"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="reset-password-confirm"
+                  className="mb-1.5 block text-[12px] font-medium text-text-2"
+                >
+                  确认新密码
+                </label>
+                <Input
+                  id="reset-password-confirm"
+                  type={showPassword ? "text" : "password"}
+                  value={resetConfirm}
+                  onChange={(event) => setResetConfirm(event.target.value)}
+                  autoComplete="new-password"
+                  leading={<LockKeyhole className="h-3.5 w-3.5" />}
+                  placeholder="再次输入新密码"
+                />
+              </div>
+
+              <Collapse show={Boolean(error)}>
+                <p className="flex items-start gap-1.5 rounded-lg bg-danger-soft px-3 py-2 text-[11.5px] leading-5 text-danger">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  {error}
+                </p>
+              </Collapse>
+
+              <Button type="submit" variant="primary" size="lg" className="w-full" loading={busy}>
+                重置并登录
+              </Button>
+              <button
+                type="button"
+                className="w-full text-center text-[11.5px] text-text-3 hover:text-text"
+                onClick={leaveReset}
+              >
+                返回登录
+              </button>
+            </form>
           ) : (
             <form className="mt-7 space-y-4" onSubmit={submit}>
               <div>
@@ -210,12 +332,20 @@ export function LoginPage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="login-password"
-                  className="mb-1.5 block text-[12px] font-medium text-text-2"
-                >
-                  密码
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label htmlFor="login-password" className="text-[12px] font-medium text-text-2">
+                    密码
+                  </label>
+                  {localHost ? (
+                    <button
+                      type="button"
+                      className="text-[11.5px] font-medium text-accent hover:underline"
+                      onClick={enterReset}
+                    >
+                      忘记密码？
+                    </button>
+                  ) : null}
+                </div>
                 <Input
                   id="login-password"
                   type={showPassword ? "text" : "password"}

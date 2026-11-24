@@ -147,6 +147,13 @@ export const api = {
       auth: false,
     }),
 
+  resetPassword: (newPassword: string) =>
+    request<LoginResult>("/api/v1/auth/reset-password", {
+      method: "POST",
+      body: { newPassword },
+      auth: false,
+    }),
+
   logout: () => request<void>("/api/v1/auth/logout", { method: "POST" }),
 
   changePassword: (username: string, oldPassword: string, newPassword: string) =>

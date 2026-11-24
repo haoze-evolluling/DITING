@@ -11,7 +11,7 @@ use crate::handlers::{
 };
 use crate::server::Server;
 use crate::types::{
-    AuthStatusResponse, ChangePasswordRequest, LoginRequest, LoginResponse,
+    AuthStatusResponse, ChangePasswordRequest, LoginRequest, LoginResponse, ResetPasswordRequest,
     SetLoginBackgroundRequest, SetupAuthRequest,
 };
 use crate::ws::Event;
@@ -81,6 +81,37 @@ pub fn handle_setup(server: &Server, ctx: &Ctx<'_>) -> Resp {
         Ok((username, hash, salt)) => {
             persist_credentials(server, &username, &hash, &salt);
             ok_message("管理员账号初始化成功！")
+        }
+        Err(error) => bad_request(error),
+    }
+}
+
+/// 本机“忘记密码”入口：只允许回环地址与可信来源重置，成功后直接签发会话。
+pub fn handle_reset_password(server: &Server, ctx: &Ctx<'_>) -> Resp {
+    if let Err(response) = ctx.require_method(&[Method::POST], "method not allowed") {
+        return response;
+    }
+    if !is_loopback(ctx) || !handlers::header_trusted_origin(ctx) {
+        return handlers::forbidden("忘记密码仅支持在本机管理页操作");
+    }
+    let request: ResetPasswordRequest = match ctx.json() {
+        Ok(request) => request,
+        Err(response) => return response,
+    };
+    match server.auth().reset_password(&request.new_password) {
+        Ok((username, hash, salt)) => {
+            persist_credentials(server, &username, &hash, &salt);
+            match server
+                .auth()
+                .login(&username, &request.new_password, &client_ip(ctx))
+            {
+                Ok(session) => ok(LoginResponse {
+                    token: session.token,
+                    username: session.username,
+                    expires_at: session.expires_at_unix,
+                }),
+                Err(error) => unauthorized(error),
+            }
         }
         Err(error) => bad_request(error),
     }

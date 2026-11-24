@@ -127,6 +127,33 @@ async fn configured_token_is_required_but_loopback_stays_trusted_when_empty() {
 }
 
 #[tokio::test]
+async fn loopback_password_reset_returns_a_session_and_replaces_credentials() {
+    let mut config = test_config(Path::new("."));
+    let (hash, salt) = diting_desktop_ipc::auth::hash_password("secret", "");
+    config.web.password_hash = hash;
+    config.web.salt = salt;
+    let (server, root) = start("reset", config).await;
+    let addr = server.addr().await.unwrap();
+
+    let body = r#"{"newPassword":"new-secret"}"#;
+    let (status, text) = send(
+        addr,
+        format!(
+            "POST /api/v1/auth/reset-password HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        ),
+    )
+    .await;
+    assert_eq!(status, 200, "{text}");
+    assert!(text.contains("\"token\""));
+    assert!(server.auth().verify_password("new-secret"));
+    assert!(!server.auth().verify_password("secret"));
+
+    server.shutdown().await;
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[tokio::test]
 async fn body_cap_rejects_oversized_payloads() {
     let (server, root) = start("body", test_config(Path::new("."))).await;
     let addr = server.addr().await.unwrap();
