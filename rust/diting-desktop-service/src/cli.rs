@@ -5,6 +5,7 @@ pub enum Command {
     Service(ServiceAction),
     PortCheck,
     Restore,
+    ResetPassword(String),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -76,6 +77,15 @@ where
             "-run" | "--run" => cli.command = Command::Run,
             "-check-ports" | "--check-ports" => cli.command = Command::PortCheck,
             "-restore" | "--restore" => cli.command = Command::Restore,
+            "-reset-password" | "--reset-password" => {
+                let password = args
+                    .next()
+                    .ok_or_else(|| "缺少 -reset-password 的新密码参数".to_string())?;
+                if password.chars().count() < 4 {
+                    return Err("新密码长度不能少于 4 位字符".to_string());
+                }
+                cli.command = Command::ResetPassword(password);
+            }
             "-service" | "--service" => {
                 let value = args
                     .next()
@@ -151,5 +161,17 @@ mod tests {
     #[test]
     fn no_arguments_prints_version() {
         assert_eq!(parse(["svc"]).unwrap().command, Command::Version);
+    }
+
+    #[test]
+    fn parses_reset_password_and_validates_length() {
+        assert_eq!(
+            parse(["svc", "-reset-password", "newpass"])
+                .unwrap()
+                .command,
+            Command::ResetPassword("newpass".to_string())
+        );
+        assert!(parse(["svc", "-reset-password"]).is_err());
+        assert!(parse(["svc", "-reset-password", "abc"]).is_err());
     }
 }

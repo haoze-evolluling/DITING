@@ -19,6 +19,18 @@ use owner::{
 };
 use proc::collect_port53_sockets;
 
+pub(crate) fn collect_port53_sockets_for_openwrt() -> std::io::Result<Vec<proc::ProcSocket>> {
+    collect_port53_sockets()
+}
+
+pub(crate) fn socket_inode_owners_for_openwrt() -> std::collections::HashMap<u64, i32> {
+    socket_inode_owners()
+}
+
+pub(crate) fn process_name_for_openwrt(pid: i32) -> String {
+    process_name(pid)
+}
+
 const DEFAULT_PORT53_ADDRESS: &str = "127.0.0.1:53";
 
 pub struct LinuxPortChecker {

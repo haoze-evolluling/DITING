@@ -1,6 +1,9 @@
+use std::net::IpAddr;
 use std::path::Path;
+use std::sync::Arc;
 
 use async_trait::async_trait;
+use diting_desktop_api::config::OpenWrtConfig;
 use diting_desktop_api::platform_types::{
     AdapterInfo, AdapterState, AutoStartStatus, CoreServiceStatus, PortCheckResult, TakeoverState,
 };
@@ -111,4 +114,17 @@ pub trait FirewallManager: Send + Sync {
     async fn configure_port53(&self, enable: bool) -> PlatformResult<()>;
     async fn check_web(&self) -> PlatformResult<bool>;
     async fn configure_web(&self, port: i32, enable: bool) -> PlatformResult<()>;
+}
+
+pub type ClientHostLookup = Arc<dyn Fn(IpAddr) -> Option<String> + Send + Sync>;
+
+#[async_trait]
+pub trait OpenWrtPlatform: Send + Sync {
+    fn distro_name(&self) -> String;
+    fn detected_local_domain(&self) -> String;
+    async fn probe_local_domain(&self) -> String;
+    fn sync_config(&self, config: OpenWrtConfig);
+    async fn check_dns_redirect(&self) -> bool;
+    async fn configure_dns_redirect(&self, enable: bool, target_port: u16) -> PlatformResult<()>;
+    fn client_name_lookup(&self) -> Option<ClientHostLookup>;
 }

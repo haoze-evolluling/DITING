@@ -8,6 +8,7 @@ import type {
 
 export * from "./types/cache";
 export * from "./types/advanced";
+export * from "./types/openwrt";
 
 export interface ApiEnvelope<T> {
   success: boolean;
@@ -34,8 +35,11 @@ export interface LoginResult {
 
 export interface MetaInfo {
   os: string;
+  platformKind?: string;
+  distro?: string | null;
   storageBackend?: string;
   databasePath?: string | null;
+  queryLogPath?: string | null;
 }
 
 export interface UpstreamInfo {

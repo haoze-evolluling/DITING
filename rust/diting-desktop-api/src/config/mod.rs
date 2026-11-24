@@ -4,6 +4,7 @@ pub mod dns;
 pub mod dns_features;
 pub mod duration;
 pub mod filter;
+pub mod openwrt;
 pub mod paths;
 pub mod querylog;
 pub mod rewrite_zone;
@@ -21,6 +22,10 @@ pub use dns_features::{
 };
 pub use duration::{parse_go_duration, DurationParseError, DurationValue};
 pub use filter::{BlockingSchedule, FilterConfig, FilterList};
+pub use openwrt::{
+    OpenWrtConfig, DEFAULT_DNSMASQ_AUX_PORT, DEFAULT_UPSTREAM_LISTEN_PORT,
+    OPENWRT_MODE_DNSMASQ_UPSTREAM, OPENWRT_MODE_REPLACE_DNSMASQ,
+};
 pub use querylog::QueryLogConfig;
 pub use rewrite_zone::{RewriteConfig, RewriteRecord, RewriteRule, ZoneConfig, ZoneEntry};
 pub use security::{
@@ -55,16 +60,19 @@ pub struct Config {
     #[serde(rename = "querylog")]
     pub query_log: QueryLogConfig,
     pub web: WebConfig,
+    #[serde(default)]
+    pub openwrt: OpenWrtConfig,
 }
 
 impl Config {
     pub fn normalize(&mut self) {
         self.dns.normalize();
         if self.ipc.listen_address.is_empty() {
-            self.ipc.listen_address = "127.0.0.1:15353".to_string();
+            self.ipc.listen_address = IPCConfig::default().listen_address;
         }
         self.upstream.normalize();
         self.web.normalize();
+        self.openwrt.normalize();
         self.cache.normalize();
         self.filter.normalize();
         self.rewrite.normalize();

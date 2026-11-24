@@ -47,6 +47,7 @@ function SaveFooter({
 export function QueryLogCard() {
   const config = useQueryLogConfig();
   const meta = useMeta();
+  const isOpenWrt = meta.data?.platformKind === "openwrt";
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<QueryLogConfig | null>(null);
 
@@ -62,11 +63,13 @@ export function QueryLogCard() {
         logClients: value.logClients,
         maxEntries: value.maxEntries,
         retentionDays: value.retentionDays,
+        dataDir: value.dataDir,
       }),
     onSuccess: () => {
       toast.success("查询日志配置已更新");
       void queryClient.invalidateQueries({ queryKey: ["query-config"] });
       void queryClient.invalidateQueries({ queryKey: ["query-stats"] });
+      void queryClient.invalidateQueries({ queryKey: ["meta"] });
     },
     onError: (error) => toast.error(describeError(error)),
   });
@@ -170,7 +173,9 @@ export function QueryLogCard() {
           </div>
 
           <div className="mt-3">
-            <div className="text-[11px] text-text-3">数据库位置</div>
+            <div className="text-[11px] text-text-3">
+              {isOpenWrt ? "核心配置库位置（Flash 持久）" : "数据库位置"}
+            </div>
             <div className="mt-1.5 flex items-center gap-2 rounded-lg bg-surface-2 px-2.5 py-1.5">
               <span
                 className="mono min-w-0 flex-1 truncate text-[10.5px] text-text-2"
@@ -192,6 +197,30 @@ export function QueryLogCard() {
               </button>
             </div>
           </div>
+
+          {isOpenWrt ? (
+            <div className="mt-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-text-3">查询日志存储目录（冷热分离）</span>
+                <button
+                  type="button"
+                  onClick={() => update({ dataDir: "/tmp/diting" })}
+                  className="text-[10.5px] text-accent hover:underline"
+                >
+                  恢复默认内存盘
+                </button>
+              </div>
+              <Input
+                className="mono mt-1.5"
+                value={draft.dataDir}
+                placeholder="/tmp/diting 或 /mnt/sda1/diting"
+                onChange={(event) => update({ dataDir: event.target.value })}
+              />
+              <span className="mt-1 block text-[10px] text-text-3">
+                默认使用 /tmp/diting 内存盘保护闪存寿命；如需重启保留日志可改为外置磁盘路径。
+              </span>
+            </div>
+          ) : null}
 
           {!valid ? (
             <p className="mt-3 rounded-lg bg-warn-soft px-3 py-2 text-[11px] text-warn">

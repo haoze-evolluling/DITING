@@ -14,6 +14,7 @@ import type {
   CheckHostResult,
   ClientGroup,
   ClientGroupConfigResponse,
+  ConfigureOpenWrtPatch,
   ECSConfig,
   EmergencyRestoreResult,
   EncryptedDNSStatus,
@@ -27,6 +28,7 @@ import type {
   LanStatus,
   LoginResult,
   MetaInfo,
+  OpenWrtStatus,
   PortCheckResult,
   ProviderConfig,
   QueryLogConfig,
@@ -448,6 +450,14 @@ export const api = {
     request<void>("/api/v1/web/configure", { method: "POST", body: patch }),
   configureWebFirewall: (enable: boolean) =>
     request<void>("/api/v1/web/firewall", { method: "POST", body: { enable } }),
+
+  // OpenWrt 路由集成
+  openwrtStatus: () => request<OpenWrtStatus>("/api/v1/openwrt/status"),
+  configureOpenwrt: (patch: ConfigureOpenWrtPatch) =>
+    request<OpenWrtStatus>("/api/v1/openwrt/configure", {
+      method: "POST",
+      body: patch,
+    }),
 
   // 加密 DNS
   encryptedStatus: () =>

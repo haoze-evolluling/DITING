@@ -21,6 +21,19 @@ fn ensure_crypto_provider() {
     });
 }
 
+fn bundled_fallback_certs() -> Vec<reqwest::Certificate> {
+    if !rustls_native_certs::load_native_certs().certs.is_empty() {
+        return Vec::new();
+    }
+    let mut certs = Vec::new();
+    for pem in diting_engine::resolver::trust::BUNDLED_ROOTS {
+        if let Ok(parsed) = reqwest::Certificate::from_pem_bundle(pem.as_bytes()) {
+            certs.extend(parsed);
+        }
+    }
+    certs
+}
+
 pub(crate) struct FetchOutcome {
     pub(crate) data: Option<Vec<u8>>,
     pub(crate) etag: String,
@@ -87,15 +100,17 @@ pub(crate) async fn fetch_conditional(
 
     ensure_crypto_provider();
 
-    let client = reqwest::Client::builder()
+    let mut builder = reqwest::Client::builder()
         .timeout(TIMEOUT)
         .gzip(true)
-        .user_agent(USER_AGENT)
-        .build()
-        .map_err(|error| FetchError::Transport {
-            url: url.to_string(),
-            message: error.to_string(),
-        })?;
+        .user_agent(USER_AGENT);
+    for cert in bundled_fallback_certs() {
+        builder = builder.add_root_certificate(cert);
+    }
+    let client = builder.build().map_err(|error| FetchError::Transport {
+        url: url.to_string(),
+        message: error.to_string(),
+    })?;
 
     let mut request = client.get(url);
     if !etag.is_empty() {

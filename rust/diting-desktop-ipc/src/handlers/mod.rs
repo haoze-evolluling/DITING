@@ -6,6 +6,7 @@ pub mod clients;
 pub mod encrypted;
 pub mod filter;
 pub mod lan;
+pub mod openwrt;
 pub mod querylog;
 pub mod rewrite;
 pub mod safesearch;
@@ -215,7 +216,6 @@ pub fn controller_error(error: ControllerError) -> Resp {
     }
     internal_error(error.message)
 }
-
 
 pub fn plain(status: StatusCode, body: Vec<u8>, content_type: &str) -> Resp {
     let mut response = Response::new(Full::new(Bytes::from(body)));

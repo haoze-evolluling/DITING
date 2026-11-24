@@ -19,6 +19,9 @@ fn fallback_conflict(message: impl Into<String>) -> ControllerError {
 
 impl AppRuntime {
     pub async fn start_dns_checked(&self) -> Result<(), ControllerError> {
+        if self.is_openwrt_platform() {
+            return self.start_openwrt_dns_and_takeover().await;
+        }
         if self.is_dns_running() {
             return Ok(());
         }
@@ -56,6 +59,9 @@ impl AppRuntime {
     }
 
     pub async fn stop_dns_checked(&self) -> Result<(), ControllerError> {
+        if self.is_openwrt_platform() {
+            return self.stop_openwrt_dns_and_takeover(true).await;
+        }
         if let Some(platform) = self.platform() {
             if let Some(manager) = platform.dns_manager.clone() {
                 if manager.is_takeover_active() {

@@ -7,6 +7,7 @@ use crate::config::serde_util::nullable_vec;
 pub const AUTO_START_MECHANISM_SERVICE: &str = "service";
 pub const AUTO_START_MECHANISM_LOGIN_ITEM: &str = "login_item";
 pub const AUTO_START_MECHANISM_SYSTEMD: &str = "systemd";
+pub const AUTO_START_MECHANISM_PROCD: &str = "procd";
 pub const AUTO_START_MECHANISM_XDG: &str = "xdg";
 pub const AUTO_START_MECHANISM_NONE: &str = "none";
 
@@ -97,7 +98,6 @@ impl Default for TakeoverState {
 fn zero_timestamp() -> String {
     "0001-01-01T00:00:00Z".to_string()
 }
-
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

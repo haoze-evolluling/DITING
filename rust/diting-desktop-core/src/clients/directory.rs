@@ -173,9 +173,12 @@ impl StatsAggregator {
     }
 }
 
+pub type ExternalNameLookup = Arc<dyn Fn(IpAddr) -> Option<String> + Send + Sync>;
+
 pub struct ClientDirectory {
     config: RwLock<Arc<ConfigSnapshot>>,
     cache: RwLock<HashMap<IpAddr, CacheEntry>>,
+    external: RwLock<Option<ExternalNameLookup>>,
     in_flight: Mutex<HashSet<IpAddr>>,
     activity_tx: mpsc::Sender<(IpAddr, i64)>,
     aggregator: Arc<StatsAggregator>,
@@ -204,6 +207,7 @@ impl ClientDirectory {
                 groups,
             })),
             cache: RwLock::new(HashMap::new()),
+            external: RwLock::new(None),
             in_flight: Mutex::new(HashSet::new()),
             activity_tx,
             aggregator,
@@ -234,6 +238,22 @@ impl ClientDirectory {
         diagnostics
     }
 
+    pub fn set_external_lookup(&self, lookup: Option<ExternalNameLookup>) {
+        *self
+            .external
+            .write()
+            .unwrap_or_else(|poisoned| poisoned.into_inner()) = lookup;
+    }
+
+    fn external_name(&self, ip: IpAddr) -> Option<String> {
+        let lookup = self
+            .external
+            .read()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .clone()?;
+        lookup(ip).filter(|name| !name.trim().is_empty())
+    }
+
     pub fn enabled(&self) -> bool {
         self.config_snapshot().enabled
     }
@@ -252,6 +272,9 @@ impl ClientDirectory {
         }
         if ip.is_loopback() {
             return "localhost".to_string();
+        }
+        if let Some(name) = self.external_name(ip) {
+            return name;
         }
         self.cache_read()
             .get(&ip)
@@ -273,6 +296,9 @@ impl ClientDirectory {
         if ip.is_loopback() {
             return "localhost".to_string();
         }
+        if let Some(name) = self.external_name(ip) {
+            return name;
+        }
         self.cache_read()
             .get(&ip)
             .map(|entry| entry.name.clone())
@@ -291,7 +317,12 @@ impl ClientDirectory {
         let mut seen = HashSet::with_capacity(stats.len());
 
         for (ip, stat) in stats.iter() {
-            let name = resolve_display_name(&config, &cache, *ip, &stat.name);
+            let mut name = resolve_display_name(&config, &cache, *ip, &stat.name);
+            if name.is_empty() && config.enabled && !ip.is_loopback() {
+                if let Some(ext) = self.external_name(*ip) {
+                    name = ext;
+                }
+            }
             result.push(ClientInfo {
                 ip: *ip,
                 name,

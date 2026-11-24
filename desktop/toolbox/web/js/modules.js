@@ -331,7 +331,7 @@ window.BuildModule = {
     const archEl = document.getElementById('build-arch');
     const arch = archEl ? archEl.value : 'amd64';
 
-    const labelMap = { exe: 'Windows EXE 安装包', deb: 'Linux DEB 安装包', both: '双平台安装包 (EXE + DEB)' };
+    const labelMap = { exe: 'Windows EXE 安装包', deb: 'Linux DEB 安装包', ipk: 'OpenWrt IPK 安装包', both: '双平台安装包 (EXE + DEB)', all: '全平台安装包 (EXE + DEB + IPK)' };
     const taskLabel = labelMap[target] || `${target} 安装包`;
 
     App.setBusy(true, `正在执行 ${taskLabel} 构建流水线...`);

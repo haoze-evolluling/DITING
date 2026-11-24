@@ -19,6 +19,7 @@ export function ServiceCard() {
   const status = useStatus();
   const meta = useMeta();
   const data = service.data;
+  const isOpenWrt = meta.data?.platformKind === "openwrt";
 
   return (
     <>
@@ -87,13 +88,28 @@ export function ServiceCard() {
             <LoadingState label="正在加载运行环境…" />
           ) : data ? (
             <>
-              <InfoRow label="平台">{platformLabel(meta.data?.os)}</InfoRow>
+              <InfoRow label="平台">
+                {platformLabel(
+                  meta.data?.os,
+                  meta.data?.distro,
+                  meta.data?.platformKind,
+                )}
+              </InfoRow>
               <InfoRow label="可执行文件" mono>
                 {data.executablePath || "—"}
               </InfoRow>
               {data.message ? (
                 <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-5 text-text-3">
                   {data.message}
+                </p>
+              ) : null}
+              {isOpenWrt ? (
+                <p className="mt-2 rounded-lg bg-surface-2 px-3 py-2 text-[10.5px] leading-5 text-text-3">
+                  若忘记管理员密码，可通过路由器 SSH 执行{" "}
+                  <span className="mono text-text-2">
+                    diting-service -reset-password &lt;新密码&gt;
+                  </span>{" "}
+                  重置。
                 </p>
               ) : null}
               {!data.isElevated ? (

@@ -18,10 +18,14 @@ pub fn handle_meta(server: &Server, ctx: &Ctx<'_>) -> Resp {
     }
     let runtime = server.runtime();
     let backend = runtime.storage_backend();
+    let query_log_dir = runtime.query_log_config().data_dir;
     ok(MetaResponse {
         os: runtime.platform_name(),
+        platform_kind: runtime.platform_kind(),
+        distro: runtime.distro_name(),
         storage_backend: backend.to_string(),
         database_path: (backend == "sqlite").then(|| runtime.storage_location()),
+        query_log_path: (!query_log_dir.is_empty()).then_some(query_log_dir),
     })
 }
 

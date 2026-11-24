@@ -41,6 +41,55 @@ pub fn resolver_settings(config: &ResolverConfig) -> ResolverSettings {
     }
 }
 
+const OPENWRT_PRIVATE_PTR_ZONES: &[&str] = &[
+    "10.in-addr.arpa",
+    "168.192.in-addr.arpa",
+    "16.172.in-addr.arpa",
+    "17.172.in-addr.arpa",
+    "18.172.in-addr.arpa",
+    "19.172.in-addr.arpa",
+    "20.172.in-addr.arpa",
+    "21.172.in-addr.arpa",
+    "22.172.in-addr.arpa",
+    "23.172.in-addr.arpa",
+    "24.172.in-addr.arpa",
+    "25.172.in-addr.arpa",
+    "26.172.in-addr.arpa",
+    "27.172.in-addr.arpa",
+    "28.172.in-addr.arpa",
+    "29.172.in-addr.arpa",
+    "30.172.in-addr.arpa",
+    "31.172.in-addr.arpa",
+    "c.f.ip6.arpa",
+    "d.f.ip6.arpa",
+];
+
+pub fn resolver_settings_for_runtime(
+    config: &Config,
+    openwrt_local_domain: Option<&str>,
+) -> ResolverSettings {
+    let mut settings = resolver_settings(&config.upstream);
+    if let Some(domain) = openwrt_local_domain {
+        if config.openwrt.is_replace_mode() && config.openwrt.forward_local_domain {
+            let target = format!("127.0.0.1:{}", config.openwrt.dnsmasq_port);
+            let cleaned = domain.trim().trim_matches('.').to_ascii_lowercase();
+            if !cleaned.is_empty() {
+                settings
+                    .conditional_routes
+                    .entry(cleaned)
+                    .or_insert_with(|| target.clone());
+            }
+            for &zone in OPENWRT_PRIVATE_PTR_ZONES {
+                settings
+                    .conditional_routes
+                    .entry(zone.to_string())
+                    .or_insert_with(|| target.clone());
+            }
+        }
+    }
+    settings
+}
+
 fn provider_settings(provider: &diting_desktop_api::config::ProviderConfig) -> ProviderSettings {
     ProviderSettings {
         id: provider.id.clone(),

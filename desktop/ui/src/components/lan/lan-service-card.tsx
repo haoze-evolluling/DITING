@@ -5,33 +5,12 @@ import { toast } from "sonner";
 
 import { useLanStatus } from "../../hooks/use-api";
 import { api, describeError } from "../../lib/api";
+import { firewallBackendLabel } from "../../lib/labels";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { LoadingState } from "../ui/loading";
 import { SwitchRow } from "../ui/switch-row";
-
-function firewallBackendLabel(backend: string | undefined): string {
-  switch (backend) {
-    case "windows":
-    case "netsh":
-      return "Windows 防火墙";
-    case "firewalld":
-      return "firewalld";
-    case "ufw":
-      return "ufw";
-    case "iptables":
-      return "iptables";
-    case "nftables":
-      return "nftables";
-    case "none":
-    case "":
-    case undefined:
-      return "未检测到可用防火墙后端";
-    default:
-      return backend;
-  }
-}
 
 export function LanServiceCard() {
   const lan = useLanStatus();

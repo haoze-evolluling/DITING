@@ -5,7 +5,7 @@
 项目包含 Android 客户端与桌面端服务：
 
 - Android 客户端：Flutter 界面、Kotlin 系统集成与 Rust 数据面，提供普通、简洁、服务器三种工作模式。
-- 桌面端：Rust 特权服务负责系统 DNS 接管、局域网 DNS 服务与管理 API；管理界面由服务内嵌并托管的 React Web 管理页提供。
+- 桌面端：Rust 特权服务负责系统 DNS 接管、局域网 DNS 服务与管理 API；管理界面由服务内嵌并托管的 React Web 管理页提供，同时支持 Windows、Linux 与 OpenWrt 路由器。
 
 Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 
@@ -72,7 +72,7 @@ Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 - 查询日志、客户端分组流量统计与规则检测。
 - 桌面管理端：React Web 管理页（由服务托管，浏览器访问），提供运行概览、DNS 启停、系统 DNS 接管、网络诊断、查询日志与 24 小时统计，并支持缓存策略与落盘、上游与 Bootstrap、域名条件分流与回退上游、规则订阅与服务拦截、时间计划、安全搜索与威胁情报、隐私加固与 Hosts/ECS/DNS64、域名重写与区文件、局域网访问控制与客户端分组、加密 DNS 与证书管理、Web 远程管理与管理员改密。
 - 管理 API：HTTP/WebSocket，带认证与 CORS。
-- 服务托管：Windows 通过 SCM 注册系统服务，Linux 提供 deb 安装包与服务注册命令。
+- 服务托管：Windows 通过 SCM 注册系统服务，Linux 提供 deb 安装包与服务注册命令，OpenWrt 提供 musl 静态链接的 `.ipk` 安装包与 `procd` 守护服务（支持「接管 53 端口」与「作为 dnsmasq 上游」双模式、`.lan` 本地域名回流、DHCP 租约设备名自动识别、局域网 53 端口 DNAT 重定向，以及 `/etc/diting` 与 `/tmp/diting` 冷热分离闪存保护）。
 
 ## 工作模式
 
@@ -141,6 +141,7 @@ Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策�
 
 - Windows：`%ProgramData%\DITING`
 - Linux root：`/etc/diting` 与 `/var/lib/diting`
+- OpenWrt：核心配置与状态持久化在 `/etc/diting`（随 `sysupgrade` 保留），高频写入的查询日志默认独立存于内存盘 `/tmp/diting/querylog.db`（可在设置页切换至外置挂载磁盘）
 - Linux 非 root：`~/.diting`
 - 可用环境变量 `DITING_DATA_DIR` 覆盖
 
@@ -231,19 +232,29 @@ cargo run -p diting-desktop-service -- -run
 ```bat
 desktop\build_installer.bat
 desktop\build_installer.bat both
+desktop\build_installer.bat ipk -a both
 ```
 
-第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb。完整流水线为：`desktop/ui` 前端构建 → `diting-service` 编译（嵌入 Web 管理页）→ NSIS / deb 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。构建前端需要 Node.js 与 npm，可用 `--skip-ui` 跳过并生成不带 Web 管理页的服务安装包。Windows 安装完成后会在公共桌面创建“谛听 DNS 管理页”快捷方式，用默认浏览器打开 Web 管理页。
+第一条命令生成 Windows EXE 安装包，第二条同时生成 Linux deb，第三条通过 WSL 生成 OpenWrt `x86_64` 与 `aarch64` 的 `.ipk` 安装包。完整流水线为：`desktop/ui` 前端构建 → `diting-service` 编译（嵌入 Web 管理页）→ NSIS / deb / ipk 安装包；版本号取自 `desktop/service/VERSION`，产物位于 `desktop\service\build\bin`。构建前端需要 Node.js 与 npm，可用 `--skip-ui` 跳过并生成不带 Web 管理页的服务安装包。Windows 安装完成后会在公共桌面创建“谛听 DNS 管理页”快捷方式，用默认浏览器打开 Web 管理页。
 
-Linux 单独构建：
+Linux / OpenWrt 单独构建：
 
 ```bash
 cd desktop/service
 ./build_linux.sh --package
-sudo diting-service -service install
+./build_openwrt.sh --package -a both
 ```
 
-`diting-service` 还提供 `-check-ports`、`-restore`、`-service install|uninstall`、`-config`、`-port`、`-ipc-addr` 与 `-token` 等参数。
+OpenWrt 安装与使用（覆盖 OpenWrt 21.02–24.10 及 ImmortalWrt / iStoreOS 等衍生固件）：
+
+```bash
+opkg install diting_<版本>_openwrt_x86_64.ipk    # 或 aarch64 包
+# 浏览器打开 http://<路由器LAN_IP>:15353 完成管理员初始化并开启路由器 DNS 接管
+# 若忘记管理员密码，可通过 SSH 重置：
+diting-service -reset-password <新密码>
+```
+
+`diting-service` 还提供 `-check-ports`、`-restore`、`-reset-password`、`-service install|uninstall`、`-config`、`-port`、`-ipc-addr` 与 `-token` 等参数。
 
 #### 桌面管理端
 

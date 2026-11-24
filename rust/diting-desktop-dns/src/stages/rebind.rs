@@ -39,14 +39,33 @@ impl Stage for RebindStage {
     }
 
     async fn after(&self, ctx: &mut DnsContext) {
-        let (enabled, allowed) = {
+        let (enabled, allowed, routed_to_loopback) = {
             let config = self
                 .config
                 .read()
                 .unwrap_or_else(|error| error.into_inner());
-            (config.rebind.enabled, config.rebind.allowed_domains.clone())
+            let clean = normalized_name(&ctx.question.name);
+            let loopback_route =
+                config
+                    .upstream
+                    .conditional_routes
+                    .iter()
+                    .any(|(pattern, target)| {
+                        let suffix = pattern.trim().trim_start_matches('*').trim_matches('.');
+                        !suffix.is_empty()
+                            && crate::stages::util::domain_or_suffix(
+                                &clean,
+                                &normalized_name(suffix),
+                            )
+                            && is_loopback_target(target)
+                    });
+            (
+                config.rebind.enabled,
+                config.rebind.allowed_domains.clone(),
+                loopback_route,
+            )
         };
-        if !enabled || attr_is_true(ctx, "filter_blocked") {
+        if !enabled || routed_to_loopback || attr_is_true(ctx, "filter_blocked") {
             return;
         }
         let Some(response) = ctx.response.as_ref() else {
@@ -109,6 +128,15 @@ pub fn is_blocked_ip(ip: IpAddr) -> bool {
 
 fn is_unique_local(octets: &[u8; 16]) -> bool {
     octets[0] & 0xfe == 0xfc
+}
+
+fn is_loopback_target(target: &str) -> bool {
+    let trimmed = target.trim();
+    trimmed.starts_with("127.")
+        || trimmed.starts_with("[::1]")
+        || trimmed.starts_with("localhost:")
+        || trimmed == "::1"
+        || trimmed == "localhost"
 }
 
 pub fn is_domain_allowed(domain: &str, allowed: &[String]) -> bool {

@@ -48,14 +48,23 @@ export function cacheHitLabel(value: string | undefined): string {
   }
 }
 
-export function platformLabel(os: string | undefined): string {
+export function platformLabel(
+  os: string | undefined,
+  distro?: string | null,
+  platformKind?: string,
+): string {
+  if (platformKind === "openwrt") {
+    return distro || "OpenWrt";
+  }
   switch ((os ?? "").toLowerCase()) {
     case "windows":
       return "Windows";
     case "linux":
-      return "Linux";
+      return distro || "Linux";
     case "darwin":
       return "macOS";
+    case "openwrt":
+      return distro || "OpenWrt";
     default:
       return os || "—";
   }
@@ -67,10 +76,40 @@ export function autoStartMechanismLabel(mechanism: string | undefined): string {
       return "系统服务";
     case "systemd":
       return "systemd";
+    case "procd":
+      return "procd";
     case "task":
       return "计划任务";
     default:
       return mechanism || "";
+  }
+}
+
+export function firewallBackendLabel(backend: string | undefined): string {
+  switch (backend) {
+    case "windows":
+    case "netsh":
+      return "Windows 防火墙";
+    case "uci-fw4":
+      return "OpenWrt fw4（仅 LAN 区）";
+    case "uci-fw3":
+      return "OpenWrt fw3（仅 LAN 区）";
+    case "uci":
+      return "OpenWrt UCI（仅 LAN 区）";
+    case "firewalld":
+      return "firewalld";
+    case "ufw":
+      return "ufw";
+    case "iptables":
+      return "iptables";
+    case "nftables":
+      return "nftables";
+    case "none":
+    case "":
+    case undefined:
+      return "未检测到可用防火墙后端";
+    default:
+      return backend;
   }
 }
 

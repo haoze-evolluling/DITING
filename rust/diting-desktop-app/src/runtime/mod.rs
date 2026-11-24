@@ -22,8 +22,8 @@ use diting_desktop_dns::server::{DnsServer, ServerConfig};
 use diting_desktop_dns::stages::metrics::QueryObserver;
 use diting_desktop_platform::paths;
 use diting_desktop_platform::traits::{
-    AdapterScanner, AutoStartManager, DnsManager, FirewallManager, PortChecker, ServiceManager,
-    StateStore,
+    AdapterScanner, AutoStartManager, DnsManager, FirewallManager, OpenWrtPlatform, PortChecker,
+    ServiceManager, StateStore,
 };
 use tokio::sync::Mutex;
 
@@ -42,8 +42,11 @@ pub struct PlatformHandles {
     pub firewall: Option<Arc<dyn FirewallManager>>,
     pub autostart: Option<Arc<dyn AutoStartManager>>,
     pub state_store: Option<Arc<dyn StateStore>>,
+    pub openwrt: Option<Arc<dyn OpenWrtPlatform>>,
     pub lan_addresses: Arc<dyn Fn() -> Vec<String> + Send + Sync>,
     pub platform_name: String,
+    pub platform_kind: String,
+    pub distro_name: String,
     pub firewall_backend: String,
     pub is_elevated: bool,
 }
@@ -58,8 +61,11 @@ impl Default for PlatformHandles {
             firewall: None,
             autostart: None,
             state_store: None,
+            openwrt: None,
             lan_addresses: Arc::new(Vec::new),
             platform_name: String::new(),
+            platform_kind: String::new(),
+            distro_name: String::new(),
             firewall_backend: "none".to_string(),
             is_elevated: false,
         }
@@ -185,10 +191,18 @@ impl AppRuntime {
     }
 
     pub fn set_platform(&self, platform: PlatformHandles) {
+        if let Some(openwrt) = &platform.openwrt {
+            openwrt.sync_config(self.config().openwrt);
+            self.clients
+                .set_external_lookup(openwrt.client_name_lookup());
+        } else {
+            self.clients.set_external_lookup(None);
+        }
         *self
             .platform
             .write()
             .unwrap_or_else(|error| error.into_inner()) = Some(Arc::new(platform));
+        self.refresh_resolver(&self.config());
     }
 
     pub fn platform(&self) -> Option<Arc<PlatformHandles>> {
@@ -329,9 +343,20 @@ impl AppRuntime {
         self.querylog
             .configure(settings::querylog_settings(&config.query_log));
         self.cert.configure(config.encrypted.cert.clone());
+        if let Some(openwrt) = self.platform().and_then(|p| p.openwrt.clone()) {
+            openwrt.sync_config(config.openwrt.clone());
+        }
+        self.refresh_resolver(&config);
+    }
+
+    pub fn refresh_resolver(&self, config: &Config) {
+        let local_domain = self
+            .platform()
+            .and_then(|platform| platform.openwrt.clone())
+            .map(|openwrt| openwrt.detected_local_domain());
         self.resolver.configure(
-            &settings::resolver_settings(&config.upstream),
-            &settings::group_upstreams(&config),
+            &settings::resolver_settings_for_runtime(config, local_domain.as_deref()),
+            &settings::group_upstreams(config),
         );
     }
 

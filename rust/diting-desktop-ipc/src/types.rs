@@ -4,8 +4,14 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct MetaResponse {
     pub os: String,
+    #[serde(default)]
+    pub platform_kind: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distro: Option<String>,
     pub storage_backend: String,
     pub database_path: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub query_log_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

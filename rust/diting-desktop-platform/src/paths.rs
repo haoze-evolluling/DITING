@@ -1,92 +1,52 @@
 use std::path::PathBuf;
 
-pub const ENV_DATA_DIR: &str = "DITING_DATA_DIR";
-pub const CONFIG_FILE: &str = "config.json";
-pub const STATE_FILE: &str = "dns_state.json";
-pub const FILTER_DIR: &str = "filters";
-pub const QUERYLOG_DIR: &str = "querylog";
-pub const CERT_DIR: &str = "certs";
+use diting_desktop_api::config::paths as api_paths;
 
-fn env_override() -> Option<PathBuf> {
-    std::env::var_os(ENV_DATA_DIR)
-        .filter(|value| !value.is_empty())
-        .map(|value| PathBuf::from(value).join("DITING"))
+pub const ENV_DATA_DIR: &str = api_paths::ENV_DATA_DIR;
+pub const CONFIG_FILE: &str = api_paths::DEFAULT_CONFIG_FILE_NAME;
+pub const STATE_FILE: &str = api_paths::DEFAULT_STATE_FILE_NAME;
+pub const FILTER_DIR: &str = api_paths::DEFAULT_FILTER_DIR_NAME;
+pub const QUERYLOG_DIR: &str = api_paths::DEFAULT_QUERY_LOG_DIR_NAME;
+pub const CERT_DIR: &str = api_paths::DEFAULT_CERT_DIR_NAME;
+
+pub fn is_openwrt() -> bool {
+    api_paths::is_openwrt()
 }
 
-#[cfg(unix)]
-fn home_dir() -> Option<PathBuf> {
-    std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .map(PathBuf::from)
-}
-
-#[cfg(windows)]
-fn program_data() -> PathBuf {
-    std::env::var_os("ProgramData")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(r"C:\ProgramData"))
+pub fn openwrt_distro_name() -> Option<String> {
+    api_paths::openwrt_distro_name()
 }
 
 pub fn default_data_dir() -> PathBuf {
-    if let Some(path) = env_override() {
-        return path;
-    }
-    #[cfg(windows)]
-    {
-        program_data().join("DITING")
-    }
-    #[cfg(unix)]
-    {
-        let root = unsafe { libc::geteuid() } == 0;
-        if root {
-            PathBuf::from("/var/lib/diting")
-        } else {
-            home_dir()
-                .unwrap_or_else(|| PathBuf::from("/var/lib/diting"))
-                .join(".diting")
-        }
-    }
+    api_paths::default_data_dir()
 }
 
 pub fn default_config_dir() -> PathBuf {
-    if let Some(path) = env_override() {
-        return path;
-    }
-    #[cfg(windows)]
-    {
-        program_data().join("DITING")
-    }
-    #[cfg(unix)]
-    {
-        let root = unsafe { libc::geteuid() } == 0;
-        if root {
-            PathBuf::from("/etc/diting")
-        } else {
-            home_dir()
-                .unwrap_or_else(|| PathBuf::from("/etc/diting"))
-                .join(".diting")
-        }
-    }
+    api_paths::default_config_dir()
+}
+
+pub fn default_volatile_dir() -> PathBuf {
+    api_paths::default_volatile_dir()
 }
 
 pub fn default_config_path() -> PathBuf {
-    default_config_dir().join(CONFIG_FILE)
+    api_paths::default_config_path()
 }
 
 pub fn default_state_path() -> PathBuf {
-    default_data_dir().join(STATE_FILE)
+    api_paths::default_state_file_path()
 }
 
 pub fn default_filter_dir() -> PathBuf {
-    default_data_dir().join(FILTER_DIR)
+    api_paths::default_filter_dir()
 }
 
 pub fn default_querylog_dir() -> PathBuf {
-    default_data_dir().join(QUERYLOG_DIR)
+    api_paths::default_query_log_dir()
 }
 
 pub fn default_cert_dir() -> PathBuf {
-    default_data_dir().join(CERT_DIR)
+    api_paths::default_cert_dir()
 }
 
 pub fn resolve_state_path(explicit: &str) -> PathBuf {
@@ -96,7 +56,6 @@ pub fn resolve_state_path(explicit: &str) -> PathBuf {
         PathBuf::from(explicit)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

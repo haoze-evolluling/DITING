@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { useWebStatus } from "../../hooks/use-api";
 import { api, describeError } from "../../lib/api";
+import { firewallBackendLabel } from "../../lib/labels";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
@@ -107,7 +108,8 @@ export function WebAccessCard() {
                 />
               </Field>
               <div className="flex items-end pb-1 text-[10.5px] leading-4 text-text-3">
-                当前监听 {data.listenAddress || "—"} · 防火墙后端 {data.firewallBackend || "none"}
+                当前监听 {data.listenAddress || "—"} · 防火墙{" "}
+                {firewallBackendLabel(data.firewallBackend)}
               </div>
             </div>
 

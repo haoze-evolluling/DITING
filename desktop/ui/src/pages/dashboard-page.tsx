@@ -4,19 +4,22 @@ import { RefreshCw } from "lucide-react";
 import { TrafficChart } from "../components/charts/traffic-chart";
 import { DiagnosticsDialog } from "../components/dashboard/diagnostics-dialog";
 import { HeroStatus } from "../components/dashboard/hero-status";
+import { OpenWrtTakeoverCard } from "../components/dashboard/openwrt-takeover-card";
 import { RecentQueries } from "../components/dashboard/recent-queries";
 import { StatGrid } from "../components/dashboard/stat-grid";
 import { TakeoverCard } from "../components/dashboard/takeover-card";
 import { UpstreamsCard } from "../components/dashboard/upstreams-card";
 import { PageHeader } from "../components/layout/page-header";
 import { Button } from "../components/ui/button";
-import { useQueryLogSearch, useQueryStats, useStatus } from "../hooks/use-api";
+import { useMeta, useQueryLogSearch, useQueryStats, useStatus } from "../hooks/use-api";
 import { useRuntimeActions } from "../hooks/use-runtime-actions";
 import { useLiveStore } from "../stores/live";
 
 export function DashboardPage() {
   const status = useStatus();
+  const meta = useMeta();
   const stats = useQueryStats();
+  const isOpenWrt = meta.data?.platformKind === "openwrt";
   const liveMetrics = useLiveStore((state) => state.metrics);
   const liveQueries = useLiveStore((state) => state.queries);
   const connected = useLiveStore((state) => state.connected);
@@ -34,6 +37,11 @@ export function DashboardPage() {
     actions.disableTakeover.isPending;
 
   const toggleDns = () => {
+    if (isOpenWrt) {
+      if (running) actions.stopDns.mutate();
+      else actions.startDns.mutate();
+      return;
+    }
     if (running) {
       // 先还原系统 DNS 再停止解析：还原失败时中止停止操作，
       // 避免网卡继续指向已经停止的本地解析服务。
@@ -64,7 +72,11 @@ export function DashboardPage() {
     <>
       <PageHeader
         title="概览"
-        description="本机 DNS 过滤、系统接管与实时运行状态"
+        description={
+          isOpenWrt
+            ? "路由器全局 DNS 过滤、dnsmasq 协同与实时运行状态"
+            : "本机 DNS 过滤、系统接管与实时运行状态"
+        }
         actions={
           <Button
             size="sm"
@@ -85,6 +97,7 @@ export function DashboardPage() {
             metrics={liveMetrics}
             loading={status.isLoading}
             busy={busy}
+            isOpenWrt={isOpenWrt}
             onToggleDns={toggleDns}
             onOpenDiagnostics={() => setDiagnosticsOpen(true)}
           />
@@ -107,7 +120,11 @@ export function DashboardPage() {
             stats={stats.data}
             loading={status.isLoading}
           />
-          <TakeoverCard status={status.data} loading={status.isLoading} />
+          {isOpenWrt ? (
+            <OpenWrtTakeoverCard status={status.data} loading={status.isLoading} />
+          ) : (
+            <TakeoverCard status={status.data} loading={status.isLoading} />
+          )}
         </div>
 
         <RecentQueries

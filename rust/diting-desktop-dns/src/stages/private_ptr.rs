@@ -200,14 +200,25 @@ impl Stage for PrivatePtrStage {
     }
 
     async fn before(&self, ctx: &mut DnsContext) -> StageResult {
-        let enabled = {
+        let (enabled, routed_locally) = {
             let config = self
                 .config
                 .read()
                 .unwrap_or_else(|error| error.into_inner());
-            config.dns.block_private_ptr
+            let clean = normalized_name(&ctx.question.name);
+            let has_route = config.upstream.conditional_routes.keys().any(|pattern| {
+                let suffix = pattern.trim().trim_start_matches('*').trim_matches('.');
+                !suffix.is_empty() && domain_or_suffix(&clean, &normalized_name(suffix))
+            });
+            let openwrt_ptr_forwarded = diting_desktop_api::config::paths::is_openwrt()
+                && config.openwrt.is_replace_mode()
+                && config.openwrt.forward_local_domain;
+            (
+                config.dns.block_private_ptr,
+                has_route || openwrt_ptr_forwarded,
+            )
         };
-        if !enabled || ctx.question.qtype != TYPE_PTR_QUERY {
+        if !enabled || routed_locally || ctx.question.qtype != TYPE_PTR_QUERY {
             return StageResult::Continue;
         }
         let Some(zone) = private_reverse_zone_apex(&ctx.question.name) else {
@@ -225,7 +236,6 @@ impl Stage for PrivatePtrStage {
         StageResult::Stop
     }
 }
-
 
 #[cfg(test)]
 mod tests {

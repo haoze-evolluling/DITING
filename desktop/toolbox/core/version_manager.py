@@ -107,6 +107,12 @@ def derived_targets() -> List[Dict[str, str]]:
             "type": "sh",
             "via": "build_linux.sh 读 desktop/service/VERSION",
         },
+        {
+            "name": "OpenWrt 安装包",
+            "path": os.path.join(SERVICE_DIR, "build_openwrt.sh"),
+            "type": "sh",
+            "via": "build_openwrt.sh 读 desktop/service/VERSION",
+        },
     ]
 
 

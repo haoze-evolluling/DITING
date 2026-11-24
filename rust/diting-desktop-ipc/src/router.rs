@@ -98,6 +98,8 @@ fn known(path: &str) -> bool {
             | "/api/v1/web/status"
             | "/api/v1/web/configure"
             | "/api/v1/web/firewall"
+            | "/api/v1/openwrt/status"
+            | "/api/v1/openwrt/configure"
     )
 }
 
@@ -202,6 +204,8 @@ pub async fn dispatch(server: &Server, ctx: &Ctx<'_>, path: &str) -> Resp {
         "/api/v1/web/status" => handlers::web::handle_status(server, ctx).await,
         "/api/v1/web/configure" => handlers::web::handle_configure(server, ctx).await,
         "/api/v1/web/firewall" => handlers::web::handle_firewall(server, ctx).await,
+        "/api/v1/openwrt/status" => handlers::openwrt::handle_status(server, ctx).await,
+        "/api/v1/openwrt/configure" => handlers::openwrt::handle_configure(server, ctx).await,
         _ => handlers::not_found("api endpoint not found"),
     }
 }

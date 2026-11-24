@@ -260,7 +260,9 @@
               <select id="build-target">
                 <option value="exe" selected>Windows EXE 安装包 (仅输出安装包)</option>
                 <option value="deb">Linux DEB 安装包 (仅输出安装包)</option>
+                <option value="ipk">OpenWrt IPK 安装包 (musl 静态链接)</option>
                 <option value="both">双平台安装包 (EXE + DEB)</option>
+                <option value="all">全平台安装包 (EXE + DEB + IPK)</option>
               </select>
             </div>
             <div class="form-group flex-1">
@@ -275,11 +277,12 @@
               </select>
             </div>
             <div class="form-group flex-1">
-              <label>Linux 目标架构</label>
+              <label>Linux / OpenWrt 架构</label>
               <select id="build-arch">
                 <option value="amd64" selected>amd64 (x86_64)</option>
                 <option value="arm64">arm64 (aarch64)</option>
-                <option value="arm">arm (32-bit)</option>
+                <option value="both">both (OpenWrt 双架构)</option>
+                <option value="arm">arm (32-bit, 仅 DEB)</option>
               </select>
             </div>
             <div class="form-group flex-1 flex-center">

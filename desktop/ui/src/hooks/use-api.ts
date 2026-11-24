@@ -22,6 +22,7 @@ import type {
   FilterRulesResponse,
   LanStatus,
   MetaInfo,
+  OpenWrtStatus,
   QueryLogConfig,
   QueryLogStats,
   QuerySearchParams,
@@ -340,6 +341,17 @@ export function useWebStatus(): UseQueryResult<WebStatus> {
     queryFn: api.webStatus,
     enabled: Boolean(token),
     refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useOpenWrtStatus(enabled = true): UseQueryResult<OpenWrtStatus> {
+  const token = useAuthStore((state) => state.token);
+  return useQuery({
+    queryKey: ["openwrt-status"],
+    queryFn: api.openwrtStatus,
+    enabled: Boolean(token) && enabled,
+    refetchInterval: 10_000,
     retry: 1,
   });
 }

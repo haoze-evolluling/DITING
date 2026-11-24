@@ -4,15 +4,15 @@ use diting_desktop_app::RuntimeStores;
 use diting_desktop_core::querylog::Config as QueryLogConfig;
 
 use crate::{
-    SqliteCachePersistence, SqliteConfigStore, SqliteDb, SqliteListCache, SqliteQueryLogStorage,
-    SqliteSessionStore, SqliteStateStore,
+    RoutedSqliteQueryLogStorage, SqliteCachePersistence, SqliteConfigStore, SqliteDb,
+    SqliteListCache, SqliteSessionStore, SqliteStateStore,
 };
 
 pub fn runtime_stores(db: Arc<SqliteDb>, querylog: &QueryLogConfig) -> RuntimeStores {
     RuntimeStores {
         backend: "sqlite",
         config: Arc::new(SqliteConfigStore::new(Arc::clone(&db))),
-        querylog: Some(Arc::new(SqliteQueryLogStorage::new(
+        querylog: Some(Arc::new(RoutedSqliteQueryLogStorage::new(
             Arc::clone(&db),
             querylog,
         ))),

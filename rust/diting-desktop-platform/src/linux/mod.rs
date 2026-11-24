@@ -5,6 +5,7 @@ pub mod autostart;
 pub mod backend;
 pub mod dnsstate;
 pub mod firewall;
+pub mod openwrt;
 pub mod portcheck;
 pub mod restore_script;
 pub mod service;

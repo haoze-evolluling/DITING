@@ -37,12 +37,18 @@ pub struct DNSConfig {
 
 impl Default for DNSConfig {
     fn default() -> Self {
+        let openwrt = super::paths::is_openwrt();
+        let addrs = if openwrt {
+            vec!["0.0.0.0:53".to_string(), "[::]:53".to_string()]
+        } else {
+            vec!["127.0.0.1:53".to_string(), "[::1]:53".to_string()]
+        };
         Self {
-            udp_addresses: vec!["127.0.0.1:53".to_string(), "[::1]:53".to_string()],
-            tcp_addresses: vec!["127.0.0.1:53".to_string(), "[::1]:53".to_string()],
+            udp_addresses: addrs.clone(),
+            tcp_addresses: addrs,
             read_timeout: DurationValue::from_secs(5),
             write_timeout: DurationValue::from_secs(5),
-            allow_lan: false,
+            allow_lan: openwrt,
             enable_ede: true,
             block_unqualified: false,
             block_private_ptr: true,
@@ -106,8 +112,13 @@ pub struct IPCConfig {
 
 impl Default for IPCConfig {
     fn default() -> Self {
+        let listen_address = if super::paths::is_openwrt() {
+            "0.0.0.0:15353".to_string()
+        } else {
+            "127.0.0.1:15353".to_string()
+        };
         Self {
-            listen_address: "127.0.0.1:15353".to_string(),
+            listen_address,
             auth_token: String::new(),
         }
     }

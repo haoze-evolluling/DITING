@@ -296,6 +296,9 @@ impl AppRuntime {
     }
 
     pub async fn enable_takeover(&self) -> Result<(), ControllerError> {
+        if self.is_openwrt_platform() {
+            return self.start_openwrt_dns_and_takeover().await;
+        }
         let platform = require_platform(self)?;
         if !self.is_dns_running() {
             self.start_dns_checked().await?;
@@ -324,6 +327,9 @@ impl AppRuntime {
     }
 
     pub async fn disable_takeover(&self) -> Result<(), ControllerError> {
+        if self.is_openwrt_platform() {
+            return self.stop_openwrt_dns_and_takeover(true).await;
+        }
         let platform = require_platform(self)?;
         let manager = platform
             .dns_manager
@@ -369,6 +375,13 @@ impl AppRuntime {
     }
 
     pub async fn emergency_restore(&self) -> Result<EmergencyRestoreResponse, ControllerError> {
+        if self.is_openwrt_platform() {
+            self.stop_openwrt_dns_and_takeover(true).await?;
+            return Ok(EmergencyRestoreResponse {
+                healed: true,
+                message: "已还原 OpenWrt dnsmasq 与防火墙配置！".to_string(),
+            });
+        }
         let platform = require_platform(self)?;
         let store = platform
             .state_store

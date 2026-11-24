@@ -2,15 +2,18 @@
 setlocal
 title DITING Installer Build
 
-:: Build the DITING desktop service installers (Windows EXE / Linux .deb).
+:: Build the DITING desktop service installers (Windows EXE / Linux .deb / OpenWrt .ipk).
 ::
 :: Usage:
 ::   build_installer.bat                    Windows EXE installer (default)
 ::   build_installer.bat exe                same as above
 ::   build_installer.bat deb                Linux .deb, assembled through WSL
+::   build_installer.bat ipk                OpenWrt .ipk (musl static), assembled through WSL
 ::   build_installer.bat both               EXE + .deb
+::   build_installer.bat all                EXE + .deb + OpenWrt .ipk
 ::   build_installer.bat exe -v 1.4.4 --clean
 ::   build_installer.bat deb -a arm64
+::   build_installer.bat ipk -a both
 ::
 :: Any argument after the optional target is forwarded to
 :: desktop\toolbox\core\build_manager.py, which runs the whole pipeline:
@@ -43,6 +46,7 @@ set "PASS="
 if "%~1"=="" goto ARGS_READY
 if /i "%~1"=="exe" goto TAKE_TARGET
 if /i "%~1"=="deb" goto TAKE_TARGET
+if /i "%~1"=="ipk" goto TAKE_TARGET
 if /i "%~1"=="both" goto TAKE_TARGET
 if /i "%~1"=="all" goto TAKE_TARGET
 if /i "%~1"=="installer" goto TAKE_TARGET
@@ -75,18 +79,20 @@ if errorlevel 1 goto ERR_NO_PYTHON
 
 :: Normalise the target into the two flags that drive the tool checks.
 set "NEED_WIN="
-set "NEED_DEB="
-if /i "%TARGET%"=="deb" goto TGT_DEB
+set "NEED_WSL="
+if /i "%TARGET%"=="deb" goto TGT_WSL
+if /i "%TARGET%"=="ipk" goto TGT_WSL
 if /i "%TARGET%"=="both" goto TGT_BOTH
+if /i "%TARGET%"=="all" goto TGT_BOTH
 set "NEED_WIN=1"
 goto TGT_DONE
 :TGT_BOTH
 set "NEED_WIN=1"
-:TGT_DEB
-set "NEED_DEB=1"
+:TGT_WSL
+set "NEED_WSL=1"
 :TGT_DONE
 
-if not defined NEED_WIN goto CHECK_DEB
+if not defined NEED_WIN goto CHECK_WSL
 
 where cargo >nul 2>&1
 if errorlevel 1 goto ERR_NO_CARGO
@@ -109,10 +115,10 @@ if not defined MAKENSIS if exist "%ProgramFiles(x86)%\NSIS\makensis.exe" set "MA
 if not defined MAKENSIS if exist "%ProgramFiles%\NSIS\makensis.exe" set "MAKENSIS=%ProgramFiles%\NSIS\makensis.exe"
 if not defined MAKENSIS goto ERR_NO_NSIS
 
-:CHECK_DEB
-if not defined NEED_DEB goto PREFLIGHT_OK
+:CHECK_WSL
+if not defined NEED_WSL goto PREFLIGHT_OK
 if /i not "%OS%"=="Windows_NT" goto PREFLIGHT_OK
-:: The deb is assembled by WSL so the Windows host needs no extra Linux toolchain.
+:: Linux .deb and OpenWrt .ipk are assembled inside WSL when run on Windows.
 where wsl >nul 2>&1
 if errorlevel 1 goto ERR_NO_WSL
 

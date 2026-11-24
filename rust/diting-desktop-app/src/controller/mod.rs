@@ -4,6 +4,7 @@ pub mod clients;
 pub mod dns;
 pub mod encrypted;
 pub mod filter;
+pub mod openwrt;
 pub mod querylog;
 pub mod rewrite_zone;
 pub mod safebrowsing;
@@ -78,6 +79,17 @@ pub fn effective_listen_addresses(config: &DNSConfig) -> (Vec<String>, Vec<Strin
         .filter(|port| *port > 0)
         .unwrap_or(53);
 
+    // 若监听端口为非 53 的纯本地回环（例如 OpenWrt 作为 dnsmasq 上游监听 127.0.0.1:5354），保留回环绑定。
+    let all_loopback_non53 = port != 53
+        && !config.udp_addresses.is_empty()
+        && config
+            .udp_addresses
+            .iter()
+            .all(|addr| addr.starts_with("127.0.0.1:") || addr.starts_with("[::1]:"));
+    if all_loopback_non53 {
+        return (config.udp_addresses.clone(), config.tcp_addresses.clone());
+    }
+
     if config.allow_lan {
         let addresses = vec![format!("0.0.0.0:{port}"), format!("[::]:{port}")];
         return (addresses.clone(), addresses);
@@ -102,7 +114,6 @@ pub fn effective_listen_addresses(config: &DNSConfig) -> (Vec<String>, Vec<Strin
 pub fn error_message(result: Result<(), ControllerError>) -> Option<ControllerError> {
     result.err()
 }
-
 
 pub fn config_snapshot(runtime: &crate::AppRuntime) -> Config {
     runtime.config()

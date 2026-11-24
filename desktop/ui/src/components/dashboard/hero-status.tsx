@@ -96,6 +96,7 @@ export function HeroStatus({
   metrics,
   loading,
   busy,
+  isOpenWrt = false,
   onToggleDns,
   onOpenDiagnostics,
 }: {
@@ -103,6 +104,7 @@ export function HeroStatus({
   metrics?: MetricsStatus | null;
   loading: boolean;
   busy: boolean;
+  isOpenWrt?: boolean;
   onToggleDns: () => void;
   onOpenDiagnostics: () => void;
 }) {
@@ -154,9 +156,9 @@ export function HeroStatus({
           <span className="text-[12px] font-medium text-text-3">DNS 核心</span>
           <Badge tone="neutral">{resolverModeLabel(status?.dns.mode)}</Badge>
           {takeover?.active ? (
-            <Badge tone="accent">系统 DNS 已接管</Badge>
+            <Badge tone="accent">{isOpenWrt ? "路由器 DNS 已接管" : "系统 DNS 已接管"}</Badge>
           ) : running ? (
-            <Badge tone="warn">系统 DNS 未接管</Badge>
+            <Badge tone="warn">{isOpenWrt ? "路由器 DNS 未接管" : "系统 DNS 未接管"}</Badge>
           ) : null}
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2">
