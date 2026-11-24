@@ -246,6 +246,28 @@ EOF
     echo "[OK] 已生成 OpenWrt 安装包: $ipk_path ($(du -h "$ipk_path" | cut -f1))"
 }
 
+# cargo-zigbuild 需要 PATH 中存在名为 `zig` 的可执行文件；PyPI 的 ziglang 只提供
+# `python3 -m ziglang`，这里按需生成一个轻量 shim，让文档中的安装方式即可用。
+ensure_zig_on_path() {
+    if command -v zig >/dev/null 2>&1; then
+        return 0
+    fi
+    if ! python3 -c 'import ziglang' >/dev/null 2>&1; then
+        return 1
+    fi
+    local shim_dir="$HOME/.cargo/bin"
+    mkdir -p "$shim_dir" || return 1
+    if [ ! -x "$shim_dir/zig" ]; then
+        printf '#!/bin/sh\nexec python3 -m ziglang "$@"\n' > "$shim_dir/zig" || return 1
+        chmod +x "$shim_dir/zig" || return 1
+    fi
+    case ":$PATH:" in
+        *":$shim_dir:"*) ;;
+        *) export PATH="$shim_dir:$PATH" ;;
+    esac
+    return 0
+}
+
 build_one_arch() {
     local pkg_arch="$1"
     local rust_target=""
@@ -270,8 +292,9 @@ build_one_arch() {
     fi
 
     local use_zigbuild=0
-    if command -v cargo-zigbuild >/dev/null 2>&1 && command -v zig >/dev/null 2>&1; then
+    if command -v cargo-zigbuild >/dev/null 2>&1 && ensure_zig_on_path; then
         use_zigbuild=1
+        echo ">>> 使用 cargo-zigbuild 交叉编译 ($(zig version 2>/dev/null || echo zig))..."
     fi
 
     local subcmd="build"

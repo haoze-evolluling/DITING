@@ -172,7 +172,7 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 | Android | JDK 17+、Android SDK、NDK；应用 `minSdk` 为 28，交叉编译使用 API 28 工具链 |
 | Windows 打包 | Visual Studio 的“使用 C++ 的桌面开发”工作负载（提供 Rust MSVC 链接器）；生成 EXE 安装包还需 NSIS |
 | Linux 打包 | Cargo；在 Windows 上生成 deb / ipk 需要 WSL |
-| OpenWrt 打包 | musl 目标的 C 工具链（Ubuntu/Debian：`sudo apt install musl-tools`，提供 `x86_64-linux-musl-gcc`，供 ring 与内置 SQLite 编译）；交叉构建 aarch64 还需 zig + cargo-zigbuild 或 aarch64 交叉工具链 |
+| OpenWrt 打包 | musl 目标的 C 工具链（Ubuntu/Debian：`sudo apt install musl-tools`，提供 `x86_64-linux-musl-gcc`，供 ring 与内置 SQLite 编译）；交叉构建 aarch64 还需 `cargo install cargo-zigbuild && pip install ziglang`（或 aarch64 交叉工具链） |
 
 Android 的 Gradle、AGP、Kotlin 版本与镜像配置见 `docs/development/android-build-environment.md`。
 

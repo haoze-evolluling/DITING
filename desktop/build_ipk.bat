@@ -23,6 +23,9 @@ title DITING IPK Build
 ::   - WSL when this runs on Windows; the Rust service is compiled inside WSL,
 ::     so WSL needs rustup, the musl target, and musl-tools (musl-gcc) installed
 ::     as well (ring and the bundled SQLite need a musl C compiler)
+::   - For -a arm64 / -a both, the aarch64 musl target also needs a cross
+::     toolchain; the recommended option is cargo-zigbuild + zig:
+::       cargo install cargo-zigbuild && pip install ziglang
 ::
 :: This script only builds; it never installs anything.
 
