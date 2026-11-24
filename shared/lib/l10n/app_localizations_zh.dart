@@ -17,16 +17,10 @@ class AppL10nZh extends AppL10n {
   String get ruleTestEnterSubtitle => '输入域名查看为何被拦截或放行';
 
   @override
-  String get ruleTestIntro => '输入域名，立即查看判定结果、命中规则与改写结果。判定逻辑与引擎完全一致。';
-
-  @override
   String get ruleTestDomainLabel => '域名';
 
   @override
   String get ruleTestDomainHint => '例如 ads.example.com';
-
-  @override
-  String get ruleTestQtype => '查询类型';
 
   @override
   String get ruleTestRun => '开始测试';
@@ -174,11 +168,6 @@ class AppL10nZh extends AppL10n {
   String get hitRankingFooter => '统计来自本机 dns_log，按被拦截结果聚合。';
 
   @override
-  String hitRankingTotal(int count) {
-    return '共拦截 $count 次';
-  }
-
-  @override
   String get healthTitle => '保护健康';
 
   @override
@@ -272,16 +261,10 @@ class AppL10nZh extends AppL10n {
   String get flowLiveTab => '实时连接';
 
   @override
-  String get flowEntrySubtitle => '按应用查看实时连接与远端';
-
-  @override
   String get flowAppsSection => '应用';
 
   @override
   String get flowRefresh => '刷新';
-
-  @override
-  String get flowEmptyBody => '保护运行且有流量时，这里按应用→域名→远端显示实时连接。';
 
   @override
   String get flowStatusActive => '活跃';
@@ -546,12 +529,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get providerSheetRaceTitle => '选择竞速服务商';
-
-  @override
-  String get providerSheetSingleOptions => '可选服务商';
-
-  @override
-  String get providerSheetRaceMinimum => '至少选 2 个';
 
   @override
   String get providerSheetManage => '管理服务...';
@@ -892,12 +869,6 @@ class AppL10nZh extends AppL10n {
   String get statusCoreState => '内核状态';
 
   @override
-  String get statusListenPort => '监听端口';
-
-  @override
-  String get statusNotListening => '未监听';
-
-  @override
   String get statusProviderFooter => '延迟是该服务商的最近一次实测值，不是本机到目标的往返。';
 
   @override
@@ -1113,10 +1084,6 @@ class AppL10nZh extends AppL10n {
   String get siteLatencyMeasuredSites => '已测站点';
 
   @override
-  String get siteLatencyDetailFooter =>
-      '每个站点发 3 个 ICMP 回显，取平均值；系统 ping 不可用时退回 TCP 握手，会标上 * 号，数值略高于真实往返。本应用自身流量不经过 VPN，测的是物理网络。';
-
-  @override
   String get intranetDetailTitle => '内网 IP 详情';
 
   @override
@@ -1126,13 +1093,7 @@ class AppL10nZh extends AppL10n {
   String get intranetLocalAddress => '本机局域网地址';
 
   @override
-  String get intranetUsableAsDns => '可作 DNS';
-
-  @override
   String get intranetLocalOnly => '仅本机';
-
-  @override
-  String get intranetSameSubnetHint => '同网段设备把 DNS 指到这个地址即可走本机解析。';
 
   @override
   String get intranetNetworkOverview => '网络概况';
@@ -1169,13 +1130,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get intranetPrivateDns => '私人 DNS';
-
-  @override
-  String get intranetPortFooter =>
-      '端口只在服务启动时绑定，改动端口后需要重启服务；把同网段设备的 DNS 指向上面的地址即可让它们走本机解析。';
-
-  @override
-  String get intranetCopyAddressWithPort => '复制地址（含端口）';
 
   @override
   String get speedDetailTitle => '网速详情';
@@ -1230,27 +1184,8 @@ class AppL10nZh extends AppL10n {
   String get commonNoData => '无数据';
 
   @override
-  String get commonPendingTitle => '尚未接入';
-
-  @override
-  String get commonPendingBody => '这个页面还没有连接到本机服务，接入后会显示实时数据。';
-
-  @override
-  String get homePowerPending => '电源控制还没有接入本机服务';
-
-  @override
   String intranetModeNotListening(String mode) {
     return '$mode不监听局域网，其他设备无法把这里当 DNS';
-  }
-
-  @override
-  String intranetListeningOn(int port) {
-    return '已监听 0.0.0.0:$port，其他设备把 DNS 指到上面的地址';
-  }
-
-  @override
-  String intranetServiceStopped(int port) {
-    return '服务未启动：启动后才会绑定 $port 端口';
   }
 
   @override
@@ -1698,11 +1633,6 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String providerRaceSummary(String count, String names) {
-    return '已选 $count 个：$names';
-  }
-
-  @override
   String get rulesDbUnavailable => '当前环境无法读写规则库';
 
   @override
@@ -1805,13 +1735,7 @@ class AppL10nZh extends AppL10n {
   String get aiPresetAggregator => '聚合与本地部署';
 
   @override
-  String get aiProviderConfigured => '已配置厂商';
-
-  @override
   String get aiProviderExampleName => '示例厂商（请修改）';
-
-  @override
-  String get logSubscriptionDeleted => '已删除订阅';
 
   @override
   String get logRaceFastest => '最快响应';
@@ -1868,9 +1792,6 @@ class AppL10nZh extends AppL10n {
   String get imagePickerUnavailable => '当前设备没有可用的图片选择器';
 
   @override
-  String get recognitionInvalidConfig => '云端名单配置无效';
-
-  @override
   String get recognitionGithubInterrupted => '与 GitHub 的连接被中断，请稍后重试';
 
   @override
@@ -1878,9 +1799,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get recognitionNetworkUnavailable => '网络不可用，无法更新名单';
-
-  @override
-  String get recognitionUpdateFailed => '名单更新失败';
 
   @override
   String get subscriptionNotFound => '订阅不存在或数据库不可用';
@@ -1944,9 +1862,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get updateInstallerUnavailable => '无法调起系统安装器，请稍后重试';
-
-  @override
-  String get workModeNoDataPlane => '当前工作模式尚未接入数据面';
 
   @override
   String get workModeNoVpnConsent => '没有获得 VPN 授权';
@@ -2052,11 +1967,6 @@ class AppL10nZh extends AppL10n {
   @override
   String recognitionUpdateFailedDetail(String detail) {
     return '名单更新失败：$detail';
-  }
-
-  @override
-  String subscriptionAlreadyExists(String kind, String what) {
-    return '$what已作为$kind存在';
   }
 
   @override
@@ -2201,16 +2111,6 @@ class AppL10nZh extends AppL10n {
   String get subscriptionKindHosts => 'hosts 规则';
 
   @override
-  String logRowDirect(String protocol) {
-    return '$protocol 直连';
-  }
-
-  @override
-  String logRowDirectWithPackage(String package, String protocol) {
-    return '$protocol 直连 · $package';
-  }
-
-  @override
   String get logRowCacheHit => '命中缓存';
 
   @override
@@ -2252,27 +2152,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get cachePresetRecommended => '推荐';
-
-  @override
-  String get cacheDisabledSummary => '已关闭 · 每次解析都会请求上游';
-
-  @override
-  String get upstreamNameRequired => '请填写名称';
-
-  @override
-  String get upstreamAddressRequired => '请填写地址';
-
-  @override
-  String get upstreamDohNeedsHttps => 'DoH 地址必须以 https:// 开头';
-
-  @override
-  String get upstreamDohInvalidUrl => 'DoH 地址不是合法的 URL';
-
-  @override
-  String get upstreamPortRange => '端口需在 1–65535 之间';
-
-  @override
-  String get upstreamIpv6Invalid => 'IPv6 地址格式不正确';
 
   @override
   String get upstreamPresetAliyun => '阿里云';
@@ -2437,13 +2316,7 @@ class AppL10nZh extends AppL10n {
   String get hubCategoryData => '数据与维护';
 
   @override
-  String get hubLogs => '日志';
-
-  @override
   String get hubLogsDescription => '实时解析统计、请求明细查询与日志导出';
-
-  @override
-  String get hubBackup => '数据与维护';
 
   @override
   String get hubBackupDescription => '导出与导入服务商、规则订阅及个性化设置';
@@ -2461,25 +2334,7 @@ class AppL10nZh extends AppL10n {
   String get hubTroubleshootingDescription => '导出崩溃日志，手动抓取并导出运行日志发给开发者';
 
   @override
-  String get hubCategoryNetworkTools => '网络工具与隐私';
-
-  @override
-  String get hubCategoryAutomation => '自动化与场景';
-
-  @override
-  String get hubCategoryIntegration => '自动化与资源';
-
-  @override
-  String get hubCategorySubscription => '订阅与更新';
-
-  @override
-  String get hubDnsLeak => 'DNS 泄漏';
-
-  @override
   String get hubAutoUpdateDescription => '按固定间隔或每天固定时刻自动更新规则订阅';
-
-  @override
-  String get hubCategoryAbout => '关于谛听';
 
   @override
   String get hubAbout => '关于';
@@ -2492,12 +2347,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get hubSponsorDescription => '支持谛听项目持续维护与开发';
-
-  @override
-  String get hubSponsors => '赞助者名单';
-
-  @override
-  String get hubSponsorsDescription => '鸣谢支持谛听项目的赞助者';
 
   @override
   String get fontSizeSmall => '小';
@@ -2551,9 +2400,6 @@ class AppL10nZh extends AppL10n {
   String get appearanceMotionSection => '动效';
 
   @override
-  String get appearanceInterfaceSection => '界面显示';
-
-  @override
   String get appearanceHomeOpacitySubtitle => '交互组件与文字的透明度';
 
   @override
@@ -2561,9 +2407,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get appearancePureBlackOff => '切到深色模式后才可开启';
-
-  @override
-  String get appearanceHomeSection => '首页内容';
 
   @override
   String get appearanceHomeSentenceSubtitle => '运行与停止两种状态各一句';
@@ -2593,13 +2436,6 @@ class AppL10nZh extends AppL10n {
   String get appearanceMotionFooter => '动画与玻璃只作用于浮条；普通底栏始终是实色。';
 
   @override
-  String get appearancePaletteGoldLegacy => '落盘值沿用旧版的 indigo';
-
-  @override
-  String get appearancePaletteFooter =>
-      '色板只提供种子，上屏的是 HCT 推导出的整套角色色。旧版没有自定义取色，因此这里也不提供。';
-
-  @override
   String get launcherIconTitle => '应用图标';
 
   @override
@@ -2626,11 +2462,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get launcherIconApplyFailed => '切换应用图标失败，请稍后重试';
-
-  @override
-  String fontFamilySizeSubtitle(String percent) {
-    return '当前 $percent%';
-  }
 
   @override
   String get fontFamilySystemDefault => '跟随宿主平台的中文界面字体，最稳妥的选择';
@@ -2867,9 +2698,6 @@ class AppL10nZh extends AppL10n {
   String get dayNightTitle => '日夜模式';
 
   @override
-  String get dayNightFollowSystemDescription => '系统切换深色时一起切换';
-
-  @override
   String get dayNightFooter => '纯黑模式只在深色模式下生效，可在「反馈与动效」中开启。';
 
   @override
@@ -2909,23 +2737,10 @@ class AppL10nZh extends AppL10n {
   String get bottomBarCustomTitle => '底栏自定义';
 
   @override
-  String bottomBarItemsHeader(String count, String max) {
-    return '底栏项（$count/$max）';
-  }
-
-  @override
-  String bottomBarDragHint(String max) {
-    return '按住右侧把手或长按整行拖动排序，顺序即底栏从左到右的顺序。至少 2 项、最多 $max 项：浮条按项数等比分配宽度，再多就挤到看不清图标。';
-  }
-
-  @override
   String get bottomBarDisabled => '未启用';
 
   @override
   String get bottomBarNewItemFooter => '新启用的项排在底栏最右侧。';
-
-  @override
-  String get bottomBarFeel => '手感';
 
   @override
   String get homeSentenceTitle => '首页句子';
@@ -3007,9 +2822,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get fontSizeRestoreDefaults => '恢复默认';
-
-  @override
-  String get fontFamilyHapticSubtitle => '切换 tab 时给一次轻震';
 
   @override
   String get ruleKindBlockTitle => '黑名单';
@@ -3151,9 +2963,6 @@ class AppL10nZh extends AppL10n {
   String get ruleAll => '全部';
 
   @override
-  String get formIssuesTitle => '有几点需要先修正';
-
-  @override
   String get formSave => '保存';
 
   @override
@@ -3164,12 +2973,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get formDelete => '删除';
-
-  @override
-  String get formHelp => '说明';
-
-  @override
-  String get formGotIt => '知道了';
 
   @override
   String get rulePatternHint => '规则内容，如 ||ads.example.com^';
@@ -3641,11 +3444,6 @@ class AppL10nZh extends AppL10n {
   String get trafficRankingTitle => '应用流量排行';
 
   @override
-  String trafficShareFooter(String range, String window) {
-    return '占比按$window总字节数（下行 + 上行）计算；$range。点按一行查看该应用的上下行明细。';
-  }
-
-  @override
   String get trafficClearTitle => '清除全部流量记录？';
 
   @override
@@ -3668,9 +3466,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get trafficHideSystemApps => '隐藏系统应用';
-
-  @override
-  String get trafficSearchHint => '搜索应用名或包名';
 
   @override
   String get trafficAllHistory => '全部历史';
@@ -3744,23 +3539,11 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get trafficWhyDaemonTitle => '为什么系统设置将全部流量算给谛听？';
-
-  @override
-  String get trafficWhyDaemonBody =>
-      '因 Android VPN 机制，系统将代理出站归属于守护进程。谛听自身不偷跑流量，点按查看统计口径。';
-
-  @override
   String get trafficLiveRateTitle => '实时速率';
 
   @override
   String trafficNoLiveRate(String window) {
     return '本模式不统计实时速率：当前接管方式不经过引擎的流量计数器。上面的 $window 下行 / 上行与下方排行都是真实数字。';
-  }
-
-  @override
-  String trafficLiveRateBody(String window) {
-    return '来自引擎的每秒速率（本次会话），与常驻通知里的读数同源；上面的 $window 下行 / 上行是 `app_traffic_daily` 的累计字节，两者口径不同，数字不必相等。';
   }
 
   @override
@@ -3915,11 +3698,6 @@ class AppL10nZh extends AppL10n {
   String get obsCacheHit => '缓存命中';
 
   @override
-  String obsCopied(String text) {
-    return '已复制 $text';
-  }
-
-  @override
   String get obsCopyAddress => '复制地址';
 
   @override
@@ -4040,9 +3818,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get obsExportScopeSection => '筛选条件';
-
-  @override
-  String get obsExportIntro => '选择时间范围、请求来源、状态与应用，再勾选需要导出的字段。';
 
   @override
   String get obsExportDnsOnlyNote => '当前模式没有 HTTPS 请求日志，导出仅包含 DNS 记录';
@@ -4331,11 +4106,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get logsNeverHit => '尚未命中';
-
-  @override
-  String logsCacheFooter(String count) {
-    return '共 $count 条，按命中次数与过期时间排序。剩余 TTL 少于 30 秒的条目标橙色。点按一行查看详情，可复制域名、加入黑白名单或用 AI 分析。';
-  }
 
   @override
   String get logsBootstrapTitle => 'Bootstrap 统计';
@@ -4702,9 +4472,6 @@ class AppL10nZh extends AppL10n {
   String get storageV2Verifying => '正在校验数据…';
 
   @override
-  String get storageV2Cleaning => '正在清理旧数据…';
-
-  @override
   String get storageV2NeedStop => '网络连接正在使用旧数据库。请先停止当前连接，再继续升级。';
 
   @override
@@ -4781,31 +4548,10 @@ class AppL10nZh extends AppL10n {
   String get devOptions => '开发者选项';
 
   @override
-  String get devDiagnostics => '诊断与观测';
-
-  @override
   String get devIpQuality => 'IP 质量';
 
   @override
   String get devIpQualityBody => '实测出口地址与三个公开情报源的类型判断';
-
-  @override
-  String get devRequestLogs => '请求日志';
-
-  @override
-  String get devRequestLogsBody => '合并 http_request_log 与 dns_log 的实时请求记录';
-
-  @override
-  String get devLogRetention => '日志保留';
-
-  @override
-  String get devLogRetentionBody => '日志容量上限与 DNS 请求日志的记录范围';
-
-  @override
-  String get devTroubleshoot => '故障排查';
-
-  @override
-  String get devTroubleshootBody => '导出崩溃日志，手动抓取并导出运行日志';
 
   @override
   String get devDataCleanup => '数据清理';
@@ -4895,11 +4641,6 @@ class AppL10nZh extends AppL10n {
   String get sponsorNoteShort => '付款时请备注昵称，以便同步加入赞助者名单。';
 
   @override
-  String aboutQqCopied(String number) {
-    return '未检测到 QQ，群号已复制：$number';
-  }
-
-  @override
   String get disclaimerTitle => '免责声明';
 
   @override
@@ -4962,53 +4703,10 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get devDataCleanupBody => '按类别删除日志、权重、规则与缓存';
-
-  @override
-  String get devConfigSection => '配置与资源';
-
-  @override
-  String get devCustomResources => '自定义资源';
-
-  @override
-  String get devCustomResourcesBody => 'User-Agent、按需连接等配置资源入口';
-
-  @override
   String get devUserAgentBody => '订阅下载与测速请求携带的 UA';
 
   @override
-  String get devOnDemand => '按需连接';
-
-  @override
-  String get devOnDemandBody => '按 SSID 决定是否启动 VPN';
-
-  @override
-  String get devWebdav => 'WebDAV 云同步';
-
-  @override
-  String get devWebdavBody => '把备份真实上传到自建的 WebDAV 服务';
-
-  @override
-  String get devUiSection => '界面与外观保留项';
-
-  @override
-  String get devFontFamilyBody => '选择界面字体族，独立页';
-
-  @override
-  String get devFontSizeBody => '全局文字缩放；在外观设置「界面显示」组内联滑杆';
-
-  @override
-  String get devTabAnimation => 'Tab 动画';
-
-  @override
-  String get devTabAnimationBody => '切换底部标签时的入场动画；在外观设置「背景与动效」组内联选项';
-
-  @override
   String get devExperimental => '实验动作';
-
-  @override
-  String get devLegacyFooter =>
-      '以上「诊断与观测」「配置与资源」「界面与外观保留项」里的页面都不属于旧版 1.4.3 的界面，保留供调试与组件验收；旧版对应的功能仍按旧版菜单进入，不经过本页。';
 
   @override
   String get unknownRouteTitle => '页面不存在';
@@ -5037,17 +4735,7 @@ class AppL10nZh extends AppL10n {
   String get disclaimerImmutable => '不可修改';
 
   @override
-  String get devFontFamily => '字体';
-
-  @override
-  String get devFontSize => '字号';
-
-  @override
   String get devWarningTitle => '开发者模式';
-
-  @override
-  String get devFooterLegacy =>
-      '以上「诊断与观测」「配置与资源」「界面与外观保留项」里的页面都不属于旧版 1.4.3 的界面，保留供调试与组件验收；旧版对应的功能仍按旧版菜单进入，不经过本页。';
 
   @override
   String get devFooterMoved =>
@@ -5603,9 +5291,6 @@ class AppL10nZh extends AppL10n {
   String get uaEdit => '编辑 User-Agent';
 
   @override
-  String get uaNote => 'UA 会随订阅下载、规则集拉取与订阅测速请求一起发送；部分服务端按 UA 拒绝请求，改这里可以绕过。';
-
-  @override
   String get uaCurrent => '当前选择';
 
   @override
@@ -5698,9 +5383,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get odEnable => '启用按需连接';
-
-  @override
-  String get odEnableBody => '连上白名单里的 SSID 时自动启动 VPN';
 
   @override
   String get odDisableBody => '关闭时 VPN 始终在线，不随网络切换';
@@ -5851,9 +5533,6 @@ class AppL10nZh extends AppL10n {
   String get configCancel => '取消';
 
   @override
-  String get configNotSet => '未设置';
-
-  @override
   String configItemCount(int count) {
     return '共 $count 项';
   }
@@ -5878,15 +5557,6 @@ class AppL10nZh extends AppL10n {
   String get troubleshootRecordLogs => '记录运行日志';
 
   @override
-  String get troubleshootExportLogs => '导出运行日志';
-
-  @override
-  String get troubleshootClearLogs => '清空运行日志';
-
-  @override
-  String get troubleshootClearLogsBody => '删除本地已记录的全部运行日志文件';
-
-  @override
   String get troubleshootRecordNote =>
       '默认关闭。开启后会在通知栏显示状态，关闭软件或手动关闭后即停止记录；日志只保存在本机，不会自动上传。';
 
@@ -5899,22 +5569,6 @@ class AppL10nZh extends AppL10n {
   @override
   String get troubleshootWriteStatusNote =>
       '日志、竞速记录与流量统计由后台直接写入本地数据库。出现丢弃或打开失败时，多为数据库被长时间占用，点击可重新读取；反复出现请导出运行日志反馈。';
-
-  @override
-  String get troubleshootCrashLogs => '崩溃日志';
-
-  @override
-  String get troubleshootExportCrashes => '导出崩溃日志';
-
-  @override
-  String get troubleshootClearCrashes => '清空崩溃日志';
-
-  @override
-  String get troubleshootClearCrashesBody => '删除本地所有已记录的崩溃文件';
-
-  @override
-  String get troubleshootCrashNote =>
-      '发生未捕获异常时自动保存诊断信息与关键日志，仅保存在设备本地，导出后可反馈给开发者。';
 
   @override
   String get troubleshootCaptureWarning =>
@@ -5935,17 +5589,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get troubleshootStoppedNoLogs => '已关闭，开启后才会记录运行日志';
-
-  @override
-  String get troubleshootReadingLogs => '正在读取本地日志…';
-
-  @override
-  String get troubleshootNoLogs => '当前设备没有运行日志';
-
-  @override
-  String troubleshootLogCount(int count, String size) {
-    return '共 $count 个文件，$size，点击导出文件';
-  }
 
   @override
   String get troubleshootReadingHealth => '正在读取写入状态…';
@@ -5981,17 +5624,6 @@ class AppL10nZh extends AppL10n {
   String get troubleshootClosed => '停止时未写完';
 
   @override
-  String get troubleshootReadingCrashes => '正在读取本机崩溃日志…';
-
-  @override
-  String get troubleshootNoCrashes => '当前设备没有崩溃日志';
-
-  @override
-  String troubleshootCrashCount(int count) {
-    return '已记录 $count 份崩溃日志，点击导出文件';
-  }
-
-  @override
   String get troubleshootStoppedToast => '已停止记录运行日志';
 
   @override
@@ -6012,45 +5644,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get troubleshootStartFailedToast => '无法开启日志抓取，请稍后重试';
-
-  @override
-  String get troubleshootNoExportableLogs => '没有可导出的运行日志';
-
-  @override
-  String get troubleshootExportFailed => '导出失败：本机没有可写的导出目录';
-
-  @override
-  String troubleshootExported(String path) {
-    return '已导出到 $path';
-  }
-
-  @override
-  String get troubleshootConfirm => '确定';
-
-  @override
-  String get troubleshootClearLogsConfirm => '确认清空所有已保存的运行日志吗？该操作不可恢复。';
-
-  @override
-  String troubleshootClearedLogs(String count) {
-    return '已清空 $count 个日志文件';
-  }
-
-  @override
-  String get troubleshootNoClearableLogs => '没有可清空的运行日志';
-
-  @override
-  String get troubleshootNoExportableCrashes => '没有可导出的崩溃日志';
-
-  @override
-  String get troubleshootClearCrashesConfirm => '确认清空所有已保存的崩溃日志吗？';
-
-  @override
-  String troubleshootClearedCrashes(String count) {
-    return '已清空 $count 份崩溃日志';
-  }
-
-  @override
-  String get troubleshootNoClearableCrashes => '没有可清空的崩溃日志';
 
   @override
   String get bypassAddTitle => '添加绕过域名';
@@ -6088,10 +5681,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get hiddenFeaturesReset => '恢复全部显示';
-
-  @override
-  String get hiddenFeaturesNote =>
-      '自定义在功能中心显示的功能卡片。关闭开关将从功能中心隐藏该卡片，默认显示全部卡片（简洁模式首次进入时会收起几个分类）。隐藏仅调整界面展示，不会影响功能的后台运行与规则生效。设置会保存到本机，重启后仍然有效。';
 
   @override
   String get hiddenFeaturesFooter => '「隐藏功能」卡片固定常驻，确保随时可以在这里恢复。';
@@ -6133,10 +5722,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get providerVisibilityTitle => '服务显示';
-
-  @override
-  String get providerVisibilityNote =>
-      '关闭竞速模式时，首页解析服务下拉框仅显示这里选中的服务。当前正在使用的服务会始终保留。按住右侧手柄拖动可调整顺序，该顺序同时决定选择竞速服务商时的排列。';
 
   @override
   String providerVisibilityProtocol(String protocol) {
@@ -6766,10 +6351,6 @@ class AppL10nZh extends AppL10n {
   String get mirrorTplAdd => '添加模板';
 
   @override
-  String get mirrorTplIntro =>
-      '保存常用的下载镜像。开启全局镜像后，订阅与软件更新默认都走所选模板；添加订阅时也可以单独指定模板。';
-
-  @override
   String get mirrorTplActions => '操作';
 
   @override
@@ -6894,14 +6475,6 @@ class AppL10nZh extends AppL10n {
   String get ruleControlUrlRunning => '运行中 · 解密流量匹配 URL 屏蔽、放行及重定向';
 
   @override
-  String get ruleControlIntro =>
-      '统一管理域名过滤、URL 规则及规则覆写的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。';
-
-  @override
-  String get ruleControlIntroLimited =>
-      '统一管理域名过滤的总控开关、拦截策略与在线规则订阅。黑名单、白名单与覆写名单可在功能中心中独立管理。';
-
-  @override
   String get ruleControlFilterSection => '过滤与覆写控制';
 
   @override
@@ -6918,9 +6491,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get ruleControlNotReady => '未就绪';
-
-  @override
-  String get ruleControlPolicySection => '拦截策略';
 
   @override
   String get ruleControlDiagnosticsSection => '规则诊断';
@@ -6940,39 +6510,7 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get ruleControlNetworkPrivacySection => '网络隐私与诊断';
-
-  @override
-  String get ruleControlInterfacesSection => '对外接口与联动';
-
-  @override
-  String get ruleControlSubsSection => '订阅与更新';
-
-  @override
   String get ruleControlSubsSubtitle => '管理域名规则与 IPv4/IPv6 覆写订阅源及分组';
-
-  @override
-  String ruleControlCount(int count) {
-    return '$count 个';
-  }
-
-  @override
-  String ruleControlAutoUpdateOn(int hours) {
-    return '已开启 · 每 $hours 小时自动更新';
-  }
-
-  @override
-  String ruleControlAutoUpdateDaily(String time) {
-    return '已开启 · 每天 $time 自动更新';
-  }
-
-  @override
-  String ruleControlAutoUpdateEveryOtherDay(String time) {
-    return '已开启 · 隔天 $time 自动更新';
-  }
-
-  @override
-  String get ruleControlAutoUpdateOff => '已关闭自动更新';
 
   @override
   String get ruleControlMirrorSubtitle => '维护订阅下载镜像，可在添加订阅时直接选择';
@@ -7163,10 +6701,6 @@ class AppL10nZh extends AppL10n {
   String get httpInspDeselectVisible => '取消当前结果';
 
   @override
-  String get httpInspAppsIntro =>
-      '隧道接管流量后，HTTPS 流量检查仅检查所选应用的 HTTP(S) 请求，其他应用直接转发。选择应用会取消其「排除应用」「禁止联网」与应用独立规则状态。';
-
-  @override
   String httpInspAppsCount(int selected, int visible) {
     return '已选择 $selected 个应用（可见 $visible）';
   }
@@ -7352,18 +6886,6 @@ class AppL10nZh extends AppL10n {
   String get transferTitle => '备份与迁移';
 
   @override
-  String get transferMetricProviders => 'DNS 服务商';
-
-  @override
-  String get transferMetricSubs => '规则订阅';
-
-  @override
-  String get transferMetricCustomRules => '自定义规则';
-
-  @override
-  String get transferMetricListedApps => '名单应用';
-
-  @override
   String get transferSectionAppConfig => '应用配置备份';
 
   @override
@@ -7413,9 +6935,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get transferBusyExporting => '正在生成备份文件…';
-
-  @override
-  String get transferBusySaving => '等待选择保存位置…';
 
   @override
   String get transferBusyPickingImport => '等待选择备份文件…';
@@ -7797,10 +7316,6 @@ class AppL10nZh extends AppL10n {
   String get agentProvidersAdd => '添加自定义厂商';
 
   @override
-  String get agentProvidersIntro =>
-      '点选下方预设厂商会自动预填接口地址；模型名请在编辑页点「拉取模型」从厂商真实返回的列表里选。编辑时若 API Key 留空则保留原密钥。密钥以旧版同一套掩码混淆后存在本机，不额外落明文。';
-
-  @override
   String get agentProvidersMine => '我的厂商';
 
   @override
@@ -7813,9 +7328,6 @@ class AppL10nZh extends AppL10n {
   String agentProvidersRow(String model, String baseUrl, String key) {
     return '$model · $baseUrl · $key';
   }
-
-  @override
-  String get agentProvidersKeyConfigured => '密钥已配置';
 
   @override
   String get agentProvidersKeyMissing => '缺少密钥';
@@ -8130,10 +7642,6 @@ class AppL10nZh extends AppL10n {
   String get outboundAppsTitle => '选择代理应用';
 
   @override
-  String get outboundAppsIntro =>
-      '选择提供本地代理端口的应用。代理应用本身会绕过 DITING。端口由该应用绑定，谛听无法代它监听。';
-
-  @override
   String outboundAppsCount(int count) {
     return '已安装应用（$count）';
   }
@@ -8185,9 +7693,6 @@ class AppL10nZh extends AppL10n {
   String resolutionProviderCount(int count) {
     return '$count 个服务商';
   }
-
-  @override
-  String get resolutionPickerTitle => '选择解析模式';
 
   @override
   String get resolutionMinProviders => '至少保留 2 家服务商';
@@ -8905,9 +8410,6 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get subsErrUnsupported => '当前环境不支持网络订阅更新';
-
-  @override
   String subsErrMirrorPlaceholder(String list) {
     return '镜像模板必须包含 $list';
   }
@@ -9052,10 +8554,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get outboundTargetsTitle => '选择走代理的应用';
-
-  @override
-  String get outboundTargetsIntro =>
-      '勾选的应用会经代理连接网络，修改后需重启隧道生效。代理应用本身、谛听以及「排除应用」中的应用不经过隧道，无法走代理，因此不在列表中。';
 
   @override
   String get outboundProxyTargetsRequired => '「仅选中应用」模式下请至少选择一个走代理的应用';
@@ -9258,4162 +8756,6 @@ class AppL10nZh extends AppL10n {
   String get permOverlay => '悬浮窗';
 
   @override
-  String get desktopDnsServiceTitle => 'DNS 服务';
-
-  @override
-  String get desktopQueriesTitle => '查询指标';
-
-  @override
-  String get desktopQueriesTotal => '总查询';
-
-  @override
-  String get desktopQueriesSuccess => '成功';
-
-  @override
-  String get desktopQueriesFailed => '失败';
-
-  @override
-  String get desktopQps => 'QPS';
-
-  @override
-  String get desktopCacheTitle => '缓存';
-
-  @override
-  String get desktopCacheHits => '命中';
-
-  @override
-  String get desktopCacheEvictions => '淘汰';
-
-  @override
-  String get desktopFilterTitle => '规则拦截';
-
-  @override
-  String get desktopFilterRules => '有效防护规则';
-
-  @override
-  String get desktopFilterBlockRate => '拦截比例';
-
-  @override
-  String get desktopTakeoverTitle => '系统 DNS 接管';
-
-  @override
-  String get desktopTakeoverOn => '已接管';
-
-  @override
-  String get desktopTakeoverOff => '未接管';
-
-  @override
-  String get desktopFilterPauseTitle => '临时暂停拦截';
-
-  @override
-  String get desktopFilterPaused => '已暂停';
-
-  @override
-  String get desktopFilterActive => '生效中';
-
-  @override
-  String get desktopServiceHostTitle => '后台服务';
-
-  @override
-  String get desktopServiceAutoStart => '开机自启';
-
-  @override
-  String get desktopServiceNotInstalled => '未安装';
-
-  @override
-  String get desktopVersion => '版本';
-
-  @override
-  String get desktopProcessId => '进程';
-
-  @override
-  String get desktopPerformanceTitle => '性能';
-
-  @override
-  String get desktopRuntimeTitle => '运行信息';
-
-  @override
-  String get desktopLanAllowed => '局域网';
-
-  @override
-  String get desktopListeningOn => '监听';
-
-  @override
-  String get desktopStartDns => '启动 DNS';
-
-  @override
-  String get desktopStopDns => '停止 DNS';
-
-  @override
-  String get desktopStartDnsTitle => '启动 DNS 服务？';
-
-  @override
-  String get desktopStartDnsMessage => '启动后本机解析与规则过滤随之生效。';
-
-  @override
-  String get desktopStopDnsTitle => '停止 DNS 服务？';
-
-  @override
-  String get desktopStopDnsMessage => '停止后本机解析回到系统默认 DNS，接管与规则随之失效。';
-
-  @override
-  String get desktopBackendOfflineTitle => '连不上本机服务';
-
-  @override
-  String desktopBackendOfflineBody(String address) {
-    return '确认谛听服务正在运行，并监听 $address。';
-  }
-
-  @override
-  String get desktopBackendUnauthorizedTitle => '需要访问令牌';
-
-  @override
-  String get desktopBackendUnauthorizedBody => '本机服务已启用 IPC 令牌，填入令牌后才能读取状态。';
-
-  @override
-  String desktopActionFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String desktopLastUpdated(String time) {
-    return '更新于 $time';
-  }
-
-  @override
-  String get desktopRetry => '重试';
-
-  @override
-  String get desktopRecentQueriesTitle => '最近查询';
-
-  @override
-  String get desktopRecentQueriesEmpty => '还没有查询记录';
-
-  @override
-  String get desktopLogWindow24h => '近 24 小时';
-
-  @override
-  String get desktopLogDomain => '域名';
-
-  @override
-  String get desktopLogClient => '客户端';
-
-  @override
-  String get desktopLogDomainHint => '域名包含';
-
-  @override
-  String get desktopLogClientHint => '客户端 IP 或主机名';
-
-  @override
-  String get desktopLogAllTypes => '全部类型';
-
-  @override
-  String get desktopLogClear => '清空历史';
-
-  @override
-  String get desktopLogClearTitle => '清空查询历史？';
-
-  @override
-  String get desktopLogClearBody => '将删除全部内存记录与已落盘的历史日志文件，此操作不可撤销。';
-
-  @override
-  String get desktopLogClearDone => '查询历史与统计已清空';
-
-  @override
-  String desktopLogClearFailed(String message) {
-    return '清空失败：$message';
-  }
-
-  @override
-  String get desktopLogTopDomains => '高频访问域名';
-
-  @override
-  String get desktopLogTopBlocked => '拦截命中排行';
-
-  @override
-  String get desktopLogTopClients => '活跃客户端';
-
-  @override
-  String get desktopLogNoBlocked => '暂无拦截记录';
-
-  @override
-  String get desktopLiveTitle => '实时查询流';
-
-  @override
-  String get desktopLiveConnected => '实时监听中';
-
-  @override
-  String get desktopLivePaused => '已暂停';
-
-  @override
-  String get desktopLiveDisconnected => '未连接';
-
-  @override
-  String get desktopLiveDisconnectedBody => '本机事件通道没有连上，实时记录暂停；查询历史与统计仍可正常读取。';
-
-  @override
-  String desktopLiveShown(String count) {
-    return '符合筛选 $count 条';
-  }
-
-  @override
-  String get desktopLiveSearchHint => '检索域名或客户端 IP';
-
-  @override
-  String get desktopLiveOnlyBlocked => '仅看已拦截';
-
-  @override
-  String get desktopLivePause => '暂停';
-
-  @override
-  String get desktopLiveResume => '继续';
-
-  @override
-  String get desktopLiveClear => '清空';
-
-  @override
-  String get desktopLiveEmpty => '还没有推送的查询';
-
-  @override
-  String get desktopLiveCaptured => '缓冲区记录';
-
-  @override
-  String get desktopLiveBlocked => '已拦截';
-
-  @override
-  String get desktopLiveSuccessRate => '成功率';
-
-  @override
-  String desktopLiveBufferNote(String count) {
-    return '滚动缓冲区上限 $count 条';
-  }
-
-  @override
-  String get desktopLiveStale => '容灾复用';
-
-  @override
-  String get desktopLogConfigTitle => '查询日志与留存策略';
-
-  @override
-  String get desktopLogConfigEnabled => '启用查询日志记录';
-
-  @override
-  String get desktopLogConfigEnabledBody => '关闭后不再记录任何查询历史与统计，DNS 解析不受影响';
-
-  @override
-  String get desktopLogConfigMaxEntries => '内存缓冲条数';
-
-  @override
-  String get desktopLogConfigRetentionDays => '落盘留存天数';
-
-  @override
-  String get desktopLogConfigFile => '历史记录落盘';
-
-  @override
-  String get desktopLogConfigFileBody =>
-      '按天写入 JSON-Lines 文件，供历史检索回溯（目录不可写时自动降级为纯内存）';
-
-  @override
-  String get desktopLogConfigClients => '记录客户端信息';
-
-  @override
-  String get desktopLogConfigClientsBody => '记录发起查询的设备 IP 与主机名；关闭后仅保留域名维度统计';
-
-  @override
-  String desktopLogConfigDataDir(String path) {
-    return '落盘目录：$path';
-  }
-
-  @override
-  String get desktopLogConfigSave => '保存策略';
-
-  @override
-  String get desktopLogConfigSaved => '查询日志配置已保存并生效';
-
-  @override
-  String get desktopLogConfigLoadFailed => '读不到查询日志配置';
-
-  @override
-  String get desktopLogConfigInvalid => '缓冲条数与留存天数需为正整数';
-
-  @override
-  String get desktopLogPagePrev => '上一页';
-
-  @override
-  String get desktopLogPageNext => '下一页';
-
-  @override
-  String desktopLogPageInfo(String from, String to, String total) {
-    return '第 $from–$to 条，共 $total 条';
-  }
-
-  @override
-  String get desktopHubResolveSection => '解析服务';
-
-  @override
-  String get desktopHubProtectSection => '拦截防护';
-
-  @override
-  String get desktopHubUpstream => '上游解析';
-
-  @override
-  String get desktopHubUpstreamBody => '调度策略、上游节点、Bootstrap 引导与条件分流';
-
-  @override
-  String get desktopUpstreamTitle => '上游解析';
-
-  @override
-  String get desktopUpstreamModeTitle => '上游调度策略';
-
-  @override
-  String get desktopUpstreamModeBody => '选择多服务器协同工作与容灾模式';
-
-  @override
-  String get desktopUpstreamModeSingle => '单服务器模式';
-
-  @override
-  String get desktopUpstreamModeSingleBody => '始终固定使用列表中的首选服务器进行解析';
-
-  @override
-  String get desktopUpstreamModeBackup => '主备自动容灾';
-
-  @override
-  String get desktopUpstreamModeBackupBody => '平时优先使用主服务器，超时或故障时自动切换至备用服务器';
-
-  @override
-  String get desktopUpstreamModeRace => '并发极速响应';
-
-  @override
-  String get desktopUpstreamModeRaceBody => '同时向全部服务器发送查询，自动采用最快返回的结果，解析延迟最低';
-
-  @override
-  String get desktopUpstreamModeSmart => '智能延迟优选';
-
-  @override
-  String get desktopUpstreamModeSmartBody => '根据各服务器近期响应速度与稳定性动态评分，智能选用最优质服务器';
-
-  @override
-  String get desktopUpstreamNodesTitle => '已配置的 DNS 服务器';
-
-  @override
-  String get desktopUpstreamNodesBody => '管理用于解析域名的 DNS 服务器，支持加密传输与智能容灾测速';
-
-  @override
-  String desktopUpstreamNodesCount(int count) {
-    return '$count 个节点';
-  }
-
-  @override
-  String get desktopUpstreamAdd => '添加 DNS 服务器';
-
-  @override
-  String get desktopUpstreamAddTitle => '添加 DNS 服务器';
-
-  @override
-  String get desktopUpstreamEditTitle => '编辑 DNS 服务器';
-
-  @override
-  String get desktopUpstreamName => '服务器名称 / 标识';
-
-  @override
-  String get desktopUpstreamProtocol => '连接协议';
-
-  @override
-  String get desktopUpstreamAddress => '服务器地址 (IP 或域名)';
-
-  @override
-  String get desktopUpstreamUrl => '加密解析地址 (URL)';
-
-  @override
-  String get desktopUpstreamPin => '证书指纹 (可选，SHA-256)';
-
-  @override
-  String get desktopUpstreamPinWarning =>
-      '填写指纹后将替代系统 CA 链校验，仅适用于自签或私有 CA 部署的上游。指纹不匹配时该上游将完全不可用。';
-
-  @override
-  String get desktopUpstreamPreset => '常用推荐预设';
-
-  @override
-  String get desktopUpstreamPresetProvider => '服务商';
-
-  @override
-  String get desktopUpstreamPresetProtocol => '解析协议';
-
-  @override
-  String get desktopUpstreamStamp => 'DNS 印章 (sdns://)';
-
-  @override
-  String get desktopUpstreamStampHint => '粘贴印章';
-
-  @override
-  String get desktopUpstreamStampParse => '解析';
-
-  @override
-  String get desktopUpstreamStampParsing => '解析中…';
-
-  @override
-  String get desktopUpstreamStampEmpty => '请先粘贴 sdns:// 印章';
-
-  @override
-  String desktopUpstreamStampFailed(String message) {
-    return '印章解析失败：$message';
-  }
-
-  @override
-  String desktopUpstreamStampParsed(String proto) {
-    return '已解析为 $proto';
-  }
-
-  @override
-  String get desktopUpstreamInvalid => '服务器名称与地址不得为空';
-
-  @override
-  String get desktopUpstreamDeleteTitle => '确认删除';
-
-  @override
-  String desktopUpstreamDeleteBody(String name) {
-    return '确定删除上游 DNS 服务器 [$name] 吗？';
-  }
-
-  @override
-  String get desktopUpstreamKeepOne => '请至少保留一个 DNS 服务器以维持正常的域名解析服务。';
-
-  @override
-  String get desktopUpstreamEmpty => '暂无配置 DNS 服务器';
-
-  @override
-  String get desktopUpstreamEmptyBody => '请添加主备 DNS 服务器后保存。';
-
-  @override
-  String get desktopUpstreamTest => '测试延迟';
-
-  @override
-  String desktopUpstreamTestFailed(String message) {
-    return '测试失败：$message';
-  }
-
-  @override
-  String desktopUpstreamSaveFailed(String message) {
-    return '更新 DNS 配置失败：$message';
-  }
-
-  @override
-  String get desktopUpstreamSaved => 'DNS 服务器配置已更新并即时生效';
-
-  @override
-  String get desktopUpstreamLoadFailed => '读取上游配置失败';
-
-  @override
-  String get desktopUpstreamBootstrapTitle => 'Bootstrap 引导解析';
-
-  @override
-  String get desktopUpstreamBootstrapBody =>
-      '建立 DoT（TLS）和 DoH（HTTPS）加密连接前解析上游域名的前置服务器，优先使用纯 IP 地址。';
-
-  @override
-  String get desktopUpstreamBootstrapOn => '引导启用';
-
-  @override
-  String get desktopUpstreamBootstrapOff => '已停用';
-
-  @override
-  String get desktopUpstreamBootstrapAdd => '添加引导';
-
-  @override
-  String get desktopUpstreamBootstrapEmpty => '未配置 Bootstrap DNS 服务器';
-
-  @override
-  String get desktopUpstreamBootstrapKeepOne =>
-      '请至少保留一个 Bootstrap DNS 服务器，避免加密握手域名无法解析。';
-
-  @override
-  String get desktopUpstreamBootstrapName => '名称';
-
-  @override
-  String get desktopUpstreamBootstrapAddress => 'IP 地址 (可带端口)';
-
-  @override
-  String get desktopUpstreamBootstrapInvalid => '请填写名称与 IP 地址';
-
-  @override
-  String desktopUpstreamBootstrapDeleteBody(String name) {
-    return '确定删除引导服务器 [$name] 吗？';
-  }
-
-  @override
-  String get desktopUpstreamRoutesTitle => '条件分流路由';
-
-  @override
-  String get desktopUpstreamRoutesBody =>
-      '为内部私有域名定向指定专用 DNS 服务器，支持 *.internal 这类泛域名';
-
-  @override
-  String get desktopUpstreamRoutesAdd => '添加分流规则';
-
-  @override
-  String get desktopUpstreamRoutesEmpty => '暂未配置条件分流路由，全部域名请求遵循全局调度模式。';
-
-  @override
-  String get desktopUpstreamRouteDomain => '匹配域名或后缀';
-
-  @override
-  String get desktopUpstreamRouteServer => '定向 DNS 服务器地址';
-
-  @override
-  String get desktopUpstreamRouteInvalid => '请填写匹配域名与目标 DNS 地址';
-
-  @override
-  String desktopUpstreamRouteDeleteBody(String domain) {
-    return '确定删除匹配域名 [$domain] 的分流规则吗？';
-  }
-
-  @override
-  String get desktopUpstreamFallbackPolicyTitle => '回退触发条件';
-
-  @override
-  String get desktopUpstreamFallbackPolicyBody => '何时改用备用上游：超时、应答码与解析失败';
-
-  @override
-  String get desktopUpstreamFallbackPolicyOff => '备用链未开启，触发条件暂不生效。';
-
-  @override
-  String get desktopUpstreamFallbackTitle => '独立回退上游';
-
-  @override
-  String get desktopUpstreamFallbackBody => '主链路整体失效后整链切换的备用解析链路';
-
-  @override
-  String get desktopUpstreamFallbackOff => '未启用';
-
-  @override
-  String desktopUpstreamFallbackCount(int count) {
-    return '$count 个回退节点';
-  }
-
-  @override
-  String get desktopUpstreamFallbackNote =>
-      '与主链路是两条独立链路：主链路先以独立超时尝试整条链，失败或命中下列响应码后，才整链切换到回退上游。';
-
-  @override
-  String get desktopUpstreamFallbackEmpty => '未配置回退上游，DNS 查询量不会因此增加。';
-
-  @override
-  String get desktopUpstreamFallbackAdd => '添加回退节点';
-
-  @override
-  String get desktopUpstreamFallbackTimeout => '主链路独立超时（毫秒）';
-
-  @override
-  String get desktopUpstreamFallbackTimeoutHint =>
-      '留空或 0 使用服务端默认 2000ms，取值范围 100–30000。';
-
-  @override
-  String get desktopUpstreamFallbackRcode => '触发回退的响应码';
-
-  @override
-  String get desktopUpstreamFallbackRcodeHint =>
-      '默认仅 SERVFAIL 与 REFUSED。NXDOMAIN 是权威有效判定，勾选它会让「域名不存在」也去问备用上游。';
-
-  @override
-  String get desktopUpstreamFallbackOnError => '超时、连接失败等链路故障同样触发回退';
-
-  @override
-  String desktopUpstreamWeight(int weight) {
-    return '权重 $weight';
-  }
-
-  @override
-  String get desktopUpstreamPinSet => '指纹固定';
-
-  @override
-  String get desktopUpstreamPresetMissing => '该服务商未提供此协议的公开端点，请手动填写';
-
-  @override
-  String get desktopUpstreamProbeFailed => '测试失败';
-
-  @override
-  String get desktopUpstreamBootstrapAddTitle => '添加 Bootstrap DNS 服务器';
-
-  @override
-  String get desktopUpstreamBootstrapEditTitle => '编辑 Bootstrap DNS 服务器';
-
-  @override
-  String get desktopHubCache => '解析缓存';
-
-  @override
-  String get desktopHubCacheBody => '命中率、容量、TTL 策略、排除规则与落盘持久化';
-
-  @override
-  String get desktopCacheEngineTitle => '智能解析加速引擎';
-
-  @override
-  String get desktopCacheEngineBody => '自动缓存已访问过的解析结果，下次访问直接返回；上游抖动时复用近期记录兜底。';
-
-  @override
-  String get desktopCacheEngineOn => '加速生效中';
-
-  @override
-  String get desktopCacheEngineOff => '加速已停用';
-
-  @override
-  String get desktopCacheHitRatio => '缓存命中率';
-
-  @override
-  String get desktopCacheRefresh => '刷新数据';
-
-  @override
-  String get desktopCacheClear => '一键清空缓存';
-
-  @override
-  String get desktopCacheClearTitle => '确定清空所有加速缓存？';
-
-  @override
-  String desktopCacheClearBody(int count) {
-    return '此操作将清空当前全部已缓存的网址记录（共 $count 条）。清空后后续访问将重新通过网络解析。';
-  }
-
-  @override
-  String get desktopCacheClearDone => '加速缓存已全部清空';
-
-  @override
-  String desktopCacheClearFailed(String message) {
-    return '清空缓存失败：$message';
-  }
-
-  @override
-  String get desktopCacheTelemetryTitle => '缓存遥测指标';
-
-  @override
-  String desktopCacheTelemetryCapacity(int used, int max) {
-    return '容量 $used / $max';
-  }
-
-  @override
-  String get desktopCacheMisses => '实时联网解析';
-
-  @override
-  String get desktopCacheStaleHits => '弱网应急保障';
-
-  @override
-  String get desktopCacheNegativeHits => '无效网址拦截';
-
-  @override
-  String get desktopCachePrefetchCount => '热点预取刷新';
-
-  @override
-  String get desktopCacheTopTitle => '高频访问网址排行';
-
-  @override
-  String get desktopCacheTopBody => '本地缓存命中次数最高的前 10 个域名';
-
-  @override
-  String get desktopCacheTopEmpty => '暂无高频网址访问记录';
-
-  @override
-  String desktopCacheTopHits(int count) {
-    return '$count 次';
-  }
-
-  @override
-  String get desktopCacheConfigTitle => '加速策略设置';
-
-  @override
-  String get desktopCacheConfigBody => '有效期规则、弱网容灾与热点预取';
-
-  @override
-  String get desktopCacheConfigSave => '保存策略';
-
-  @override
-  String get desktopCacheConfigSaved => '加速策略已保存并即时生效';
-
-  @override
-  String get desktopCacheFallbackTitle => '弱网回退';
-
-  @override
-  String get desktopCacheFallbackBody => '上游抖动时用过期记录兜底，以及先回旧值再刷新的乐观模式';
-
-  @override
-  String get desktopCacheModeLabel => '记录有效期计算方式';
-
-  @override
-  String get desktopCacheModeLimit => '限制最长有效期（推荐）';
-
-  @override
-  String get desktopCacheModeFollow => '完全遵从上游 TTL';
-
-  @override
-  String get desktopCacheModeFixed => '强制使用固定有效期';
-
-  @override
-  String get desktopCacheMaxTtl => '最长保存时长（秒）';
-
-  @override
-  String get desktopCacheMinTtl => '最短保留时长（秒）';
-
-  @override
-  String get desktopCacheFixedTtl => '固定有效期（秒）';
-
-  @override
-  String get desktopCacheMinTtlEnabled => '应用最短保留时长';
-
-  @override
-  String get desktopCacheStaleTitle => '弱网应急保障（旧记录兜底）';
-
-  @override
-  String get desktopCacheStaleBody => '上游超时或断网时，复用近期缓存防止网页报错';
-
-  @override
-  String get desktopCacheStaleSeconds => '应急保留期（秒）';
-
-  @override
-  String get desktopCacheOptimistic => '极速响应';
-
-  @override
-  String get desktopCacheOptimisticBody => '先返回缓存，后台静默刷新';
-
-  @override
-  String get desktopCacheNegative => '无效网址记忆加速';
-
-  @override
-  String get desktopCacheNegativeBody => '记住不存在或错误的域名，避免频繁重复重试';
-
-  @override
-  String get desktopCacheNegativeSeconds => '无效记录保留（秒）';
-
-  @override
-  String get desktopCachePrefetchTitle => '热点域名主动预取';
-
-  @override
-  String get desktopCachePrefetchBody => '在常用域名记录到期前提前回源刷新，避免首次访问等待';
-
-  @override
-  String get desktopCachePrefetchThreshold => '命中次数门槛';
-
-  @override
-  String get desktopCachePrefetchThresholdHint => '被访问达到该次数的域名才会预取';
-
-  @override
-  String get desktopCachePrefetchBefore => '剩余有效期阈值（毫秒）';
-
-  @override
-  String get desktopCachePrefetchBeforeHint => '剩余有效期低于该值时触发刷新';
-
-  @override
-  String get desktopCacheInvalidNumbers => '秒数与阈值需为正整数';
-
-  @override
-  String desktopCacheSaveFailed(String message) {
-    return '保存缓存配置失败：$message';
-  }
-
-  @override
-  String get desktopCacheLoadFailed => '读不到缓存配置';
-
-  @override
-  String get desktopCachePersistTitle => '缓存落盘持久化';
-
-  @override
-  String get desktopCachePersistBody =>
-      '把内存中的解析结果定期写入磁盘，服务重启后可直接读回。默认关闭：读取上次的应答会让「上游已变更但仍命中旧记录」更难察觉。';
-
-  @override
-  String get desktopCachePersistOn => '已开启';
-
-  @override
-  String get desktopCachePersistOff => '未开启';
-
-  @override
-  String get desktopCachePersistInterval => '定时落盘间隔（秒）';
-
-  @override
-  String get desktopCachePersistIntervalHint =>
-      '取值范围 30–86400；留空或 0 使用默认值 300。服务退出时总会额外写一次。';
-
-  @override
-  String get desktopCachePersistPath => '落盘文件';
-
-  @override
-  String desktopCachePersistLastError(String message) {
-    return '最近一次落盘失败：$message';
-  }
-
-  @override
-  String desktopCachePersistRecords(int count) {
-    return '当前 $count 条可落盘记录';
-  }
-
-  @override
-  String get desktopCacheSnapshotTitle => '磁盘快照';
-
-  @override
-  String get desktopCacheSnapshotBody => '把当前缓存立即写入落盘文件，或从文件读回上次的记录';
-
-  @override
-  String get desktopCachePersistDump => '立即落盘';
-
-  @override
-  String get desktopCachePersistLoad => '从文件恢复';
-
-  @override
-  String desktopCachePersistDumpDone(int count) {
-    return '已落盘 $count 条缓存记录';
-  }
-
-  @override
-  String desktopCachePersistLoadDone(int count) {
-    return '已从落盘文件恢复 $count 条缓存记录';
-  }
-
-  @override
-  String desktopCachePersistDumpFailed(String message) {
-    return '落盘失败：$message';
-  }
-
-  @override
-  String desktopCachePersistLoadFailed(String message) {
-    return '恢复失败：$message';
-  }
-
-  @override
-  String get desktopCachePersistLoadTitle => '确定从落盘文件恢复缓存？';
-
-  @override
-  String get desktopCachePersistLoadBody =>
-      '文件中仍有效的记录会被读入当前缓存，覆盖同名的现有条目；已过期的记录会被自动忽略。';
-
-  @override
-  String get desktopCachePersistToggleOn => '缓存落盘已开启';
-
-  @override
-  String get desktopCachePersistToggleOff => '缓存落盘已关闭';
-
-  @override
-  String get desktopCachePersistIntervalSaved => '落盘间隔已更新';
-
-  @override
-  String get desktopCacheExcludeTitle => '缓存排除规则';
-
-  @override
-  String get desktopCacheExcludeBody =>
-      '命中规则的域名既不读取也不写入缓存，每次都实时回源。适用于内网域名、动态 IP 探测等「缓存反而出错」的场景。';
-
-  @override
-  String get desktopCacheExcludeOff => '未启用';
-
-  @override
-  String desktopCacheExcludeCount(int count) {
-    return '$count 条规则';
-  }
-
-  @override
-  String get desktopCacheExcludeLabel => '正则表达式（一行一条，Go RE2 语法）';
-
-  @override
-  String get desktopCacheExcludeHint => '例如：\\.local\$';
-
-  @override
-  String get desktopCacheExcludeSave => '保存规则';
-
-  @override
-  String desktopCacheExcludeSaved(int count) {
-    return '已保存 $count 条排除规则';
-  }
-
-  @override
-  String get desktopCacheExcludeCleared => '已清空排除规则，全部域名重新参与缓存';
-
-  @override
-  String desktopCacheExcludeFailed(String message) {
-    return '保存排除规则失败：$message';
-  }
-
-  @override
-  String desktopCacheExcludeHits(int count) {
-    return '已拦截 $count 次缓存读写';
-  }
-
-  @override
-  String get desktopCacheExcludeReset => '撤销修改';
-
-  @override
-  String desktopCacheExcludeTooMany(int max) {
-    return '规则超过 $max 条，超出部分不会被保存';
-  }
-
-  @override
-  String desktopCacheExcludeTooLong(int count, int max) {
-    return '$count 条规则超过 $max 字符，保存时会被忽略';
-  }
-
-  @override
-  String get desktopCacheExcludePresetLocal => '内网单标签域';
-
-  @override
-  String get desktopCacheExcludePresetPtr => 'PTR 反查';
-
-  @override
-  String get desktopCacheExcludePresetProbe => '临时探测域';
-
-  @override
-  String get desktopCacheEntriesTitle => '已缓存域名明细';
-
-  @override
-  String get desktopCacheEntriesBody => '实时查看分片缓存记录、TTL 有效期与解析 IP';
-
-  @override
-  String get desktopCacheEntriesSearch => '搜索网址或记录类型…';
-
-  @override
-  String get desktopCacheEntriesEmpty => '未匹配到符合条件的缓存条目';
-
-  @override
-  String get desktopCacheEntriesNone => '缓存中暂无记录';
-
-  @override
-  String get desktopCacheEntriesLoadFailed => '读取缓存条目失败';
-
-  @override
-  String get desktopCacheFilterAll => '全部';
-
-  @override
-  String get desktopCacheFilterFresh => '有效记录';
-
-  @override
-  String get desktopCacheFilterStale => '应急备用';
-
-  @override
-  String get desktopCacheFilterNegative => '无效网址';
-
-  @override
-  String get desktopCacheEntryDomain => '网址 / 域名';
-
-  @override
-  String get desktopCacheEntryType => '类型';
-
-  @override
-  String get desktopCacheEntryStatus => '状态';
-
-  @override
-  String get desktopCacheEntryRemaining => '剩余有效期';
-
-  @override
-  String get desktopCacheEntryTtl => '初始 TTL';
-
-  @override
-  String get desktopCacheEntryHits => '命中次数';
-
-  @override
-  String get desktopCacheEntryIps => '解析 IP 列表';
-
-  @override
-  String get desktopCacheStatusFresh => '有效';
-
-  @override
-  String get desktopCacheStatusStale => '应急备用';
-
-  @override
-  String get desktopCacheStatusNegative => '无效网址';
-
-  @override
-  String get desktopCacheNoIps => '无';
-
-  @override
-  String get desktopHubRewrite => '自定义重写';
-
-  @override
-  String get desktopHubRewriteBody => '把域名指向指定 IP、别名或 TXT，本地直接权威应答';
-
-  @override
-  String get desktopRewriteTitle => '自定义 DNS 重写';
-
-  @override
-  String get desktopRewriteEngineTitle => '自定义 DNS 重写与域名伪装';
-
-  @override
-  String get desktopRewriteEngineBody =>
-      '匹配规则在上游解析前直接权威应答，无需等待外网请求；支持精确域名与 *.lan 泛域名。';
-
-  @override
-  String get desktopRewriteEngineOn => '重写引擎已就绪';
-
-  @override
-  String get desktopRewriteEngineOff => '重写引擎已停用';
-
-  @override
-  String get desktopRewriteEnabled => '重写已启用';
-
-  @override
-  String get desktopRewriteDisabled => '重写已关闭';
-
-  @override
-  String get desktopRewriteDefaultTtl => '默认生存期（秒）';
-
-  @override
-  String get desktopRewriteTtlSave => '保存';
-
-  @override
-  String get desktopRewriteTtlSaved => '默认重写 TTL 已保存';
-
-  @override
-  String get desktopRewriteTtlInvalid => 'TTL 需为正整数';
-
-  @override
-  String get desktopRewriteToggleOn => '自定义 DNS 重写已开启';
-
-  @override
-  String get desktopRewriteToggleOff => '自定义 DNS 重写已关闭';
-
-  @override
-  String desktopRewriteSaveFailed(String message) {
-    return '保存重写配置失败：$message';
-  }
-
-  @override
-  String get desktopRewriteLoadFailed => '读不到 DNS 重写配置';
-
-  @override
-  String get desktopRewriteRulesTitle => 'DNS 重写规则列表';
-
-  @override
-  String get desktopRewriteRulesBody => '当前生效的自定义伪装映射';
-
-  @override
-  String desktopRewriteRulesCount(int count) {
-    return '$count 条规则';
-  }
-
-  @override
-  String get desktopRewriteAdd => '添加重写规则';
-
-  @override
-  String get desktopRewriteSearch => '搜索域名、目标 IP 或别名…';
-
-  @override
-  String get desktopRewriteEmpty => '暂未添加任何 DNS 重写规则，点击上方按钮即可添加';
-
-  @override
-  String get desktopRewriteNoMatch => '未找到符合条件的重写规则';
-
-  @override
-  String get desktopRewriteResetSearch => '清除检索';
-
-  @override
-  String get desktopRewriteDomain => '匹配域名';
-
-  @override
-  String get desktopRewriteTypes => '类型';
-
-  @override
-  String get desktopRewriteTarget => '重写目标详情';
-
-  @override
-  String get desktopRewriteTtl => 'TTL';
-
-  @override
-  String get desktopRewriteActions => '操作';
-
-  @override
-  String get desktopRewriteEdit => '编辑重写规则';
-
-  @override
-  String get desktopRewriteDelete => '删除规则';
-
-  @override
-  String desktopRewriteSeconds(int count) {
-    return '$count 秒';
-  }
-
-  @override
-  String get desktopRewriteNoTarget => '无目标';
-
-  @override
-  String desktopRewriteRcodeOnly(String rcode) {
-    return '仅返回 $rcode，不返回任何记录';
-  }
-
-  @override
-  String get desktopRewriteDeleteTitle => '删除 DNS 重写规则';
-
-  @override
-  String desktopRewriteDeleteBody(String domain) {
-    return '确定要删除域名「$domain」的 DNS 重写规则吗？';
-  }
-
-  @override
-  String desktopRewriteRuleSaved(String domain) {
-    return '重写规则「$domain」已保存并生效';
-  }
-
-  @override
-  String desktopRewriteRuleDeleted(String domain) {
-    return '重写规则「$domain」已删除';
-  }
-
-  @override
-  String desktopRewriteRuleFailed(String message) {
-    return '保存重写规则失败：$message';
-  }
-
-  @override
-  String desktopRewriteDeleteFailed(String message) {
-    return '删除规则失败：$message';
-  }
-
-  @override
-  String get desktopRewriteAddTitle => '添加 DNS 重写与伪装规则';
-
-  @override
-  String get desktopRewriteEditTitle => '编辑 DNS 重写规则';
-
-  @override
-  String get desktopRewriteDomainLabel => '匹配域名';
-
-  @override
-  String get desktopRewriteDomainHint => '如 host.lan 或 *.home.local';
-
-  @override
-  String get desktopRewriteDomainHelp =>
-      '支持精确域名（如 router.lan）或泛域名（如 *.cluster.internal）';
-
-  @override
-  String get desktopRewriteDomainRequired => '请输入匹配域名（支持精准匹配或 *.lan 泛域名）';
-
-  @override
-  String get desktopRewriteTargetMode => '应答目标';
-
-  @override
-  String get desktopRewriteModeShortcut => '快捷目标';
-
-  @override
-  String get desktopRewriteModeRecords => '自定义记录';
-
-  @override
-  String get desktopRewriteTargetType => '重写目标类型';
-
-  @override
-  String get desktopRewriteTypeIp => 'A / AAAA 地址';
-
-  @override
-  String get desktopRewriteTypeCname => 'CNAME 别名';
-
-  @override
-  String get desktopRewriteTypeTxt => 'TXT 文本';
-
-  @override
-  String get desktopRewriteIpsLabel => 'IPv4 / IPv6 目标解析地址';
-
-  @override
-  String get desktopRewriteIpsHelp => '每行一个 IP 地址，支持多 IP 负载均衡返回';
-
-  @override
-  String get desktopRewriteCnameLabel => 'CNAME 目标重定向域名';
-
-  @override
-  String get desktopRewriteCnameHelp => '系统将自动遵循别名链进行递归解析';
-
-  @override
-  String get desktopRewriteTxtLabel => 'TXT 记录内容（每行一条）';
-
-  @override
-  String get desktopRewriteRecordsLabel => '自定义记录';
-
-  @override
-  String get desktopRewriteRecordAdd => '添加记录';
-
-  @override
-  String get desktopRewriteRecordEmpty => '尚未添加记录，点击「添加记录」开始';
-
-  @override
-  String get desktopRewriteRecordValueHint => '记录取值';
-
-  @override
-  String get desktopRewriteRecordsHelp =>
-      '取值语法与 AdGuard 的 dnsrewrite 一致：MX 填「优先级 主机」，SRV 填「优先级 权重 端口 目标」，HTTPS/SVCB 填「优先级 目标 参数…」。仅与匹配记录类型的查询返回这些记录。';
-
-  @override
-  String get desktopRewriteRcodeLabel => '应答码覆盖（可选）';
-
-  @override
-  String get desktopRewriteRcodeNone => '不覆盖（正常返回记录）';
-
-  @override
-  String get desktopRewriteRcodeWarning =>
-      '选择失败应答码后，本条规则只返回该错误码，不再返回任何记录；客户端会认为该域名不可用或被拒绝。';
-
-  @override
-  String get desktopRewriteTtlLabel => '生存时间 TTL（秒，可选）';
-
-  @override
-  String get desktopRewriteTtlHint => '留空则使用全局默认 TTL';
-
-  @override
-  String get desktopRewriteNeedIp => '请输入至少一个 IPv4 或 IPv6 目标解析地址';
-
-  @override
-  String get desktopRewriteNeedCname => '请输入 CNAME 别名重定向目标域名';
-
-  @override
-  String get desktopRewriteNeedTxt => '请输入至少一条 TXT 记录文本';
-
-  @override
-  String get desktopRewriteNeedRecord => '请至少添加一条有效记录（类型与取值均不能为空）';
-
-  @override
-  String get desktopRewriteChipEmpty => '空';
-
-  @override
-  String get desktopZoneSettingsTitle => '区域解析开关与默认 TTL';
-
-  @override
-  String get desktopZoneSettingsBody => '开关本地权威区域，并设置没有写明 TTL 的记录使用多久';
-
-  @override
-  String get desktopZoneTitle => '本地权威区（zone 文件）';
-
-  @override
-  String get desktopZoneBody =>
-      '整段声明一个名字空间由本机负责，区内未收录的名字返回权威 NODATA 而非转发上游；适合内网域名与局域网服务发现';
-
-  @override
-  String desktopZoneBadge(int zones, int maxZones, int records) {
-    return '$zones / $maxZones 区 · $records 个名字';
-  }
-
-  @override
-  String get desktopZoneRules =>
-      '区顶点及其以下所有名字都由本地负责：区里没有的名字会被权威地判为「不存在」，不会漏到公网，同名时也优先于 hosts 条目。因此顶点要写成完整后缀（如 lan.），而不是单条域名。区文件语法遵循 RFC 1035，INCLUDE 指令出于安全考虑一律拒绝。';
-
-  @override
-  String get desktopZoneDefaultTtl => '默认 TTL（秒）';
-
-  @override
-  String get desktopZoneTtlSaved => '本地权威区默认 TTL 已保存';
-
-  @override
-  String get desktopZoneTtlInvalid => 'TTL 需为正整数';
-
-  @override
-  String get desktopZoneToggleOn => '本地权威区已启用';
-
-  @override
-  String get desktopZoneToggleOff => '本地权威区已停用';
-
-  @override
-  String desktopZoneSaveFailed(String message) {
-    return '保存本地权威区配置失败：$message';
-  }
-
-  @override
-  String get desktopZoneLoadFailed => '读不到本地权威区配置';
-
-  @override
-  String desktopZoneLimit(int records) {
-    return '合计上限 $records 条记录；超出部分会被截断并在区上标注。';
-  }
-
-  @override
-  String get desktopZoneAdd => '添加区';
-
-  @override
-  String get desktopZoneSaveAll => '保存全部';
-
-  @override
-  String get desktopZoneSaved => '本地权威区配置已保存并生效';
-
-  @override
-  String get desktopZoneEmpty => '尚未配置任何本地权威区';
-
-  @override
-  String desktopZoneMaxZones(int max) {
-    return '最多支持 $max 个区，请先删除不再使用的区';
-  }
-
-  @override
-  String get desktopZoneOriginHint => '区顶点，如 lan.';
-
-  @override
-  String desktopZoneDeleted(String origin) {
-    return '区「$origin」已删除';
-  }
-
-  @override
-  String get desktopZoneUnnamed => '（未命名）';
-
-  @override
-  String get desktopZoneStateDisabled => '已停用';
-
-  @override
-  String get desktopZoneStatePending => '待构建';
-
-  @override
-  String get desktopZoneStateFailed => '解析失败';
-
-  @override
-  String desktopZoneStateTruncated(int count) {
-    return '已加载 $count 条（截断）';
-  }
-
-  @override
-  String desktopZoneStateLoaded(int count) {
-    return '已加载 $count 条';
-  }
-
-  @override
-  String get desktopZoneFailedReason => '该区未被加载';
-
-  @override
-  String get desktopZoneExpand => '展开编辑';
-
-  @override
-  String get desktopZoneCollapse => '收起';
-
-  @override
-  String get desktopZoneDelete => '删除该区';
-
-  @override
-  String get desktopZoneContent => '区文件内容';
-
-  @override
-  String get desktopZonePreview => '预演解析';
-
-  @override
-  String get desktopZonePreviewNote => '用与后端一致的解析路径试跑一次；改动需点「保存全部」才会生效。';
-
-  @override
-  String get desktopZonePreviewEmpty => '（空区，无记录）';
-
-  @override
-  String desktopZonePreviewMore(int count) {
-    return '… 其余 $count 条已省略';
-  }
-
-  @override
-  String get desktopHubDns64 => 'IPv6 / DNS64';
-
-  @override
-  String get desktopHubDns64Body => '为纯 IPv6 网络把仅有 IPv4 记录的目标合成为 AAAA';
-
-  @override
-  String get desktopDns64Title => 'IPv6 / DNS64';
-
-  @override
-  String get desktopDns64Refresh => '刷新 DNS64 配置';
-
-  @override
-  String get desktopDns64CardTitle => 'DNS64 IPv6-only 网络过渡合成';
-
-  @override
-  String get desktopDns64CardBody =>
-      '遵循 RFC 6052 / RFC 6147，为纯 IPv6 终端自动把仅有 A 记录的目标合成为 AAAA';
-
-  @override
-  String get desktopDns64EngineOn => 'DNS64 合成中';
-
-  @override
-  String get desktopDns64EngineOff => '功能已停用';
-
-  @override
-  String get desktopDns64Description =>
-      '当客户端位于纯 IPv6 网络并通过 NAT64 网关访问互联网时，若目标域名只有 IPv4（A）记录而没有原生 IPv6（AAAA）记录，DNS64 引擎会用指定前缀把 IPv4 地址合成映射为 AAAA 返回，让终端仍能端到端访问。';
-
-  @override
-  String get desktopDns64PrefixesCardTitle => '合成前缀';
-
-  @override
-  String get desktopDns64PrefixesLabel => '用于合成的 IPv6 前缀（每行一个）';
-
-  @override
-  String get desktopDns64PrefixesHelper =>
-      '每行一个 IPv6 网段。支持 /32、/40、/48、/56、/64、/96；留空时服务使用知名公共前缀 64:ff9b::/96。';
-
-  @override
-  String get desktopDns64FillWellKnown => '填入标准前缀';
-
-  @override
-  String get desktopDns64NoteTitle => '智能保护机制';
-
-  @override
-  String get desktopDns64NoteBody =>
-      '服务内置 RFC 6147 排除网段（回环、链路本地、IPv4-mapped 与自身前缀），避免回环与重复嵌套合成；目标已有原生 AAAA 时直接返回原生记录，不做额外合成。';
-
-  @override
-  String get desktopDns64Save => '保存 DNS64 配置';
-
-  @override
-  String get desktopDns64Saving => '保存中…';
-
-  @override
-  String get desktopDns64Saved => 'DNS64 过渡合成配置已更新';
-
-  @override
-  String get desktopDns64ToggleOn => 'DNS64 过渡合成已开启';
-
-  @override
-  String get desktopDns64ToggleOff => 'DNS64 过渡合成已关闭';
-
-  @override
-  String desktopDns64SaveFailed(String message) {
-    return '更新 DNS64 配置失败：$message';
-  }
-
-  @override
-  String get desktopDns64LoadFailed => '读不到 DNS64 配置';
-
-  @override
-  String get desktopHubFilterLists => '规则订阅';
-
-  @override
-  String get desktopHubFilterListsBody => '在线规则库与本地规则文件，按订阅批量生效';
-
-  @override
-  String get desktopFilterListsPageTitle => '规则订阅';
-
-  @override
-  String get desktopFilterListsRefresh => '刷新订阅状态';
-
-  @override
-  String get desktopFilterSummaryTitle => '规则拦截总览';
-
-  @override
-  String get desktopFilterEngineOn => '防护生效中';
-
-  @override
-  String get desktopFilterEngineOff => '防护已关闭';
-
-  @override
-  String get desktopFilterPausedChip => '已暂停';
-
-  @override
-  String get desktopFilterBlocked => '已拦截请求';
-
-  @override
-  String get desktopFilterTimes => '次';
-
-  @override
-  String get desktopFilterRulesUnit => '条';
-
-  @override
-  String get desktopFilterActiveLists => '已启用规则库';
-
-  @override
-  String get desktopFilterListsUnit => '个';
-
-  @override
-  String desktopFilterPausedRemaining(String remaining) {
-    return '拦截已暂停，剩余 $remaining 后自动恢复';
-  }
-
-  @override
-  String desktopFilterPauseDays(int days) {
-    return '$days 天';
-  }
-
-  @override
-  String desktopFilterPauseHours(int hours, int minutes) {
-    return '$hours 小时 $minutes 分';
-  }
-
-  @override
-  String desktopFilterPauseMinutes(int minutes, int seconds) {
-    return '$minutes 分 $seconds 秒';
-  }
-
-  @override
-  String desktopFilterPauseSeconds(int seconds) {
-    return '$seconds 秒';
-  }
-
-  @override
-  String get desktopFilterListsTitle => '规则订阅库';
-
-  @override
-  String get desktopFilterListsBody =>
-      '支持在线订阅链接与本地规则文本文件；每个规则库独立开关，全部更新会逐个重新拉取。';
-
-  @override
-  String desktopFilterListsCount(int count) {
-    return '$count 个规则库';
-  }
-
-  @override
-  String get desktopFilterListUpdateAll => '全部更新';
-
-  @override
-  String get desktopFilterListAdd => '添加规则库';
-
-  @override
-  String get desktopFilterListsEmpty => '暂无规则订阅库';
-
-  @override
-  String get desktopFilterListsEmptyBody =>
-      '添加 AdGuard 语法规则链接或本地 Hosts 规则文件后，规则会随订阅自动下载并生效。';
-
-  @override
-  String desktopFilterListDefaultName(int index) {
-    return '订阅列表 $index';
-  }
-
-  @override
-  String get desktopFilterListAdded => '规则库已添加并开始下载';
-
-  @override
-  String get desktopFilterListAllUpdated => '全部规则库已更新完成';
-
-  @override
-  String get desktopFilterListUpdated => '规则库已更新';
-
-  @override
-  String desktopFilterActionFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String desktopFilterListToggleOn(String name) {
-    return '已启用规则库：$name';
-  }
-
-  @override
-  String desktopFilterListToggleOff(String name) {
-    return '已停用规则库：$name';
-  }
-
-  @override
-  String get desktopFilterListDeleteTitle => '删除规则库';
-
-  @override
-  String desktopFilterListDeleteBody(String name) {
-    return '确定要删除规则库「$name」吗？删除后其包含的拦截规则将不再生效。';
-  }
-
-  @override
-  String get desktopFilterListDeleteConfirm => '确定删除';
-
-  @override
-  String get desktopFilterListDeleted => '规则库已删除';
-
-  @override
-  String desktopFilterListRules(int count) {
-    return '$count 条规则';
-  }
-
-  @override
-  String get desktopFilterListEnabled => '规则拦截生效中';
-
-  @override
-  String get desktopFilterListDisabled => '已暂停拦截';
-
-  @override
-  String get desktopFilterListNeverUpdated => '最后更新：未更新';
-
-  @override
-  String desktopFilterListUpdatedAt(String time) {
-    return '最后更新：$time';
-  }
-
-  @override
-  String get desktopFilterListRefreshOne => '立即更新此规则库';
-
-  @override
-  String get desktopFilterListDelete => '删除此规则库';
-
-  @override
-  String get desktopFilterListHealthOk => '已同步';
-
-  @override
-  String get desktopFilterListHealthUnchanged => '未变更';
-
-  @override
-  String get desktopFilterListHealthCached => '沿用缓存';
-
-  @override
-  String get desktopFilterListHealthFailed => '更新失败';
-
-  @override
-  String get desktopFilterListHealthOkBody => '本次拉取获取到新内容并已生效';
-
-  @override
-  String get desktopFilterListHealthUnchangedBody => '服务端返回 304，本地副本仍然有效';
-
-  @override
-  String get desktopFilterListHealthCachedBody => '拉取失败，继续使用上次缓存内容';
-
-  @override
-  String get desktopFilterListHealthFailedBody => '拉取失败且无可用缓存';
-
-  @override
-  String get desktopFilterListAddTitle => '添加规则订阅库';
-
-  @override
-  String get desktopFilterListAddBody => '输入规则库的名称，以及在线订阅网址（URL）或本地文件路径。';
-
-  @override
-  String get desktopFilterListNameLabel => '规则库名称';
-
-  @override
-  String get desktopFilterListNameHint => '例如：广告拦截通用规则';
-
-  @override
-  String get desktopFilterListUrlLabel => '订阅链接 / 文件路径';
-
-  @override
-  String get desktopFilterListUrlHint => 'https://… 或本地文件路径';
-
-  @override
-  String get desktopFilterListAddConfirm => '添加并下载';
-
-  @override
-  String get desktopFilterListNeedUrl => '请输入有效的规则源 URL 或本地文件路径';
-
-  @override
-  String get desktopFilterListsLoadFailed => '读不到规则订阅库';
-
-  @override
-  String get desktopHubFilterRules => '自定义规则';
-
-  @override
-  String get desktopHubFilterRulesBody => '手写 AdGuard 语法规则，保存后立即热重载生效';
-
-  @override
-  String get desktopFilterRulesPageTitle => '自定义规则';
-
-  @override
-  String get desktopFilterRulesRefresh => '重新读取自定义规则';
-
-  @override
-  String get desktopFilterRulesEditorTitle => '自定义规则文本编辑器';
-
-  @override
-  String get desktopFilterRulesEditorBody => '编辑用户专属的过滤拦截或放行清单，每行一条';
-
-  @override
-  String get desktopFilterRulesSave => '保存规则';
-
-  @override
-  String get desktopFilterRulesSaving => '保存中…';
-
-  @override
-  String get desktopFilterRulesSaved => '自定义规则已保存生效';
-
-  @override
-  String desktopFilterRulesSaveFailed(String message) {
-    return '保存自定义规则失败：$message';
-  }
-
-  @override
-  String get desktopFilterRulesLoadFailed => '读不到自定义规则';
-
-  @override
-  String get desktopFilterRulesPlaceholder => '在此输入自定义拦截或信任规则，每行一条…';
-
-  @override
-  String desktopFilterRulesLineCount(int count) {
-    return '行数统计：$count 条规则';
-  }
-
-  @override
-  String get desktopFilterRulesHint => '每行一条规则，以 ! 开头的行为注释；修改后点击保存立即热重载生效。';
-
-  @override
-  String get desktopFilterGuideTitle => 'AdGuard 语法速查指南';
-
-  @override
-  String get desktopFilterGuideBody => '主流广告过滤与信任规则编写格式';
-
-  @override
-  String get desktopFilterGuideCommon => '常用格式';
-
-  @override
-  String get desktopFilterGuideExempt => '豁免放行';
-
-  @override
-  String get desktopFilterGuideCompat => '传统兼容';
-
-  @override
-  String get desktopFilterGuidePriority => '强制优先';
-
-  @override
-  String get desktopFilterGuideRewrite => '应答重写';
-
-  @override
-  String get desktopFilterGuideDomainTitle => '域名与子域名拦截';
-
-  @override
-  String get desktopFilterGuideDomainBody =>
-      '匹配并拦截 example.com 及其所有子域名（如 ad.example.com）。';
-
-  @override
-  String get desktopFilterGuideAllowTitle => '白名单信任放行';
-
-  @override
-  String get desktopFilterGuideAllowBody => '即便其他规则命中，也始终允许解析 safe.com。';
-
-  @override
-  String get desktopFilterGuideHostsTitle => 'Hosts 文件格式';
-
-  @override
-  String get desktopFilterGuideHostsBody => '兼容标准 Hosts 文件屏蔽特定域名的语法。';
-
-  @override
-  String get desktopFilterGuideImportantTitle => '最高优先级强力拦截';
-
-  @override
-  String get desktopFilterGuideImportantBody => '忽略所有白名单规则，强制拦截该域名。';
-
-  @override
-  String get desktopFilterGuideRewriteTitle => '应答重写';
-
-  @override
-  String get desktopFilterGuideRewriteBody =>
-      '无需上游应答，直接按规则给出结果：支持 IPv4/IPv6 地址、域名（CNAME）、NOERROR;A;1.2.3.4 这类显式写法，以及 REFUSED / NXDOMAIN 等应答码；显式写法还支持 MX、SRV、NS、PTR、TXT、HTTPS、SVCB。优先级高于一切拦截与放行规则，用 @@||nas.lan^\$dnsrewrite 可取消该域名的全部重写。';
-
-  @override
-  String get desktopFilterGuideFooter => '提示：每行一条规则，以 ! 开头的行为注释。';
-
-  @override
-  String get desktopHubFilterConfig => '拦截方式';
-
-  @override
-  String get desktopHubFilterConfigBody => '应答模式、阻断地址、更新周期、临时暂停与高级拦截';
-
-  @override
-  String get desktopFilterConfigPageTitle => '拦截方式';
-
-  @override
-  String get desktopFilterConfigRefresh => '刷新拦截配置';
-
-  @override
-  String get desktopFilterConfigLoadFailed => '读不到拦截配置';
-
-  @override
-  String desktopFilterConfigSaveFailed(String message) {
-    return '保存拦截配置失败：$message';
-  }
-
-  @override
-  String get desktopFilterEngineOnMessage => '规则拦截防护已开启';
-
-  @override
-  String get desktopFilterEngineOffMessage => '规则拦截防护已关闭';
-
-  @override
-  String get desktopFilterModeTitle => '拦截响应处理方式';
-
-  @override
-  String get desktopFilterModeBody => '命中拦截规则时向客户端返回的应答';
-
-  @override
-  String get desktopFilterModeSave => '保存策略与参数';
-
-  @override
-  String get desktopFilterModeSaving => '保存中…';
-
-  @override
-  String get desktopFilterModeSaved => '拦截策略配置已保存';
-
-  @override
-  String get desktopFilterModeParamsTitle => '规则自动更新与阻断地址';
-
-  @override
-  String get desktopFilterModeParamsBody => '被拦截域名得到的应答地址，以及规则列表的自动更新周期';
-
-  @override
-  String get desktopFilterModeBlockingIPv4 => '阻断 IPv4 响应地址';
-
-  @override
-  String get desktopFilterModeBlockingIPv6 => '阻断 IPv6 响应地址';
-
-  @override
-  String get desktopFilterModeInterval => '规则库同步周期（小时）';
-
-  @override
-  String get desktopFilterModeIntervalHelper => '默认 24 小时';
-
-  @override
-  String get desktopFilterModeInvalid => '同步周期需为正整数，阻断地址不能为空';
-
-  @override
-  String get desktopFilterModeNullIp => '立即返回空地址（0.0.0.0 / ::）';
-
-  @override
-  String get desktopFilterModeNullIpBody => '以极速终止广告和弹窗资源加载，不会引起浏览器反复重发请求。';
-
-  @override
-  String get desktopFilterModeNxdomain => '提示域名不存在（NXDOMAIN）';
-
-  @override
-  String get desktopFilterModeNxdomainBody => '告知客户端该网址不存在，部分标准网络软件将放弃进一步连接探测。';
-
-  @override
-  String get desktopFilterModeRefused => '明确拒绝请求（REFUSED）';
-
-  @override
-  String get desktopFilterModeRefusedBody => '向客户端返回拒绝码，表示请求被 DNS 防火墙安全策略主动阻止。';
-
-  @override
-  String get desktopFilterAdvancedTitle => '高级拦截能力';
-
-  @override
-  String get desktopFilterAdvancedBody => '针对绕过手法的增强拦截策略，默认关闭，按需开启';
-
-  @override
-  String get desktopFilterAdvancedResponseTitle => '响应侧别名链深度复检';
-
-  @override
-  String get desktopFilterAdvancedResponseBody =>
-      '对上游应答中的 CNAME 目标与 A/AAAA 所属名二次匹配黑名单，拦截「查询域名合法但别名指向黑名单域」的深链绕过；缓存命中的应答同样复检。';
-
-  @override
-  String get desktopFilterAdvancedResponseOn => '响应侧别名链复检已开启';
-
-  @override
-  String get desktopFilterAdvancedResponseOff => '响应侧别名链复检已关闭';
-
-  @override
-  String get desktopFilterAdvancedAllowlistTitle => '仅白名单模式';
-
-  @override
-  String get desktopFilterAdvancedAllowlistBody =>
-      '开启后仅命中放行规则（@@ 例外）的查询才被放行，其余一律阻断；本地 Hosts / 重写 / 内网域名等本地权威应答不受影响。';
-
-  @override
-  String get desktopFilterAdvancedAllowlistWarning =>
-      '请先确保已配置充分的放行白名单，否则可能造成大面积域名解析失败。';
-
-  @override
-  String get desktopFilterAdvancedAllowlistOn => '仅白名单模式已开启';
-
-  @override
-  String get desktopFilterAdvancedAllowlistOff => '仅白名单模式已关闭';
-
-  @override
-  String get desktopFilterAdvancedBogusTitle => '伪应答纠正';
-
-  @override
-  String get desktopFilterAdvancedBogusBody =>
-      '部分网络在域名不存在时返回固定的导航或广告页地址；开启后应答地址落在下方清单内即判定为上游劫持，就地改写为 NXDOMAIN。';
-
-  @override
-  String get desktopFilterAdvancedBogusOn => '伪应答纠正已开启';
-
-  @override
-  String get desktopFilterAdvancedBogusOff => '伪应答纠正已关闭';
-
-  @override
-  String get desktopFilterAdvancedBogusListLabel =>
-      '劫持地址清单（一行一条，支持 IP 与 CIDR 网段）';
-
-  @override
-  String desktopFilterAdvancedBogusSuspicious(String entries) {
-    return '以下条目格式可疑，保存时若无法解析将被服务忽略：$entries';
-  }
-
-  @override
-  String get desktopFilterAdvancedBogusPresets => '快捷填入：';
-
-  @override
-  String get desktopFilterAdvancedBogusReset => '撤销修改';
-
-  @override
-  String get desktopFilterAdvancedBogusSave => '保存地址清单';
-
-  @override
-  String desktopFilterAdvancedBogusSaved(int count) {
-    return '已保存 $count 条劫持地址';
-  }
-
-  @override
-  String get desktopFilterAdvancedBogusCleared => '劫持地址清单已清空';
-
-  @override
-  String get desktopFilterPauseBody => '在指定时长内整体放行全部查询，到期自动恢复（重启服务亦恢复）。';
-
-  @override
-  String get desktopFilterPauseDuration => '暂停时长';
-
-  @override
-  String get desktopFilterPauseAction => '暂停';
-
-  @override
-  String get desktopFilterPauseResume => '立即恢复拦截';
-
-  @override
-  String get desktopFilterPauseStarted => '拦截已暂停';
-
-  @override
-  String get desktopFilterPauseResumed => '拦截已恢复';
-
-  @override
-  String get desktopFilterPauseActiveTitle => '拦截已暂停';
-
-  @override
-  String desktopFilterPauseActiveBody(String remaining) {
-    return '剩余 $remaining 后自动恢复拦截';
-  }
-
-  @override
-  String desktopFilterPauseMinutesOnly(int minutes) {
-    return '$minutes 分钟';
-  }
-
-  @override
-  String get desktopFilterPauseOneHour => '1 小时';
-
-  @override
-  String get desktopFilterPauseEightHours => '8 小时';
-
-  @override
-  String get desktopHubFilterSchedule => '时间计划';
-
-  @override
-  String get desktopHubFilterScheduleBody => '只在指定时段执行拦截，其余时间自动放行';
-
-  @override
-  String get desktopSchedulePageTitle => '时间计划';
-
-  @override
-  String get desktopScheduleRefresh => '刷新时间计划';
-
-  @override
-  String get desktopScheduleLoadFailed => '读不到时间计划';
-
-  @override
-  String get desktopScheduleTitle => '分时拦截 · 时间计划';
-
-  @override
-  String get desktopScheduleBody => '仅在指定时段内执行广告拦截，其余时间自动放行';
-
-  @override
-  String get desktopScheduleBadgeOff => '未启用 · 拦截常开';
-
-  @override
-  String get desktopScheduleBadgeActive => '拦截生效中';
-
-  @override
-  String get desktopScheduleBadgePaused => '计划暂停 · 放行全部';
-
-  @override
-  String get desktopScheduleEnable => '启用分时拦截';
-
-  @override
-  String get desktopScheduleEnableBody => '关闭时拦截始终生效；开启后仅在下列时间窗口内执行拦截。';
-
-  @override
-  String get desktopScheduleNoEnabled => '当前无已启用计划，拦截将保持常开。请至少启用一条计划以限制拦截时段。';
-
-  @override
-  String get desktopScheduleSave => '保存计划';
-
-  @override
-  String get desktopScheduleSaving => '保存中…';
-
-  @override
-  String get desktopScheduleSaved => '时间计划已保存并生效';
-
-  @override
-  String desktopScheduleSaveFailed(String message) {
-    return '保存时间计划失败：$message';
-  }
-
-  @override
-  String get desktopScheduleAdd => '新增时间计划';
-
-  @override
-  String get desktopScheduleName => '计划名称';
-
-  @override
-  String get desktopScheduleEnabled => '启用该计划';
-
-  @override
-  String get desktopScheduleStart => '生效开始时刻';
-
-  @override
-  String get desktopScheduleEnd => '生效结束时刻';
-
-  @override
-  String get desktopScheduleEndHelper => '早于开始即跨夜';
-
-  @override
-  String get desktopScheduleWeekdays => '生效星期';
-
-  @override
-  String get desktopScheduleEveryDay => '每天';
-
-  @override
-  String get desktopScheduleDelete => '删除该计划';
-
-  @override
-  String get desktopScheduleDeleteTitle => '删除时间计划';
-
-  @override
-  String get desktopScheduleDeleteBody => '确定要删除该时间计划吗？保存后不再生效。';
-
-  @override
-  String get desktopScheduleDeleteConfirm => '删除';
-
-  @override
-  String get desktopWeekdayMon => '一';
-
-  @override
-  String get desktopWeekdayTue => '二';
-
-  @override
-  String get desktopWeekdayWed => '三';
-
-  @override
-  String get desktopWeekdayThu => '四';
-
-  @override
-  String get desktopWeekdayFri => '五';
-
-  @override
-  String get desktopWeekdaySat => '六';
-
-  @override
-  String get desktopWeekdaySun => '日';
-
-  @override
-  String get desktopHubFilterServices => '应用拦截';
-
-  @override
-  String get desktopHubFilterServicesBody => '内置应用与网站规则，一键整组拦截，可按周计划放行';
-
-  @override
-  String get desktopServicesPageTitle => '应用拦截';
-
-  @override
-  String get desktopServicesRefresh => '刷新应用拦截';
-
-  @override
-  String get desktopServicesLoadFailed => '读不到内置服务目录';
-
-  @override
-  String get desktopServicesGroupsTitle => '整组拦截';
-
-  @override
-  String get desktopServicesGroupsBody => '一次性开关整组应用与网站，不必逐个点选';
-
-  @override
-  String get desktopServicesTitle => '应用与网站拦截';
-
-  @override
-  String get desktopServicesBody =>
-      '一键拦截常见应用与网站，规则随程序内置、无需联网拉取；可与订阅规则、自定义规则叠加生效。';
-
-  @override
-  String desktopServicesCount(int blocked, int total) {
-    return '$blocked / $total 项已拦截';
-  }
-
-  @override
-  String get desktopServicesClearAll => '全部取消';
-
-  @override
-  String get desktopServicesCleared => '已取消全部应用拦截';
-
-  @override
-  String get desktopServicesSearchHint => '搜索应用名称、域名或规则…';
-
-  @override
-  String get desktopServicesGroupFilter => '分组筛选';
-
-  @override
-  String get desktopServicesAllGroups => '全部分组';
-
-  @override
-  String desktopServicesGroupItem(String name, int count) {
-    return '$name ($count)';
-  }
-
-  @override
-  String desktopServicesGroupChip(String name, int count) {
-    return '$name · $count';
-  }
-
-  @override
-  String desktopServicesActiveRules(int count) {
-    return '展开 $count 条规则';
-  }
-
-  @override
-  String get desktopServicesEmpty => '内置服务目录为空';
-
-  @override
-  String get desktopServicesNoMatch => '未找到符合条件的应用';
-
-  @override
-  String desktopServicesBlocked(String name) {
-    return '已拦截：$name';
-  }
-
-  @override
-  String desktopServicesUnblocked(String name) {
-    return '已取消拦截：$name';
-  }
-
-  @override
-  String desktopServicesActionFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String desktopServicesGroupOn(String name) {
-    return '已整组拦截：$name';
-  }
-
-  @override
-  String desktopServicesGroupOff(String name) {
-    return '已取消整组拦截：$name';
-  }
-
-  @override
-  String get desktopServicesByGroup => '随分组';
-
-  @override
-  String get desktopServicesScheduleInside => '计划内';
-
-  @override
-  String get desktopServicesScheduleOutside => '计划外';
-
-  @override
-  String desktopServicesRuleCount(String group, int count) {
-    return '$group · $count 条规则';
-  }
-
-  @override
-  String get desktopServicesScheduleEdit => '编辑每周生效计划';
-
-  @override
-  String get desktopServicesShowRules => '查看或收起规则';
-
-  @override
-  String desktopServicesScheduleTitle(String name) {
-    return '$name 的每周生效计划';
-  }
-
-  @override
-  String get desktopServicesScheduleBody =>
-      '仅在命中的时间窗口内拦截该应用，其余时间正常放行。未配置任何计划时恒为拦截；需要某段时间完全不限制时，取消勾选该服务比清空计划更直观。';
-
-  @override
-  String get desktopServicesScheduleSave => '保存计划';
-
-  @override
-  String desktopServicesScheduleSaved(String name) {
-    return '「$name」的每周生效计划已保存';
-  }
-
-  @override
-  String desktopServicesScheduleRemoved(String name) {
-    return '「$name」已恢复为始终拦截';
-  }
-
-  @override
-  String get desktopHubPrivacy => '安全隐私';
-
-  @override
-  String get desktopHubPrivacyBody => '协议加固、ECS 子网隐私与内置重绑定 / hosts 防御';
-
-  @override
-  String get desktopPrivacyPageTitle => '安全隐私';
-
-  @override
-  String get desktopPrivacyRefresh => '刷新安全隐私配置';
-
-  @override
-  String get desktopPrivacyLoadFailed => '读不到安全隐私配置';
-
-  @override
-  String desktopPrivacySaveFailed(String message) {
-    return '保存失败：$message';
-  }
-
-  @override
-  String get desktopPrivacyProtocolTitle => '协议隐私与外泄防御';
-
-  @override
-  String get desktopPrivacyProtocolBody =>
-      '阻断局域网私有 PTR 与单标签域名泄露，防御 ECH 加密绕过与报文侧信道嗅探';
-
-  @override
-  String get desktopPrivacyBlockTitle => '记录类型拦截';
-
-  @override
-  String get desktopPrivacyBlockBody => 'ECH、ANY 与 IPv6 查询的拦截策略，与协议加固分开设置';
-
-  @override
-  String get desktopPrivacyEdeTitle => 'Extended DNS Errors（EDE 错误诊断扩展）';
-
-  @override
-  String get desktopPrivacyEdeBody =>
-      '向支持的客户端在 OPT 报文中透明返回 RFC 8914 扩展错误代码与原因说明（如策略阻断、速率超限、Rebind 拦截或上游解析故障）。';
-
-  @override
-  String get desktopPrivacyEdeOn => 'EDE 错误诊断已开启';
-
-  @override
-  String get desktopPrivacyEdeOff => 'EDE 错误诊断已关闭';
-
-  @override
-  String get desktopPrivacyPtrTitle => '私有反向 PTR 解析防泄露';
-
-  @override
-  String get desktopPrivacyPtrBody =>
-      '阻断局域网私有 IP 的反向域名 PTR 查询向公共上游泄露；命中且未在本地绑定的反查直接返回权威 NXDOMAIN。';
-
-  @override
-  String get desktopPrivacyPtrOn => '私有 PTR 防泄露已开启';
-
-  @override
-  String get desktopPrivacyPtrOff => '私有 PTR 防泄露已关闭';
-
-  @override
-  String get desktopPrivacyUnqualifiedTitle => '阻止无点单标签域名外泄';
-
-  @override
-  String get desktopPrivacyUnqualifiedBody =>
-      '拦截没有顶级域名点分隔的内部单标签请求（如 router、printer），防止拼写错误或搜索域缺失导致内网主机名泄漏至公共递归解析器。';
-
-  @override
-  String get desktopPrivacyUnqualifiedOn => '单标签域名防外泄已开启';
-
-  @override
-  String get desktopPrivacyUnqualifiedOff => '单标签域名防外泄已关闭';
-
-  @override
-  String get desktopPrivacyEchTitle => '剥离 ECH（加密 ClientHello）';
-
-  @override
-  String get desktopPrivacyEchBody =>
-      '从上游 HTTPS / SVCB 资源记录中过滤剥离 ech 参数，防止客户端用 TLS 1.3 ECH 隐藏真实域名而绕过本地审计。';
-
-  @override
-  String get desktopPrivacyEchOn => 'ECH 剥离已开启';
-
-  @override
-  String get desktopPrivacyEchOff => 'ECH 剥离已关闭';
-
-  @override
-  String get desktopPrivacyAnyTitle => 'ANY 查询最小化';
-
-  @override
-  String get desktopPrivacyAnyBody =>
-      'ANY 查询常被用于 DNS 放大攻击，也会让按记录类型下发的拦截失效；开启后本机不再转发 ANY，而是直接给出最小化应答。';
-
-  @override
-  String get desktopPrivacyAnyOn => 'ANY 查询最小化已开启';
-
-  @override
-  String get desktopPrivacyAnyOff => 'ANY 查询最小化已关闭';
-
-  @override
-  String get desktopPrivacyAnyModeLabel => '应答形式';
-
-  @override
-  String get desktopPrivacyAnyModeNotimp => 'NOTIMP（推荐）';
-
-  @override
-  String get desktopPrivacyAnyModeNotimpBody =>
-      '明确回应「不支持该查询」，客户端不会把它误当成一次有效解析。';
-
-  @override
-  String get desktopPrivacyAnyModeRfc => 'RFC 8482 最小应答';
-
-  @override
-  String get desktopPrivacyAnyModeRfcBody =>
-      '返回 NOERROR + 一条 HINFO(\"RFC8482\")，语义更准确，但需要客户端理解这一约定。';
-
-  @override
-  String get desktopPrivacyAnyModeSaved => 'ANY 最小化应答形式已保存';
-
-  @override
-  String get desktopPrivacyIpv6Title => '过滤 IPv6（AAAA）查询';
-
-  @override
-  String get desktopPrivacyIpv6Body =>
-      '对所有 AAAA 查询秒级应答权威 NODATA，并在 HTTPS 查询中过滤 ipv6hint；在 IPv6 不佳的网络里消除双栈重试导致的卡顿。';
-
-  @override
-  String get desktopPrivacyIpv6On => 'IPv6 过滤已开启';
-
-  @override
-  String get desktopPrivacyIpv6Off => 'IPv6 过滤已关闭';
-
-  @override
-  String get desktopPrivacyPaddingTitle => 'EDNS0 报文填充大小';
-
-  @override
-  String get desktopPrivacyPaddingBody => '对加密 DNS 填充至固定块，防范报文长度指纹侧信道分析。';
-
-  @override
-  String desktopPrivacyPaddingValue(int size) {
-    return '$size 字节';
-  }
-
-  @override
-  String get desktopPrivacyPaddingSaved => 'EDNS0 填充大小已保存';
-
-  @override
-  String get desktopPrivacyEcsTitle => 'EDNS Client Subnet（ECS 策略）';
-
-  @override
-  String get desktopPrivacyEcsBody =>
-      'ECS 允许向递归解析器携带客户端所在子网以优化 CDN 调度，但未经处理的原生 ECS 会向上游泄露家庭或企业内网真实网段。';
-
-  @override
-  String get desktopPrivacyEcsOn => 'ECS 策略已生效';
-
-  @override
-  String get desktopPrivacyEcsOff => '策略已停用';
-
-  @override
-  String get desktopPrivacyEcsOnMessage => 'ECS 策略已开启';
-
-  @override
-  String get desktopPrivacyEcsOffMessage => 'ECS 策略已关闭';
-
-  @override
-  String get desktopPrivacyEcsStripTitle => '剥离请求中的真实客户端子网';
-
-  @override
-  String get desktopPrivacyEcsStripBody =>
-      '开启后转发查询时主动抹除客户端发送的真实出口子网信息，保障家庭或内网各设备的网络隐私。';
-
-  @override
-  String get desktopPrivacyEcsStripOn => '真实客户端子网剥离已开启';
-
-  @override
-  String get desktopPrivacyEcsStripOff => '真实客户端子网剥离已关闭';
-
-  @override
-  String get desktopPrivacyEcsSubnetLabel => '自定义转发子网（CIDR）';
-
-  @override
-  String get desktopPrivacyEcsSubnetHelper =>
-      '可选。填写公共出口网段向权威 DNS 伪装位置以保持 CDN 调度，留空则完全保密。';
-
-  @override
-  String get desktopPrivacyEcsSave => '保存 ECS 策略';
-
-  @override
-  String get desktopPrivacyEcsSaved => 'EDNS Client Subnet 客户端子网策略已更新';
-
-  @override
-  String get desktopPrivacyDefenceTitle => '内置安全防御模块';
-
-  @override
-  String get desktopPrivacyDefenceBody => '重绑定防御与本地 Hosts 解析的运行状态与配置';
-
-  @override
-  String get desktopPrivacyRebindTitle => 'DNS 重绑定防御';
-
-  @override
-  String get desktopPrivacyRebindBody =>
-      '阻断外网域名解析为私有 IP，防止攻击者用 DNS 重绑定访问局域网设备。';
-
-  @override
-  String get desktopPrivacyRebindOn => 'DNS 重绑定防御已开启';
-
-  @override
-  String get desktopPrivacyRebindOff => 'DNS 重绑定防御已关闭';
-
-  @override
-  String desktopPrivacyRebindCount(int count) {
-    return '$count 个白名单域名';
-  }
-
-  @override
-  String get desktopPrivacyRebindAllowlist => '白名单设置';
-
-  @override
-  String get desktopPrivacyRebindDialogTitle => 'DNS 重绑定防御白名单域名';
-
-  @override
-  String get desktopPrivacyRebindDialogBody =>
-      '名单内的域名允许解析为局域网私有 IP（如 192.168.x.x、10.x.x.x、127.0.0.1），支持后缀通配（如 .lan、.local）。每行一个。';
-
-  @override
-  String get desktopPrivacyRebindDialogSave => '保存白名单';
-
-  @override
-  String get desktopPrivacyRebindSaved => 'DNS 重绑定防御白名单已保存';
-
-  @override
-  String get desktopPrivacyHostsTitle => '本地 Hosts 解析器';
-
-  @override
-  String get desktopPrivacyHostsBody => '系统与自定义 hosts 映射优先应答，命中后不再向上游查询。';
-
-  @override
-  String get desktopPrivacyHostsOn => '本地 Hosts 解析已开启';
-
-  @override
-  String get desktopPrivacyHostsOff => '本地 Hosts 解析已关闭';
-
-  @override
-  String get desktopPrivacyHostsSystem => '联动系统 hosts 文件';
-
-  @override
-  String desktopPrivacyHostsTtl(int seconds) {
-    return 'TTL ${seconds}s';
-  }
-
-  @override
-  String get desktopPrivacyHostsSystemOn => '已联动系统 hosts';
-
-  @override
-  String get desktopPrivacyHostsSystemOff => '已停止联动系统 hosts';
-
-  @override
-  String get desktopHubPrivacySection => '隐私与加密';
-
-  @override
-  String get desktopHubShareSection => '网络共享';
-
-  @override
-  String get desktopSafeSearchTitle => '强制安全搜索';
-
-  @override
-  String get desktopSafeSearchBody =>
-      '把主流搜索引擎重写为强制过滤入口，从 DNS 层确保无法关闭安全搜索。属新增拦截能力，默认关闭。';
-
-  @override
-  String desktopSafeSearchEnabled(int count) {
-    return '已生效 · $count 家';
-  }
-
-  @override
-  String get desktopSafeSearchOff => '未启用';
-
-  @override
-  String get desktopSafeSearchOn => '强制安全搜索已开启';
-
-  @override
-  String get desktopSafeSearchOffMessage => '强制安全搜索已关闭';
-
-  @override
-  String get desktopSafeSearchServiceSaved => '安全搜索服务商已更新';
-
-  @override
-  String get desktopSafeSearchTtl => '重写应答 TTL（秒）';
-
-  @override
-  String get desktopSafeSearchTtlSave => '保存';
-
-  @override
-  String get desktopSafeSearchTtlSaved => '安全搜索应答 TTL 已保存';
-
-  @override
-  String get desktopSafeSearchTtlInvalid => 'TTL 需为正整数';
-
-  @override
-  String get desktopSafeSearchFooter => '未勾选的服务商将直接透传正常解析。';
-
-  @override
-  String get desktopSafeSearchTtlCardTitle => '安全搜索改写有效期';
-
-  @override
-  String get desktopSafeSearchTtlCardBody => '强制安全搜索的改写记录在本地保留多久，到期后重新向上游确认。';
-
-  @override
-  String desktopSafeSearchTtlChip(int seconds) {
-    return '当前 ${seconds}s';
-  }
-
-  @override
-  String get desktopSafeSearchBing => 'Bing';
-
-  @override
-  String get desktopSafeSearchDuckDuckGo => 'DuckDuckGo';
-
-  @override
-  String get desktopSafeSearchEcosia => 'Ecosia';
-
-  @override
-  String get desktopSafeSearchGoogle => 'Google';
-
-  @override
-  String get desktopSafeSearchPixabay => 'Pixabay';
-
-  @override
-  String get desktopSafeSearchYandex => 'Yandex';
-
-  @override
-  String get desktopSafeSearchYoutube => 'YouTube';
-
-  @override
-  String get desktopReputationTitle => '恶意网址库（Safe Browsing）';
-
-  @override
-  String get desktopReputationOn => '查询中';
-
-  @override
-  String get desktopReputationOff => '未启用';
-
-  @override
-  String get desktopReputationOnMessage => '恶意网址库查询已开启';
-
-  @override
-  String get desktopReputationOffMessage => '恶意网址库查询已关闭';
-
-  @override
-  String get desktopReputationBody =>
-      '查询时只把域名的 SHA-256 前 2 字节发往第三方哈希前缀服务，对方返回命中的完整摘要，本地再比对；第三方无法从这 2 个字节还原完整域名。查询失败一律放行。';
-
-  @override
-  String get desktopReputationLookups => '查询次数';
-
-  @override
-  String get desktopReputationBlocked => '命中拦截';
-
-  @override
-  String get desktopReputationHitRate => '缓存命中率';
-
-  @override
-  String get desktopReputationFailures => '查询失败';
-
-  @override
-  String get desktopReputationAnswer => '拦截方式';
-
-  @override
-  String get desktopReputationAnswerNullIp => '空地址';
-
-  @override
-  String get desktopReputationTimeout => '查询超时（毫秒）';
-
-  @override
-  String get desktopReputationCacheSize => '缓存条目上限';
-
-  @override
-  String get desktopReputationCacheTtl => '缓存有效期（秒）';
-
-  @override
-  String get desktopReputationParamsTitle => '查询参数';
-
-  @override
-  String get desktopReputationParamsInvalid => '超时与缓存有效期需为正整数，缓存条目不能为负';
-
-  @override
-  String get desktopReputationParamsSave => '保存查询参数';
-
-  @override
-  String get desktopReputationParamsSaved => '查询参数已保存';
-
-  @override
-  String get desktopReputationFooter => '缓存按 2 字节前缀索引，同一前缀下的域名共享一次查询。';
-
-  @override
-  String get desktopParentalTitle => '家长控制';
-
-  @override
-  String get desktopParentalBody =>
-      '与恶意网址库机制相同，借第三方分类库拦截成人内容域名；两者各自独立开关，可只开家长控制。';
-
-  @override
-  String get desktopParentalWarning =>
-      '恶意网址库当前未开启。两者互不依赖，但钓鱼与恶意软件站点不在家长控制的分类范围内。';
-
-  @override
-  String get desktopParentalOn => '家长控制已开启';
-
-  @override
-  String get desktopParentalOff => '家长控制已关闭';
-
-  @override
-  String get desktopHubEncrypted => '加密 DNS 服务';
-
-  @override
-  String get desktopHubEncryptedBody => '以 DoT / DoH 向局域网提供加密解析，含证书与 DDR';
-
-  @override
-  String get desktopEncryptedPageTitle => '加密 DNS 服务';
-
-  @override
-  String get desktopEncryptedRefresh => '刷新加密 DNS 状态';
-
-  @override
-  String get desktopEncryptedLoadFailed => '读不到加密 DNS 服务状态';
-
-  @override
-  String desktopEncryptedSaveFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopEncryptedListenersTitle => '加密 DNS 服务';
-
-  @override
-  String get desktopEncryptedListenersBody => '在局域网内以 DoT / DoH 提供解析，终端无需明文查询';
-
-  @override
-  String get desktopEncryptedEnabled => '已启用';
-
-  @override
-  String get desktopEncryptedDisabled => '未启用';
-
-  @override
-  String get desktopEncryptedOn => '加密 DNS 服务已开启';
-
-  @override
-  String get desktopEncryptedOff => '加密 DNS 服务已关闭';
-
-  @override
-  String get desktopEncryptedNoProtocol => '服务总开关已打开，但两种协议都没选中，因此不会有任何监听。';
-
-  @override
-  String get desktopEncryptedDot => 'DoT · DNS over TLS';
-
-  @override
-  String desktopEncryptedDotBody(int port) {
-    return '端口 $port，客户端用 tls:// 连接';
-  }
-
-  @override
-  String get desktopEncryptedDoh => 'DoH · DNS over HTTPS';
-
-  @override
-  String desktopEncryptedDohBody(int port, String path) {
-    return '端口 $port，路径 $path';
-  }
-
-  @override
-  String desktopEncryptedListening(String address) {
-    return '正在监听 $address';
-  }
-
-  @override
-  String get desktopEncryptedNotListening => '未在监听（服务未启动、证书不可用或端口被占用）';
-
-  @override
-  String get desktopEncryptedDotOn => 'DoT 已启用';
-
-  @override
-  String get desktopEncryptedDotOff => 'DoT 已停用';
-
-  @override
-  String get desktopEncryptedDohOn => 'DoH 已启用';
-
-  @override
-  String get desktopEncryptedDohOff => 'DoH 已停用';
-
-  @override
-  String get desktopEncryptedUrls => '客户端填写以下任一地址即可使用：';
-
-  @override
-  String get desktopEncryptedNetworkTitle => '监听参数';
-
-  @override
-  String get desktopEncryptedListenAddress => '监听地址';
-
-  @override
-  String get desktopEncryptedListenHint => '留空表示全部网卡';
-
-  @override
-  String get desktopEncryptedServerName => '服务器名（客户端连接用）';
-
-  @override
-  String get desktopEncryptedDotPort => 'DoT 端口';
-
-  @override
-  String get desktopEncryptedDohPort => 'DoH 端口';
-
-  @override
-  String get desktopEncryptedDohPath => 'DoH 路径';
-
-  @override
-  String get desktopEncryptedServerNameHint =>
-      '服务器名会被写进证书的 SAN，终端按它连接才不会报证书错误。';
-
-  @override
-  String get desktopEncryptedPortInvalid => '端口需为 1–65535 的整数';
-
-  @override
-  String get desktopEncryptedReset => '恢复默认';
-
-  @override
-  String get desktopEncryptedSaveNetwork => '保存';
-
-  @override
-  String get desktopEncryptedNetworkSaved => '监听参数已保存';
-
-  @override
-  String get desktopEncryptedCertTitle => '服务端证书';
-
-  @override
-  String get desktopEncryptedCertBody => '服务端 TLS 证书的摘要；私钥不会离开本机';
-
-  @override
-  String get desktopEncryptedCertSelfSigned => '自签证书';
-
-  @override
-  String get desktopEncryptedCertLoaded => '已载入';
-
-  @override
-  String get desktopEncryptedCertMissing => '未载入';
-
-  @override
-  String get desktopEncryptedCertExpired =>
-      '服务端证书已过期：客户端 TLS 握手会全部失败。请立即重新签发或导入有效证书。';
-
-  @override
-  String get desktopEncryptedCertExpiresSoon =>
-      '服务端自签证书将在 30 天内到期。到期后所有加密查询都会握手失败，建议尽早重新签发。';
-
-  @override
-  String get desktopEncryptedCertMissingBody => '尚未配置可用证书，加密监听无法启动。';
-
-  @override
-  String get desktopEncryptedCertSubject => '主体';
-
-  @override
-  String get desktopEncryptedCertIssuer => '签发者';
-
-  @override
-  String get desktopEncryptedCertNotAfter => '有效期至';
-
-  @override
-  String get desktopEncryptedCertDays => '剩余天数';
-
-  @override
-  String desktopEncryptedCertDaysValue(int days) {
-    return '$days 天';
-  }
-
-  @override
-  String get desktopEncryptedCertDns => '覆盖域名';
-
-  @override
-  String get desktopEncryptedCertIps => '覆盖 IP';
-
-  @override
-  String desktopEncryptedCertFingerprint(String fingerprint) {
-    return 'SHA-256：$fingerprint';
-  }
-
-  @override
-  String desktopEncryptedCertDir(String dir) {
-    return '证书目录：$dir';
-  }
-
-  @override
-  String get desktopEncryptedCertGenerate => '重新签发';
-
-  @override
-  String get desktopEncryptedCertImport => '导入 PEM';
-
-  @override
-  String get desktopEncryptedCertGenerated => '证书已生成';
-
-  @override
-  String get desktopEncryptedCertImported => '证书已导入';
-
-  @override
-  String get desktopEncryptedCertGenerateTitle => '生成自签证书';
-
-  @override
-  String get desktopEncryptedCertGenerateBody => '覆盖性动作：已信任旧证书的客户端将全部失效。';
-
-  @override
-  String get desktopEncryptedCertKeyType => '密钥类型';
-
-  @override
-  String get desktopEncryptedCertCommonName => '通用名（CN）';
-
-  @override
-  String get desktopEncryptedCertDnsNames => 'SAN 域名（每行一个）';
-
-  @override
-  String get desktopEncryptedCertIpAddresses => 'SAN IP（每行一个）';
-
-  @override
-  String get desktopEncryptedCertValidDays => '有效期（天）';
-
-  @override
-  String get desktopEncryptedCertGenerateConfirm => '生成';
-
-  @override
-  String get desktopEncryptedCertImportTitle => '导入 PEM 证书';
-
-  @override
-  String get desktopEncryptedCertImportBody => '粘贴证书链与私钥 PEM 文本，两者必须匹配。';
-
-  @override
-  String get desktopEncryptedCertPem => '证书链 PEM';
-
-  @override
-  String get desktopEncryptedKeyPem => '私钥 PEM';
-
-  @override
-  String get desktopEncryptedCertImportConfirm => '导入';
-
-  @override
-  String get desktopEncryptedCertImportInvalid => '证书与私钥都不能为空';
-
-  @override
-  String get desktopEncryptedExtrasTitle => '发现与代理';
-
-  @override
-  String get desktopEncryptedExtrasBody => '客户端自动发现、反向代理信任与移动端描述文件';
-
-  @override
-  String get desktopEncryptedDdrTitle => '指定解析器发现（DDR）';
-
-  @override
-  String get desktopEncryptedDdrBody =>
-      '应答 _dns.resolver.arpa 探测，让终端自动发现本机的加密解析入口。';
-
-  @override
-  String get desktopEncryptedDdrSelfSignedWarning =>
-      '当前是自签证书：终端若未预先信任它，开启 DDR 会直接失去 DNS 解析。';
-
-  @override
-  String get desktopEncryptedDdrConfirmTitle => '确认开启 DDR？';
-
-  @override
-  String get desktopEncryptedDdrConfirmBody =>
-      'DDR 会让客户端自动切换解析入口；证书不被信任时，这一步等于让客户端失去 DNS。';
-
-  @override
-  String get desktopEncryptedDdrConfirm => '仍要开启';
-
-  @override
-  String get desktopEncryptedDdrOn => 'DDR 已开启';
-
-  @override
-  String get desktopEncryptedDdrOff => 'DDR 已关闭';
-
-  @override
-  String get desktopEncryptedProxyTitle => '反向代理透传';
-
-  @override
-  String get desktopEncryptedProxyBody =>
-      '仅当 DoH 确实位于自己掌握的反向代理之后才开启；开启后会采信转发头。';
-
-  @override
-  String get desktopEncryptedProxyUnrestricted =>
-      '可信来源包含 0.0.0.0/0 或 ::/0：任何人都能伪造来源地址。';
-
-  @override
-  String get desktopEncryptedProxyOn => '反向代理透传已开启';
-
-  @override
-  String get desktopEncryptedProxyOff => '反向代理透传已关闭';
-
-  @override
-  String get desktopEncryptedProxySources => '可信代理来源（每行一个 IP 或 CIDR）';
-
-  @override
-  String get desktopEncryptedProxyHeader =>
-      '自定义转发头（留空则依次尝试 X-Forwarded-For 与 X-Real-IP）';
-
-  @override
-  String get desktopEncryptedProxySave => '保存代理配置';
-
-  @override
-  String get desktopEncryptedProxySaved => '反向代理配置已保存';
-
-  @override
-  String get desktopEncryptedMobileConfigTitle => '移动端描述文件';
-
-  @override
-  String get desktopEncryptedMobileConfigBody =>
-      '在设备上打开该链接即可安装包含本机加密 DNS 的描述文件。';
-
-  @override
-  String get desktopEncryptedMobileConfigOpen => '打开描述文件';
-
-  @override
-  String get desktopEncryptedOpenUrl => '在浏览器中打开';
-
-  @override
-  String get desktopTrafficPageTitle => '设备与客户端';
-
-  @override
-  String get desktopTrafficRefresh => '刷新设备与访问控制';
-
-  @override
-  String get desktopTrafficLoadFailed => '读不到设备与访问控制状态';
-
-  @override
-  String desktopTrafficSaveFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopTrafficClientsTitle => '已识别的局域网客户端';
-
-  @override
-  String get desktopTrafficClientsBody => '通过 rDNS 或自定义别名识别发起查询的设备';
-
-  @override
-  String desktopTrafficClientCount(int count) {
-    return '$count 个活跃设备';
-  }
-
-  @override
-  String get desktopTrafficClientsEmpty => '暂未识别到来自外部或局域网的 DNS 查询设备。';
-
-  @override
-  String get desktopTrafficClientUnnamed => '未设置（未知设备）';
-
-  @override
-  String desktopTrafficClientQueries(int count) {
-    return '累计查询 $count 次';
-  }
-
-  @override
-  String get desktopTrafficClientNever => '最近活跃：从未';
-
-  @override
-  String desktopTrafficClientLastSeen(String time) {
-    return '最近活跃 $time';
-  }
-
-  @override
-  String get desktopTrafficStateBlocked => '已阻断';
-
-  @override
-  String get desktopTrafficStateAllowed => '白名单';
-
-  @override
-  String get desktopTrafficStateNotAllowed => '未在白名单';
-
-  @override
-  String get desktopTrafficStateOpen => '正常放行';
-
-  @override
-  String get desktopTrafficAlias => '别名';
-
-  @override
-  String get desktopTrafficAliasTitle => '配置客户端设备别名';
-
-  @override
-  String get desktopTrafficAliasField => '自定义友好设备名称';
-
-  @override
-  String get desktopTrafficAliasHint => '如 客厅电视、工作用笔记本、NAS 存储';
-
-  @override
-  String get desktopTrafficAliasBody => '留空保存将清除自定义别名。';
-
-  @override
-  String get desktopTrafficAliasSave => '保存别名';
-
-  @override
-  String desktopTrafficAliasSaved(String ip) {
-    return '客户端 [$ip] 别名已更新';
-  }
-
-  @override
-  String desktopTrafficAliasCleared(String ip) {
-    return '客户端 [$ip] 别名已清除';
-  }
-
-  @override
-  String get desktopTrafficAllowedAdd => '白名单';
-
-  @override
-  String get desktopTrafficAllowedRemove => '已放行';
-
-  @override
-  String desktopTrafficAllowedAdded(String ip) {
-    return '客户端 [$ip] 已加入白名单';
-  }
-
-  @override
-  String desktopTrafficAllowedRemoved(String ip) {
-    return '客户端 [$ip] 已移出白名单';
-  }
-
-  @override
-  String get desktopTrafficBlockedAdd => '阻断';
-
-  @override
-  String get desktopTrafficBlockedRemove => '已阻断';
-
-  @override
-  String desktopTrafficBlockedAdded(String ip) {
-    return '客户端 [$ip] 已加入黑名单阻断';
-  }
-
-  @override
-  String desktopTrafficBlockedRemoved(String ip) {
-    return '客户端 [$ip] 已移出黑名单';
-  }
-
-  @override
-  String get desktopTrafficAccessTitle => '客户端访问控制（ACL）';
-
-  @override
-  String get desktopTrafficAccessBody => '限制特定 IP 或 CIDR 网段设备的 DNS 查询权限';
-
-  @override
-  String get desktopTrafficAccessOpen => '未限制';
-
-  @override
-  String get desktopTrafficAccessAllowOnly => '仅白名单';
-
-  @override
-  String get desktopTrafficAccessAllowed => '允许访问白名单';
-
-  @override
-  String get desktopTrafficAccessAllowedHint =>
-      '例如: 192.168.1.0/24 或 192.168.1.50';
-
-  @override
-  String get desktopTrafficAccessAllowedBody =>
-      '若填写，则仅允许名单内的客户端解析；留空表示不限制。每行一个 IP 或 CIDR。';
-
-  @override
-  String get desktopTrafficAccessBlocked => '显式阻断黑名单';
-
-  @override
-  String get desktopTrafficAccessBlockedHint =>
-      '例如: 192.168.1.199 或 10.0.0.0/8';
-
-  @override
-  String get desktopTrafficAccessBlockedBody =>
-      '命中该名单的客户端将被直接拒绝解析请求。每行一个 IP 或 CIDR。';
-
-  @override
-  String get desktopTrafficAccessSave => '保存名单';
-
-  @override
-  String get desktopTrafficAccessReset => '撤销修改';
-
-  @override
-  String get desktopTrafficAccessSaved => '客户端黑白名单已保存';
-
-  @override
-  String get desktopTrafficRateLimitTitle => '客户端请求速率限制';
-
-  @override
-  String get desktopTrafficRateLimitBody => '基于令牌桶限流，防范局域网 DoS 泛洪与 DNS 放大攻击';
-
-  @override
-  String get desktopTrafficRateLimitOn => '限流生效中';
-
-  @override
-  String get desktopTrafficRateLimitOff => '限流已停用';
-
-  @override
-  String get desktopTrafficRateLimitSavedOn => '速率限制已开启';
-
-  @override
-  String get desktopTrafficRateLimitSavedOff => '速率限制已关闭';
-
-  @override
-  String get desktopTrafficRate => '速率（令牌/秒）';
-
-  @override
-  String get desktopTrafficBurst => '突发容量（次）';
-
-  @override
-  String get desktopTrafficIpv4Prefix => 'IPv4 聚合掩码';
-
-  @override
-  String get desktopTrafficIpv6Prefix => 'IPv6 聚合掩码';
-
-  @override
-  String get desktopTrafficPrefixBody => '单 IP 为 32 / 128；局域网可按需聚合，如 24 / 64。';
-
-  @override
-  String get desktopTrafficExempt => '豁免 IP / 网段';
-
-  @override
-  String get desktopTrafficExemptBody => '回环与受信任网段不计入限流统计。';
-
-  @override
-  String get desktopTrafficRateLimitSave => '保存速率限制';
-
-  @override
-  String get desktopTrafficRateInvalid =>
-      '速率与突发需大于 0，掩码需在 1–32（IPv4）与 1–128（IPv6）之间';
-
-  @override
-  String get desktopGroupsPageTitle => '客户端分组';
-
-  @override
-  String get desktopGroupsRefresh => '刷新客户端分组';
-
-  @override
-  String get desktopGroupsLoadFailed => '读不到客户端分组配置';
-
-  @override
-  String get desktopGroupsTitle => '客户端分组 · 精细策略';
-
-  @override
-  String get desktopGroupsBody => '为不同设备组绑定专属订阅规则集与拦截方式，实现精细化管控';
-
-  @override
-  String desktopGroupsCount(int enabled, int total) {
-    return '$enabled / $total 个启用分组';
-  }
-
-  @override
-  String get desktopGroupsOn => '分组生效中';
-
-  @override
-  String get desktopGroupsOff => '分组未启用';
-
-  @override
-  String get desktopGroupsSave => '保存策略';
-
-  @override
-  String get desktopGroupsSaved => '客户端分组策略已保存并生效';
-
-  @override
-  String get desktopGroupsMaster => '启用客户端分组';
-
-  @override
-  String get desktopGroupsMasterBody => '关闭时所有客户端统一使用全局规则；开启后按网段最长前缀匹配分组。';
-
-  @override
-  String get desktopGroupsAdd => '新增客户端分组';
-
-  @override
-  String get desktopGroupsEmpty => '尚未配置任何分组。未命中分组的客户端将统一使用全局规则（默认组）。';
-
-  @override
-  String get desktopGroupsFooter => '采用最长前缀匹配：更具体的网段（如 /24）优先于更宽泛的网段（如 /16）。';
-
-  @override
-  String get desktopGroupsOpen => '客户端分组';
-
-  @override
-  String get desktopGroupsName => '分组名称';
-
-  @override
-  String get desktopGroupsEnabled => '启用该分组';
-
-  @override
-  String get desktopGroupsDelete => '删除该分组';
-
-  @override
-  String get desktopGroupsDeleteTitle => '删除客户端分组';
-
-  @override
-  String get desktopGroupsDeleteBody => '确定要删除该客户端分组吗？保存后不再生效。';
-
-  @override
-  String get desktopGroupsMembers => '成员 IP / 网段';
-
-  @override
-  String get desktopGroupsMembersHint =>
-      '例如:\n192.168.1.0/24\n10.0.0.7\nfd00::/8';
-
-  @override
-  String get desktopGroupsMembersBody => '每行一个 IP 或 CIDR，支持 IPv4/IPv6。';
-
-  @override
-  String get desktopGroupsBlockMode => '拦截应答方式';
-
-  @override
-  String get desktopGroupsModeInherit => '继承全局';
-
-  @override
-  String get desktopGroupsModeNullIp => '空 IP（0.0.0.0 / ::）';
-
-  @override
-  String get desktopGroupsModeNxdomain => 'NXDOMAIN（域名不存在）';
-
-  @override
-  String get desktopGroupsModeRefused => 'REFUSED（拒绝应答）';
-
-  @override
-  String get desktopGroupsAllowlistOnly => '仅白名单模式';
-
-  @override
-  String get desktopGroupsAllowlistOnlyBody => '开启后该组仅放行命中放行规则（@@）的查询，其余一律阻断';
-
-  @override
-  String get desktopGroupsSchedule => '组级时间计划';
-
-  @override
-  String get desktopGroupsScheduleBody => '开启后该组按自身窗口拦截；关闭则继承全局时间计划';
-
-  @override
-  String get desktopGroupsRuleLists => '绑定的订阅规则集';
-
-  @override
-  String get desktopGroupsInheritAll => '继承全部';
-
-  @override
-  String get desktopGroupsNoRuleLists => '当前无可用订阅列表，该组将仅应用自定义规则。';
-
-  @override
-  String get desktopGroupsRuleListsInherited => '未勾选任何列表 → 继承全部订阅规则。';
-
-  @override
-  String get desktopGroupsRuleListsSelected => '该组只应用所选订阅列表。';
-
-  @override
-  String get desktopGroupsUpstreams => '专属上游 DNS';
-
-  @override
-  String get desktopGroupsInheritChain => '沿用主链路';
-
-  @override
-  String get desktopGroupsNoUpstreams => '当前无可选上游，该组将沿用主链路。';
-
-  @override
-  String get desktopGroupsUpstreamsInherited => '未勾选任何上游 → 沿用主链路调度策略。';
-
-  @override
-  String get desktopGroupsUpstreamsSelected => '该组的查询直接由所选上游解析，不参与全局回退链。';
-
-  @override
-  String desktopGroupsNewName(int index) {
-    return '新分组 $index';
-  }
-
-  @override
-  String get desktopGroupsListEnabled => '该订阅已启用';
-
-  @override
-  String get desktopGroupsListDisabled => '该订阅已停用';
-
-  @override
-  String get desktopToolsPortTitle => '网络诊断与修复';
-
-  @override
-  String get desktopToolsPortBody =>
-      '排查 53 端口被 ICS 共享或 systemd-resolved stub 占用导致无法启动的问题';
-
-  @override
-  String get desktopToolsPortIdle => '尚未检测。点本卡片右上角的检索按钮运行一次端口探测。';
-
-  @override
-  String get desktopToolsPortOk => '端口正常可用';
-
-  @override
-  String get desktopToolsPortConflict => '检测到端口冲突';
-
-  @override
-  String get desktopToolsCheck => '检测端口';
-
-  @override
-  String get desktopToolsFix => '一键修复端口占用';
-
-  @override
-  String get desktopToolsFixTitle => '修复端口占用？';
-
-  @override
-  String get desktopToolsFixBody =>
-      '将停止占用 53 端口的系统监听（Windows ICS 共享 / systemd-resolved stub），不会启动或重启 DNS 服务。';
-
-  @override
-  String get desktopToolsFixed => '端口冲突已修复';
-
-  @override
-  String desktopToolsFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopToolsSystemListener => '系统占用';
-
-  @override
-  String get desktopToolsSelfListener => '谛听自身';
-
-  @override
-  String desktopToolsConflictOwner(String process, int pid, String address) {
-    return '$process · PID $pid · $address';
-  }
-
-  @override
-  String desktopToolsConflictService(String service) {
-    return '服务：$service';
-  }
-
-  @override
-  String get desktopToolsPortFooter => '探测只临时占用端口以确认可用性；诊断文本与处置建议来自系统探测本身。';
-
-  @override
-  String get desktopToolsRulePageTitle => '规则检测';
-
-  @override
-  String get desktopHubDiagnoseSection => '诊断与恢复';
-
-  @override
-  String get desktopToolsRuleEntryBody => '模拟一次查询，查看命中规则与处置结论';
-
-  @override
-  String get desktopHubQueryLog => '查询日志';
-
-  @override
-  String get desktopHubQueryLogBody => '实时查询流、历史记录检索与日志保留策略';
-
-  @override
-  String get desktopQueryLogPageTitle => '查询日志';
-
-  @override
-  String get desktopToolsRuleInputTitle => '网址拦截模拟测试';
-
-  @override
-  String get desktopToolsRuleInputBody => '输入域名快速检测是否命中过滤拦截规则';
-
-  @override
-  String get desktopToolsRuleDomain => '测试目标域名';
-
-  @override
-  String get desktopToolsRuleDomainHint =>
-      '例如: ad.example.com 或 tracker.domain.com';
-
-  @override
-  String get desktopToolsRuleQtype => 'DNS 记录类型';
-
-  @override
-  String desktopToolsRuleQtypeOption(String type) {
-    return '$type 记录';
-  }
-
-  @override
-  String get desktopToolsRuleExamples => '快速填充示例：';
-
-  @override
-  String get desktopToolsRuleRun => '立即模拟检测';
-
-  @override
-  String get desktopToolsRuleRunning => '正在执行规则匹配…';
-
-  @override
-  String get desktopToolsRuleVerdictTitle => '规则诊断与拦截判定';
-
-  @override
-  String get desktopToolsRuleVerdictBody => '规则匹配结果、所属规则库与响应动作';
-
-  @override
-  String get desktopToolsRuleIdle => '在上方输入域名并点击「立即模拟检测」以查看规则判定明细';
-
-  @override
-  String get desktopToolsRuleBlocked => '已拦截（阻断访问）';
-
-  @override
-  String desktopToolsRuleRewritten(String code) {
-    return '已重写（$code）';
-  }
-
-  @override
-  String get desktopToolsRuleAllowed => '已放行（信任名单）';
-
-  @override
-  String get desktopToolsRulePassed => '未命中（正常解析）';
-
-  @override
-  String get desktopToolsRuleMatched => '命中的防护规则';
-
-  @override
-  String get desktopToolsRuleNoMatch => '未命中任何规则';
-
-  @override
-  String get desktopToolsRuleList => '来源规则库';
-
-  @override
-  String get desktopToolsRuleNoList => '无';
-
-  @override
-  String get desktopToolsRuleReason => '处置判定原因';
-
-  @override
-  String get desktopToolsRuleNoReason => '正常直连解析';
-
-  @override
-  String desktopToolsRuleRewrite(String code) {
-    return '\$dnsrewrite 应答：$code';
-  }
-
-  @override
-  String get desktopToolsRuleRewriteEmpty => '不返回任何记录（权威 NODATA）';
-
-  @override
-  String get desktopToolsRuleFooter => '支持 AdGuard、Hosts 及自定义规则即时模拟测试。';
-
-  @override
-  String desktopToolsRuleFailed(String message) {
-    return '检测失败：$message';
-  }
-
-  @override
-  String get desktopHubAppSection => '应用与服务';
-
-  @override
-  String get desktopAboutProjectSection => '项目与链接';
-
-  @override
-  String get desktopAboutDisclaimerSection => '软件说明与免责声明';
-
-  @override
-  String get desktopSettingsAppearance => '外观主题';
-
-  @override
-  String get desktopSettingsAppearanceEntryBody => '配色方案与深浅模式，即时预览';
-
-  @override
-  String get desktopSettingsAppearanceTitle => '外观与界面主题';
-
-  @override
-  String get desktopSettingsAppearanceBody => '多套配色方案与深浅模式自由切换，全局即时适配';
-
-  @override
-  String get desktopSettingsPalette => '主题配色方案';
-
-  @override
-  String get desktopSettingsPaletteBody => '选择符合个人偏好的视觉设计体系，所有界面元素即时协调匹配';
-
-  @override
-  String get desktopSettingsMode => '深浅模式';
-
-  @override
-  String get desktopSettingsModeBody => '跟随系统时按系统深浅偏好自动同步';
-
-  @override
-  String get desktopSettingsAppearanceFooter => '外观偏好与移动端共用同一组键，切换后重启仍生效。';
-
-  @override
-  String get desktopSettingsPreview => '桌面预览';
-
-  @override
-  String get desktopSettingsPreviewBody => '侧栏、工具栏与卡片都按当前配色和深浅模式渲染，所见即所得。';
-
-  @override
-  String desktopSettingsSystemResolved(String mode) {
-    return '$mode（跟随系统）';
-  }
-
-  @override
-  String get desktopServicePageTitle => '服务与连接';
-
-  @override
-  String get desktopServiceEntryBody => '后台连接设置、核心服务与开机自启状态';
-
-  @override
-  String get desktopServiceConnectionTitle => '后台服务连接设置';
-
-  @override
-  String get desktopServiceConnectionBody => '前端客户端与核心服务的通信管道';
-
-  @override
-  String get desktopServiceConnectionFooter =>
-      '保存后立即用新地址重建连接；「测试连接」检查当前服务是否应答。';
-
-  @override
-  String get desktopServiceHost => '服务地址（IP 或主机名）';
-
-  @override
-  String get desktopServicePort => '通信端口';
-
-  @override
-  String get desktopServiceToken => '访问密钥 / 授权 Token（可选）';
-
-  @override
-  String get desktopServiceTokenHint => '留空表示本机无需密码';
-
-  @override
-  String get desktopServiceTest => '测试连接';
-
-  @override
-  String get desktopServiceSave => '保存配置';
-
-  @override
-  String get desktopServiceSaved => '连接设置已保存';
-
-  @override
-  String get desktopServiceReachable => '通信正常';
-
-  @override
-  String get desktopServiceUnreachable => '连接异常';
-
-  @override
-  String get desktopServiceConfigured => '已配置';
-
-  @override
-  String get desktopServiceAddressInvalid => '服务地址不能为空，端口需为 1–65535 的整数';
-
-  @override
-  String get desktopServiceCoreTitle => '后台核心服务';
-
-  @override
-  String get desktopServiceCoreBody => '宿主机上负责 DNS 与拦截的核心服务状态';
-
-  @override
-  String get desktopServiceCoreFooter => '安装、启动与开机自启由宿主机托管，本页只读取并显示其真实状态。';
-
-  @override
-  String get desktopServiceState => '服务状态';
-
-  @override
-  String get desktopServiceAutoStartOn => '已开启';
-
-  @override
-  String get desktopServiceAutoStartOff => '未开启';
-
-  @override
-  String get desktopServiceAutoStartUnknown => '服务未上报';
-
-  @override
-  String get desktopServiceRunning => '运行中';
-
-  @override
-  String get desktopServiceStopped => '已停止';
-
-  @override
-  String get desktopServiceUnknown => '未知';
-
-  @override
-  String get desktopServiceRefresh => '刷新核心服务状态';
-
-  @override
-  String get desktopLanWebPageTitle => '局域网控制台';
-
-  @override
-  String get desktopLanWebEntryBody => '远程管理开关、访问地址、防火墙放行与管理员凭据';
-
-  @override
-  String get desktopHubClientAccess => '客户端访问控制';
-
-  @override
-  String get desktopHubClientAccessBody => '哪些局域网客户端可以解析，以及每个客户端的查询限速';
-
-  @override
-  String get desktopClientAccessPageTitle => '客户端访问控制';
-
-  @override
-  String get desktopLanWebRefresh => '刷新局域网控制台状态';
-
-  @override
-  String get desktopLanWebLoadFailed => '读不到局域网控制台状态';
-
-  @override
-  String get desktopLanWebAccessTitle => '放行与管理员凭据';
-
-  @override
-  String get desktopLanWebAccessBody => '防火墙放行规则与本控制台的登录账号，凭据只影响局域网访问';
-
-  @override
-  String get desktopLanWebTitle => '局域网 Web 控制台';
-
-  @override
-  String get desktopLanWebOpen => '对外开放中';
-
-  @override
-  String get desktopLanWebLocal => '仅本地（127.0.0.1）';
-
-  @override
-  String get desktopLanWebEnabledBody => '局域网内的手机或电脑可通过浏览器访问完整控制台进行远程管理。';
-
-  @override
-  String get desktopLanWebDisabledBody =>
-      '开启后，局域网内的手机或电脑可通过浏览器访问完整控制台，与桌面客户端共享核心数据与配置。';
-
-  @override
-  String get desktopLanWebOn => '局域网 Web 管理已开启';
-
-  @override
-  String get desktopLanWebOff => '局域网 Web 管理已关闭';
-
-  @override
-  String desktopLanWebFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopLanWebUrls => '局域网访问网址（浏览器直连）';
-
-  @override
-  String get desktopLanWebNoUrls => '未探测到可用的局域网网卡 IPv4 地址';
-
-  @override
-  String get desktopLanWebPort => 'Web 端口';
-
-  @override
-  String get desktopLanWebSavePort => '保存端口';
-
-  @override
-  String get desktopLanWebPortInvalid => '请输入有效的端口号（1–65535）';
-
-  @override
-  String get desktopLanWebFirewall => '放行防火墙入站规则';
-
-  @override
-  String get desktopLanWebFirewallBody => '为 Web 端口添加或清除系统防火墙放行规则';
-
-  @override
-  String get desktopLanWebFirewallOn => '已放行防火墙 Web 端口';
-
-  @override
-  String get desktopLanWebFirewallOff => '已清除防火墙 Web 端口规则';
-
-  @override
-  String get desktopLanWebNoFirewall => '系统未检测到防火墙管理器，端口本就对外开放，无需放行规则。';
-
-  @override
-  String get desktopLanWebCredentials => '控制台凭据';
-
-  @override
-  String desktopLanWebUser(String user) {
-    return '管理员：$user';
-  }
-
-  @override
-  String get desktopLanWebNoUser => '尚未设置管理员';
-
-  @override
-  String get desktopLanWebProtected => '密码保护已启用';
-
-  @override
-  String get desktopLanWebUnprotected => '尚未初始化密码，首次进入需设置';
-
-  @override
-  String get desktopLanWebChangePassword => '修改管理员密码';
-
-  @override
-  String get desktopLanWebSetPassword => '设置初始密码';
-
-  @override
-  String get desktopLanWebPasswordSave => '保存';
-
-  @override
-  String get desktopLanWebPasswordSaved => '管理员密码已保存';
-
-  @override
-  String desktopLanWebChangeBody(String user) {
-    return '修改 $user 的密码，保存后已有外部会话将失效。';
-  }
-
-  @override
-  String desktopLanWebSetupBody(String user) {
-    return '为 $user 设置初始密码，之后访问控制台需要登录。';
-  }
-
-  @override
-  String get desktopLanWebOldPassword => '当前密码';
-
-  @override
-  String get desktopLanWebNewPassword => '新密码';
-
-  @override
-  String get desktopLanWebConfirmPassword => '确认新密码';
-
-  @override
-  String get desktopLanWebPasswordRequired => '新密码不能为空';
-
-  @override
-  String get desktopLanWebPasswordMismatch => '两次输入的新密码不一致';
-
-  @override
-  String get desktopLanWebOldRequired => '请输入当前密码';
-
-  @override
-  String get desktopLanWebFooter => '凭据仅用于局域网控制台登录；桌面客户端仍通过本机接口通信。';
-
-  @override
-  String get desktopHubAdapters => '网卡接管';
-
-  @override
-  String get desktopHubAdaptersBody => '逐网卡查看网关、DNS 与接管状态，可单个或全部接管';
-
-  @override
-  String get desktopHubLanDns => '局域网 DNS 服务';
-
-  @override
-  String get desktopHubLanDnsBody => '对外监听 53 端口，供路由器与终端共享解析与拦截';
-
-  @override
-  String get desktopAdaptersPageTitle => '网卡接管';
-
-  @override
-  String get desktopAdaptersRefresh => '刷新网卡列表';
-
-  @override
-  String get desktopAdaptersLoadFailed => '读不到网卡列表';
-
-  @override
-  String get desktopAdaptersSectionTitle => '网络连接与保护接管';
-
-  @override
-  String get desktopAdaptersSectionBody => '只列出当前正在使用的网络连接，虚拟与离线网卡由服务端排除。';
-
-  @override
-  String get desktopAdaptersTakeoverAll => '全部开启保护';
-
-  @override
-  String get desktopAdaptersRestoreAll => '恢复系统默认';
-
-  @override
-  String get desktopAdaptersProtecting => '保护中';
-
-  @override
-  String get desktopAdaptersInactive => '未开启';
-
-  @override
-  String get desktopAdaptersConnected => '已连接';
-
-  @override
-  String get desktopAdaptersDisconnected => '未连接';
-
-  @override
-  String get desktopAdaptersGateway => '默认网关';
-
-  @override
-  String get desktopAdaptersNoGateway => '无';
-
-  @override
-  String get desktopAdaptersIpMode => 'IP 模式';
-
-  @override
-  String get desktopAdaptersDhcp => '自动 (DHCP)';
-
-  @override
-  String get desktopAdaptersStatic => '固定静态 IP';
-
-  @override
-  String get desktopAdaptersOriginalDns => '原始系统 DNS';
-
-  @override
-  String get desktopAdaptersAutoDns => '自动获取 (系统默认)';
-
-  @override
-  String get desktopAdaptersEffectiveDns => '当前生效 DNS';
-
-  @override
-  String get desktopAdaptersEffectiveLoopback => '127.0.0.1 (本机保护)';
-
-  @override
-  String get desktopAdaptersEffectiveSystem => '系统默认未接管';
-
-  @override
-  String get desktopAdaptersEmpty => '未发现可用的网络连接';
-
-  @override
-  String get desktopAdaptersEmptyBody => '请确认 Wi-Fi 或网线已连接，然后重新检测。';
-
-  @override
-  String get desktopAdaptersAllOn => '已接管全部物理网卡';
-
-  @override
-  String get desktopAdaptersAllOff => '已恢复系统默认 DNS';
-
-  @override
-  String desktopAdaptersAdapterToggled(String name, String state) {
-    return '$name：$state';
-  }
-
-  @override
-  String get desktopAdaptersAdapterOn => '已接管';
-
-  @override
-  String get desktopAdaptersAdapterOff => '已恢复';
-
-  @override
-  String desktopAdaptersActionFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopLanDnsPageTitle => '局域网 DNS 服务';
-
-  @override
-  String get desktopLanDnsRefresh => '刷新局域网 DNS 状态';
-
-  @override
-  String get desktopLanDnsLoadFailed => '读不到局域网 DNS 状态';
-
-  @override
-  String get desktopLanDnsServiceTitle => '局域网 DNS 服务';
-
-  @override
-  String get desktopLanDnsServiceBody =>
-      '开启后，路由器、手机、平板与 NAS 可将首选 DNS 设为本机 IP，共享加速与拦截。';
-
-  @override
-  String get desktopLanDnsOnChip => '全网监听 (0.0.0.0)';
-
-  @override
-  String get desktopLanDnsOffChip => '仅本机模式';
-
-  @override
-  String get desktopLanDnsOn => '局域网 DNS 服务已开启';
-
-  @override
-  String get desktopLanDnsOff => '已关闭局域网 DNS 服务，恢复为仅本机监听';
-
-  @override
-  String get desktopLanDnsAddressesCardTitle => '监听与访问地址';
-
-  @override
-  String get desktopLanDnsAddressesCardBody => '服务实际绑定的地址，以及局域网内其他设备可以填写的地址';
-
-  @override
-  String get desktopLanDnsListenTitle => '当前监听地址';
-
-  @override
-  String get desktopLanDnsNoListen => '服务当前未监听任何地址';
-
-  @override
-  String get desktopLanDnsAddressesTitle => '本机可用的局域网 DNS 地址';
-
-  @override
-  String get desktopLanDnsNoAddresses => '未检测到物理活动网卡 IP，请确认已连接 Wi-Fi 或以太网。';
-
-  @override
-  String get desktopLanDnsIpv4 => 'IPv4';
-
-  @override
-  String get desktopLanDnsIpv6 => 'IPv6';
-
-  @override
-  String desktopLanDnsRouterHint(String address) {
-    return '把 $address 填进路由器的 DNS 设置即可覆盖全屋设备。';
-  }
-
-  @override
-  String get desktopLanDnsFirewallTitle => '防火墙入站放行';
-
-  @override
-  String get desktopLanDnsFirewallAllowed => '53 端口已放行';
-
-  @override
-  String get desktopLanDnsFirewallBlocked => '未放行';
-
-  @override
-  String get desktopLanDnsFirewallNone => '无需放行';
-
-  @override
-  String get desktopLanDnsFirewallBody =>
-      '局域网设备需通过 UDP/TCP 53 端口向本机发送解析请求；被防火墙拦截会导致这些设备断网。';
-
-  @override
-  String get desktopLanDnsFirewallNoneBody =>
-      '系统未检测到防火墙后端，53 端口已直接对外开放，无需放行规则。';
-
-  @override
-  String get desktopLanDnsFirewallStatusOn => '允许局域网设备接入 53 端口';
-
-  @override
-  String get desktopLanDnsFirewallStatusOff => '53 端口受限或被拦截';
-
-  @override
-  String get desktopLanDnsFirewallAllow => '一键放行入站 53 端口';
-
-  @override
-  String get desktopLanDnsFirewallRemove => '移除防火墙入站放行';
-
-  @override
-  String get desktopLanDnsFirewallOn => '已放行 53 端口入站规则';
-
-  @override
-  String get desktopLanDnsFirewallOff => '已移除 53 端口入站规则';
-
-  @override
-  String get desktopLanDnsRouterTitle => '方案 A：路由器全局配置';
-
-  @override
-  String get desktopLanDnsRouterBadge => '强烈推荐';
-
-  @override
-  String get desktopLanDnsRouterBody =>
-      '登录路由器后台（通常为 192.168.1.1），在「局域网 LAN 设置」或「DHCP 服务器」里把主 DNS 改为本机 IP。';
-
-  @override
-  String get desktopLanDnsRouterFoot => '保存并重连 Wi-Fi 后，全屋设备统一生效。';
-
-  @override
-  String get desktopLanDnsDeviceTitle => '方案 B：单终端独立配置';
-
-  @override
-  String get desktopLanDnsDeviceBadge => '独立体验';
-
-  @override
-  String get desktopLanDnsDeviceBody =>
-      '在手机或电脑的 Wi-Fi 详情里把 IP 设置改为静态，DNS 1 填入本机 IP。';
-
-  @override
-  String get desktopLanDnsDeviceFoot => '适用于没有路由器管理权限，或只想让单台设备体验的场景。';
-
-  @override
-  String get desktopLanDnsPlaceholder => '192.168.x.x';
-
-  @override
-  String desktopLanDnsFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopLoginTitle => '谛听 DNS 控制台';
-
-  @override
-  String get desktopLoginSubtitle => '局域网远程管理服务 · 请验证管理员凭据';
-
-  @override
-  String get desktopLoginSetupSubtitle => '初始化管理员密码，守护局域网远程管理安全';
-
-  @override
-  String get desktopLoginUserLabel => '管理员账号';
-
-  @override
-  String get desktopLoginPasswordLabel => '管理员密码';
-
-  @override
-  String get desktopLoginSetupPasswordLabel => '设置初始密码 (至少 4 位)';
-
-  @override
-  String get desktopLoginConfirmLabel => '确认管理员密码';
-
-  @override
-  String get desktopLoginSubmit => '立即登录';
-
-  @override
-  String get desktopLoginSetupSubmit => '完成初始化并进入控制台';
-
-  @override
-  String get desktopLoginSecurity => 'SHA-256 加盐哈希保护 · 连续错误自动安全锁定';
-
-  @override
-  String get desktopLoginFooter => '谛听 (DITING) DNS 解析加速与安全防护系统';
-
-  @override
-  String get desktopLoginChecking => '控制台安全载入中…';
-
-  @override
-  String get desktopLoginShowPassword => '显示密码';
-
-  @override
-  String get desktopLoginHidePassword => '隐藏密码';
-
-  @override
-  String get desktopLoginUserRequired => '请输入用户名';
-
-  @override
-  String get desktopLoginPasswordRequired => '请输入密码';
-
-  @override
-  String get desktopLoginPasswordTooShort => '密码长度至少为 4 位字符';
-
-  @override
-  String get desktopLoginPasswordMismatch => '两次输入的密码不一致';
-
-  @override
-  String get desktopLoginSuccess => '身份验证成功，正在进入控制台…';
-
-  @override
-  String get desktopLoginSetupSuccess => '管理员密码设置成功，正在进入系统…';
-
-  @override
-  String desktopLoginLockout(int seconds) {
-    return '安全频控锁定中，请等待 $seconds 秒后再试';
-  }
-
-  @override
-  String get desktopLoginUnreachable => '连不上本机服务';
-
-  @override
-  String get desktopLoginRetry => '重试';
-
-  @override
-  String get desktopLoginThemeCycle => '切换深浅模式';
-
-  @override
-  String get desktopLoginPaletteCycle => '切换配色方案';
-
-  @override
-  String get desktopLoginBackground => '自定义背景';
-
-  @override
-  String get desktopLoginBackgroundEnabled => '已启用自定义背景';
-
-  @override
-  String get desktopLoginBackgroundTitle => '登录背景';
-
-  @override
-  String get desktopLoginBackgroundLocal => '本地上传';
-
-  @override
-  String get desktopLoginBackgroundUrl => '网络图片';
-
-  @override
-  String get desktopLoginBackgroundChoose => '选择图片';
-
-  @override
-  String get desktopLoginBackgroundNoFile => '未选择图片';
-
-  @override
-  String get desktopLoginBackgroundUrlLabel => '图片地址';
-
-  @override
-  String get desktopLoginBackgroundUrlInvalid =>
-      '请输入 http:// 或 https:// 开头的图片地址';
-
-  @override
-  String get desktopLoginBackgroundOpacity => '遮罩暗度';
-
-  @override
-  String get desktopLoginBackgroundBlur => '毛玻璃模糊';
-
-  @override
-  String get desktopLoginBackgroundSave => '保存背景';
-
-  @override
-  String get desktopLoginBackgroundReset => '恢复默认背景';
-
-  @override
-  String get desktopLoginBackgroundSaved => '登录背景已保存';
-
-  @override
-  String get desktopLoginBackgroundResetDone => '已恢复系统默认背景';
-
-  @override
-  String get desktopLoginBackgroundNeedImage => '请先选择图片或填写图片地址';
-
-  @override
-  String get desktopLoginBackgroundPassword => '管理员密码';
-
-  @override
-  String get desktopLoginBackgroundPasswordBody => '局域网远程修改登录背景需要验证管理员密码。';
-
-  @override
-  String desktopLoginBackgroundFailed(String message) {
-    return '操作失败：$message';
-  }
-
-  @override
-  String get desktopSettingsSessionSection => '当前会话';
-
-  @override
-  String get desktopSettingsLogout => '退出登录';
-
-  @override
-  String get desktopSettingsLogoutBody => '清除本机保存的管理员会话，返回登录页';
-
-  @override
-  String get desktopSettingsLogoutConfirm => '退出后需要重新输入管理员凭据才能进入控制台。';
-
-  @override
-  String get desktopSettingsLogoutDone => '已退出登录';
-
-  @override
-  String get desktopToolsEmergencyTitle => '一键恢复系统网络默认';
-
-  @override
-  String get desktopToolsEmergencyBody =>
-      '当软件异常退出导致无法上网时，按接管前的快照还原系统 DNS，并清理残留回环 DNS 与系统缓存。';
-
-  @override
-  String get desktopToolsEmergencyAction => '一键恢复';
-
-  @override
-  String get desktopToolsEmergencyBusy => '正在恢复…';
-
-  @override
-  String get desktopToolsEmergencyConfirmTitle => '确认执行应急恢复？';
-
-  @override
-  String get desktopToolsEmergencyConfirmBody =>
-      '将按接管前落盘的快照还原系统 DNS，兜底清理指向本机的残留回环 DNS，再清空系统 DNS 缓存。';
-
-  @override
-  String get desktopToolsEmergencyDone => '网络设置已恢复默认';
-
-  @override
-  String desktopToolsEmergencyFailed(String message) {
-    return '恢复失败：$message';
-  }
-
-  @override
-  String get desktopToolsEmergencyFooter => '恢复依据是接管前落盘的快照，不会改动网卡驱动本身。';
-
-  @override
-  String get desktopLanWebQrCaption => '手机与电脑连同一 Wi-Fi，用相机扫码直达控制台';
-
-  @override
-  String get desktopLoginBackgroundPreparing => '正在压缩图片…';
-
-  @override
-  String get desktopLoginChangePassword => '修改管理员密码';
-
-  @override
-  String get desktopLoginChangeSubtitle => '更新管理员凭据，保存后其他外部会话立即失效';
-
-  @override
-  String get desktopLoginOldPasswordLabel => '当前密码';
-
-  @override
-  String get desktopLoginNewPasswordLabel => '新密码 (至少 4 位)';
-
-  @override
-  String get desktopLoginChangeSubmit => '保存新密码';
-
-  @override
-  String get desktopLoginChangeSuccess => '管理员密码已更新，请用新密码登录';
-
-  @override
-  String get desktopLoginBackToSignIn => '返回登录';
-
-  @override
-  String get desktopLoginOldPasswordRequired => '请输入当前密码';
-
-  @override
-  String get desktopTrayTooltip => '谛听 (DITING) DNS 控制台';
-
-  @override
-  String get desktopTrayOpenWindow => '打开主界面';
-
-  @override
-  String get desktopTrayHideWindow => '隐藏主界面';
-
-  @override
-  String get desktopTrayAutoStart => '开机自启动';
-
-  @override
-  String get desktopTrayServiceRunning => '核心服务：运行中';
-
-  @override
-  String get desktopTrayServiceStopped => '核心服务：已停止';
-
-  @override
-  String get desktopTrayServiceUnknown => '核心服务：状态未知';
-
-  @override
-  String get desktopTrayServiceStart => '启动核心服务';
-
-  @override
-  String get desktopTrayServiceStop => '停止核心服务';
-
-  @override
-  String get desktopTrayServiceRestart => '重启核心服务';
-
-  @override
-  String get desktopTrayQuit => '退出程序';
-
-  @override
-  String get desktopTrayBalloonServiceTitle => '核心服务';
-
-  @override
-  String get desktopTrayBalloonServiceStarted => '核心服务已启动';
-
-  @override
-  String get desktopTrayBalloonServiceStopped => '核心服务已停止';
-
-  @override
-  String get desktopTrayBalloonServiceRestarted => '核心服务已重启';
-
-  @override
-  String get desktopTrayBalloonAutoStartTitle => '开机自启动';
-
-  @override
-  String get desktopTrayBalloonAutoStartOn => '已开启开机自启动';
-
-  @override
-  String get desktopTrayBalloonAutoStartOff => '已关闭开机自启动';
-
-  @override
-  String get desktopTrayBalloonFailedPrefix => '操作失败：';
-
-  @override
-  String get desktopTrayBalloonMinimized =>
-      '谛听已最小化到系统托盘，并在后台继续运行。\n点击托盘图标可重新打开主界面。';
-
-  @override
   String get deepLinkImportInvalid => '深链地址无效，无法导入订阅';
 
   @override
@@ -13586,9 +8928,6 @@ class AppL10nZh extends AppL10n {
   String get troubleshootEventsOpen => '查看运行事件';
 
   @override
-  String get troubleshootEventsOpenBody => '按级别与模块筛选启动、服务与异常事件';
-
-  @override
   String get troubleshootDetailMode => '详细模式';
 
   @override
@@ -13599,9 +8938,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get automationSubtitle => '条件-动作编排 · 按需连接';
-
-  @override
-  String get automationHubSection => '场景与自动化';
 
   @override
   String get automationIntro => '用触发、条件与动作把零散入口组合成场景（到家 / 会议 / 游戏 / 低电）。';
@@ -13670,9 +9006,6 @@ class AppL10nZh extends AppL10n {
   String get automationSave => '保存';
 
   @override
-  String get automationEditIntro => '选择触发方式与动作；保存后由自动化引擎在对应时机执行。';
-
-  @override
   String get automationRuleName => '规则名称';
 
   @override
@@ -13727,12 +9060,6 @@ class AppL10nZh extends AppL10n {
   String get profilesAdd => '新增档案';
 
   @override
-  String get profilesIntro => '一键切换工作模式 / 上游集 / 规则组与开关的快照。';
-
-  @override
-  String get profilesEmpty => '还没有配置档案。';
-
-  @override
   String get profilesListSection => '档案';
 
   @override
@@ -13768,12 +9095,6 @@ class AppL10nZh extends AppL10n {
   String get timetableAdd => '新增时段';
 
   @override
-  String get timetableIntro => '按周编排分时拦截时段，到点自动收紧或恢复。';
-
-  @override
-  String get timetableEmpty => '还没有分时时段。';
-
-  @override
   String get netProfileTitle => '网络档案';
 
   @override
@@ -13783,9 +9104,6 @@ class AppL10nZh extends AppL10n {
   String get netProfileAdd => '新增网络档案';
 
   @override
-  String get netProfileIntro => '按当前网络（Wi‑Fi / 蜂窝 / 漫游 / 计费）自动选择生效的上游集与规则组。';
-
-  @override
   String get netProfileCurrentNet => '当前网络';
 
   @override
@@ -13793,9 +9111,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get netProfileNone => '无匹配档案';
-
-  @override
-  String get netProfileEmpty => '还没有网络档案，新增一条开始按网络切换策略。';
 
   @override
   String get netProfileList => '网络档案';
@@ -13859,12 +9174,6 @@ class AppL10nZh extends AppL10n {
   String get dnsLeakReasonInsufficient => '探测数据不足，无法判定。';
 
   @override
-  String get dnsLeakVpnActive => '隧道运行中';
-
-  @override
-  String get dnsLeakVpnInactive => '隧道未运行';
-
-  @override
   String get captiveSection => 'Captive Portal';
 
   @override
@@ -13892,13 +9201,7 @@ class AppL10nZh extends AppL10n {
   String get appInsightsIntro => '基于实时连接按应用汇总流量、拦截与连接地图。';
 
   @override
-  String get appInsightsEmpty => '暂无可展示的连接，请先启动隧道并产生流量。';
-
-  @override
   String get appInsightsReports => '应用报告卡';
-
-  @override
-  String get appInsightsMap => '连接地图';
 
   @override
   String appInsightsStat(int connections, int blocked, String bytes) {
@@ -13952,10 +9255,6 @@ class AppL10nZh extends AppL10n {
   String get connectionRateLimitCardDescription => '限制 DNS 查询与新建连接';
 
   @override
-  String get connectionRateLimitIntro =>
-      '按应用分别限制 DNS 查询和新建连接，避免单个应用耗尽解析或建连能力。两个计数桶共用下面这组速率与突发参数。';
-
-  @override
   String get connectionRateLimitSectionSwitch => '限速开关';
 
   @override
@@ -13986,20 +9285,10 @@ class AppL10nZh extends AppL10n {
   String get ruleVersionsTitle => '订阅版本回滚';
 
   @override
-  String get ruleVersionsIntro =>
-      '每次订阅更新都会记录规则快照。可从历史版本对比差异或一键回滚，避免被误更新或投毒规则影响。';
-
-  @override
   String get ruleVersionsPick => '选择订阅';
 
   @override
   String get ruleVersionsHistory => '版本历史';
-
-  @override
-  String get ruleVersionsEmpty => '该订阅还没有版本记录，更新一次后即可查看。';
-
-  @override
-  String get ruleVersionsNone => '没有可选订阅';
 
   @override
   String get ruleVersionsUnavailable => '规则数据库不可用';
@@ -14152,9 +9441,6 @@ class AppL10nZh extends AppL10n {
   String get serverAverageLatencyHint => '平均响应';
 
   @override
-  String get serverFilter => '过滤';
-
-  @override
   String get serverFilterOn => '已启用';
 
   @override
@@ -14188,18 +9474,8 @@ class AppL10nZh extends AppL10n {
   String get serverHubSystem => '系统';
 
   @override
-  String serverHubUpstreamSummary(int count, String mode) {
-    return '$count 个服务商 · $mode';
-  }
-
-  @override
   String serverHubFilterSummary(String state, int count) {
     return '$state · $count 个订阅';
-  }
-
-  @override
-  String serverHubCacheSummary(int count, String mode) {
-    return '$count 条 · $mode';
   }
 
   @override
@@ -14225,31 +9501,16 @@ class AppL10nZh extends AppL10n {
   String get serverUpstreamTitle => '调度与缓存';
 
   @override
-  String get serverUpstreamHubHint => '调整调度方式与缓存策略';
-
-  @override
   String get serverFilterTitle => '过滤规则';
-
-  @override
-  String get serverFilterHubHint => '管理订阅、自定义规则并测试域名';
 
   @override
   String get serverCacheTitle => '缓存';
 
   @override
-  String get serverCacheHubHint => '调整容量、TTL 与过期回退策略';
-
-  @override
   String get serverQueryLogTitle => '日志记录';
 
   @override
-  String get serverQueryLogHubHint => '设置记录内容、落盘与保留天数';
-
-  @override
   String get serverSettingsTitle => '服务器设置';
-
-  @override
-  String get serverSettingsHubHint => 'Root、端口与数据目录';
 
   @override
   String get serverAppearance => '外观';
@@ -14297,12 +9558,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverLogSearchDomain => '搜索域名';
-
-  @override
-  String get serverLogSearchClient => '搜索客户端';
-
-  @override
-  String get serverLogSearch => '搜索';
 
   @override
   String get serverLogEmpty => '暂无查询记录';
@@ -14420,13 +9675,7 @@ class AppL10nZh extends AppL10n {
   String get serverUpstreamModeNote => '主备切换优先使用首个可用服务商；并行竞速取最快响应；智能选择按历史表现调度。';
 
   @override
-  String get serverUpstreamBootstrap => 'Bootstrap';
-
-  @override
   String get serverBootstrapSummary => 'Bootstrap 摘要';
-
-  @override
-  String get serverBootstrapServers => '服务器列表';
 
   @override
   String serverBootstrapServerCount(int count) {
@@ -14581,9 +9830,6 @@ class AppL10nZh extends AppL10n {
   String get serverSubscriptionRequired => '名称和地址不能为空';
 
   @override
-  String get serverCheckTitle => '规则测试';
-
-  @override
   String get serverCheckDomain => '域名';
 
   @override
@@ -14614,12 +9860,6 @@ class AppL10nZh extends AppL10n {
   String get serverCacheEnabledBody => '缓存上游响应并复用 TTL';
 
   @override
-  String get serverCacheState => '缓存状态';
-
-  @override
-  String get serverCacheCapacity => '容量';
-
-  @override
   String get serverCacheEntries => '最大条目';
 
   @override
@@ -14630,9 +9870,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverCacheFixed => '固定 TTL';
-
-  @override
-  String get serverCacheTtl => 'TTL 策略';
 
   @override
   String get serverCacheMaxTtl => '最大 TTL';
@@ -14674,19 +9911,7 @@ class AppL10nZh extends AppL10n {
   String get serverCacheAdvanced => '高级选项';
 
   @override
-  String get serverCacheBehavior => '缓存行为';
-
-  @override
   String get serverCacheAdvancedSummary => '最小 TTL、过期回退、否定缓存、乐观缓存与预取';
-
-  @override
-  String get serverCacheAdvancedTtl => 'TTL 下限';
-
-  @override
-  String get serverCacheFallback => '过期与否定缓存';
-
-  @override
-  String get serverCachePerformance => '预取与优化';
 
   @override
   String get serverQueryLogEnabled => '记录查询';
@@ -14729,15 +9954,6 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverNumberInvalid => '请输入有效范围内的整数';
-
-  @override
-  String get serverSettingsRuntime => '运行状态';
-
-  @override
-  String get serverRunning => '服务器运行中';
-
-  @override
-  String get serverSettingsSwitchModeBody => '切换模式前会停止服务器';
 
   @override
   String get serverSettingsListen => '监听';

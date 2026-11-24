@@ -2,10 +2,8 @@
   "@@locale": "en",
   "ruleTestTitle": "Rule test",
   "ruleTestEnterSubtitle": "Enter a domain to see why it is blocked or allowed",
-  "ruleTestIntro": "Enter a domain to see the verdict, the matched rule and any rewrite. The logic is exactly the engine's.",
   "ruleTestDomainLabel": "Domain",
   "ruleTestDomainHint": "e.g. ads.example.com",
-  "ruleTestQtype": "Query type",
   "ruleTestRun": "Run test",
   "ruleTestResultTitle": "Verdict",
   "ruleTestActionBlock": "Blocked",
@@ -67,14 +65,6 @@
   "hitRankingEmptyBody": "Switch the range, or enable rule blocking first.",
   "hitRankingLoadFailed": "Failed to load hit ranking",
   "hitRankingFooter": "Aggregated from local dns_log by blocked results.",
-  "hitRankingTotal": "{count} blocked in total",
-  "@hitRankingTotal": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "healthTitle": "Protection health",
   "healthEntrySubtitle": "See the four-dimension score and suggestions",
   "healthIntro": "Assesses whether protection is actually effective across permissions, DNS, filter and cache, and suggests the next step.",
@@ -106,10 +96,8 @@
   "searchGroupTools": "Commands",
   "flowTitle": "Connection monitor",
   "flowLiveTab": "Live connections",
-  "flowEntrySubtitle": "See live connections and remotes by app",
   "flowAppsSection": "Apps",
   "flowRefresh": "Refresh",
-  "flowEmptyBody": "While protection runs with traffic, live connections show here grouped by app → domain → remote.",
   "flowStatusActive": "Active",
   "flowStatusFailed": "Blocked",
   "flowStatusClosed": "Closed",
@@ -192,8 +180,6 @@
   "dashboardAddCard": "Add card",
   "providerSheetSingleTitle": "Choose a resolver",
   "providerSheetRaceTitle": "Choose racing resolvers",
-  "providerSheetSingleOptions": "Available resolvers",
-  "providerSheetRaceMinimum": "Pick at least 2",
   "providerSheetManage": "Manage resolvers...",
   "providerSheetVisibility": "Resolver visibility...",
   "providerSheetActions": "Provider management",
@@ -301,8 +287,6 @@
   "statusCoreSection": "Core",
   "statusWorkMode": "Work mode",
   "statusCoreState": "Core state",
-  "statusListenPort": "Listening port",
-  "statusNotListening": "Not listening",
   "statusProviderFooter": "Latency is the resolver's last measured value, not this device's round trip to the target.",
   "statusNoProviderHint": "No resolver selected yet. Pick one in resolver management so resolution uses a real upstream.",
   "statusTodayCounts": "Today's counts",
@@ -373,13 +357,10 @@
   "siteLatencyThisRun": "This run",
   "siteLatencyReachable": "Reachable",
   "siteLatencyMeasuredSites": "Sites tested",
-  "siteLatencyDetailFooter": "Each site gets three ICMP echo requests and the average is used; when system ping is unavailable the TCP handshake is used instead, marked with *, and reads slightly higher than the real round trip. This app's own traffic bypasses the VPN, so the physical network is measured.",
   "intranetDetailTitle": "LAN IP details",
   "intranetRefresh": "Refresh network info",
   "intranetLocalAddress": "Local LAN address",
-  "intranetUsableAsDns": "Usable as DNS",
   "intranetLocalOnly": "Local only",
-  "intranetSameSubnetHint": "Point devices on the same subnet at this address to use local resolution.",
   "intranetNetworkOverview": "Network overview",
   "commonEnabled": "Enabled",
   "commonDisabled": "Disabled",
@@ -392,8 +373,6 @@
   "intranetNoDnsServer": "No DNS server was read: the interface provides none, or there is no diagnostic channel here.",
   "intranetPrimaryDns": "Primary",
   "intranetPrivateDns": "Private DNS",
-  "intranetPortFooter": "The port is bound only when the service starts, so restart it after changing the port; point devices on the same subnet at the address above to use local resolution.",
-  "intranetCopyAddressWithPort": "Copy address (with port)",
   "speedDetailTitle": "Speed details",
   "speedCurrentDownload": "Current download",
   "speedSamplingPaused": "Sampling paused",
@@ -411,12 +390,7 @@
   "speedNoDataInMode": "No rate data in this mode",
   "speedWaitingSample": "Waiting for the first sample",
   "commonNoData": "No data",
-  "commonPendingTitle": "Not connected yet",
-  "commonPendingBody": "This page is not connected to the local service yet; live data appears once it is.",
-  "homePowerPending": "Power control is not connected to the local service yet",
   "intranetModeNotListening": "{mode} does not listen on the LAN, so other devices cannot use this as their DNS",
-  "intranetListeningOn": "Listening on 0.0.0.0:{port}; point other devices' DNS at the address above",
-  "intranetServiceStopped": "Service not started: port {port} is bound once it starts",
   "commonCopied": "Copied {text}",
   "intranetGatewaySuffix": " · Gateway {gateway}",
   "speedTotalDash": "Total —",
@@ -543,7 +517,6 @@
   "elapsedMinutesAgo": "{count}m ago",
   "elapsedHoursAgo": "{count}h ago",
   "elapsedDaysAgo": "{count}d ago",
-  "providerRaceSummary": "{count} selected: {names}",
   "rulesDbUnavailable": "The rule database is not readable in this environment",
   "agentApiKeyMissing": "No usable API key yet. Fill one in under AI provider management and select that provider.",
   "agentNoExtraInfo": "(no extra information)",
@@ -578,9 +551,7 @@
   "aiPresetMainland": "Mainland providers",
   "aiPresetOverseas": "Overseas providers",
   "aiPresetAggregator": "Aggregators and local deployments",
-  "aiProviderConfigured": "Configured providers",
   "aiProviderExampleName": "Example provider (edit me)",
-  "logSubscriptionDeleted": "Deleted subscription",
   "logRaceFastest": "Fastest response",
   "logRaceSmart": "Smart selection",
   "logRaceSequential": "Try in order",
@@ -599,11 +570,9 @@
   "speedTestSelectProvider": "Select at least one resolver to test",
   "speedTestEmptyDomain": "Enter a domain to test",
   "imagePickerUnavailable": "No image picker is available on this device",
-  "recognitionInvalidConfig": "The cloud roster configuration is invalid",
   "recognitionGithubInterrupted": "The connection to GitHub was interrupted; try again later",
   "recognitionGithubTimeout": "Connecting to GitHub timed out; check the network and retry",
   "recognitionNetworkUnavailable": "No network, so the roster cannot be updated",
-  "recognitionUpdateFailed": "The roster update failed",
   "subscriptionNotFound": "The subscription does not exist or the database is unavailable",
   "subscriptionDatabaseUnavailable": "The subscription database is unavailable",
   "subscriptionRuleDbUnavailable": "The rule database is unavailable, so downloaded rules cannot be stored",
@@ -625,7 +594,6 @@
   "updateCheckFirst": "Check for updates first",
   "updateDownloadFirst": "Download the update package first",
   "updateInstallerUnavailable": "The system installer cannot be opened; try again later",
-  "workModeNoDataPlane": "This work mode has no data plane yet",
   "workModeNoVpnConsent": "VPN consent was not granted",
   "workModeStartTimeout": "The service timed out starting",
   "workModeVpnStartFailed": "The VPN failed to start",
@@ -652,7 +620,6 @@
   "recognitionInvalidConfigKept": "The cloud roster configuration is invalid ({detail}); the local cache is kept",
   "recognitionFetchFailed": "Fetching the cloud roster failed ({detail})",
   "recognitionUpdateFailedDetail": "The roster update failed: {detail}",
-  "subscriptionAlreadyExists": "{what} already exists as {kind}",
   "subscriptionUpdatedCount": "{count} updated",
   "subscriptionUnchangedCount": "{count} unchanged",
   "subscriptionFailedCount": "{count} failed",
@@ -695,8 +662,6 @@
   "subscriptionSourceLocal": "Local file",
   "subscriptionKindDomain": "Domain list rules",
   "subscriptionKindHosts": "Hosts rules",
-  "logRowDirect": "{protocol} direct",
-  "logRowDirectWithPackage": "{protocol} direct · {package}",
   "logRowCacheHit": "cache hit",
   "logRowNoAuthority": "no authority",
   "cachePresetConservativeName": "Conservative",
@@ -710,13 +675,6 @@
   "cachePresetMultiplier": "{value}×",
   "cachePresetExample": "{upstream}s upstream → {cached}s cached",
   "cachePresetRecommended": "Recommended",
-  "cacheDisabledSummary": "Off · every lookup goes upstream",
-  "upstreamNameRequired": "Enter a name",
-  "upstreamAddressRequired": "Enter an address",
-  "upstreamDohNeedsHttps": "A DoH address must start with https://",
-  "upstreamDohInvalidUrl": "The DoH address is not a valid URL",
-  "upstreamPortRange": "The port must be between 1 and 65535",
-  "upstreamIpv6Invalid": "The IPv6 address is not valid",
   "upstreamPresetAliyun": "Aliyun",
   "upstreamPresetTencent": "Tencent Cloud DNSPod",
   "upstreamPresetByteDance": "ByteDance",
@@ -770,27 +728,17 @@
   "hubOtherSettings": "Other settings",
   "hubOtherSettingsDescription": "Global options such as language, foreground/background behaviour and notifications",
   "hubCategoryData": "Data and maintenance",
-  "hubLogs": "Logs",
   "hubLogsDescription": "Live resolution statistics, request details and log export",
-  "hubBackup": "Data and maintenance",
   "hubBackupDescription": "Export and import resolvers, rule subscriptions and personal settings",
   "hubDataCleanup": "Data cleanup",
   "hubDataCleanupDescription": "Clean runtime logs, caches, rules, subscriptions and custom data by category",
   "hubTroubleshooting": "Troubleshooting",
   "hubTroubleshootingDescription": "Export crash logs and capture runtime logs to send to the developer",
-  "hubCategoryNetworkTools": "Network tools and privacy",
-  "hubCategoryAutomation": "Automation and scenes",
-  "hubCategoryIntegration": "Automation and resources",
-  "hubCategorySubscription": "Subscriptions and updates",
-  "hubDnsLeak": "DNS leak",
   "hubAutoUpdateDescription": "Update rule subscriptions on a fixed interval or at a daily time",
-  "hubCategoryAbout": "About DITING",
   "hubAbout": "About",
   "hubAboutDescription": "Version information, update checks, source links and contributor lists",
   "hubSponsor": "Sponsor",
   "hubSponsorDescription": "Support the ongoing maintenance and development of DITING",
-  "hubSponsors": "Sponsors",
-  "hubSponsorsDescription": "Thanks to everyone who supports the project",
   "fontSizeSmall": "Small",
   "fontSizeStandard": "Standard",
   "fontSizeLarge": "Large",
@@ -808,11 +756,9 @@
   "appearanceFeedbackMotionSubtitle": "Pure black, haptics and transition effects",
   "appearanceFeedbackSection": "Feedback",
   "appearanceMotionSection": "Motion",
-  "appearanceInterfaceSection": "Interface",
   "appearanceHomeOpacitySubtitle": "Opacity of interactive components and text",
   "appearancePureBlackOn": "Dark surfaces collapse to pure black, saving power on OLED",
   "appearancePureBlackOff": "Available once dark mode is on",
-  "appearanceHomeSection": "Home content",
   "appearanceHomeSentenceSubtitle": "One sentence each for running and stopped",
   "appearanceNotification": "Notification",
   "appearanceNotificationSubtitle": "Persistent notification, live rate and custom text",
@@ -822,8 +768,6 @@
   "appearanceBottomBarStyleDocked": "Docked at the bottom",
   "appearanceTabTransitionSubtitle": "Animation used when switching tabs",
   "appearanceMotionFooter": "Animation and glass only apply to the floating bar; the docked bar stays solid.",
-  "appearancePaletteGoldLegacy": "Stored value keeps the legacy indigo",
-  "appearancePaletteFooter": "The palette only supplies a seed; the screen shows the full HCT-derived role set. The legacy app had no custom picker, so there is none here.",
   "launcherIconTitle": "App icon",
   "launcherIconInfoLabel": "Choose the icon shown on your home screen",
   "launcherIconDefault": "Default",
@@ -833,7 +777,6 @@
   "launcherIconFooter": "Android has no runtime API to replace an installed icon, so switching enables the matching launcher entry. Return to your home screen to see it; if the launcher caches the old icon, wait a moment or restart it.",
   "launcherIconApplied": "Launcher icon switched — return to your home screen to see it",
   "launcherIconApplyFailed": "Couldn't switch the launcher icon. Try again later",
-  "fontFamilySizeSubtitle": "{percent}% now",
   "fontFamilySystemDefault": "Follows the host platform's interface font; the safest choice",
   "fontFamilyImported": "Imported third-party font",
   "fontFamilyEmpty": "No imported fonts yet. Once imported you can switch here; font files stay on this device.",
@@ -917,7 +860,6 @@
   "rootTakeoverProbeUnsupported": "Root takeover is not supported on this platform",
   "rootTakeoverRunning": "Root DNS takeover is running",
   "dayNightTitle": "Day/night mode",
-  "dayNightFollowSystemDescription": "Switches together with the system dark mode",
   "dayNightFooter": "Pure black only applies in dark mode; turn it on in Feedback & motion.",
   "homeOpacityTitle": "Home opacity",
   "homeOpacityComponents": "Interactive components",
@@ -931,11 +873,8 @@
   "bottomBarSettingsSubtitle": "All settings",
   "bottomBarMinimumHint": "Keep at least 2 items in the bottom bar",
   "bottomBarCustomTitle": "Bottom bar",
-  "bottomBarItemsHeader": "Bottom bar items ({count}/{max})",
-  "bottomBarDragHint": "Drag by the handle on the right or long-press a row to reorder; the order is the bottom bar order from left to right. Keep 2 to {max} items: the floating bar splits its width evenly and more would squeeze the icons.",
   "bottomBarDisabled": "Not in use",
   "bottomBarNewItemFooter": "Newly enabled items go to the far right.",
-  "bottomBarFeel": "Feel",
   "homeSentenceTitle": "Home sentences",
   "homeSentenceFooter": "Both fields may stay empty; when empty, no sentence is shown in that state. The sentence appears once, below the power button.",
   "appearancePaletteTitle": "Palette",
@@ -958,7 +897,6 @@
   "appearanceLiquidGlass": "Liquid glass",
   "fontFamilyTitle": "Font settings",
   "fontSizeRestoreDefaults": "Restore defaults",
-  "fontFamilyHapticSubtitle": "A short vibration when switching tabs",
   "ruleKindBlockTitle": "Block list",
   "ruleKindBlockSummary": "Block matching domains",
   "ruleKindAllowTitle": "Allow list",
@@ -1005,13 +943,10 @@
   "ruleNoMatch": "No matching rules",
   "ruleNoMatchDescription": "Try another keyword or filter",
   "ruleAll": "All",
-  "formIssuesTitle": "A few things need fixing",
   "formSave": "Save",
   "formProcessing": "Working…",
   "formAdd": "Add",
   "formDelete": "Delete",
-  "formHelp": "Help",
-  "formGotIt": "Got it",
   "rulePatternHint": "Rule text, e.g. ||ads.example.com^",
   "ruleBatchImported": "Imported {count} rules into {kind}.",
   "ruleBatchSkippedDuplicates": "Skipped {count} duplicate rules.",
@@ -1149,7 +1084,6 @@
   "trafficNoData": "No traffic data yet",
   "trafficNoMatchingApps": "No matching apps",
   "trafficRankingTitle": "App traffic ranking",
-  "trafficShareFooter": "Shares use the total bytes (download + upload) for {window}; {range}. Tap a row to see that app's breakdown.",
   "trafficClearTitle": "Clear all traffic records?",
   "trafficConfirmClear": "Clear",
   "trafficClearBody": "This clears every stored per-app traffic record and cannot be undone.",
@@ -1158,7 +1092,6 @@
   "trafficSessionUnavailable": "The session window needs per-session traffic from the core; only daily records exist here",
   "trafficLiveRate": "By live rate",
   "trafficHideSystemApps": "Hide system apps",
-  "trafficSearchHint": "Search by app name or package",
   "trafficAllHistory": "All history",
   "trafficLiveRateUnavailable": "The live-rate sort needs per-second rates; the daily table has no rate column",
   "trafficHideSystemAppsSubtitle": "Recognised by system flag and vendor preinstall prefixes; hidden apps are left out of the ranking",
@@ -1175,11 +1108,8 @@
   "trafficCleared": "Cleared {count} traffic records",
   "trafficClearFailed": "Clearing failed: {detail}",
   "trafficShareBarTooltip": "The bar length is this row's share of the window total under \"{sort}\" (currently {value}), matching the list order.",
-  "trafficWhyDaemonTitle": "Why do system settings attribute all traffic to DITING?",
-  "trafficWhyDaemonBody": "Android's VPN model attributes proxied outbound traffic to the daemon. DITING does not use traffic behind your back; tap to see what is counted.",
   "trafficLiveRateTitle": "Live rate",
   "trafficNoLiveRate": "This mode does not measure a live rate: the current takeover path bypasses the engine's traffic counters. The {window} download/upload figures and the ranking below are still real numbers.",
-  "trafficLiveRateBody": "Per-second rates from the engine (this session), the same source as the persistent notification. The {window} download/upload figures are cumulative bytes from `app_traffic_daily`; the two use different scopes and need not match.",
   "trafficSearchPlaceholder": "Search app or package...",
   "trafficWindowDown": "{window} download",
   "trafficWindowUp": "{window} upload",
@@ -1229,7 +1159,6 @@
   "obsFailedHint": "For failed requests, check the matching active connections on the Connections page.",
   "obsRulesHint": "Rules added here can be reviewed and undone on the Rules page.",
   "obsCacheHit": "Cache hit",
-  "obsCopied": "Copied {text}",
   "obsCopyAddress": "Copy address",
   "obsCopyDomain": "Copy domain",
   "obsInBlocklist": "Already blocked",
@@ -1266,7 +1195,6 @@
   "obsExportCustomRange": "Date range",
   "obsExportPickRange": "Tap to choose a range",
   "obsExportScopeSection": "Filters",
-  "obsExportIntro": "Pick a time range, source, status and apps, then choose the columns to export.",
   "obsExportDnsOnlyNote": "This mode has no HTTPS request log; the export only contains DNS records.",
   "obsExportApps": "Apps",
   "obsExportAllApps": "All apps",
@@ -1354,7 +1282,6 @@
   "logsCurrentSearch": "Searching: {query}",
   "logsLiveCache": "Live cache entries",
   "logsNeverHit": "Never hit",
-  "logsCacheFooter": "{count} entries sorted by hits and expiry. Entries with less than 30 seconds of TTL are orange. Tap a row for details, to copy the domain, add it to the lists or analyse it with AI.",
   "logsBootstrapTitle": "Bootstrap statistics",
   "logsBootstrapFooter": "The success rate is successes ÷ attempts; the average time is weighted by each node's attempts.",
   "logsBootstrapLoadFailed": "Bootstrap records cannot be read",
@@ -1479,7 +1406,6 @@
     }
   },
   "storageV2Verifying": "Verifying data…",
-  "storageV2Cleaning": "Cleaning up old data…",
   "storageV2NeedStop": "A network connection is using the old databases. Stop it before upgrading.",
   "storageV2StopAndRetry": "Stop connection and continue",
   "storageV2Retry": "Retry",
@@ -1507,15 +1433,8 @@
   "devQuitNow": "Quit now",
   "devClearAllDone": "All data has been cleared; restart the app to start from the factory state.",
   "devOptions": "Developer options",
-  "devDiagnostics": "Diagnostics",
   "devIpQuality": "IP quality",
   "devIpQualityBody": "Probe the egress address and how three public sources classify it",
-  "devRequestLogs": "Request logs",
-  "devRequestLogsBody": "Live request records merged from http_request_log and dns_log",
-  "devLogRetention": "Log retention",
-  "devLogRetentionBody": "Log capacity limits and what DNS request logs record",
-  "devTroubleshoot": "Troubleshooting",
-  "devTroubleshootBody": "Export crash logs, or capture and export runtime logs manually",
   "devDataCleanup": "Data cleanup",
   "devUnlocked": "Experimental actions unlocked",
   "devLocked": "The actions below are unavailable while off",
@@ -1544,7 +1463,6 @@
   "sponsorQrCode": "{label} QR code",
   "sponsorClose": "Close",
   "sponsorNoteShort": "Please add your nickname in the payment note so you can be added to the sponsor list.",
-  "aboutQqCopied": "QQ was not found; the group number was copied: {number}",
   "disclaimerTitle": "Disclaimer",
   "disclaimerTerms": "Full terms",
   "disclaimerSource": "The authoritative terms are NOTICE.md in the repository and the LICENSE shipped with the app.",
@@ -1564,22 +1482,8 @@
   "ipQualityNotUsed": "Not used",
   "ipQualityUsed": "Used",
   "devFooterWarning": "These actions work directly on the local databases, prefs and native channels: the stress test really writes {count} rows, compaction runs SQLite VACUUM, and clearing all data deletes everything locally and requires a restart.",
-  "devDataCleanupBody": "Delete logs, weights, rules and cache by category",
-  "devConfigSection": "Configuration and resources",
-  "devCustomResources": "Custom resources",
-  "devCustomResourcesBody": "Entry points for configuration resources such as User-Agent and on-demand",
   "devUserAgentBody": "The UA sent with subscription downloads and speed tests",
-  "devOnDemand": "On-demand connection",
-  "devOnDemandBody": "Start the VPN depending on the SSID",
-  "devWebdav": "WebDAV sync",
-  "devWebdavBody": "Upload backups to your own WebDAV server",
-  "devUiSection": "UI and appearance extras",
-  "devFontFamilyBody": "Choose the UI font family on its own page",
-  "devFontSizeBody": "Global text scaling; an inline slider in the appearance settings",
-  "devTabAnimation": "Tab animation",
-  "devTabAnimationBody": "The entrance animation when switching bottom tabs; an inline option in the appearance settings",
   "devExperimental": "Experimental actions",
-  "devLegacyFooter": "None of the pages under Diagnostics, Configuration and resources or UI and appearance belong to the 1.4.3 interface; they are kept for debugging and component review. The legacy features are still reached through the legacy menus, not this page.",
   "unknownRouteTitle": "Page not found",
   "unknownRouteBody": "This page cannot be found",
   "unknownRouteBack": "Back",
@@ -1588,10 +1492,7 @@
   "disclaimerLawful": "Use this software in compliance with the laws of your jurisdiction. Using it on any unauthorised network is at your own risk.",
   "disclaimerFirstRun": "The text confirmed at first launch",
   "disclaimerImmutable": "Not editable",
-  "devFontFamily": "Font",
-  "devFontSize": "Text size",
   "devWarningTitle": "Developer mode",
-  "devFooterLegacy": "The pages under Diagnostics, Configuration and resources, and UI and appearance do not belong to the 1.4.3 interface; they are kept for debugging and component review. Legacy features are still reached through the legacy menus, not this page.",
   "devFooterMoved": "IP quality, request logs and custom resources now live under their own categories in the feature hub; the developer options keep only the experimental actions below.",
   "ipTypeResidential": "Residential",
   "ipTypeMobile": "Mobile",
@@ -1765,7 +1666,6 @@
   "uaDeleteBody": "Delete this entry? Only the candidate is removed; the currently selected UA is unaffected.",
   "uaAdd": "Add User-Agent",
   "uaEdit": "Edit User-Agent",
-  "uaNote": "The UA is sent with subscription downloads, ruleset fetches and subscription speed tests; some servers reject requests by UA, and changing it here works around that.",
   "uaCurrent": "Current selection",
   "uaAll": "All User-Agents",
   "uaNoOverride": "No override",
@@ -1797,7 +1697,6 @@
   "odTitle": "On-demand connection",
   "odApplyNow": "Apply now",
   "odEnable": "Enable on-demand connection",
-  "odEnableBody": "Start the VPN automatically on allowlisted SSIDs",
   "odDisableBody": "When off, the VPN stays on and does not follow network changes",
   "odNote": "When enabled, the VPN starts automatically only on allowlisted SSIDs and stays off elsewhere, which is both more power-friendly and more predictable. Automatic decisions only act on network changes and never override the manual switch; tap \"Apply now\" to re-evaluate for the current network immediately.",
   "odAllowlist": "SSID allowlist",
@@ -1845,33 +1744,21 @@
   "customResourcesTitle": "User-Agent management",
   "configDelete": "Delete",
   "configCancel": "Cancel",
-  "configNotSet": "Not set",
   "configItemCount": "{count} items",
   "odEditSsidTooltip": "Edit {ssid}",
   "odDeleteSsidTooltip": "Delete {ssid}",
   "troubleshootTitle": "Troubleshooting",
   "troubleshootRuntimeLogs": "Runtime logs",
   "troubleshootRecordLogs": "Record runtime logs",
-  "troubleshootExportLogs": "Export runtime logs",
-  "troubleshootClearLogs": "Clear runtime logs",
-  "troubleshootClearLogsBody": "Delete every runtime log file recorded locally",
   "troubleshootRecordNote": "Off by default. While on, a status notification is shown and recording stops when the app closes or you turn it off; logs stay on this device and are never uploaded automatically.",
   "troubleshootLocalDb": "Local database",
   "troubleshootWriteStatus": "Log write status",
   "troubleshootWriteStatusNote": "Logs, race records and traffic statistics are written straight into the local database in the background. Dropped rows or open failures usually mean the database was locked for a long time; tap to read again, and export the runtime logs if it keeps happening.",
-  "troubleshootCrashLogs": "Crash logs",
-  "troubleshootExportCrashes": "Export crash logs",
-  "troubleshootClearCrashes": "Clear crash logs",
-  "troubleshootClearCrashesBody": "Delete every crash file recorded locally",
-  "troubleshootCrashNote": "When an uncaught exception happens, diagnostics and key logs are saved on the device only; export them to report the problem.",
   "troubleshootCaptureWarning": "Capturing runtime logs keeps reading and writing a few files, which may raise power use, increase storage usage or have other unknown effects, so turn it off when done. The exported file can be sent to the developer; describing the symptom and when it happened helps pinpoint the cause.",
   "troubleshootReadingStatus": "Reading capture status…",
   "troubleshootRecording": "Recording, using {size}; tap again to stop",
   "troubleshootStoppedWithLogs": "Stopped; {size} of logs are available to export",
   "troubleshootStoppedNoLogs": "Stopped; runtime logs are only recorded while on",
-  "troubleshootReadingLogs": "Reading local logs…",
-  "troubleshootNoLogs": "There are no runtime logs on this device",
-  "troubleshootLogCount": "{count} files, {size}; tap to export",
   "troubleshootReadingHealth": "Reading write status…",
   "troubleshootHealthy": "Healthy, no logs were dropped",
   "troubleshootHealthyDetail": "Healthy, no logs were dropped ({mode} · {detail})",
@@ -1880,9 +1767,6 @@
   "troubleshootTableMissing": "Missing table",
   "troubleshootNoDatabase": "No database",
   "troubleshootClosed": "Unfinished when stopped",
-  "troubleshootReadingCrashes": "Reading crash logs on this device…",
-  "troubleshootNoCrashes": "There are no crash logs on this device",
-  "troubleshootCrashCount": "{count} crash logs recorded; tap to export",
   "troubleshootStoppedToast": "Stopped recording runtime logs",
   "troubleshootStartTitle": "Start capturing runtime logs",
   "troubleshootCancel": "Cancel",
@@ -1890,17 +1774,6 @@
   "troubleshootStartBody": "This feature mainly helps the developer diagnose problems: while on, the app's runtime logs are recorded continuously to local storage.\n\nCapturing may raise power use, increase storage usage or have other unknown effects. Unless you are troubleshooting, turn it off when done.\n\nLogs stay on this device and recording stops when you turn it off; you can export and send them to the developer yourself.",
   "troubleshootStartedToast": "Started recording runtime logs",
   "troubleshootStartFailedToast": "Cannot start capturing logs; try again later",
-  "troubleshootNoExportableLogs": "There are no runtime logs to export",
-  "troubleshootExportFailed": "Export failed: there is no writable export directory",
-  "troubleshootExported": "Exported to {path}",
-  "troubleshootConfirm": "Confirm",
-  "troubleshootClearLogsConfirm": "Clear all saved runtime logs? This cannot be undone.",
-  "troubleshootClearedLogs": "Cleared {count} log files",
-  "troubleshootNoClearableLogs": "There are no runtime logs to clear",
-  "troubleshootNoExportableCrashes": "There are no crash logs to export",
-  "troubleshootClearCrashesConfirm": "Clear all saved crash logs?",
-  "troubleshootClearedCrashes": "Cleared {count} crash logs",
-  "troubleshootNoClearableCrashes": "There are no crash logs to clear",
   "bypassAddTitle": "Add a bypass domain",
   "bypassAdd": "Add",
   "bypassSuffix": "Domain suffix",
@@ -1913,7 +1786,6 @@
   "mirrorNote": "When on, subscriptions without their own mirror, update checks and package downloads all try the mirror first and fall back to the original address if it fails. Subscriptions with their own mirror keep their own settings.",
   "hiddenFeaturesTitle": "Hidden features",
   "hiddenFeaturesReset": "Show everything again",
-  "hiddenFeaturesNote": "Choose which cards the feature hub shows. Turning a switch off hides that card from the hub; every card is shown by default (simple mode hides a few categories on first use). Hiding only changes the UI and never affects background behaviour or rule enforcement. The setting is stored on this device and survives restarts.",
   "hiddenFeaturesFooter": "The \"Hidden features\" card always stays so you can restore cards from here at any time.",
   "cacheSettingsTitle": "Cache settings",
   "cacheSection": "Cache",
@@ -1927,7 +1799,6 @@
   "recognitionSponsorIntro": "Thanks to everyone who supports Diting! The list is ordered by sponsorship time, earliest first, and the button in the corner reverses it; the amount is not shown because every contribution matters equally.",
   "recognitionSponsorSection": "Sponsors",
   "providerVisibilityTitle": "Provider visibility",
-  "providerVisibilityNote": "With race mode off, the resolver picker on the home page only shows the providers selected here. The one currently in use is always kept. Drag the handle on the right to reorder; that order also sets how the race provider list is arranged.",
   "providerVisibilityProtocol": "{protocol} providers",
   "providerVisibilityAll": "All {protocol} providers",
   "providerVisibilityNone": "Hide this provider type",
@@ -2114,7 +1985,6 @@
   "autoUpdateIntervalHelper": "1–168 hours",
   "mirrorTplTitle": "Mirror templates",
   "mirrorTplAdd": "Add template",
-  "mirrorTplIntro": "Save the mirrors you use often. With the global mirror on, subscriptions and app updates use the selected template by default; a single subscription can also pick its own template.",
   "mirrorTplActions": "Actions",
   "mirrorTplFormatExample": "Mirror format example",
   "mirrorTplFormatExampleSubtitle": "See how placeholders make up a mirror address",
@@ -2148,29 +2018,18 @@
   "ruleControlUrlNotReadyApps": "Not ready · pick target apps in HTTPS traffic inspection",
   "ruleControlUrlPaused": "Paused · URL filtering and redirects for decrypted traffic are off",
   "ruleControlUrlRunning": "Running · decrypted traffic is matched against URL block, allow and redirect rules",
-  "ruleControlIntro": "One place for the master switches of domain filtering, URL rules and rule overrides, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub.",
-  "ruleControlIntroLimited": "One place for the domain-filtering master switch, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub.",
   "ruleControlFilterSection": "Filtering and override control",
   "ruleControlDomainRules": "Enable domain rules",
   "ruleControlDomainRulesOn": "Blocks, allows and overrides IPv4/IPv6 at the DNS stage",
   "ruleControlDomainRulesOff": "DNS domain filtering is off; every query is passed through",
   "ruleControlUrlRules": "URL rules and content filtering",
   "ruleControlNotReady": "Not ready",
-  "ruleControlPolicySection": "Block policy",
   "ruleControlDiagnosticsSection": "Rule diagnostics",
   "ruleControlControlSection": "Blocking controls",
   "ruleControlDomainSection": "Domain lists & rewrite",
   "ruleControlBlockResponse": "Block response",
   "ruleControlDynamicSummary": "Dynamic policy: NODATA first, then {mode} for frequent requests",
-  "ruleControlNetworkPrivacySection": "Network privacy and diagnostics",
-  "ruleControlInterfacesSection": "External interfaces and integrations",
-  "ruleControlSubsSection": "Subscriptions and updates",
   "ruleControlSubsSubtitle": "Manage domain rule and IPv4/IPv6 override sources and groups",
-  "ruleControlCount": "{count}",
-  "ruleControlAutoUpdateOn": "On · auto-updates every {hours} hours",
-  "ruleControlAutoUpdateDaily": "On · auto-updates every day at {time}",
-  "ruleControlAutoUpdateEveryOtherDay": "On · auto-updates every other day at {time}",
-  "ruleControlAutoUpdateOff": "Auto-update is off",
   "ruleControlMirrorSubtitle": "Manage download mirrors that can be picked when adding a subscription",
   "blockResponseFixedSection": "Fixed response",
   "blockResponseFixedFooter": "While the dynamic policy is on it overrides the choice above: NODATA first, then NXDOMAIN for frequent requests.",
@@ -2229,7 +2088,6 @@
   "httpInspAppsTitle": "Choose apps to inspect",
   "httpInspSelectVisible": "Select all shown",
   "httpInspDeselectVisible": "Deselect all shown",
-  "httpInspAppsIntro": "Once the tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state.",
   "httpInspAppsCount": "{selected} apps selected ({visible} shown)",
   "commonLater": "Later",
   "ruleControlSubsTitle": "Rule subscriptions",
@@ -2285,10 +2143,6 @@
   "cleanupRestartBody": "Cleanup finished. The first-run guides and the terms were reset; restart the app for it to take effect.",
   "commonConfirm": "Confirm",
   "transferTitle": "Backup and migration",
-  "transferMetricProviders": "DNS providers",
-  "transferMetricSubs": "Rule subscriptions",
-  "transferMetricCustomRules": "Custom rules",
-  "transferMetricListedApps": "Listed apps",
   "transferSectionAppConfig": "App configuration",
   "transferSectionRules": "Rules and subscriptions",
   "transferSectionAppControl": "App control and traffic",
@@ -2305,7 +2159,6 @@
   "transferWebdav": "WebDAV sync",
   "transferWebdavSubtitle": "Sync the configuration file to your own WebDAV server",
   "transferBusyExporting": "Building the backup file…",
-  "transferBusySaving": "Waiting for a save location…",
   "transferBusyPickingImport": "Waiting for a backup file…",
   "transferExportEmpty": "The selected groups have nothing to export",
   "transferExportCancelled": "Save cancelled",
@@ -2420,12 +2273,10 @@
   "agentApiResetConfirm": "Restore",
   "agentProvidersTitle": "AI provider management",
   "agentProvidersAdd": "Add custom provider",
-  "agentProvidersIntro": "Picking a preset below pre-fills the endpoint; choose the model from the provider's real list via \"Fetch models\" in the editor. Leaving the API key empty while editing keeps the existing key. Keys are stored on this device with the same obfuscation as before, with no extra plain text.",
   "agentProvidersMine": "My providers",
   "agentProvidersEmpty": "No providers yet",
   "agentProvidersEmptySubtitle": "Pick one from the presets below, or add a custom provider from the top right",
   "agentProvidersRow": "{model} · {baseUrl} · {key}",
-  "agentProvidersKeyConfigured": "Key configured",
   "agentProvidersKeyMissing": "Key missing",
   "agentProvidersFooter": "Tap a row to make that provider active; switching also syncs the endpoint, key and model into the four legacy flat keys so the new and old screens never disagree.",
   "agentProvidersAdded": "Added",
@@ -2522,7 +2373,6 @@
   "outboundFooterReady": "The engine confirmed the proxy works; after changing the settings the tunnel must restart to check again.",
   "outboundFooterConnecting": "The tunnel checks proxy connectivity when it starts and shows the result here live.",
   "outboundAppsTitle": "Choose the proxy app",
-  "outboundAppsIntro": "Pick the app that provides the local proxy port. The proxy app itself bypasses DITING; it owns the port and DITING cannot listen for it.",
   "outboundAppsCount": "Installed apps ({count})",
   "outboundAppsEmpty": "There are no proxy apps to pick on this device",
   "resolutionSingleDesc": "Every query goes to the selected provider.",
@@ -2538,7 +2388,6 @@
   "resolutionConfigFooter": "The resolution mode and race providers are stored in the dataset of the current work mode (normal, simple and server each keep their own).",
   "resolutionNotConfigured": "Not configured",
   "resolutionProviderCount": "{count} providers",
-  "resolutionPickerTitle": "Choose the resolution mode",
   "resolutionMinProviders": "Keep at least 2 providers",
   "resolutionSingleHint": "Pick one provider as the only way out.",
   "resolutionRaceHint": "{count} providers selected; at least 2 are required.",
@@ -2749,7 +2598,6 @@
   "subsLargeConfirmAction": "Import anyway",
   "subsErrUnreachable": "Network unreachable",
   "subsErrUnreachableCode": "Network unreachable: {code}",
-  "subsErrUnsupported": "This environment cannot update online subscriptions",
   "subsErrMirrorPlaceholder": "A mirror template must contain {list}",
   "subsErrRawUrlInvalid": "The original subscription URL is not valid",
   "subsErrMirrorScheme": "The address built from the mirror template must use HTTP or HTTPS",
@@ -2795,7 +2643,6 @@
   "outboundScopeAppsFooter": "Only connections from the selected apps go through the proxy. Other apps, connections whose owner cannot be identified and DITING's own upstream DNS queries connect directly.",
   "outboundTargets": "Apps using the proxy",
   "outboundTargetsTitle": "Choose apps that use the proxy",
-  "outboundTargetsIntro": "Checked apps connect through the proxy; restart the tunnel after a change. The proxy app, DITING and apps in Excluded apps bypass the tunnel and cannot use the proxy, so they are not listed.",
   "outboundProxyTargetsRequired": "Pick at least one app to use the proxy in Selected apps mode",
   "logDashboardCardHero": "Dashboard title",
   "logDashboardCardTrafficStructure": "Traffic structure",
@@ -2860,2211 +2707,6 @@
   "floatingLogSizeTitle": "Panel size",
   "logRetentionOverlayHowTo": "Drag the bubble or the panel's title bar to move it. Tap a row for details; long-press to copy the domain.",
   "permOverlay": "Overlay",
-  "desktopDnsServiceTitle": "DNS service",
-  "desktopQueriesTitle": "Query metrics",
-  "desktopQueriesTotal": "Queries",
-  "desktopQueriesSuccess": "Succeeded",
-  "desktopQueriesFailed": "Failed",
-  "desktopQps": "QPS",
-  "desktopCacheTitle": "Cache",
-  "desktopCacheHits": "Hits",
-  "desktopCacheEvictions": "Evictions",
-  "desktopFilterTitle": "Rule blocking",
-  "desktopFilterRules": "Active rules",
-  "desktopFilterBlockRate": "Block rate",
-  "desktopTakeoverTitle": "System DNS takeover",
-  "desktopTakeoverOn": "Taken over",
-  "desktopTakeoverOff": "Not taken over",
-  "desktopFilterPauseTitle": "Pause blocking temporarily",
-  "desktopFilterPaused": "Paused",
-  "desktopFilterActive": "Active",
-  "desktopServiceHostTitle": "Host service",
-  "desktopServiceAutoStart": "Boot start",
-  "desktopServiceNotInstalled": "Not installed",
-  "desktopVersion": "Version",
-  "desktopProcessId": "Process",
-  "desktopPerformanceTitle": "Performance",
-  "desktopRuntimeTitle": "Runtime",
-  "desktopLanAllowed": "LAN",
-  "desktopListeningOn": "Listening on",
-  "desktopStartDns": "Start DNS",
-  "desktopStopDns": "Stop DNS",
-  "desktopStartDnsTitle": "Start the DNS service?",
-  "desktopStartDnsMessage": "Resolution and rule filtering take effect once it starts.",
-  "desktopStopDnsTitle": "Stop the DNS service?",
-  "desktopStopDnsMessage": "Resolution falls back to the system DNS and takeover and rules stop applying.",
-  "desktopBackendOfflineTitle": "Cannot reach the local service",
-  "desktopBackendOfflineBody": "Check that the DITING service is running and listening on {address}.",
-  "desktopBackendUnauthorizedTitle": "Access token required",
-  "desktopBackendUnauthorizedBody": "The local service requires an IPC token before it reports status.",
-  "desktopActionFailed": "Action failed: {message}",
-  "desktopLastUpdated": "Updated {time}",
-  "desktopRetry": "Retry",
-  "desktopRecentQueriesTitle": "Recent queries",
-  "desktopRecentQueriesEmpty": "No queries yet",
-  "desktopLogWindow24h": "Last 24 hours",
-  "desktopLogDomain": "Domain",
-  "desktopLogClient": "Client",
-  "desktopLogDomainHint": "Domain contains",
-  "desktopLogClientHint": "Client IP or host name",
-  "desktopLogAllTypes": "All types",
-  "desktopLogClear": "Clear history",
-  "desktopLogClearTitle": "Clear the query history?",
-  "desktopLogClearBody": "This deletes every in-memory record and every retained log file. It cannot be undone.",
-  "desktopLogClearDone": "Query history and statistics cleared",
-  "desktopLogClearFailed": "Clear failed: {message}",
-  "@desktopLogClearFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLogTopDomains": "Most queried domains",
-  "desktopLogTopBlocked": "Most blocked domains",
-  "desktopLogTopClients": "Busiest clients",
-  "desktopLogNoBlocked": "Nothing blocked yet",
-  "desktopLiveTitle": "Live queries",
-  "desktopLiveConnected": "Listening",
-  "desktopLivePaused": "Paused",
-  "desktopLiveDisconnected": "Disconnected",
-  "desktopLiveDisconnectedBody": "The local event channel is not connected, so nothing is streaming. History and the summary still read.",
-  "desktopLiveShown": "Matching {count}",
-  "@desktopLiveShown": {
-    "placeholders": {
-      "count": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLiveSearchHint": "Search domain or client IP",
-  "desktopLiveOnlyBlocked": "Blocked only",
-  "desktopLivePause": "Pause",
-  "desktopLiveResume": "Resume",
-  "desktopLiveClear": "Clear",
-  "desktopLiveEmpty": "Nothing pushed yet",
-  "desktopLiveCaptured": "In buffer",
-  "desktopLiveBlocked": "Blocked",
-  "desktopLiveSuccessRate": "Success rate",
-  "desktopLiveBufferNote": "Rolling buffer holds {count}",
-  "@desktopLiveBufferNote": {
-    "placeholders": {
-      "count": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLiveStale": "Stale fallback",
-  "desktopLogConfigTitle": "Query log and retention",
-  "desktopLogConfigEnabled": "Record the query log",
-  "desktopLogConfigEnabledBody": "When off, no history and no statistics are recorded. Resolution is unaffected.",
-  "desktopLogConfigMaxEntries": "In-memory entries",
-  "desktopLogConfigRetentionDays": "Days kept on disk",
-  "desktopLogConfigFile": "Write history to disk",
-  "desktopLogConfigFileBody": "One JSON-Lines file per day, so history survives restarts. Falls back to memory when the directory is not writable.",
-  "desktopLogConfigClients": "Record client details",
-  "desktopLogConfigClientsBody": "Keeps the device IP and host name behind each query; without it only domain-level statistics remain.",
-  "desktopLogConfigDataDir": "On-disk directory: {path}",
-  "@desktopLogConfigDataDir": {
-    "placeholders": {
-      "path": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLogConfigSave": "Save",
-  "desktopLogConfigSaved": "Query log settings saved and applied",
-  "desktopLogConfigLoadFailed": "Cannot read the query log settings",
-  "desktopLogConfigInvalid": "Entries and days must be positive whole numbers",
-  "desktopLogPagePrev": "Previous",
-  "desktopLogPageNext": "Next",
-  "desktopLogPageInfo": "Rows {from}–{to} of {total}",
-  "desktopHubResolveSection": "Resolution service",
-  "desktopHubProtectSection": "Blocking defence",
-  "desktopHubUpstream": "Upstream resolution",
-  "desktopHubUpstreamBody": "Scheduling mode, upstream nodes, bootstrap and split DNS",
-  "desktopUpstreamTitle": "Upstream resolution",
-  "desktopUpstreamModeTitle": "Upstream scheduling",
-  "desktopUpstreamModeBody": "How the configured servers share queries and fail over",
-  "desktopUpstreamModeSingle": "Single server",
-  "desktopUpstreamModeSingleBody": "Always resolve through the first server in the list",
-  "desktopUpstreamModeBackup": "Primary with failover",
-  "desktopUpstreamModeBackupBody": "Prefer the primary; switch to a backup on timeout or failure",
-  "desktopUpstreamModeRace": "Parallel race",
-  "desktopUpstreamModeRaceBody": "Query every server at once and use the fastest answer",
-  "desktopUpstreamModeSmart": "Smart latency",
-  "desktopUpstreamModeSmartBody": "Score recent latency and stability, then use the best server",
-  "desktopUpstreamNodesTitle": "Configured DNS servers",
-  "desktopUpstreamNodesBody": "Servers used to resolve names, with encrypted transports and latency probes",
-  "desktopUpstreamNodesCount": "{count} nodes",
-  "@desktopUpstreamNodesCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopUpstreamAdd": "Add DNS server",
-  "desktopUpstreamAddTitle": "Add DNS server",
-  "desktopUpstreamEditTitle": "Edit DNS server",
-  "desktopUpstreamName": "Server name / id",
-  "desktopUpstreamProtocol": "Transport",
-  "desktopUpstreamAddress": "Server address (IP or host)",
-  "desktopUpstreamUrl": "Encrypted query URL",
-  "desktopUpstreamPin": "Certificate fingerprint (optional, SHA-256)",
-  "desktopUpstreamPinWarning": "A fingerprint replaces the system CA chain and is only for self-signed or private-CA upstreams. A mismatch makes the upstream unusable.",
-  "desktopUpstreamPreset": "Common presets",
-  "desktopUpstreamPresetProvider": "Provider",
-  "desktopUpstreamPresetProtocol": "Protocol",
-  "desktopUpstreamStamp": "DNS stamp (sdns://)",
-  "desktopUpstreamStampHint": "Paste a stamp",
-  "desktopUpstreamStampParse": "Parse",
-  "desktopUpstreamStampParsing": "Parsing…",
-  "desktopUpstreamStampEmpty": "Paste an sdns:// stamp first",
-  "desktopUpstreamStampFailed": "Cannot parse the stamp: {message}",
-  "@desktopUpstreamStampFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamStampParsed": "Parsed as {proto}",
-  "@desktopUpstreamStampParsed": {
-    "placeholders": {
-      "proto": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamInvalid": "A name and an address are required",
-  "desktopUpstreamDeleteTitle": "Delete server?",
-  "desktopUpstreamDeleteBody": "Delete upstream DNS server [{name}]?",
-  "@desktopUpstreamDeleteBody": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamKeepOne": "Keep at least one DNS server so names can still be resolved.",
-  "desktopUpstreamEmpty": "No DNS server configured",
-  "desktopUpstreamEmptyBody": "Add a primary or backup server and save.",
-  "desktopUpstreamTest": "Test latency",
-  "desktopUpstreamTestFailed": "Test failed: {message}",
-  "@desktopUpstreamTestFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamSaveFailed": "Cannot update the DNS config: {message}",
-  "@desktopUpstreamSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamSaved": "DNS servers updated and applied",
-  "desktopUpstreamLoadFailed": "Cannot read the upstream config",
-  "desktopUpstreamBootstrapTitle": "Bootstrap resolution",
-  "desktopUpstreamBootstrapBody": "Resolves upstream host names before a DoT or DoH handshake. Prefer plain IP addresses.",
-  "desktopUpstreamBootstrapOn": "Bootstrap on",
-  "desktopUpstreamBootstrapOff": "Off",
-  "desktopUpstreamBootstrapAdd": "Add bootstrap",
-  "desktopUpstreamBootstrapEmpty": "No bootstrap DNS server configured",
-  "desktopUpstreamBootstrapKeepOne": "Keep at least one bootstrap server so encrypted host names can be resolved.",
-  "desktopUpstreamBootstrapName": "Name",
-  "desktopUpstreamBootstrapAddress": "IP address (port optional)",
-  "desktopUpstreamBootstrapInvalid": "A name and an IP address are required",
-  "desktopUpstreamBootstrapDeleteBody": "Delete bootstrap server [{name}]?",
-  "@desktopUpstreamBootstrapDeleteBody": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamRoutesTitle": "Split DNS routes",
-  "desktopUpstreamRoutesBody": "Send private suffixes to a dedicated DNS server; wildcards such as *.internal are supported",
-  "desktopUpstreamRoutesAdd": "Add route",
-  "desktopUpstreamRoutesEmpty": "No split route configured; every name follows the global scheduling mode.",
-  "desktopUpstreamRouteDomain": "Domain or suffix",
-  "desktopUpstreamRouteServer": "Target DNS server",
-  "desktopUpstreamRouteInvalid": "A matching domain and a target DNS address are required",
-  "desktopUpstreamRouteDeleteBody": "Delete the split route for [{domain}]?",
-  "@desktopUpstreamRouteDeleteBody": {
-    "placeholders": {
-      "domain": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopUpstreamFallbackPolicyTitle": "Fallback triggers",
-  "desktopUpstreamFallbackPolicyBody": "When the backup upstreams are used: timeouts, response codes and lookup failures",
-  "desktopUpstreamFallbackPolicyOff": "The fallback chain is off, so these triggers do nothing yet.",
-  "desktopUpstreamFallbackTitle": "Independent fallback chain",
-  "desktopUpstreamFallbackBody": "A separate chain used only after the whole main chain fails",
-  "desktopUpstreamFallbackOff": "Disabled",
-  "desktopUpstreamFallbackCount": "{count} fallback nodes",
-  "@desktopUpstreamFallbackCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopUpstreamFallbackNote": "The main chain gets its own timeout. Only when it fails or returns one of the selected response codes does the whole query switch to this chain.",
-  "desktopUpstreamFallbackEmpty": "No fallback upstream; queries are not duplicated.",
-  "desktopUpstreamFallbackAdd": "Add fallback node",
-  "desktopUpstreamFallbackTimeout": "Main chain timeout (ms)",
-  "desktopUpstreamFallbackTimeoutHint": "Empty or 0 uses the service default of 2000 ms; valid range is 100–30000.",
-  "desktopUpstreamFallbackRcode": "Fallback response codes",
-  "desktopUpstreamFallbackRcodeHint": "SERVFAIL and REFUSED by default. NXDOMAIN is an authoritative answer; ticking it would also ask the fallback about names that do not exist.",
-  "desktopUpstreamFallbackOnError": "Timeouts and connection failures also trigger fallback",
-  "desktopUpstreamWeight": "Weight {weight}",
-  "@desktopUpstreamWeight": {
-    "placeholders": {
-      "weight": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopUpstreamPinSet": "Fingerprint pinned",
-  "desktopUpstreamPresetMissing": "This provider has no public endpoint for that protocol; fill it in manually",
-  "desktopUpstreamProbeFailed": "Test failed",
-  "desktopUpstreamBootstrapAddTitle": "Add bootstrap DNS server",
-  "desktopUpstreamBootstrapEditTitle": "Edit bootstrap DNS server",
-  "desktopHubCache": "Resolver cache",
-  "desktopHubCacheBody": "Hit rate, capacity, TTL policy, exclude rules and on-disk persistence",
-  "desktopCacheEngineTitle": "Resolver acceleration engine",
-  "desktopCacheEngineBody": "Caches answers that were already looked up and returns them instantly; recent records cover an upstream that stalls.",
-  "desktopCacheEngineOn": "Acceleration active",
-  "desktopCacheEngineOff": "Acceleration off",
-  "desktopCacheHitRatio": "Cache hit rate",
-  "desktopCacheRefresh": "Refresh data",
-  "desktopCacheClear": "Clear cache",
-  "desktopCacheClearTitle": "Clear every cached answer?",
-  "desktopCacheClearBody": "This deletes all {count} cached names. Later lookups go back to the network.",
-  "@desktopCacheClearBody": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheClearDone": "The cache is empty",
-  "desktopCacheClearFailed": "Could not clear the cache: {message}",
-  "@desktopCacheClearFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopCacheTelemetryTitle": "Cache telemetry",
-  "desktopCacheTelemetryCapacity": "Capacity {used} / {max}",
-  "@desktopCacheTelemetryCapacity": {
-    "placeholders": {
-      "used": {
-        "type": "int"
-      },
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheMisses": "Live lookups",
-  "desktopCacheStaleHits": "Stale fallbacks",
-  "desktopCacheNegativeHits": "Negative answers",
-  "desktopCachePrefetchCount": "Prefetch refreshes",
-  "desktopCacheTopTitle": "Most queried names",
-  "desktopCacheTopBody": "The ten names with the most local cache hits",
-  "desktopCacheTopEmpty": "No frequently queried names yet",
-  "desktopCacheTopHits": "{count} hits",
-  "@desktopCacheTopHits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheConfigTitle": "Acceleration policy",
-  "desktopCacheConfigBody": "Record lifetime, stale fallback and prefetch",
-  "desktopCacheConfigSave": "Save policy",
-  "desktopCacheFallbackTitle": "Weak-network fallback",
-  "desktopCacheFallbackBody": "Serve a stale record while upstreams falter, and refresh optimistically",
-  "desktopCacheConfigSaved": "The acceleration policy is saved and active",
-  "desktopCacheModeLabel": "How record lifetime is computed",
-  "desktopCacheModeLimit": "Cap the maximum lifetime (recommended)",
-  "desktopCacheModeFollow": "Follow the upstream TTL exactly",
-  "desktopCacheModeFixed": "Force one fixed lifetime",
-  "desktopCacheMaxTtl": "Maximum lifetime (s)",
-  "desktopCacheMinTtl": "Minimum lifetime (s)",
-  "desktopCacheFixedTtl": "Fixed lifetime (s)",
-  "desktopCacheMinTtlEnabled": "Apply the minimum lifetime",
-  "desktopCacheStaleTitle": "Stale fallback",
-  "desktopCacheStaleBody": "Reuse a recent record when the upstream times out or the network drops",
-  "desktopCacheStaleSeconds": "Fallback window (s)",
-  "desktopCacheOptimistic": "Instant response",
-  "desktopCacheOptimisticBody": "Answer from cache, refresh in the background",
-  "desktopCacheNegative": "Remember negative answers",
-  "desktopCacheNegativeBody": "Remember names that do not exist so software stops retrying them",
-  "desktopCacheNegativeSeconds": "Negative record lifetime (s)",
-  "desktopCachePrefetchTitle": "Prefetch hot names",
-  "desktopCachePrefetchBody": "Refresh a frequently used name before it expires, so the next visit does not wait",
-  "desktopCachePrefetchThreshold": "Hit threshold",
-  "desktopCachePrefetchThresholdHint": "Only names reached this often are prefetched",
-  "desktopCachePrefetchBefore": "Remaining lifetime threshold (ms)",
-  "desktopCachePrefetchBeforeHint": "Refresh once the remaining lifetime drops below this",
-  "desktopCacheInvalidNumbers": "Seconds and thresholds must be positive whole numbers",
-  "desktopCacheSaveFailed": "Could not save the cache config: {message}",
-  "@desktopCacheSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopCacheLoadFailed": "Could not read the cache config",
-  "desktopCachePersistTitle": "Cache persistence",
-  "desktopCachePersistBody": "Writes the in-memory answers to disk periodically so a restart can read them back. Off by default: replaying old answers makes a changed upstream harder to notice.",
-  "desktopCachePersistOn": "On",
-  "desktopCachePersistOff": "Off",
-  "desktopCachePersistInterval": "Write interval (s)",
-  "desktopCachePersistIntervalHint": "30–86400; empty or 0 uses the default 300. The service always writes once more on exit.",
-  "desktopCachePersistPath": "Cache file",
-  "desktopCachePersistLastError": "The last write failed: {message}",
-  "@desktopCachePersistLastError": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopCacheSnapshotTitle": "Disk snapshot",
-  "desktopCacheSnapshotBody": "Write the current cache to the persistence file now, or read the last one back",
-  "desktopCachePersistRecords": "{count} records can be written",
-  "@desktopCachePersistRecords": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCachePersistDump": "Write now",
-  "desktopCachePersistLoad": "Restore from file",
-  "desktopCachePersistDumpDone": "Wrote {count} cache records",
-  "@desktopCachePersistDumpDone": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCachePersistLoadDone": "Restored {count} cache records from the file",
-  "@desktopCachePersistLoadDone": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCachePersistDumpFailed": "Could not write the cache: {message}",
-  "@desktopCachePersistDumpFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopCachePersistLoadFailed": "Could not restore the cache: {message}",
-  "@desktopCachePersistLoadFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopCachePersistLoadTitle": "Restore the cache from the file?",
-  "desktopCachePersistLoadBody": "Records still valid in the file are read into the current cache and replace entries with the same name; expired records are ignored.",
-  "desktopCachePersistToggleOn": "Cache persistence is on",
-  "desktopCachePersistToggleOff": "Cache persistence is off",
-  "desktopCachePersistIntervalSaved": "The write interval is updated",
-  "desktopCacheExcludeTitle": "Cache exclude rules",
-  "desktopCacheExcludeBody": "A matching name is neither read from nor written to the cache; it always goes upstream. Useful for internal names and dynamic-IP probes where caching does harm.",
-  "desktopCacheExcludeOff": "Not enabled",
-  "desktopCacheExcludeCount": "{count} rules",
-  "@desktopCacheExcludeCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheExcludeLabel": "Regular expressions (one per line, Go RE2)",
-  "desktopCacheExcludeHint": "For example: \\.local$",
-  "desktopCacheExcludeSave": "Save rules",
-  "desktopCacheExcludeSaved": "Saved {count} exclude rules",
-  "@desktopCacheExcludeSaved": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheExcludeCleared": "Exclude rules cleared; every name is cached again",
-  "desktopCacheExcludeFailed": "Could not save the exclude rules: {message}",
-  "@desktopCacheExcludeFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopCacheExcludeHits": "{count} cache reads and writes bypassed",
-  "@desktopCacheExcludeHits": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheExcludeReset": "Discard changes",
-  "desktopCacheExcludeTooMany": "More than {max} rules; the extra ones are not saved",
-  "@desktopCacheExcludeTooMany": {
-    "placeholders": {
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheExcludeTooLong": "{count} rules exceed {max} characters and are ignored on save",
-  "@desktopCacheExcludeTooLong": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopCacheExcludePresetLocal": "Single-label internal names",
-  "desktopCacheExcludePresetPtr": "PTR lookups",
-  "desktopCacheExcludePresetProbe": "Captive-portal probes",
-  "desktopCacheEntriesTitle": "Cached names",
-  "desktopCacheEntriesBody": "Live shard entries, their TTL and the addresses they resolve to",
-  "desktopCacheEntriesSearch": "Search a name or record type…",
-  "desktopCacheEntriesEmpty": "No cache entry matches these conditions",
-  "desktopCacheEntriesNone": "The cache holds no entries yet",
-  "desktopCacheEntriesLoadFailed": "Could not read the cache entries",
-  "desktopCacheFilterAll": "All",
-  "desktopCacheFilterFresh": "Fresh",
-  "desktopCacheFilterStale": "Stale",
-  "desktopCacheFilterNegative": "Negative",
-  "desktopCacheEntryDomain": "Name",
-  "desktopCacheEntryType": "Type",
-  "desktopCacheEntryStatus": "State",
-  "desktopCacheEntryRemaining": "Remaining TTL",
-  "desktopCacheEntryTtl": "Initial TTL",
-  "desktopCacheEntryHits": "Hits",
-  "desktopCacheEntryIps": "Addresses",
-  "desktopCacheStatusFresh": "Fresh",
-  "desktopCacheStatusStale": "Stale",
-  "desktopCacheStatusNegative": "Negative",
-  "desktopCacheNoIps": "None",
-  "desktopHubRewrite": "DNS rewrite",
-  "desktopHubRewriteBody": "Answer a name with an address, alias or TXT from this machine",
-  "desktopRewriteTitle": "DNS rewrite",
-  "desktopRewriteEngineTitle": "Custom DNS rewrite and name disguise",
-  "desktopRewriteEngineBody": "Matching rules answer authoritatively before any upstream query; exact names and wildcards such as *.lan both work.",
-  "desktopRewriteEngineOn": "Rewrite engine ready",
-  "desktopRewriteEngineOff": "Rewrite engine disabled",
-  "desktopRewriteEnabled": "Rewrite on",
-  "desktopRewriteDisabled": "Rewrite off",
-  "desktopRewriteDefaultTtl": "Default lifetime (s)",
-  "desktopRewriteTtlSave": "Save",
-  "desktopRewriteTtlSaved": "The default rewrite TTL was saved",
-  "desktopRewriteTtlInvalid": "The TTL must be a positive whole number",
-  "desktopRewriteToggleOn": "Custom DNS rewrite is on",
-  "desktopRewriteToggleOff": "Custom DNS rewrite is off",
-  "desktopRewriteSaveFailed": "Could not save the rewrite config: {message}",
-  "@desktopRewriteSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteLoadFailed": "Could not read the DNS rewrite config",
-  "desktopRewriteRulesTitle": "Rewrite rules",
-  "desktopRewriteRulesBody": "The disguise mappings currently in effect",
-  "desktopRewriteRulesCount": "{count} rules",
-  "@desktopRewriteRulesCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopRewriteAdd": "Add rule",
-  "desktopRewriteSearch": "Search a name, target address or alias…",
-  "desktopRewriteEmpty": "No DNS rewrite rules yet; use the button above to add one",
-  "desktopRewriteNoMatch": "No rewrite rule matches this search",
-  "desktopRewriteResetSearch": "Clear search",
-  "desktopRewriteDomain": "Name",
-  "desktopRewriteTypes": "Types",
-  "desktopRewriteTarget": "Target",
-  "desktopRewriteTtl": "TTL",
-  "desktopRewriteActions": "Actions",
-  "desktopRewriteEdit": "Edit rule",
-  "desktopRewriteDelete": "Delete rule",
-  "desktopRewriteSeconds": "{count} s",
-  "@desktopRewriteSeconds": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopRewriteNoTarget": "No target",
-  "desktopRewriteRcodeOnly": "Answers {rcode} with no records",
-  "@desktopRewriteRcodeOnly": {
-    "placeholders": {
-      "rcode": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteDeleteTitle": "Delete this DNS rewrite rule?",
-  "desktopRewriteDeleteBody": "Remove the DNS rewrite rule for “{domain}”?",
-  "@desktopRewriteDeleteBody": {
-    "placeholders": {
-      "domain": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteRuleSaved": "Rule “{domain}” saved and in effect",
-  "@desktopRewriteRuleSaved": {
-    "placeholders": {
-      "domain": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteRuleDeleted": "Rule “{domain}” deleted",
-  "@desktopRewriteRuleDeleted": {
-    "placeholders": {
-      "domain": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteRuleFailed": "Could not save the rewrite rule: {message}",
-  "@desktopRewriteRuleFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteDeleteFailed": "Could not delete the rule: {message}",
-  "@desktopRewriteDeleteFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopRewriteAddTitle": "Add a DNS rewrite rule",
-  "desktopRewriteEditTitle": "Edit the DNS rewrite rule",
-  "desktopRewriteDomainLabel": "Matched name",
-  "desktopRewriteDomainHint": "host.lan or *.home.local",
-  "desktopRewriteDomainHelp": "An exact name (router.lan) or a wildcard (*.cluster.internal)",
-  "desktopRewriteDomainRequired": "Enter the name to match (exact or a *.lan wildcard)",
-  "desktopRewriteTargetMode": "Answer",
-  "desktopRewriteModeShortcut": "Shortcut target",
-  "desktopRewriteModeRecords": "Custom records",
-  "desktopRewriteTargetType": "Target type",
-  "desktopRewriteTypeIp": "A / AAAA address",
-  "desktopRewriteTypeCname": "CNAME alias",
-  "desktopRewriteTypeTxt": "TXT text",
-  "desktopRewriteIpsLabel": "IPv4 / IPv6 addresses",
-  "desktopRewriteIpsHelp": "One address per line; several are returned together",
-  "desktopRewriteCnameLabel": "CNAME target",
-  "desktopRewriteCnameHelp": "The alias chain is followed during resolution",
-  "desktopRewriteTxtLabel": "TXT contents (one per line)",
-  "desktopRewriteRecordsLabel": "Custom records",
-  "desktopRewriteRecordAdd": "Add record",
-  "desktopRewriteRecordEmpty": "No records yet; use “Add record” to start",
-  "desktopRewriteRecordValueHint": "Record value",
-  "desktopRewriteRecordsHelp": "Values follow AdGuard's dnsrewrite syntax: MX takes “preference host”, SRV takes “priority weight port target”, HTTPS/SVCB take “priority target parameters…”. Only queries of the matching type receive them.",
-  "desktopRewriteRcodeLabel": "Response code override (optional)",
-  "desktopRewriteRcodeNone": "No override (answer records normally)",
-  "desktopRewriteRcodeWarning": "With a failure code the rule answers that error and no records; clients treat the name as unavailable or refused.",
-  "desktopRewriteTtlLabel": "Lifetime TTL (seconds, optional)",
-  "desktopRewriteTtlHint": "Empty uses the global default TTL",
-  "desktopRewriteNeedIp": "Enter at least one IPv4 or IPv6 target address",
-  "desktopRewriteNeedCname": "Enter the CNAME target name",
-  "desktopRewriteNeedTxt": "Enter at least one line of TXT text",
-  "desktopRewriteNeedRecord": "Add at least one complete record (both type and value)",
-  "desktopRewriteChipEmpty": "Empty",
-  "desktopZoneSettingsTitle": "Zones switch and default TTL",
-  "desktopZoneSettingsBody": "Turn local authoritative zones on, and set the TTL for records that do not state one",
-  "desktopZoneTitle": "Local zones",
-  "desktopZoneBody": "Declare a whole namespace as this machine's own: names missing from a zone answer authoritative NODATA instead of leaking upstream. Made for internal names and LAN discovery",
-  "desktopZoneBadge": "{zones} / {maxZones} zones · {records} names",
-  "@desktopZoneBadge": {
-    "placeholders": {
-      "zones": {
-        "type": "int"
-      },
-      "maxZones": {
-        "type": "int"
-      },
-      "records": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopZoneRules": "The apex and every name below it belong to this machine: a name missing from the zone is authoritatively answered as non-existent rather than leaking to the internet, and the zone wins over a hosts entry. The apex must be a complete suffix (lan.), not a single host name. Syntax follows RFC 1035; INCLUDE is refused for security.",
-  "desktopZoneDefaultTtl": "Default TTL (s)",
-  "desktopZoneTtlSaved": "The default zone TTL was saved",
-  "desktopZoneTtlInvalid": "The TTL must be a positive whole number",
-  "desktopZoneToggleOn": "Local zones are on",
-  "desktopZoneToggleOff": "Local zones are off",
-  "desktopZoneSaveFailed": "Could not save the zone config: {message}",
-  "@desktopZoneSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopZoneLoadFailed": "Could not read the local zone config",
-  "desktopZoneLimit": "{records} records in total; anything beyond that is truncated and marked on the zone.",
-  "@desktopZoneLimit": {
-    "placeholders": {
-      "records": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopZoneAdd": "Add zone",
-  "desktopZoneSaveAll": "Save all",
-  "desktopZoneSaved": "The zone config was saved and is in effect",
-  "desktopZoneEmpty": "No local zone configured yet",
-  "desktopZoneMaxZones": "At most {max} zones; delete one that is no longer used first",
-  "@desktopZoneMaxZones": {
-    "placeholders": {
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopZoneOriginHint": "Apex, for example lan.",
-  "desktopZoneDeleted": "Zone “{origin}” deleted",
-  "@desktopZoneDeleted": {
-    "placeholders": {
-      "origin": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopZoneUnnamed": "(unnamed)",
-  "desktopZoneStateDisabled": "Disabled",
-  "desktopZoneStatePending": "Not built",
-  "desktopZoneStateFailed": "Failed",
-  "desktopZoneStateTruncated": "Loaded {count} (truncated)",
-  "@desktopZoneStateTruncated": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopZoneStateLoaded": "Loaded {count}",
-  "@desktopZoneStateLoaded": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopZoneFailedReason": "This zone was not loaded",
-  "desktopZoneExpand": "Expand",
-  "desktopZoneCollapse": "Collapse",
-  "desktopZoneDelete": "Delete zone",
-  "desktopZoneContent": "Zone file contents",
-  "desktopZonePreview": "Preview",
-  "desktopZonePreviewNote": "Runs the same parser the service uses; the edits only take effect after “Save all”.",
-  "desktopZonePreviewEmpty": "(Empty zone, no records)",
-  "desktopZonePreviewMore": "… {count} more omitted",
-  "@desktopZonePreviewMore": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopHubDns64": "IPv6 / DNS64",
-  "desktopHubDns64Body": "Synthesize AAAA answers for IPv4-only names on an IPv6-only network",
-  "desktopDns64Title": "IPv6 / DNS64",
-  "desktopDns64Refresh": "Reload the DNS64 config",
-  "desktopDns64CardTitle": "DNS64 IPv6-only transition",
-  "desktopDns64CardBody": "Follows RFC 6052 / RFC 6147 to synthesize AAAA answers for names that only have an A record",
-  "desktopDns64EngineOn": "Synthesizing",
-  "desktopDns64EngineOff": "Turned off",
-  "desktopDns64Description": "When a client on an IPv6-only network reaches the internet through a NAT64 gateway and a name has only IPv4 (A) records, the DNS64 engine embeds the address into the configured prefix and answers with AAAA, so the client can still connect end to end.",
-  "desktopDns64PrefixesCardTitle": "Synthesis prefixes",
-  "desktopDns64PrefixesLabel": "Synthesis prefixes (one per line)",
-  "desktopDns64PrefixesHelper": "One IPv6 CIDR per line. /32, /40, /48, /56, /64 and /96 are accepted; an empty list makes the service use the well-known 64:ff9b::/96.",
-  "desktopDns64FillWellKnown": "Use the well-known prefix",
-  "desktopDns64NoteTitle": "Built-in protections",
-  "desktopDns64NoteBody": "The service excludes the RFC 6147 ranges (loopback, link-local, IPv4-mapped and its own prefixes) so nothing is synthesized twice, and a name with a native AAAA record is answered natively.",
-  "desktopDns64Save": "Save DNS64 config",
-  "desktopDns64Saving": "Saving…",
-  "desktopDns64Saved": "The DNS64 config was updated",
-  "desktopDns64ToggleOn": "DNS64 synthesis is on",
-  "desktopDns64ToggleOff": "DNS64 synthesis is off",
-  "desktopDns64SaveFailed": "Could not update the DNS64 config: {message}",
-  "@desktopDns64SaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopDns64LoadFailed": "Could not read the DNS64 config",
-  "desktopHubFilterLists": "Subscriptions",
-  "desktopHubFilterListsBody": "Online rule lists and local rule files, applied as subscriptions",
-  "desktopFilterListsPageTitle": "Subscriptions",
-  "desktopFilterListsRefresh": "Reload the subscriptions",
-  "desktopFilterSummaryTitle": "Blocking overview",
-  "desktopFilterEngineOn": "Protection is on",
-  "desktopFilterEngineOff": "Protection is off",
-  "desktopFilterPausedChip": "Paused",
-  "desktopFilterBlocked": "Blocked queries",
-  "desktopFilterTimes": "",
-  "desktopFilterRulesUnit": "",
-  "desktopFilterActiveLists": "Enabled lists",
-  "desktopFilterListsUnit": "",
-  "desktopFilterPausedRemaining": "Blocking is paused and resumes in {remaining}",
-  "@desktopFilterPausedRemaining": {
-    "placeholders": {
-      "remaining": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterPauseDays": "{days} d",
-  "@desktopFilterPauseDays": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterPauseHours": "{hours} h {minutes} min",
-  "@desktopFilterPauseHours": {
-    "placeholders": {
-      "hours": {
-        "type": "int"
-      },
-      "minutes": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterPauseMinutes": "{minutes} min {seconds} s",
-  "@desktopFilterPauseMinutes": {
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      },
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterPauseSeconds": "{seconds} s",
-  "@desktopFilterPauseSeconds": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterListsTitle": "Subscription lists",
-  "desktopFilterListsBody": "Online subscriptions and local rule files. Each list has its own switch; “update all” pulls every one again.",
-  "desktopFilterListsCount": "{count} lists",
-  "@desktopFilterListsCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterListUpdateAll": "Update all",
-  "desktopFilterListAdd": "Add list",
-  "desktopFilterListsEmpty": "No subscription list yet",
-  "desktopFilterListsEmptyBody": "Add an AdGuard-syntax subscription link or a local hosts file; the rules download and take effect on their own.",
-  "desktopFilterListDefaultName": "Subscription {index}",
-  "@desktopFilterListDefaultName": {
-    "placeholders": {
-      "index": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterListAdded": "The list was added and the download started",
-  "desktopFilterListAllUpdated": "Every list was updated",
-  "desktopFilterListUpdated": "The list was updated",
-  "desktopFilterActionFailed": "The action failed: {message}",
-  "@desktopFilterActionFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterListToggleOn": "Enabled the list {name}",
-  "@desktopFilterListToggleOn": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterListToggleOff": "Disabled the list {name}",
-  "@desktopFilterListToggleOff": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterListDeleteTitle": "Delete the list",
-  "desktopFilterListDeleteBody": "Delete “{name}”? Its blocking rules stop applying immediately.",
-  "@desktopFilterListDeleteBody": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterListDeleteConfirm": "Delete",
-  "desktopFilterListDeleted": "The list was deleted",
-  "desktopFilterListRules": "{count} rules",
-  "@desktopFilterListRules": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterListEnabled": "Blocking is active",
-  "desktopFilterListDisabled": "Blocking is paused",
-  "desktopFilterListNeverUpdated": "Last update: never",
-  "desktopFilterListUpdatedAt": "Last update: {time}",
-  "@desktopFilterListUpdatedAt": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterListRefreshOne": "Update this list now",
-  "desktopFilterListDelete": "Delete this list",
-  "desktopFilterListHealthOk": "Synced",
-  "desktopFilterListHealthUnchanged": "Unchanged",
-  "desktopFilterListHealthCached": "Using cache",
-  "desktopFilterListHealthFailed": "Update failed",
-  "desktopFilterListHealthOkBody": "The pull fetched new content and it is in effect",
-  "desktopFilterListHealthUnchangedBody": "The server answered 304; the local copy is still valid",
-  "desktopFilterListHealthCachedBody": "The pull failed and the last cached copy is still in use",
-  "desktopFilterListHealthFailedBody": "The pull failed and no cached copy is available",
-  "desktopFilterListAddTitle": "Add a subscription list",
-  "desktopFilterListAddBody": "Enter a name, plus the subscription URL or the path of a local rule file.",
-  "desktopFilterListNameLabel": "List name",
-  "desktopFilterListNameHint": "e.g. General ad blocking",
-  "desktopFilterListUrlLabel": "Subscription URL / file path",
-  "desktopFilterListUrlHint": "https://… or a local file path",
-  "desktopFilterListAddConfirm": "Add and download",
-  "desktopFilterListNeedUrl": "Enter a valid rule source URL or local file path",
-  "desktopFilterListsLoadFailed": "Could not read the subscription lists",
-  "desktopHubFilterRules": "Custom rules",
-  "desktopHubFilterRulesBody": "Hand-written AdGuard-syntax rules, hot-reloaded the moment they are saved",
-  "desktopFilterRulesPageTitle": "Custom rules",
-  "desktopFilterRulesRefresh": "Reload the custom rules",
-  "desktopFilterRulesEditorTitle": "Custom rule editor",
-  "desktopFilterRulesEditorBody": "Edit your own blocking and allow rules, one per line",
-  "desktopFilterRulesSave": "Save rules",
-  "desktopFilterRulesSaving": "Saving…",
-  "desktopFilterRulesSaved": "The custom rules were saved and are in effect",
-  "desktopFilterRulesSaveFailed": "Could not save the custom rules: {message}",
-  "@desktopFilterRulesSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterRulesLoadFailed": "Could not read the custom rules",
-  "desktopFilterRulesPlaceholder": "Type your blocking or trust rules here, one per line…",
-  "desktopFilterRulesLineCount": "{count} rules",
-  "@desktopFilterRulesLineCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterRulesHint": "One rule per line; a line starting with ! is a comment. Saving hot-reloads the engine.",
-  "desktopFilterGuideTitle": "AdGuard syntax cheat sheet",
-  "desktopFilterGuideBody": "The formats used by mainstream ad-blocking and trust rules",
-  "desktopFilterGuideCommon": "Common",
-  "desktopFilterGuideExempt": "Exempt",
-  "desktopFilterGuideCompat": "Legacy",
-  "desktopFilterGuidePriority": "Priority",
-  "desktopFilterGuideRewrite": "Rewrite",
-  "desktopFilterGuideDomainTitle": "Block a domain and its subdomains",
-  "desktopFilterGuideDomainBody": "Matches and blocks example.com and every subdomain such as ad.example.com.",
-  "desktopFilterGuideAllowTitle": "Allowlist a trusted domain",
-  "desktopFilterGuideAllowBody": "Always resolves safe.com, even when another rule matches it.",
-  "desktopFilterGuideHostsTitle": "Hosts file format",
-  "desktopFilterGuideHostsBody": "Compatible with the standard hosts-file way of blocking a name.",
-  "desktopFilterGuideImportantTitle": "Force a block",
-  "desktopFilterGuideImportantBody": "Ignores every allow rule and blocks the name outright.",
-  "desktopFilterGuideRewriteTitle": "Rewrite the answer",
-  "desktopFilterGuideRewriteBody": "Answers directly without asking upstream: IPv4/IPv6 addresses, a CNAME, explicit forms like NOERROR;A;1.2.3.4, and codes such as REFUSED / NXDOMAIN. Explicit forms also cover MX, SRV, NS, PTR, TXT, HTTPS and SVCB. A rewrite outranks every block and allow rule; @@||nas.lan^$dnsrewrite removes all rewrites for that name.",
-  "desktopFilterGuideFooter": "One rule per line; a line starting with ! is a comment.",
-  "desktopHubFilterConfig": "Blocking mode",
-  "desktopHubFilterConfigBody": "Answer mode, blocking addresses, refresh interval, temporary pause and advanced switches",
-  "desktopFilterConfigPageTitle": "Blocking mode",
-  "desktopFilterConfigRefresh": "Reload the blocking config",
-  "desktopFilterConfigLoadFailed": "Could not read the blocking config",
-  "desktopFilterConfigSaveFailed": "Could not save the blocking config: {message}",
-  "@desktopFilterConfigSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterEngineOnMessage": "Rule blocking is on",
-  "desktopFilterEngineOffMessage": "Rule blocking is off",
-  "desktopFilterModeTitle": "How a blocked name is answered",
-  "desktopFilterModeBody": "The answer a client gets when a blocking rule matches",
-  "desktopFilterModeSave": "Save policy and parameters",
-  "desktopFilterModeSaving": "Saving…",
-  "desktopFilterModeSaved": "The blocking policy was saved",
-  "desktopFilterModeParamsTitle": "List refresh and blocking addresses",
-  "desktopFilterModeParamsBody": "The address a blocked name is answered with, and how often the rule lists refresh",
-  "desktopFilterModeBlockingIPv4": "Blocking IPv4 address",
-  "desktopFilterModeBlockingIPv6": "Blocking IPv6 address",
-  "desktopFilterModeInterval": "List refresh interval (hours)",
-  "desktopFilterModeIntervalHelper": "24 hours by default",
-  "desktopFilterModeInvalid": "The interval must be a positive whole number and neither address may be empty",
-  "desktopFilterModeNullIp": "Answer the null address (0.0.0.0 / ::)",
-  "desktopFilterModeNullIpBody": "Ends ad and popup loading instantly without making the browser retry.",
-  "desktopFilterModeNxdomain": "Say the name does not exist (NXDOMAIN)",
-  "desktopFilterModeNxdomainBody": "Tells the client the name is absent, so well-behaved software stops probing.",
-  "desktopFilterModeRefused": "Refuse the request (REFUSED)",
-  "desktopFilterModeRefusedBody": "Returns a refusal code: the DNS firewall blocked the query on purpose.",
-  "desktopFilterAdvancedTitle": "Advanced blocking",
-  "desktopFilterAdvancedBody": "Extra defences against bypass tricks; all off by default",
-  "desktopFilterAdvancedResponseTitle": "Re-check the CNAME chain",
-  "desktopFilterAdvancedResponseBody": "Matches the CNAME targets and A/AAAA owner names in an upstream answer against the block lists again, catching a legal query whose alias points at a blocked domain; cached answers are re-checked too.",
-  "desktopFilterAdvancedResponseOn": "CNAME chain re-checking is on",
-  "desktopFilterAdvancedResponseOff": "CNAME chain re-checking is off",
-  "desktopFilterAdvancedAllowlistTitle": "Allowlist only",
-  "desktopFilterAdvancedAllowlistBody": "Only queries that hit an allow rule (@@ exception) pass; everything else is blocked. Local answers such as hosts, rewrites and internal zones are unaffected.",
-  "desktopFilterAdvancedAllowlistWarning": "Make sure the allowlist is complete first, or a large number of names will fail to resolve.",
-  "desktopFilterAdvancedAllowlistOn": "Allowlist-only mode is on",
-  "desktopFilterAdvancedAllowlistOff": "Allowlist-only mode is off",
-  "desktopFilterAdvancedBogusTitle": "Correct bogus answers",
-  "desktopFilterAdvancedBogusBody": "Some networks answer a missing name with a fixed portal or ad address. When the answer falls inside the list below it is treated as an upstream hijack and rewritten to NXDOMAIN.",
-  "desktopFilterAdvancedBogusOn": "Bogus-answer correction is on",
-  "desktopFilterAdvancedBogusOff": "Bogus-answer correction is off",
-  "desktopFilterAdvancedBogusListLabel": "Hijack addresses (one per line; IP or CIDR)",
-  "desktopFilterAdvancedBogusSuspicious": "These entries look malformed and will be ignored by the service if they cannot be parsed: {entries}",
-  "@desktopFilterAdvancedBogusSuspicious": {
-    "placeholders": {
-      "entries": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterAdvancedBogusPresets": "Quick add:",
-  "desktopFilterAdvancedBogusReset": "Undo changes",
-  "desktopFilterAdvancedBogusSave": "Save the list",
-  "desktopFilterAdvancedBogusSaved": "{count} hijack addresses saved",
-  "@desktopFilterAdvancedBogusSaved": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterAdvancedBogusCleared": "The hijack address list was cleared",
-  "desktopFilterPauseBody": "Lets every query through for the chosen duration, then resumes on its own (a service restart also resumes).",
-  "desktopFilterPauseDuration": "Pause duration",
-  "desktopFilterPauseAction": "Pause",
-  "desktopFilterPauseResume": "Resume now",
-  "desktopFilterPauseStarted": "Blocking is paused",
-  "desktopFilterPauseResumed": "Blocking resumed",
-  "desktopFilterPauseActiveTitle": "Blocking is paused",
-  "desktopFilterPauseActiveBody": "Resumes automatically in {remaining}",
-  "@desktopFilterPauseActiveBody": {
-    "placeholders": {
-      "remaining": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopFilterPauseMinutesOnly": "{minutes} min",
-  "@desktopFilterPauseMinutesOnly": {
-    "placeholders": {
-      "minutes": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopFilterPauseOneHour": "1 hour",
-  "desktopFilterPauseEightHours": "8 hours",
-  "desktopHubFilterSchedule": "Time plan",
-  "desktopHubFilterScheduleBody": "Block only inside the chosen windows and let everything through otherwise",
-  "desktopSchedulePageTitle": "Time plan",
-  "desktopScheduleRefresh": "Reload the time plan",
-  "desktopScheduleLoadFailed": "Could not read the time plan",
-  "desktopScheduleTitle": "Scheduled blocking",
-  "desktopScheduleBody": "Blocks only inside the chosen windows and lets everything through the rest of the time",
-  "desktopScheduleBadgeOff": "Off · blocking always on",
-  "desktopScheduleBadgeActive": "Blocking is active",
-  "desktopScheduleBadgePaused": "Outside the windows · all allowed",
-  "desktopScheduleEnable": "Enable scheduled blocking",
-  "desktopScheduleEnableBody": "Off means blocking always applies; on means it only applies inside the windows below.",
-  "desktopScheduleNoEnabled": "No window is enabled, so blocking stays on all the time. Enable at least one window to limit it.",
-  "desktopScheduleSave": "Save plan",
-  "desktopScheduleSaving": "Saving…",
-  "desktopScheduleSaved": "The time plan was saved and is in effect",
-  "desktopScheduleSaveFailed": "Could not save the time plan: {message}",
-  "@desktopScheduleSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopScheduleAdd": "Add a window",
-  "desktopScheduleName": "Window name",
-  "desktopScheduleEnabled": "Enable this window",
-  "desktopScheduleStart": "Starts at",
-  "desktopScheduleEnd": "Ends at",
-  "desktopScheduleEndHelper": "Earlier than the start means overnight",
-  "desktopScheduleWeekdays": "Days",
-  "desktopScheduleEveryDay": "Every day",
-  "desktopScheduleDelete": "Delete this window",
-  "desktopScheduleDeleteTitle": "Delete the window",
-  "desktopScheduleDeleteBody": "Delete this window? It stops applying after the next save.",
-  "desktopScheduleDeleteConfirm": "Delete",
-  "desktopWeekdayMon": "Mo",
-  "desktopWeekdayTue": "Tu",
-  "desktopWeekdayWed": "We",
-  "desktopWeekdayThu": "Th",
-  "desktopWeekdayFri": "Fr",
-  "desktopWeekdaySat": "Sa",
-  "desktopWeekdaySun": "Su",
-  "desktopHubFilterServices": "App blocking",
-  "desktopHubFilterServicesBody": "Built-in app and site rules, blocked by group, with optional weekly windows",
-  "desktopServicesPageTitle": "App blocking",
-  "desktopServicesRefresh": "Reload the app blocking state",
-  "desktopServicesLoadFailed": "Could not read the built-in service catalogue",
-  "desktopServicesGroupsTitle": "Whole-group blocking",
-  "desktopServicesGroupsBody": "Turn a whole group of apps and sites on or off in one tap",
-  "desktopServicesTitle": "App and site blocking",
-  "desktopServicesBody": "Blocks common apps and sites with rules built into the app, no download needed; combines with subscription and custom rules.",
-  "desktopServicesCount": "{blocked} / {total} blocked",
-  "@desktopServicesCount": {
-    "placeholders": {
-      "blocked": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopServicesClearAll": "Clear all",
-  "desktopServicesCleared": "Every app block was cleared",
-  "desktopServicesSearchHint": "Search a name, domain or rule…",
-  "desktopServicesGroupFilter": "Group filter",
-  "desktopServicesAllGroups": "All groups",
-  "desktopServicesGroupItem": "{name} ({count})",
-  "@desktopServicesGroupItem": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopServicesGroupChip": "{name} · {count}",
-  "@desktopServicesGroupChip": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopServicesActiveRules": "{count} rules in effect",
-  "@desktopServicesActiveRules": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopServicesEmpty": "The built-in catalogue is empty",
-  "desktopServicesNoMatch": "No service matches the filter",
-  "desktopServicesBlocked": "Blocked {name}",
-  "@desktopServicesBlocked": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesUnblocked": "Unblocked {name}",
-  "@desktopServicesUnblocked": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesActionFailed": "The action failed: {message}",
-  "@desktopServicesActionFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesGroupOn": "Blocked the whole group {name}",
-  "@desktopServicesGroupOn": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesGroupOff": "Unblocked the whole group {name}",
-  "@desktopServicesGroupOff": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesByGroup": "By group",
-  "desktopServicesScheduleInside": "In window",
-  "desktopServicesScheduleOutside": "Outside window",
-  "desktopServicesRuleCount": "{group} · {count} rules",
-  "@desktopServicesRuleCount": {
-    "placeholders": {
-      "group": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopServicesScheduleEdit": "Edit the weekly plan",
-  "desktopServicesShowRules": "Show or hide the rules",
-  "desktopServicesScheduleTitle": "Weekly plan for {name}",
-  "@desktopServicesScheduleTitle": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesScheduleBody": "Blocks this app only inside the matching windows and lets it through the rest of the time. No window means always blocked; to lift the limit for a while, unblocking the service is clearer than clearing the plan.",
-  "desktopServicesScheduleSave": "Save plan",
-  "desktopServicesScheduleSaved": "The weekly plan for “{name}” was saved",
-  "@desktopServicesScheduleSaved": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicesScheduleRemoved": "“{name}” is blocked all the time again",
-  "@desktopServicesScheduleRemoved": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopHubPrivacy": "Privacy",
-  "desktopHubPrivacyBody": "Protocol hardening, ECS subnet privacy and the built-in rebinding / hosts defences",
-  "desktopPrivacyPageTitle": "Security and privacy",
-  "desktopPrivacyRefresh": "Reload the privacy config",
-  "desktopPrivacyLoadFailed": "Could not read the privacy config",
-  "desktopPrivacySaveFailed": "Could not save: {message}",
-  "@desktopPrivacySaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopPrivacyProtocolTitle": "Protocol privacy and leak defence",
-  "desktopPrivacyProtocolBody": "Stops private PTR and single-label leaks, and blocks ECH bypasses and packet-length side channels",
-  "desktopPrivacyBlockTitle": "Record-type blocking",
-  "desktopPrivacyBlockBody": "How ECH, ANY and IPv6 lookups are handled, kept apart from protocol hardening",
-  "desktopPrivacyEdeTitle": "Extended DNS Errors (EDE)",
-  "desktopPrivacyEdeBody": "Returns RFC 8914 extended error codes and reasons in the OPT record (policy block, rate limit, rebind block or upstream failure).",
-  "desktopPrivacyEdeOn": "EDE diagnostics are on",
-  "desktopPrivacyEdeOff": "EDE diagnostics are off",
-  "desktopPrivacyPtrTitle": "Private reverse PTR leak defence",
-  "desktopPrivacyPtrBody": "Keeps private LAN addresses' reverse lookups away from public upstreams; an unbound private PTR answers an authoritative NXDOMAIN.",
-  "desktopPrivacyPtrOn": "Private PTR leak defence is on",
-  "desktopPrivacyPtrOff": "Private PTR leak defence is off",
-  "desktopPrivacyUnqualifiedTitle": "Block single-label name leaks",
-  "desktopPrivacyUnqualifiedBody": "Blocks internal single-label lookups without a dot (router, printer) so a typo or missing search domain cannot leak host names to a public resolver.",
-  "desktopPrivacyUnqualifiedOn": "Single-label leak defence is on",
-  "desktopPrivacyUnqualifiedOff": "Single-label leak defence is off",
-  "desktopPrivacyEchTitle": "Strip ECH (encrypted ClientHello)",
-  "desktopPrivacyEchBody": "Removes the ech parameter from upstream HTTPS / SVCB records so a client cannot hide the real name behind TLS 1.3 ECH and bypass local auditing.",
-  "desktopPrivacyEchOn": "ECH stripping is on",
-  "desktopPrivacyEchOff": "ECH stripping is off",
-  "desktopPrivacyAnyTitle": "Minimise ANY queries",
-  "desktopPrivacyAnyBody": "ANY is a favourite of DNS amplification and defeats per-type blocking; with this on the host stops forwarding ANY and answers minimally instead.",
-  "desktopPrivacyAnyOn": "ANY minimisation is on",
-  "desktopPrivacyAnyOff": "ANY minimisation is off",
-  "desktopPrivacyAnyModeLabel": "Answer shape",
-  "desktopPrivacyAnyModeNotimp": "NOTIMP (recommended)",
-  "desktopPrivacyAnyModeNotimpBody": "Says the query is not supported, so a client cannot mistake it for a real answer.",
-  "desktopPrivacyAnyModeRfc": "RFC 8482 minimal answer",
-  "desktopPrivacyAnyModeRfcBody": "Answers NOERROR with one HINFO(\"RFC8482\"); more precise, but the client has to understand the convention.",
-  "desktopPrivacyAnyModeSaved": "The ANY answer shape was saved",
-  "desktopPrivacyIpv6Title": "Filter IPv6 (AAAA) queries",
-  "desktopPrivacyIpv6Body": "Answers every AAAA query with an authoritative NODATA and drops ipv6hint from HTTPS answers, removing dual-stack retry stalls on a weak IPv6 network.",
-  "desktopPrivacyIpv6On": "IPv6 filtering is on",
-  "desktopPrivacyIpv6Off": "IPv6 filtering is off",
-  "desktopPrivacyPaddingTitle": "EDNS0 padding size",
-  "desktopPrivacyPaddingBody": "Pads encrypted DNS to a fixed block to defeat packet-length fingerprinting.",
-  "desktopPrivacyPaddingValue": "{size} bytes",
-  "@desktopPrivacyPaddingValue": {
-    "placeholders": {
-      "size": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopPrivacyPaddingSaved": "The EDNS0 padding size was saved",
-  "desktopPrivacyEcsTitle": "EDNS Client Subnet (ECS policy)",
-  "desktopPrivacyEcsBody": "ECS carries the client's subnet to the recursive resolver for better CDN routing, but unhandled ECS leaks a home or office subnet upstream.",
-  "desktopPrivacyEcsOn": "ECS policy is active",
-  "desktopPrivacyEcsOff": "Policy is off",
-  "desktopPrivacyEcsOnMessage": "The ECS policy is on",
-  "desktopPrivacyEcsOffMessage": "The ECS policy is off",
-  "desktopPrivacyEcsStripTitle": "Strip the real client subnet",
-  "desktopPrivacyEcsStripBody": "Removes the client's real egress subnet from forwarded queries, protecting every device behind this resolver.",
-  "desktopPrivacyEcsStripOn": "Client subnet stripping is on",
-  "desktopPrivacyEcsStripOff": "Client subnet stripping is off",
-  "desktopPrivacyEcsSubnetLabel": "Custom subnet (CIDR)",
-  "desktopPrivacyEcsSubnetHelper": "Optional. A public egress subnet keeps CDN routing good; leave empty to stay fully private.",
-  "desktopPrivacyEcsSave": "Save the ECS policy",
-  "desktopPrivacyEcsSaved": "The ECS policy was updated",
-  "desktopPrivacyDefenceTitle": "Built-in defences",
-  "desktopPrivacyDefenceBody": "Rebinding protection and the local hosts resolver",
-  "desktopPrivacyRebindTitle": "DNS rebinding protection",
-  "desktopPrivacyRebindBody": "Stops public names from resolving to private addresses, so a rebinding attack cannot reach LAN devices.",
-  "desktopPrivacyRebindOn": "DNS rebinding protection is on",
-  "desktopPrivacyRebindOff": "DNS rebinding protection is off",
-  "desktopPrivacyRebindCount": "{count} allowlisted domains",
-  "@desktopPrivacyRebindCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopPrivacyRebindAllowlist": "Allowlist",
-  "desktopPrivacyRebindDialogTitle": "Rebinding allowlist",
-  "desktopPrivacyRebindDialogBody": "Names here may resolve to private addresses (192.168.x.x, 10.x.x.x, 127.0.0.1); a leading dot matches a suffix (.lan, .local). One per line.",
-  "desktopPrivacyRebindDialogSave": "Save the allowlist",
-  "desktopPrivacyRebindSaved": "The rebinding allowlist was saved",
-  "desktopPrivacyHostsTitle": "Local hosts resolver",
-  "desktopPrivacyHostsBody": "System and custom hosts entries answer first, without asking upstream.",
-  "desktopPrivacyHostsOn": "The local hosts resolver is on",
-  "desktopPrivacyHostsOff": "The local hosts resolver is off",
-  "desktopPrivacyHostsSystem": "Follow the system hosts file",
-  "desktopPrivacyHostsTtl": "TTL {seconds}s",
-  "@desktopPrivacyHostsTtl": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopPrivacyHostsSystemOn": "Now following the system hosts file",
-  "desktopPrivacyHostsSystemOff": "No longer following the system hosts file",
-  "desktopHubPrivacySection": "Privacy and encryption",
-  "desktopHubShareSection": "Network sharing",
-  "desktopSafeSearchTitle": "Forced safe search",
-  "desktopSafeSearchBody": "Rewrites the big search engines to their filtered endpoints, so safe search cannot be switched off at the DNS layer. Off by default.",
-  "desktopSafeSearchEnabled": "Active · {count} providers",
-  "@desktopSafeSearchEnabled": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopSafeSearchOff": "Off",
-  "desktopSafeSearchOn": "Forced safe search is on",
-  "desktopSafeSearchOffMessage": "Forced safe search is off",
-  "desktopSafeSearchServiceSaved": "The provider selection was updated",
-  "desktopSafeSearchTtl": "Rewrite TTL (s)",
-  "desktopSafeSearchTtlSave": "Save",
-  "desktopSafeSearchTtlSaved": "The safe search TTL was saved",
-  "desktopSafeSearchTtlInvalid": "The TTL must be a positive whole number",
-  "desktopSafeSearchFooter": "An unchecked provider is resolved normally.",
-  "desktopSafeSearchTtlCardTitle": "Safe-search rewrite lifetime",
-  "desktopSafeSearchTtlCardBody": "How long a forced safe-search rewrite is kept locally before the service asks upstream again.",
-  "desktopSafeSearchTtlChip": "{seconds}s",
-  "@desktopSafeSearchTtlChip": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopSafeSearchBing": "Bing",
-  "desktopSafeSearchDuckDuckGo": "DuckDuckGo",
-  "desktopSafeSearchEcosia": "Ecosia",
-  "desktopSafeSearchGoogle": "Google",
-  "desktopSafeSearchPixabay": "Pixabay",
-  "desktopSafeSearchYandex": "Yandex",
-  "desktopSafeSearchYoutube": "YouTube",
-  "desktopReputationTitle": "Malicious-site lookups (Safe Browsing)",
-  "desktopReputationOn": "Looking up",
-  "desktopReputationOff": "Off",
-  "desktopReputationOnMessage": "Malicious-site lookups are on",
-  "desktopReputationOffMessage": "Malicious-site lookups are off",
-  "desktopReputationBody": "Only the first 2 bytes of a name's SHA-256 leave the machine; the third party answers the matching full digests and the comparison happens locally. A failed lookup always lets the name through.",
-  "desktopReputationLookups": "Lookups",
-  "desktopReputationBlocked": "Blocked",
-  "desktopReputationHitRate": "Cache hit rate",
-  "desktopReputationFailures": "Failures",
-  "desktopReputationAnswer": "Answer",
-  "desktopReputationAnswerNullIp": "Null address",
-  "desktopReputationTimeout": "Lookup timeout (ms)",
-  "desktopReputationCacheSize": "Cache entries",
-  "desktopReputationCacheTtl": "Cache lifetime (s)",
-  "desktopReputationParamsTitle": "Lookup parameters",
-  "desktopReputationParamsInvalid": "The timeout and cache lifetime must be positive and the entry count cannot be negative",
-  "desktopReputationParamsSave": "Save query parameters",
-  "desktopReputationParamsSaved": "The query parameters were saved",
-  "desktopReputationFooter": "The cache is keyed by the 2-byte prefix, so names under one prefix share a single lookup.",
-  "desktopParentalTitle": "Parental control",
-  "desktopParentalBody": "Same mechanism as malicious-site lookups, using a third-party category list to block adult domains; the two switches are independent.",
-  "desktopParentalWarning": "Malicious-site lookups are off. They are independent, but phishing and malware sites are not part of the parental categories.",
-  "desktopParentalOn": "Parental control is on",
-  "desktopParentalOff": "Parental control is off",
-  "desktopHubEncrypted": "Encrypted DNS",
-  "desktopHubEncryptedBody": "Serve DoT / DoH to the LAN, with a certificate and DDR",
-  "desktopEncryptedPageTitle": "Encrypted DNS server",
-  "desktopEncryptedRefresh": "Reload the encrypted DNS status",
-  "desktopEncryptedLoadFailed": "Could not read the encrypted DNS status",
-  "desktopEncryptedSaveFailed": "The action failed: {message}",
-  "@desktopEncryptedSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopEncryptedListenersTitle": "Encrypted DNS server",
-  "desktopEncryptedListenersBody": "Serves DoT / DoH on the LAN so clients never query in cleartext",
-  "desktopEncryptedEnabled": "Enabled",
-  "desktopEncryptedDisabled": "Off",
-  "desktopEncryptedOn": "The encrypted DNS server is on",
-  "desktopEncryptedOff": "The encrypted DNS server is off",
-  "desktopEncryptedNoProtocol": "The server is on but neither protocol is selected, so nothing is listening.",
-  "desktopEncryptedDot": "DoT · DNS over TLS",
-  "desktopEncryptedDotBody": "Port {port}; clients connect with tls://",
-  "@desktopEncryptedDotBody": {
-    "placeholders": {
-      "port": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopEncryptedDoh": "DoH · DNS over HTTPS",
-  "desktopEncryptedDohBody": "Port {port}, path {path}",
-  "@desktopEncryptedDohBody": {
-    "placeholders": {
-      "port": {
-        "type": "int"
-      },
-      "path": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopEncryptedListening": "Listening on {address}",
-  "@desktopEncryptedListening": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopEncryptedNotListening": "Not listening (service stopped, certificate unusable or port taken)",
-  "desktopEncryptedDotOn": "DoT is on",
-  "desktopEncryptedDotOff": "DoT is off",
-  "desktopEncryptedDohOn": "DoH is on",
-  "desktopEncryptedDohOff": "DoH is off",
-  "desktopEncryptedUrls": "A client can use any of these addresses:",
-  "desktopEncryptedNetworkTitle": "Listener parameters",
-  "desktopEncryptedListenAddress": "Listen address",
-  "desktopEncryptedListenHint": "Empty means every interface",
-  "desktopEncryptedServerName": "Server name (for clients)",
-  "desktopEncryptedDotPort": "DoT port",
-  "desktopEncryptedDohPort": "DoH port",
-  "desktopEncryptedDohPath": "DoH path",
-  "desktopEncryptedServerNameHint": "The server name goes into the certificate SAN; clients connecting by it will not see a name error.",
-  "desktopEncryptedPortInvalid": "A port must be a whole number from 1 to 65535",
-  "desktopEncryptedReset": "Reset to defaults",
-  "desktopEncryptedSaveNetwork": "Save",
-  "desktopEncryptedNetworkSaved": "The listener parameters were saved",
-  "desktopEncryptedCertTitle": "Server certificate",
-  "desktopEncryptedCertBody": "A summary of the TLS certificate; the private key never leaves this machine",
-  "desktopEncryptedCertSelfSigned": "Self-signed",
-  "desktopEncryptedCertLoaded": "Loaded",
-  "desktopEncryptedCertMissing": "Not loaded",
-  "desktopEncryptedCertExpired": "The certificate has expired: every client TLS handshake will fail. Re-issue or import a valid one now.",
-  "desktopEncryptedCertExpiresSoon": "The self-signed certificate expires within 30 days; every encrypted query will then fail its handshake. Re-issue it soon.",
-  "desktopEncryptedCertMissingBody": "No usable certificate is configured, so the encrypted listeners cannot start.",
-  "desktopEncryptedCertSubject": "Subject",
-  "desktopEncryptedCertIssuer": "Issuer",
-  "desktopEncryptedCertNotAfter": "Valid until",
-  "desktopEncryptedCertDays": "Days left",
-  "desktopEncryptedCertDaysValue": "{days} days",
-  "@desktopEncryptedCertDaysValue": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopEncryptedCertDns": "DNS names",
-  "desktopEncryptedCertIps": "IP addresses",
-  "desktopEncryptedCertFingerprint": "SHA-256: {fingerprint}",
-  "@desktopEncryptedCertFingerprint": {
-    "placeholders": {
-      "fingerprint": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopEncryptedCertDir": "Certificate directory: {dir}",
-  "@desktopEncryptedCertDir": {
-    "placeholders": {
-      "dir": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopEncryptedCertGenerate": "Re-issue",
-  "desktopEncryptedCertImport": "Import PEM",
-  "desktopEncryptedCertGenerated": "The certificate was generated",
-  "desktopEncryptedCertImported": "The certificate was imported",
-  "desktopEncryptedCertGenerateTitle": "Generate a self-signed certificate",
-  "desktopEncryptedCertGenerateBody": "This replaces the current certificate: every client that trusted the old one will stop working.",
-  "desktopEncryptedCertKeyType": "Key type",
-  "desktopEncryptedCertCommonName": "Common name (CN)",
-  "desktopEncryptedCertDnsNames": "SAN DNS names (one per line)",
-  "desktopEncryptedCertIpAddresses": "SAN IPs (one per line)",
-  "desktopEncryptedCertValidDays": "Valid for (days)",
-  "desktopEncryptedCertGenerateConfirm": "Generate",
-  "desktopEncryptedCertImportTitle": "Import a PEM certificate",
-  "desktopEncryptedCertImportBody": "Paste the certificate chain and the private key; the two must match.",
-  "desktopEncryptedCertPem": "Certificate chain PEM",
-  "desktopEncryptedKeyPem": "Private key PEM",
-  "desktopEncryptedCertImportConfirm": "Import",
-  "desktopEncryptedCertImportInvalid": "Both the certificate and the key are required",
-  "desktopEncryptedExtrasTitle": "Discovery and proxy",
-  "desktopEncryptedExtrasBody": "Client auto-discovery, reverse-proxy trust and the mobile profile",
-  "desktopEncryptedDdrTitle": "Discovery of designated resolver (DDR)",
-  "desktopEncryptedDdrBody": "Answers _dns.resolver.arpa probes so clients find this encrypted resolver on their own.",
-  "desktopEncryptedDdrSelfSignedWarning": "The certificate is self-signed: a client that does not already trust it loses DNS entirely when DDR is on.",
-  "desktopEncryptedDdrConfirmTitle": "Turn DDR on?",
-  "desktopEncryptedDdrConfirmBody": "DDR makes clients switch their resolver automatically; if the certificate is not trusted, that means no DNS at all.",
-  "desktopEncryptedDdrConfirm": "Turn it on anyway",
-  "desktopEncryptedDdrOn": "DDR is on",
-  "desktopEncryptedDdrOff": "DDR is off",
-  "desktopEncryptedProxyTitle": "Reverse-proxy pass-through",
-  "desktopEncryptedProxyBody": "Only enable this when DoH really sits behind a proxy you control; forwarded headers are trusted once it is on.",
-  "desktopEncryptedProxyUnrestricted": "A trusted source is 0.0.0.0/0 or ::/0: anyone can forge the source address.",
-  "desktopEncryptedProxyOn": "Reverse-proxy pass-through is on",
-  "desktopEncryptedProxyOff": "Reverse-proxy pass-through is off",
-  "desktopEncryptedProxySources": "Trusted proxy sources (one IP or CIDR per line)",
-  "desktopEncryptedProxyHeader": "Custom forwarding header (empty tries X-Forwarded-For then X-Real-IP)",
-  "desktopEncryptedProxySave": "Save the proxy config",
-  "desktopEncryptedProxySaved": "The reverse-proxy config was saved",
-  "desktopEncryptedMobileConfigTitle": "Mobile configuration profile",
-  "desktopEncryptedMobileConfigBody": "Opening this link on a device installs a profile that points it at this encrypted resolver.",
-  "desktopEncryptedMobileConfigOpen": "Open the profile",
-  "desktopEncryptedOpenUrl": "Open in browser",
-  "desktopTrafficPageTitle": "Devices and clients",
-  "desktopTrafficRefresh": "Reload devices and access control",
-  "desktopTrafficLoadFailed": "Could not read the devices and access control",
-  "desktopTrafficSaveFailed": "The action failed: {message}",
-  "@desktopTrafficSaveFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficClientsTitle": "Recognised LAN clients",
-  "desktopTrafficClientsBody": "Devices that queried, identified by rDNS or a custom alias",
-  "desktopTrafficClientCount": "{count} active devices",
-  "@desktopTrafficClientCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopTrafficClientsEmpty": "No device has queried from the LAN or outside yet.",
-  "desktopTrafficClientUnnamed": "Not set (unknown device)",
-  "desktopTrafficClientQueries": "{count} queries",
-  "@desktopTrafficClientQueries": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopTrafficClientNever": "Last seen: never",
-  "desktopTrafficClientLastSeen": "Last seen {time}",
-  "@desktopTrafficClientLastSeen": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficStateBlocked": "Blocked",
-  "desktopTrafficStateAllowed": "Allowlisted",
-  "desktopTrafficStateNotAllowed": "Not allowlisted",
-  "desktopTrafficStateOpen": "Allowed",
-  "desktopTrafficAlias": "Alias",
-  "desktopTrafficAliasTitle": "Set the client's device alias",
-  "desktopTrafficAliasField": "Friendly device name",
-  "desktopTrafficAliasHint": "e.g. living-room TV, work laptop, NAS",
-  "desktopTrafficAliasBody": "Saving an empty name clears the alias.",
-  "desktopTrafficAliasSave": "Save alias",
-  "desktopTrafficAliasSaved": "The alias for [{ip}] was updated",
-  "@desktopTrafficAliasSaved": {
-    "placeholders": {
-      "ip": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficAliasCleared": "The alias for [{ip}] was cleared",
-  "@desktopTrafficAliasCleared": {
-    "placeholders": {
-      "ip": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficAllowedAdd": "Allowlist",
-  "desktopTrafficAllowedRemove": "Allowlisted",
-  "desktopTrafficAllowedAdded": "[{ip}] was added to the allowlist",
-  "@desktopTrafficAllowedAdded": {
-    "placeholders": {
-      "ip": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficAllowedRemoved": "[{ip}] was removed from the allowlist",
-  "@desktopTrafficAllowedRemoved": {
-    "placeholders": {
-      "ip": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficBlockedAdd": "Block",
-  "desktopTrafficBlockedRemove": "Blocked",
-  "desktopTrafficBlockedAdded": "[{ip}] was added to the blocklist",
-  "@desktopTrafficBlockedAdded": {
-    "placeholders": {
-      "ip": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficBlockedRemoved": "[{ip}] was removed from the blocklist",
-  "@desktopTrafficBlockedRemoved": {
-    "placeholders": {
-      "ip": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopTrafficAccessTitle": "Client access control (ACL)",
-  "desktopTrafficAccessBody": "Restricts which client IPs or CIDR ranges may resolve",
-  "desktopTrafficAccessOpen": "Unrestricted",
-  "desktopTrafficAccessAllowOnly": "Allowlist only",
-  "desktopTrafficAccessAllowed": "Allowlist",
-  "desktopTrafficAccessAllowedHint": "e.g. 192.168.1.0/24 or 192.168.1.50",
-  "desktopTrafficAccessAllowedBody": "When set, only listed clients may resolve; empty means no restriction. One IP or CIDR per line.",
-  "desktopTrafficAccessBlocked": "Explicit blocklist",
-  "desktopTrafficAccessBlockedHint": "e.g. 192.168.1.199 or 10.0.0.0/8",
-  "desktopTrafficAccessBlockedBody": "Clients matching this list have their queries refused outright. One IP or CIDR per line.",
-  "desktopTrafficAccessSave": "Save lists",
-  "desktopTrafficAccessReset": "Discard changes",
-  "desktopTrafficAccessSaved": "The client lists were saved",
-  "desktopTrafficRateLimitTitle": "Client rate limit",
-  "desktopTrafficRateLimitBody": "Token-bucket limiting against LAN DoS floods and DNS amplification",
-  "desktopTrafficRateLimitOn": "Limiting",
-  "desktopTrafficRateLimitOff": "Off",
-  "desktopTrafficRateLimitSavedOn": "Rate limiting is on",
-  "desktopTrafficRateLimitSavedOff": "Rate limiting is off",
-  "desktopTrafficRate": "Rate (tokens/s)",
-  "desktopTrafficBurst": "Burst capacity",
-  "desktopTrafficIpv4Prefix": "IPv4 prefix length",
-  "desktopTrafficIpv6Prefix": "IPv6 prefix length",
-  "desktopTrafficPrefixBody": "32 / 128 for a single address; aggregate on a LAN with e.g. 24 / 64.",
-  "desktopTrafficExempt": "Exempt IPs / ranges",
-  "desktopTrafficExemptBody": "Loopback and trusted ranges are not counted.",
-  "desktopTrafficRateLimitSave": "Save rate limit",
-  "desktopTrafficRateInvalid": "Rate and burst must be positive; prefixes must be 1–32 (IPv4) and 1–128 (IPv6)",
-  "desktopGroupsPageTitle": "Client groups",
-  "desktopGroupsRefresh": "Reload the client groups",
-  "desktopGroupsLoadFailed": "Could not read the client group config",
-  "desktopGroupsTitle": "Client groups · fine-grained policy",
-  "desktopGroupsBody": "Binds a device group to its own subscription sets and blocking mode",
-  "desktopGroupsCount": "{enabled} / {total} groups enabled",
-  "@desktopGroupsCount": {
-    "placeholders": {
-      "enabled": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopGroupsOn": "Groups active",
-  "desktopGroupsOff": "Groups off",
-  "desktopGroupsSave": "Save policy",
-  "desktopGroupsSaved": "The client group policy was saved",
-  "desktopGroupsMaster": "Enable client groups",
-  "desktopGroupsMasterBody": "When off, every client uses the global rules; when on, groups match by longest prefix.",
-  "desktopGroupsAdd": "Add a client group",
-  "desktopGroupsEmpty": "No group is configured. Clients that match none use the global rules (the default group).",
-  "desktopGroupsFooter": "Longest-prefix match: a narrower range such as /24 wins over /16.",
-  "desktopGroupsOpen": "Client groups",
-  "desktopGroupsName": "Group name",
-  "desktopGroupsEnabled": "Enable this group",
-  "desktopGroupsDelete": "Delete this group",
-  "desktopGroupsDeleteTitle": "Delete the client group",
-  "desktopGroupsDeleteBody": "Delete this client group? It stops applying once saved.",
-  "desktopGroupsMembers": "Member IPs / ranges",
-  "desktopGroupsMembersHint": "e.g.\n192.168.1.0/24\n10.0.0.7\nfd00::/8",
-  "desktopGroupsMembersBody": "One IP or CIDR per line; IPv4 and IPv6 are both accepted.",
-  "desktopGroupsBlockMode": "Blocking response",
-  "desktopGroupsModeInherit": "Inherit the global mode",
-  "desktopGroupsModeNullIp": "Null IP (0.0.0.0 / ::)",
-  "desktopGroupsModeNxdomain": "NXDOMAIN (no such domain)",
-  "desktopGroupsModeRefused": "REFUSED (refuse the answer)",
-  "desktopGroupsAllowlistOnly": "Allowlist only",
-  "desktopGroupsAllowlistOnlyBody": "Only queries that match an allow rule (@@) pass; everything else is blocked",
-  "desktopGroupsSchedule": "Group schedule",
-  "desktopGroupsScheduleBody": "When on, this group blocks by its own windows; when off it inherits the global schedule",
-  "desktopGroupsRuleLists": "Bound subscription sets",
-  "desktopGroupsInheritAll": "Inherit all",
-  "desktopGroupsNoRuleLists": "No subscription is available; this group applies only custom rules.",
-  "desktopGroupsRuleListsInherited": "Nothing selected → every subscription rule is inherited.",
-  "desktopGroupsRuleListsSelected": "Only the selected subscriptions apply to this group.",
-  "desktopGroupsUpstreams": "Dedicated upstreams",
-  "desktopGroupsInheritChain": "Use the main chain",
-  "desktopGroupsNoUpstreams": "No upstream is available; this group uses the main chain.",
-  "desktopGroupsUpstreamsInherited": "Nothing selected → the main-chain scheduling applies.",
-  "desktopGroupsUpstreamsSelected": "This group resolves through the selected upstreams and skips the global fallback chain.",
-  "desktopGroupsNewName": "Group {index}",
-  "@desktopGroupsNewName": {
-    "placeholders": {
-      "index": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopGroupsListEnabled": "This subscription is enabled",
-  "desktopGroupsListDisabled": "This subscription is disabled",
-  "desktopToolsPortTitle": "Network diagnosis and repair",
-  "desktopToolsPortBody": "Finds out whether ICS sharing or the systemd-resolved stub holds port 53 and blocks startup",
-  "desktopToolsPortIdle": "Not checked yet. Use the search button in this card to run one probe.",
-  "desktopToolsPortOk": "The port is available",
-  "desktopToolsPortConflict": "A port conflict was found",
-  "desktopToolsCheck": "Check the port",
-  "desktopToolsFix": "Repair the port conflict",
-  "desktopToolsFixTitle": "Repair the port conflict?",
-  "desktopToolsFixBody": "Stops the system listener on port 53 (Windows ICS sharing / the systemd-resolved stub). It does not start or restart DNS.",
-  "desktopToolsFixed": "The port conflict was repaired",
-  "desktopToolsFailed": "The action failed: {message}",
-  "@desktopToolsFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsSystemListener": "System listener",
-  "desktopToolsSelfListener": "DITING itself",
-  "desktopToolsConflictOwner": "{process} · PID {pid} · {address}",
-  "@desktopToolsConflictOwner": {
-    "placeholders": {
-      "process": {
-        "type": "String"
-      },
-      "pid": {
-        "type": "int"
-      },
-      "address": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsConflictService": "Service: {service}",
-  "@desktopToolsConflictService": {
-    "placeholders": {
-      "service": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsPortFooter": "The probe only takes the port briefly to confirm it is free; the report and advice come from the system probe itself.",
-  "desktopToolsRulePageTitle": "Rule check",
-  "desktopHubDiagnoseSection": "Diagnosis and recovery",
-  "desktopToolsRuleEntryBody": "Simulate one lookup and read the matched rule and verdict",
-  "desktopHubQueryLog": "Query log",
-  "desktopHubQueryLogBody": "Live query stream, searchable history and retention policy",
-  "desktopQueryLogPageTitle": "Query log",
-  "desktopToolsRuleInputTitle": "Blocking simulation",
-  "desktopToolsRuleInputBody": "Enter a domain to see whether a blocking rule matches it",
-  "desktopToolsRuleDomain": "Domain to test",
-  "desktopToolsRuleDomainHint": "e.g. ad.example.com or tracker.domain.com",
-  "desktopToolsRuleQtype": "DNS record type",
-  "desktopToolsRuleQtypeOption": "{type} record",
-  "@desktopToolsRuleQtypeOption": {
-    "placeholders": {
-      "type": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsRuleExamples": "Quick examples:",
-  "desktopToolsRuleRun": "Run the simulation",
-  "desktopToolsRuleRunning": "Matching rules…",
-  "desktopToolsRuleVerdictTitle": "Rule diagnosis and verdict",
-  "desktopToolsRuleVerdictBody": "The matched rule, the list it came from and the response",
-  "desktopToolsRuleIdle": "Enter a domain above and run the simulation to see the verdict",
-  "desktopToolsRuleBlocked": "Blocked",
-  "desktopToolsRuleRewritten": "Rewritten ({code})",
-  "@desktopToolsRuleRewritten": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsRuleAllowed": "Allowed (trusted list)",
-  "desktopToolsRulePassed": "No match (normal resolution)",
-  "desktopToolsRuleMatched": "Matched rule",
-  "desktopToolsRuleNoMatch": "No rule matched",
-  "desktopToolsRuleList": "Source list",
-  "desktopToolsRuleNoList": "None",
-  "desktopToolsRuleReason": "Verdict reason",
-  "desktopToolsRuleNoReason": "Normal direct resolution",
-  "desktopToolsRuleRewrite": "$dnsrewrite answer: {code}",
-  "@desktopToolsRuleRewrite": {
-    "placeholders": {
-      "code": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsRuleRewriteEmpty": "No records returned (authoritative NODATA)",
-  "desktopToolsRuleFooter": "Tests AdGuard, Hosts and custom rules instantly.",
-  "desktopToolsRuleFailed": "The check failed: {message}",
-  "@desktopToolsRuleFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopHubAppSection": "App and service",
-  "desktopAboutProjectSection": "Project and links",
-  "desktopAboutDisclaimerSection": "About the app and disclaimer",
-  "desktopSettingsAppearance": "Appearance",
-  "desktopSettingsAppearanceEntryBody": "Palette and day/night mode, previewed live",
-  "desktopSettingsAppearanceTitle": "Appearance and theme",
-  "desktopSettingsAppearanceBody": "Switch palettes and day/night modes; the whole interface follows at once",
-  "desktopSettingsPalette": "Palette",
-  "desktopSettingsPaletteBody": "Pick the visual system you prefer; every element follows it",
-  "desktopSettingsMode": "Day/night mode",
-  "desktopSettingsModeBody": "Following the system uses the system's light/dark preference",
-  "desktopSettingsAppearanceFooter": "Appearance shares the mobile app's preference keys, so the choice survives a restart.",
-  "desktopSettingsPreview": "Window preview",
-  "desktopSettingsPreviewBody": "The sidebar, toolbar and cards render with the current palette and mode.",
-  "desktopSettingsSystemResolved": "{mode} (system)",
-  "@desktopSettingsSystemResolved": {
-    "placeholders": {
-      "mode": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopServicePageTitle": "Service and connection",
-  "desktopServiceEntryBody": "Connection settings, the core service and its boot registration",
-  "desktopServiceConnectionTitle": "Service connection",
-  "desktopServiceConnectionBody": "The channel between this client and the core service",
-  "desktopServiceConnectionFooter": "Saving rebuilds the connection with the new address; the test checks the service that is answering now.",
-  "desktopServiceHost": "Service address (IP or host)",
-  "desktopServicePort": "Port",
-  "desktopServiceToken": "Access token (optional)",
-  "desktopServiceTokenHint": "Empty when the loopback service needs no password",
-  "desktopServiceTest": "Test the connection",
-  "desktopServiceSave": "Save",
-  "desktopServiceSaved": "The connection settings were saved",
-  "desktopServiceReachable": "Connected",
-  "desktopServiceUnreachable": "Unreachable",
-  "desktopServiceConfigured": "Configured",
-  "desktopServiceAddressInvalid": "The address is required and the port must be a whole number from 1 to 65535",
-  "desktopServiceCoreTitle": "Core service",
-  "desktopServiceCoreBody": "The host service that runs DNS and blocking",
-  "desktopServiceCoreFooter": "Installing, starting and the boot registration are handled on the host; this page only reads its state.",
-  "desktopServiceState": "State",
-  "desktopServiceAutoStartOn": "Enabled",
-  "desktopServiceAutoStartOff": "Off",
-  "desktopServiceAutoStartUnknown": "Not reported",
-  "desktopServiceRunning": "Running",
-  "desktopServiceStopped": "Stopped",
-  "desktopServiceUnknown": "Unknown",
-  "desktopServiceRefresh": "Reload the core service state",
-  "desktopLanWebPageTitle": "LAN console",
-  "desktopLanWebEntryBody": "Remote access switch, URLs, firewall rule and admin credential",
-  "desktopHubClientAccess": "Client access",
-  "desktopHubClientAccessBody": "Which LAN clients may resolve, and the query rate limit each one gets",
-  "desktopClientAccessPageTitle": "Client access control",
-  "desktopLanWebRefresh": "Reload the LAN console status",
-  "desktopLanWebLoadFailed": "Could not read the LAN console status",
-  "desktopLanWebAccessTitle": "Firewall rule and admin credential",
-  "desktopLanWebAccessBody": "The firewall rule and the login this console uses; the credential only affects LAN access",
-  "desktopLanWebTitle": "LAN web console",
-  "desktopLanWebOpen": "Open to the LAN",
-  "desktopLanWebLocal": "Local only (127.0.0.1)",
-  "desktopLanWebEnabledBody": "Phones and computers on the LAN can open the full console in a browser.",
-  "desktopLanWebDisabledBody": "When enabled, phones and computers on the LAN can open the full console and share this service's data and config.",
-  "desktopLanWebOn": "LAN web access is on",
-  "desktopLanWebOff": "LAN web access is off",
-  "desktopLanWebFailed": "The action failed: {message}",
-  "@desktopLanWebFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLanWebUrls": "LAN URLs (open in a browser)",
-  "desktopLanWebNoUrls": "No IPv4 LAN interface was found",
-  "desktopLanWebPort": "Web port",
-  "desktopLanWebSavePort": "Save port",
-  "desktopLanWebPortInvalid": "Enter a valid port (1–65535)",
-  "desktopLanWebFirewall": "Allow the inbound firewall rule",
-  "desktopLanWebFirewallBody": "Adds or removes the system firewall rule for the web port",
-  "desktopLanWebFirewallOn": "The web port was allowed through the firewall",
-  "desktopLanWebFirewallOff": "The web port firewall rule was removed",
-  "desktopLanWebNoFirewall": "No firewall manager was detected, so the port is already open and needs no rule.",
-  "desktopLanWebCredentials": "Console credential",
-  "desktopLanWebUser": "Administrator: {user}",
-  "@desktopLanWebUser": {
-    "placeholders": {
-      "user": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLanWebNoUser": "No administrator yet",
-  "desktopLanWebProtected": "Password protection is on",
-  "desktopLanWebUnprotected": "No password yet; the first visit must set one",
-  "desktopLanWebChangePassword": "Change the admin password",
-  "desktopLanWebSetPassword": "Set the initial password",
-  "desktopLanWebPasswordSave": "Save",
-  "desktopLanWebPasswordSaved": "The admin password was saved",
-  "desktopLanWebChangeBody": "Changes the password for {user}; existing external sessions stop working.",
-  "@desktopLanWebChangeBody": {
-    "placeholders": {
-      "user": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLanWebSetupBody": "Sets the initial password for {user}; later console visits must log in.",
-  "@desktopLanWebSetupBody": {
-    "placeholders": {
-      "user": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLanWebOldPassword": "Current password",
-  "desktopLanWebNewPassword": "New password",
-  "desktopLanWebConfirmPassword": "Confirm the new password",
-  "desktopLanWebPasswordRequired": "The new password is required",
-  "desktopLanWebPasswordMismatch": "The two new passwords do not match",
-  "desktopLanWebOldRequired": "Enter the current password",
-  "desktopLanWebFooter": "The credential only guards console login; the desktop client keeps using the local API.",
-  "desktopHubAdapters": "Adapter takeover",
-  "desktopHubAdaptersBody": "Per-adapter gateway, DNS and takeover state, one by one or all at once",
-  "desktopHubLanDns": "LAN DNS service",
-  "desktopHubLanDnsBody": "Listen on port 53 so routers and devices share this resolver",
-  "desktopAdaptersPageTitle": "Adapter takeover",
-  "desktopAdaptersRefresh": "Refresh adapter list",
-  "desktopAdaptersLoadFailed": "Cannot read the adapter list",
-  "desktopAdaptersSectionTitle": "Network connections and takeover",
-  "desktopAdaptersSectionBody": "Only connections in use are listed; the service drops virtual and offline adapters.",
-  "desktopAdaptersTakeoverAll": "Protect all",
-  "desktopAdaptersRestoreAll": "Restore system default",
-  "desktopAdaptersProtecting": "Protecting",
-  "desktopAdaptersInactive": "Off",
-  "desktopAdaptersConnected": "Connected",
-  "desktopAdaptersDisconnected": "Disconnected",
-  "desktopAdaptersGateway": "Gateway",
-  "desktopAdaptersNoGateway": "None",
-  "desktopAdaptersIpMode": "IP mode",
-  "desktopAdaptersDhcp": "Automatic (DHCP)",
-  "desktopAdaptersStatic": "Static IP",
-  "desktopAdaptersOriginalDns": "Original system DNS",
-  "desktopAdaptersAutoDns": "Automatic (system default)",
-  "desktopAdaptersEffectiveDns": "DNS in effect",
-  "desktopAdaptersEffectiveLoopback": "127.0.0.1 (protected locally)",
-  "desktopAdaptersEffectiveSystem": "System default, not taken over",
-  "desktopAdaptersEmpty": "No usable network connection",
-  "desktopAdaptersEmptyBody": "Check that Wi-Fi or the network cable is connected, then detect again.",
-  "desktopAdaptersAllOn": "All physical adapters are taken over",
-  "desktopAdaptersAllOff": "System default DNS restored",
-  "desktopAdaptersAdapterToggled": "{name}: {state}",
-  "@desktopAdaptersAdapterToggled": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "state": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopAdaptersAdapterOn": "taken over",
-  "desktopAdaptersAdapterOff": "restored",
-  "desktopAdaptersActionFailed": "Failed: {message}",
-  "@desktopAdaptersActionFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLanDnsPageTitle": "LAN DNS service",
-  "desktopLanDnsRefresh": "Refresh LAN DNS state",
-  "desktopLanDnsLoadFailed": "Cannot read the LAN DNS state",
-  "desktopLanDnsServiceTitle": "LAN DNS service",
-  "desktopLanDnsServiceBody": "When on, routers, phones, tablets and NAS boxes can point their primary DNS at this host and share the acceleration and blocking.",
-  "desktopLanDnsOnChip": "Listening on all interfaces (0.0.0.0)",
-  "desktopLanDnsOffChip": "This host only",
-  "desktopLanDnsOn": "LAN DNS service is on",
-  "desktopLanDnsOff": "LAN DNS service is off; listening locally again",
-  "desktopLanDnsAddressesCardTitle": "Listen and access addresses",
-  "desktopLanDnsAddressesCardBody": "Where the service is bound, and the address other devices on the LAN can use",
-  "desktopLanDnsListenTitle": "Addresses being listened on",
-  "desktopLanDnsNoListen": "The service is not listening on any address",
-  "desktopLanDnsAddressesTitle": "LAN DNS addresses of this host",
-  "desktopLanDnsNoAddresses": "No active physical adapter address found; check Wi-Fi or Ethernet.",
-  "desktopLanDnsIpv4": "IPv4",
-  "desktopLanDnsIpv6": "IPv6",
-  "desktopLanDnsRouterHint": "Put {address} into the router's DNS setting to cover every device at home.",
-  "@desktopLanDnsRouterHint": {
-    "placeholders": {
-      "address": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLanDnsFirewallTitle": "Firewall inbound rule",
-  "desktopLanDnsFirewallAllowed": "Port 53 allowed",
-  "desktopLanDnsFirewallBlocked": "Not allowed",
-  "desktopLanDnsFirewallNone": "Nothing to allow",
-  "desktopLanDnsFirewallBody": "LAN devices send queries to UDP/TCP port 53 on this host; a firewall block makes those devices lose their network.",
-  "desktopLanDnsFirewallNoneBody": "No firewall manager was detected, so port 53 is already open and no rule is needed.",
-  "desktopLanDnsFirewallStatusOn": "LAN devices may reach port 53",
-  "desktopLanDnsFirewallStatusOff": "Port 53 is restricted or blocked",
-  "desktopLanDnsFirewallAllow": "Allow inbound port 53",
-  "desktopLanDnsFirewallRemove": "Remove the inbound rule",
-  "desktopLanDnsFirewallOn": "Inbound rule for port 53 added",
-  "desktopLanDnsFirewallOff": "Inbound rule for port 53 removed",
-  "desktopLanDnsRouterTitle": "Option A: router-wide setting",
-  "desktopLanDnsRouterBadge": "Recommended",
-  "desktopLanDnsRouterBody": "Open the router admin page (usually 192.168.1.1) and set the primary DNS to this host's address under LAN or DHCP settings.",
-  "desktopLanDnsRouterFoot": "Save and reconnect Wi-Fi; every device at home follows.",
-  "desktopLanDnsDeviceTitle": "Option B: one device at a time",
-  "desktopLanDnsDeviceBadge": "Standalone",
-  "desktopLanDnsDeviceBody": "In the Wi-Fi details of a phone or computer, switch IP assignment to static and put this host's address into DNS 1.",
-  "desktopLanDnsDeviceFoot": "For cases without router access, or when only one device should use it.",
-  "desktopLanDnsPlaceholder": "192.168.x.x",
-  "desktopLanDnsFailed": "Failed: {message}",
-  "@desktopLanDnsFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopLoginTitle": "DITING DNS console",
-  "desktopLoginSubtitle": "LAN remote administration · verify the admin credential",
-  "desktopLoginSetupSubtitle": "Set the admin password to guard LAN remote administration",
-  "desktopLoginUserLabel": "Admin account",
-  "desktopLoginPasswordLabel": "Admin password",
-  "desktopLoginSetupPasswordLabel": "Initial password (at least 4 characters)",
-  "desktopLoginConfirmLabel": "Confirm admin password",
-  "desktopLoginSubmit": "Sign in",
-  "desktopLoginSetupSubmit": "Finish setup and enter the console",
-  "desktopLoginSecurity": "SHA-256 salted hash · repeated failures lock the form",
-  "desktopLoginFooter": "DITING DNS acceleration and protection",
-  "desktopLoginChecking": "Loading the console securely…",
-  "desktopLoginShowPassword": "Show password",
-  "desktopLoginHidePassword": "Hide password",
-  "desktopLoginUserRequired": "Enter the user name",
-  "desktopLoginPasswordRequired": "Enter the password",
-  "desktopLoginPasswordTooShort": "The password needs at least 4 characters",
-  "desktopLoginPasswordMismatch": "The two passwords differ",
-  "desktopLoginSuccess": "Verified, entering the console…",
-  "desktopLoginSetupSuccess": "Admin password saved, entering the console…",
-  "desktopLoginLockout": "Locked after too many failures; retry in {seconds}s",
-  "@desktopLoginLockout": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "desktopLoginUnreachable": "Cannot reach the service",
-  "desktopLoginRetry": "Retry",
-  "desktopLoginThemeCycle": "Switch light or dark",
-  "desktopLoginPaletteCycle": "Switch colour palette",
-  "desktopLoginBackground": "Custom background",
-  "desktopLoginBackgroundEnabled": "Custom background is on",
-  "desktopLoginBackgroundTitle": "Login background",
-  "desktopLoginBackgroundLocal": "Upload",
-  "desktopLoginBackgroundUrl": "Image URL",
-  "desktopLoginBackgroundChoose": "Choose an image",
-  "desktopLoginBackgroundNoFile": "No image selected",
-  "desktopLoginBackgroundUrlLabel": "Image address",
-  "desktopLoginBackgroundUrlInvalid": "Enter an address starting with http:// or https://",
-  "desktopLoginBackgroundOpacity": "Overlay darkness",
-  "desktopLoginBackgroundBlur": "Frosted blur",
-  "desktopLoginBackgroundSave": "Save background",
-  "desktopLoginBackgroundReset": "Restore default",
-  "desktopLoginBackgroundSaved": "Login background saved",
-  "desktopLoginBackgroundResetDone": "System default background restored",
-  "desktopLoginBackgroundNeedImage": "Choose an image or enter an address first",
-  "desktopLoginBackgroundPassword": "Admin password",
-  "desktopLoginBackgroundPasswordBody": "Changing the background remotely over the LAN needs the admin password.",
-  "desktopLoginBackgroundFailed": "Failed: {message}",
-  "@desktopLoginBackgroundFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopSettingsSessionSection": "Current session",
-  "desktopSettingsLogout": "Sign out",
-  "desktopSettingsLogoutBody": "Drop the admin session stored in this browser and return to the login page",
-  "desktopSettingsLogoutConfirm": "Signing out means entering the admin credential again to get back in.",
-  "desktopSettingsLogoutDone": "Signed out",
-  "desktopToolsEmergencyTitle": "Restore system network defaults",
-  "desktopToolsEmergencyBody": "When a crash leaves the machine offline, restore the system DNS from the pre-takeover snapshot, clear residual loopback DNS and flush the system cache.",
-  "desktopToolsEmergencyAction": "Restore now",
-  "desktopToolsEmergencyBusy": "Restoring…",
-  "desktopToolsEmergencyConfirmTitle": "Run the emergency restore?",
-  "desktopToolsEmergencyConfirmBody": "The system DNS is restored from the snapshot saved before the takeover, residual loopback DNS is cleared, and the system DNS cache is flushed.",
-  "desktopToolsEmergencyDone": "Network settings restored",
-  "desktopToolsEmergencyFailed": "Restore failed: {message}",
-  "@desktopToolsEmergencyFailed": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "desktopToolsEmergencyFooter": "The restore replays the snapshot saved before the takeover; it does not touch the adapter drivers.",
-  "desktopLanWebQrCaption": "On the same Wi-Fi, scan with the phone camera to open the console",
-  "desktopLoginBackgroundPreparing": "Compressing the image…",
-  "desktopLoginChangePassword": "Change admin password",
-  "desktopLoginChangeSubtitle": "Rotating the credential signs every other external session out",
-  "desktopLoginOldPasswordLabel": "Current password",
-  "desktopLoginNewPasswordLabel": "New password (at least 4 characters)",
-  "desktopLoginChangeSubmit": "Save new password",
-  "desktopLoginChangeSuccess": "Admin password updated; sign in with the new one",
-  "desktopLoginBackToSignIn": "Back to sign in",
-  "desktopLoginOldPasswordRequired": "Enter the current password",
-  "desktopTrayTooltip": "DITING DNS Console",
-  "desktopTrayOpenWindow": "Open main window",
-  "desktopTrayHideWindow": "Hide main window",
-  "desktopTrayAutoStart": "Start on sign-in",
-  "desktopTrayServiceRunning": "Core service: running",
-  "desktopTrayServiceStopped": "Core service: stopped",
-  "desktopTrayServiceUnknown": "Core service: status unknown",
-  "desktopTrayServiceStart": "Start core service",
-  "desktopTrayServiceStop": "Stop core service",
-  "desktopTrayServiceRestart": "Restart core service",
-  "desktopTrayQuit": "Quit",
-  "desktopTrayBalloonServiceTitle": "Core service",
-  "desktopTrayBalloonServiceStarted": "Core service started",
-  "desktopTrayBalloonServiceStopped": "Core service stopped",
-  "desktopTrayBalloonServiceRestarted": "Core service restarted",
-  "desktopTrayBalloonAutoStartTitle": "Start on sign-in",
-  "desktopTrayBalloonAutoStartOn": "Start on sign-in enabled",
-  "desktopTrayBalloonAutoStartOff": "Start on sign-in disabled",
-  "desktopTrayBalloonFailedPrefix": "Operation failed: ",
-  "desktopTrayBalloonMinimized": "DITING keeps running in the notification area.\nClick the tray icon to reopen the main window.",
   "deepLinkImportInvalid": "Invalid deep link; the subscription could not be imported",
   "troubleshootLogsTitle": "Log management",
   "troubleshootLogsViewLogs": "View and manage logs",
@@ -5143,12 +2785,10 @@
   "troubleshootEventsLevel": "Level",
   "troubleshootEventsModule": "Module",
   "troubleshootEventsOpen": "View runtime events",
-  "troubleshootEventsOpenBody": "Filter startup, service and error events by level and module",
   "troubleshootDetailMode": "Detailed mode",
   "troubleshootDetailModeNote": "Detailed mode records the full logcat of every process and buffer; broader but uses more power.",
   "automationTitle": "Scenario automation",
   "automationSubtitle": "Compose condition-action scenarios and on-demand connection",
-  "automationHubSection": "Scenarios & automation",
   "automationIntro": "Combine triggers, conditions and actions into scenes (home / meeting / gaming / low battery).",
   "automationOverviewEmptyTitle": "No automation rules yet",
   "automationOverviewEmptyHint": "Turn scattered entries into scenarios.",
@@ -5193,7 +2833,6 @@
   "automationEditTitle": "Edit rule",
   "automationDelete": "Delete",
   "automationSave": "Save",
-  "automationEditIntro": "Pick a trigger and actions; the automation engine runs them when the trigger fires.",
   "automationRuleName": "Rule name",
   "automationPriority": "Priority",
   "automationTrigger": "Trigger",
@@ -5212,8 +2851,6 @@
   "profilesTitle": "Profiles",
   "profilesSubtitle": "One-tap configuration snapshots",
   "profilesAdd": "Add profile",
-  "profilesIntro": "One-tap snapshots of work mode / upstream set / rule groups and toggles.",
-  "profilesEmpty": "No profiles yet.",
   "profilesListSection": "Profiles",
   "profilesApply": "Apply",
   "profilesDelete": "Delete",
@@ -5232,16 +2869,12 @@
   "timetableTitle": "Timetable",
   "timetableSubtitle": "Weekly blocking windows",
   "timetableAdd": "Add slot",
-  "timetableIntro": "Lay out timed blocking windows across the week; they tighten or restore on schedule.",
-  "timetableEmpty": "No timetable slots yet.",
   "netProfileTitle": "Network profiles",
   "netProfileSubtitle": "Per-network policy",
   "netProfileAdd": "Add network profile",
-  "netProfileIntro": "Automatically pick the upstream set and rule groups by the current network (Wi‑Fi / cellular / roaming / metered).",
   "netProfileCurrentNet": "Current network",
   "netProfileResolved": "Effective profile",
   "netProfileNone": "No matching profile",
-  "netProfileEmpty": "No network profiles yet. Add one to switch policy by network.",
   "netProfileList": "Network profiles",
   "netProfileDelete": "Delete",
   "netProfileName": "Name",
@@ -5262,8 +2895,6 @@
   "dnsLeakReasonMismatch": "The exit resolver differs from the configured upstream.",
   "dnsLeakReasonPlaintext": "Plaintext DNS egress was observed.",
   "dnsLeakReasonInsufficient": "Not enough probe data to decide.",
-  "dnsLeakVpnActive": "Tunnel active",
-  "dnsLeakVpnInactive": "Tunnel inactive",
   "captiveSection": "Captive portal",
   "captiveRun": "Check portal",
   "captiveOpen": "Network open",
@@ -5273,9 +2904,7 @@
   "networkDiagnosticsFailed": "Check failed, please try again.",
   "appInsightsTitle": "App insights",
   "appInsightsIntro": "Aggregates live connections per app: traffic, blocks and a connection map.",
-  "appInsightsEmpty": "No connections yet. Start the tunnel and generate some traffic.",
   "appInsightsReports": "App report cards",
-  "appInsightsMap": "Connection map",
   "appInsightsStat": "{connections} connections · {blocked} blocked · {bytes}",
   "appInsightsNoDomains": "No domains",
   "privacySuiteTitle": "Privacy protection",
@@ -5291,7 +2920,6 @@
   "dns64EnableDesc": "When the upstream has no usable AAAA, synthesize one from the A record behind the well-known prefix 64:ff9b::/96. Enable only on IPv6-only links; on dual-stack it can break access.",
   "connectionRateLimitTitle": "Connection rate limiting",
   "connectionRateLimitCardDescription": "Limit DNS queries and new connections",
-  "connectionRateLimitIntro": "Limit DNS queries and new connections per app so one app cannot exhaust resolution or connection capacity. Both counters share the rate and burst below.",
   "connectionRateLimitSectionSwitch": "Rate limit switch",
   "connectionRateLimitSectionParameters": "Rate and burst",
   "connectionRateLimitEnable": "Enable connection rate limiting",
@@ -5308,11 +2936,8 @@
     }
   },
   "ruleVersionsTitle": "Subscription version rollback",
-  "ruleVersionsIntro": "Every subscription update records a rule-set snapshot. Compare against older versions or roll back in one tap, so a bad or poisoned update cannot stick.",
   "ruleVersionsPick": "Choose a subscription",
   "ruleVersionsHistory": "Version history",
-  "ruleVersionsEmpty": "No versions recorded yet. Update the subscription once to see history here.",
-  "ruleVersionsNone": "No subscriptions available",
   "ruleVersionsUnavailable": "Rule database unavailable",
   "ruleVersionsCurrent": "Current",
   "ruleVersionsRuleCount": "{count} rules",
@@ -5382,7 +3007,6 @@
   "serverCacheHit": "Cache hits",
   "serverAverageLatency": "Avg latency",
   "serverAverageLatencyHint": "Avg response",
-  "serverFilter": "Filtering",
   "serverFilterOn": "Enabled",
   "serverFilterOff": "Disabled",
   "serverRecentQueries": "Recent queries",
@@ -5394,17 +3018,6 @@
   "serverHubTitle": "Configuration",
   "serverHubDataPlane": "Resolution services",
   "serverHubSystem": "System",
-  "serverHubUpstreamSummary": "{count} providers · {mode}",
-  "@serverHubUpstreamSummary": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "mode": {
-        "type": "String"
-      }
-    }
-  },
   "serverHubFilterSummary": "{state} · {count} subscriptions",
   "@serverHubFilterSummary": {
     "placeholders": {
@@ -5413,17 +3026,6 @@
       },
       "count": {
         "type": "int"
-      }
-    }
-  },
-  "serverHubCacheSummary": "{count} entries · {mode}",
-  "@serverHubCacheSummary": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "mode": {
-        "type": "String"
       }
     }
   },
@@ -5450,15 +3052,10 @@
   },
   "serverUpstream": "Scheduling and cache",
   "serverUpstreamTitle": "Scheduling and cache",
-  "serverUpstreamHubHint": "Adjust scheduling and cache policy",
   "serverFilterTitle": "Filtering rules",
-  "serverFilterHubHint": "Manage subscriptions and custom rules, or test a domain",
   "serverCacheTitle": "Cache",
-  "serverCacheHubHint": "Tune capacity, TTL and stale fallback",
   "serverQueryLogTitle": "Query logging",
-  "serverQueryLogHubHint": "Choose what to record, file output and retention",
   "serverSettingsTitle": "Server settings",
-  "serverSettingsHubHint": "Root, port and data directory",
   "serverAppearance": "Appearance",
   "serverAppearanceHint": "Theme, accent color and interface style",
   "serverAbout": "About",
@@ -5484,8 +3081,6 @@
   "serverLogCached": "Cached",
   "serverLogError": "Errors",
   "serverLogSearchDomain": "Search domain",
-  "serverLogSearchClient": "Search client",
-  "serverLogSearch": "Search",
   "serverLogEmpty": "No queries yet",
   "serverLogEmptyBody": "Client queries will appear here once the server is running.",
   "serverLogNoMatchTitle": "No matching results",
@@ -5543,9 +3138,7 @@
   "serverUpstreamSaved": "Upstream settings saved",
   "serverUpstreamProviderNote": "Choose a built-in normal/simple-mode provider or add a custom DNS, DoT or DoH service. Changes use server-specific configuration.",
   "serverUpstreamModeNote": "Primary + backup prefers the first healthy provider; parallel race takes the fastest; smart selection uses recent performance.",
-  "serverUpstreamBootstrap": "Bootstrap",
   "serverBootstrapSummary": "Bootstrap summary",
-  "serverBootstrapServers": "Servers",
   "serverBootstrapServerCount": "{count} servers",
   "@serverBootstrapServerCount": {
     "placeholders": {
@@ -5628,7 +3221,6 @@
   "serverSubscriptionName": "Name",
   "serverSubscriptionUrl": "Subscription URL",
   "serverSubscriptionRequired": "Name and URL are required",
-  "serverCheckTitle": "Rule test",
   "serverCheckDomain": "Domain",
   "serverCheckDomainRequired": "Enter a domain",
   "serverCheckAction": "Test",
@@ -5639,13 +3231,10 @@
   "serverFilterSaved": "Filter settings saved",
   "serverCacheEnabled": "Enable cache",
   "serverCacheEnabledBody": "Cache upstream responses and reuse their TTL",
-  "serverCacheState": "Cache status",
-  "serverCacheCapacity": "Capacity",
   "serverCacheEntries": "Maximum entries",
   "serverCacheMode": "TTL mode",
   "serverCacheLimit": "Limit max TTL",
   "serverCacheFixed": "Fixed TTL",
-  "serverCacheTtl": "TTL policy",
   "serverCacheMaxTtl": "Maximum TTL",
   "serverCacheFixedTtl": "Fixed TTL",
   "serverCacheMinTtl": "Minimum TTL",
@@ -5659,11 +3248,7 @@
   "serverCacheFooter": "Changes apply immediately; cached entries are cleared when the process restarts.",
   "serverCacheSaved": "Cache settings saved",
   "serverCacheAdvanced": "Advanced options",
-  "serverCacheBehavior": "Cache behavior",
   "serverCacheAdvancedSummary": "Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch",
-  "serverCacheAdvancedTtl": "TTL floor",
-  "serverCacheFallback": "Stale and negative cache",
-  "serverCachePerformance": "Prefetch and optimization",
   "serverQueryLogEnabled": "Record queries",
   "serverQueryLogContent": "Recorded data",
   "serverQueryLogEnabledBody": "Keep recent queries for the management UI",
@@ -5678,9 +3263,6 @@
   "serverQueryLogMemoryNote": "A ring buffer overwrites the oldest entries when full.",
   "serverQueryLogSaved": "Query log settings saved",
   "serverNumberInvalid": "Enter a whole number within the allowed range",
-  "serverSettingsRuntime": "Runtime",
-  "serverRunning": "Server running",
-  "serverSettingsSwitchModeBody": "The server stops before switching modes",
   "serverSettingsListen": "Listening",
   "serverSettingsRoot": "Root mode",
   "serverSettingsRootRunning": "Stop the server to change root mode",

@@ -40,13 +40,9 @@ abstract class AppL10n {
 
   String get ruleTestEnterSubtitle;
 
-  String get ruleTestIntro;
-
   String get ruleTestDomainLabel;
 
   String get ruleTestDomainHint;
-
-  String get ruleTestQtype;
 
   String get ruleTestRun;
 
@@ -142,8 +138,6 @@ abstract class AppL10n {
 
   String get hitRankingFooter;
 
-  String hitRankingTotal(int count);
-
   String get healthTitle;
 
   String get healthEntrySubtitle;
@@ -206,13 +200,9 @@ abstract class AppL10n {
 
   String get flowLiveTab;
 
-  String get flowEntrySubtitle;
-
   String get flowAppsSection;
 
   String get flowRefresh;
-
-  String get flowEmptyBody;
 
   String get flowStatusActive;
 
@@ -377,10 +367,6 @@ abstract class AppL10n {
   String get providerSheetSingleTitle;
 
   String get providerSheetRaceTitle;
-
-  String get providerSheetSingleOptions;
-
-  String get providerSheetRaceMinimum;
 
   String get providerSheetManage;
 
@@ -596,10 +582,6 @@ abstract class AppL10n {
 
   String get statusCoreState;
 
-  String get statusListenPort;
-
-  String get statusNotListening;
-
   String get statusProviderFooter;
 
   String get statusNoProviderHint;
@@ -740,19 +722,13 @@ abstract class AppL10n {
 
   String get siteLatencyMeasuredSites;
 
-  String get siteLatencyDetailFooter;
-
   String get intranetDetailTitle;
 
   String get intranetRefresh;
 
   String get intranetLocalAddress;
 
-  String get intranetUsableAsDns;
-
   String get intranetLocalOnly;
-
-  String get intranetSameSubnetHint;
 
   String get intranetNetworkOverview;
 
@@ -777,10 +753,6 @@ abstract class AppL10n {
   String get intranetPrimaryDns;
 
   String get intranetPrivateDns;
-
-  String get intranetPortFooter;
-
-  String get intranetCopyAddressWithPort;
 
   String get speedDetailTitle;
 
@@ -816,17 +788,7 @@ abstract class AppL10n {
 
   String get commonNoData;
 
-  String get commonPendingTitle;
-
-  String get commonPendingBody;
-
-  String get homePowerPending;
-
   String intranetModeNotListening(String mode);
-
-  String intranetListeningOn(int port);
-
-  String intranetServiceStopped(int port);
 
   String commonCopied(String text);
 
@@ -1084,8 +1046,6 @@ abstract class AppL10n {
 
   String elapsedDaysAgo(int count);
 
-  String providerRaceSummary(String count, String names);
-
   String get rulesDbUnavailable;
 
   String get agentApiKeyMissing;
@@ -1154,11 +1114,7 @@ abstract class AppL10n {
 
   String get aiPresetAggregator;
 
-  String get aiProviderConfigured;
-
   String get aiProviderExampleName;
-
-  String get logSubscriptionDeleted;
 
   String get logRaceFastest;
 
@@ -1196,15 +1152,11 @@ abstract class AppL10n {
 
   String get imagePickerUnavailable;
 
-  String get recognitionInvalidConfig;
-
   String get recognitionGithubInterrupted;
 
   String get recognitionGithubTimeout;
 
   String get recognitionNetworkUnavailable;
-
-  String get recognitionUpdateFailed;
 
   String get subscriptionNotFound;
 
@@ -1247,8 +1199,6 @@ abstract class AppL10n {
   String get updateDownloadFirst;
 
   String get updateInstallerUnavailable;
-
-  String get workModeNoDataPlane;
 
   String get workModeNoVpnConsent;
 
@@ -1301,8 +1251,6 @@ abstract class AppL10n {
   String recognitionFetchFailed(String detail);
 
   String recognitionUpdateFailedDetail(String detail);
-
-  String subscriptionAlreadyExists(String kind, String what);
 
   String subscriptionUpdatedCount(int count);
 
@@ -1388,10 +1336,6 @@ abstract class AppL10n {
 
   String get subscriptionKindHosts;
 
-  String logRowDirect(String protocol);
-
-  String logRowDirectWithPackage(String package, String protocol);
-
   String get logRowCacheHit;
 
   String get logRowNoAuthority;
@@ -1417,20 +1361,6 @@ abstract class AppL10n {
   String cachePresetExample(int upstream, int cached);
 
   String get cachePresetRecommended;
-
-  String get cacheDisabledSummary;
-
-  String get upstreamNameRequired;
-
-  String get upstreamAddressRequired;
-
-  String get upstreamDohNeedsHttps;
-
-  String get upstreamDohInvalidUrl;
-
-  String get upstreamPortRange;
-
-  String get upstreamIpv6Invalid;
 
   String get upstreamPresetAliyun;
 
@@ -1538,11 +1468,7 @@ abstract class AppL10n {
 
   String get hubCategoryData;
 
-  String get hubLogs;
-
   String get hubLogsDescription;
-
-  String get hubBackup;
 
   String get hubBackupDescription;
 
@@ -1554,19 +1480,7 @@ abstract class AppL10n {
 
   String get hubTroubleshootingDescription;
 
-  String get hubCategoryNetworkTools;
-
-  String get hubCategoryAutomation;
-
-  String get hubCategoryIntegration;
-
-  String get hubCategorySubscription;
-
-  String get hubDnsLeak;
-
   String get hubAutoUpdateDescription;
-
-  String get hubCategoryAbout;
 
   String get hubAbout;
 
@@ -1575,10 +1489,6 @@ abstract class AppL10n {
   String get hubSponsor;
 
   String get hubSponsorDescription;
-
-  String get hubSponsors;
-
-  String get hubSponsorsDescription;
 
   String get fontSizeSmall;
 
@@ -1614,15 +1524,11 @@ abstract class AppL10n {
 
   String get appearanceMotionSection;
 
-  String get appearanceInterfaceSection;
-
   String get appearanceHomeOpacitySubtitle;
 
   String get appearancePureBlackOn;
 
   String get appearancePureBlackOff;
-
-  String get appearanceHomeSection;
 
   String get appearanceHomeSentenceSubtitle;
 
@@ -1642,10 +1548,6 @@ abstract class AppL10n {
 
   String get appearanceMotionFooter;
 
-  String get appearancePaletteGoldLegacy;
-
-  String get appearancePaletteFooter;
-
   String get launcherIconTitle;
 
   String get launcherIconInfoLabel;
@@ -1663,8 +1565,6 @@ abstract class AppL10n {
   String get launcherIconApplied;
 
   String get launcherIconApplyFailed;
-
-  String fontFamilySizeSubtitle(String percent);
 
   String get fontFamilySystemDefault;
 
@@ -1818,8 +1718,6 @@ abstract class AppL10n {
 
   String get dayNightTitle;
 
-  String get dayNightFollowSystemDescription;
-
   String get dayNightFooter;
 
   String get homeOpacityTitle;
@@ -1846,15 +1744,9 @@ abstract class AppL10n {
 
   String get bottomBarCustomTitle;
 
-  String bottomBarItemsHeader(String count, String max);
-
-  String bottomBarDragHint(String max);
-
   String get bottomBarDisabled;
 
   String get bottomBarNewItemFooter;
-
-  String get bottomBarFeel;
 
   String get homeSentenceTitle;
 
@@ -1899,8 +1791,6 @@ abstract class AppL10n {
   String get fontFamilyTitle;
 
   String get fontSizeRestoreDefaults;
-
-  String get fontFamilyHapticSubtitle;
 
   String get ruleKindBlockTitle;
 
@@ -1994,8 +1884,6 @@ abstract class AppL10n {
 
   String get ruleAll;
 
-  String get formIssuesTitle;
-
   String get formSave;
 
   String get formProcessing;
@@ -2003,10 +1891,6 @@ abstract class AppL10n {
   String get formAdd;
 
   String get formDelete;
-
-  String get formHelp;
-
-  String get formGotIt;
 
   String get rulePatternHint;
 
@@ -2282,8 +2166,6 @@ abstract class AppL10n {
 
   String get trafficRankingTitle;
 
-  String trafficShareFooter(String range, String window);
-
   String get trafficClearTitle;
 
   String get trafficConfirmClear;
@@ -2299,8 +2181,6 @@ abstract class AppL10n {
   String get trafficLiveRate;
 
   String get trafficHideSystemApps;
-
-  String get trafficSearchHint;
 
   String get trafficAllHistory;
 
@@ -2334,15 +2214,9 @@ abstract class AppL10n {
 
   String trafficShareBarTooltip(String sort, String value);
 
-  String get trafficWhyDaemonTitle;
-
-  String get trafficWhyDaemonBody;
-
   String get trafficLiveRateTitle;
 
   String trafficNoLiveRate(String window);
-
-  String trafficLiveRateBody(String window);
 
   String get trafficSearchPlaceholder;
 
@@ -2442,8 +2316,6 @@ abstract class AppL10n {
 
   String get obsCacheHit;
 
-  String obsCopied(String text);
-
   String get obsCopyAddress;
 
   String get obsCopyDomain;
@@ -2515,8 +2387,6 @@ abstract class AppL10n {
   String get obsExportPickRange;
 
   String get obsExportScopeSection;
-
-  String get obsExportIntro;
 
   String get obsExportDnsOnlyNote;
 
@@ -2691,8 +2561,6 @@ abstract class AppL10n {
   String get logsLiveCache;
 
   String get logsNeverHit;
-
-  String logsCacheFooter(String count);
 
   String get logsBootstrapTitle;
 
@@ -2901,8 +2769,6 @@ abstract class AppL10n {
 
   String get storageV2Verifying;
 
-  String get storageV2Cleaning;
-
   String get storageV2NeedStop;
 
   String get storageV2StopAndRetry;
@@ -2947,23 +2813,9 @@ abstract class AppL10n {
 
   String get devOptions;
 
-  String get devDiagnostics;
-
   String get devIpQuality;
 
   String get devIpQualityBody;
-
-  String get devRequestLogs;
-
-  String get devRequestLogsBody;
-
-  String get devLogRetention;
-
-  String get devLogRetentionBody;
-
-  String get devTroubleshoot;
-
-  String get devTroubleshootBody;
 
   String get devDataCleanup;
 
@@ -3021,8 +2873,6 @@ abstract class AppL10n {
 
   String get sponsorNoteShort;
 
-  String aboutQqCopied(String number);
-
   String get disclaimerTitle;
 
   String get disclaimerTerms;
@@ -3061,37 +2911,9 @@ abstract class AppL10n {
 
   String devFooterWarning(int count);
 
-  String get devDataCleanupBody;
-
-  String get devConfigSection;
-
-  String get devCustomResources;
-
-  String get devCustomResourcesBody;
-
   String get devUserAgentBody;
 
-  String get devOnDemand;
-
-  String get devOnDemandBody;
-
-  String get devWebdav;
-
-  String get devWebdavBody;
-
-  String get devUiSection;
-
-  String get devFontFamilyBody;
-
-  String get devFontSizeBody;
-
-  String get devTabAnimation;
-
-  String get devTabAnimationBody;
-
   String get devExperimental;
-
-  String get devLegacyFooter;
 
   String get unknownRouteTitle;
 
@@ -3109,13 +2931,7 @@ abstract class AppL10n {
 
   String get disclaimerImmutable;
 
-  String get devFontFamily;
-
-  String get devFontSize;
-
   String get devWarningTitle;
-
-  String get devFooterLegacy;
 
   String get devFooterMoved;
 
@@ -3463,8 +3279,6 @@ abstract class AppL10n {
 
   String get uaEdit;
 
-  String get uaNote;
-
   String get uaCurrent;
 
   String get uaAll;
@@ -3526,8 +3340,6 @@ abstract class AppL10n {
   String get odApplyNow;
 
   String get odEnable;
-
-  String get odEnableBody;
 
   String get odDisableBody;
 
@@ -3623,8 +3435,6 @@ abstract class AppL10n {
 
   String get configCancel;
 
-  String get configNotSet;
-
   String configItemCount(int count);
 
   String odEditSsidTooltip(String ssid);
@@ -3637,12 +3447,6 @@ abstract class AppL10n {
 
   String get troubleshootRecordLogs;
 
-  String get troubleshootExportLogs;
-
-  String get troubleshootClearLogs;
-
-  String get troubleshootClearLogsBody;
-
   String get troubleshootRecordNote;
 
   String get troubleshootLocalDb;
@@ -3650,16 +3454,6 @@ abstract class AppL10n {
   String get troubleshootWriteStatus;
 
   String get troubleshootWriteStatusNote;
-
-  String get troubleshootCrashLogs;
-
-  String get troubleshootExportCrashes;
-
-  String get troubleshootClearCrashes;
-
-  String get troubleshootClearCrashesBody;
-
-  String get troubleshootCrashNote;
 
   String get troubleshootCaptureWarning;
 
@@ -3670,12 +3464,6 @@ abstract class AppL10n {
   String troubleshootStoppedWithLogs(String size);
 
   String get troubleshootStoppedNoLogs;
-
-  String get troubleshootReadingLogs;
-
-  String get troubleshootNoLogs;
-
-  String troubleshootLogCount(int count, String size);
 
   String get troubleshootReadingHealth;
 
@@ -3698,12 +3486,6 @@ abstract class AppL10n {
 
   String get troubleshootClosed;
 
-  String get troubleshootReadingCrashes;
-
-  String get troubleshootNoCrashes;
-
-  String troubleshootCrashCount(int count);
-
   String get troubleshootStoppedToast;
 
   String get troubleshootStartTitle;
@@ -3717,28 +3499,6 @@ abstract class AppL10n {
   String get troubleshootStartedToast;
 
   String get troubleshootStartFailedToast;
-
-  String get troubleshootNoExportableLogs;
-
-  String get troubleshootExportFailed;
-
-  String troubleshootExported(String path);
-
-  String get troubleshootConfirm;
-
-  String get troubleshootClearLogsConfirm;
-
-  String troubleshootClearedLogs(String count);
-
-  String get troubleshootNoClearableLogs;
-
-  String get troubleshootNoExportableCrashes;
-
-  String get troubleshootClearCrashesConfirm;
-
-  String troubleshootClearedCrashes(String count);
-
-  String get troubleshootNoClearableCrashes;
 
   String get bypassAddTitle;
 
@@ -3763,8 +3523,6 @@ abstract class AppL10n {
   String get hiddenFeaturesTitle;
 
   String get hiddenFeaturesReset;
-
-  String get hiddenFeaturesNote;
 
   String get hiddenFeaturesFooter;
 
@@ -3791,8 +3549,6 @@ abstract class AppL10n {
   String get recognitionSponsorSection;
 
   String get providerVisibilityTitle;
-
-  String get providerVisibilityNote;
 
   String providerVisibilityProtocol(String protocol);
 
@@ -4172,8 +3928,6 @@ abstract class AppL10n {
 
   String get mirrorTplAdd;
 
-  String get mirrorTplIntro;
-
   String get mirrorTplActions;
 
   String get mirrorTplFormatExample;
@@ -4247,10 +4001,6 @@ abstract class AppL10n {
 
   String get ruleControlUrlRunning;
 
-  String get ruleControlIntro;
-
-  String get ruleControlIntroLimited;
-
   String get ruleControlFilterSection;
 
   String get ruleControlDomainRules;
@@ -4263,8 +4013,6 @@ abstract class AppL10n {
 
   String get ruleControlNotReady;
 
-  String get ruleControlPolicySection;
-
   String get ruleControlDiagnosticsSection;
 
   String get ruleControlControlSection;
@@ -4275,23 +4023,7 @@ abstract class AppL10n {
 
   String ruleControlDynamicSummary(String mode);
 
-  String get ruleControlNetworkPrivacySection;
-
-  String get ruleControlInterfacesSection;
-
-  String get ruleControlSubsSection;
-
   String get ruleControlSubsSubtitle;
-
-  String ruleControlCount(int count);
-
-  String ruleControlAutoUpdateOn(int hours);
-
-  String ruleControlAutoUpdateDaily(String time);
-
-  String ruleControlAutoUpdateEveryOtherDay(String time);
-
-  String get ruleControlAutoUpdateOff;
 
   String get ruleControlMirrorSubtitle;
 
@@ -4409,8 +4141,6 @@ abstract class AppL10n {
 
   String get httpInspDeselectVisible;
 
-  String get httpInspAppsIntro;
-
   String httpInspAppsCount(int selected, int visible);
 
   String get commonLater;
@@ -4521,14 +4251,6 @@ abstract class AppL10n {
 
   String get transferTitle;
 
-  String get transferMetricProviders;
-
-  String get transferMetricSubs;
-
-  String get transferMetricCustomRules;
-
-  String get transferMetricListedApps;
-
   String get transferSectionAppConfig;
 
   String get transferSectionRules;
@@ -4560,8 +4282,6 @@ abstract class AppL10n {
   String get transferWebdavSubtitle;
 
   String get transferBusyExporting;
-
-  String get transferBusySaving;
 
   String get transferBusyPickingImport;
 
@@ -4791,8 +4511,6 @@ abstract class AppL10n {
 
   String get agentProvidersAdd;
 
-  String get agentProvidersIntro;
-
   String get agentProvidersMine;
 
   String get agentProvidersEmpty;
@@ -4800,8 +4518,6 @@ abstract class AppL10n {
   String get agentProvidersEmptySubtitle;
 
   String agentProvidersRow(String model, String baseUrl, String key);
-
-  String get agentProvidersKeyConfigured;
 
   String get agentProvidersKeyMissing;
 
@@ -4995,8 +4711,6 @@ abstract class AppL10n {
 
   String get outboundAppsTitle;
 
-  String get outboundAppsIntro;
-
   String outboundAppsCount(int count);
 
   String get outboundAppsEmpty;
@@ -5026,8 +4740,6 @@ abstract class AppL10n {
   String get resolutionNotConfigured;
 
   String resolutionProviderCount(int count);
-
-  String get resolutionPickerTitle;
 
   String get resolutionMinProviders;
 
@@ -5449,8 +5161,6 @@ abstract class AppL10n {
 
   String subsErrUnreachableCode(String code);
 
-  String get subsErrUnsupported;
-
   String subsErrMirrorPlaceholder(String list);
 
   String get subsErrRawUrlInvalid;
@@ -5540,8 +5250,6 @@ abstract class AppL10n {
   String get outboundTargets;
 
   String get outboundTargetsTitle;
-
-  String get outboundTargetsIntro;
 
   String get outboundProxyTargetsRequired;
 
@@ -5671,2548 +5379,6 @@ abstract class AppL10n {
 
   String get permOverlay;
 
-  String get desktopDnsServiceTitle;
-
-  String get desktopQueriesTitle;
-
-  String get desktopQueriesTotal;
-
-  String get desktopQueriesSuccess;
-
-  String get desktopQueriesFailed;
-
-  String get desktopQps;
-
-  String get desktopCacheTitle;
-
-  String get desktopCacheHits;
-
-  String get desktopCacheEvictions;
-
-  String get desktopFilterTitle;
-
-  String get desktopFilterRules;
-
-  String get desktopFilterBlockRate;
-
-  String get desktopTakeoverTitle;
-
-  String get desktopTakeoverOn;
-
-  String get desktopTakeoverOff;
-
-  String get desktopFilterPauseTitle;
-
-  String get desktopFilterPaused;
-
-  String get desktopFilterActive;
-
-  String get desktopServiceHostTitle;
-
-  String get desktopServiceAutoStart;
-
-  String get desktopServiceNotInstalled;
-
-  String get desktopVersion;
-
-  String get desktopProcessId;
-
-  String get desktopPerformanceTitle;
-
-  String get desktopRuntimeTitle;
-
-  String get desktopLanAllowed;
-
-  String get desktopListeningOn;
-
-  String get desktopStartDns;
-
-  String get desktopStopDns;
-
-  String get desktopStartDnsTitle;
-
-  String get desktopStartDnsMessage;
-
-  String get desktopStopDnsTitle;
-
-  String get desktopStopDnsMessage;
-
-  String get desktopBackendOfflineTitle;
-
-  String desktopBackendOfflineBody(String address);
-
-  String get desktopBackendUnauthorizedTitle;
-
-  String get desktopBackendUnauthorizedBody;
-
-  String desktopActionFailed(String message);
-
-  String desktopLastUpdated(String time);
-
-  String get desktopRetry;
-
-  String get desktopRecentQueriesTitle;
-
-  String get desktopRecentQueriesEmpty;
-
-  String get desktopLogWindow24h;
-
-  String get desktopLogDomain;
-
-  String get desktopLogClient;
-
-  String get desktopLogDomainHint;
-
-  String get desktopLogClientHint;
-
-  String get desktopLogAllTypes;
-
-  String get desktopLogClear;
-
-  String get desktopLogClearTitle;
-
-  String get desktopLogClearBody;
-
-  String get desktopLogClearDone;
-
-  String desktopLogClearFailed(String message);
-
-  String get desktopLogTopDomains;
-
-  String get desktopLogTopBlocked;
-
-  String get desktopLogTopClients;
-
-  String get desktopLogNoBlocked;
-
-  String get desktopLiveTitle;
-
-  String get desktopLiveConnected;
-
-  String get desktopLivePaused;
-
-  String get desktopLiveDisconnected;
-
-  String get desktopLiveDisconnectedBody;
-
-  String desktopLiveShown(String count);
-
-  String get desktopLiveSearchHint;
-
-  String get desktopLiveOnlyBlocked;
-
-  String get desktopLivePause;
-
-  String get desktopLiveResume;
-
-  String get desktopLiveClear;
-
-  String get desktopLiveEmpty;
-
-  String get desktopLiveCaptured;
-
-  String get desktopLiveBlocked;
-
-  String get desktopLiveSuccessRate;
-
-  String desktopLiveBufferNote(String count);
-
-  String get desktopLiveStale;
-
-  String get desktopLogConfigTitle;
-
-  String get desktopLogConfigEnabled;
-
-  String get desktopLogConfigEnabledBody;
-
-  String get desktopLogConfigMaxEntries;
-
-  String get desktopLogConfigRetentionDays;
-
-  String get desktopLogConfigFile;
-
-  String get desktopLogConfigFileBody;
-
-  String get desktopLogConfigClients;
-
-  String get desktopLogConfigClientsBody;
-
-  String desktopLogConfigDataDir(String path);
-
-  String get desktopLogConfigSave;
-
-  String get desktopLogConfigSaved;
-
-  String get desktopLogConfigLoadFailed;
-
-  String get desktopLogConfigInvalid;
-
-  String get desktopLogPagePrev;
-
-  String get desktopLogPageNext;
-
-  String desktopLogPageInfo(String from, String to, String total);
-
-  String get desktopHubResolveSection;
-
-  String get desktopHubProtectSection;
-
-  String get desktopHubUpstream;
-
-  String get desktopHubUpstreamBody;
-
-  String get desktopUpstreamTitle;
-
-  String get desktopUpstreamModeTitle;
-
-  String get desktopUpstreamModeBody;
-
-  String get desktopUpstreamModeSingle;
-
-  String get desktopUpstreamModeSingleBody;
-
-  String get desktopUpstreamModeBackup;
-
-  String get desktopUpstreamModeBackupBody;
-
-  String get desktopUpstreamModeRace;
-
-  String get desktopUpstreamModeRaceBody;
-
-  String get desktopUpstreamModeSmart;
-
-  String get desktopUpstreamModeSmartBody;
-
-  String get desktopUpstreamNodesTitle;
-
-  String get desktopUpstreamNodesBody;
-
-  String desktopUpstreamNodesCount(int count);
-
-  String get desktopUpstreamAdd;
-
-  String get desktopUpstreamAddTitle;
-
-  String get desktopUpstreamEditTitle;
-
-  String get desktopUpstreamName;
-
-  String get desktopUpstreamProtocol;
-
-  String get desktopUpstreamAddress;
-
-  String get desktopUpstreamUrl;
-
-  String get desktopUpstreamPin;
-
-  String get desktopUpstreamPinWarning;
-
-  String get desktopUpstreamPreset;
-
-  String get desktopUpstreamPresetProvider;
-
-  String get desktopUpstreamPresetProtocol;
-
-  String get desktopUpstreamStamp;
-
-  String get desktopUpstreamStampHint;
-
-  String get desktopUpstreamStampParse;
-
-  String get desktopUpstreamStampParsing;
-
-  String get desktopUpstreamStampEmpty;
-
-  String desktopUpstreamStampFailed(String message);
-
-  String desktopUpstreamStampParsed(String proto);
-
-  String get desktopUpstreamInvalid;
-
-  String get desktopUpstreamDeleteTitle;
-
-  String desktopUpstreamDeleteBody(String name);
-
-  String get desktopUpstreamKeepOne;
-
-  String get desktopUpstreamEmpty;
-
-  String get desktopUpstreamEmptyBody;
-
-  String get desktopUpstreamTest;
-
-  String desktopUpstreamTestFailed(String message);
-
-  String desktopUpstreamSaveFailed(String message);
-
-  String get desktopUpstreamSaved;
-
-  String get desktopUpstreamLoadFailed;
-
-  String get desktopUpstreamBootstrapTitle;
-
-  String get desktopUpstreamBootstrapBody;
-
-  String get desktopUpstreamBootstrapOn;
-
-  String get desktopUpstreamBootstrapOff;
-
-  String get desktopUpstreamBootstrapAdd;
-
-  String get desktopUpstreamBootstrapEmpty;
-
-  String get desktopUpstreamBootstrapKeepOne;
-
-  String get desktopUpstreamBootstrapName;
-
-  String get desktopUpstreamBootstrapAddress;
-
-  String get desktopUpstreamBootstrapInvalid;
-
-  String desktopUpstreamBootstrapDeleteBody(String name);
-
-  String get desktopUpstreamRoutesTitle;
-
-  String get desktopUpstreamRoutesBody;
-
-  String get desktopUpstreamRoutesAdd;
-
-  String get desktopUpstreamRoutesEmpty;
-
-  String get desktopUpstreamRouteDomain;
-
-  String get desktopUpstreamRouteServer;
-
-  String get desktopUpstreamRouteInvalid;
-
-  String desktopUpstreamRouteDeleteBody(String domain);
-
-  String get desktopUpstreamFallbackPolicyTitle;
-
-  String get desktopUpstreamFallbackPolicyBody;
-
-  String get desktopUpstreamFallbackPolicyOff;
-
-  String get desktopUpstreamFallbackTitle;
-
-  String get desktopUpstreamFallbackBody;
-
-  String get desktopUpstreamFallbackOff;
-
-  String desktopUpstreamFallbackCount(int count);
-
-  String get desktopUpstreamFallbackNote;
-
-  String get desktopUpstreamFallbackEmpty;
-
-  String get desktopUpstreamFallbackAdd;
-
-  String get desktopUpstreamFallbackTimeout;
-
-  String get desktopUpstreamFallbackTimeoutHint;
-
-  String get desktopUpstreamFallbackRcode;
-
-  String get desktopUpstreamFallbackRcodeHint;
-
-  String get desktopUpstreamFallbackOnError;
-
-  String desktopUpstreamWeight(int weight);
-
-  String get desktopUpstreamPinSet;
-
-  String get desktopUpstreamPresetMissing;
-
-  String get desktopUpstreamProbeFailed;
-
-  String get desktopUpstreamBootstrapAddTitle;
-
-  String get desktopUpstreamBootstrapEditTitle;
-
-  String get desktopHubCache;
-
-  String get desktopHubCacheBody;
-
-  String get desktopCacheEngineTitle;
-
-  String get desktopCacheEngineBody;
-
-  String get desktopCacheEngineOn;
-
-  String get desktopCacheEngineOff;
-
-  String get desktopCacheHitRatio;
-
-  String get desktopCacheRefresh;
-
-  String get desktopCacheClear;
-
-  String get desktopCacheClearTitle;
-
-  String desktopCacheClearBody(int count);
-
-  String get desktopCacheClearDone;
-
-  String desktopCacheClearFailed(String message);
-
-  String get desktopCacheTelemetryTitle;
-
-  String desktopCacheTelemetryCapacity(int used, int max);
-
-  String get desktopCacheMisses;
-
-  String get desktopCacheStaleHits;
-
-  String get desktopCacheNegativeHits;
-
-  String get desktopCachePrefetchCount;
-
-  String get desktopCacheTopTitle;
-
-  String get desktopCacheTopBody;
-
-  String get desktopCacheTopEmpty;
-
-  String desktopCacheTopHits(int count);
-
-  String get desktopCacheConfigTitle;
-
-  String get desktopCacheConfigBody;
-
-  String get desktopCacheConfigSave;
-
-  String get desktopCacheConfigSaved;
-
-  String get desktopCacheFallbackTitle;
-
-  String get desktopCacheFallbackBody;
-
-  String get desktopCacheModeLabel;
-
-  String get desktopCacheModeLimit;
-
-  String get desktopCacheModeFollow;
-
-  String get desktopCacheModeFixed;
-
-  String get desktopCacheMaxTtl;
-
-  String get desktopCacheMinTtl;
-
-  String get desktopCacheFixedTtl;
-
-  String get desktopCacheMinTtlEnabled;
-
-  String get desktopCacheStaleTitle;
-
-  String get desktopCacheStaleBody;
-
-  String get desktopCacheStaleSeconds;
-
-  String get desktopCacheOptimistic;
-
-  String get desktopCacheOptimisticBody;
-
-  String get desktopCacheNegative;
-
-  String get desktopCacheNegativeBody;
-
-  String get desktopCacheNegativeSeconds;
-
-  String get desktopCachePrefetchTitle;
-
-  String get desktopCachePrefetchBody;
-
-  String get desktopCachePrefetchThreshold;
-
-  String get desktopCachePrefetchThresholdHint;
-
-  String get desktopCachePrefetchBefore;
-
-  String get desktopCachePrefetchBeforeHint;
-
-  String get desktopCacheInvalidNumbers;
-
-  String desktopCacheSaveFailed(String message);
-
-  String get desktopCacheLoadFailed;
-
-  String get desktopCachePersistTitle;
-
-  String get desktopCachePersistBody;
-
-  String get desktopCachePersistOn;
-
-  String get desktopCachePersistOff;
-
-  String get desktopCachePersistInterval;
-
-  String get desktopCachePersistIntervalHint;
-
-  String get desktopCachePersistPath;
-
-  String desktopCachePersistLastError(String message);
-
-  String desktopCachePersistRecords(int count);
-
-  String get desktopCacheSnapshotTitle;
-
-  String get desktopCacheSnapshotBody;
-
-  String get desktopCachePersistDump;
-
-  String get desktopCachePersistLoad;
-
-  String desktopCachePersistDumpDone(int count);
-
-  String desktopCachePersistLoadDone(int count);
-
-  String desktopCachePersistDumpFailed(String message);
-
-  String desktopCachePersistLoadFailed(String message);
-
-  String get desktopCachePersistLoadTitle;
-
-  String get desktopCachePersistLoadBody;
-
-  String get desktopCachePersistToggleOn;
-
-  String get desktopCachePersistToggleOff;
-
-  String get desktopCachePersistIntervalSaved;
-
-  String get desktopCacheExcludeTitle;
-
-  String get desktopCacheExcludeBody;
-
-  String get desktopCacheExcludeOff;
-
-  String desktopCacheExcludeCount(int count);
-
-  String get desktopCacheExcludeLabel;
-
-  String get desktopCacheExcludeHint;
-
-  String get desktopCacheExcludeSave;
-
-  String desktopCacheExcludeSaved(int count);
-
-  String get desktopCacheExcludeCleared;
-
-  String desktopCacheExcludeFailed(String message);
-
-  String desktopCacheExcludeHits(int count);
-
-  String get desktopCacheExcludeReset;
-
-  String desktopCacheExcludeTooMany(int max);
-
-  String desktopCacheExcludeTooLong(int count, int max);
-
-  String get desktopCacheExcludePresetLocal;
-
-  String get desktopCacheExcludePresetPtr;
-
-  String get desktopCacheExcludePresetProbe;
-
-  String get desktopCacheEntriesTitle;
-
-  String get desktopCacheEntriesBody;
-
-  String get desktopCacheEntriesSearch;
-
-  String get desktopCacheEntriesEmpty;
-
-  String get desktopCacheEntriesNone;
-
-  String get desktopCacheEntriesLoadFailed;
-
-  String get desktopCacheFilterAll;
-
-  String get desktopCacheFilterFresh;
-
-  String get desktopCacheFilterStale;
-
-  String get desktopCacheFilterNegative;
-
-  String get desktopCacheEntryDomain;
-
-  String get desktopCacheEntryType;
-
-  String get desktopCacheEntryStatus;
-
-  String get desktopCacheEntryRemaining;
-
-  String get desktopCacheEntryTtl;
-
-  String get desktopCacheEntryHits;
-
-  String get desktopCacheEntryIps;
-
-  String get desktopCacheStatusFresh;
-
-  String get desktopCacheStatusStale;
-
-  String get desktopCacheStatusNegative;
-
-  String get desktopCacheNoIps;
-
-  String get desktopHubRewrite;
-
-  String get desktopHubRewriteBody;
-
-  String get desktopRewriteTitle;
-
-  String get desktopRewriteEngineTitle;
-
-  String get desktopRewriteEngineBody;
-
-  String get desktopRewriteEngineOn;
-
-  String get desktopRewriteEngineOff;
-
-  String get desktopRewriteEnabled;
-
-  String get desktopRewriteDisabled;
-
-  String get desktopRewriteDefaultTtl;
-
-  String get desktopRewriteTtlSave;
-
-  String get desktopRewriteTtlSaved;
-
-  String get desktopRewriteTtlInvalid;
-
-  String get desktopRewriteToggleOn;
-
-  String get desktopRewriteToggleOff;
-
-  String desktopRewriteSaveFailed(String message);
-
-  String get desktopRewriteLoadFailed;
-
-  String get desktopRewriteRulesTitle;
-
-  String get desktopRewriteRulesBody;
-
-  String desktopRewriteRulesCount(int count);
-
-  String get desktopRewriteAdd;
-
-  String get desktopRewriteSearch;
-
-  String get desktopRewriteEmpty;
-
-  String get desktopRewriteNoMatch;
-
-  String get desktopRewriteResetSearch;
-
-  String get desktopRewriteDomain;
-
-  String get desktopRewriteTypes;
-
-  String get desktopRewriteTarget;
-
-  String get desktopRewriteTtl;
-
-  String get desktopRewriteActions;
-
-  String get desktopRewriteEdit;
-
-  String get desktopRewriteDelete;
-
-  String desktopRewriteSeconds(int count);
-
-  String get desktopRewriteNoTarget;
-
-  String desktopRewriteRcodeOnly(String rcode);
-
-  String get desktopRewriteDeleteTitle;
-
-  String desktopRewriteDeleteBody(String domain);
-
-  String desktopRewriteRuleSaved(String domain);
-
-  String desktopRewriteRuleDeleted(String domain);
-
-  String desktopRewriteRuleFailed(String message);
-
-  String desktopRewriteDeleteFailed(String message);
-
-  String get desktopRewriteAddTitle;
-
-  String get desktopRewriteEditTitle;
-
-  String get desktopRewriteDomainLabel;
-
-  String get desktopRewriteDomainHint;
-
-  String get desktopRewriteDomainHelp;
-
-  String get desktopRewriteDomainRequired;
-
-  String get desktopRewriteTargetMode;
-
-  String get desktopRewriteModeShortcut;
-
-  String get desktopRewriteModeRecords;
-
-  String get desktopRewriteTargetType;
-
-  String get desktopRewriteTypeIp;
-
-  String get desktopRewriteTypeCname;
-
-  String get desktopRewriteTypeTxt;
-
-  String get desktopRewriteIpsLabel;
-
-  String get desktopRewriteIpsHelp;
-
-  String get desktopRewriteCnameLabel;
-
-  String get desktopRewriteCnameHelp;
-
-  String get desktopRewriteTxtLabel;
-
-  String get desktopRewriteRecordsLabel;
-
-  String get desktopRewriteRecordAdd;
-
-  String get desktopRewriteRecordEmpty;
-
-  String get desktopRewriteRecordValueHint;
-
-  String get desktopRewriteRecordsHelp;
-
-  String get desktopRewriteRcodeLabel;
-
-  String get desktopRewriteRcodeNone;
-
-  String get desktopRewriteRcodeWarning;
-
-  String get desktopRewriteTtlLabel;
-
-  String get desktopRewriteTtlHint;
-
-  String get desktopRewriteNeedIp;
-
-  String get desktopRewriteNeedCname;
-
-  String get desktopRewriteNeedTxt;
-
-  String get desktopRewriteNeedRecord;
-
-  String get desktopRewriteChipEmpty;
-
-  String get desktopZoneSettingsTitle;
-
-  String get desktopZoneSettingsBody;
-
-  String get desktopZoneTitle;
-
-  String get desktopZoneBody;
-
-  String desktopZoneBadge(int zones, int maxZones, int records);
-
-  String get desktopZoneRules;
-
-  String get desktopZoneDefaultTtl;
-
-  String get desktopZoneTtlSaved;
-
-  String get desktopZoneTtlInvalid;
-
-  String get desktopZoneToggleOn;
-
-  String get desktopZoneToggleOff;
-
-  String desktopZoneSaveFailed(String message);
-
-  String get desktopZoneLoadFailed;
-
-  String desktopZoneLimit(int records);
-
-  String get desktopZoneAdd;
-
-  String get desktopZoneSaveAll;
-
-  String get desktopZoneSaved;
-
-  String get desktopZoneEmpty;
-
-  String desktopZoneMaxZones(int max);
-
-  String get desktopZoneOriginHint;
-
-  String desktopZoneDeleted(String origin);
-
-  String get desktopZoneUnnamed;
-
-  String get desktopZoneStateDisabled;
-
-  String get desktopZoneStatePending;
-
-  String get desktopZoneStateFailed;
-
-  String desktopZoneStateTruncated(int count);
-
-  String desktopZoneStateLoaded(int count);
-
-  String get desktopZoneFailedReason;
-
-  String get desktopZoneExpand;
-
-  String get desktopZoneCollapse;
-
-  String get desktopZoneDelete;
-
-  String get desktopZoneContent;
-
-  String get desktopZonePreview;
-
-  String get desktopZonePreviewNote;
-
-  String get desktopZonePreviewEmpty;
-
-  String desktopZonePreviewMore(int count);
-
-  String get desktopHubDns64;
-
-  String get desktopHubDns64Body;
-
-  String get desktopDns64Title;
-
-  String get desktopDns64Refresh;
-
-  String get desktopDns64CardTitle;
-
-  String get desktopDns64CardBody;
-
-  String get desktopDns64EngineOn;
-
-  String get desktopDns64EngineOff;
-
-  String get desktopDns64Description;
-
-  String get desktopDns64PrefixesCardTitle;
-
-  String get desktopDns64PrefixesLabel;
-
-  String get desktopDns64PrefixesHelper;
-
-  String get desktopDns64FillWellKnown;
-
-  String get desktopDns64NoteTitle;
-
-  String get desktopDns64NoteBody;
-
-  String get desktopDns64Save;
-
-  String get desktopDns64Saving;
-
-  String get desktopDns64Saved;
-
-  String get desktopDns64ToggleOn;
-
-  String get desktopDns64ToggleOff;
-
-  String desktopDns64SaveFailed(String message);
-
-  String get desktopDns64LoadFailed;
-
-  String get desktopHubFilterLists;
-
-  String get desktopHubFilterListsBody;
-
-  String get desktopFilterListsPageTitle;
-
-  String get desktopFilterListsRefresh;
-
-  String get desktopFilterSummaryTitle;
-
-  String get desktopFilterEngineOn;
-
-  String get desktopFilterEngineOff;
-
-  String get desktopFilterPausedChip;
-
-  String get desktopFilterBlocked;
-
-  String get desktopFilterTimes;
-
-  String get desktopFilterRulesUnit;
-
-  String get desktopFilterActiveLists;
-
-  String get desktopFilterListsUnit;
-
-  String desktopFilterPausedRemaining(String remaining);
-
-  String desktopFilterPauseDays(int days);
-
-  String desktopFilterPauseHours(int hours, int minutes);
-
-  String desktopFilterPauseMinutes(int minutes, int seconds);
-
-  String desktopFilterPauseSeconds(int seconds);
-
-  String get desktopFilterListsTitle;
-
-  String get desktopFilterListsBody;
-
-  String desktopFilterListsCount(int count);
-
-  String get desktopFilterListUpdateAll;
-
-  String get desktopFilterListAdd;
-
-  String get desktopFilterListsEmpty;
-
-  String get desktopFilterListsEmptyBody;
-
-  String desktopFilterListDefaultName(int index);
-
-  String get desktopFilterListAdded;
-
-  String get desktopFilterListAllUpdated;
-
-  String get desktopFilterListUpdated;
-
-  String desktopFilterActionFailed(String message);
-
-  String desktopFilterListToggleOn(String name);
-
-  String desktopFilterListToggleOff(String name);
-
-  String get desktopFilterListDeleteTitle;
-
-  String desktopFilterListDeleteBody(String name);
-
-  String get desktopFilterListDeleteConfirm;
-
-  String get desktopFilterListDeleted;
-
-  String desktopFilterListRules(int count);
-
-  String get desktopFilterListEnabled;
-
-  String get desktopFilterListDisabled;
-
-  String get desktopFilterListNeverUpdated;
-
-  String desktopFilterListUpdatedAt(String time);
-
-  String get desktopFilterListRefreshOne;
-
-  String get desktopFilterListDelete;
-
-  String get desktopFilterListHealthOk;
-
-  String get desktopFilterListHealthUnchanged;
-
-  String get desktopFilterListHealthCached;
-
-  String get desktopFilterListHealthFailed;
-
-  String get desktopFilterListHealthOkBody;
-
-  String get desktopFilterListHealthUnchangedBody;
-
-  String get desktopFilterListHealthCachedBody;
-
-  String get desktopFilterListHealthFailedBody;
-
-  String get desktopFilterListAddTitle;
-
-  String get desktopFilterListAddBody;
-
-  String get desktopFilterListNameLabel;
-
-  String get desktopFilterListNameHint;
-
-  String get desktopFilterListUrlLabel;
-
-  String get desktopFilterListUrlHint;
-
-  String get desktopFilterListAddConfirm;
-
-  String get desktopFilterListNeedUrl;
-
-  String get desktopFilterListsLoadFailed;
-
-  String get desktopHubFilterRules;
-
-  String get desktopHubFilterRulesBody;
-
-  String get desktopFilterRulesPageTitle;
-
-  String get desktopFilterRulesRefresh;
-
-  String get desktopFilterRulesEditorTitle;
-
-  String get desktopFilterRulesEditorBody;
-
-  String get desktopFilterRulesSave;
-
-  String get desktopFilterRulesSaving;
-
-  String get desktopFilterRulesSaved;
-
-  String desktopFilterRulesSaveFailed(String message);
-
-  String get desktopFilterRulesLoadFailed;
-
-  String get desktopFilterRulesPlaceholder;
-
-  String desktopFilterRulesLineCount(int count);
-
-  String get desktopFilterRulesHint;
-
-  String get desktopFilterGuideTitle;
-
-  String get desktopFilterGuideBody;
-
-  String get desktopFilterGuideCommon;
-
-  String get desktopFilterGuideExempt;
-
-  String get desktopFilterGuideCompat;
-
-  String get desktopFilterGuidePriority;
-
-  String get desktopFilterGuideRewrite;
-
-  String get desktopFilterGuideDomainTitle;
-
-  String get desktopFilterGuideDomainBody;
-
-  String get desktopFilterGuideAllowTitle;
-
-  String get desktopFilterGuideAllowBody;
-
-  String get desktopFilterGuideHostsTitle;
-
-  String get desktopFilterGuideHostsBody;
-
-  String get desktopFilterGuideImportantTitle;
-
-  String get desktopFilterGuideImportantBody;
-
-  String get desktopFilterGuideRewriteTitle;
-
-  String get desktopFilterGuideRewriteBody;
-
-  String get desktopFilterGuideFooter;
-
-  String get desktopHubFilterConfig;
-
-  String get desktopHubFilterConfigBody;
-
-  String get desktopFilterConfigPageTitle;
-
-  String get desktopFilterConfigRefresh;
-
-  String get desktopFilterConfigLoadFailed;
-
-  String desktopFilterConfigSaveFailed(String message);
-
-  String get desktopFilterEngineOnMessage;
-
-  String get desktopFilterEngineOffMessage;
-
-  String get desktopFilterModeTitle;
-
-  String get desktopFilterModeBody;
-
-  String get desktopFilterModeSave;
-
-  String get desktopFilterModeSaving;
-
-  String get desktopFilterModeSaved;
-
-  String get desktopFilterModeParamsTitle;
-
-  String get desktopFilterModeParamsBody;
-
-  String get desktopFilterModeBlockingIPv4;
-
-  String get desktopFilterModeBlockingIPv6;
-
-  String get desktopFilterModeInterval;
-
-  String get desktopFilterModeIntervalHelper;
-
-  String get desktopFilterModeInvalid;
-
-  String get desktopFilterModeNullIp;
-
-  String get desktopFilterModeNullIpBody;
-
-  String get desktopFilterModeNxdomain;
-
-  String get desktopFilterModeNxdomainBody;
-
-  String get desktopFilterModeRefused;
-
-  String get desktopFilterModeRefusedBody;
-
-  String get desktopFilterAdvancedTitle;
-
-  String get desktopFilterAdvancedBody;
-
-  String get desktopFilterAdvancedResponseTitle;
-
-  String get desktopFilterAdvancedResponseBody;
-
-  String get desktopFilterAdvancedResponseOn;
-
-  String get desktopFilterAdvancedResponseOff;
-
-  String get desktopFilterAdvancedAllowlistTitle;
-
-  String get desktopFilterAdvancedAllowlistBody;
-
-  String get desktopFilterAdvancedAllowlistWarning;
-
-  String get desktopFilterAdvancedAllowlistOn;
-
-  String get desktopFilterAdvancedAllowlistOff;
-
-  String get desktopFilterAdvancedBogusTitle;
-
-  String get desktopFilterAdvancedBogusBody;
-
-  String get desktopFilterAdvancedBogusOn;
-
-  String get desktopFilterAdvancedBogusOff;
-
-  String get desktopFilterAdvancedBogusListLabel;
-
-  String desktopFilterAdvancedBogusSuspicious(String entries);
-
-  String get desktopFilterAdvancedBogusPresets;
-
-  String get desktopFilterAdvancedBogusReset;
-
-  String get desktopFilterAdvancedBogusSave;
-
-  String desktopFilterAdvancedBogusSaved(int count);
-
-  String get desktopFilterAdvancedBogusCleared;
-
-  String get desktopFilterPauseBody;
-
-  String get desktopFilterPauseDuration;
-
-  String get desktopFilterPauseAction;
-
-  String get desktopFilterPauseResume;
-
-  String get desktopFilterPauseStarted;
-
-  String get desktopFilterPauseResumed;
-
-  String get desktopFilterPauseActiveTitle;
-
-  String desktopFilterPauseActiveBody(String remaining);
-
-  String desktopFilterPauseMinutesOnly(int minutes);
-
-  String get desktopFilterPauseOneHour;
-
-  String get desktopFilterPauseEightHours;
-
-  String get desktopHubFilterSchedule;
-
-  String get desktopHubFilterScheduleBody;
-
-  String get desktopSchedulePageTitle;
-
-  String get desktopScheduleRefresh;
-
-  String get desktopScheduleLoadFailed;
-
-  String get desktopScheduleTitle;
-
-  String get desktopScheduleBody;
-
-  String get desktopScheduleBadgeOff;
-
-  String get desktopScheduleBadgeActive;
-
-  String get desktopScheduleBadgePaused;
-
-  String get desktopScheduleEnable;
-
-  String get desktopScheduleEnableBody;
-
-  String get desktopScheduleNoEnabled;
-
-  String get desktopScheduleSave;
-
-  String get desktopScheduleSaving;
-
-  String get desktopScheduleSaved;
-
-  String desktopScheduleSaveFailed(String message);
-
-  String get desktopScheduleAdd;
-
-  String get desktopScheduleName;
-
-  String get desktopScheduleEnabled;
-
-  String get desktopScheduleStart;
-
-  String get desktopScheduleEnd;
-
-  String get desktopScheduleEndHelper;
-
-  String get desktopScheduleWeekdays;
-
-  String get desktopScheduleEveryDay;
-
-  String get desktopScheduleDelete;
-
-  String get desktopScheduleDeleteTitle;
-
-  String get desktopScheduleDeleteBody;
-
-  String get desktopScheduleDeleteConfirm;
-
-  String get desktopWeekdayMon;
-
-  String get desktopWeekdayTue;
-
-  String get desktopWeekdayWed;
-
-  String get desktopWeekdayThu;
-
-  String get desktopWeekdayFri;
-
-  String get desktopWeekdaySat;
-
-  String get desktopWeekdaySun;
-
-  String get desktopHubFilterServices;
-
-  String get desktopHubFilterServicesBody;
-
-  String get desktopServicesPageTitle;
-
-  String get desktopServicesRefresh;
-
-  String get desktopServicesLoadFailed;
-
-  String get desktopServicesGroupsTitle;
-
-  String get desktopServicesGroupsBody;
-
-  String get desktopServicesTitle;
-
-  String get desktopServicesBody;
-
-  String desktopServicesCount(int blocked, int total);
-
-  String get desktopServicesClearAll;
-
-  String get desktopServicesCleared;
-
-  String get desktopServicesSearchHint;
-
-  String get desktopServicesGroupFilter;
-
-  String get desktopServicesAllGroups;
-
-  String desktopServicesGroupItem(String name, int count);
-
-  String desktopServicesGroupChip(String name, int count);
-
-  String desktopServicesActiveRules(int count);
-
-  String get desktopServicesEmpty;
-
-  String get desktopServicesNoMatch;
-
-  String desktopServicesBlocked(String name);
-
-  String desktopServicesUnblocked(String name);
-
-  String desktopServicesActionFailed(String message);
-
-  String desktopServicesGroupOn(String name);
-
-  String desktopServicesGroupOff(String name);
-
-  String get desktopServicesByGroup;
-
-  String get desktopServicesScheduleInside;
-
-  String get desktopServicesScheduleOutside;
-
-  String desktopServicesRuleCount(String group, int count);
-
-  String get desktopServicesScheduleEdit;
-
-  String get desktopServicesShowRules;
-
-  String desktopServicesScheduleTitle(String name);
-
-  String get desktopServicesScheduleBody;
-
-  String get desktopServicesScheduleSave;
-
-  String desktopServicesScheduleSaved(String name);
-
-  String desktopServicesScheduleRemoved(String name);
-
-  String get desktopHubPrivacy;
-
-  String get desktopHubPrivacyBody;
-
-  String get desktopPrivacyPageTitle;
-
-  String get desktopPrivacyRefresh;
-
-  String get desktopPrivacyLoadFailed;
-
-  String desktopPrivacySaveFailed(String message);
-
-  String get desktopPrivacyProtocolTitle;
-
-  String get desktopPrivacyProtocolBody;
-
-  String get desktopPrivacyBlockTitle;
-
-  String get desktopPrivacyBlockBody;
-
-  String get desktopPrivacyEdeTitle;
-
-  String get desktopPrivacyEdeBody;
-
-  String get desktopPrivacyEdeOn;
-
-  String get desktopPrivacyEdeOff;
-
-  String get desktopPrivacyPtrTitle;
-
-  String get desktopPrivacyPtrBody;
-
-  String get desktopPrivacyPtrOn;
-
-  String get desktopPrivacyPtrOff;
-
-  String get desktopPrivacyUnqualifiedTitle;
-
-  String get desktopPrivacyUnqualifiedBody;
-
-  String get desktopPrivacyUnqualifiedOn;
-
-  String get desktopPrivacyUnqualifiedOff;
-
-  String get desktopPrivacyEchTitle;
-
-  String get desktopPrivacyEchBody;
-
-  String get desktopPrivacyEchOn;
-
-  String get desktopPrivacyEchOff;
-
-  String get desktopPrivacyAnyTitle;
-
-  String get desktopPrivacyAnyBody;
-
-  String get desktopPrivacyAnyOn;
-
-  String get desktopPrivacyAnyOff;
-
-  String get desktopPrivacyAnyModeLabel;
-
-  String get desktopPrivacyAnyModeNotimp;
-
-  String get desktopPrivacyAnyModeNotimpBody;
-
-  String get desktopPrivacyAnyModeRfc;
-
-  String get desktopPrivacyAnyModeRfcBody;
-
-  String get desktopPrivacyAnyModeSaved;
-
-  String get desktopPrivacyIpv6Title;
-
-  String get desktopPrivacyIpv6Body;
-
-  String get desktopPrivacyIpv6On;
-
-  String get desktopPrivacyIpv6Off;
-
-  String get desktopPrivacyPaddingTitle;
-
-  String get desktopPrivacyPaddingBody;
-
-  String desktopPrivacyPaddingValue(int size);
-
-  String get desktopPrivacyPaddingSaved;
-
-  String get desktopPrivacyEcsTitle;
-
-  String get desktopPrivacyEcsBody;
-
-  String get desktopPrivacyEcsOn;
-
-  String get desktopPrivacyEcsOff;
-
-  String get desktopPrivacyEcsOnMessage;
-
-  String get desktopPrivacyEcsOffMessage;
-
-  String get desktopPrivacyEcsStripTitle;
-
-  String get desktopPrivacyEcsStripBody;
-
-  String get desktopPrivacyEcsStripOn;
-
-  String get desktopPrivacyEcsStripOff;
-
-  String get desktopPrivacyEcsSubnetLabel;
-
-  String get desktopPrivacyEcsSubnetHelper;
-
-  String get desktopPrivacyEcsSave;
-
-  String get desktopPrivacyEcsSaved;
-
-  String get desktopPrivacyDefenceTitle;
-
-  String get desktopPrivacyDefenceBody;
-
-  String get desktopPrivacyRebindTitle;
-
-  String get desktopPrivacyRebindBody;
-
-  String get desktopPrivacyRebindOn;
-
-  String get desktopPrivacyRebindOff;
-
-  String desktopPrivacyRebindCount(int count);
-
-  String get desktopPrivacyRebindAllowlist;
-
-  String get desktopPrivacyRebindDialogTitle;
-
-  String get desktopPrivacyRebindDialogBody;
-
-  String get desktopPrivacyRebindDialogSave;
-
-  String get desktopPrivacyRebindSaved;
-
-  String get desktopPrivacyHostsTitle;
-
-  String get desktopPrivacyHostsBody;
-
-  String get desktopPrivacyHostsOn;
-
-  String get desktopPrivacyHostsOff;
-
-  String get desktopPrivacyHostsSystem;
-
-  String desktopPrivacyHostsTtl(int seconds);
-
-  String get desktopPrivacyHostsSystemOn;
-
-  String get desktopPrivacyHostsSystemOff;
-
-  String get desktopHubPrivacySection;
-
-  String get desktopHubShareSection;
-
-  String get desktopSafeSearchTitle;
-
-  String get desktopSafeSearchBody;
-
-  String desktopSafeSearchEnabled(int count);
-
-  String get desktopSafeSearchOff;
-
-  String get desktopSafeSearchOn;
-
-  String get desktopSafeSearchOffMessage;
-
-  String get desktopSafeSearchServiceSaved;
-
-  String get desktopSafeSearchTtl;
-
-  String get desktopSafeSearchTtlSave;
-
-  String get desktopSafeSearchTtlSaved;
-
-  String get desktopSafeSearchTtlInvalid;
-
-  String get desktopSafeSearchFooter;
-
-  String get desktopSafeSearchTtlCardTitle;
-
-  String get desktopSafeSearchTtlCardBody;
-
-  String desktopSafeSearchTtlChip(int seconds);
-
-  String get desktopSafeSearchBing;
-
-  String get desktopSafeSearchDuckDuckGo;
-
-  String get desktopSafeSearchEcosia;
-
-  String get desktopSafeSearchGoogle;
-
-  String get desktopSafeSearchPixabay;
-
-  String get desktopSafeSearchYandex;
-
-  String get desktopSafeSearchYoutube;
-
-  String get desktopReputationTitle;
-
-  String get desktopReputationOn;
-
-  String get desktopReputationOff;
-
-  String get desktopReputationOnMessage;
-
-  String get desktopReputationOffMessage;
-
-  String get desktopReputationBody;
-
-  String get desktopReputationLookups;
-
-  String get desktopReputationBlocked;
-
-  String get desktopReputationHitRate;
-
-  String get desktopReputationFailures;
-
-  String get desktopReputationAnswer;
-
-  String get desktopReputationAnswerNullIp;
-
-  String get desktopReputationTimeout;
-
-  String get desktopReputationCacheSize;
-
-  String get desktopReputationCacheTtl;
-
-  String get desktopReputationParamsTitle;
-
-  String get desktopReputationParamsInvalid;
-
-  String get desktopReputationParamsSave;
-
-  String get desktopReputationParamsSaved;
-
-  String get desktopReputationFooter;
-
-  String get desktopParentalTitle;
-
-  String get desktopParentalBody;
-
-  String get desktopParentalWarning;
-
-  String get desktopParentalOn;
-
-  String get desktopParentalOff;
-
-  String get desktopHubEncrypted;
-
-  String get desktopHubEncryptedBody;
-
-  String get desktopEncryptedPageTitle;
-
-  String get desktopEncryptedRefresh;
-
-  String get desktopEncryptedLoadFailed;
-
-  String desktopEncryptedSaveFailed(String message);
-
-  String get desktopEncryptedListenersTitle;
-
-  String get desktopEncryptedListenersBody;
-
-  String get desktopEncryptedEnabled;
-
-  String get desktopEncryptedDisabled;
-
-  String get desktopEncryptedOn;
-
-  String get desktopEncryptedOff;
-
-  String get desktopEncryptedNoProtocol;
-
-  String get desktopEncryptedDot;
-
-  String desktopEncryptedDotBody(int port);
-
-  String get desktopEncryptedDoh;
-
-  String desktopEncryptedDohBody(int port, String path);
-
-  String desktopEncryptedListening(String address);
-
-  String get desktopEncryptedNotListening;
-
-  String get desktopEncryptedDotOn;
-
-  String get desktopEncryptedDotOff;
-
-  String get desktopEncryptedDohOn;
-
-  String get desktopEncryptedDohOff;
-
-  String get desktopEncryptedUrls;
-
-  String get desktopEncryptedNetworkTitle;
-
-  String get desktopEncryptedListenAddress;
-
-  String get desktopEncryptedListenHint;
-
-  String get desktopEncryptedServerName;
-
-  String get desktopEncryptedDotPort;
-
-  String get desktopEncryptedDohPort;
-
-  String get desktopEncryptedDohPath;
-
-  String get desktopEncryptedServerNameHint;
-
-  String get desktopEncryptedPortInvalid;
-
-  String get desktopEncryptedReset;
-
-  String get desktopEncryptedSaveNetwork;
-
-  String get desktopEncryptedNetworkSaved;
-
-  String get desktopEncryptedCertTitle;
-
-  String get desktopEncryptedCertBody;
-
-  String get desktopEncryptedCertSelfSigned;
-
-  String get desktopEncryptedCertLoaded;
-
-  String get desktopEncryptedCertMissing;
-
-  String get desktopEncryptedCertExpired;
-
-  String get desktopEncryptedCertExpiresSoon;
-
-  String get desktopEncryptedCertMissingBody;
-
-  String get desktopEncryptedCertSubject;
-
-  String get desktopEncryptedCertIssuer;
-
-  String get desktopEncryptedCertNotAfter;
-
-  String get desktopEncryptedCertDays;
-
-  String desktopEncryptedCertDaysValue(int days);
-
-  String get desktopEncryptedCertDns;
-
-  String get desktopEncryptedCertIps;
-
-  String desktopEncryptedCertFingerprint(String fingerprint);
-
-  String desktopEncryptedCertDir(String dir);
-
-  String get desktopEncryptedCertGenerate;
-
-  String get desktopEncryptedCertImport;
-
-  String get desktopEncryptedCertGenerated;
-
-  String get desktopEncryptedCertImported;
-
-  String get desktopEncryptedCertGenerateTitle;
-
-  String get desktopEncryptedCertGenerateBody;
-
-  String get desktopEncryptedCertKeyType;
-
-  String get desktopEncryptedCertCommonName;
-
-  String get desktopEncryptedCertDnsNames;
-
-  String get desktopEncryptedCertIpAddresses;
-
-  String get desktopEncryptedCertValidDays;
-
-  String get desktopEncryptedCertGenerateConfirm;
-
-  String get desktopEncryptedCertImportTitle;
-
-  String get desktopEncryptedCertImportBody;
-
-  String get desktopEncryptedCertPem;
-
-  String get desktopEncryptedKeyPem;
-
-  String get desktopEncryptedCertImportConfirm;
-
-  String get desktopEncryptedCertImportInvalid;
-
-  String get desktopEncryptedExtrasTitle;
-
-  String get desktopEncryptedExtrasBody;
-
-  String get desktopEncryptedDdrTitle;
-
-  String get desktopEncryptedDdrBody;
-
-  String get desktopEncryptedDdrSelfSignedWarning;
-
-  String get desktopEncryptedDdrConfirmTitle;
-
-  String get desktopEncryptedDdrConfirmBody;
-
-  String get desktopEncryptedDdrConfirm;
-
-  String get desktopEncryptedDdrOn;
-
-  String get desktopEncryptedDdrOff;
-
-  String get desktopEncryptedProxyTitle;
-
-  String get desktopEncryptedProxyBody;
-
-  String get desktopEncryptedProxyUnrestricted;
-
-  String get desktopEncryptedProxyOn;
-
-  String get desktopEncryptedProxyOff;
-
-  String get desktopEncryptedProxySources;
-
-  String get desktopEncryptedProxyHeader;
-
-  String get desktopEncryptedProxySave;
-
-  String get desktopEncryptedProxySaved;
-
-  String get desktopEncryptedMobileConfigTitle;
-
-  String get desktopEncryptedMobileConfigBody;
-
-  String get desktopEncryptedMobileConfigOpen;
-
-  String get desktopEncryptedOpenUrl;
-
-  String get desktopTrafficPageTitle;
-
-  String get desktopTrafficRefresh;
-
-  String get desktopTrafficLoadFailed;
-
-  String desktopTrafficSaveFailed(String message);
-
-  String get desktopTrafficClientsTitle;
-
-  String get desktopTrafficClientsBody;
-
-  String desktopTrafficClientCount(int count);
-
-  String get desktopTrafficClientsEmpty;
-
-  String get desktopTrafficClientUnnamed;
-
-  String desktopTrafficClientQueries(int count);
-
-  String get desktopTrafficClientNever;
-
-  String desktopTrafficClientLastSeen(String time);
-
-  String get desktopTrafficStateBlocked;
-
-  String get desktopTrafficStateAllowed;
-
-  String get desktopTrafficStateNotAllowed;
-
-  String get desktopTrafficStateOpen;
-
-  String get desktopTrafficAlias;
-
-  String get desktopTrafficAliasTitle;
-
-  String get desktopTrafficAliasField;
-
-  String get desktopTrafficAliasHint;
-
-  String get desktopTrafficAliasBody;
-
-  String get desktopTrafficAliasSave;
-
-  String desktopTrafficAliasSaved(String ip);
-
-  String desktopTrafficAliasCleared(String ip);
-
-  String get desktopTrafficAllowedAdd;
-
-  String get desktopTrafficAllowedRemove;
-
-  String desktopTrafficAllowedAdded(String ip);
-
-  String desktopTrafficAllowedRemoved(String ip);
-
-  String get desktopTrafficBlockedAdd;
-
-  String get desktopTrafficBlockedRemove;
-
-  String desktopTrafficBlockedAdded(String ip);
-
-  String desktopTrafficBlockedRemoved(String ip);
-
-  String get desktopTrafficAccessTitle;
-
-  String get desktopTrafficAccessBody;
-
-  String get desktopTrafficAccessOpen;
-
-  String get desktopTrafficAccessAllowOnly;
-
-  String get desktopTrafficAccessAllowed;
-
-  String get desktopTrafficAccessAllowedHint;
-
-  String get desktopTrafficAccessAllowedBody;
-
-  String get desktopTrafficAccessBlocked;
-
-  String get desktopTrafficAccessBlockedHint;
-
-  String get desktopTrafficAccessBlockedBody;
-
-  String get desktopTrafficAccessSave;
-
-  String get desktopTrafficAccessReset;
-
-  String get desktopTrafficAccessSaved;
-
-  String get desktopTrafficRateLimitTitle;
-
-  String get desktopTrafficRateLimitBody;
-
-  String get desktopTrafficRateLimitOn;
-
-  String get desktopTrafficRateLimitOff;
-
-  String get desktopTrafficRateLimitSavedOn;
-
-  String get desktopTrafficRateLimitSavedOff;
-
-  String get desktopTrafficRate;
-
-  String get desktopTrafficBurst;
-
-  String get desktopTrafficIpv4Prefix;
-
-  String get desktopTrafficIpv6Prefix;
-
-  String get desktopTrafficPrefixBody;
-
-  String get desktopTrafficExempt;
-
-  String get desktopTrafficExemptBody;
-
-  String get desktopTrafficRateLimitSave;
-
-  String get desktopTrafficRateInvalid;
-
-  String get desktopGroupsPageTitle;
-
-  String get desktopGroupsRefresh;
-
-  String get desktopGroupsLoadFailed;
-
-  String get desktopGroupsTitle;
-
-  String get desktopGroupsBody;
-
-  String desktopGroupsCount(int enabled, int total);
-
-  String get desktopGroupsOn;
-
-  String get desktopGroupsOff;
-
-  String get desktopGroupsSave;
-
-  String get desktopGroupsSaved;
-
-  String get desktopGroupsMaster;
-
-  String get desktopGroupsMasterBody;
-
-  String get desktopGroupsAdd;
-
-  String get desktopGroupsEmpty;
-
-  String get desktopGroupsFooter;
-
-  String get desktopGroupsOpen;
-
-  String get desktopGroupsName;
-
-  String get desktopGroupsEnabled;
-
-  String get desktopGroupsDelete;
-
-  String get desktopGroupsDeleteTitle;
-
-  String get desktopGroupsDeleteBody;
-
-  String get desktopGroupsMembers;
-
-  String get desktopGroupsMembersHint;
-
-  String get desktopGroupsMembersBody;
-
-  String get desktopGroupsBlockMode;
-
-  String get desktopGroupsModeInherit;
-
-  String get desktopGroupsModeNullIp;
-
-  String get desktopGroupsModeNxdomain;
-
-  String get desktopGroupsModeRefused;
-
-  String get desktopGroupsAllowlistOnly;
-
-  String get desktopGroupsAllowlistOnlyBody;
-
-  String get desktopGroupsSchedule;
-
-  String get desktopGroupsScheduleBody;
-
-  String get desktopGroupsRuleLists;
-
-  String get desktopGroupsInheritAll;
-
-  String get desktopGroupsNoRuleLists;
-
-  String get desktopGroupsRuleListsInherited;
-
-  String get desktopGroupsRuleListsSelected;
-
-  String get desktopGroupsUpstreams;
-
-  String get desktopGroupsInheritChain;
-
-  String get desktopGroupsNoUpstreams;
-
-  String get desktopGroupsUpstreamsInherited;
-
-  String get desktopGroupsUpstreamsSelected;
-
-  String desktopGroupsNewName(int index);
-
-  String get desktopGroupsListEnabled;
-
-  String get desktopGroupsListDisabled;
-
-  String get desktopToolsPortTitle;
-
-  String get desktopToolsPortBody;
-
-  String get desktopToolsPortIdle;
-
-  String get desktopToolsPortOk;
-
-  String get desktopToolsPortConflict;
-
-  String get desktopToolsCheck;
-
-  String get desktopToolsFix;
-
-  String get desktopToolsFixTitle;
-
-  String get desktopToolsFixBody;
-
-  String get desktopToolsFixed;
-
-  String desktopToolsFailed(String message);
-
-  String get desktopToolsSystemListener;
-
-  String get desktopToolsSelfListener;
-
-  String desktopToolsConflictOwner(String process, int pid, String address);
-
-  String desktopToolsConflictService(String service);
-
-  String get desktopToolsPortFooter;
-
-  String get desktopToolsRulePageTitle;
-
-  String get desktopHubDiagnoseSection;
-
-  String get desktopToolsRuleEntryBody;
-
-  String get desktopHubQueryLog;
-
-  String get desktopHubQueryLogBody;
-
-  String get desktopQueryLogPageTitle;
-
-  String get desktopToolsRuleInputTitle;
-
-  String get desktopToolsRuleInputBody;
-
-  String get desktopToolsRuleDomain;
-
-  String get desktopToolsRuleDomainHint;
-
-  String get desktopToolsRuleQtype;
-
-  String desktopToolsRuleQtypeOption(String type);
-
-  String get desktopToolsRuleExamples;
-
-  String get desktopToolsRuleRun;
-
-  String get desktopToolsRuleRunning;
-
-  String get desktopToolsRuleVerdictTitle;
-
-  String get desktopToolsRuleVerdictBody;
-
-  String get desktopToolsRuleIdle;
-
-  String get desktopToolsRuleBlocked;
-
-  String desktopToolsRuleRewritten(String code);
-
-  String get desktopToolsRuleAllowed;
-
-  String get desktopToolsRulePassed;
-
-  String get desktopToolsRuleMatched;
-
-  String get desktopToolsRuleNoMatch;
-
-  String get desktopToolsRuleList;
-
-  String get desktopToolsRuleNoList;
-
-  String get desktopToolsRuleReason;
-
-  String get desktopToolsRuleNoReason;
-
-  String desktopToolsRuleRewrite(String code);
-
-  String get desktopToolsRuleRewriteEmpty;
-
-  String get desktopToolsRuleFooter;
-
-  String desktopToolsRuleFailed(String message);
-
-  String get desktopHubAppSection;
-
-  String get desktopAboutProjectSection;
-
-  String get desktopAboutDisclaimerSection;
-
-  String get desktopSettingsAppearance;
-
-  String get desktopSettingsAppearanceEntryBody;
-
-  String get desktopSettingsAppearanceTitle;
-
-  String get desktopSettingsAppearanceBody;
-
-  String get desktopSettingsPalette;
-
-  String get desktopSettingsPaletteBody;
-
-  String get desktopSettingsMode;
-
-  String get desktopSettingsModeBody;
-
-  String get desktopSettingsAppearanceFooter;
-
-  String get desktopSettingsPreview;
-
-  String get desktopSettingsPreviewBody;
-
-  String desktopSettingsSystemResolved(String mode);
-
-  String get desktopServicePageTitle;
-
-  String get desktopServiceEntryBody;
-
-  String get desktopServiceConnectionTitle;
-
-  String get desktopServiceConnectionBody;
-
-  String get desktopServiceConnectionFooter;
-
-  String get desktopServiceHost;
-
-  String get desktopServicePort;
-
-  String get desktopServiceToken;
-
-  String get desktopServiceTokenHint;
-
-  String get desktopServiceTest;
-
-  String get desktopServiceSave;
-
-  String get desktopServiceSaved;
-
-  String get desktopServiceReachable;
-
-  String get desktopServiceUnreachable;
-
-  String get desktopServiceConfigured;
-
-  String get desktopServiceAddressInvalid;
-
-  String get desktopServiceCoreTitle;
-
-  String get desktopServiceCoreBody;
-
-  String get desktopServiceCoreFooter;
-
-  String get desktopServiceState;
-
-  String get desktopServiceAutoStartOn;
-
-  String get desktopServiceAutoStartOff;
-
-  String get desktopServiceAutoStartUnknown;
-
-  String get desktopServiceRunning;
-
-  String get desktopServiceStopped;
-
-  String get desktopServiceUnknown;
-
-  String get desktopServiceRefresh;
-
-  String get desktopLanWebPageTitle;
-
-  String get desktopLanWebEntryBody;
-
-  String get desktopHubClientAccess;
-
-  String get desktopHubClientAccessBody;
-
-  String get desktopClientAccessPageTitle;
-
-  String get desktopLanWebRefresh;
-
-  String get desktopLanWebLoadFailed;
-
-  String get desktopLanWebAccessTitle;
-
-  String get desktopLanWebAccessBody;
-
-  String get desktopLanWebTitle;
-
-  String get desktopLanWebOpen;
-
-  String get desktopLanWebLocal;
-
-  String get desktopLanWebEnabledBody;
-
-  String get desktopLanWebDisabledBody;
-
-  String get desktopLanWebOn;
-
-  String get desktopLanWebOff;
-
-  String desktopLanWebFailed(String message);
-
-  String get desktopLanWebUrls;
-
-  String get desktopLanWebNoUrls;
-
-  String get desktopLanWebPort;
-
-  String get desktopLanWebSavePort;
-
-  String get desktopLanWebPortInvalid;
-
-  String get desktopLanWebFirewall;
-
-  String get desktopLanWebFirewallBody;
-
-  String get desktopLanWebFirewallOn;
-
-  String get desktopLanWebFirewallOff;
-
-  String get desktopLanWebNoFirewall;
-
-  String get desktopLanWebCredentials;
-
-  String desktopLanWebUser(String user);
-
-  String get desktopLanWebNoUser;
-
-  String get desktopLanWebProtected;
-
-  String get desktopLanWebUnprotected;
-
-  String get desktopLanWebChangePassword;
-
-  String get desktopLanWebSetPassword;
-
-  String get desktopLanWebPasswordSave;
-
-  String get desktopLanWebPasswordSaved;
-
-  String desktopLanWebChangeBody(String user);
-
-  String desktopLanWebSetupBody(String user);
-
-  String get desktopLanWebOldPassword;
-
-  String get desktopLanWebNewPassword;
-
-  String get desktopLanWebConfirmPassword;
-
-  String get desktopLanWebPasswordRequired;
-
-  String get desktopLanWebPasswordMismatch;
-
-  String get desktopLanWebOldRequired;
-
-  String get desktopLanWebFooter;
-
-  String get desktopHubAdapters;
-
-  String get desktopHubAdaptersBody;
-
-  String get desktopHubLanDns;
-
-  String get desktopHubLanDnsBody;
-
-  String get desktopAdaptersPageTitle;
-
-  String get desktopAdaptersRefresh;
-
-  String get desktopAdaptersLoadFailed;
-
-  String get desktopAdaptersSectionTitle;
-
-  String get desktopAdaptersSectionBody;
-
-  String get desktopAdaptersTakeoverAll;
-
-  String get desktopAdaptersRestoreAll;
-
-  String get desktopAdaptersProtecting;
-
-  String get desktopAdaptersInactive;
-
-  String get desktopAdaptersConnected;
-
-  String get desktopAdaptersDisconnected;
-
-  String get desktopAdaptersGateway;
-
-  String get desktopAdaptersNoGateway;
-
-  String get desktopAdaptersIpMode;
-
-  String get desktopAdaptersDhcp;
-
-  String get desktopAdaptersStatic;
-
-  String get desktopAdaptersOriginalDns;
-
-  String get desktopAdaptersAutoDns;
-
-  String get desktopAdaptersEffectiveDns;
-
-  String get desktopAdaptersEffectiveLoopback;
-
-  String get desktopAdaptersEffectiveSystem;
-
-  String get desktopAdaptersEmpty;
-
-  String get desktopAdaptersEmptyBody;
-
-  String get desktopAdaptersAllOn;
-
-  String get desktopAdaptersAllOff;
-
-  String desktopAdaptersAdapterToggled(String name, String state);
-
-  String get desktopAdaptersAdapterOn;
-
-  String get desktopAdaptersAdapterOff;
-
-  String desktopAdaptersActionFailed(String message);
-
-  String get desktopLanDnsPageTitle;
-
-  String get desktopLanDnsRefresh;
-
-  String get desktopLanDnsLoadFailed;
-
-  String get desktopLanDnsServiceTitle;
-
-  String get desktopLanDnsServiceBody;
-
-  String get desktopLanDnsOnChip;
-
-  String get desktopLanDnsOffChip;
-
-  String get desktopLanDnsOn;
-
-  String get desktopLanDnsOff;
-
-  String get desktopLanDnsAddressesCardTitle;
-
-  String get desktopLanDnsAddressesCardBody;
-
-  String get desktopLanDnsListenTitle;
-
-  String get desktopLanDnsNoListen;
-
-  String get desktopLanDnsAddressesTitle;
-
-  String get desktopLanDnsNoAddresses;
-
-  String get desktopLanDnsIpv4;
-
-  String get desktopLanDnsIpv6;
-
-  String desktopLanDnsRouterHint(String address);
-
-  String get desktopLanDnsFirewallTitle;
-
-  String get desktopLanDnsFirewallAllowed;
-
-  String get desktopLanDnsFirewallBlocked;
-
-  String get desktopLanDnsFirewallNone;
-
-  String get desktopLanDnsFirewallBody;
-
-  String get desktopLanDnsFirewallNoneBody;
-
-  String get desktopLanDnsFirewallStatusOn;
-
-  String get desktopLanDnsFirewallStatusOff;
-
-  String get desktopLanDnsFirewallAllow;
-
-  String get desktopLanDnsFirewallRemove;
-
-  String get desktopLanDnsFirewallOn;
-
-  String get desktopLanDnsFirewallOff;
-
-  String get desktopLanDnsRouterTitle;
-
-  String get desktopLanDnsRouterBadge;
-
-  String get desktopLanDnsRouterBody;
-
-  String get desktopLanDnsRouterFoot;
-
-  String get desktopLanDnsDeviceTitle;
-
-  String get desktopLanDnsDeviceBadge;
-
-  String get desktopLanDnsDeviceBody;
-
-  String get desktopLanDnsDeviceFoot;
-
-  String get desktopLanDnsPlaceholder;
-
-  String desktopLanDnsFailed(String message);
-
-  String get desktopLoginTitle;
-
-  String get desktopLoginSubtitle;
-
-  String get desktopLoginSetupSubtitle;
-
-  String get desktopLoginUserLabel;
-
-  String get desktopLoginPasswordLabel;
-
-  String get desktopLoginSetupPasswordLabel;
-
-  String get desktopLoginConfirmLabel;
-
-  String get desktopLoginSubmit;
-
-  String get desktopLoginSetupSubmit;
-
-  String get desktopLoginSecurity;
-
-  String get desktopLoginFooter;
-
-  String get desktopLoginChecking;
-
-  String get desktopLoginShowPassword;
-
-  String get desktopLoginHidePassword;
-
-  String get desktopLoginUserRequired;
-
-  String get desktopLoginPasswordRequired;
-
-  String get desktopLoginPasswordTooShort;
-
-  String get desktopLoginPasswordMismatch;
-
-  String get desktopLoginSuccess;
-
-  String get desktopLoginSetupSuccess;
-
-  String desktopLoginLockout(int seconds);
-
-  String get desktopLoginUnreachable;
-
-  String get desktopLoginRetry;
-
-  String get desktopLoginThemeCycle;
-
-  String get desktopLoginPaletteCycle;
-
-  String get desktopLoginBackground;
-
-  String get desktopLoginBackgroundEnabled;
-
-  String get desktopLoginBackgroundTitle;
-
-  String get desktopLoginBackgroundLocal;
-
-  String get desktopLoginBackgroundUrl;
-
-  String get desktopLoginBackgroundChoose;
-
-  String get desktopLoginBackgroundNoFile;
-
-  String get desktopLoginBackgroundUrlLabel;
-
-  String get desktopLoginBackgroundUrlInvalid;
-
-  String get desktopLoginBackgroundOpacity;
-
-  String get desktopLoginBackgroundBlur;
-
-  String get desktopLoginBackgroundSave;
-
-  String get desktopLoginBackgroundReset;
-
-  String get desktopLoginBackgroundSaved;
-
-  String get desktopLoginBackgroundResetDone;
-
-  String get desktopLoginBackgroundNeedImage;
-
-  String get desktopLoginBackgroundPassword;
-
-  String get desktopLoginBackgroundPasswordBody;
-
-  String desktopLoginBackgroundFailed(String message);
-
-  String get desktopSettingsSessionSection;
-
-  String get desktopSettingsLogout;
-
-  String get desktopSettingsLogoutBody;
-
-  String get desktopSettingsLogoutConfirm;
-
-  String get desktopSettingsLogoutDone;
-
-  String get desktopToolsEmergencyTitle;
-
-  String get desktopToolsEmergencyBody;
-
-  String get desktopToolsEmergencyAction;
-
-  String get desktopToolsEmergencyBusy;
-
-  String get desktopToolsEmergencyConfirmTitle;
-
-  String get desktopToolsEmergencyConfirmBody;
-
-  String get desktopToolsEmergencyDone;
-
-  String desktopToolsEmergencyFailed(String message);
-
-  String get desktopToolsEmergencyFooter;
-
-  String get desktopLanWebQrCaption;
-
-  String get desktopLoginBackgroundPreparing;
-
-  String get desktopLoginChangePassword;
-
-  String get desktopLoginChangeSubtitle;
-
-  String get desktopLoginOldPasswordLabel;
-
-  String get desktopLoginNewPasswordLabel;
-
-  String get desktopLoginChangeSubmit;
-
-  String get desktopLoginChangeSuccess;
-
-  String get desktopLoginBackToSignIn;
-
-  String get desktopLoginOldPasswordRequired;
-
-  String get desktopTrayTooltip;
-
-  String get desktopTrayOpenWindow;
-
-  String get desktopTrayHideWindow;
-
-  String get desktopTrayAutoStart;
-
-  String get desktopTrayServiceRunning;
-
-  String get desktopTrayServiceStopped;
-
-  String get desktopTrayServiceUnknown;
-
-  String get desktopTrayServiceStart;
-
-  String get desktopTrayServiceStop;
-
-  String get desktopTrayServiceRestart;
-
-  String get desktopTrayQuit;
-
-  String get desktopTrayBalloonServiceTitle;
-
-  String get desktopTrayBalloonServiceStarted;
-
-  String get desktopTrayBalloonServiceStopped;
-
-  String get desktopTrayBalloonServiceRestarted;
-
-  String get desktopTrayBalloonAutoStartTitle;
-
-  String get desktopTrayBalloonAutoStartOn;
-
-  String get desktopTrayBalloonAutoStartOff;
-
-  String get desktopTrayBalloonFailedPrefix;
-
-  String get desktopTrayBalloonMinimized;
-
   String get deepLinkImportInvalid;
 
   String get troubleshootLogsTitle;
@@ -8321,8 +5487,6 @@ abstract class AppL10n {
 
   String get troubleshootEventsOpen;
 
-  String get troubleshootEventsOpenBody;
-
   String get troubleshootDetailMode;
 
   String get troubleshootDetailModeNote;
@@ -8330,8 +5494,6 @@ abstract class AppL10n {
   String get automationTitle;
 
   String get automationSubtitle;
-
-  String get automationHubSection;
 
   String get automationIntro;
 
@@ -8373,8 +5535,6 @@ abstract class AppL10n {
 
   String get automationSave;
 
-  String get automationEditIntro;
-
   String get automationRuleName;
 
   String get automationPriority;
@@ -8411,10 +5571,6 @@ abstract class AppL10n {
 
   String get profilesAdd;
 
-  String get profilesIntro;
-
-  String get profilesEmpty;
-
   String get profilesListSection;
 
   String get profilesApply;
@@ -8437,25 +5593,17 @@ abstract class AppL10n {
 
   String get timetableAdd;
 
-  String get timetableIntro;
-
-  String get timetableEmpty;
-
   String get netProfileTitle;
 
   String get netProfileSubtitle;
 
   String get netProfileAdd;
 
-  String get netProfileIntro;
-
   String get netProfileCurrentNet;
 
   String get netProfileResolved;
 
   String get netProfileNone;
-
-  String get netProfileEmpty;
 
   String get netProfileList;
 
@@ -8497,10 +5645,6 @@ abstract class AppL10n {
 
   String get dnsLeakReasonInsufficient;
 
-  String get dnsLeakVpnActive;
-
-  String get dnsLeakVpnInactive;
-
   String get captiveSection;
 
   String get captiveRun;
@@ -8519,11 +5663,7 @@ abstract class AppL10n {
 
   String get appInsightsIntro;
 
-  String get appInsightsEmpty;
-
   String get appInsightsReports;
-
-  String get appInsightsMap;
 
   String appInsightsStat(int connections, int blocked, String bytes);
 
@@ -8555,8 +5695,6 @@ abstract class AppL10n {
 
   String get connectionRateLimitCardDescription;
 
-  String get connectionRateLimitIntro;
-
   String get connectionRateLimitSectionSwitch;
 
   String get connectionRateLimitSectionParameters;
@@ -8575,15 +5713,9 @@ abstract class AppL10n {
 
   String get ruleVersionsTitle;
 
-  String get ruleVersionsIntro;
-
   String get ruleVersionsPick;
 
   String get ruleVersionsHistory;
-
-  String get ruleVersionsEmpty;
-
-  String get ruleVersionsNone;
 
   String get ruleVersionsUnavailable;
 
@@ -8677,8 +5809,6 @@ abstract class AppL10n {
 
   String get serverAverageLatencyHint;
 
-  String get serverFilter;
-
   String get serverFilterOn;
 
   String get serverFilterOff;
@@ -8701,11 +5831,7 @@ abstract class AppL10n {
 
   String get serverHubSystem;
 
-  String serverHubUpstreamSummary(int count, String mode);
-
   String serverHubFilterSummary(String state, int count);
-
-  String serverHubCacheSummary(int count, String mode);
 
   String serverHubLogSummary(int days, String file);
 
@@ -8719,23 +5845,13 @@ abstract class AppL10n {
 
   String get serverUpstreamTitle;
 
-  String get serverUpstreamHubHint;
-
   String get serverFilterTitle;
-
-  String get serverFilterHubHint;
 
   String get serverCacheTitle;
 
-  String get serverCacheHubHint;
-
   String get serverQueryLogTitle;
 
-  String get serverQueryLogHubHint;
-
   String get serverSettingsTitle;
-
-  String get serverSettingsHubHint;
 
   String get serverAppearance;
 
@@ -8766,10 +5882,6 @@ abstract class AppL10n {
   String get serverLogError;
 
   String get serverLogSearchDomain;
-
-  String get serverLogSearchClient;
-
-  String get serverLogSearch;
 
   String get serverLogEmpty;
 
@@ -8843,11 +5955,7 @@ abstract class AppL10n {
 
   String get serverUpstreamModeNote;
 
-  String get serverUpstreamBootstrap;
-
   String get serverBootstrapSummary;
-
-  String get serverBootstrapServers;
 
   String serverBootstrapServerCount(int count);
 
@@ -8943,8 +6051,6 @@ abstract class AppL10n {
 
   String get serverSubscriptionRequired;
 
-  String get serverCheckTitle;
-
   String get serverCheckDomain;
 
   String get serverCheckDomainRequired;
@@ -8965,10 +6071,6 @@ abstract class AppL10n {
 
   String get serverCacheEnabledBody;
 
-  String get serverCacheState;
-
-  String get serverCacheCapacity;
-
   String get serverCacheEntries;
 
   String get serverCacheMode;
@@ -8976,8 +6078,6 @@ abstract class AppL10n {
   String get serverCacheLimit;
 
   String get serverCacheFixed;
-
-  String get serverCacheTtl;
 
   String get serverCacheMaxTtl;
 
@@ -9005,15 +6105,7 @@ abstract class AppL10n {
 
   String get serverCacheAdvanced;
 
-  String get serverCacheBehavior;
-
   String get serverCacheAdvancedSummary;
-
-  String get serverCacheAdvancedTtl;
-
-  String get serverCacheFallback;
-
-  String get serverCachePerformance;
 
   String get serverQueryLogEnabled;
 
@@ -9042,12 +6134,6 @@ abstract class AppL10n {
   String get serverQueryLogSaved;
 
   String get serverNumberInvalid;
-
-  String get serverSettingsRuntime;
-
-  String get serverRunning;
-
-  String get serverSettingsSwitchModeBody;
 
   String get serverSettingsListen;
 

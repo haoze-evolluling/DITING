@@ -18,17 +18,10 @@ class AppL10nEn extends AppL10n {
       'Enter a domain to see why it is blocked or allowed';
 
   @override
-  String get ruleTestIntro =>
-      'Enter a domain to see the verdict, the matched rule and any rewrite. The logic is exactly the engine\'s.';
-
-  @override
   String get ruleTestDomainLabel => 'Domain';
 
   @override
   String get ruleTestDomainHint => 'e.g. ads.example.com';
-
-  @override
-  String get ruleTestQtype => 'Query type';
 
   @override
   String get ruleTestRun => 'Run test';
@@ -185,11 +178,6 @@ class AppL10nEn extends AppL10n {
       'Aggregated from local dns_log by blocked results.';
 
   @override
-  String hitRankingTotal(int count) {
-    return '$count blocked in total';
-  }
-
-  @override
   String get healthTitle => 'Protection health';
 
   @override
@@ -293,17 +281,10 @@ class AppL10nEn extends AppL10n {
   String get flowLiveTab => 'Live connections';
 
   @override
-  String get flowEntrySubtitle => 'See live connections and remotes by app';
-
-  @override
   String get flowAppsSection => 'Apps';
 
   @override
   String get flowRefresh => 'Refresh';
-
-  @override
-  String get flowEmptyBody =>
-      'While protection runs with traffic, live connections show here grouped by app → domain → remote.';
 
   @override
   String get flowStatusActive => 'Active';
@@ -573,12 +554,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get providerSheetRaceTitle => 'Choose racing resolvers';
-
-  @override
-  String get providerSheetSingleOptions => 'Available resolvers';
-
-  @override
-  String get providerSheetRaceMinimum => 'Pick at least 2';
 
   @override
   String get providerSheetManage => 'Manage resolvers...';
@@ -935,12 +910,6 @@ class AppL10nEn extends AppL10n {
   String get statusCoreState => 'Core state';
 
   @override
-  String get statusListenPort => 'Listening port';
-
-  @override
-  String get statusNotListening => 'Not listening';
-
-  @override
   String get statusProviderFooter =>
       'Latency is the resolver\'s last measured value, not this device\'s round trip to the target.';
 
@@ -1166,10 +1135,6 @@ class AppL10nEn extends AppL10n {
   String get siteLatencyMeasuredSites => 'Sites tested';
 
   @override
-  String get siteLatencyDetailFooter =>
-      'Each site gets three ICMP echo requests and the average is used; when system ping is unavailable the TCP handshake is used instead, marked with *, and reads slightly higher than the real round trip. This app\'s own traffic bypasses the VPN, so the physical network is measured.';
-
-  @override
   String get intranetDetailTitle => 'LAN IP details';
 
   @override
@@ -1179,14 +1144,7 @@ class AppL10nEn extends AppL10n {
   String get intranetLocalAddress => 'Local LAN address';
 
   @override
-  String get intranetUsableAsDns => 'Usable as DNS';
-
-  @override
   String get intranetLocalOnly => 'Local only';
-
-  @override
-  String get intranetSameSubnetHint =>
-      'Point devices on the same subnet at this address to use local resolution.';
 
   @override
   String get intranetNetworkOverview => 'Network overview';
@@ -1226,13 +1184,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get intranetPrivateDns => 'Private DNS';
-
-  @override
-  String get intranetPortFooter =>
-      'The port is bound only when the service starts, so restart it after changing the port; point devices on the same subnet at the address above to use local resolution.';
-
-  @override
-  String get intranetCopyAddressWithPort => 'Copy address (with port)';
 
   @override
   String get speedDetailTitle => 'Speed details';
@@ -1290,29 +1241,8 @@ class AppL10nEn extends AppL10n {
   String get commonNoData => 'No data';
 
   @override
-  String get commonPendingTitle => 'Not connected yet';
-
-  @override
-  String get commonPendingBody =>
-      'This page is not connected to the local service yet; live data appears once it is.';
-
-  @override
-  String get homePowerPending =>
-      'Power control is not connected to the local service yet';
-
-  @override
   String intranetModeNotListening(String mode) {
     return '$mode does not listen on the LAN, so other devices cannot use this as their DNS';
-  }
-
-  @override
-  String intranetListeningOn(int port) {
-    return 'Listening on 0.0.0.0:$port; point other devices\' DNS at the address above';
-  }
-
-  @override
-  String intranetServiceStopped(int port) {
-    return 'Service not started: port $port is bound once it starts';
   }
 
   @override
@@ -1771,11 +1701,6 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String providerRaceSummary(String count, String names) {
-    return '$count selected: $names';
-  }
-
-  @override
   String get rulesDbUnavailable =>
       'The rule database is not readable in this environment';
 
@@ -1887,13 +1812,7 @@ class AppL10nEn extends AppL10n {
   String get aiPresetAggregator => 'Aggregators and local deployments';
 
   @override
-  String get aiProviderConfigured => 'Configured providers';
-
-  @override
   String get aiProviderExampleName => 'Example provider (edit me)';
-
-  @override
-  String get logSubscriptionDeleted => 'Deleted subscription';
 
   @override
   String get logRaceFastest => 'Fastest response';
@@ -1957,10 +1876,6 @@ class AppL10nEn extends AppL10n {
       'No image picker is available on this device';
 
   @override
-  String get recognitionInvalidConfig =>
-      'The cloud roster configuration is invalid';
-
-  @override
   String get recognitionGithubInterrupted =>
       'The connection to GitHub was interrupted; try again later';
 
@@ -1971,9 +1886,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get recognitionNetworkUnavailable =>
       'No network, so the roster cannot be updated';
-
-  @override
-  String get recognitionUpdateFailed => 'The roster update failed';
 
   @override
   String get subscriptionNotFound =>
@@ -2046,9 +1958,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get updateInstallerUnavailable =>
       'The system installer cannot be opened; try again later';
-
-  @override
-  String get workModeNoDataPlane => 'This work mode has no data plane yet';
 
   @override
   String get workModeNoVpnConsent => 'VPN consent was not granted';
@@ -2154,11 +2063,6 @@ class AppL10nEn extends AppL10n {
   @override
   String recognitionUpdateFailedDetail(String detail) {
     return 'The roster update failed: $detail';
-  }
-
-  @override
-  String subscriptionAlreadyExists(String kind, String what) {
-    return '$what already exists as $kind';
   }
 
   @override
@@ -2306,16 +2210,6 @@ class AppL10nEn extends AppL10n {
   String get subscriptionKindHosts => 'Hosts rules';
 
   @override
-  String logRowDirect(String protocol) {
-    return '$protocol direct';
-  }
-
-  @override
-  String logRowDirectWithPackage(String package, String protocol) {
-    return '$protocol direct · $package';
-  }
-
-  @override
   String get logRowCacheHit => 'cache hit';
 
   @override
@@ -2357,27 +2251,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get cachePresetRecommended => 'Recommended';
-
-  @override
-  String get cacheDisabledSummary => 'Off · every lookup goes upstream';
-
-  @override
-  String get upstreamNameRequired => 'Enter a name';
-
-  @override
-  String get upstreamAddressRequired => 'Enter an address';
-
-  @override
-  String get upstreamDohNeedsHttps => 'A DoH address must start with https://';
-
-  @override
-  String get upstreamDohInvalidUrl => 'The DoH address is not a valid URL';
-
-  @override
-  String get upstreamPortRange => 'The port must be between 1 and 65535';
-
-  @override
-  String get upstreamIpv6Invalid => 'The IPv6 address is not valid';
 
   @override
   String get upstreamPresetAliyun => 'Aliyun';
@@ -2562,14 +2435,8 @@ class AppL10nEn extends AppL10n {
   String get hubCategoryData => 'Data and maintenance';
 
   @override
-  String get hubLogs => 'Logs';
-
-  @override
   String get hubLogsDescription =>
       'Live resolution statistics, request details and log export';
-
-  @override
-  String get hubBackup => 'Data and maintenance';
 
   @override
   String get hubBackupDescription =>
@@ -2590,26 +2457,8 @@ class AppL10nEn extends AppL10n {
       'Export crash logs and capture runtime logs to send to the developer';
 
   @override
-  String get hubCategoryNetworkTools => 'Network tools and privacy';
-
-  @override
-  String get hubCategoryAutomation => 'Automation and scenes';
-
-  @override
-  String get hubCategoryIntegration => 'Automation and resources';
-
-  @override
-  String get hubCategorySubscription => 'Subscriptions and updates';
-
-  @override
-  String get hubDnsLeak => 'DNS leak';
-
-  @override
   String get hubAutoUpdateDescription =>
       'Update rule subscriptions on a fixed interval or at a daily time';
-
-  @override
-  String get hubCategoryAbout => 'About DITING';
 
   @override
   String get hubAbout => 'About';
@@ -2624,13 +2473,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get hubSponsorDescription =>
       'Support the ongoing maintenance and development of DITING';
-
-  @override
-  String get hubSponsors => 'Sponsors';
-
-  @override
-  String get hubSponsorsDescription =>
-      'Thanks to everyone who supports the project';
 
   @override
   String get fontSizeSmall => 'Small';
@@ -2687,9 +2529,6 @@ class AppL10nEn extends AppL10n {
   String get appearanceMotionSection => 'Motion';
 
   @override
-  String get appearanceInterfaceSection => 'Interface';
-
-  @override
   String get appearanceHomeOpacitySubtitle =>
       'Opacity of interactive components and text';
 
@@ -2699,9 +2538,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get appearancePureBlackOff => 'Available once dark mode is on';
-
-  @override
-  String get appearanceHomeSection => 'Home content';
 
   @override
   String get appearanceHomeSentenceSubtitle =>
@@ -2736,14 +2572,6 @@ class AppL10nEn extends AppL10n {
       'Animation and glass only apply to the floating bar; the docked bar stays solid.';
 
   @override
-  String get appearancePaletteGoldLegacy =>
-      'Stored value keeps the legacy indigo';
-
-  @override
-  String get appearancePaletteFooter =>
-      'The palette only supplies a seed; the screen shows the full HCT-derived role set. The legacy app had no custom picker, so there is none here.';
-
-  @override
   String get launcherIconTitle => 'App icon';
 
   @override
@@ -2774,11 +2602,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get launcherIconApplyFailed =>
       'Couldn\'t switch the launcher icon. Try again later';
-
-  @override
-  String fontFamilySizeSubtitle(String percent) {
-    return '$percent% now';
-  }
 
   @override
   String get fontFamilySystemDefault =>
@@ -3040,10 +2863,6 @@ class AppL10nEn extends AppL10n {
   String get dayNightTitle => 'Day/night mode';
 
   @override
-  String get dayNightFollowSystemDescription =>
-      'Switches together with the system dark mode';
-
-  @override
   String get dayNightFooter =>
       'Pure black only applies in dark mode; turn it on in Feedback & motion.';
 
@@ -3085,24 +2904,11 @@ class AppL10nEn extends AppL10n {
   String get bottomBarCustomTitle => 'Bottom bar';
 
   @override
-  String bottomBarItemsHeader(String count, String max) {
-    return 'Bottom bar items ($count/$max)';
-  }
-
-  @override
-  String bottomBarDragHint(String max) {
-    return 'Drag by the handle on the right or long-press a row to reorder; the order is the bottom bar order from left to right. Keep 2 to $max items: the floating bar splits its width evenly and more would squeeze the icons.';
-  }
-
-  @override
   String get bottomBarDisabled => 'Not in use';
 
   @override
   String get bottomBarNewItemFooter =>
       'Newly enabled items go to the far right.';
-
-  @override
-  String get bottomBarFeel => 'Feel';
 
   @override
   String get homeSentenceTitle => 'Home sentences';
@@ -3185,10 +2991,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get fontSizeRestoreDefaults => 'Restore defaults';
-
-  @override
-  String get fontFamilyHapticSubtitle =>
-      'A short vibration when switching tabs';
 
   @override
   String get ruleKindBlockTitle => 'Block list';
@@ -3333,9 +3135,6 @@ class AppL10nEn extends AppL10n {
   String get ruleAll => 'All';
 
   @override
-  String get formIssuesTitle => 'A few things need fixing';
-
-  @override
   String get formSave => 'Save';
 
   @override
@@ -3346,12 +3145,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get formDelete => 'Delete';
-
-  @override
-  String get formHelp => 'Help';
-
-  @override
-  String get formGotIt => 'Got it';
 
   @override
   String get rulePatternHint => 'Rule text, e.g. ||ads.example.com^';
@@ -3840,11 +3633,6 @@ class AppL10nEn extends AppL10n {
   String get trafficRankingTitle => 'App traffic ranking';
 
   @override
-  String trafficShareFooter(String range, String window) {
-    return 'Shares use the total bytes (download + upload) for $window; $range. Tap a row to see that app\'s breakdown.';
-  }
-
-  @override
   String get trafficClearTitle => 'Clear all traffic records?';
 
   @override
@@ -3869,9 +3657,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get trafficHideSystemApps => 'Hide system apps';
-
-  @override
-  String get trafficSearchHint => 'Search by app name or package';
 
   @override
   String get trafficAllHistory => 'All history';
@@ -3947,24 +3732,11 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get trafficWhyDaemonTitle =>
-      'Why do system settings attribute all traffic to DITING?';
-
-  @override
-  String get trafficWhyDaemonBody =>
-      'Android\'s VPN model attributes proxied outbound traffic to the daemon. DITING does not use traffic behind your back; tap to see what is counted.';
-
-  @override
   String get trafficLiveRateTitle => 'Live rate';
 
   @override
   String trafficNoLiveRate(String window) {
     return 'This mode does not measure a live rate: the current takeover path bypasses the engine\'s traffic counters. The $window download/upload figures and the ranking below are still real numbers.';
-  }
-
-  @override
-  String trafficLiveRateBody(String window) {
-    return 'Per-second rates from the engine (this session), the same source as the persistent notification. The $window download/upload figures are cumulative bytes from `app_traffic_daily`; the two use different scopes and need not match.';
   }
 
   @override
@@ -4126,11 +3898,6 @@ class AppL10nEn extends AppL10n {
   String get obsCacheHit => 'Cache hit';
 
   @override
-  String obsCopied(String text) {
-    return 'Copied $text';
-  }
-
-  @override
   String get obsCopyAddress => 'Copy address';
 
   @override
@@ -4255,10 +4022,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get obsExportScopeSection => 'Filters';
-
-  @override
-  String get obsExportIntro =>
-      'Pick a time range, source, status and apps, then choose the columns to export.';
 
   @override
   String get obsExportDnsOnlyNote =>
@@ -4558,11 +4321,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get logsNeverHit => 'Never hit';
-
-  @override
-  String logsCacheFooter(String count) {
-    return '$count entries sorted by hits and expiry. Entries with less than 30 seconds of TTL are orange. Tap a row for details, to copy the domain, add it to the lists or analyse it with AI.';
-  }
 
   @override
   String get logsBootstrapTitle => 'Bootstrap statistics';
@@ -4944,9 +4702,6 @@ class AppL10nEn extends AppL10n {
   String get storageV2Verifying => 'Verifying data…';
 
   @override
-  String get storageV2Cleaning => 'Cleaning up old data…';
-
-  @override
   String get storageV2NeedStop =>
       'A network connection is using the old databases. Stop it before upgrading.';
 
@@ -5030,35 +4785,11 @@ class AppL10nEn extends AppL10n {
   String get devOptions => 'Developer options';
 
   @override
-  String get devDiagnostics => 'Diagnostics';
-
-  @override
   String get devIpQuality => 'IP quality';
 
   @override
   String get devIpQualityBody =>
       'Probe the egress address and how three public sources classify it';
-
-  @override
-  String get devRequestLogs => 'Request logs';
-
-  @override
-  String get devRequestLogsBody =>
-      'Live request records merged from http_request_log and dns_log';
-
-  @override
-  String get devLogRetention => 'Log retention';
-
-  @override
-  String get devLogRetentionBody =>
-      'Log capacity limits and what DNS request logs record';
-
-  @override
-  String get devTroubleshoot => 'Troubleshooting';
-
-  @override
-  String get devTroubleshootBody =>
-      'Export crash logs, or capture and export runtime logs manually';
 
   @override
   String get devDataCleanup => 'Data cleanup';
@@ -5151,11 +4882,6 @@ class AppL10nEn extends AppL10n {
       'Please add your nickname in the payment note so you can be added to the sponsor list.';
 
   @override
-  String aboutQqCopied(String number) {
-    return 'QQ was not found; the group number was copied: $number';
-  }
-
-  @override
   String get disclaimerTitle => 'Disclaimer';
 
   @override
@@ -5222,58 +4948,11 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get devDataCleanupBody =>
-      'Delete logs, weights, rules and cache by category';
-
-  @override
-  String get devConfigSection => 'Configuration and resources';
-
-  @override
-  String get devCustomResources => 'Custom resources';
-
-  @override
-  String get devCustomResourcesBody =>
-      'Entry points for configuration resources such as User-Agent and on-demand';
-
-  @override
   String get devUserAgentBody =>
       'The UA sent with subscription downloads and speed tests';
 
   @override
-  String get devOnDemand => 'On-demand connection';
-
-  @override
-  String get devOnDemandBody => 'Start the VPN depending on the SSID';
-
-  @override
-  String get devWebdav => 'WebDAV sync';
-
-  @override
-  String get devWebdavBody => 'Upload backups to your own WebDAV server';
-
-  @override
-  String get devUiSection => 'UI and appearance extras';
-
-  @override
-  String get devFontFamilyBody => 'Choose the UI font family on its own page';
-
-  @override
-  String get devFontSizeBody =>
-      'Global text scaling; an inline slider in the appearance settings';
-
-  @override
-  String get devTabAnimation => 'Tab animation';
-
-  @override
-  String get devTabAnimationBody =>
-      'The entrance animation when switching bottom tabs; an inline option in the appearance settings';
-
-  @override
   String get devExperimental => 'Experimental actions';
-
-  @override
-  String get devLegacyFooter =>
-      'None of the pages under Diagnostics, Configuration and resources or UI and appearance belong to the 1.4.3 interface; they are kept for debugging and component review. The legacy features are still reached through the legacy menus, not this page.';
 
   @override
   String get unknownRouteTitle => 'Page not found';
@@ -5302,17 +4981,7 @@ class AppL10nEn extends AppL10n {
   String get disclaimerImmutable => 'Not editable';
 
   @override
-  String get devFontFamily => 'Font';
-
-  @override
-  String get devFontSize => 'Text size';
-
-  @override
   String get devWarningTitle => 'Developer mode';
-
-  @override
-  String get devFooterLegacy =>
-      'The pages under Diagnostics, Configuration and resources, and UI and appearance do not belong to the 1.4.3 interface; they are kept for debugging and component review. Legacy features are still reached through the legacy menus, not this page.';
 
   @override
   String get devFooterMoved =>
@@ -5907,10 +5576,6 @@ class AppL10nEn extends AppL10n {
   String get uaEdit => 'Edit User-Agent';
 
   @override
-  String get uaNote =>
-      'The UA is sent with subscription downloads, ruleset fetches and subscription speed tests; some servers reject requests by UA, and changing it here works around that.';
-
-  @override
   String get uaCurrent => 'Current selection';
 
   @override
@@ -6007,9 +5672,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get odEnable => 'Enable on-demand connection';
-
-  @override
-  String get odEnableBody => 'Start the VPN automatically on allowlisted SSIDs';
 
   @override
   String get odDisableBody =>
@@ -6178,9 +5840,6 @@ class AppL10nEn extends AppL10n {
   String get configCancel => 'Cancel';
 
   @override
-  String get configNotSet => 'Not set';
-
-  @override
   String configItemCount(int count) {
     return '$count items';
   }
@@ -6205,16 +5864,6 @@ class AppL10nEn extends AppL10n {
   String get troubleshootRecordLogs => 'Record runtime logs';
 
   @override
-  String get troubleshootExportLogs => 'Export runtime logs';
-
-  @override
-  String get troubleshootClearLogs => 'Clear runtime logs';
-
-  @override
-  String get troubleshootClearLogsBody =>
-      'Delete every runtime log file recorded locally';
-
-  @override
   String get troubleshootRecordNote =>
       'Off by default. While on, a status notification is shown and recording stops when the app closes or you turn it off; logs stay on this device and are never uploaded automatically.';
 
@@ -6227,23 +5876,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get troubleshootWriteStatusNote =>
       'Logs, race records and traffic statistics are written straight into the local database in the background. Dropped rows or open failures usually mean the database was locked for a long time; tap to read again, and export the runtime logs if it keeps happening.';
-
-  @override
-  String get troubleshootCrashLogs => 'Crash logs';
-
-  @override
-  String get troubleshootExportCrashes => 'Export crash logs';
-
-  @override
-  String get troubleshootClearCrashes => 'Clear crash logs';
-
-  @override
-  String get troubleshootClearCrashesBody =>
-      'Delete every crash file recorded locally';
-
-  @override
-  String get troubleshootCrashNote =>
-      'When an uncaught exception happens, diagnostics and key logs are saved on the device only; export them to report the problem.';
 
   @override
   String get troubleshootCaptureWarning =>
@@ -6265,17 +5897,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get troubleshootStoppedNoLogs =>
       'Stopped; runtime logs are only recorded while on';
-
-  @override
-  String get troubleshootReadingLogs => 'Reading local logs…';
-
-  @override
-  String get troubleshootNoLogs => 'There are no runtime logs on this device';
-
-  @override
-  String troubleshootLogCount(int count, String size) {
-    return '$count files, $size; tap to export';
-  }
 
   @override
   String get troubleshootReadingHealth => 'Reading write status…';
@@ -6311,17 +5932,6 @@ class AppL10nEn extends AppL10n {
   String get troubleshootClosed => 'Unfinished when stopped';
 
   @override
-  String get troubleshootReadingCrashes => 'Reading crash logs on this device…';
-
-  @override
-  String get troubleshootNoCrashes => 'There are no crash logs on this device';
-
-  @override
-  String troubleshootCrashCount(int count) {
-    return '$count crash logs recorded; tap to export';
-  }
-
-  @override
   String get troubleshootStoppedToast => 'Stopped recording runtime logs';
 
   @override
@@ -6343,51 +5953,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get troubleshootStartFailedToast =>
       'Cannot start capturing logs; try again later';
-
-  @override
-  String get troubleshootNoExportableLogs =>
-      'There are no runtime logs to export';
-
-  @override
-  String get troubleshootExportFailed =>
-      'Export failed: there is no writable export directory';
-
-  @override
-  String troubleshootExported(String path) {
-    return 'Exported to $path';
-  }
-
-  @override
-  String get troubleshootConfirm => 'Confirm';
-
-  @override
-  String get troubleshootClearLogsConfirm =>
-      'Clear all saved runtime logs? This cannot be undone.';
-
-  @override
-  String troubleshootClearedLogs(String count) {
-    return 'Cleared $count log files';
-  }
-
-  @override
-  String get troubleshootNoClearableLogs =>
-      'There are no runtime logs to clear';
-
-  @override
-  String get troubleshootNoExportableCrashes =>
-      'There are no crash logs to export';
-
-  @override
-  String get troubleshootClearCrashesConfirm => 'Clear all saved crash logs?';
-
-  @override
-  String troubleshootClearedCrashes(String count) {
-    return 'Cleared $count crash logs';
-  }
-
-  @override
-  String get troubleshootNoClearableCrashes =>
-      'There are no crash logs to clear';
 
   @override
   String get bypassAddTitle => 'Add a bypass domain';
@@ -6427,10 +5992,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get hiddenFeaturesReset => 'Show everything again';
-
-  @override
-  String get hiddenFeaturesNote =>
-      'Choose which cards the feature hub shows. Turning a switch off hides that card from the hub; every card is shown by default (simple mode hides a few categories on first use). Hiding only changes the UI and never affects background behaviour or rule enforcement. The setting is stored on this device and survives restarts.';
 
   @override
   String get hiddenFeaturesFooter =>
@@ -6473,10 +6034,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get providerVisibilityTitle => 'Provider visibility';
-
-  @override
-  String get providerVisibilityNote =>
-      'With race mode off, the resolver picker on the home page only shows the providers selected here. The one currently in use is always kept. Drag the handle on the right to reorder; that order also sets how the race provider list is arranged.';
 
   @override
   String providerVisibilityProtocol(String protocol) {
@@ -7145,10 +6702,6 @@ class AppL10nEn extends AppL10n {
   String get mirrorTplAdd => 'Add template';
 
   @override
-  String get mirrorTplIntro =>
-      'Save the mirrors you use often. With the global mirror on, subscriptions and app updates use the selected template by default; a single subscription can also pick its own template.';
-
-  @override
   String get mirrorTplActions => 'Actions';
 
   @override
@@ -7285,14 +6838,6 @@ class AppL10nEn extends AppL10n {
       'Running · decrypted traffic is matched against URL block, allow and redirect rules';
 
   @override
-  String get ruleControlIntro =>
-      'One place for the master switches of domain filtering, URL rules and rule overrides, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub.';
-
-  @override
-  String get ruleControlIntroLimited =>
-      'One place for the domain-filtering master switch, the block policy and online rule subscriptions. Block, allow and override lists are still managed separately in the hub.';
-
-  @override
   String get ruleControlFilterSection => 'Filtering and override control';
 
   @override
@@ -7313,9 +6858,6 @@ class AppL10nEn extends AppL10n {
   String get ruleControlNotReady => 'Not ready';
 
   @override
-  String get ruleControlPolicySection => 'Block policy';
-
-  @override
   String get ruleControlDiagnosticsSection => 'Rule diagnostics';
 
   @override
@@ -7333,42 +6875,8 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get ruleControlNetworkPrivacySection =>
-      'Network privacy and diagnostics';
-
-  @override
-  String get ruleControlInterfacesSection =>
-      'External interfaces and integrations';
-
-  @override
-  String get ruleControlSubsSection => 'Subscriptions and updates';
-
-  @override
   String get ruleControlSubsSubtitle =>
       'Manage domain rule and IPv4/IPv6 override sources and groups';
-
-  @override
-  String ruleControlCount(int count) {
-    return '$count';
-  }
-
-  @override
-  String ruleControlAutoUpdateOn(int hours) {
-    return 'On · auto-updates every $hours hours';
-  }
-
-  @override
-  String ruleControlAutoUpdateDaily(String time) {
-    return 'On · auto-updates every day at $time';
-  }
-
-  @override
-  String ruleControlAutoUpdateEveryOtherDay(String time) {
-    return 'On · auto-updates every other day at $time';
-  }
-
-  @override
-  String get ruleControlAutoUpdateOff => 'Auto-update is off';
 
   @override
   String get ruleControlMirrorSubtitle =>
@@ -7574,10 +7082,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get httpInspDeselectVisible => 'Deselect all shown';
-
-  @override
-  String get httpInspAppsIntro =>
-      'Once the tunnel takes over traffic, HTTPS inspection only inspects HTTP(S) requests from the selected apps; others are forwarded directly. Selecting an app clears its excluded, blocked and per-app rule state.';
 
   @override
   String httpInspAppsCount(int selected, int visible) {
@@ -7795,18 +7299,6 @@ class AppL10nEn extends AppL10n {
   String get transferTitle => 'Backup and migration';
 
   @override
-  String get transferMetricProviders => 'DNS providers';
-
-  @override
-  String get transferMetricSubs => 'Rule subscriptions';
-
-  @override
-  String get transferMetricCustomRules => 'Custom rules';
-
-  @override
-  String get transferMetricListedApps => 'Listed apps';
-
-  @override
   String get transferSectionAppConfig => 'App configuration';
 
   @override
@@ -7858,9 +7350,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get transferBusyExporting => 'Building the backup file…';
-
-  @override
-  String get transferBusySaving => 'Waiting for a save location…';
 
   @override
   String get transferBusyPickingImport => 'Waiting for a backup file…';
@@ -8277,10 +7766,6 @@ class AppL10nEn extends AppL10n {
   String get agentProvidersAdd => 'Add custom provider';
 
   @override
-  String get agentProvidersIntro =>
-      'Picking a preset below pre-fills the endpoint; choose the model from the provider\'s real list via \"Fetch models\" in the editor. Leaving the API key empty while editing keeps the existing key. Keys are stored on this device with the same obfuscation as before, with no extra plain text.';
-
-  @override
   String get agentProvidersMine => 'My providers';
 
   @override
@@ -8294,9 +7779,6 @@ class AppL10nEn extends AppL10n {
   String agentProvidersRow(String model, String baseUrl, String key) {
     return '$model · $baseUrl · $key';
   }
-
-  @override
-  String get agentProvidersKeyConfigured => 'Key configured';
 
   @override
   String get agentProvidersKeyMissing => 'Key missing';
@@ -8632,10 +8114,6 @@ class AppL10nEn extends AppL10n {
   String get outboundAppsTitle => 'Choose the proxy app';
 
   @override
-  String get outboundAppsIntro =>
-      'Pick the app that provides the local proxy port. The proxy app itself bypasses DITING; it owns the port and DITING cannot listen for it.';
-
-  @override
   String outboundAppsCount(int count) {
     return 'Installed apps ($count)';
   }
@@ -8692,9 +8170,6 @@ class AppL10nEn extends AppL10n {
   String resolutionProviderCount(int count) {
     return '$count providers';
   }
-
-  @override
-  String get resolutionPickerTitle => 'Choose the resolution mode';
 
   @override
   String get resolutionMinProviders => 'Keep at least 2 providers';
@@ -9478,10 +8953,6 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get subsErrUnsupported =>
-      'This environment cannot update online subscriptions';
-
-  @override
   String subsErrMirrorPlaceholder(String list) {
     return 'A mirror template must contain $list';
   }
@@ -9643,10 +9114,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get outboundTargetsTitle => 'Choose apps that use the proxy';
-
-  @override
-  String get outboundTargetsIntro =>
-      'Checked apps connect through the proxy; restart the tunnel after a change. The proxy app, DITING and apps in Excluded apps bypass the tunnel and cannot use the proxy, so they are not listed.';
 
   @override
   String get outboundProxyTargetsRequired =>
@@ -9868,4382 +9335,6 @@ class AppL10nEn extends AppL10n {
   String get permOverlay => 'Overlay';
 
   @override
-  String get desktopDnsServiceTitle => 'DNS service';
-
-  @override
-  String get desktopQueriesTitle => 'Query metrics';
-
-  @override
-  String get desktopQueriesTotal => 'Queries';
-
-  @override
-  String get desktopQueriesSuccess => 'Succeeded';
-
-  @override
-  String get desktopQueriesFailed => 'Failed';
-
-  @override
-  String get desktopQps => 'QPS';
-
-  @override
-  String get desktopCacheTitle => 'Cache';
-
-  @override
-  String get desktopCacheHits => 'Hits';
-
-  @override
-  String get desktopCacheEvictions => 'Evictions';
-
-  @override
-  String get desktopFilterTitle => 'Rule blocking';
-
-  @override
-  String get desktopFilterRules => 'Active rules';
-
-  @override
-  String get desktopFilterBlockRate => 'Block rate';
-
-  @override
-  String get desktopTakeoverTitle => 'System DNS takeover';
-
-  @override
-  String get desktopTakeoverOn => 'Taken over';
-
-  @override
-  String get desktopTakeoverOff => 'Not taken over';
-
-  @override
-  String get desktopFilterPauseTitle => 'Pause blocking temporarily';
-
-  @override
-  String get desktopFilterPaused => 'Paused';
-
-  @override
-  String get desktopFilterActive => 'Active';
-
-  @override
-  String get desktopServiceHostTitle => 'Host service';
-
-  @override
-  String get desktopServiceAutoStart => 'Boot start';
-
-  @override
-  String get desktopServiceNotInstalled => 'Not installed';
-
-  @override
-  String get desktopVersion => 'Version';
-
-  @override
-  String get desktopProcessId => 'Process';
-
-  @override
-  String get desktopPerformanceTitle => 'Performance';
-
-  @override
-  String get desktopRuntimeTitle => 'Runtime';
-
-  @override
-  String get desktopLanAllowed => 'LAN';
-
-  @override
-  String get desktopListeningOn => 'Listening on';
-
-  @override
-  String get desktopStartDns => 'Start DNS';
-
-  @override
-  String get desktopStopDns => 'Stop DNS';
-
-  @override
-  String get desktopStartDnsTitle => 'Start the DNS service?';
-
-  @override
-  String get desktopStartDnsMessage =>
-      'Resolution and rule filtering take effect once it starts.';
-
-  @override
-  String get desktopStopDnsTitle => 'Stop the DNS service?';
-
-  @override
-  String get desktopStopDnsMessage =>
-      'Resolution falls back to the system DNS and takeover and rules stop applying.';
-
-  @override
-  String get desktopBackendOfflineTitle => 'Cannot reach the local service';
-
-  @override
-  String desktopBackendOfflineBody(String address) {
-    return 'Check that the DITING service is running and listening on $address.';
-  }
-
-  @override
-  String get desktopBackendUnauthorizedTitle => 'Access token required';
-
-  @override
-  String get desktopBackendUnauthorizedBody =>
-      'The local service requires an IPC token before it reports status.';
-
-  @override
-  String desktopActionFailed(String message) {
-    return 'Action failed: $message';
-  }
-
-  @override
-  String desktopLastUpdated(String time) {
-    return 'Updated $time';
-  }
-
-  @override
-  String get desktopRetry => 'Retry';
-
-  @override
-  String get desktopRecentQueriesTitle => 'Recent queries';
-
-  @override
-  String get desktopRecentQueriesEmpty => 'No queries yet';
-
-  @override
-  String get desktopLogWindow24h => 'Last 24 hours';
-
-  @override
-  String get desktopLogDomain => 'Domain';
-
-  @override
-  String get desktopLogClient => 'Client';
-
-  @override
-  String get desktopLogDomainHint => 'Domain contains';
-
-  @override
-  String get desktopLogClientHint => 'Client IP or host name';
-
-  @override
-  String get desktopLogAllTypes => 'All types';
-
-  @override
-  String get desktopLogClear => 'Clear history';
-
-  @override
-  String get desktopLogClearTitle => 'Clear the query history?';
-
-  @override
-  String get desktopLogClearBody =>
-      'This deletes every in-memory record and every retained log file. It cannot be undone.';
-
-  @override
-  String get desktopLogClearDone => 'Query history and statistics cleared';
-
-  @override
-  String desktopLogClearFailed(String message) {
-    return 'Clear failed: $message';
-  }
-
-  @override
-  String get desktopLogTopDomains => 'Most queried domains';
-
-  @override
-  String get desktopLogTopBlocked => 'Most blocked domains';
-
-  @override
-  String get desktopLogTopClients => 'Busiest clients';
-
-  @override
-  String get desktopLogNoBlocked => 'Nothing blocked yet';
-
-  @override
-  String get desktopLiveTitle => 'Live queries';
-
-  @override
-  String get desktopLiveConnected => 'Listening';
-
-  @override
-  String get desktopLivePaused => 'Paused';
-
-  @override
-  String get desktopLiveDisconnected => 'Disconnected';
-
-  @override
-  String get desktopLiveDisconnectedBody =>
-      'The local event channel is not connected, so nothing is streaming. History and the summary still read.';
-
-  @override
-  String desktopLiveShown(String count) {
-    return 'Matching $count';
-  }
-
-  @override
-  String get desktopLiveSearchHint => 'Search domain or client IP';
-
-  @override
-  String get desktopLiveOnlyBlocked => 'Blocked only';
-
-  @override
-  String get desktopLivePause => 'Pause';
-
-  @override
-  String get desktopLiveResume => 'Resume';
-
-  @override
-  String get desktopLiveClear => 'Clear';
-
-  @override
-  String get desktopLiveEmpty => 'Nothing pushed yet';
-
-  @override
-  String get desktopLiveCaptured => 'In buffer';
-
-  @override
-  String get desktopLiveBlocked => 'Blocked';
-
-  @override
-  String get desktopLiveSuccessRate => 'Success rate';
-
-  @override
-  String desktopLiveBufferNote(String count) {
-    return 'Rolling buffer holds $count';
-  }
-
-  @override
-  String get desktopLiveStale => 'Stale fallback';
-
-  @override
-  String get desktopLogConfigTitle => 'Query log and retention';
-
-  @override
-  String get desktopLogConfigEnabled => 'Record the query log';
-
-  @override
-  String get desktopLogConfigEnabledBody =>
-      'When off, no history and no statistics are recorded. Resolution is unaffected.';
-
-  @override
-  String get desktopLogConfigMaxEntries => 'In-memory entries';
-
-  @override
-  String get desktopLogConfigRetentionDays => 'Days kept on disk';
-
-  @override
-  String get desktopLogConfigFile => 'Write history to disk';
-
-  @override
-  String get desktopLogConfigFileBody =>
-      'One JSON-Lines file per day, so history survives restarts. Falls back to memory when the directory is not writable.';
-
-  @override
-  String get desktopLogConfigClients => 'Record client details';
-
-  @override
-  String get desktopLogConfigClientsBody =>
-      'Keeps the device IP and host name behind each query; without it only domain-level statistics remain.';
-
-  @override
-  String desktopLogConfigDataDir(String path) {
-    return 'On-disk directory: $path';
-  }
-
-  @override
-  String get desktopLogConfigSave => 'Save';
-
-  @override
-  String get desktopLogConfigSaved => 'Query log settings saved and applied';
-
-  @override
-  String get desktopLogConfigLoadFailed => 'Cannot read the query log settings';
-
-  @override
-  String get desktopLogConfigInvalid =>
-      'Entries and days must be positive whole numbers';
-
-  @override
-  String get desktopLogPagePrev => 'Previous';
-
-  @override
-  String get desktopLogPageNext => 'Next';
-
-  @override
-  String desktopLogPageInfo(String from, String to, String total) {
-    return 'Rows $from–$to of $total';
-  }
-
-  @override
-  String get desktopHubResolveSection => 'Resolution service';
-
-  @override
-  String get desktopHubProtectSection => 'Blocking defence';
-
-  @override
-  String get desktopHubUpstream => 'Upstream resolution';
-
-  @override
-  String get desktopHubUpstreamBody =>
-      'Scheduling mode, upstream nodes, bootstrap and split DNS';
-
-  @override
-  String get desktopUpstreamTitle => 'Upstream resolution';
-
-  @override
-  String get desktopUpstreamModeTitle => 'Upstream scheduling';
-
-  @override
-  String get desktopUpstreamModeBody =>
-      'How the configured servers share queries and fail over';
-
-  @override
-  String get desktopUpstreamModeSingle => 'Single server';
-
-  @override
-  String get desktopUpstreamModeSingleBody =>
-      'Always resolve through the first server in the list';
-
-  @override
-  String get desktopUpstreamModeBackup => 'Primary with failover';
-
-  @override
-  String get desktopUpstreamModeBackupBody =>
-      'Prefer the primary; switch to a backup on timeout or failure';
-
-  @override
-  String get desktopUpstreamModeRace => 'Parallel race';
-
-  @override
-  String get desktopUpstreamModeRaceBody =>
-      'Query every server at once and use the fastest answer';
-
-  @override
-  String get desktopUpstreamModeSmart => 'Smart latency';
-
-  @override
-  String get desktopUpstreamModeSmartBody =>
-      'Score recent latency and stability, then use the best server';
-
-  @override
-  String get desktopUpstreamNodesTitle => 'Configured DNS servers';
-
-  @override
-  String get desktopUpstreamNodesBody =>
-      'Servers used to resolve names, with encrypted transports and latency probes';
-
-  @override
-  String desktopUpstreamNodesCount(int count) {
-    return '$count nodes';
-  }
-
-  @override
-  String get desktopUpstreamAdd => 'Add DNS server';
-
-  @override
-  String get desktopUpstreamAddTitle => 'Add DNS server';
-
-  @override
-  String get desktopUpstreamEditTitle => 'Edit DNS server';
-
-  @override
-  String get desktopUpstreamName => 'Server name / id';
-
-  @override
-  String get desktopUpstreamProtocol => 'Transport';
-
-  @override
-  String get desktopUpstreamAddress => 'Server address (IP or host)';
-
-  @override
-  String get desktopUpstreamUrl => 'Encrypted query URL';
-
-  @override
-  String get desktopUpstreamPin =>
-      'Certificate fingerprint (optional, SHA-256)';
-
-  @override
-  String get desktopUpstreamPinWarning =>
-      'A fingerprint replaces the system CA chain and is only for self-signed or private-CA upstreams. A mismatch makes the upstream unusable.';
-
-  @override
-  String get desktopUpstreamPreset => 'Common presets';
-
-  @override
-  String get desktopUpstreamPresetProvider => 'Provider';
-
-  @override
-  String get desktopUpstreamPresetProtocol => 'Protocol';
-
-  @override
-  String get desktopUpstreamStamp => 'DNS stamp (sdns://)';
-
-  @override
-  String get desktopUpstreamStampHint => 'Paste a stamp';
-
-  @override
-  String get desktopUpstreamStampParse => 'Parse';
-
-  @override
-  String get desktopUpstreamStampParsing => 'Parsing…';
-
-  @override
-  String get desktopUpstreamStampEmpty => 'Paste an sdns:// stamp first';
-
-  @override
-  String desktopUpstreamStampFailed(String message) {
-    return 'Cannot parse the stamp: $message';
-  }
-
-  @override
-  String desktopUpstreamStampParsed(String proto) {
-    return 'Parsed as $proto';
-  }
-
-  @override
-  String get desktopUpstreamInvalid => 'A name and an address are required';
-
-  @override
-  String get desktopUpstreamDeleteTitle => 'Delete server?';
-
-  @override
-  String desktopUpstreamDeleteBody(String name) {
-    return 'Delete upstream DNS server [$name]?';
-  }
-
-  @override
-  String get desktopUpstreamKeepOne =>
-      'Keep at least one DNS server so names can still be resolved.';
-
-  @override
-  String get desktopUpstreamEmpty => 'No DNS server configured';
-
-  @override
-  String get desktopUpstreamEmptyBody =>
-      'Add a primary or backup server and save.';
-
-  @override
-  String get desktopUpstreamTest => 'Test latency';
-
-  @override
-  String desktopUpstreamTestFailed(String message) {
-    return 'Test failed: $message';
-  }
-
-  @override
-  String desktopUpstreamSaveFailed(String message) {
-    return 'Cannot update the DNS config: $message';
-  }
-
-  @override
-  String get desktopUpstreamSaved => 'DNS servers updated and applied';
-
-  @override
-  String get desktopUpstreamLoadFailed => 'Cannot read the upstream config';
-
-  @override
-  String get desktopUpstreamBootstrapTitle => 'Bootstrap resolution';
-
-  @override
-  String get desktopUpstreamBootstrapBody =>
-      'Resolves upstream host names before a DoT or DoH handshake. Prefer plain IP addresses.';
-
-  @override
-  String get desktopUpstreamBootstrapOn => 'Bootstrap on';
-
-  @override
-  String get desktopUpstreamBootstrapOff => 'Off';
-
-  @override
-  String get desktopUpstreamBootstrapAdd => 'Add bootstrap';
-
-  @override
-  String get desktopUpstreamBootstrapEmpty =>
-      'No bootstrap DNS server configured';
-
-  @override
-  String get desktopUpstreamBootstrapKeepOne =>
-      'Keep at least one bootstrap server so encrypted host names can be resolved.';
-
-  @override
-  String get desktopUpstreamBootstrapName => 'Name';
-
-  @override
-  String get desktopUpstreamBootstrapAddress => 'IP address (port optional)';
-
-  @override
-  String get desktopUpstreamBootstrapInvalid =>
-      'A name and an IP address are required';
-
-  @override
-  String desktopUpstreamBootstrapDeleteBody(String name) {
-    return 'Delete bootstrap server [$name]?';
-  }
-
-  @override
-  String get desktopUpstreamRoutesTitle => 'Split DNS routes';
-
-  @override
-  String get desktopUpstreamRoutesBody =>
-      'Send private suffixes to a dedicated DNS server; wildcards such as *.internal are supported';
-
-  @override
-  String get desktopUpstreamRoutesAdd => 'Add route';
-
-  @override
-  String get desktopUpstreamRoutesEmpty =>
-      'No split route configured; every name follows the global scheduling mode.';
-
-  @override
-  String get desktopUpstreamRouteDomain => 'Domain or suffix';
-
-  @override
-  String get desktopUpstreamRouteServer => 'Target DNS server';
-
-  @override
-  String get desktopUpstreamRouteInvalid =>
-      'A matching domain and a target DNS address are required';
-
-  @override
-  String desktopUpstreamRouteDeleteBody(String domain) {
-    return 'Delete the split route for [$domain]?';
-  }
-
-  @override
-  String get desktopUpstreamFallbackPolicyTitle => 'Fallback triggers';
-
-  @override
-  String get desktopUpstreamFallbackPolicyBody =>
-      'When the backup upstreams are used: timeouts, response codes and lookup failures';
-
-  @override
-  String get desktopUpstreamFallbackPolicyOff =>
-      'The fallback chain is off, so these triggers do nothing yet.';
-
-  @override
-  String get desktopUpstreamFallbackTitle => 'Independent fallback chain';
-
-  @override
-  String get desktopUpstreamFallbackBody =>
-      'A separate chain used only after the whole main chain fails';
-
-  @override
-  String get desktopUpstreamFallbackOff => 'Disabled';
-
-  @override
-  String desktopUpstreamFallbackCount(int count) {
-    return '$count fallback nodes';
-  }
-
-  @override
-  String get desktopUpstreamFallbackNote =>
-      'The main chain gets its own timeout. Only when it fails or returns one of the selected response codes does the whole query switch to this chain.';
-
-  @override
-  String get desktopUpstreamFallbackEmpty =>
-      'No fallback upstream; queries are not duplicated.';
-
-  @override
-  String get desktopUpstreamFallbackAdd => 'Add fallback node';
-
-  @override
-  String get desktopUpstreamFallbackTimeout => 'Main chain timeout (ms)';
-
-  @override
-  String get desktopUpstreamFallbackTimeoutHint =>
-      'Empty or 0 uses the service default of 2000 ms; valid range is 100–30000.';
-
-  @override
-  String get desktopUpstreamFallbackRcode => 'Fallback response codes';
-
-  @override
-  String get desktopUpstreamFallbackRcodeHint =>
-      'SERVFAIL and REFUSED by default. NXDOMAIN is an authoritative answer; ticking it would also ask the fallback about names that do not exist.';
-
-  @override
-  String get desktopUpstreamFallbackOnError =>
-      'Timeouts and connection failures also trigger fallback';
-
-  @override
-  String desktopUpstreamWeight(int weight) {
-    return 'Weight $weight';
-  }
-
-  @override
-  String get desktopUpstreamPinSet => 'Fingerprint pinned';
-
-  @override
-  String get desktopUpstreamPresetMissing =>
-      'This provider has no public endpoint for that protocol; fill it in manually';
-
-  @override
-  String get desktopUpstreamProbeFailed => 'Test failed';
-
-  @override
-  String get desktopUpstreamBootstrapAddTitle => 'Add bootstrap DNS server';
-
-  @override
-  String get desktopUpstreamBootstrapEditTitle => 'Edit bootstrap DNS server';
-
-  @override
-  String get desktopHubCache => 'Resolver cache';
-
-  @override
-  String get desktopHubCacheBody =>
-      'Hit rate, capacity, TTL policy, exclude rules and on-disk persistence';
-
-  @override
-  String get desktopCacheEngineTitle => 'Resolver acceleration engine';
-
-  @override
-  String get desktopCacheEngineBody =>
-      'Caches answers that were already looked up and returns them instantly; recent records cover an upstream that stalls.';
-
-  @override
-  String get desktopCacheEngineOn => 'Acceleration active';
-
-  @override
-  String get desktopCacheEngineOff => 'Acceleration off';
-
-  @override
-  String get desktopCacheHitRatio => 'Cache hit rate';
-
-  @override
-  String get desktopCacheRefresh => 'Refresh data';
-
-  @override
-  String get desktopCacheClear => 'Clear cache';
-
-  @override
-  String get desktopCacheClearTitle => 'Clear every cached answer?';
-
-  @override
-  String desktopCacheClearBody(int count) {
-    return 'This deletes all $count cached names. Later lookups go back to the network.';
-  }
-
-  @override
-  String get desktopCacheClearDone => 'The cache is empty';
-
-  @override
-  String desktopCacheClearFailed(String message) {
-    return 'Could not clear the cache: $message';
-  }
-
-  @override
-  String get desktopCacheTelemetryTitle => 'Cache telemetry';
-
-  @override
-  String desktopCacheTelemetryCapacity(int used, int max) {
-    return 'Capacity $used / $max';
-  }
-
-  @override
-  String get desktopCacheMisses => 'Live lookups';
-
-  @override
-  String get desktopCacheStaleHits => 'Stale fallbacks';
-
-  @override
-  String get desktopCacheNegativeHits => 'Negative answers';
-
-  @override
-  String get desktopCachePrefetchCount => 'Prefetch refreshes';
-
-  @override
-  String get desktopCacheTopTitle => 'Most queried names';
-
-  @override
-  String get desktopCacheTopBody =>
-      'The ten names with the most local cache hits';
-
-  @override
-  String get desktopCacheTopEmpty => 'No frequently queried names yet';
-
-  @override
-  String desktopCacheTopHits(int count) {
-    return '$count hits';
-  }
-
-  @override
-  String get desktopCacheConfigTitle => 'Acceleration policy';
-
-  @override
-  String get desktopCacheConfigBody =>
-      'Record lifetime, stale fallback and prefetch';
-
-  @override
-  String get desktopCacheConfigSave => 'Save policy';
-
-  @override
-  String get desktopCacheConfigSaved =>
-      'The acceleration policy is saved and active';
-
-  @override
-  String get desktopCacheFallbackTitle => 'Weak-network fallback';
-
-  @override
-  String get desktopCacheFallbackBody =>
-      'Serve a stale record while upstreams falter, and refresh optimistically';
-
-  @override
-  String get desktopCacheModeLabel => 'How record lifetime is computed';
-
-  @override
-  String get desktopCacheModeLimit => 'Cap the maximum lifetime (recommended)';
-
-  @override
-  String get desktopCacheModeFollow => 'Follow the upstream TTL exactly';
-
-  @override
-  String get desktopCacheModeFixed => 'Force one fixed lifetime';
-
-  @override
-  String get desktopCacheMaxTtl => 'Maximum lifetime (s)';
-
-  @override
-  String get desktopCacheMinTtl => 'Minimum lifetime (s)';
-
-  @override
-  String get desktopCacheFixedTtl => 'Fixed lifetime (s)';
-
-  @override
-  String get desktopCacheMinTtlEnabled => 'Apply the minimum lifetime';
-
-  @override
-  String get desktopCacheStaleTitle => 'Stale fallback';
-
-  @override
-  String get desktopCacheStaleBody =>
-      'Reuse a recent record when the upstream times out or the network drops';
-
-  @override
-  String get desktopCacheStaleSeconds => 'Fallback window (s)';
-
-  @override
-  String get desktopCacheOptimistic => 'Instant response';
-
-  @override
-  String get desktopCacheOptimisticBody =>
-      'Answer from cache, refresh in the background';
-
-  @override
-  String get desktopCacheNegative => 'Remember negative answers';
-
-  @override
-  String get desktopCacheNegativeBody =>
-      'Remember names that do not exist so software stops retrying them';
-
-  @override
-  String get desktopCacheNegativeSeconds => 'Negative record lifetime (s)';
-
-  @override
-  String get desktopCachePrefetchTitle => 'Prefetch hot names';
-
-  @override
-  String get desktopCachePrefetchBody =>
-      'Refresh a frequently used name before it expires, so the next visit does not wait';
-
-  @override
-  String get desktopCachePrefetchThreshold => 'Hit threshold';
-
-  @override
-  String get desktopCachePrefetchThresholdHint =>
-      'Only names reached this often are prefetched';
-
-  @override
-  String get desktopCachePrefetchBefore => 'Remaining lifetime threshold (ms)';
-
-  @override
-  String get desktopCachePrefetchBeforeHint =>
-      'Refresh once the remaining lifetime drops below this';
-
-  @override
-  String get desktopCacheInvalidNumbers =>
-      'Seconds and thresholds must be positive whole numbers';
-
-  @override
-  String desktopCacheSaveFailed(String message) {
-    return 'Could not save the cache config: $message';
-  }
-
-  @override
-  String get desktopCacheLoadFailed => 'Could not read the cache config';
-
-  @override
-  String get desktopCachePersistTitle => 'Cache persistence';
-
-  @override
-  String get desktopCachePersistBody =>
-      'Writes the in-memory answers to disk periodically so a restart can read them back. Off by default: replaying old answers makes a changed upstream harder to notice.';
-
-  @override
-  String get desktopCachePersistOn => 'On';
-
-  @override
-  String get desktopCachePersistOff => 'Off';
-
-  @override
-  String get desktopCachePersistInterval => 'Write interval (s)';
-
-  @override
-  String get desktopCachePersistIntervalHint =>
-      '30–86400; empty or 0 uses the default 300. The service always writes once more on exit.';
-
-  @override
-  String get desktopCachePersistPath => 'Cache file';
-
-  @override
-  String desktopCachePersistLastError(String message) {
-    return 'The last write failed: $message';
-  }
-
-  @override
-  String desktopCachePersistRecords(int count) {
-    return '$count records can be written';
-  }
-
-  @override
-  String get desktopCacheSnapshotTitle => 'Disk snapshot';
-
-  @override
-  String get desktopCacheSnapshotBody =>
-      'Write the current cache to the persistence file now, or read the last one back';
-
-  @override
-  String get desktopCachePersistDump => 'Write now';
-
-  @override
-  String get desktopCachePersistLoad => 'Restore from file';
-
-  @override
-  String desktopCachePersistDumpDone(int count) {
-    return 'Wrote $count cache records';
-  }
-
-  @override
-  String desktopCachePersistLoadDone(int count) {
-    return 'Restored $count cache records from the file';
-  }
-
-  @override
-  String desktopCachePersistDumpFailed(String message) {
-    return 'Could not write the cache: $message';
-  }
-
-  @override
-  String desktopCachePersistLoadFailed(String message) {
-    return 'Could not restore the cache: $message';
-  }
-
-  @override
-  String get desktopCachePersistLoadTitle => 'Restore the cache from the file?';
-
-  @override
-  String get desktopCachePersistLoadBody =>
-      'Records still valid in the file are read into the current cache and replace entries with the same name; expired records are ignored.';
-
-  @override
-  String get desktopCachePersistToggleOn => 'Cache persistence is on';
-
-  @override
-  String get desktopCachePersistToggleOff => 'Cache persistence is off';
-
-  @override
-  String get desktopCachePersistIntervalSaved =>
-      'The write interval is updated';
-
-  @override
-  String get desktopCacheExcludeTitle => 'Cache exclude rules';
-
-  @override
-  String get desktopCacheExcludeBody =>
-      'A matching name is neither read from nor written to the cache; it always goes upstream. Useful for internal names and dynamic-IP probes where caching does harm.';
-
-  @override
-  String get desktopCacheExcludeOff => 'Not enabled';
-
-  @override
-  String desktopCacheExcludeCount(int count) {
-    return '$count rules';
-  }
-
-  @override
-  String get desktopCacheExcludeLabel =>
-      'Regular expressions (one per line, Go RE2)';
-
-  @override
-  String get desktopCacheExcludeHint => 'For example: \\.local\$';
-
-  @override
-  String get desktopCacheExcludeSave => 'Save rules';
-
-  @override
-  String desktopCacheExcludeSaved(int count) {
-    return 'Saved $count exclude rules';
-  }
-
-  @override
-  String get desktopCacheExcludeCleared =>
-      'Exclude rules cleared; every name is cached again';
-
-  @override
-  String desktopCacheExcludeFailed(String message) {
-    return 'Could not save the exclude rules: $message';
-  }
-
-  @override
-  String desktopCacheExcludeHits(int count) {
-    return '$count cache reads and writes bypassed';
-  }
-
-  @override
-  String get desktopCacheExcludeReset => 'Discard changes';
-
-  @override
-  String desktopCacheExcludeTooMany(int max) {
-    return 'More than $max rules; the extra ones are not saved';
-  }
-
-  @override
-  String desktopCacheExcludeTooLong(int count, int max) {
-    return '$count rules exceed $max characters and are ignored on save';
-  }
-
-  @override
-  String get desktopCacheExcludePresetLocal => 'Single-label internal names';
-
-  @override
-  String get desktopCacheExcludePresetPtr => 'PTR lookups';
-
-  @override
-  String get desktopCacheExcludePresetProbe => 'Captive-portal probes';
-
-  @override
-  String get desktopCacheEntriesTitle => 'Cached names';
-
-  @override
-  String get desktopCacheEntriesBody =>
-      'Live shard entries, their TTL and the addresses they resolve to';
-
-  @override
-  String get desktopCacheEntriesSearch => 'Search a name or record type…';
-
-  @override
-  String get desktopCacheEntriesEmpty =>
-      'No cache entry matches these conditions';
-
-  @override
-  String get desktopCacheEntriesNone => 'The cache holds no entries yet';
-
-  @override
-  String get desktopCacheEntriesLoadFailed =>
-      'Could not read the cache entries';
-
-  @override
-  String get desktopCacheFilterAll => 'All';
-
-  @override
-  String get desktopCacheFilterFresh => 'Fresh';
-
-  @override
-  String get desktopCacheFilterStale => 'Stale';
-
-  @override
-  String get desktopCacheFilterNegative => 'Negative';
-
-  @override
-  String get desktopCacheEntryDomain => 'Name';
-
-  @override
-  String get desktopCacheEntryType => 'Type';
-
-  @override
-  String get desktopCacheEntryStatus => 'State';
-
-  @override
-  String get desktopCacheEntryRemaining => 'Remaining TTL';
-
-  @override
-  String get desktopCacheEntryTtl => 'Initial TTL';
-
-  @override
-  String get desktopCacheEntryHits => 'Hits';
-
-  @override
-  String get desktopCacheEntryIps => 'Addresses';
-
-  @override
-  String get desktopCacheStatusFresh => 'Fresh';
-
-  @override
-  String get desktopCacheStatusStale => 'Stale';
-
-  @override
-  String get desktopCacheStatusNegative => 'Negative';
-
-  @override
-  String get desktopCacheNoIps => 'None';
-
-  @override
-  String get desktopHubRewrite => 'DNS rewrite';
-
-  @override
-  String get desktopHubRewriteBody =>
-      'Answer a name with an address, alias or TXT from this machine';
-
-  @override
-  String get desktopRewriteTitle => 'DNS rewrite';
-
-  @override
-  String get desktopRewriteEngineTitle =>
-      'Custom DNS rewrite and name disguise';
-
-  @override
-  String get desktopRewriteEngineBody =>
-      'Matching rules answer authoritatively before any upstream query; exact names and wildcards such as *.lan both work.';
-
-  @override
-  String get desktopRewriteEngineOn => 'Rewrite engine ready';
-
-  @override
-  String get desktopRewriteEngineOff => 'Rewrite engine disabled';
-
-  @override
-  String get desktopRewriteEnabled => 'Rewrite on';
-
-  @override
-  String get desktopRewriteDisabled => 'Rewrite off';
-
-  @override
-  String get desktopRewriteDefaultTtl => 'Default lifetime (s)';
-
-  @override
-  String get desktopRewriteTtlSave => 'Save';
-
-  @override
-  String get desktopRewriteTtlSaved => 'The default rewrite TTL was saved';
-
-  @override
-  String get desktopRewriteTtlInvalid =>
-      'The TTL must be a positive whole number';
-
-  @override
-  String get desktopRewriteToggleOn => 'Custom DNS rewrite is on';
-
-  @override
-  String get desktopRewriteToggleOff => 'Custom DNS rewrite is off';
-
-  @override
-  String desktopRewriteSaveFailed(String message) {
-    return 'Could not save the rewrite config: $message';
-  }
-
-  @override
-  String get desktopRewriteLoadFailed =>
-      'Could not read the DNS rewrite config';
-
-  @override
-  String get desktopRewriteRulesTitle => 'Rewrite rules';
-
-  @override
-  String get desktopRewriteRulesBody =>
-      'The disguise mappings currently in effect';
-
-  @override
-  String desktopRewriteRulesCount(int count) {
-    return '$count rules';
-  }
-
-  @override
-  String get desktopRewriteAdd => 'Add rule';
-
-  @override
-  String get desktopRewriteSearch => 'Search a name, target address or alias…';
-
-  @override
-  String get desktopRewriteEmpty =>
-      'No DNS rewrite rules yet; use the button above to add one';
-
-  @override
-  String get desktopRewriteNoMatch => 'No rewrite rule matches this search';
-
-  @override
-  String get desktopRewriteResetSearch => 'Clear search';
-
-  @override
-  String get desktopRewriteDomain => 'Name';
-
-  @override
-  String get desktopRewriteTypes => 'Types';
-
-  @override
-  String get desktopRewriteTarget => 'Target';
-
-  @override
-  String get desktopRewriteTtl => 'TTL';
-
-  @override
-  String get desktopRewriteActions => 'Actions';
-
-  @override
-  String get desktopRewriteEdit => 'Edit rule';
-
-  @override
-  String get desktopRewriteDelete => 'Delete rule';
-
-  @override
-  String desktopRewriteSeconds(int count) {
-    return '$count s';
-  }
-
-  @override
-  String get desktopRewriteNoTarget => 'No target';
-
-  @override
-  String desktopRewriteRcodeOnly(String rcode) {
-    return 'Answers $rcode with no records';
-  }
-
-  @override
-  String get desktopRewriteDeleteTitle => 'Delete this DNS rewrite rule?';
-
-  @override
-  String desktopRewriteDeleteBody(String domain) {
-    return 'Remove the DNS rewrite rule for “$domain”?';
-  }
-
-  @override
-  String desktopRewriteRuleSaved(String domain) {
-    return 'Rule “$domain” saved and in effect';
-  }
-
-  @override
-  String desktopRewriteRuleDeleted(String domain) {
-    return 'Rule “$domain” deleted';
-  }
-
-  @override
-  String desktopRewriteRuleFailed(String message) {
-    return 'Could not save the rewrite rule: $message';
-  }
-
-  @override
-  String desktopRewriteDeleteFailed(String message) {
-    return 'Could not delete the rule: $message';
-  }
-
-  @override
-  String get desktopRewriteAddTitle => 'Add a DNS rewrite rule';
-
-  @override
-  String get desktopRewriteEditTitle => 'Edit the DNS rewrite rule';
-
-  @override
-  String get desktopRewriteDomainLabel => 'Matched name';
-
-  @override
-  String get desktopRewriteDomainHint => 'host.lan or *.home.local';
-
-  @override
-  String get desktopRewriteDomainHelp =>
-      'An exact name (router.lan) or a wildcard (*.cluster.internal)';
-
-  @override
-  String get desktopRewriteDomainRequired =>
-      'Enter the name to match (exact or a *.lan wildcard)';
-
-  @override
-  String get desktopRewriteTargetMode => 'Answer';
-
-  @override
-  String get desktopRewriteModeShortcut => 'Shortcut target';
-
-  @override
-  String get desktopRewriteModeRecords => 'Custom records';
-
-  @override
-  String get desktopRewriteTargetType => 'Target type';
-
-  @override
-  String get desktopRewriteTypeIp => 'A / AAAA address';
-
-  @override
-  String get desktopRewriteTypeCname => 'CNAME alias';
-
-  @override
-  String get desktopRewriteTypeTxt => 'TXT text';
-
-  @override
-  String get desktopRewriteIpsLabel => 'IPv4 / IPv6 addresses';
-
-  @override
-  String get desktopRewriteIpsHelp =>
-      'One address per line; several are returned together';
-
-  @override
-  String get desktopRewriteCnameLabel => 'CNAME target';
-
-  @override
-  String get desktopRewriteCnameHelp =>
-      'The alias chain is followed during resolution';
-
-  @override
-  String get desktopRewriteTxtLabel => 'TXT contents (one per line)';
-
-  @override
-  String get desktopRewriteRecordsLabel => 'Custom records';
-
-  @override
-  String get desktopRewriteRecordAdd => 'Add record';
-
-  @override
-  String get desktopRewriteRecordEmpty =>
-      'No records yet; use “Add record” to start';
-
-  @override
-  String get desktopRewriteRecordValueHint => 'Record value';
-
-  @override
-  String get desktopRewriteRecordsHelp =>
-      'Values follow AdGuard\'s dnsrewrite syntax: MX takes “preference host”, SRV takes “priority weight port target”, HTTPS/SVCB take “priority target parameters…”. Only queries of the matching type receive them.';
-
-  @override
-  String get desktopRewriteRcodeLabel => 'Response code override (optional)';
-
-  @override
-  String get desktopRewriteRcodeNone => 'No override (answer records normally)';
-
-  @override
-  String get desktopRewriteRcodeWarning =>
-      'With a failure code the rule answers that error and no records; clients treat the name as unavailable or refused.';
-
-  @override
-  String get desktopRewriteTtlLabel => 'Lifetime TTL (seconds, optional)';
-
-  @override
-  String get desktopRewriteTtlHint => 'Empty uses the global default TTL';
-
-  @override
-  String get desktopRewriteNeedIp =>
-      'Enter at least one IPv4 or IPv6 target address';
-
-  @override
-  String get desktopRewriteNeedCname => 'Enter the CNAME target name';
-
-  @override
-  String get desktopRewriteNeedTxt => 'Enter at least one line of TXT text';
-
-  @override
-  String get desktopRewriteNeedRecord =>
-      'Add at least one complete record (both type and value)';
-
-  @override
-  String get desktopRewriteChipEmpty => 'Empty';
-
-  @override
-  String get desktopZoneSettingsTitle => 'Zones switch and default TTL';
-
-  @override
-  String get desktopZoneSettingsBody =>
-      'Turn local authoritative zones on, and set the TTL for records that do not state one';
-
-  @override
-  String get desktopZoneTitle => 'Local zones';
-
-  @override
-  String get desktopZoneBody =>
-      'Declare a whole namespace as this machine\'s own: names missing from a zone answer authoritative NODATA instead of leaking upstream. Made for internal names and LAN discovery';
-
-  @override
-  String desktopZoneBadge(int zones, int maxZones, int records) {
-    return '$zones / $maxZones zones · $records names';
-  }
-
-  @override
-  String get desktopZoneRules =>
-      'The apex and every name below it belong to this machine: a name missing from the zone is authoritatively answered as non-existent rather than leaking to the internet, and the zone wins over a hosts entry. The apex must be a complete suffix (lan.), not a single host name. Syntax follows RFC 1035; INCLUDE is refused for security.';
-
-  @override
-  String get desktopZoneDefaultTtl => 'Default TTL (s)';
-
-  @override
-  String get desktopZoneTtlSaved => 'The default zone TTL was saved';
-
-  @override
-  String get desktopZoneTtlInvalid => 'The TTL must be a positive whole number';
-
-  @override
-  String get desktopZoneToggleOn => 'Local zones are on';
-
-  @override
-  String get desktopZoneToggleOff => 'Local zones are off';
-
-  @override
-  String desktopZoneSaveFailed(String message) {
-    return 'Could not save the zone config: $message';
-  }
-
-  @override
-  String get desktopZoneLoadFailed => 'Could not read the local zone config';
-
-  @override
-  String desktopZoneLimit(int records) {
-    return '$records records in total; anything beyond that is truncated and marked on the zone.';
-  }
-
-  @override
-  String get desktopZoneAdd => 'Add zone';
-
-  @override
-  String get desktopZoneSaveAll => 'Save all';
-
-  @override
-  String get desktopZoneSaved => 'The zone config was saved and is in effect';
-
-  @override
-  String get desktopZoneEmpty => 'No local zone configured yet';
-
-  @override
-  String desktopZoneMaxZones(int max) {
-    return 'At most $max zones; delete one that is no longer used first';
-  }
-
-  @override
-  String get desktopZoneOriginHint => 'Apex, for example lan.';
-
-  @override
-  String desktopZoneDeleted(String origin) {
-    return 'Zone “$origin” deleted';
-  }
-
-  @override
-  String get desktopZoneUnnamed => '(unnamed)';
-
-  @override
-  String get desktopZoneStateDisabled => 'Disabled';
-
-  @override
-  String get desktopZoneStatePending => 'Not built';
-
-  @override
-  String get desktopZoneStateFailed => 'Failed';
-
-  @override
-  String desktopZoneStateTruncated(int count) {
-    return 'Loaded $count (truncated)';
-  }
-
-  @override
-  String desktopZoneStateLoaded(int count) {
-    return 'Loaded $count';
-  }
-
-  @override
-  String get desktopZoneFailedReason => 'This zone was not loaded';
-
-  @override
-  String get desktopZoneExpand => 'Expand';
-
-  @override
-  String get desktopZoneCollapse => 'Collapse';
-
-  @override
-  String get desktopZoneDelete => 'Delete zone';
-
-  @override
-  String get desktopZoneContent => 'Zone file contents';
-
-  @override
-  String get desktopZonePreview => 'Preview';
-
-  @override
-  String get desktopZonePreviewNote =>
-      'Runs the same parser the service uses; the edits only take effect after “Save all”.';
-
-  @override
-  String get desktopZonePreviewEmpty => '(Empty zone, no records)';
-
-  @override
-  String desktopZonePreviewMore(int count) {
-    return '… $count more omitted';
-  }
-
-  @override
-  String get desktopHubDns64 => 'IPv6 / DNS64';
-
-  @override
-  String get desktopHubDns64Body =>
-      'Synthesize AAAA answers for IPv4-only names on an IPv6-only network';
-
-  @override
-  String get desktopDns64Title => 'IPv6 / DNS64';
-
-  @override
-  String get desktopDns64Refresh => 'Reload the DNS64 config';
-
-  @override
-  String get desktopDns64CardTitle => 'DNS64 IPv6-only transition';
-
-  @override
-  String get desktopDns64CardBody =>
-      'Follows RFC 6052 / RFC 6147 to synthesize AAAA answers for names that only have an A record';
-
-  @override
-  String get desktopDns64EngineOn => 'Synthesizing';
-
-  @override
-  String get desktopDns64EngineOff => 'Turned off';
-
-  @override
-  String get desktopDns64Description =>
-      'When a client on an IPv6-only network reaches the internet through a NAT64 gateway and a name has only IPv4 (A) records, the DNS64 engine embeds the address into the configured prefix and answers with AAAA, so the client can still connect end to end.';
-
-  @override
-  String get desktopDns64PrefixesCardTitle => 'Synthesis prefixes';
-
-  @override
-  String get desktopDns64PrefixesLabel => 'Synthesis prefixes (one per line)';
-
-  @override
-  String get desktopDns64PrefixesHelper =>
-      'One IPv6 CIDR per line. /32, /40, /48, /56, /64 and /96 are accepted; an empty list makes the service use the well-known 64:ff9b::/96.';
-
-  @override
-  String get desktopDns64FillWellKnown => 'Use the well-known prefix';
-
-  @override
-  String get desktopDns64NoteTitle => 'Built-in protections';
-
-  @override
-  String get desktopDns64NoteBody =>
-      'The service excludes the RFC 6147 ranges (loopback, link-local, IPv4-mapped and its own prefixes) so nothing is synthesized twice, and a name with a native AAAA record is answered natively.';
-
-  @override
-  String get desktopDns64Save => 'Save DNS64 config';
-
-  @override
-  String get desktopDns64Saving => 'Saving…';
-
-  @override
-  String get desktopDns64Saved => 'The DNS64 config was updated';
-
-  @override
-  String get desktopDns64ToggleOn => 'DNS64 synthesis is on';
-
-  @override
-  String get desktopDns64ToggleOff => 'DNS64 synthesis is off';
-
-  @override
-  String desktopDns64SaveFailed(String message) {
-    return 'Could not update the DNS64 config: $message';
-  }
-
-  @override
-  String get desktopDns64LoadFailed => 'Could not read the DNS64 config';
-
-  @override
-  String get desktopHubFilterLists => 'Subscriptions';
-
-  @override
-  String get desktopHubFilterListsBody =>
-      'Online rule lists and local rule files, applied as subscriptions';
-
-  @override
-  String get desktopFilterListsPageTitle => 'Subscriptions';
-
-  @override
-  String get desktopFilterListsRefresh => 'Reload the subscriptions';
-
-  @override
-  String get desktopFilterSummaryTitle => 'Blocking overview';
-
-  @override
-  String get desktopFilterEngineOn => 'Protection is on';
-
-  @override
-  String get desktopFilterEngineOff => 'Protection is off';
-
-  @override
-  String get desktopFilterPausedChip => 'Paused';
-
-  @override
-  String get desktopFilterBlocked => 'Blocked queries';
-
-  @override
-  String get desktopFilterTimes => '';
-
-  @override
-  String get desktopFilterRulesUnit => '';
-
-  @override
-  String get desktopFilterActiveLists => 'Enabled lists';
-
-  @override
-  String get desktopFilterListsUnit => '';
-
-  @override
-  String desktopFilterPausedRemaining(String remaining) {
-    return 'Blocking is paused and resumes in $remaining';
-  }
-
-  @override
-  String desktopFilterPauseDays(int days) {
-    return '$days d';
-  }
-
-  @override
-  String desktopFilterPauseHours(int hours, int minutes) {
-    return '$hours h $minutes min';
-  }
-
-  @override
-  String desktopFilterPauseMinutes(int minutes, int seconds) {
-    return '$minutes min $seconds s';
-  }
-
-  @override
-  String desktopFilterPauseSeconds(int seconds) {
-    return '$seconds s';
-  }
-
-  @override
-  String get desktopFilterListsTitle => 'Subscription lists';
-
-  @override
-  String get desktopFilterListsBody =>
-      'Online subscriptions and local rule files. Each list has its own switch; “update all” pulls every one again.';
-
-  @override
-  String desktopFilterListsCount(int count) {
-    return '$count lists';
-  }
-
-  @override
-  String get desktopFilterListUpdateAll => 'Update all';
-
-  @override
-  String get desktopFilterListAdd => 'Add list';
-
-  @override
-  String get desktopFilterListsEmpty => 'No subscription list yet';
-
-  @override
-  String get desktopFilterListsEmptyBody =>
-      'Add an AdGuard-syntax subscription link or a local hosts file; the rules download and take effect on their own.';
-
-  @override
-  String desktopFilterListDefaultName(int index) {
-    return 'Subscription $index';
-  }
-
-  @override
-  String get desktopFilterListAdded =>
-      'The list was added and the download started';
-
-  @override
-  String get desktopFilterListAllUpdated => 'Every list was updated';
-
-  @override
-  String get desktopFilterListUpdated => 'The list was updated';
-
-  @override
-  String desktopFilterActionFailed(String message) {
-    return 'The action failed: $message';
-  }
-
-  @override
-  String desktopFilterListToggleOn(String name) {
-    return 'Enabled the list $name';
-  }
-
-  @override
-  String desktopFilterListToggleOff(String name) {
-    return 'Disabled the list $name';
-  }
-
-  @override
-  String get desktopFilterListDeleteTitle => 'Delete the list';
-
-  @override
-  String desktopFilterListDeleteBody(String name) {
-    return 'Delete “$name”? Its blocking rules stop applying immediately.';
-  }
-
-  @override
-  String get desktopFilterListDeleteConfirm => 'Delete';
-
-  @override
-  String get desktopFilterListDeleted => 'The list was deleted';
-
-  @override
-  String desktopFilterListRules(int count) {
-    return '$count rules';
-  }
-
-  @override
-  String get desktopFilterListEnabled => 'Blocking is active';
-
-  @override
-  String get desktopFilterListDisabled => 'Blocking is paused';
-
-  @override
-  String get desktopFilterListNeverUpdated => 'Last update: never';
-
-  @override
-  String desktopFilterListUpdatedAt(String time) {
-    return 'Last update: $time';
-  }
-
-  @override
-  String get desktopFilterListRefreshOne => 'Update this list now';
-
-  @override
-  String get desktopFilterListDelete => 'Delete this list';
-
-  @override
-  String get desktopFilterListHealthOk => 'Synced';
-
-  @override
-  String get desktopFilterListHealthUnchanged => 'Unchanged';
-
-  @override
-  String get desktopFilterListHealthCached => 'Using cache';
-
-  @override
-  String get desktopFilterListHealthFailed => 'Update failed';
-
-  @override
-  String get desktopFilterListHealthOkBody =>
-      'The pull fetched new content and it is in effect';
-
-  @override
-  String get desktopFilterListHealthUnchangedBody =>
-      'The server answered 304; the local copy is still valid';
-
-  @override
-  String get desktopFilterListHealthCachedBody =>
-      'The pull failed and the last cached copy is still in use';
-
-  @override
-  String get desktopFilterListHealthFailedBody =>
-      'The pull failed and no cached copy is available';
-
-  @override
-  String get desktopFilterListAddTitle => 'Add a subscription list';
-
-  @override
-  String get desktopFilterListAddBody =>
-      'Enter a name, plus the subscription URL or the path of a local rule file.';
-
-  @override
-  String get desktopFilterListNameLabel => 'List name';
-
-  @override
-  String get desktopFilterListNameHint => 'e.g. General ad blocking';
-
-  @override
-  String get desktopFilterListUrlLabel => 'Subscription URL / file path';
-
-  @override
-  String get desktopFilterListUrlHint => 'https://… or a local file path';
-
-  @override
-  String get desktopFilterListAddConfirm => 'Add and download';
-
-  @override
-  String get desktopFilterListNeedUrl =>
-      'Enter a valid rule source URL or local file path';
-
-  @override
-  String get desktopFilterListsLoadFailed =>
-      'Could not read the subscription lists';
-
-  @override
-  String get desktopHubFilterRules => 'Custom rules';
-
-  @override
-  String get desktopHubFilterRulesBody =>
-      'Hand-written AdGuard-syntax rules, hot-reloaded the moment they are saved';
-
-  @override
-  String get desktopFilterRulesPageTitle => 'Custom rules';
-
-  @override
-  String get desktopFilterRulesRefresh => 'Reload the custom rules';
-
-  @override
-  String get desktopFilterRulesEditorTitle => 'Custom rule editor';
-
-  @override
-  String get desktopFilterRulesEditorBody =>
-      'Edit your own blocking and allow rules, one per line';
-
-  @override
-  String get desktopFilterRulesSave => 'Save rules';
-
-  @override
-  String get desktopFilterRulesSaving => 'Saving…';
-
-  @override
-  String get desktopFilterRulesSaved =>
-      'The custom rules were saved and are in effect';
-
-  @override
-  String desktopFilterRulesSaveFailed(String message) {
-    return 'Could not save the custom rules: $message';
-  }
-
-  @override
-  String get desktopFilterRulesLoadFailed => 'Could not read the custom rules';
-
-  @override
-  String get desktopFilterRulesPlaceholder =>
-      'Type your blocking or trust rules here, one per line…';
-
-  @override
-  String desktopFilterRulesLineCount(int count) {
-    return '$count rules';
-  }
-
-  @override
-  String get desktopFilterRulesHint =>
-      'One rule per line; a line starting with ! is a comment. Saving hot-reloads the engine.';
-
-  @override
-  String get desktopFilterGuideTitle => 'AdGuard syntax cheat sheet';
-
-  @override
-  String get desktopFilterGuideBody =>
-      'The formats used by mainstream ad-blocking and trust rules';
-
-  @override
-  String get desktopFilterGuideCommon => 'Common';
-
-  @override
-  String get desktopFilterGuideExempt => 'Exempt';
-
-  @override
-  String get desktopFilterGuideCompat => 'Legacy';
-
-  @override
-  String get desktopFilterGuidePriority => 'Priority';
-
-  @override
-  String get desktopFilterGuideRewrite => 'Rewrite';
-
-  @override
-  String get desktopFilterGuideDomainTitle =>
-      'Block a domain and its subdomains';
-
-  @override
-  String get desktopFilterGuideDomainBody =>
-      'Matches and blocks example.com and every subdomain such as ad.example.com.';
-
-  @override
-  String get desktopFilterGuideAllowTitle => 'Allowlist a trusted domain';
-
-  @override
-  String get desktopFilterGuideAllowBody =>
-      'Always resolves safe.com, even when another rule matches it.';
-
-  @override
-  String get desktopFilterGuideHostsTitle => 'Hosts file format';
-
-  @override
-  String get desktopFilterGuideHostsBody =>
-      'Compatible with the standard hosts-file way of blocking a name.';
-
-  @override
-  String get desktopFilterGuideImportantTitle => 'Force a block';
-
-  @override
-  String get desktopFilterGuideImportantBody =>
-      'Ignores every allow rule and blocks the name outright.';
-
-  @override
-  String get desktopFilterGuideRewriteTitle => 'Rewrite the answer';
-
-  @override
-  String get desktopFilterGuideRewriteBody =>
-      'Answers directly without asking upstream: IPv4/IPv6 addresses, a CNAME, explicit forms like NOERROR;A;1.2.3.4, and codes such as REFUSED / NXDOMAIN. Explicit forms also cover MX, SRV, NS, PTR, TXT, HTTPS and SVCB. A rewrite outranks every block and allow rule; @@||nas.lan^\$dnsrewrite removes all rewrites for that name.';
-
-  @override
-  String get desktopFilterGuideFooter =>
-      'One rule per line; a line starting with ! is a comment.';
-
-  @override
-  String get desktopHubFilterConfig => 'Blocking mode';
-
-  @override
-  String get desktopHubFilterConfigBody =>
-      'Answer mode, blocking addresses, refresh interval, temporary pause and advanced switches';
-
-  @override
-  String get desktopFilterConfigPageTitle => 'Blocking mode';
-
-  @override
-  String get desktopFilterConfigRefresh => 'Reload the blocking config';
-
-  @override
-  String get desktopFilterConfigLoadFailed =>
-      'Could not read the blocking config';
-
-  @override
-  String desktopFilterConfigSaveFailed(String message) {
-    return 'Could not save the blocking config: $message';
-  }
-
-  @override
-  String get desktopFilterEngineOnMessage => 'Rule blocking is on';
-
-  @override
-  String get desktopFilterEngineOffMessage => 'Rule blocking is off';
-
-  @override
-  String get desktopFilterModeTitle => 'How a blocked name is answered';
-
-  @override
-  String get desktopFilterModeBody =>
-      'The answer a client gets when a blocking rule matches';
-
-  @override
-  String get desktopFilterModeSave => 'Save policy and parameters';
-
-  @override
-  String get desktopFilterModeSaving => 'Saving…';
-
-  @override
-  String get desktopFilterModeSaved => 'The blocking policy was saved';
-
-  @override
-  String get desktopFilterModeParamsTitle =>
-      'List refresh and blocking addresses';
-
-  @override
-  String get desktopFilterModeParamsBody =>
-      'The address a blocked name is answered with, and how often the rule lists refresh';
-
-  @override
-  String get desktopFilterModeBlockingIPv4 => 'Blocking IPv4 address';
-
-  @override
-  String get desktopFilterModeBlockingIPv6 => 'Blocking IPv6 address';
-
-  @override
-  String get desktopFilterModeInterval => 'List refresh interval (hours)';
-
-  @override
-  String get desktopFilterModeIntervalHelper => '24 hours by default';
-
-  @override
-  String get desktopFilterModeInvalid =>
-      'The interval must be a positive whole number and neither address may be empty';
-
-  @override
-  String get desktopFilterModeNullIp =>
-      'Answer the null address (0.0.0.0 / ::)';
-
-  @override
-  String get desktopFilterModeNullIpBody =>
-      'Ends ad and popup loading instantly without making the browser retry.';
-
-  @override
-  String get desktopFilterModeNxdomain =>
-      'Say the name does not exist (NXDOMAIN)';
-
-  @override
-  String get desktopFilterModeNxdomainBody =>
-      'Tells the client the name is absent, so well-behaved software stops probing.';
-
-  @override
-  String get desktopFilterModeRefused => 'Refuse the request (REFUSED)';
-
-  @override
-  String get desktopFilterModeRefusedBody =>
-      'Returns a refusal code: the DNS firewall blocked the query on purpose.';
-
-  @override
-  String get desktopFilterAdvancedTitle => 'Advanced blocking';
-
-  @override
-  String get desktopFilterAdvancedBody =>
-      'Extra defences against bypass tricks; all off by default';
-
-  @override
-  String get desktopFilterAdvancedResponseTitle => 'Re-check the CNAME chain';
-
-  @override
-  String get desktopFilterAdvancedResponseBody =>
-      'Matches the CNAME targets and A/AAAA owner names in an upstream answer against the block lists again, catching a legal query whose alias points at a blocked domain; cached answers are re-checked too.';
-
-  @override
-  String get desktopFilterAdvancedResponseOn => 'CNAME chain re-checking is on';
-
-  @override
-  String get desktopFilterAdvancedResponseOff =>
-      'CNAME chain re-checking is off';
-
-  @override
-  String get desktopFilterAdvancedAllowlistTitle => 'Allowlist only';
-
-  @override
-  String get desktopFilterAdvancedAllowlistBody =>
-      'Only queries that hit an allow rule (@@ exception) pass; everything else is blocked. Local answers such as hosts, rewrites and internal zones are unaffected.';
-
-  @override
-  String get desktopFilterAdvancedAllowlistWarning =>
-      'Make sure the allowlist is complete first, or a large number of names will fail to resolve.';
-
-  @override
-  String get desktopFilterAdvancedAllowlistOn => 'Allowlist-only mode is on';
-
-  @override
-  String get desktopFilterAdvancedAllowlistOff => 'Allowlist-only mode is off';
-
-  @override
-  String get desktopFilterAdvancedBogusTitle => 'Correct bogus answers';
-
-  @override
-  String get desktopFilterAdvancedBogusBody =>
-      'Some networks answer a missing name with a fixed portal or ad address. When the answer falls inside the list below it is treated as an upstream hijack and rewritten to NXDOMAIN.';
-
-  @override
-  String get desktopFilterAdvancedBogusOn => 'Bogus-answer correction is on';
-
-  @override
-  String get desktopFilterAdvancedBogusOff => 'Bogus-answer correction is off';
-
-  @override
-  String get desktopFilterAdvancedBogusListLabel =>
-      'Hijack addresses (one per line; IP or CIDR)';
-
-  @override
-  String desktopFilterAdvancedBogusSuspicious(String entries) {
-    return 'These entries look malformed and will be ignored by the service if they cannot be parsed: $entries';
-  }
-
-  @override
-  String get desktopFilterAdvancedBogusPresets => 'Quick add:';
-
-  @override
-  String get desktopFilterAdvancedBogusReset => 'Undo changes';
-
-  @override
-  String get desktopFilterAdvancedBogusSave => 'Save the list';
-
-  @override
-  String desktopFilterAdvancedBogusSaved(int count) {
-    return '$count hijack addresses saved';
-  }
-
-  @override
-  String get desktopFilterAdvancedBogusCleared =>
-      'The hijack address list was cleared';
-
-  @override
-  String get desktopFilterPauseBody =>
-      'Lets every query through for the chosen duration, then resumes on its own (a service restart also resumes).';
-
-  @override
-  String get desktopFilterPauseDuration => 'Pause duration';
-
-  @override
-  String get desktopFilterPauseAction => 'Pause';
-
-  @override
-  String get desktopFilterPauseResume => 'Resume now';
-
-  @override
-  String get desktopFilterPauseStarted => 'Blocking is paused';
-
-  @override
-  String get desktopFilterPauseResumed => 'Blocking resumed';
-
-  @override
-  String get desktopFilterPauseActiveTitle => 'Blocking is paused';
-
-  @override
-  String desktopFilterPauseActiveBody(String remaining) {
-    return 'Resumes automatically in $remaining';
-  }
-
-  @override
-  String desktopFilterPauseMinutesOnly(int minutes) {
-    return '$minutes min';
-  }
-
-  @override
-  String get desktopFilterPauseOneHour => '1 hour';
-
-  @override
-  String get desktopFilterPauseEightHours => '8 hours';
-
-  @override
-  String get desktopHubFilterSchedule => 'Time plan';
-
-  @override
-  String get desktopHubFilterScheduleBody =>
-      'Block only inside the chosen windows and let everything through otherwise';
-
-  @override
-  String get desktopSchedulePageTitle => 'Time plan';
-
-  @override
-  String get desktopScheduleRefresh => 'Reload the time plan';
-
-  @override
-  String get desktopScheduleLoadFailed => 'Could not read the time plan';
-
-  @override
-  String get desktopScheduleTitle => 'Scheduled blocking';
-
-  @override
-  String get desktopScheduleBody =>
-      'Blocks only inside the chosen windows and lets everything through the rest of the time';
-
-  @override
-  String get desktopScheduleBadgeOff => 'Off · blocking always on';
-
-  @override
-  String get desktopScheduleBadgeActive => 'Blocking is active';
-
-  @override
-  String get desktopScheduleBadgePaused => 'Outside the windows · all allowed';
-
-  @override
-  String get desktopScheduleEnable => 'Enable scheduled blocking';
-
-  @override
-  String get desktopScheduleEnableBody =>
-      'Off means blocking always applies; on means it only applies inside the windows below.';
-
-  @override
-  String get desktopScheduleNoEnabled =>
-      'No window is enabled, so blocking stays on all the time. Enable at least one window to limit it.';
-
-  @override
-  String get desktopScheduleSave => 'Save plan';
-
-  @override
-  String get desktopScheduleSaving => 'Saving…';
-
-  @override
-  String get desktopScheduleSaved => 'The time plan was saved and is in effect';
-
-  @override
-  String desktopScheduleSaveFailed(String message) {
-    return 'Could not save the time plan: $message';
-  }
-
-  @override
-  String get desktopScheduleAdd => 'Add a window';
-
-  @override
-  String get desktopScheduleName => 'Window name';
-
-  @override
-  String get desktopScheduleEnabled => 'Enable this window';
-
-  @override
-  String get desktopScheduleStart => 'Starts at';
-
-  @override
-  String get desktopScheduleEnd => 'Ends at';
-
-  @override
-  String get desktopScheduleEndHelper =>
-      'Earlier than the start means overnight';
-
-  @override
-  String get desktopScheduleWeekdays => 'Days';
-
-  @override
-  String get desktopScheduleEveryDay => 'Every day';
-
-  @override
-  String get desktopScheduleDelete => 'Delete this window';
-
-  @override
-  String get desktopScheduleDeleteTitle => 'Delete the window';
-
-  @override
-  String get desktopScheduleDeleteBody =>
-      'Delete this window? It stops applying after the next save.';
-
-  @override
-  String get desktopScheduleDeleteConfirm => 'Delete';
-
-  @override
-  String get desktopWeekdayMon => 'Mo';
-
-  @override
-  String get desktopWeekdayTue => 'Tu';
-
-  @override
-  String get desktopWeekdayWed => 'We';
-
-  @override
-  String get desktopWeekdayThu => 'Th';
-
-  @override
-  String get desktopWeekdayFri => 'Fr';
-
-  @override
-  String get desktopWeekdaySat => 'Sa';
-
-  @override
-  String get desktopWeekdaySun => 'Su';
-
-  @override
-  String get desktopHubFilterServices => 'App blocking';
-
-  @override
-  String get desktopHubFilterServicesBody =>
-      'Built-in app and site rules, blocked by group, with optional weekly windows';
-
-  @override
-  String get desktopServicesPageTitle => 'App blocking';
-
-  @override
-  String get desktopServicesRefresh => 'Reload the app blocking state';
-
-  @override
-  String get desktopServicesLoadFailed =>
-      'Could not read the built-in service catalogue';
-
-  @override
-  String get desktopServicesGroupsTitle => 'Whole-group blocking';
-
-  @override
-  String get desktopServicesGroupsBody =>
-      'Turn a whole group of apps and sites on or off in one tap';
-
-  @override
-  String get desktopServicesTitle => 'App and site blocking';
-
-  @override
-  String get desktopServicesBody =>
-      'Blocks common apps and sites with rules built into the app, no download needed; combines with subscription and custom rules.';
-
-  @override
-  String desktopServicesCount(int blocked, int total) {
-    return '$blocked / $total blocked';
-  }
-
-  @override
-  String get desktopServicesClearAll => 'Clear all';
-
-  @override
-  String get desktopServicesCleared => 'Every app block was cleared';
-
-  @override
-  String get desktopServicesSearchHint => 'Search a name, domain or rule…';
-
-  @override
-  String get desktopServicesGroupFilter => 'Group filter';
-
-  @override
-  String get desktopServicesAllGroups => 'All groups';
-
-  @override
-  String desktopServicesGroupItem(String name, int count) {
-    return '$name ($count)';
-  }
-
-  @override
-  String desktopServicesGroupChip(String name, int count) {
-    return '$name · $count';
-  }
-
-  @override
-  String desktopServicesActiveRules(int count) {
-    return '$count rules in effect';
-  }
-
-  @override
-  String get desktopServicesEmpty => 'The built-in catalogue is empty';
-
-  @override
-  String get desktopServicesNoMatch => 'No service matches the filter';
-
-  @override
-  String desktopServicesBlocked(String name) {
-    return 'Blocked $name';
-  }
-
-  @override
-  String desktopServicesUnblocked(String name) {
-    return 'Unblocked $name';
-  }
-
-  @override
-  String desktopServicesActionFailed(String message) {
-    return 'The action failed: $message';
-  }
-
-  @override
-  String desktopServicesGroupOn(String name) {
-    return 'Blocked the whole group $name';
-  }
-
-  @override
-  String desktopServicesGroupOff(String name) {
-    return 'Unblocked the whole group $name';
-  }
-
-  @override
-  String get desktopServicesByGroup => 'By group';
-
-  @override
-  String get desktopServicesScheduleInside => 'In window';
-
-  @override
-  String get desktopServicesScheduleOutside => 'Outside window';
-
-  @override
-  String desktopServicesRuleCount(String group, int count) {
-    return '$group · $count rules';
-  }
-
-  @override
-  String get desktopServicesScheduleEdit => 'Edit the weekly plan';
-
-  @override
-  String get desktopServicesShowRules => 'Show or hide the rules';
-
-  @override
-  String desktopServicesScheduleTitle(String name) {
-    return 'Weekly plan for $name';
-  }
-
-  @override
-  String get desktopServicesScheduleBody =>
-      'Blocks this app only inside the matching windows and lets it through the rest of the time. No window means always blocked; to lift the limit for a while, unblocking the service is clearer than clearing the plan.';
-
-  @override
-  String get desktopServicesScheduleSave => 'Save plan';
-
-  @override
-  String desktopServicesScheduleSaved(String name) {
-    return 'The weekly plan for “$name” was saved';
-  }
-
-  @override
-  String desktopServicesScheduleRemoved(String name) {
-    return '“$name” is blocked all the time again';
-  }
-
-  @override
-  String get desktopHubPrivacy => 'Privacy';
-
-  @override
-  String get desktopHubPrivacyBody =>
-      'Protocol hardening, ECS subnet privacy and the built-in rebinding / hosts defences';
-
-  @override
-  String get desktopPrivacyPageTitle => 'Security and privacy';
-
-  @override
-  String get desktopPrivacyRefresh => 'Reload the privacy config';
-
-  @override
-  String get desktopPrivacyLoadFailed => 'Could not read the privacy config';
-
-  @override
-  String desktopPrivacySaveFailed(String message) {
-    return 'Could not save: $message';
-  }
-
-  @override
-  String get desktopPrivacyProtocolTitle => 'Protocol privacy and leak defence';
-
-  @override
-  String get desktopPrivacyProtocolBody =>
-      'Stops private PTR and single-label leaks, and blocks ECH bypasses and packet-length side channels';
-
-  @override
-  String get desktopPrivacyBlockTitle => 'Record-type blocking';
-
-  @override
-  String get desktopPrivacyBlockBody =>
-      'How ECH, ANY and IPv6 lookups are handled, kept apart from protocol hardening';
-
-  @override
-  String get desktopPrivacyEdeTitle => 'Extended DNS Errors (EDE)';
-
-  @override
-  String get desktopPrivacyEdeBody =>
-      'Returns RFC 8914 extended error codes and reasons in the OPT record (policy block, rate limit, rebind block or upstream failure).';
-
-  @override
-  String get desktopPrivacyEdeOn => 'EDE diagnostics are on';
-
-  @override
-  String get desktopPrivacyEdeOff => 'EDE diagnostics are off';
-
-  @override
-  String get desktopPrivacyPtrTitle => 'Private reverse PTR leak defence';
-
-  @override
-  String get desktopPrivacyPtrBody =>
-      'Keeps private LAN addresses\' reverse lookups away from public upstreams; an unbound private PTR answers an authoritative NXDOMAIN.';
-
-  @override
-  String get desktopPrivacyPtrOn => 'Private PTR leak defence is on';
-
-  @override
-  String get desktopPrivacyPtrOff => 'Private PTR leak defence is off';
-
-  @override
-  String get desktopPrivacyUnqualifiedTitle => 'Block single-label name leaks';
-
-  @override
-  String get desktopPrivacyUnqualifiedBody =>
-      'Blocks internal single-label lookups without a dot (router, printer) so a typo or missing search domain cannot leak host names to a public resolver.';
-
-  @override
-  String get desktopPrivacyUnqualifiedOn => 'Single-label leak defence is on';
-
-  @override
-  String get desktopPrivacyUnqualifiedOff => 'Single-label leak defence is off';
-
-  @override
-  String get desktopPrivacyEchTitle => 'Strip ECH (encrypted ClientHello)';
-
-  @override
-  String get desktopPrivacyEchBody =>
-      'Removes the ech parameter from upstream HTTPS / SVCB records so a client cannot hide the real name behind TLS 1.3 ECH and bypass local auditing.';
-
-  @override
-  String get desktopPrivacyEchOn => 'ECH stripping is on';
-
-  @override
-  String get desktopPrivacyEchOff => 'ECH stripping is off';
-
-  @override
-  String get desktopPrivacyAnyTitle => 'Minimise ANY queries';
-
-  @override
-  String get desktopPrivacyAnyBody =>
-      'ANY is a favourite of DNS amplification and defeats per-type blocking; with this on the host stops forwarding ANY and answers minimally instead.';
-
-  @override
-  String get desktopPrivacyAnyOn => 'ANY minimisation is on';
-
-  @override
-  String get desktopPrivacyAnyOff => 'ANY minimisation is off';
-
-  @override
-  String get desktopPrivacyAnyModeLabel => 'Answer shape';
-
-  @override
-  String get desktopPrivacyAnyModeNotimp => 'NOTIMP (recommended)';
-
-  @override
-  String get desktopPrivacyAnyModeNotimpBody =>
-      'Says the query is not supported, so a client cannot mistake it for a real answer.';
-
-  @override
-  String get desktopPrivacyAnyModeRfc => 'RFC 8482 minimal answer';
-
-  @override
-  String get desktopPrivacyAnyModeRfcBody =>
-      'Answers NOERROR with one HINFO(\"RFC8482\"); more precise, but the client has to understand the convention.';
-
-  @override
-  String get desktopPrivacyAnyModeSaved => 'The ANY answer shape was saved';
-
-  @override
-  String get desktopPrivacyIpv6Title => 'Filter IPv6 (AAAA) queries';
-
-  @override
-  String get desktopPrivacyIpv6Body =>
-      'Answers every AAAA query with an authoritative NODATA and drops ipv6hint from HTTPS answers, removing dual-stack retry stalls on a weak IPv6 network.';
-
-  @override
-  String get desktopPrivacyIpv6On => 'IPv6 filtering is on';
-
-  @override
-  String get desktopPrivacyIpv6Off => 'IPv6 filtering is off';
-
-  @override
-  String get desktopPrivacyPaddingTitle => 'EDNS0 padding size';
-
-  @override
-  String get desktopPrivacyPaddingBody =>
-      'Pads encrypted DNS to a fixed block to defeat packet-length fingerprinting.';
-
-  @override
-  String desktopPrivacyPaddingValue(int size) {
-    return '$size bytes';
-  }
-
-  @override
-  String get desktopPrivacyPaddingSaved => 'The EDNS0 padding size was saved';
-
-  @override
-  String get desktopPrivacyEcsTitle => 'EDNS Client Subnet (ECS policy)';
-
-  @override
-  String get desktopPrivacyEcsBody =>
-      'ECS carries the client\'s subnet to the recursive resolver for better CDN routing, but unhandled ECS leaks a home or office subnet upstream.';
-
-  @override
-  String get desktopPrivacyEcsOn => 'ECS policy is active';
-
-  @override
-  String get desktopPrivacyEcsOff => 'Policy is off';
-
-  @override
-  String get desktopPrivacyEcsOnMessage => 'The ECS policy is on';
-
-  @override
-  String get desktopPrivacyEcsOffMessage => 'The ECS policy is off';
-
-  @override
-  String get desktopPrivacyEcsStripTitle => 'Strip the real client subnet';
-
-  @override
-  String get desktopPrivacyEcsStripBody =>
-      'Removes the client\'s real egress subnet from forwarded queries, protecting every device behind this resolver.';
-
-  @override
-  String get desktopPrivacyEcsStripOn => 'Client subnet stripping is on';
-
-  @override
-  String get desktopPrivacyEcsStripOff => 'Client subnet stripping is off';
-
-  @override
-  String get desktopPrivacyEcsSubnetLabel => 'Custom subnet (CIDR)';
-
-  @override
-  String get desktopPrivacyEcsSubnetHelper =>
-      'Optional. A public egress subnet keeps CDN routing good; leave empty to stay fully private.';
-
-  @override
-  String get desktopPrivacyEcsSave => 'Save the ECS policy';
-
-  @override
-  String get desktopPrivacyEcsSaved => 'The ECS policy was updated';
-
-  @override
-  String get desktopPrivacyDefenceTitle => 'Built-in defences';
-
-  @override
-  String get desktopPrivacyDefenceBody =>
-      'Rebinding protection and the local hosts resolver';
-
-  @override
-  String get desktopPrivacyRebindTitle => 'DNS rebinding protection';
-
-  @override
-  String get desktopPrivacyRebindBody =>
-      'Stops public names from resolving to private addresses, so a rebinding attack cannot reach LAN devices.';
-
-  @override
-  String get desktopPrivacyRebindOn => 'DNS rebinding protection is on';
-
-  @override
-  String get desktopPrivacyRebindOff => 'DNS rebinding protection is off';
-
-  @override
-  String desktopPrivacyRebindCount(int count) {
-    return '$count allowlisted domains';
-  }
-
-  @override
-  String get desktopPrivacyRebindAllowlist => 'Allowlist';
-
-  @override
-  String get desktopPrivacyRebindDialogTitle => 'Rebinding allowlist';
-
-  @override
-  String get desktopPrivacyRebindDialogBody =>
-      'Names here may resolve to private addresses (192.168.x.x, 10.x.x.x, 127.0.0.1); a leading dot matches a suffix (.lan, .local). One per line.';
-
-  @override
-  String get desktopPrivacyRebindDialogSave => 'Save the allowlist';
-
-  @override
-  String get desktopPrivacyRebindSaved => 'The rebinding allowlist was saved';
-
-  @override
-  String get desktopPrivacyHostsTitle => 'Local hosts resolver';
-
-  @override
-  String get desktopPrivacyHostsBody =>
-      'System and custom hosts entries answer first, without asking upstream.';
-
-  @override
-  String get desktopPrivacyHostsOn => 'The local hosts resolver is on';
-
-  @override
-  String get desktopPrivacyHostsOff => 'The local hosts resolver is off';
-
-  @override
-  String get desktopPrivacyHostsSystem => 'Follow the system hosts file';
-
-  @override
-  String desktopPrivacyHostsTtl(int seconds) {
-    return 'TTL ${seconds}s';
-  }
-
-  @override
-  String get desktopPrivacyHostsSystemOn =>
-      'Now following the system hosts file';
-
-  @override
-  String get desktopPrivacyHostsSystemOff =>
-      'No longer following the system hosts file';
-
-  @override
-  String get desktopHubPrivacySection => 'Privacy and encryption';
-
-  @override
-  String get desktopHubShareSection => 'Network sharing';
-
-  @override
-  String get desktopSafeSearchTitle => 'Forced safe search';
-
-  @override
-  String get desktopSafeSearchBody =>
-      'Rewrites the big search engines to their filtered endpoints, so safe search cannot be switched off at the DNS layer. Off by default.';
-
-  @override
-  String desktopSafeSearchEnabled(int count) {
-    return 'Active · $count providers';
-  }
-
-  @override
-  String get desktopSafeSearchOff => 'Off';
-
-  @override
-  String get desktopSafeSearchOn => 'Forced safe search is on';
-
-  @override
-  String get desktopSafeSearchOffMessage => 'Forced safe search is off';
-
-  @override
-  String get desktopSafeSearchServiceSaved =>
-      'The provider selection was updated';
-
-  @override
-  String get desktopSafeSearchTtl => 'Rewrite TTL (s)';
-
-  @override
-  String get desktopSafeSearchTtlSave => 'Save';
-
-  @override
-  String get desktopSafeSearchTtlSaved => 'The safe search TTL was saved';
-
-  @override
-  String get desktopSafeSearchTtlInvalid =>
-      'The TTL must be a positive whole number';
-
-  @override
-  String get desktopSafeSearchFooter =>
-      'An unchecked provider is resolved normally.';
-
-  @override
-  String get desktopSafeSearchTtlCardTitle => 'Safe-search rewrite lifetime';
-
-  @override
-  String get desktopSafeSearchTtlCardBody =>
-      'How long a forced safe-search rewrite is kept locally before the service asks upstream again.';
-
-  @override
-  String desktopSafeSearchTtlChip(int seconds) {
-    return '${seconds}s';
-  }
-
-  @override
-  String get desktopSafeSearchBing => 'Bing';
-
-  @override
-  String get desktopSafeSearchDuckDuckGo => 'DuckDuckGo';
-
-  @override
-  String get desktopSafeSearchEcosia => 'Ecosia';
-
-  @override
-  String get desktopSafeSearchGoogle => 'Google';
-
-  @override
-  String get desktopSafeSearchPixabay => 'Pixabay';
-
-  @override
-  String get desktopSafeSearchYandex => 'Yandex';
-
-  @override
-  String get desktopSafeSearchYoutube => 'YouTube';
-
-  @override
-  String get desktopReputationTitle => 'Malicious-site lookups (Safe Browsing)';
-
-  @override
-  String get desktopReputationOn => 'Looking up';
-
-  @override
-  String get desktopReputationOff => 'Off';
-
-  @override
-  String get desktopReputationOnMessage => 'Malicious-site lookups are on';
-
-  @override
-  String get desktopReputationOffMessage => 'Malicious-site lookups are off';
-
-  @override
-  String get desktopReputationBody =>
-      'Only the first 2 bytes of a name\'s SHA-256 leave the machine; the third party answers the matching full digests and the comparison happens locally. A failed lookup always lets the name through.';
-
-  @override
-  String get desktopReputationLookups => 'Lookups';
-
-  @override
-  String get desktopReputationBlocked => 'Blocked';
-
-  @override
-  String get desktopReputationHitRate => 'Cache hit rate';
-
-  @override
-  String get desktopReputationFailures => 'Failures';
-
-  @override
-  String get desktopReputationAnswer => 'Answer';
-
-  @override
-  String get desktopReputationAnswerNullIp => 'Null address';
-
-  @override
-  String get desktopReputationTimeout => 'Lookup timeout (ms)';
-
-  @override
-  String get desktopReputationCacheSize => 'Cache entries';
-
-  @override
-  String get desktopReputationCacheTtl => 'Cache lifetime (s)';
-
-  @override
-  String get desktopReputationParamsTitle => 'Lookup parameters';
-
-  @override
-  String get desktopReputationParamsInvalid =>
-      'The timeout and cache lifetime must be positive and the entry count cannot be negative';
-
-  @override
-  String get desktopReputationParamsSave => 'Save query parameters';
-
-  @override
-  String get desktopReputationParamsSaved => 'The query parameters were saved';
-
-  @override
-  String get desktopReputationFooter =>
-      'The cache is keyed by the 2-byte prefix, so names under one prefix share a single lookup.';
-
-  @override
-  String get desktopParentalTitle => 'Parental control';
-
-  @override
-  String get desktopParentalBody =>
-      'Same mechanism as malicious-site lookups, using a third-party category list to block adult domains; the two switches are independent.';
-
-  @override
-  String get desktopParentalWarning =>
-      'Malicious-site lookups are off. They are independent, but phishing and malware sites are not part of the parental categories.';
-
-  @override
-  String get desktopParentalOn => 'Parental control is on';
-
-  @override
-  String get desktopParentalOff => 'Parental control is off';
-
-  @override
-  String get desktopHubEncrypted => 'Encrypted DNS';
-
-  @override
-  String get desktopHubEncryptedBody =>
-      'Serve DoT / DoH to the LAN, with a certificate and DDR';
-
-  @override
-  String get desktopEncryptedPageTitle => 'Encrypted DNS server';
-
-  @override
-  String get desktopEncryptedRefresh => 'Reload the encrypted DNS status';
-
-  @override
-  String get desktopEncryptedLoadFailed =>
-      'Could not read the encrypted DNS status';
-
-  @override
-  String desktopEncryptedSaveFailed(String message) {
-    return 'The action failed: $message';
-  }
-
-  @override
-  String get desktopEncryptedListenersTitle => 'Encrypted DNS server';
-
-  @override
-  String get desktopEncryptedListenersBody =>
-      'Serves DoT / DoH on the LAN so clients never query in cleartext';
-
-  @override
-  String get desktopEncryptedEnabled => 'Enabled';
-
-  @override
-  String get desktopEncryptedDisabled => 'Off';
-
-  @override
-  String get desktopEncryptedOn => 'The encrypted DNS server is on';
-
-  @override
-  String get desktopEncryptedOff => 'The encrypted DNS server is off';
-
-  @override
-  String get desktopEncryptedNoProtocol =>
-      'The server is on but neither protocol is selected, so nothing is listening.';
-
-  @override
-  String get desktopEncryptedDot => 'DoT · DNS over TLS';
-
-  @override
-  String desktopEncryptedDotBody(int port) {
-    return 'Port $port; clients connect with tls://';
-  }
-
-  @override
-  String get desktopEncryptedDoh => 'DoH · DNS over HTTPS';
-
-  @override
-  String desktopEncryptedDohBody(int port, String path) {
-    return 'Port $port, path $path';
-  }
-
-  @override
-  String desktopEncryptedListening(String address) {
-    return 'Listening on $address';
-  }
-
-  @override
-  String get desktopEncryptedNotListening =>
-      'Not listening (service stopped, certificate unusable or port taken)';
-
-  @override
-  String get desktopEncryptedDotOn => 'DoT is on';
-
-  @override
-  String get desktopEncryptedDotOff => 'DoT is off';
-
-  @override
-  String get desktopEncryptedDohOn => 'DoH is on';
-
-  @override
-  String get desktopEncryptedDohOff => 'DoH is off';
-
-  @override
-  String get desktopEncryptedUrls => 'A client can use any of these addresses:';
-
-  @override
-  String get desktopEncryptedNetworkTitle => 'Listener parameters';
-
-  @override
-  String get desktopEncryptedListenAddress => 'Listen address';
-
-  @override
-  String get desktopEncryptedListenHint => 'Empty means every interface';
-
-  @override
-  String get desktopEncryptedServerName => 'Server name (for clients)';
-
-  @override
-  String get desktopEncryptedDotPort => 'DoT port';
-
-  @override
-  String get desktopEncryptedDohPort => 'DoH port';
-
-  @override
-  String get desktopEncryptedDohPath => 'DoH path';
-
-  @override
-  String get desktopEncryptedServerNameHint =>
-      'The server name goes into the certificate SAN; clients connecting by it will not see a name error.';
-
-  @override
-  String get desktopEncryptedPortInvalid =>
-      'A port must be a whole number from 1 to 65535';
-
-  @override
-  String get desktopEncryptedReset => 'Reset to defaults';
-
-  @override
-  String get desktopEncryptedSaveNetwork => 'Save';
-
-  @override
-  String get desktopEncryptedNetworkSaved =>
-      'The listener parameters were saved';
-
-  @override
-  String get desktopEncryptedCertTitle => 'Server certificate';
-
-  @override
-  String get desktopEncryptedCertBody =>
-      'A summary of the TLS certificate; the private key never leaves this machine';
-
-  @override
-  String get desktopEncryptedCertSelfSigned => 'Self-signed';
-
-  @override
-  String get desktopEncryptedCertLoaded => 'Loaded';
-
-  @override
-  String get desktopEncryptedCertMissing => 'Not loaded';
-
-  @override
-  String get desktopEncryptedCertExpired =>
-      'The certificate has expired: every client TLS handshake will fail. Re-issue or import a valid one now.';
-
-  @override
-  String get desktopEncryptedCertExpiresSoon =>
-      'The self-signed certificate expires within 30 days; every encrypted query will then fail its handshake. Re-issue it soon.';
-
-  @override
-  String get desktopEncryptedCertMissingBody =>
-      'No usable certificate is configured, so the encrypted listeners cannot start.';
-
-  @override
-  String get desktopEncryptedCertSubject => 'Subject';
-
-  @override
-  String get desktopEncryptedCertIssuer => 'Issuer';
-
-  @override
-  String get desktopEncryptedCertNotAfter => 'Valid until';
-
-  @override
-  String get desktopEncryptedCertDays => 'Days left';
-
-  @override
-  String desktopEncryptedCertDaysValue(int days) {
-    return '$days days';
-  }
-
-  @override
-  String get desktopEncryptedCertDns => 'DNS names';
-
-  @override
-  String get desktopEncryptedCertIps => 'IP addresses';
-
-  @override
-  String desktopEncryptedCertFingerprint(String fingerprint) {
-    return 'SHA-256: $fingerprint';
-  }
-
-  @override
-  String desktopEncryptedCertDir(String dir) {
-    return 'Certificate directory: $dir';
-  }
-
-  @override
-  String get desktopEncryptedCertGenerate => 'Re-issue';
-
-  @override
-  String get desktopEncryptedCertImport => 'Import PEM';
-
-  @override
-  String get desktopEncryptedCertGenerated => 'The certificate was generated';
-
-  @override
-  String get desktopEncryptedCertImported => 'The certificate was imported';
-
-  @override
-  String get desktopEncryptedCertGenerateTitle =>
-      'Generate a self-signed certificate';
-
-  @override
-  String get desktopEncryptedCertGenerateBody =>
-      'This replaces the current certificate: every client that trusted the old one will stop working.';
-
-  @override
-  String get desktopEncryptedCertKeyType => 'Key type';
-
-  @override
-  String get desktopEncryptedCertCommonName => 'Common name (CN)';
-
-  @override
-  String get desktopEncryptedCertDnsNames => 'SAN DNS names (one per line)';
-
-  @override
-  String get desktopEncryptedCertIpAddresses => 'SAN IPs (one per line)';
-
-  @override
-  String get desktopEncryptedCertValidDays => 'Valid for (days)';
-
-  @override
-  String get desktopEncryptedCertGenerateConfirm => 'Generate';
-
-  @override
-  String get desktopEncryptedCertImportTitle => 'Import a PEM certificate';
-
-  @override
-  String get desktopEncryptedCertImportBody =>
-      'Paste the certificate chain and the private key; the two must match.';
-
-  @override
-  String get desktopEncryptedCertPem => 'Certificate chain PEM';
-
-  @override
-  String get desktopEncryptedKeyPem => 'Private key PEM';
-
-  @override
-  String get desktopEncryptedCertImportConfirm => 'Import';
-
-  @override
-  String get desktopEncryptedCertImportInvalid =>
-      'Both the certificate and the key are required';
-
-  @override
-  String get desktopEncryptedExtrasTitle => 'Discovery and proxy';
-
-  @override
-  String get desktopEncryptedExtrasBody =>
-      'Client auto-discovery, reverse-proxy trust and the mobile profile';
-
-  @override
-  String get desktopEncryptedDdrTitle =>
-      'Discovery of designated resolver (DDR)';
-
-  @override
-  String get desktopEncryptedDdrBody =>
-      'Answers _dns.resolver.arpa probes so clients find this encrypted resolver on their own.';
-
-  @override
-  String get desktopEncryptedDdrSelfSignedWarning =>
-      'The certificate is self-signed: a client that does not already trust it loses DNS entirely when DDR is on.';
-
-  @override
-  String get desktopEncryptedDdrConfirmTitle => 'Turn DDR on?';
-
-  @override
-  String get desktopEncryptedDdrConfirmBody =>
-      'DDR makes clients switch their resolver automatically; if the certificate is not trusted, that means no DNS at all.';
-
-  @override
-  String get desktopEncryptedDdrConfirm => 'Turn it on anyway';
-
-  @override
-  String get desktopEncryptedDdrOn => 'DDR is on';
-
-  @override
-  String get desktopEncryptedDdrOff => 'DDR is off';
-
-  @override
-  String get desktopEncryptedProxyTitle => 'Reverse-proxy pass-through';
-
-  @override
-  String get desktopEncryptedProxyBody =>
-      'Only enable this when DoH really sits behind a proxy you control; forwarded headers are trusted once it is on.';
-
-  @override
-  String get desktopEncryptedProxyUnrestricted =>
-      'A trusted source is 0.0.0.0/0 or ::/0: anyone can forge the source address.';
-
-  @override
-  String get desktopEncryptedProxyOn => 'Reverse-proxy pass-through is on';
-
-  @override
-  String get desktopEncryptedProxyOff => 'Reverse-proxy pass-through is off';
-
-  @override
-  String get desktopEncryptedProxySources =>
-      'Trusted proxy sources (one IP or CIDR per line)';
-
-  @override
-  String get desktopEncryptedProxyHeader =>
-      'Custom forwarding header (empty tries X-Forwarded-For then X-Real-IP)';
-
-  @override
-  String get desktopEncryptedProxySave => 'Save the proxy config';
-
-  @override
-  String get desktopEncryptedProxySaved => 'The reverse-proxy config was saved';
-
-  @override
-  String get desktopEncryptedMobileConfigTitle =>
-      'Mobile configuration profile';
-
-  @override
-  String get desktopEncryptedMobileConfigBody =>
-      'Opening this link on a device installs a profile that points it at this encrypted resolver.';
-
-  @override
-  String get desktopEncryptedMobileConfigOpen => 'Open the profile';
-
-  @override
-  String get desktopEncryptedOpenUrl => 'Open in browser';
-
-  @override
-  String get desktopTrafficPageTitle => 'Devices and clients';
-
-  @override
-  String get desktopTrafficRefresh => 'Reload devices and access control';
-
-  @override
-  String get desktopTrafficLoadFailed =>
-      'Could not read the devices and access control';
-
-  @override
-  String desktopTrafficSaveFailed(String message) {
-    return 'The action failed: $message';
-  }
-
-  @override
-  String get desktopTrafficClientsTitle => 'Recognised LAN clients';
-
-  @override
-  String get desktopTrafficClientsBody =>
-      'Devices that queried, identified by rDNS or a custom alias';
-
-  @override
-  String desktopTrafficClientCount(int count) {
-    return '$count active devices';
-  }
-
-  @override
-  String get desktopTrafficClientsEmpty =>
-      'No device has queried from the LAN or outside yet.';
-
-  @override
-  String get desktopTrafficClientUnnamed => 'Not set (unknown device)';
-
-  @override
-  String desktopTrafficClientQueries(int count) {
-    return '$count queries';
-  }
-
-  @override
-  String get desktopTrafficClientNever => 'Last seen: never';
-
-  @override
-  String desktopTrafficClientLastSeen(String time) {
-    return 'Last seen $time';
-  }
-
-  @override
-  String get desktopTrafficStateBlocked => 'Blocked';
-
-  @override
-  String get desktopTrafficStateAllowed => 'Allowlisted';
-
-  @override
-  String get desktopTrafficStateNotAllowed => 'Not allowlisted';
-
-  @override
-  String get desktopTrafficStateOpen => 'Allowed';
-
-  @override
-  String get desktopTrafficAlias => 'Alias';
-
-  @override
-  String get desktopTrafficAliasTitle => 'Set the client\'s device alias';
-
-  @override
-  String get desktopTrafficAliasField => 'Friendly device name';
-
-  @override
-  String get desktopTrafficAliasHint => 'e.g. living-room TV, work laptop, NAS';
-
-  @override
-  String get desktopTrafficAliasBody =>
-      'Saving an empty name clears the alias.';
-
-  @override
-  String get desktopTrafficAliasSave => 'Save alias';
-
-  @override
-  String desktopTrafficAliasSaved(String ip) {
-    return 'The alias for [$ip] was updated';
-  }
-
-  @override
-  String desktopTrafficAliasCleared(String ip) {
-    return 'The alias for [$ip] was cleared';
-  }
-
-  @override
-  String get desktopTrafficAllowedAdd => 'Allowlist';
-
-  @override
-  String get desktopTrafficAllowedRemove => 'Allowlisted';
-
-  @override
-  String desktopTrafficAllowedAdded(String ip) {
-    return '[$ip] was added to the allowlist';
-  }
-
-  @override
-  String desktopTrafficAllowedRemoved(String ip) {
-    return '[$ip] was removed from the allowlist';
-  }
-
-  @override
-  String get desktopTrafficBlockedAdd => 'Block';
-
-  @override
-  String get desktopTrafficBlockedRemove => 'Blocked';
-
-  @override
-  String desktopTrafficBlockedAdded(String ip) {
-    return '[$ip] was added to the blocklist';
-  }
-
-  @override
-  String desktopTrafficBlockedRemoved(String ip) {
-    return '[$ip] was removed from the blocklist';
-  }
-
-  @override
-  String get desktopTrafficAccessTitle => 'Client access control (ACL)';
-
-  @override
-  String get desktopTrafficAccessBody =>
-      'Restricts which client IPs or CIDR ranges may resolve';
-
-  @override
-  String get desktopTrafficAccessOpen => 'Unrestricted';
-
-  @override
-  String get desktopTrafficAccessAllowOnly => 'Allowlist only';
-
-  @override
-  String get desktopTrafficAccessAllowed => 'Allowlist';
-
-  @override
-  String get desktopTrafficAccessAllowedHint =>
-      'e.g. 192.168.1.0/24 or 192.168.1.50';
-
-  @override
-  String get desktopTrafficAccessAllowedBody =>
-      'When set, only listed clients may resolve; empty means no restriction. One IP or CIDR per line.';
-
-  @override
-  String get desktopTrafficAccessBlocked => 'Explicit blocklist';
-
-  @override
-  String get desktopTrafficAccessBlockedHint =>
-      'e.g. 192.168.1.199 or 10.0.0.0/8';
-
-  @override
-  String get desktopTrafficAccessBlockedBody =>
-      'Clients matching this list have their queries refused outright. One IP or CIDR per line.';
-
-  @override
-  String get desktopTrafficAccessSave => 'Save lists';
-
-  @override
-  String get desktopTrafficAccessReset => 'Discard changes';
-
-  @override
-  String get desktopTrafficAccessSaved => 'The client lists were saved';
-
-  @override
-  String get desktopTrafficRateLimitTitle => 'Client rate limit';
-
-  @override
-  String get desktopTrafficRateLimitBody =>
-      'Token-bucket limiting against LAN DoS floods and DNS amplification';
-
-  @override
-  String get desktopTrafficRateLimitOn => 'Limiting';
-
-  @override
-  String get desktopTrafficRateLimitOff => 'Off';
-
-  @override
-  String get desktopTrafficRateLimitSavedOn => 'Rate limiting is on';
-
-  @override
-  String get desktopTrafficRateLimitSavedOff => 'Rate limiting is off';
-
-  @override
-  String get desktopTrafficRate => 'Rate (tokens/s)';
-
-  @override
-  String get desktopTrafficBurst => 'Burst capacity';
-
-  @override
-  String get desktopTrafficIpv4Prefix => 'IPv4 prefix length';
-
-  @override
-  String get desktopTrafficIpv6Prefix => 'IPv6 prefix length';
-
-  @override
-  String get desktopTrafficPrefixBody =>
-      '32 / 128 for a single address; aggregate on a LAN with e.g. 24 / 64.';
-
-  @override
-  String get desktopTrafficExempt => 'Exempt IPs / ranges';
-
-  @override
-  String get desktopTrafficExemptBody =>
-      'Loopback and trusted ranges are not counted.';
-
-  @override
-  String get desktopTrafficRateLimitSave => 'Save rate limit';
-
-  @override
-  String get desktopTrafficRateInvalid =>
-      'Rate and burst must be positive; prefixes must be 1–32 (IPv4) and 1–128 (IPv6)';
-
-  @override
-  String get desktopGroupsPageTitle => 'Client groups';
-
-  @override
-  String get desktopGroupsRefresh => 'Reload the client groups';
-
-  @override
-  String get desktopGroupsLoadFailed =>
-      'Could not read the client group config';
-
-  @override
-  String get desktopGroupsTitle => 'Client groups · fine-grained policy';
-
-  @override
-  String get desktopGroupsBody =>
-      'Binds a device group to its own subscription sets and blocking mode';
-
-  @override
-  String desktopGroupsCount(int enabled, int total) {
-    return '$enabled / $total groups enabled';
-  }
-
-  @override
-  String get desktopGroupsOn => 'Groups active';
-
-  @override
-  String get desktopGroupsOff => 'Groups off';
-
-  @override
-  String get desktopGroupsSave => 'Save policy';
-
-  @override
-  String get desktopGroupsSaved => 'The client group policy was saved';
-
-  @override
-  String get desktopGroupsMaster => 'Enable client groups';
-
-  @override
-  String get desktopGroupsMasterBody =>
-      'When off, every client uses the global rules; when on, groups match by longest prefix.';
-
-  @override
-  String get desktopGroupsAdd => 'Add a client group';
-
-  @override
-  String get desktopGroupsEmpty =>
-      'No group is configured. Clients that match none use the global rules (the default group).';
-
-  @override
-  String get desktopGroupsFooter =>
-      'Longest-prefix match: a narrower range such as /24 wins over /16.';
-
-  @override
-  String get desktopGroupsOpen => 'Client groups';
-
-  @override
-  String get desktopGroupsName => 'Group name';
-
-  @override
-  String get desktopGroupsEnabled => 'Enable this group';
-
-  @override
-  String get desktopGroupsDelete => 'Delete this group';
-
-  @override
-  String get desktopGroupsDeleteTitle => 'Delete the client group';
-
-  @override
-  String get desktopGroupsDeleteBody =>
-      'Delete this client group? It stops applying once saved.';
-
-  @override
-  String get desktopGroupsMembers => 'Member IPs / ranges';
-
-  @override
-  String get desktopGroupsMembersHint =>
-      'e.g.\n192.168.1.0/24\n10.0.0.7\nfd00::/8';
-
-  @override
-  String get desktopGroupsMembersBody =>
-      'One IP or CIDR per line; IPv4 and IPv6 are both accepted.';
-
-  @override
-  String get desktopGroupsBlockMode => 'Blocking response';
-
-  @override
-  String get desktopGroupsModeInherit => 'Inherit the global mode';
-
-  @override
-  String get desktopGroupsModeNullIp => 'Null IP (0.0.0.0 / ::)';
-
-  @override
-  String get desktopGroupsModeNxdomain => 'NXDOMAIN (no such domain)';
-
-  @override
-  String get desktopGroupsModeRefused => 'REFUSED (refuse the answer)';
-
-  @override
-  String get desktopGroupsAllowlistOnly => 'Allowlist only';
-
-  @override
-  String get desktopGroupsAllowlistOnlyBody =>
-      'Only queries that match an allow rule (@@) pass; everything else is blocked';
-
-  @override
-  String get desktopGroupsSchedule => 'Group schedule';
-
-  @override
-  String get desktopGroupsScheduleBody =>
-      'When on, this group blocks by its own windows; when off it inherits the global schedule';
-
-  @override
-  String get desktopGroupsRuleLists => 'Bound subscription sets';
-
-  @override
-  String get desktopGroupsInheritAll => 'Inherit all';
-
-  @override
-  String get desktopGroupsNoRuleLists =>
-      'No subscription is available; this group applies only custom rules.';
-
-  @override
-  String get desktopGroupsRuleListsInherited =>
-      'Nothing selected → every subscription rule is inherited.';
-
-  @override
-  String get desktopGroupsRuleListsSelected =>
-      'Only the selected subscriptions apply to this group.';
-
-  @override
-  String get desktopGroupsUpstreams => 'Dedicated upstreams';
-
-  @override
-  String get desktopGroupsInheritChain => 'Use the main chain';
-
-  @override
-  String get desktopGroupsNoUpstreams =>
-      'No upstream is available; this group uses the main chain.';
-
-  @override
-  String get desktopGroupsUpstreamsInherited =>
-      'Nothing selected → the main-chain scheduling applies.';
-
-  @override
-  String get desktopGroupsUpstreamsSelected =>
-      'This group resolves through the selected upstreams and skips the global fallback chain.';
-
-  @override
-  String desktopGroupsNewName(int index) {
-    return 'Group $index';
-  }
-
-  @override
-  String get desktopGroupsListEnabled => 'This subscription is enabled';
-
-  @override
-  String get desktopGroupsListDisabled => 'This subscription is disabled';
-
-  @override
-  String get desktopToolsPortTitle => 'Network diagnosis and repair';
-
-  @override
-  String get desktopToolsPortBody =>
-      'Finds out whether ICS sharing or the systemd-resolved stub holds port 53 and blocks startup';
-
-  @override
-  String get desktopToolsPortIdle =>
-      'Not checked yet. Use the search button in this card to run one probe.';
-
-  @override
-  String get desktopToolsPortOk => 'The port is available';
-
-  @override
-  String get desktopToolsPortConflict => 'A port conflict was found';
-
-  @override
-  String get desktopToolsCheck => 'Check the port';
-
-  @override
-  String get desktopToolsFix => 'Repair the port conflict';
-
-  @override
-  String get desktopToolsFixTitle => 'Repair the port conflict?';
-
-  @override
-  String get desktopToolsFixBody =>
-      'Stops the system listener on port 53 (Windows ICS sharing / the systemd-resolved stub). It does not start or restart DNS.';
-
-  @override
-  String get desktopToolsFixed => 'The port conflict was repaired';
-
-  @override
-  String desktopToolsFailed(String message) {
-    return 'The action failed: $message';
-  }
-
-  @override
-  String get desktopToolsSystemListener => 'System listener';
-
-  @override
-  String get desktopToolsSelfListener => 'DITING itself';
-
-  @override
-  String desktopToolsConflictOwner(String process, int pid, String address) {
-    return '$process · PID $pid · $address';
-  }
-
-  @override
-  String desktopToolsConflictService(String service) {
-    return 'Service: $service';
-  }
-
-  @override
-  String get desktopToolsPortFooter =>
-      'The probe only takes the port briefly to confirm it is free; the report and advice come from the system probe itself.';
-
-  @override
-  String get desktopToolsRulePageTitle => 'Rule check';
-
-  @override
-  String get desktopHubDiagnoseSection => 'Diagnosis and recovery';
-
-  @override
-  String get desktopToolsRuleEntryBody =>
-      'Simulate one lookup and read the matched rule and verdict';
-
-  @override
-  String get desktopHubQueryLog => 'Query log';
-
-  @override
-  String get desktopHubQueryLogBody =>
-      'Live query stream, searchable history and retention policy';
-
-  @override
-  String get desktopQueryLogPageTitle => 'Query log';
-
-  @override
-  String get desktopToolsRuleInputTitle => 'Blocking simulation';
-
-  @override
-  String get desktopToolsRuleInputBody =>
-      'Enter a domain to see whether a blocking rule matches it';
-
-  @override
-  String get desktopToolsRuleDomain => 'Domain to test';
-
-  @override
-  String get desktopToolsRuleDomainHint =>
-      'e.g. ad.example.com or tracker.domain.com';
-
-  @override
-  String get desktopToolsRuleQtype => 'DNS record type';
-
-  @override
-  String desktopToolsRuleQtypeOption(String type) {
-    return '$type record';
-  }
-
-  @override
-  String get desktopToolsRuleExamples => 'Quick examples:';
-
-  @override
-  String get desktopToolsRuleRun => 'Run the simulation';
-
-  @override
-  String get desktopToolsRuleRunning => 'Matching rules…';
-
-  @override
-  String get desktopToolsRuleVerdictTitle => 'Rule diagnosis and verdict';
-
-  @override
-  String get desktopToolsRuleVerdictBody =>
-      'The matched rule, the list it came from and the response';
-
-  @override
-  String get desktopToolsRuleIdle =>
-      'Enter a domain above and run the simulation to see the verdict';
-
-  @override
-  String get desktopToolsRuleBlocked => 'Blocked';
-
-  @override
-  String desktopToolsRuleRewritten(String code) {
-    return 'Rewritten ($code)';
-  }
-
-  @override
-  String get desktopToolsRuleAllowed => 'Allowed (trusted list)';
-
-  @override
-  String get desktopToolsRulePassed => 'No match (normal resolution)';
-
-  @override
-  String get desktopToolsRuleMatched => 'Matched rule';
-
-  @override
-  String get desktopToolsRuleNoMatch => 'No rule matched';
-
-  @override
-  String get desktopToolsRuleList => 'Source list';
-
-  @override
-  String get desktopToolsRuleNoList => 'None';
-
-  @override
-  String get desktopToolsRuleReason => 'Verdict reason';
-
-  @override
-  String get desktopToolsRuleNoReason => 'Normal direct resolution';
-
-  @override
-  String desktopToolsRuleRewrite(String code) {
-    return '\$dnsrewrite answer: $code';
-  }
-
-  @override
-  String get desktopToolsRuleRewriteEmpty =>
-      'No records returned (authoritative NODATA)';
-
-  @override
-  String get desktopToolsRuleFooter =>
-      'Tests AdGuard, Hosts and custom rules instantly.';
-
-  @override
-  String desktopToolsRuleFailed(String message) {
-    return 'The check failed: $message';
-  }
-
-  @override
-  String get desktopHubAppSection => 'App and service';
-
-  @override
-  String get desktopAboutProjectSection => 'Project and links';
-
-  @override
-  String get desktopAboutDisclaimerSection => 'About the app and disclaimer';
-
-  @override
-  String get desktopSettingsAppearance => 'Appearance';
-
-  @override
-  String get desktopSettingsAppearanceEntryBody =>
-      'Palette and day/night mode, previewed live';
-
-  @override
-  String get desktopSettingsAppearanceTitle => 'Appearance and theme';
-
-  @override
-  String get desktopSettingsAppearanceBody =>
-      'Switch palettes and day/night modes; the whole interface follows at once';
-
-  @override
-  String get desktopSettingsPalette => 'Palette';
-
-  @override
-  String get desktopSettingsPaletteBody =>
-      'Pick the visual system you prefer; every element follows it';
-
-  @override
-  String get desktopSettingsMode => 'Day/night mode';
-
-  @override
-  String get desktopSettingsModeBody =>
-      'Following the system uses the system\'s light/dark preference';
-
-  @override
-  String get desktopSettingsAppearanceFooter =>
-      'Appearance shares the mobile app\'s preference keys, so the choice survives a restart.';
-
-  @override
-  String get desktopSettingsPreview => 'Window preview';
-
-  @override
-  String get desktopSettingsPreviewBody =>
-      'The sidebar, toolbar and cards render with the current palette and mode.';
-
-  @override
-  String desktopSettingsSystemResolved(String mode) {
-    return '$mode (system)';
-  }
-
-  @override
-  String get desktopServicePageTitle => 'Service and connection';
-
-  @override
-  String get desktopServiceEntryBody =>
-      'Connection settings, the core service and its boot registration';
-
-  @override
-  String get desktopServiceConnectionTitle => 'Service connection';
-
-  @override
-  String get desktopServiceConnectionBody =>
-      'The channel between this client and the core service';
-
-  @override
-  String get desktopServiceConnectionFooter =>
-      'Saving rebuilds the connection with the new address; the test checks the service that is answering now.';
-
-  @override
-  String get desktopServiceHost => 'Service address (IP or host)';
-
-  @override
-  String get desktopServicePort => 'Port';
-
-  @override
-  String get desktopServiceToken => 'Access token (optional)';
-
-  @override
-  String get desktopServiceTokenHint =>
-      'Empty when the loopback service needs no password';
-
-  @override
-  String get desktopServiceTest => 'Test the connection';
-
-  @override
-  String get desktopServiceSave => 'Save';
-
-  @override
-  String get desktopServiceSaved => 'The connection settings were saved';
-
-  @override
-  String get desktopServiceReachable => 'Connected';
-
-  @override
-  String get desktopServiceUnreachable => 'Unreachable';
-
-  @override
-  String get desktopServiceConfigured => 'Configured';
-
-  @override
-  String get desktopServiceAddressInvalid =>
-      'The address is required and the port must be a whole number from 1 to 65535';
-
-  @override
-  String get desktopServiceCoreTitle => 'Core service';
-
-  @override
-  String get desktopServiceCoreBody =>
-      'The host service that runs DNS and blocking';
-
-  @override
-  String get desktopServiceCoreFooter =>
-      'Installing, starting and the boot registration are handled on the host; this page only reads its state.';
-
-  @override
-  String get desktopServiceState => 'State';
-
-  @override
-  String get desktopServiceAutoStartOn => 'Enabled';
-
-  @override
-  String get desktopServiceAutoStartOff => 'Off';
-
-  @override
-  String get desktopServiceAutoStartUnknown => 'Not reported';
-
-  @override
-  String get desktopServiceRunning => 'Running';
-
-  @override
-  String get desktopServiceStopped => 'Stopped';
-
-  @override
-  String get desktopServiceUnknown => 'Unknown';
-
-  @override
-  String get desktopServiceRefresh => 'Reload the core service state';
-
-  @override
-  String get desktopLanWebPageTitle => 'LAN console';
-
-  @override
-  String get desktopLanWebEntryBody =>
-      'Remote access switch, URLs, firewall rule and admin credential';
-
-  @override
-  String get desktopHubClientAccess => 'Client access';
-
-  @override
-  String get desktopHubClientAccessBody =>
-      'Which LAN clients may resolve, and the query rate limit each one gets';
-
-  @override
-  String get desktopClientAccessPageTitle => 'Client access control';
-
-  @override
-  String get desktopLanWebRefresh => 'Reload the LAN console status';
-
-  @override
-  String get desktopLanWebLoadFailed => 'Could not read the LAN console status';
-
-  @override
-  String get desktopLanWebAccessTitle => 'Firewall rule and admin credential';
-
-  @override
-  String get desktopLanWebAccessBody =>
-      'The firewall rule and the login this console uses; the credential only affects LAN access';
-
-  @override
-  String get desktopLanWebTitle => 'LAN web console';
-
-  @override
-  String get desktopLanWebOpen => 'Open to the LAN';
-
-  @override
-  String get desktopLanWebLocal => 'Local only (127.0.0.1)';
-
-  @override
-  String get desktopLanWebEnabledBody =>
-      'Phones and computers on the LAN can open the full console in a browser.';
-
-  @override
-  String get desktopLanWebDisabledBody =>
-      'When enabled, phones and computers on the LAN can open the full console and share this service\'s data and config.';
-
-  @override
-  String get desktopLanWebOn => 'LAN web access is on';
-
-  @override
-  String get desktopLanWebOff => 'LAN web access is off';
-
-  @override
-  String desktopLanWebFailed(String message) {
-    return 'The action failed: $message';
-  }
-
-  @override
-  String get desktopLanWebUrls => 'LAN URLs (open in a browser)';
-
-  @override
-  String get desktopLanWebNoUrls => 'No IPv4 LAN interface was found';
-
-  @override
-  String get desktopLanWebPort => 'Web port';
-
-  @override
-  String get desktopLanWebSavePort => 'Save port';
-
-  @override
-  String get desktopLanWebPortInvalid => 'Enter a valid port (1–65535)';
-
-  @override
-  String get desktopLanWebFirewall => 'Allow the inbound firewall rule';
-
-  @override
-  String get desktopLanWebFirewallBody =>
-      'Adds or removes the system firewall rule for the web port';
-
-  @override
-  String get desktopLanWebFirewallOn =>
-      'The web port was allowed through the firewall';
-
-  @override
-  String get desktopLanWebFirewallOff =>
-      'The web port firewall rule was removed';
-
-  @override
-  String get desktopLanWebNoFirewall =>
-      'No firewall manager was detected, so the port is already open and needs no rule.';
-
-  @override
-  String get desktopLanWebCredentials => 'Console credential';
-
-  @override
-  String desktopLanWebUser(String user) {
-    return 'Administrator: $user';
-  }
-
-  @override
-  String get desktopLanWebNoUser => 'No administrator yet';
-
-  @override
-  String get desktopLanWebProtected => 'Password protection is on';
-
-  @override
-  String get desktopLanWebUnprotected =>
-      'No password yet; the first visit must set one';
-
-  @override
-  String get desktopLanWebChangePassword => 'Change the admin password';
-
-  @override
-  String get desktopLanWebSetPassword => 'Set the initial password';
-
-  @override
-  String get desktopLanWebPasswordSave => 'Save';
-
-  @override
-  String get desktopLanWebPasswordSaved => 'The admin password was saved';
-
-  @override
-  String desktopLanWebChangeBody(String user) {
-    return 'Changes the password for $user; existing external sessions stop working.';
-  }
-
-  @override
-  String desktopLanWebSetupBody(String user) {
-    return 'Sets the initial password for $user; later console visits must log in.';
-  }
-
-  @override
-  String get desktopLanWebOldPassword => 'Current password';
-
-  @override
-  String get desktopLanWebNewPassword => 'New password';
-
-  @override
-  String get desktopLanWebConfirmPassword => 'Confirm the new password';
-
-  @override
-  String get desktopLanWebPasswordRequired => 'The new password is required';
-
-  @override
-  String get desktopLanWebPasswordMismatch =>
-      'The two new passwords do not match';
-
-  @override
-  String get desktopLanWebOldRequired => 'Enter the current password';
-
-  @override
-  String get desktopLanWebFooter =>
-      'The credential only guards console login; the desktop client keeps using the local API.';
-
-  @override
-  String get desktopHubAdapters => 'Adapter takeover';
-
-  @override
-  String get desktopHubAdaptersBody =>
-      'Per-adapter gateway, DNS and takeover state, one by one or all at once';
-
-  @override
-  String get desktopHubLanDns => 'LAN DNS service';
-
-  @override
-  String get desktopHubLanDnsBody =>
-      'Listen on port 53 so routers and devices share this resolver';
-
-  @override
-  String get desktopAdaptersPageTitle => 'Adapter takeover';
-
-  @override
-  String get desktopAdaptersRefresh => 'Refresh adapter list';
-
-  @override
-  String get desktopAdaptersLoadFailed => 'Cannot read the adapter list';
-
-  @override
-  String get desktopAdaptersSectionTitle => 'Network connections and takeover';
-
-  @override
-  String get desktopAdaptersSectionBody =>
-      'Only connections in use are listed; the service drops virtual and offline adapters.';
-
-  @override
-  String get desktopAdaptersTakeoverAll => 'Protect all';
-
-  @override
-  String get desktopAdaptersRestoreAll => 'Restore system default';
-
-  @override
-  String get desktopAdaptersProtecting => 'Protecting';
-
-  @override
-  String get desktopAdaptersInactive => 'Off';
-
-  @override
-  String get desktopAdaptersConnected => 'Connected';
-
-  @override
-  String get desktopAdaptersDisconnected => 'Disconnected';
-
-  @override
-  String get desktopAdaptersGateway => 'Gateway';
-
-  @override
-  String get desktopAdaptersNoGateway => 'None';
-
-  @override
-  String get desktopAdaptersIpMode => 'IP mode';
-
-  @override
-  String get desktopAdaptersDhcp => 'Automatic (DHCP)';
-
-  @override
-  String get desktopAdaptersStatic => 'Static IP';
-
-  @override
-  String get desktopAdaptersOriginalDns => 'Original system DNS';
-
-  @override
-  String get desktopAdaptersAutoDns => 'Automatic (system default)';
-
-  @override
-  String get desktopAdaptersEffectiveDns => 'DNS in effect';
-
-  @override
-  String get desktopAdaptersEffectiveLoopback =>
-      '127.0.0.1 (protected locally)';
-
-  @override
-  String get desktopAdaptersEffectiveSystem => 'System default, not taken over';
-
-  @override
-  String get desktopAdaptersEmpty => 'No usable network connection';
-
-  @override
-  String get desktopAdaptersEmptyBody =>
-      'Check that Wi-Fi or the network cable is connected, then detect again.';
-
-  @override
-  String get desktopAdaptersAllOn => 'All physical adapters are taken over';
-
-  @override
-  String get desktopAdaptersAllOff => 'System default DNS restored';
-
-  @override
-  String desktopAdaptersAdapterToggled(String name, String state) {
-    return '$name: $state';
-  }
-
-  @override
-  String get desktopAdaptersAdapterOn => 'taken over';
-
-  @override
-  String get desktopAdaptersAdapterOff => 'restored';
-
-  @override
-  String desktopAdaptersActionFailed(String message) {
-    return 'Failed: $message';
-  }
-
-  @override
-  String get desktopLanDnsPageTitle => 'LAN DNS service';
-
-  @override
-  String get desktopLanDnsRefresh => 'Refresh LAN DNS state';
-
-  @override
-  String get desktopLanDnsLoadFailed => 'Cannot read the LAN DNS state';
-
-  @override
-  String get desktopLanDnsServiceTitle => 'LAN DNS service';
-
-  @override
-  String get desktopLanDnsServiceBody =>
-      'When on, routers, phones, tablets and NAS boxes can point their primary DNS at this host and share the acceleration and blocking.';
-
-  @override
-  String get desktopLanDnsOnChip => 'Listening on all interfaces (0.0.0.0)';
-
-  @override
-  String get desktopLanDnsOffChip => 'This host only';
-
-  @override
-  String get desktopLanDnsOn => 'LAN DNS service is on';
-
-  @override
-  String get desktopLanDnsOff =>
-      'LAN DNS service is off; listening locally again';
-
-  @override
-  String get desktopLanDnsAddressesCardTitle => 'Listen and access addresses';
-
-  @override
-  String get desktopLanDnsAddressesCardBody =>
-      'Where the service is bound, and the address other devices on the LAN can use';
-
-  @override
-  String get desktopLanDnsListenTitle => 'Addresses being listened on';
-
-  @override
-  String get desktopLanDnsNoListen =>
-      'The service is not listening on any address';
-
-  @override
-  String get desktopLanDnsAddressesTitle => 'LAN DNS addresses of this host';
-
-  @override
-  String get desktopLanDnsNoAddresses =>
-      'No active physical adapter address found; check Wi-Fi or Ethernet.';
-
-  @override
-  String get desktopLanDnsIpv4 => 'IPv4';
-
-  @override
-  String get desktopLanDnsIpv6 => 'IPv6';
-
-  @override
-  String desktopLanDnsRouterHint(String address) {
-    return 'Put $address into the router\'s DNS setting to cover every device at home.';
-  }
-
-  @override
-  String get desktopLanDnsFirewallTitle => 'Firewall inbound rule';
-
-  @override
-  String get desktopLanDnsFirewallAllowed => 'Port 53 allowed';
-
-  @override
-  String get desktopLanDnsFirewallBlocked => 'Not allowed';
-
-  @override
-  String get desktopLanDnsFirewallNone => 'Nothing to allow';
-
-  @override
-  String get desktopLanDnsFirewallBody =>
-      'LAN devices send queries to UDP/TCP port 53 on this host; a firewall block makes those devices lose their network.';
-
-  @override
-  String get desktopLanDnsFirewallNoneBody =>
-      'No firewall manager was detected, so port 53 is already open and no rule is needed.';
-
-  @override
-  String get desktopLanDnsFirewallStatusOn => 'LAN devices may reach port 53';
-
-  @override
-  String get desktopLanDnsFirewallStatusOff =>
-      'Port 53 is restricted or blocked';
-
-  @override
-  String get desktopLanDnsFirewallAllow => 'Allow inbound port 53';
-
-  @override
-  String get desktopLanDnsFirewallRemove => 'Remove the inbound rule';
-
-  @override
-  String get desktopLanDnsFirewallOn => 'Inbound rule for port 53 added';
-
-  @override
-  String get desktopLanDnsFirewallOff => 'Inbound rule for port 53 removed';
-
-  @override
-  String get desktopLanDnsRouterTitle => 'Option A: router-wide setting';
-
-  @override
-  String get desktopLanDnsRouterBadge => 'Recommended';
-
-  @override
-  String get desktopLanDnsRouterBody =>
-      'Open the router admin page (usually 192.168.1.1) and set the primary DNS to this host\'s address under LAN or DHCP settings.';
-
-  @override
-  String get desktopLanDnsRouterFoot =>
-      'Save and reconnect Wi-Fi; every device at home follows.';
-
-  @override
-  String get desktopLanDnsDeviceTitle => 'Option B: one device at a time';
-
-  @override
-  String get desktopLanDnsDeviceBadge => 'Standalone';
-
-  @override
-  String get desktopLanDnsDeviceBody =>
-      'In the Wi-Fi details of a phone or computer, switch IP assignment to static and put this host\'s address into DNS 1.';
-
-  @override
-  String get desktopLanDnsDeviceFoot =>
-      'For cases without router access, or when only one device should use it.';
-
-  @override
-  String get desktopLanDnsPlaceholder => '192.168.x.x';
-
-  @override
-  String desktopLanDnsFailed(String message) {
-    return 'Failed: $message';
-  }
-
-  @override
-  String get desktopLoginTitle => 'DITING DNS console';
-
-  @override
-  String get desktopLoginSubtitle =>
-      'LAN remote administration · verify the admin credential';
-
-  @override
-  String get desktopLoginSetupSubtitle =>
-      'Set the admin password to guard LAN remote administration';
-
-  @override
-  String get desktopLoginUserLabel => 'Admin account';
-
-  @override
-  String get desktopLoginPasswordLabel => 'Admin password';
-
-  @override
-  String get desktopLoginSetupPasswordLabel =>
-      'Initial password (at least 4 characters)';
-
-  @override
-  String get desktopLoginConfirmLabel => 'Confirm admin password';
-
-  @override
-  String get desktopLoginSubmit => 'Sign in';
-
-  @override
-  String get desktopLoginSetupSubmit => 'Finish setup and enter the console';
-
-  @override
-  String get desktopLoginSecurity =>
-      'SHA-256 salted hash · repeated failures lock the form';
-
-  @override
-  String get desktopLoginFooter => 'DITING DNS acceleration and protection';
-
-  @override
-  String get desktopLoginChecking => 'Loading the console securely…';
-
-  @override
-  String get desktopLoginShowPassword => 'Show password';
-
-  @override
-  String get desktopLoginHidePassword => 'Hide password';
-
-  @override
-  String get desktopLoginUserRequired => 'Enter the user name';
-
-  @override
-  String get desktopLoginPasswordRequired => 'Enter the password';
-
-  @override
-  String get desktopLoginPasswordTooShort =>
-      'The password needs at least 4 characters';
-
-  @override
-  String get desktopLoginPasswordMismatch => 'The two passwords differ';
-
-  @override
-  String get desktopLoginSuccess => 'Verified, entering the console…';
-
-  @override
-  String get desktopLoginSetupSuccess =>
-      'Admin password saved, entering the console…';
-
-  @override
-  String desktopLoginLockout(int seconds) {
-    return 'Locked after too many failures; retry in ${seconds}s';
-  }
-
-  @override
-  String get desktopLoginUnreachable => 'Cannot reach the service';
-
-  @override
-  String get desktopLoginRetry => 'Retry';
-
-  @override
-  String get desktopLoginThemeCycle => 'Switch light or dark';
-
-  @override
-  String get desktopLoginPaletteCycle => 'Switch colour palette';
-
-  @override
-  String get desktopLoginBackground => 'Custom background';
-
-  @override
-  String get desktopLoginBackgroundEnabled => 'Custom background is on';
-
-  @override
-  String get desktopLoginBackgroundTitle => 'Login background';
-
-  @override
-  String get desktopLoginBackgroundLocal => 'Upload';
-
-  @override
-  String get desktopLoginBackgroundUrl => 'Image URL';
-
-  @override
-  String get desktopLoginBackgroundChoose => 'Choose an image';
-
-  @override
-  String get desktopLoginBackgroundNoFile => 'No image selected';
-
-  @override
-  String get desktopLoginBackgroundUrlLabel => 'Image address';
-
-  @override
-  String get desktopLoginBackgroundUrlInvalid =>
-      'Enter an address starting with http:// or https://';
-
-  @override
-  String get desktopLoginBackgroundOpacity => 'Overlay darkness';
-
-  @override
-  String get desktopLoginBackgroundBlur => 'Frosted blur';
-
-  @override
-  String get desktopLoginBackgroundSave => 'Save background';
-
-  @override
-  String get desktopLoginBackgroundReset => 'Restore default';
-
-  @override
-  String get desktopLoginBackgroundSaved => 'Login background saved';
-
-  @override
-  String get desktopLoginBackgroundResetDone =>
-      'System default background restored';
-
-  @override
-  String get desktopLoginBackgroundNeedImage =>
-      'Choose an image or enter an address first';
-
-  @override
-  String get desktopLoginBackgroundPassword => 'Admin password';
-
-  @override
-  String get desktopLoginBackgroundPasswordBody =>
-      'Changing the background remotely over the LAN needs the admin password.';
-
-  @override
-  String desktopLoginBackgroundFailed(String message) {
-    return 'Failed: $message';
-  }
-
-  @override
-  String get desktopSettingsSessionSection => 'Current session';
-
-  @override
-  String get desktopSettingsLogout => 'Sign out';
-
-  @override
-  String get desktopSettingsLogoutBody =>
-      'Drop the admin session stored in this browser and return to the login page';
-
-  @override
-  String get desktopSettingsLogoutConfirm =>
-      'Signing out means entering the admin credential again to get back in.';
-
-  @override
-  String get desktopSettingsLogoutDone => 'Signed out';
-
-  @override
-  String get desktopToolsEmergencyTitle => 'Restore system network defaults';
-
-  @override
-  String get desktopToolsEmergencyBody =>
-      'When a crash leaves the machine offline, restore the system DNS from the pre-takeover snapshot, clear residual loopback DNS and flush the system cache.';
-
-  @override
-  String get desktopToolsEmergencyAction => 'Restore now';
-
-  @override
-  String get desktopToolsEmergencyBusy => 'Restoring…';
-
-  @override
-  String get desktopToolsEmergencyConfirmTitle => 'Run the emergency restore?';
-
-  @override
-  String get desktopToolsEmergencyConfirmBody =>
-      'The system DNS is restored from the snapshot saved before the takeover, residual loopback DNS is cleared, and the system DNS cache is flushed.';
-
-  @override
-  String get desktopToolsEmergencyDone => 'Network settings restored';
-
-  @override
-  String desktopToolsEmergencyFailed(String message) {
-    return 'Restore failed: $message';
-  }
-
-  @override
-  String get desktopToolsEmergencyFooter =>
-      'The restore replays the snapshot saved before the takeover; it does not touch the adapter drivers.';
-
-  @override
-  String get desktopLanWebQrCaption =>
-      'On the same Wi-Fi, scan with the phone camera to open the console';
-
-  @override
-  String get desktopLoginBackgroundPreparing => 'Compressing the image…';
-
-  @override
-  String get desktopLoginChangePassword => 'Change admin password';
-
-  @override
-  String get desktopLoginChangeSubtitle =>
-      'Rotating the credential signs every other external session out';
-
-  @override
-  String get desktopLoginOldPasswordLabel => 'Current password';
-
-  @override
-  String get desktopLoginNewPasswordLabel =>
-      'New password (at least 4 characters)';
-
-  @override
-  String get desktopLoginChangeSubmit => 'Save new password';
-
-  @override
-  String get desktopLoginChangeSuccess =>
-      'Admin password updated; sign in with the new one';
-
-  @override
-  String get desktopLoginBackToSignIn => 'Back to sign in';
-
-  @override
-  String get desktopLoginOldPasswordRequired => 'Enter the current password';
-
-  @override
-  String get desktopTrayTooltip => 'DITING DNS Console';
-
-  @override
-  String get desktopTrayOpenWindow => 'Open main window';
-
-  @override
-  String get desktopTrayHideWindow => 'Hide main window';
-
-  @override
-  String get desktopTrayAutoStart => 'Start on sign-in';
-
-  @override
-  String get desktopTrayServiceRunning => 'Core service: running';
-
-  @override
-  String get desktopTrayServiceStopped => 'Core service: stopped';
-
-  @override
-  String get desktopTrayServiceUnknown => 'Core service: status unknown';
-
-  @override
-  String get desktopTrayServiceStart => 'Start core service';
-
-  @override
-  String get desktopTrayServiceStop => 'Stop core service';
-
-  @override
-  String get desktopTrayServiceRestart => 'Restart core service';
-
-  @override
-  String get desktopTrayQuit => 'Quit';
-
-  @override
-  String get desktopTrayBalloonServiceTitle => 'Core service';
-
-  @override
-  String get desktopTrayBalloonServiceStarted => 'Core service started';
-
-  @override
-  String get desktopTrayBalloonServiceStopped => 'Core service stopped';
-
-  @override
-  String get desktopTrayBalloonServiceRestarted => 'Core service restarted';
-
-  @override
-  String get desktopTrayBalloonAutoStartTitle => 'Start on sign-in';
-
-  @override
-  String get desktopTrayBalloonAutoStartOn => 'Start on sign-in enabled';
-
-  @override
-  String get desktopTrayBalloonAutoStartOff => 'Start on sign-in disabled';
-
-  @override
-  String get desktopTrayBalloonFailedPrefix => 'Operation failed: ';
-
-  @override
-  String get desktopTrayBalloonMinimized =>
-      'DITING keeps running in the notification area.\nClick the tray icon to reopen the main window.';
-
-  @override
   String get deepLinkImportInvalid =>
       'Invalid deep link; the subscription could not be imported';
 
@@ -14425,10 +9516,6 @@ class AppL10nEn extends AppL10n {
   String get troubleshootEventsOpen => 'View runtime events';
 
   @override
-  String get troubleshootEventsOpenBody =>
-      'Filter startup, service and error events by level and module';
-
-  @override
   String get troubleshootDetailMode => 'Detailed mode';
 
   @override
@@ -14441,9 +9528,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get automationSubtitle =>
       'Compose condition-action scenarios and on-demand connection';
-
-  @override
-  String get automationHubSection => 'Scenarios & automation';
 
   @override
   String get automationIntro =>
@@ -14515,10 +9599,6 @@ class AppL10nEn extends AppL10n {
   String get automationSave => 'Save';
 
   @override
-  String get automationEditIntro =>
-      'Pick a trigger and actions; the automation engine runs them when the trigger fires.';
-
-  @override
   String get automationRuleName => 'Rule name';
 
   @override
@@ -14574,13 +9654,6 @@ class AppL10nEn extends AppL10n {
   String get profilesAdd => 'Add profile';
 
   @override
-  String get profilesIntro =>
-      'One-tap snapshots of work mode / upstream set / rule groups and toggles.';
-
-  @override
-  String get profilesEmpty => 'No profiles yet.';
-
-  @override
   String get profilesListSection => 'Profiles';
 
   @override
@@ -14616,13 +9689,6 @@ class AppL10nEn extends AppL10n {
   String get timetableAdd => 'Add slot';
 
   @override
-  String get timetableIntro =>
-      'Lay out timed blocking windows across the week; they tighten or restore on schedule.';
-
-  @override
-  String get timetableEmpty => 'No timetable slots yet.';
-
-  @override
   String get netProfileTitle => 'Network profiles';
 
   @override
@@ -14632,10 +9698,6 @@ class AppL10nEn extends AppL10n {
   String get netProfileAdd => 'Add network profile';
 
   @override
-  String get netProfileIntro =>
-      'Automatically pick the upstream set and rule groups by the current network (Wi‑Fi / cellular / roaming / metered).';
-
-  @override
   String get netProfileCurrentNet => 'Current network';
 
   @override
@@ -14643,10 +9705,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get netProfileNone => 'No matching profile';
-
-  @override
-  String get netProfileEmpty =>
-      'No network profiles yet. Add one to switch policy by network.';
 
   @override
   String get netProfileList => 'Network profiles';
@@ -14713,12 +9771,6 @@ class AppL10nEn extends AppL10n {
   String get dnsLeakReasonInsufficient => 'Not enough probe data to decide.';
 
   @override
-  String get dnsLeakVpnActive => 'Tunnel active';
-
-  @override
-  String get dnsLeakVpnInactive => 'Tunnel inactive';
-
-  @override
   String get captiveSection => 'Captive portal';
 
   @override
@@ -14747,14 +9799,7 @@ class AppL10nEn extends AppL10n {
       'Aggregates live connections per app: traffic, blocks and a connection map.';
 
   @override
-  String get appInsightsEmpty =>
-      'No connections yet. Start the tunnel and generate some traffic.';
-
-  @override
   String get appInsightsReports => 'App report cards';
-
-  @override
-  String get appInsightsMap => 'Connection map';
 
   @override
   String appInsightsStat(int connections, int blocked, String bytes) {
@@ -14810,10 +9855,6 @@ class AppL10nEn extends AppL10n {
       'Limit DNS queries and new connections';
 
   @override
-  String get connectionRateLimitIntro =>
-      'Limit DNS queries and new connections per app so one app cannot exhaust resolution or connection capacity. Both counters share the rate and burst below.';
-
-  @override
   String get connectionRateLimitSectionSwitch => 'Rate limit switch';
 
   @override
@@ -14845,21 +9886,10 @@ class AppL10nEn extends AppL10n {
   String get ruleVersionsTitle => 'Subscription version rollback';
 
   @override
-  String get ruleVersionsIntro =>
-      'Every subscription update records a rule-set snapshot. Compare against older versions or roll back in one tap, so a bad or poisoned update cannot stick.';
-
-  @override
   String get ruleVersionsPick => 'Choose a subscription';
 
   @override
   String get ruleVersionsHistory => 'Version history';
-
-  @override
-  String get ruleVersionsEmpty =>
-      'No versions recorded yet. Update the subscription once to see history here.';
-
-  @override
-  String get ruleVersionsNone => 'No subscriptions available';
 
   @override
   String get ruleVersionsUnavailable => 'Rule database unavailable';
@@ -15020,9 +10050,6 @@ class AppL10nEn extends AppL10n {
   String get serverAverageLatencyHint => 'Avg response';
 
   @override
-  String get serverFilter => 'Filtering';
-
-  @override
   String get serverFilterOn => 'Enabled';
 
   @override
@@ -15056,18 +10083,8 @@ class AppL10nEn extends AppL10n {
   String get serverHubSystem => 'System';
 
   @override
-  String serverHubUpstreamSummary(int count, String mode) {
-    return '$count providers · $mode';
-  }
-
-  @override
   String serverHubFilterSummary(String state, int count) {
     return '$state · $count subscriptions';
-  }
-
-  @override
-  String serverHubCacheSummary(int count, String mode) {
-    return '$count entries · $mode';
   }
 
   @override
@@ -15093,33 +10110,16 @@ class AppL10nEn extends AppL10n {
   String get serverUpstreamTitle => 'Scheduling and cache';
 
   @override
-  String get serverUpstreamHubHint => 'Adjust scheduling and cache policy';
-
-  @override
   String get serverFilterTitle => 'Filtering rules';
-
-  @override
-  String get serverFilterHubHint =>
-      'Manage subscriptions and custom rules, or test a domain';
 
   @override
   String get serverCacheTitle => 'Cache';
 
   @override
-  String get serverCacheHubHint => 'Tune capacity, TTL and stale fallback';
-
-  @override
   String get serverQueryLogTitle => 'Query logging';
 
   @override
-  String get serverQueryLogHubHint =>
-      'Choose what to record, file output and retention';
-
-  @override
   String get serverSettingsTitle => 'Server settings';
-
-  @override
-  String get serverSettingsHubHint => 'Root, port and data directory';
 
   @override
   String get serverAppearance => 'Appearance';
@@ -15168,12 +10168,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverLogSearchDomain => 'Search domain';
-
-  @override
-  String get serverLogSearchClient => 'Search client';
-
-  @override
-  String get serverLogSearch => 'Search';
 
   @override
   String get serverLogEmpty => 'No queries yet';
@@ -15295,13 +10289,7 @@ class AppL10nEn extends AppL10n {
       'Primary + backup prefers the first healthy provider; parallel race takes the fastest; smart selection uses recent performance.';
 
   @override
-  String get serverUpstreamBootstrap => 'Bootstrap';
-
-  @override
   String get serverBootstrapSummary => 'Bootstrap summary';
-
-  @override
-  String get serverBootstrapServers => 'Servers';
 
   @override
   String serverBootstrapServerCount(int count) {
@@ -15465,9 +10453,6 @@ class AppL10nEn extends AppL10n {
   String get serverSubscriptionRequired => 'Name and URL are required';
 
   @override
-  String get serverCheckTitle => 'Rule test';
-
-  @override
   String get serverCheckDomain => 'Domain';
 
   @override
@@ -15499,12 +10484,6 @@ class AppL10nEn extends AppL10n {
       'Cache upstream responses and reuse their TTL';
 
   @override
-  String get serverCacheState => 'Cache status';
-
-  @override
-  String get serverCacheCapacity => 'Capacity';
-
-  @override
   String get serverCacheEntries => 'Maximum entries';
 
   @override
@@ -15515,9 +10494,6 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverCacheFixed => 'Fixed TTL';
-
-  @override
-  String get serverCacheTtl => 'TTL policy';
 
   @override
   String get serverCacheMaxTtl => 'Maximum TTL';
@@ -15561,20 +10537,8 @@ class AppL10nEn extends AppL10n {
   String get serverCacheAdvanced => 'Advanced options';
 
   @override
-  String get serverCacheBehavior => 'Cache behavior';
-
-  @override
   String get serverCacheAdvancedSummary =>
       'Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch';
-
-  @override
-  String get serverCacheAdvancedTtl => 'TTL floor';
-
-  @override
-  String get serverCacheFallback => 'Stale and negative cache';
-
-  @override
-  String get serverCachePerformance => 'Prefetch and optimization';
 
   @override
   String get serverQueryLogEnabled => 'Record queries';
@@ -15621,16 +10585,6 @@ class AppL10nEn extends AppL10n {
   @override
   String get serverNumberInvalid =>
       'Enter a whole number within the allowed range';
-
-  @override
-  String get serverSettingsRuntime => 'Runtime';
-
-  @override
-  String get serverRunning => 'Server running';
-
-  @override
-  String get serverSettingsSwitchModeBody =>
-      'The server stops before switching modes';
 
   @override
   String get serverSettingsListen => 'Listening';
