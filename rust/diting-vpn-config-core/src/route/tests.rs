@@ -104,6 +104,9 @@ fn bypass_private_excludes_private_ranges_and_keeps_dns() {
     assert!(!routes
         .iter()
         .any(|(address, _)| address.starts_with("192.168.")));
+    assert!(!routes
+        .iter()
+        .any(|(address, _)| address.starts_with("240.")));
 }
 
 #[test]
