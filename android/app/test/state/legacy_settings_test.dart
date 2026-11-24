@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart' show Locale;
 import 'package:diting_shared/app/theme/colors.dart';
 import 'package:diting_shared/app/theme/layout.dart';
 import 'package:diting_shared/data/native/background_bridge.dart';
+import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/state/appearance_providers.dart';
@@ -57,43 +58,52 @@ void _legacySettings() {
       expect(settings.resolutionModeRaw, 'parallel_race');
     });
 
-    test('旧 ipv6_mode=prefer 映射为两个开关开启', () {
+    test('旧 ipv6_mode=prefer 迁移为自动', () {
       final settings = LegacySettings(
         MemoryLegacyPrefsStore({
           'dns_vpn_prefs': {'ipv6_mode': 'prefer'},
         }),
       );
-      expect(settings.tunnelIpv6Enabled, isTrue);
-      expect(settings.dnsAaaaEnabled, isTrue);
+      expect(settings.ipv6Mode, Ipv6Mode.auto);
     });
 
-    test('旧 ipv6_mode 的其他值与缺省都映射为关闭', () {
+    test('旧 ipv6_mode 的其他值迁移为仅 IPv4，缺省采用自动', () {
       for (final raw in ['auto', 'disable', 'enabled', 'disabled', '']) {
         final settings = LegacySettings(
           MemoryLegacyPrefsStore({
             'dns_vpn_prefs': {'ipv6_mode': raw},
           }),
         );
-        expect(settings.tunnelIpv6Enabled, isFalse, reason: raw);
-        expect(settings.dnsAaaaEnabled, isFalse, reason: raw);
+        expect(settings.ipv6Mode, Ipv6Mode.ipv4, reason: raw);
       }
       final empty = LegacySettings(MemoryLegacyPrefsStore());
-      expect(empty.tunnelIpv6Enabled, isFalse);
-      expect(empty.dnsAaaaEnabled, isFalse);
+      expect(empty.ipv6Mode, Ipv6Mode.auto);
     });
 
-    test('新键优先于旧 ipv6_mode', () {
+    test('新键优先于旧 ipv6_mode 与旧布尔值', () {
       final settings = LegacySettings(
         MemoryLegacyPrefsStore({
           'dns_vpn_prefs': {
             'ipv6_mode': 'prefer',
             'vpn_ipv6_enabled': false,
             'dns_aaaa_enabled': true,
+            'vpn_ipv6_mode': 'ipv6',
           },
         }),
       );
-      expect(settings.tunnelIpv6Enabled, isFalse);
-      expect(settings.dnsAaaaEnabled, isTrue);
+      expect(settings.ipv6Mode, Ipv6Mode.ipv6);
+    });
+
+    test('写入三态同时回写旧布尔值', () {
+      final store = MemoryLegacyPrefsStore();
+      final settings = LegacySettings(store);
+      settings.setIpv6Mode(Ipv6Mode.ipv4);
+      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
+      expect(store.read('dns_vpn_prefs', 'vpn_ipv6_enabled'), isFalse);
+      expect(store.read('dns_vpn_prefs', 'dns_aaaa_enabled'), isFalse);
+      settings.setIpv6Mode(Ipv6Mode.ipv6);
+      expect(store.read('dns_vpn_prefs', 'vpn_ipv6_enabled'), isTrue);
+      expect(store.read('dns_vpn_prefs', 'dns_aaaa_enabled'), isTrue);
     });
 
     test('路由列表读写去重并排序', () {
@@ -410,18 +420,16 @@ void _settingsCatalog() {
       expect(c.read(logModeProvider), LegacyLogMode.off);
     });
 
-    test('IPv6 双开关默认关闭且可独立切换', () {
+    test('IPv6 三态默认自动且可切换', () {
       final c = container();
       final notifier = c.read(foregroundBackgroundProvider.notifier);
-      expect(c.read(foregroundBackgroundProvider).tunnelIpv6, isFalse);
-      expect(c.read(foregroundBackgroundProvider).dnsAaaa, isFalse);
+      expect(c.read(foregroundBackgroundProvider).ipv6Mode, Ipv6Mode.auto);
 
-      notifier.setTunnelIpv6(true);
-      expect(c.read(foregroundBackgroundProvider).tunnelIpv6, isTrue);
-      expect(c.read(foregroundBackgroundProvider).dnsAaaa, isFalse);
+      notifier.setIpv6Mode(Ipv6Mode.ipv4);
+      expect(c.read(foregroundBackgroundProvider).ipv6Mode, Ipv6Mode.ipv4);
 
-      notifier.setDnsAaaa(true);
-      expect(c.read(foregroundBackgroundProvider).dnsAaaa, isTrue);
+      notifier.setIpv6Mode(Ipv6Mode.ipv6);
+      expect(c.read(foregroundBackgroundProvider).ipv6Mode, Ipv6Mode.ipv6);
     });
 
     test('开机自启动开关默认关闭且可独立切换', () {

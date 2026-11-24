@@ -3,6 +3,7 @@ import 'package:diting_android/data/log_dashboard_widgets.dart';
 import 'package:diting_android/state/dashboard_layout_providers.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_android/state/log_dashboard_layout_providers.dart';
+import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/state/settings_providers.dart';
@@ -23,24 +24,28 @@ void main() {
   group('IPv6 旧三态迁移', () {
     LegacySettings settingsWith(Object? value) => LegacySettings(
       MemoryLegacyPrefsStore({
-        'dns_vpn_prefs': {
-          'ipv6_mode': ?value,
-        },
+        'dns_vpn_prefs': {'ipv6_mode': ?value},
       }),
     );
 
-    test('prefer 映射为两个开关开启', () {
+    test('prefer 映射为自动', () {
       final settings = settingsWith('prefer');
-      expect(settings.tunnelIpv6Enabled, isTrue);
-      expect(settings.dnsAaaaEnabled, isTrue);
+      expect(settings.ipv6Mode, Ipv6Mode.auto);
     });
 
-    test('其他旧值与空值映射为关闭', () {
-      for (final value in <Object?>['auto', 'disable', 'enabled', 'disabled', ' ', null]) {
+    test('其他旧值映射为仅 IPv4，空值采用自动', () {
+      for (final value in <Object?>[
+        'auto',
+        'disable',
+        'enabled',
+        'disabled',
+        ' ',
+      ]) {
         final settings = settingsWith(value);
-        expect(settings.tunnelIpv6Enabled, isFalse, reason: '$value');
-        expect(settings.dnsAaaaEnabled, isFalse, reason: '$value');
+        expect(settings.ipv6Mode, Ipv6Mode.ipv4, reason: '$value');
       }
+      final settings = settingsWith(null);
+      expect(settings.ipv6Mode, Ipv6Mode.auto);
     });
   });
 

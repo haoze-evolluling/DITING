@@ -230,8 +230,9 @@ extension _BackupExportSnapshot on BackupExporter {
     final texts = settings.notificationTexts;
     return {
       'bypassLan': settings.bypassLanEnabled,
-      'tunnelIpv6': settings.tunnelIpv6Enabled,
-      'dnsAaaa': settings.dnsAaaaEnabled,
+      'ipv6Mode': settings.ipv6Mode.storageValue,
+      'tunnelIpv6': settings.ipv6Mode.storageValue != 'ipv4',
+      'dnsAaaa': settings.ipv6Mode.storageValue != 'ipv4',
       'routeAddress': settings.vpnRouteAddress,
       'routeExcludeAddress': settings.vpnRouteExcludeAddress,
       'logRetentionDays': settings.logRetentionDays,

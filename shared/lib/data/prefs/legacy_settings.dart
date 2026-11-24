@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 
 part 'legacy_settings_dns.dart';
@@ -219,14 +220,22 @@ class LegacySettings {
 
   bool get bypassLanEnabled => _bool(uiContainer, 'bypass_lan_enabled', true);
 
-  bool get _legacyIpv6Prefer =>
-      (_string(dnsContainer, 'ipv6_mode') ?? '').trim().toLowerCase() == 'prefer';
+  static const ipv6ModeKey = 'vpn_ipv6_mode';
 
-  bool get tunnelIpv6Enabled =>
-      _bool(dnsContainer, 'vpn_ipv6_enabled', _legacyIpv6Prefer);
-
-  bool get dnsAaaaEnabled =>
-      _bool(dnsContainer, 'dns_aaaa_enabled', _legacyIpv6Prefer);
+  Ipv6Mode get ipv6Mode {
+    final stored = Ipv6Mode.fromStorage(_string(dnsContainer, ipv6ModeKey));
+    if (stored != null) return stored;
+    final legacyRaw = _string(dnsContainer, 'ipv6_mode');
+    if (legacyRaw != null) {
+      return legacyRaw.trim().toLowerCase() == 'prefer'
+          ? Ipv6Mode.auto
+          : Ipv6Mode.ipv4;
+    }
+    final tunnel = _store.read(dnsContainer, 'vpn_ipv6_enabled');
+    final aaaa = _store.read(dnsContainer, 'dns_aaaa_enabled');
+    if (tunnel == null && aaaa == null) return Ipv6Mode.auto;
+    return tunnel == true && aaaa == true ? Ipv6Mode.auto : Ipv6Mode.ipv4;
+  }
 
   List<String> get vpnRouteAddress => _routeAddress('vpn_route_address');
 

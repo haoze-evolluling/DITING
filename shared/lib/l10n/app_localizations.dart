@@ -946,13 +946,15 @@ abstract class AppL10n {
 
   String get logModeOffDescription;
 
-  String get tunnelIpv6Title;
+  String get ipv6ModeTitle;
 
-  String get tunnelIpv6Subtitle;
+  String get ipv6ModeSubtitle;
 
-  String get dnsAaaaTitle;
+  String get ipv6ModeIpv4;
 
-  String get dnsAaaaSubtitle;
+  String get ipv6ModeAuto;
+
+  String get ipv6ModeIpv6;
 
   String get routeIncludeTitle;
 

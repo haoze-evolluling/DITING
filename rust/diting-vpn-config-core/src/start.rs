@@ -7,8 +7,9 @@ pub fn start_defaults() -> Value {
         "outboundProxy": DEFAULT_OUTBOUND_PROXY,
         "proxyAppPackage": "",
         "bypassLan": true,
-        "tunnelIpv6": false,
-        "dnsAaaa": false,
+        "ipv6Mode": "auto",
+        "tunnelIpv6": true,
+        "dnsAaaa": true,
         "routeAddress": [],
         "routeExcludeAddress": [],
         "excludedPackages": [],
@@ -27,8 +28,9 @@ mod tests {
         let defaults = start_defaults();
         assert_eq!(defaults["outboundProxy"], DEFAULT_OUTBOUND_PROXY);
         assert_eq!(defaults["bypassLan"], true);
-        assert_eq!(defaults["tunnelIpv6"], false);
-        assert_eq!(defaults["dnsAaaa"], false);
+        assert_eq!(defaults["ipv6Mode"], "auto");
+        assert_eq!(defaults["tunnelIpv6"], true);
+        assert_eq!(defaults["dnsAaaa"], true);
         assert_eq!(defaults["routeAddress"], json!([]));
         assert_eq!(defaults["routeExcludeAddress"], json!([]));
         assert_eq!(defaults["inspectionEnabled"], false);

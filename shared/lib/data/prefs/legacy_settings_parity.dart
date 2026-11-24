@@ -58,11 +58,17 @@ extension LegacySettingsParity on LegacySettings {
   void setBypassLanEnabled(bool value) =>
       _store.putBool(_ui, 'bypass_lan_enabled', value);
 
-  void setTunnelIpv6Enabled(bool value) =>
-      _store.putBool(dnsContainer, 'vpn_ipv6_enabled', value);
-
-  void setDnsAaaaEnabled(bool value) =>
-      _store.putBool(dnsContainer, 'dns_aaaa_enabled', value);
+  void setIpv6Mode(Ipv6Mode mode) {
+    _store.putString(
+      dnsContainer,
+      LegacySettings.ipv6ModeKey,
+      mode.storageValue,
+    );
+    // 同时写回旧键，回滚到旧版本时行为仍然连续。
+    final dual = mode != Ipv6Mode.ipv4;
+    _store.putBool(dnsContainer, 'vpn_ipv6_enabled', dual);
+    _store.putBool(dnsContainer, 'dns_aaaa_enabled', dual);
+  }
 
   void setVpnRouteAddress(Iterable<String> values) =>
       _store.putStringSet(_ui, 'vpn_route_address', _routeSet(values));

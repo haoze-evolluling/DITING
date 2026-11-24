@@ -2,6 +2,7 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/native/background_bridge.dart';
+import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -128,8 +129,7 @@ class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
     return ForegroundBackgroundState(
       hideFromRecents: settings.hideFromRecentsEnabled,
       bypassLan: settings.bypassLanEnabled,
-      tunnelIpv6: settings.tunnelIpv6Enabled,
-      dnsAaaa: settings.dnsAaaaEnabled,
+      ipv6Mode: settings.ipv6Mode,
       routeAddress: settings.vpnRouteAddress,
       routeExcludeAddress: settings.vpnRouteExcludeAddress,
     );
@@ -147,15 +147,9 @@ class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
     _bump(ref);
   }
 
-  void setTunnelIpv6(bool value) {
-    state = state.copyWith(tunnelIpv6: value);
-    _settings(ref).setTunnelIpv6Enabled(value);
-    _bump(ref);
-  }
-
-  void setDnsAaaa(bool value) {
-    state = state.copyWith(dnsAaaa: value);
-    _settings(ref).setDnsAaaaEnabled(value);
+  void setIpv6Mode(Ipv6Mode mode) {
+    state = state.copyWith(ipv6Mode: mode);
+    _settings(ref).setIpv6Mode(mode);
     _bump(ref);
   }
 
@@ -186,31 +180,27 @@ class ForegroundBackgroundState {
   const ForegroundBackgroundState({
     required this.hideFromRecents,
     required this.bypassLan,
-    required this.tunnelIpv6,
-    required this.dnsAaaa,
+    required this.ipv6Mode,
     required this.routeAddress,
     required this.routeExcludeAddress,
   });
 
   final bool hideFromRecents;
   final bool bypassLan;
-  final bool tunnelIpv6;
-  final bool dnsAaaa;
+  final Ipv6Mode ipv6Mode;
   final List<String> routeAddress;
   final List<String> routeExcludeAddress;
 
   ForegroundBackgroundState copyWith({
     bool? hideFromRecents,
     bool? bypassLan,
-    bool? tunnelIpv6,
-    bool? dnsAaaa,
+    Ipv6Mode? ipv6Mode,
     List<String>? routeAddress,
     List<String>? routeExcludeAddress,
   }) => ForegroundBackgroundState(
     hideFromRecents: hideFromRecents ?? this.hideFromRecents,
     bypassLan: bypassLan ?? this.bypassLan,
-    tunnelIpv6: tunnelIpv6 ?? this.tunnelIpv6,
-    dnsAaaa: dnsAaaa ?? this.dnsAaaa,
+    ipv6Mode: ipv6Mode ?? this.ipv6Mode,
     routeAddress: routeAddress ?? this.routeAddress,
     routeExcludeAddress: routeExcludeAddress ?? this.routeExcludeAddress,
   );

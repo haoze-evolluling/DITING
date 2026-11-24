@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_android/data/mock_config_resources.dart';
+import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
@@ -187,8 +188,7 @@ void _expressMode() {
       final express = normal.forExpress();
 
       expect(express.selectedProviderId, 'preset_dnspod_dns');
-      expect(express.tunnelIpv6Enabled, isTrue);
-      expect(express.dnsAaaaEnabled, isTrue);
+      expect(express.ipv6Mode, Ipv6Mode.auto);
       expect(express.excludedPackages, {'com.example.skip'});
       expect(express.expressVpnRunning, isTrue);
       expect(express.paletteRaw, 'moss');
@@ -203,8 +203,7 @@ void _expressMode() {
       expect(express.resolutionModeRaw, 'single');
       expect(express.cacheEnabled, isTrue);
       expect(express.bootstrapEnabled, isTrue);
-      expect(express.tunnelIpv6Enabled, isFalse);
-      expect(express.dnsAaaaEnabled, isFalse);
+      expect(express.ipv6Mode, Ipv6Mode.auto);
       expect(express.expressVpnRunning, isFalse);
     });
   });
@@ -252,8 +251,7 @@ void _expressMode() {
       final settings = c.read(legacySettingsProvider);
       // 简洁模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
       expect(request.bypassLan, settings.bypassLanEnabled);
-      expect(request.tunnelIpv6, isTrue);
-      expect(request.dnsAaaa, isTrue);
+      expect(request.ipv6Mode, Ipv6Mode.auto.storageValue);
       expect(request.routeAddress, isEmpty);
       expect(request.routeExcludeAddress, isEmpty);
       expect(request.blockedPackages, settings.blockedAppPackages.toList());

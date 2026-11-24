@@ -108,11 +108,9 @@ internal abstract class FullTunnelVpnService : VpnService() {
             proxyJson = intent.getStringExtra(VpnServiceApi.EXTRA_OUTBOUND_PROXY).orEmpty(),
             proxyAppPackage = intent.getStringExtra(VpnServiceApi.EXTRA_PROXY_APP).orEmpty(),
             bypassLan = intent.getBooleanExtra(VpnServiceApi.EXTRA_BYPASS_LAN, defaults.bypassLan),
-            tunnelIpv6 = intent.getBooleanExtra(
-                VpnServiceApi.EXTRA_TUNNEL_IPV6,
-                defaults.tunnelIpv6,
-            ),
-            dnsAaaa = intent.getBooleanExtra(VpnServiceApi.EXTRA_DNS_AAAA, defaults.dnsAaaa),
+            ipv6Mode = Ipv6Mode.fromWire(
+                intent.getStringExtra(VpnServiceApi.EXTRA_IPV6_MODE) ?: defaults.ipv6Mode,
+            ).wire,
             routeAddress = intent
                 .getStringArrayListExtra(VpnServiceApi.EXTRA_ROUTE_ADDRESS)
                 .orEmpty()
@@ -153,12 +151,19 @@ internal abstract class FullTunnelVpnService : VpnService() {
         stopping = false
         runtime.lastError = null
 
+        val clat = VpnRouteConfig.clatDetected(this)
+        val ipv6 = Ipv6Policy.resolve(
+            mode = Ipv6Mode.fromWire(args.ipv6Mode),
+            hasRoutableIpv6 = Ipv6Policy.hasRoutableIpv6(this),
+            clat = clat,
+        )
         val established = VpnRouteConfig.establish(
             service = this,
             excludedPackages = args.excludedPackages,
             proxyPackage = args.proxyAppPackage.ifBlank { null },
             bypassPrivate = args.bypassLan,
-            tunnelIpv6 = args.tunnelIpv6,
+            tunnelIpv6 = ipv6.tunnelIpv6,
+            clat = clat,
             routeAddress = args.routeAddress,
             routeExcludeAddress = args.routeExcludeAddress,
             logTag = profile.logTag,
@@ -169,7 +174,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
             return
         }
         tun = pfd
-        val blockIpv6 = !args.dnsAaaa && !established.clatOnly
+        val blockIpv6 = ipv6.blockIpv6 && !established.clatOnly
 
         val rustEngine = try {
             Engine()
@@ -200,6 +205,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
                 engine = rustEngine,
                 args = args,
                 blockIpv6 = blockIpv6,
+                preferIpv6 = ipv6.preferIpv6,
                 logMode = logMode,
                 httpsBypassRules = httpsBypassRules,
                 logTag = profile.logTag,

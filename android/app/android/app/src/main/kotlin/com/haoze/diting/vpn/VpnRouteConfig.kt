@@ -18,11 +18,11 @@ internal object VpnRouteConfig {
         proxyPackage: String?,
         bypassPrivate: Boolean,
         tunnelIpv6: Boolean,
+        clat: Boolean,
         routeAddress: Collection<String>,
         routeExcludeAddress: Collection<String>,
         logTag: String = "VpnRouteConfig",
     ): VpnEstablishResult {
-        val clat = clatDetected(service)
         val plan = VpnPlanNative.routePlan(
             tunnelIpv6 = tunnelIpv6,
             routeAddress = routeAddress,

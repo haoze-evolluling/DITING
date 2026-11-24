@@ -1473,16 +1473,19 @@ class AppL10nZh extends AppL10n {
   String get logModeOffDescription => '不记录任何请求，节省空间';
 
   @override
-  String get tunnelIpv6Title => '隧道 IPv6';
+  String get ipv6ModeTitle => 'IPv6';
 
   @override
-  String get tunnelIpv6Subtitle => '在 VPN 接口内启用 IPv6 地址、路由与 DNS';
+  String get ipv6ModeSubtitle => '同时作用于 VPN 接口与 DNS；自动模式仅在网络支持时启用';
 
   @override
-  String get dnsAaaaTitle => 'DNS 返回 AAAA';
+  String get ipv6ModeIpv4 => '仅 IPv4';
 
   @override
-  String get dnsAaaaSubtitle => '关闭时 AAAA 查询返回空，与隧道开关相互独立';
+  String get ipv6ModeAuto => '自动';
+
+  @override
+  String get ipv6ModeIpv6 => 'IPv6 优先';
 
   @override
   String get routeIncludeTitle => '自定义路由';

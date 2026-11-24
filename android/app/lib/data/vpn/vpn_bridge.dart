@@ -26,8 +26,7 @@ class VpnStartRequest {
     this.outboundProxy = '',
     this.proxyAppPackage = '',
     this.bypassLan = true,
-    this.tunnelIpv6 = false,
-    this.dnsAaaa = false,
+    this.ipv6Mode = 'auto',
     this.routeAddress = const [],
     this.routeExcludeAddress = const [],
     this.excludedPackages = const [],
@@ -41,8 +40,7 @@ class VpnStartRequest {
 
   final String proxyAppPackage;
   final bool bypassLan;
-  final bool tunnelIpv6;
-  final bool dnsAaaa;
+  final String ipv6Mode;
   final List<String> routeAddress;
   final List<String> routeExcludeAddress;
 
@@ -203,8 +201,7 @@ class MethodChannelVpnController implements VpnController {
       'outboundProxy': request.outboundProxy,
       'proxyAppPackage': request.proxyAppPackage,
       'bypassLan': request.bypassLan,
-      'tunnelIpv6': request.tunnelIpv6,
-      'dnsAaaa': request.dnsAaaa,
+      'ipv6Mode': request.ipv6Mode,
       'routeAddress': request.routeAddress,
       'routeExcludeAddress': request.routeExcludeAddress,
       'excludedPackages': request.excludedPackages,

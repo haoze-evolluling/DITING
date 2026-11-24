@@ -1536,18 +1536,20 @@ class AppL10nEn extends AppL10n {
   String get logModeOffDescription => 'Nothing is recorded, saving space';
 
   @override
-  String get tunnelIpv6Title => 'Tunnel IPv6';
+  String get ipv6ModeTitle => 'IPv6';
 
   @override
-  String get tunnelIpv6Subtitle =>
-      'Add IPv6 addresses, routes and DNS to the VPN interface';
+  String get ipv6ModeSubtitle =>
+      'Applies to both the VPN interface and DNS; Auto enables IPv6 only when the network supports it';
 
   @override
-  String get dnsAaaaTitle => 'DNS AAAA answers';
+  String get ipv6ModeIpv4 => 'IPv4 only';
 
   @override
-  String get dnsAaaaSubtitle =>
-      'When off, AAAA queries return empty; independent of the tunnel switch';
+  String get ipv6ModeAuto => 'Auto';
+
+  @override
+  String get ipv6ModeIpv6 => 'Prefer IPv6';
 
   @override
   String get routeIncludeTitle => 'Custom routes';

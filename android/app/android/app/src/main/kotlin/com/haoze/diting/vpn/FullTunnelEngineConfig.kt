@@ -29,6 +29,7 @@ internal object FullTunnelEngineConfig {
         engine: Engine,
         args: TunnelStartArgs,
         blockIpv6: Boolean,
+        preferIpv6: Boolean,
         logMode: String,
         httpsBypassRules: Set<String>,
         logTag: String,
@@ -54,6 +55,7 @@ internal object FullTunnelEngineConfig {
         EngineLogCallbacks.attach(engine, context, logDatabase, logMode)
         engine.setFilterDNS(true)
         engine.setBlockIpv6(blockIpv6)
+        engine.setPreferIpv6(preferIpv6)
         BlockPauseLink.applyTo(context, engine)
 
         val plane = EngineDataPlane(context, logMode, logDatabase)

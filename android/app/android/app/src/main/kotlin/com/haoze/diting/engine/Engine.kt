@@ -149,6 +149,10 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeSetBlockIpv6(handle, enabled)
     }
 
+    fun setPreferIpv6(enabled: Boolean) {
+        nativeSetPreferIpv6(handle, enabled)
+    }
+
     fun setSystemDns(serversCsv: String) {
         nativeSetSystemDns(handle, serversCsv)
     }
@@ -248,6 +252,8 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeSetBlockEncryptedDns(handle: Long, enabled: Boolean)
 
     private external fun nativeSetBlockIpv6(handle: Long, enabled: Boolean)
+
+    private external fun nativeSetPreferIpv6(handle: Long, enabled: Boolean)
 
     private external fun nativeSetSystemDns(handle: Long, serversCsv: String)
 

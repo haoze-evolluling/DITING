@@ -7,6 +7,7 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/notification_bridge.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/data/native/permissions_bridge.dart';
+import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/appearance/appearance_inputs.dart';
 import 'package:diting_android/pages/appearance/notification_stats_section.dart';
@@ -418,19 +419,18 @@ class SettingsBackgroundPage extends ConsumerWidget {
                 onChanged: notifier.setBypassLan,
               ),
               if (tunnelMode) ...[
-                ListItem.toggle(
-                  title: Text(context.l10n.tunnelIpv6Title),
-                  subtitle: Text(context.l10n.tunnelIpv6Subtitle),
+                ListItem.options(
+                  title: Text(context.l10n.ipv6ModeTitle),
+                  subtitle: Text(context.l10n.ipv6ModeSubtitle),
                   leading: const Icon(TablerIcons.link),
-                  value: state.tunnelIpv6,
-                  onChanged: notifier.setTunnelIpv6,
-                ),
-                ListItem.toggle(
-                  title: Text(context.l10n.dnsAaaaTitle),
-                  subtitle: Text(context.l10n.dnsAaaaSubtitle),
-                  leading: const Icon(TablerIcons.world),
-                  value: state.dnsAaaa,
-                  onChanged: notifier.setDnsAaaa,
+                  options: Ipv6Mode.values,
+                  value: state.ipv6Mode,
+                  textBuilder: (mode) => switch (mode) {
+                    Ipv6Mode.ipv4 => context.l10n.ipv6ModeIpv4,
+                    Ipv6Mode.auto => context.l10n.ipv6ModeAuto,
+                    Ipv6Mode.ipv6 => context.l10n.ipv6ModeIpv6,
+                  },
+                  onChanged: notifier.setIpv6Mode,
                 ),
                 NavEntryRow(
                   glyph: TablerIcons.route,

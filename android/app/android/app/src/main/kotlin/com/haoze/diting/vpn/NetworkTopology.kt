@@ -41,6 +41,14 @@ internal object NetworkTopology {
                 !address.isMulticastAddress
         }
 
+    /** 有全局 IPv6 地址，且有默认或非链路本地的 IPv6 路由。 */
+    fun hasRoutableIpv6(link: LinkProperties): Boolean =
+        hasGlobalIpv6(link) && link.routes.any { route ->
+            val address = route.destination.address
+            address is Inet6Address &&
+                (route.isDefaultRoute || !address.isLinkLocalAddress)
+        }
+
     /**
      * 物理网络是否只在 CLAT 之上提供 IPv4：有全局 IPv6、没有原生 IPv4，
      * 且存在 NAT64 前缀或 192.0.0.4/29 / v4- 虚拟接口。

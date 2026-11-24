@@ -2,6 +2,7 @@ package com.haoze.diting.vpn
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 
 /** 一次隧道启动的完整参数集合，普通模式与简洁模式共用。 */
 internal data class TunnelStartArgs(
@@ -9,8 +10,7 @@ internal data class TunnelStartArgs(
     val proxyJson: String,
     val proxyAppPackage: String,
     val bypassLan: Boolean,
-    val tunnelIpv6: Boolean,
-    val dnsAaaa: Boolean,
+    val ipv6Mode: String,
     val routeAddress: Set<String>,
     val routeExcludeAddress: Set<String>,
     val excludedPackages: Set<String>,
@@ -32,8 +32,10 @@ internal class VpnStartConfigStore(private val prefsName: String) {
             .putString(KEY_LAST_OUTBOUND_PROXY, args.proxyJson)
             .putString(KEY_LAST_PROXY_APP, args.proxyAppPackage)
             .putBoolean(KEY_LAST_BYPASS_LAN, args.bypassLan)
-            .putBoolean(KEY_LAST_TUNNEL_IPV6, args.tunnelIpv6)
-            .putBoolean(KEY_LAST_DNS_AAAA, args.dnsAaaa)
+            .putString(KEY_LAST_IPV6_MODE, args.ipv6Mode)
+            // 旧版本回滚时仍能读到与原语义一致的两个布尔值。
+            .putBoolean(KEY_LAST_TUNNEL_IPV6, args.ipv6Mode != Ipv6Mode.IPV4.wire)
+            .putBoolean(KEY_LAST_DNS_AAAA, args.ipv6Mode != Ipv6Mode.IPV4.wire)
             .putStringSet(KEY_LAST_ROUTE_ADDRESS, args.routeAddress)
             .putStringSet(KEY_LAST_ROUTE_EXCLUDE_ADDRESS, args.routeExcludeAddress)
             .putStringSet(KEY_LAST_EXCLUDED_PACKAGES, args.excludedPackages)
@@ -51,8 +53,6 @@ internal class VpnStartConfigStore(private val prefsName: String) {
         val dnsConfig = prefs.getString(KEY_LAST_DNS_CONFIG, null)
         if (dnsConfig.isNullOrBlank()) return null
         val defaults = VpnPlanNative.startDefaults
-        val legacyPrefer =
-            prefs.getString(KEY_LAST_IPV6_MODE, null)?.trim()?.lowercase() == "prefer"
         return buildIntent(
             TunnelStartArgs(
                 dnsConfig = dnsConfig,
@@ -60,16 +60,7 @@ internal class VpnStartConfigStore(private val prefsName: String) {
                     ?: defaults.outboundProxy,
                 proxyAppPackage = prefs.getString(KEY_LAST_PROXY_APP, null).orEmpty(),
                 bypassLan = prefs.getBoolean(KEY_LAST_BYPASS_LAN, defaults.bypassLan),
-                tunnelIpv6 = if (prefs.contains(KEY_LAST_TUNNEL_IPV6)) {
-                    prefs.getBoolean(KEY_LAST_TUNNEL_IPV6, defaults.tunnelIpv6)
-                } else {
-                    legacyPrefer
-                },
-                dnsAaaa = if (prefs.contains(KEY_LAST_DNS_AAAA)) {
-                    prefs.getBoolean(KEY_LAST_DNS_AAAA, defaults.dnsAaaa)
-                } else {
-                    legacyPrefer
-                },
+                ipv6Mode = restoreIpv6Mode(prefs),
                 routeAddress = prefs.getStringSet(KEY_LAST_ROUTE_ADDRESS, null)
                     ?: defaults.routeAddress.toSet(),
                 routeExcludeAddress = prefs.getStringSet(KEY_LAST_ROUTE_EXCLUDE_ADDRESS, null)
@@ -89,6 +80,26 @@ internal class VpnStartConfigStore(private val prefsName: String) {
     }
 
     companion object {
+        /**
+         * 新键优先；没有新键时按旧布尔值迁移，两个键都不存在则采用新的默认“自动”。
+         */
+        private fun restoreIpv6Mode(prefs: SharedPreferences): String {
+            val raw = prefs.getString(KEY_LAST_IPV6_MODE, null)?.trim()?.lowercase()
+            if (raw != null && raw.isNotEmpty()) {
+                return when (raw) {
+                    Ipv6Mode.IPV4.wire, Ipv6Mode.AUTO.wire, Ipv6Mode.IPV6.wire -> raw
+                    "prefer" -> Ipv6Mode.AUTO.wire
+                    else -> Ipv6Mode.IPV4.wire
+                }
+            }
+            val hasTunnel = prefs.contains(KEY_LAST_TUNNEL_IPV6)
+            val hasAaaa = prefs.contains(KEY_LAST_DNS_AAAA)
+            if (!hasTunnel && !hasAaaa) return Ipv6Mode.AUTO.wire
+            val tunnel = prefs.getBoolean(KEY_LAST_TUNNEL_IPV6, false)
+            val aaaa = prefs.getBoolean(KEY_LAST_DNS_AAAA, false)
+            return Ipv6Mode.fromLegacy(tunnel, aaaa).wire
+        }
+
         const val KEY_LAST_DNS_CONFIG = "last_dns_config"
 
         private const val KEY_LAST_OUTBOUND_PROXY = "last_outbound_proxy"

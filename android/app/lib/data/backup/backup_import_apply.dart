@@ -153,10 +153,13 @@ extension _BackupImportApply on BackupImporter {
         );
       case 'system.bypassLan':
         settings.setBypassLanEnabled(value == true);
+      case 'system.ipv6Mode':
+        final mode = Ipv6Mode.fromStorage('$value');
+        if (mode != null) settings.setIpv6Mode(mode);
       case 'system.tunnelIpv6':
-        settings.setTunnelIpv6Enabled(value == true);
       case 'system.dnsAaaa':
-        settings.setDnsAaaaEnabled(value == true);
+        // 兼容旧导入计划：任一开关关闭即视为仅 IPv4。
+        if (value != true) settings.setIpv6Mode(Ipv6Mode.ipv4);
       case 'system.routeAddress':
         settings.setVpnRouteAddress(_strings(value));
       case 'system.routeExcludeAddress':
