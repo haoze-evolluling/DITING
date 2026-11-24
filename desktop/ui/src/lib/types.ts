@@ -34,6 +34,23 @@ export interface LoginResult {
   expiresAt: number;
 }
 
+export type LoginBackgroundType = "none" | "custom" | "url";
+
+export interface LoginBackground {
+  type: LoginBackgroundType;
+  url: string;
+  opacity: number;
+  blur: number;
+  updatedAt: number;
+}
+
+export interface LoginBackgroundInput {
+  type: LoginBackgroundType;
+  url: string;
+  opacity: number;
+  blur: number;
+}
+
 export interface MetaInfo {
   os: string;
   platformKind?: string;

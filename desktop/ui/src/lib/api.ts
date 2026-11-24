@@ -30,6 +30,8 @@ import type {
   FilterStats,
   HostsConfig,
   LanStatus,
+  LoginBackground,
+  LoginBackgroundInput,
   LoginResult,
   MetaInfo,
   OpenWrtStatus,
@@ -167,6 +169,17 @@ export const api = {
       method: "POST",
       body: { username, oldPassword, newPassword },
     }),
+
+  // 登录页背景：GET 供登录页在未认证时读取，写入需有效会话
+  loginBackground: () =>
+    request<LoginBackground>("/api/v1/auth/background", { auth: false }),
+  setLoginBackground: (input: LoginBackgroundInput) =>
+    request<LoginBackground>("/api/v1/auth/background", {
+      method: "POST",
+      body: input,
+    }),
+  resetLoginBackground: () =>
+    request<LoginBackground>("/api/v1/auth/background", { method: "DELETE" }),
 
   status: () => request<StatusResponse>("/api/v1/status"),
   serviceStatus: () => request<ServiceStatus>("/api/v1/service/status"),

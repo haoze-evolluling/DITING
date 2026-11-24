@@ -153,12 +153,12 @@ impl AppRuntime {
             })?;
             std::fs::create_dir_all(&dir)
                 .map_err(|error| ControllerError::new(format!("创建背景存储目录失败: {error}")))?;
+            // clean_existing 会删除 login_bg 前缀的临时文件，必须先清理再写入临时文件。
+            clean_existing(&dir);
             let target = dir.join(format!("login_bg{ext}"));
             let temporary = dir.join("login_bg_upload.tmp");
             std::fs::write(&temporary, &image)
                 .map_err(|error| ControllerError::new(format!("写入背景临时文件失败: {error}")))?;
-            clean_existing(&dir);
-            let _ = std::fs::remove_file(&target);
             std::fs::rename(&temporary, &target).map_err(|error| {
                 ControllerError::new(format!("持久化背景图片文件失败: {error}"))
             })?;

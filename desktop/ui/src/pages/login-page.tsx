@@ -8,7 +8,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { LoadingState } from "../components/ui/loading";
 import { Collapse, Swap } from "../components/ui/swap";
-import { useAuthStatus } from "../hooks/use-api";
+import { useAuthStatus, useLoginBackground } from "../hooks/use-api";
 import { MOTION_EASE_OUT, useMotion } from "../hooks/use-motion";
 import { api, describeError } from "../lib/api";
 import { useAuthStore } from "../stores/auth";
@@ -18,6 +18,11 @@ const capabilities = [
   "一键接管系统 DNS，异常时自动还原",
   "实时查询流与 24 小时运行指标",
 ];
+
+function cssImageUrl(url: string): string {
+  const safe = url.replace(/["\\\n\r]/g, "").trim();
+  return `url("${safe}")`;
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -44,6 +49,11 @@ export function LoginPage() {
   const localHost = ["127.0.0.1", "localhost", "::1", "[::1]"].includes(
     window.location.hostname,
   );
+  const loginBackground = useLoginBackground().data;
+  const backdrop =
+    loginBackground && loginBackground.type !== "none" && loginBackground.url
+      ? loginBackground
+      : null;
 
   if (token && !expired) return <Navigate to="/" replace />;
 
@@ -126,6 +136,24 @@ export function LoginPage() {
   return (
     <div className="grid h-full grid-cols-1 overflow-y-auto lg:grid-cols-[1.02fr_0.98fr]">
       <aside className="relative hidden overflow-hidden bg-[#08121f] px-12 py-10 text-white lg:flex lg:flex-col">
+        {backdrop ? (
+          <>
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: cssImageUrl(backdrop.url),
+                opacity: Math.min(100, Math.max(0, backdrop.opacity)) / 100,
+                filter: backdrop.blur > 0 ? `blur(${backdrop.blur}px)` : undefined,
+                transform: backdrop.blur > 0 ? "scale(1.06)" : undefined,
+              }}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#08121f] via-[#08121f]/75 to-[#08121f]/40"
+            />
+          </>
+        ) : null}
         <div
           aria-hidden
           className="motion-glow-ambient pointer-events-none absolute inset-0"

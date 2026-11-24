@@ -21,6 +21,7 @@ import type {
   FilterPauseResponse,
   FilterRulesResponse,
   LanStatus,
+  LoginBackground,
   MetaInfo,
   OpenWrtStatus,
   QueryLogConfig,
@@ -45,6 +46,15 @@ export function useAuthStatus(): UseQueryResult<AuthStatus> {
     queryFn: api.authStatus,
     retry: 1,
     refetchInterval: 30_000,
+  });
+}
+
+export function useLoginBackground(): UseQueryResult<LoginBackground> {
+  return useQuery({
+    queryKey: ["login-background"],
+    queryFn: api.loginBackground,
+    staleTime: 30_000,
+    retry: 1,
   });
 }
 
