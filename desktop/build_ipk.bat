@@ -21,7 +21,8 @@ title DITING IPK Build
 ::   - Python 3.10+ on PATH
 ::   - Node.js 20+ and npm on PATH (skip with --skip-ui)
 ::   - WSL when this runs on Windows; the Rust service is compiled inside WSL,
-::     so WSL needs rustup and the musl target installed as well
+::     so WSL needs rustup, the musl target, and musl-tools (musl-gcc) installed
+::     as well (ring and the bundled SQLite need a musl C compiler)
 ::
 :: This script only builds; it never installs anything.
 

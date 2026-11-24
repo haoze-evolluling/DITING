@@ -292,8 +292,21 @@ build_one_arch() {
                 exit 1
             fi
         fi
-    elif [ "$pkg_arch" = "x86_64" ] && ! command -v musl-gcc >/dev/null 2>&1; then
-        echo "[提示] 未检测到 musl-gcc；若内嵌 SQLite C 代码编译失败，请执行: sudo apt install musl-tools" >&2
+    elif [ "$pkg_arch" = "x86_64" ]; then
+        # ring 的汇编与 rusqlite 的内置 SQLite 都要用 musl 目标的 C 编译器；
+        # 部分发行版的 musl-tools 只提供 musl-gcc，没有带三元组前缀的封装，故两者都探测。
+        if [ -z "${CC_x86_64_unknown_linux_musl:-}" ]; then
+            if command -v x86_64-linux-musl-gcc >/dev/null 2>&1; then
+                export CC_x86_64_unknown_linux_musl="x86_64-linux-musl-gcc"
+            elif command -v musl-gcc >/dev/null 2>&1; then
+                export CC_x86_64_unknown_linux_musl="musl-gcc"
+            else
+                echo "[错误] 编译 ring 与内置 SQLite 需要 musl 目标的 C 工具链，但未找到" >&2
+                echo "       x86_64-linux-musl-gcc 或 musl-gcc。" >&2
+                echo "       Ubuntu/Debian 请执行: sudo apt install musl-tools" >&2
+                exit 1
+            fi
+        fi
     fi
 
     local cargo_args=("$subcmd" --target "$rust_target" -p diting-desktop-service)
