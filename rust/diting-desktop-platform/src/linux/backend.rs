@@ -46,7 +46,11 @@ async fn is_systemd_resolved_active(executor: &dyn CommandExecutor) -> bool {
         return false;
     }
     match executor.run("resolvectl", &["status"]).await {
-        Ok(output) => output.success && !output.text().is_empty(),
+        // resolvectl 在 D-Bus 不可用时仍可能以 0 退出，只输出错误文本，
+        // 因此不能只看退出码，必须排除错误输出。
+        Ok(output) => {
+            output.success && crate::linux::dnsstate::resolvectl_status_usable(&output.text())
+        }
         Err(_) => false,
     }
 }

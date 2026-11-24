@@ -183,6 +183,31 @@ fn adapter_names(adapters: &[AdapterInfo]) -> Vec<String> {
         .collect()
 }
 
+/// 连接禁用 IPv6（`ipv6.method=disabled/ignore`）时，写入 `ipv6.dns`
+/// 会让整条 `nmcli con mod` 失败，因此按连接的 IPv6 方式动态拼参数。
+async fn supports_ipv6(executor: &dyn CommandExecutor, connection: &str) -> bool {
+    match executor
+        .run(
+            "nmcli",
+            &["-t", "-f", "ipv6.method", "con", "show", connection],
+        )
+        .await
+    {
+        Ok(output) if output.success => {
+            let method = parse_nmcli_property(&output.text(), "ipv6.method").unwrap_or_default();
+            !method.eq_ignore_ascii_case("disabled") && !method.eq_ignore_ascii_case("ignore")
+        }
+        _ => true,
+    }
+}
+
+pub(crate) fn parse_nmcli_property(output: &str, key: &str) -> Option<String> {
+    output.lines().find_map(|line| {
+        let (name, value) = line.split_once(':')?;
+        (name.trim() == key).then(|| value.trim().to_string())
+    })
+}
+
 async fn modify_connection(
     executor: &dyn CommandExecutor,
     connection: &str,
@@ -194,21 +219,24 @@ async fn modify_connection(
     let ipv6_arg = ipv6_dns.join(",");
     let ignore_arg = if ignore_auto { "yes" } else { "no" };
 
-    let args = [
-        "con",
-        "mod",
-        connection,
-        "ipv4.dns",
-        &ipv4_arg,
-        "ipv6.dns",
-        &ipv6_arg,
-        "ipv4.ignore-auto-dns",
-        ignore_arg,
-        "ipv6.ignore-auto-dns",
-        ignore_arg,
+    let mut args: Vec<String> = vec![
+        "con".to_string(),
+        "mod".to_string(),
+        connection.to_string(),
+        "ipv4.dns".to_string(),
+        ipv4_arg,
+        "ipv4.ignore-auto-dns".to_string(),
+        ignore_arg.to_string(),
     ];
+    if supports_ipv6(executor, connection).await {
+        args.push("ipv6.dns".to_string());
+        args.push(ipv6_arg);
+        args.push("ipv6.ignore-auto-dns".to_string());
+        args.push(ignore_arg.to_string());
+    }
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
     executor
-        .run_checked("nmcli", &args)
+        .run_checked("nmcli", &arg_refs)
         .await
         .map_err(|error| {
             PlatformError::message(format!("修改连接 [{connection}] 的 DNS 设置失败: {error}"))
@@ -281,6 +309,20 @@ mod tests {
             ..AdapterState::default()
         };
         assert!(matching_adapter(&connection, &[adapter]).is_none());
+    }
+
+    #[test]
+    fn nmcli_properties_are_parsed_by_key() {
+        let output = "ipv6.method:disabled\nipv4.method:manual\n";
+        assert_eq!(
+            parse_nmcli_property(output, "ipv6.method"),
+            Some("disabled".to_string())
+        );
+        assert_eq!(
+            parse_nmcli_property(output, "ipv4.method"),
+            Some("manual".to_string())
+        );
+        assert_eq!(parse_nmcli_property(output, "ipv6.dns"), None);
     }
 
     #[test]

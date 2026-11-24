@@ -108,24 +108,60 @@ pub(crate) fn parse_resolvectl_dns(output: &str) -> HashMap<String, Vec<String>>
     result
 }
 
+/// resolvectl 在 D-Bus 不可用时仍可能以 0 退出，只输出错误文本，
+/// 因此检测后端不能只看退出码，必须排除这些错误输出。
+pub(crate) fn resolvectl_status_usable(text: &str) -> bool {
+    if text.is_empty() {
+        return false;
+    }
+    let lower = text.to_ascii_lowercase();
+    !lower.contains("failed to")
+        && !lower.contains("sd_bus_open_system")
+        && !lower.contains("could not")
+        && !lower.contains("no such file")
+}
+
+/// `nmcli con show` 只接受 GENERAL/连接字段，`IP4.DNS` 不是合法字段。
+/// 因此先取活动连接与设备映射，再逐个读取连接的 `ipv4.dns/ipv6.dns` 属性。
 async fn servers_from_nmcli(executor: &dyn CommandExecutor) -> HashMap<String, Vec<String>> {
-    match executor
+    let output = match executor
         .run(
             "nmcli",
-            &[
-                "-t",
-                "-f",
-                "DEVICE,IP4.DNS,IP6.DNS",
-                "con",
-                "show",
-                "--active",
-            ],
+            &["-t", "-f", "NAME,DEVICE,STATE", "con", "show", "--active"],
         )
         .await
     {
-        Ok(output) if output.success => parse_nmcli_dns(&output.text()),
-        _ => HashMap::new(),
+        Ok(output) if output.success => output,
+        _ => return HashMap::new(),
+    };
+
+    let mut result = HashMap::new();
+    for line in output.text().lines() {
+        let fields = split_terse_fields(line);
+        if fields.len() < 3 {
+            continue;
+        }
+        let name = fields[0].trim();
+        let device = fields[1].trim();
+        if name.is_empty() || device.is_empty() || name == "lo" || device == "lo" {
+            continue;
+        }
+        let properties = match executor
+            .run(
+                "nmcli",
+                &["-t", "-f", "ipv4.dns,ipv6.dns", "con", "show", name],
+            )
+            .await
+        {
+            Ok(output) if output.success => output,
+            _ => continue,
+        };
+        let servers = parse_nmcli_dns_properties(&properties.text());
+        if !servers.is_empty() {
+            result.insert(device.to_string(), servers);
+        }
     }
+    result
 }
 
 /// nmcli 的 terse 模式（`-t`）用 `:` 分隔字段，并把值中的 `:` 转义为 `\:`。
@@ -153,26 +189,28 @@ pub(crate) fn split_terse_fields(line: &str) -> Vec<String> {
     fields
 }
 
-pub(crate) fn parse_nmcli_dns(output: &str) -> HashMap<String, Vec<String>> {
-    let mut result = HashMap::new();
+/// 解析 `nmcli -t -f ipv4.dns,ipv6.dns con show <name>` 的输出。
+/// 属性值可能包含 IPv6 地址和多值逗号列表，因此只在第一个 `:` 处切分。
+pub(crate) fn parse_nmcli_dns_properties(output: &str) -> Vec<String> {
+    let mut servers = Vec::new();
     for line in output.lines() {
-        let fields = split_terse_fields(line);
-        if fields.len() < 3 {
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        let key = key.trim();
+        if key != "ipv4.dns" && key != "ipv6.dns" {
             continue;
         }
-        let iface = fields[0].trim();
-        if iface.is_empty() || iface == "lo" {
-            continue;
-        }
-        let mut servers = Vec::new();
-        for field in &fields[1..] {
-            servers.extend(field.split_whitespace().map(str::to_string));
-        }
-        if !servers.is_empty() {
-            result.insert(iface.to_string(), servers);
+        let value = value.replace("\\:", ":").replace("\\\\", "\\");
+        for entry in value.split(',') {
+            for server in entry.split_whitespace() {
+                if !server.is_empty() {
+                    servers.push(server.to_string());
+                }
+            }
         }
     }
-    result
+    servers
 }
 
 fn servers_from_resolv_conf() -> HashMap<String, Vec<String>> {
@@ -443,18 +481,30 @@ mod tests {
     }
 
     #[test]
-    fn nmcli_rows_are_parsed_with_escaped_ipv6() {
-        let output = "eth0:1.1.1.1 8.8.8.8:2001\\:db8\\:\\:1\nlo:127.0.0.1:\nbad-row\n";
-        let parsed = parse_nmcli_dns(output);
+    fn nmcli_dns_properties_keep_ipv6_and_multiple_servers() {
+        let output = "ipv4.dns:1.1.1.1,8.8.8.8\nipv6.dns:2001:db8::1\n";
         assert_eq!(
-            parsed.get("eth0"),
-            Some(&vec![
+            parse_nmcli_dns_properties(output),
+            vec![
                 "1.1.1.1".to_string(),
                 "8.8.8.8".to_string(),
                 "2001:db8::1".to_string()
-            ])
+            ]
         );
-        assert!(!parsed.contains_key("lo"));
-        assert!(!parsed.contains_key("bad-row"));
+        assert!(parse_nmcli_dns_properties("ipv4.dns:\nipv6.dns:\n").is_empty());
+    }
+
+    #[test]
+    fn resolvectl_error_output_is_not_treated_as_active() {
+        assert!(resolvectl_status_usable(
+            "Global\n  DNS Servers: 10.0.0.1\nLink 2 (eth0): 10.0.0.1\n"
+        ));
+        assert!(!resolvectl_status_usable(
+            "Failed to get global data: Unit dbus-org.freedesktop.resolve1.service failed to load properly"
+        ));
+        assert!(!resolvectl_status_usable(
+            "sd_bus_open_system: No such file or directory"
+        ));
+        assert!(!resolvectl_status_usable(""));
     }
 }
