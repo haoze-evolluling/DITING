@@ -82,9 +82,7 @@ unavailable; without the AI kernel, the DNS-config kernel, the backup kernel, th
 kernel, the subscription kernel, the log-query kernel, the cleanup kernel, the update-check kernel,
 the recognition kernel, the IP-quality kernel, the outbound-proxy config kernel, the VPN plan
 kernel or the notification kernel the matching screen throws instead of drifting from the format
-the native side writes. Answers and the tunnel stay untouched in those cases. `diting-allowlist-core`
-and `diting-ipcache-core` have no consumer left (the strict allowlist and the IP → domain hint are
-not wired from Kotlin yet), so they are built by `cargo test` only and are not shipped.
+the native side writes. Answers and the tunnel stay untouched in those cases.
 
 Run this before every APK build (build_apk.bat does it for you):
 

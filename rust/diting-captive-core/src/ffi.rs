@@ -36,27 +36,6 @@ fn handle_operation(request: &Value) -> Option<Value> {
                 "suspendBlocking": verdict.suspend_blocking,
             }))
         }
-        "captive.parseOption" => {
-            let option = request.get("option").and_then(Value::as_str).unwrap_or("");
-            Some(json!({ "url": evaluate::parse_portal_url(option) }))
-        }
-        "captive.gate" => {
-            let verdict = evaluate::evaluate(&decode_probe(request));
-            let validated = request
-                .get("networkValidated")
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let capable = request
-                .get("captiveCapability")
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let decision = evaluate::gate(validated, capable, &verdict);
-            Some(json!({
-                "suspendBlocking": decision.suspend_blocking,
-                "portalUrl": decision.portal_url,
-                "reason": decision.reason,
-            }))
-        }
         _ => None,
     }
 }
@@ -158,16 +137,6 @@ mod tests {
         let answer = handle_operation(&request).unwrap();
         assert_eq!(answer["state"], json!("portal"));
         assert_eq!(answer["suspendBlocking"], json!(true));
-    }
-
-    #[test]
-    fn parses_option() {
-        let answer = handle_operation(&json!({
-            "op": "captive.parseOption",
-            "option": "https://wifi.example/login"
-        }))
-        .unwrap();
-        assert_eq!(answer["url"], json!("https://wifi.example/login"));
     }
 
     #[test]

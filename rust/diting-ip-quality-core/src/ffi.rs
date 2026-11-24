@@ -1,6 +1,6 @@
 use serde_json::{json, Value};
 
-use crate::probe::{is_ip_like, parse_probe};
+use crate::probe::parse_probe;
 use crate::source::{source_result, Source};
 use crate::summary::summarize;
 
@@ -57,9 +57,6 @@ fn payload_of(answer: Value) -> Vec<u8> {
 fn handle_operation(request: &Value) -> Option<Value> {
     match request.get("op")?.as_str()? {
         "parseProbe" => Some(json!({ "ip": parse_probe(request.get("body")?.as_str()?) })),
-        "ipLike" => Some(json!({
-            "value": is_ip_like(request.get("value")?.as_str()?),
-        })),
         "sourceResult" => {
             let source = Source::parse(request.get("source")?.as_str()?)?;
             let status = request.get("status")?.as_i64()?;
@@ -121,10 +118,6 @@ mod tests {
         assert_eq!(
             handle_operation(&json!({ "op": "parseProbe", "body": "1.2.3.4" })).unwrap()["ip"],
             "1.2.3.4"
-        );
-        assert_eq!(
-            handle_operation(&json!({ "op": "ipLike", "value": "::1" })).unwrap()["value"],
-            true
         );
         let source = handle_operation(&json!({
             "op": "sourceResult",

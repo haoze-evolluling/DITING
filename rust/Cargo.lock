@@ -544,13 +544,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "diting-allowlist-core"
-version = "0.1.0"
-dependencies = [
- "diting-go-compat",
-]
-
-[[package]]
 name = "diting-app-update-core"
 version = "0.1.0"
 dependencies = [
@@ -933,22 +926,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "diting-hosts-core"
-version = "0.1.0"
-dependencies = [
- "diting-go-compat",
-]
-
-[[package]]
 name = "diting-ip-quality-core"
 version = "0.1.0"
 dependencies = [
  "serde_json",
 ]
-
-[[package]]
-name = "diting-ipcache-core"
-version = "0.1.0"
 
 [[package]]
 name = "diting-kernels"
