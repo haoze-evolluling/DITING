@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { PageHeader } from "../components/layout/page-header";
 import { AppearanceCard } from "../components/settings/appearance-card";
+import { BackupCard } from "../components/settings/backup-card";
 import { LoginBackgroundCard } from "../components/settings/login-background-card";
 import { PasswordCard } from "../components/settings/password-card";
 import { QueryLogCard } from "../components/settings/query-log-card";
@@ -99,6 +100,7 @@ export function SettingsPage() {
         <ServiceCard />
         <WebAccessCard />
         <LoginBackgroundCard />
+        <BackupCard />
         <Card className="flex flex-col">
           <CardHeader
             title="管理模块"

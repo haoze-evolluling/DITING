@@ -1,6 +1,7 @@
 #![allow(clippy::result_large_err)]
 
 pub mod auth;
+pub mod backup;
 pub mod cache;
 pub mod clients;
 pub mod diagnostics;

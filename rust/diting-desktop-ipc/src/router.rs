@@ -98,6 +98,8 @@ fn known(path: &str) -> bool {
             | "/api/v1/diagnostics/ping"
             | "/api/v1/diagnostics/traceroute"
             | "/api/v1/service/status"
+            | "/api/v1/config/export"
+            | "/api/v1/config/import"
             | "/api/v1/auth/logout"
             | "/api/v1/auth/password"
             | "/api/v1/web/status"
@@ -132,6 +134,9 @@ pub async fn dispatch(server: &Server, ctx: &Ctx<'_>, path: &str) -> Resp {
         "/api/v1/diagnostics/ping" => handlers::diagnostics::handle_ping(server, ctx).await,
         "/api/v1/diagnostics/traceroute" => handlers::diagnostics::handle_trace(server, ctx).await,
         "/api/v1/service/status" => handlers::status::handle_service_status(server, ctx).await,
+
+        "/api/v1/config/export" => handlers::backup::handle_export(server, ctx),
+        "/api/v1/config/import" => handlers::backup::handle_import(server, ctx).await,
 
         "/api/v1/upstream" | "/api/v1/upstream/configure" => {
             handlers::upstream::handle_upstream(server, ctx)

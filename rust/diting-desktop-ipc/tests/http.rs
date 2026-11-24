@@ -190,6 +190,70 @@ async fn query_log_export_returns_csv_and_json_files() {
 }
 
 #[tokio::test]
+async fn config_backup_export_redacts_credentials_and_import_restores_fields() {
+    let mut config = test_config(Path::new("."));
+    config.cache.max_ttl_seconds = 900;
+    config.web.password_hash = "local-hash".to_string();
+    config.web.salt = "local-salt".to_string();
+    let (server, root) = start("configbackup", config).await;
+    let addr = server.addr().await.unwrap();
+
+    let (status, text) = get(addr, "/api/v1/config/export").await;
+    assert_eq!(status, 200, "{text}");
+    let lower = text.to_ascii_lowercase();
+    assert!(lower.contains("content-disposition: attachment; filename=\"diting-config-"));
+    assert!(text.contains("\"format\": \"diting-desktop-backup\""));
+    assert!(text.contains("\"maxTtlSeconds\": 900"));
+    assert!(!text.contains("local-hash"));
+    assert!(!text.contains("local-salt"));
+
+    let content = serde_json::json!({
+        "format": "diting-desktop-backup",
+        "version": 1,
+        "exportedAt": 1_700_000_000_000_i64,
+        "data": { "cache": { "maxTtlSeconds": 777 } }
+    })
+    .to_string();
+    let body = serde_json::json!({ "content": content }).to_string();
+    let (status, text) = send(
+        addr,
+        format!(
+            "POST /api/v1/config/import HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        ),
+    )
+    .await;
+    assert_eq!(status, 200, "{text}");
+    assert!(text.contains("\"sections\":1"));
+    assert_eq!(
+        server
+            .runtime()
+            .with_config(|config| config.cache.max_ttl_seconds),
+        777
+    );
+    assert_eq!(
+        server
+            .runtime()
+            .with_config(|config| config.web.password_hash.clone()),
+        "local-hash"
+    );
+
+    let (status, text) = send(
+        addr,
+        format!(
+            "POST /api/v1/config/import HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+            "{\"content\":\"not json\"}".len(),
+            "{\"content\":\"not json\"}"
+        ),
+    )
+    .await;
+    assert_eq!(status, 400, "{text}");
+
+    server.shutdown().await;
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[tokio::test]
 async fn body_cap_rejects_oversized_payloads() {
     let (server, root) = start("body", test_config(Path::new("."))).await;
     let addr = server.addr().await.unwrap();

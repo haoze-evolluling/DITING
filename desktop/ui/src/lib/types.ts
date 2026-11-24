@@ -564,3 +564,12 @@ export interface ECSConfig {
   stripECS: boolean;
   customSubnet: string;
 }
+
+// ---------------------------------------------------------------------------
+// 配置备份
+// ---------------------------------------------------------------------------
+
+export interface ConfigImportResult {
+  sections: number;
+  restartWarning: string | null;
+}

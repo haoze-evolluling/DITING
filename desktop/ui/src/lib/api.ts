@@ -15,6 +15,7 @@ import type {
   CheckHostResult,
   ClientGroup,
   ClientGroupConfigResponse,
+  ConfigImportResult,
   ConfigureOpenWrtPatch,
   DiagnosticPingResult,
   DiagnosticQueryResult,
@@ -185,6 +186,15 @@ export const api = {
   status: () => request<StatusResponse>("/api/v1/status"),
   serviceStatus: () => request<ServiceStatus>("/api/v1/service/status"),
   adapters: () => request<AdapterInfo[]>("/api/v1/adapters"),
+
+  // 配置备份
+  exportConfig: () =>
+    downloadFile("/api/v1/config/export", "DITING-config.json"),
+  importConfig: (content: string) =>
+    request<ConfigImportResult>("/api/v1/config/import", {
+      method: "POST",
+      body: { content },
+    }),
 
   startDns: () => request<void>("/api/v1/dns/start", { method: "POST" }),
   stopDns: () => request<void>("/api/v1/dns/stop", { method: "POST" }),

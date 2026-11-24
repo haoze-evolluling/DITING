@@ -1,3 +1,4 @@
+pub mod backup;
 pub mod cache;
 pub mod client;
 pub mod dns;
