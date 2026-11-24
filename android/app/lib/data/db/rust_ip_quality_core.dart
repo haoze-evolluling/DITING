@@ -26,9 +26,6 @@ class RustIpQualityCore {
   String? parseProbe(String body) =>
       call({'op': 'parseProbe', 'body': body})['ip'] as String?;
 
-  bool isIpLike(String value) =>
-      call({'op': 'ipLike', 'value': value})['value'] as bool;
-
   Map<String, Object?> sourceResult({
     required String source,
     required int status,

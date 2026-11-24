@@ -102,8 +102,6 @@ class SubscriptionEntry {
   int get lastUpdated => record.lastUpdated;
   int get lastAttemptAt => record.lastAttemptAt;
 
-  bool get ruleCountIsLexicalOnly => false;
-
   bool get isRemote => record.isRemote;
   bool get isFailed => record.importState == SubscriptionImportState.failed;
   bool get isImporting =>

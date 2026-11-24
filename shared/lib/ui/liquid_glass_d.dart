@@ -4,7 +4,6 @@ part of 'liquid_glass.dart';
 
 class _LiquidGlassLayer extends Layer {
   static int _skipped = 0;
-  static int _capturesHeld = 0;
 
   ui.FragmentProgram? program;
   Rect rect = Rect.zero;
@@ -228,9 +227,6 @@ class _LiquidGlassLayer extends Layer {
   }
 
   void _hold(ui.Picture? captured) {
-    if ((captured == null) != (_captured == null)) {
-      _capturesHeld += captured == null ? -1 : 1;
-    }
     _captured?.dispose();
     _captured = captured;
   }

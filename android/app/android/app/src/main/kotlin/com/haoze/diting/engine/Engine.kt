@@ -30,19 +30,10 @@ class Engine : TunnelEngine, AutoCloseable {
     override fun isRunning(): Boolean = nativeIsRunning(handle)
 
 
-    fun startStandalone(port: Int) {
-        val error = nativeStartStandalone(handle, port.toLong())
-        if (error != null) throw IllegalStateException(error)
-    }
-
     fun startStandaloneLoopback(port: Int) {
         val error = nativeStartStandaloneLoopback(handle, port.toLong())
         if (error != null) throw IllegalStateException(error)
     }
-
-    fun stopStandalone() = nativeStopStandalone(handle)
-
-    fun standalonePort(): Int = nativeStandalonePort(handle).toInt()
 
     override fun close() {
         if (released.compareAndSet(false, true)) {
@@ -73,10 +64,6 @@ class Engine : TunnelEngine, AutoCloseable {
 
     override fun setAllowlistOnly(enabled: Boolean) {
         nativeSetAllowlistOnly(handle, enabled)
-    }
-
-    fun setBlockResponseType(responseType: String) {
-        nativeSetBlockResponseType(handle, responseType)
     }
 
     override fun clearDNSCache() {
@@ -128,10 +115,6 @@ class Engine : TunnelEngine, AutoCloseable {
         if (error != null) throw IllegalStateException(error)
     }
 
-    fun stopFull() {
-        nativeStopFull(handle)
-    }
-
     fun releaseTun() {
         nativeReleaseTun(handle)
     }
@@ -162,10 +145,6 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeSetFilterHttp3(handle, enabled)
     }
 
-    fun setBlockEncryptedDns(enabled: Boolean) {
-        nativeSetBlockEncryptedDns(handle, enabled)
-    }
-
     fun setBlockIpv6(enabled: Boolean) {
         nativeSetBlockIpv6(handle, enabled)
     }
@@ -178,19 +157,9 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeResetResolverHealth(handle)
     }
 
-    fun setTickIntervalMs(millis: Long) {
-        nativeSetTickIntervalMs(handle, millis)
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    fun setUseTcpStack(enabled: Boolean) = Unit
-
-
     fun startStackMitm(certDir: String): String = nativeStartStackMitm(handle, certDir) ?: ""
 
     fun stopStackMitm() = nativeStopStackMitm(handle)
-
-    fun isMitmActive(): Boolean = nativeIsMitmActive(handle)
 
     fun getMitmCACert(certDir: String): String = nativeGetMitmCaCert(handle, certDir) ?: ""
 
@@ -201,13 +170,7 @@ class Engine : TunnelEngine, AutoCloseable {
     fun setExtraPassthroughSuffixes(content: String) =
         nativeSetExtraPassthroughSuffixes(handle, content)
 
-    fun clearMitmBlacklist() = nativeClearMitmBlacklist(handle)
-
     fun getMitmBlacklistCount(): Long = nativeMitmBlacklistCount(handle)
-
-    fun setCosmeticRules(json: String) = nativeSetCosmeticRules(handle, json)
-
-    fun setRequestRules(json: String) = nativeSetRequestRules(handle, json)
 
     fun setHttpLogCallback(callback: HttpLogCallback?) = nativeSetHttpLogCallback(handle, callback)
 

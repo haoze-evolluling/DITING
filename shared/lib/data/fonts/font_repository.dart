@@ -88,18 +88,6 @@ class FontRepository {
 
   List<ImportedFont> get fonts => settings.importedFonts;
 
-  ImportedFont? byFamily(String? family) {
-    if (family == null) {
-      return null;
-    }
-    for (final font in fonts) {
-      if (font.family == family) {
-        return font;
-      }
-    }
-    return null;
-  }
-
   Future<List<ImportedFont>> registerAll() async {
     final fonts = this.fonts;
     if (fonts.isEmpty) {

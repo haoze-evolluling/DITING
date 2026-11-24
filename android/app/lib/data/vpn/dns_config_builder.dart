@@ -45,11 +45,6 @@ class DnsProviderEntry {
 
   String get hostPort => RustDnsConfigCore.instance.joinHostPort(host, port);
 
-  String get endpointLabel => switch (protocol) {
-    DnsProtocol.doh => '[${protocol.storageValue}] $url',
-    _ => '[${protocol.storageValue}] $hostPort',
-  };
-
   String get address => protocol == DnsProtocol.doh ? url : hostPort;
 
   MockProvider toMock({int latencyMs = 0, bool isPreset = false}) =>

@@ -64,8 +64,6 @@ class CaInstallResult {
 
   final String? error;
 
-  bool get launched => target != CaInstallTarget.none;
-
   static CaInstallResult fromMap(Map<Object?, Object?> map) => CaInstallResult(
     target: switch (map['mode']) {
       'installer' => CaInstallTarget.installer,

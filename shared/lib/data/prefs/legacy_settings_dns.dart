@@ -169,23 +169,11 @@ extension LegacyDnsSettings on LegacySettings {
   String get cacheModeRaw =>
       _string(dnsContainer, 'dns_cache_mode_v2') ?? 'limit_max_ttl';
 
-  int get cacheMaxTtlSeconds =>
-      _int(dnsContainer, 'dns_cache_max_ttl_seconds_v2', 3600);
-
-  int get cacheFixedTtlSeconds =>
-      _int(dnsContainer, 'dns_cache_fixed_ttl_seconds_v2', 3600);
-
   bool get cacheMinTtlEnabled =>
       _bool(dnsContainer, 'dns_cache_min_ttl_enabled_v2', false);
 
-  int get cacheMinTtlSeconds =>
-      _int(dnsContainer, 'dns_cache_min_ttl_seconds_v2', 60);
-
   bool get cacheStaleFallbackEnabled =>
       _bool(dnsContainer, 'dns_cache_stale_fallback_enabled_v2', false);
-
-  int get cacheStaleFallbackSeconds =>
-      _int(dnsContainer, 'dns_cache_stale_fallback_seconds_v2', 300);
 
   String? get cachePresetRaw => _string(dnsContainer, 'dns_cache_preset_v3');
 
@@ -209,9 +197,6 @@ extension LegacyDnsSettings on LegacySettings {
       scalePercent.clamp(10, 500),
     );
   }
-
-  void setCacheEnabled(bool value) =>
-      _store.putBool(dnsContainer, 'dns_cache_enabled_v2', value);
 
   String get blockResponseModeRaw =>
       _string(dnsContainer, 'block_response_mode') ?? 'nxdomain';

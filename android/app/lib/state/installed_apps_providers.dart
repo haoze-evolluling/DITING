@@ -101,8 +101,6 @@ class AppIconsNotifier extends Notifier<Map<String, Uint8List>> {
     });
   }
 
-  Uint8List? iconOf(String packageName) => _icons[packageName];
-
   Future<void> _drain() async {
     if (_draining) return;
     _draining = true;

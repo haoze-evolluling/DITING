@@ -12,18 +12,6 @@ extension IterableExt<E> on Iterable<E> {
     }
   }
 
-  Iterable<List<E>> chunks(int size) sync* {
-    if (length == 0) return;
-    final iterator = this.iterator;
-    while (iterator.moveNext()) {
-      final chunk = [iterator.current];
-      for (var i = 1; i < size && iterator.moveNext(); i++) {
-        chunk.add(iterator.current);
-      }
-      yield chunk;
-    }
-  }
-
   Iterable<E> fill(int length, {required E Function(int count) filler}) sync* {
     int count = 0;
     for (final item in this) {
@@ -39,15 +27,6 @@ extension IterableExt<E> on Iterable<E> {
 }
 
 extension ListExt<T> on List<T> {
-  void truncate(int maxLength) {
-    if (maxLength == 0) {
-      return;
-    }
-    if (length > maxLength) {
-      removeRange(0, length - maxLength);
-    }
-  }
-
   List<T> intersection(List<T> list) {
     final lookup = list.toSet();
     return where(lookup.contains).toList();
@@ -89,13 +68,6 @@ extension ListExt<T> on List<T> {
       return defaultValue;
     }
     return this[index];
-  }
-
-  T safeLast(T defaultValue) {
-    if (isNotEmpty) {
-      return last;
-    }
-    return defaultValue;
   }
 
   void addOrRemove(T value) {

@@ -130,8 +130,6 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
     tracking: null,
   ));
 
-  ValueListenable<BarItemsMotion> get barItems => _barItems;
-
   CardRouteMixin<dynamic>? _next;
 
   final _coveringOverdrag = ValueNotifier(0.0);
@@ -346,23 +344,6 @@ mixin CardRouteMixin<T> on ModalRoute<T> {
     return popped;
   }
 
-  @protected
-  Widget coveredTransition(
-    BuildContext context,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return _CardTransition(
-      animation: kAlwaysCompleteAnimation,
-      secondaryAnimation: secondaryAnimation,
-      overdrag: const AlwaysStoppedAnimation(0.0),
-      coveringOverdrag: _coveringOverdrag,
-      radius: cardRadiusOf(context),
-      settledFill: Colors.transparent,
-      receding: _coveredByZoom,
-      child: _snapshotWhileMoving(context, child),
-    );
-  }
 
   @override
   Widget buildTransitions(

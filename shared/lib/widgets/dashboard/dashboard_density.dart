@@ -7,8 +7,6 @@ enum DashboardDensity {
   compact,
   mobile;
 
-  bool get isDesktop => this != mobile;
-
   bool get isCompact => this == compact;
 
   static DashboardDensity of(Size size) {

@@ -13,19 +13,6 @@ class PlatformBridge {
 
   final MethodChannel _channel;
 
-  Future<bool> applyRecentsPrivacy({required bool hide}) async {
-    try {
-      final result = await _channel.invokeMethod<bool>('applyRecentsPrivacy', {
-        'hide': hide,
-      });
-      return result ?? false;
-    } on MissingPluginException {
-      return false;
-    } on PlatformException {
-      return false;
-    }
-  }
-
   Future<bool> isIgnoringBatteryOptimizations() async {
     try {
       final result = await _channel.invokeMethod<bool>(
@@ -81,22 +68,6 @@ class PlatformBridge {
       return 0;
     } on PlatformException {
       return 0;
-    }
-  }
-
-  Future<String?> exportText({
-    required String name,
-    required String content,
-  }) async {
-    try {
-      return await _channel.invokeMethod<String>('exportText', {
-        'name': name,
-        'content': content,
-      });
-    } on MissingPluginException {
-      return null;
-    } on PlatformException {
-      return null;
     }
   }
 

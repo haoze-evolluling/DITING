@@ -60,8 +60,6 @@ class ParsedCosmeticRule {
   final String selector;
   final String rawLine;
   final bool isException;
-
-  String toCss() => '$selector { display: none !important; }';
 }
 
 class ParsedRewriteRule {
@@ -114,8 +112,6 @@ class CategorizedRules {
       urlBlockRules.length +
       urlAllowRules.length +
       cosmeticRules.length;
-
-  int get skippedCount => invalidCount + unsupportedCount;
 
   bool get isEmpty => size == 0;
 }

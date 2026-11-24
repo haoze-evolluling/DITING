@@ -34,8 +34,6 @@ class DnsLogRow {
       )
       .._classification = {
         'isConnection': row['isConnection'],
-        'isBlocked': row['isBlocked'],
-        'isRewritten': row['isRewritten'],
         'status': row['status'],
         'messageFields': row['messageFields'],
       };
@@ -64,10 +62,6 @@ class DnsLogRow {
       });
 
   bool get isConnection => _flags['isConnection'] as bool? ?? false;
-
-  bool get isBlocked => _flags['isBlocked'] as bool? ?? false;
-
-  bool get isRewritten => _flags['isRewritten'] as bool? ?? false;
 
   RequestStatus get status => switch (_flags['status']) {
     'passed' => RequestStatus.passed,

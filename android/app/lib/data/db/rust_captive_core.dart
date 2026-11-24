@@ -36,29 +36,6 @@ class RustCaptiveCore {
     },
   });
 
-  String? parseOption(String option) {
-    final answer = call({'op': 'captive.parseOption', 'option': option});
-    final url = answer['url'];
-    return url is String && url.isNotEmpty ? url : null;
-  }
-
-  Map<String, Object?> gate({
-    required bool networkValidated,
-    required bool captiveCapability,
-    int? statusCode,
-    String? redirectUrl,
-    bool? bodyMatchesExpected,
-  }) => call({
-    'op': 'captive.gate',
-    'networkValidated': networkValidated,
-    'captiveCapability': captiveCapability,
-    'probe': {
-      'statusCode': statusCode,
-      'redirectUrl': redirectUrl,
-      'bodyMatchesExpected': bodyMatchesExpected,
-    },
-  });
-
   Map<String, Object?> call(Map<String, Object?> request) =>
       _core.call(request);
 }

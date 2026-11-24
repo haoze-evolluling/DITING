@@ -122,12 +122,6 @@ CREATE TABLE `mirror_template` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
     'bootstrap_log',
   ];
 
-  static const migrationLogTableNames = <String>[
-    'dns_log',
-    'dns_race_log',
-    'bootstrap_log',
-  ];
-
   static const httpTrafficTableNames = <String>[
     'http_request_log',
     'app_traffic_daily',

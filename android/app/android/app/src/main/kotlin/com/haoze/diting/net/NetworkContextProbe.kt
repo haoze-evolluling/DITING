@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
-import android.os.Build
 
 internal object NetworkContextProbe {
 
@@ -56,6 +55,4 @@ internal object NetworkContextProbe {
         "ssid" to "",
         "bssid" to "",
     )
-
-    fun supportsSsid(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 }

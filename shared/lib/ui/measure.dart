@@ -1,7 +1,4 @@
 // Portions derived from DITING (https://github.com/chen08209/DITING), Copyright (c) the DITING authors, GPL-3.0-or-later.
-import 'dart:math';
-
-import 'package:diting_shared/ui/metrics.dart';
 import 'package:diting_shared/ui/typography.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -85,16 +82,6 @@ class Measure {
   double get listTitleHeight => textHeight(AppTextRole.rowTitle);
 
   double get listSubtitleHeight => textHeight(AppTextRole.supportingText);
-
-  double get cardHeaderHeight => textHeight(AppTextRole.cardTitle);
-
-  double get listRowHeight =>
-      max(listRowMinHeight, listTitleHeight + 2 * listRowVerticalPadding);
-
-  double get listTwoLineRowHeight => max(
-    listRowMinHeight,
-    listTitleHeight + listSubtitleHeight + 2 * listRowVerticalPadding,
-  );
 }
 
 class MeasureScope extends InheritedWidget {

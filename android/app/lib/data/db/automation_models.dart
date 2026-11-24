@@ -168,8 +168,6 @@ abstract final class AutomationSpec {
 
   static const actionPause = 'pause';
   static const actionSwitchProfile = 'switch_profile';
-  static const actionSwitchUpstream = 'switch_upstream';
-  static const actionToggleRuleGroup = 'toggle_rule_group';
   static const actionBlockServices = 'block_services';
 
   static Map<String, Object?> blank() => {

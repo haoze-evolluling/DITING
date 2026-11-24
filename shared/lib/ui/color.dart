@@ -245,24 +245,12 @@ extension ColorExtension on Color {
     return withValues(alpha: 0.6);
   }
 
-  Color get opacity50 {
-    return withValues(alpha: 0.5);
-  }
-
-  Color get opacity38 {
-    return withValues(alpha: 0.38);
-  }
-
   Color get opacity30 {
     return withValues(alpha: 0.3);
   }
 
   Color get opacity12 {
     return withValues(alpha: 0.12);
-  }
-
-  Color get opacity15 {
-    return withValues(alpha: 0.15);
   }
 
   Color get opacity10 {
@@ -284,17 +272,6 @@ extension ColorExtension on Color {
         clampDouble(hct.tone + delta, 0, 100),
       ).toInt(),
     );
-  }
-
-  String get hex {
-    final value = toARGB32();
-    final red = (value >> 16) & 0xFF;
-    final green = (value >> 8) & 0xFF;
-    final blue = value & 0xFF;
-    return '#${red.toRadixString(16).padLeft(2, '0')}'
-            '${green.toRadixString(16).padLeft(2, '0')}'
-            '${blue.toRadixString(16).padLeft(2, '0')}'
-        .toUpperCase();
   }
 }
 
@@ -340,11 +317,4 @@ extension ColorSchemeExtension on ColorScheme {
   Color get warningContainer => _toneOf(_warningPalette, 90, 30);
 
   Color get onWarningContainer => _toneOf(_warningPalette, 30, 90);
-
-  Color? delayColor(int? delay) {
-    if (delay == null) return null;
-    if (delay < 0) return error;
-    if (delay < 600) return success;
-    return warning;
-  }
 }

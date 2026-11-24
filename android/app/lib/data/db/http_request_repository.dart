@@ -128,15 +128,6 @@ class HttpRequestDailyStats {
 
   final Map<String, int> byOutcome;
 
-  int countFor(RequestStatus status) {
-    if (status == RequestStatus.all) return total;
-    var count = 0;
-    for (final entry in byOutcome.entries) {
-      if (statusOfOutcome(entry.key) == status) count += entry.value;
-    }
-    return count;
-  }
-
   Map<String, Object?> toKernel() => {'total': total, 'byOutcome': byOutcome};
 }
 

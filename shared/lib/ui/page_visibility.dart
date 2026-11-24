@@ -20,9 +20,6 @@ mixin PageVisibilityMixin<T extends StatefulWidget> on State<T> {
   bool _visible = false;
 
   @protected
-  bool get pageVisible => _visible;
-
-  @protected
   void onPageVisibilityChanged(bool visible);
 
   @override

@@ -35,8 +35,6 @@ class BackupGroupOutcome {
   final String? error;
 
   bool get failed => error != null;
-
-  bool get isNoop => !failed && added == 0 && updated == 0;
 }
 
 class BackupImportResult {

@@ -3,7 +3,6 @@ package com.haoze.diting.platform
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.core.content.FileProvider
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -155,6 +154,4 @@ class UpdateBridge(private val activity: Activity) : MethodChannel.MethodCallHan
         }
     }
 
-    @Suppress("unused")
-    private fun needsInstallPermission(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 }

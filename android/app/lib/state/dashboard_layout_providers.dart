@@ -103,7 +103,5 @@ class DashboardEditingNotifier extends Notifier<bool> {
 
   void enter() => state = true;
 
-  void exit() => state = false;
-
   void toggle() => state = !state;
 }

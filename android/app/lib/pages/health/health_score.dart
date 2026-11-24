@@ -30,8 +30,6 @@ class HealthReport {
   final HealthSeverity level;
   final List<HealthDimension> dimensions;
   final List<HealthAdvice> advices;
-
-  bool get isHealthy => level == HealthSeverity.ok;
 }
 
 class HealthInput {

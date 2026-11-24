@@ -38,15 +38,6 @@ internal object LogPayload {
         }
     }
 
-    fun writeOptionalLong(out: DataOutputStream, value: Long?) {
-        if (value == null) {
-            out.writeByte(0)
-        } else {
-            out.writeByte(1)
-            out.writeLong(value)
-        }
-    }
-
     class Reader(private val payload: ByteArray) {
         private val buffer: ByteBuffer = ByteBuffer.wrap(payload)
 

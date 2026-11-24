@@ -61,11 +61,7 @@ class _DragBackDetectorState extends State<_DragBackDetector> {
 
   void _handleDragStart(DragStartDetails details) {
     _dragging = true;
-    widget.route._startDragBack(
-      details.localPosition,
-      context.size!,
-      _directed.axis!,
-    );
+    widget.route._startDragBack(context.size!);
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
@@ -103,8 +99,6 @@ class _DragBackDetectorState extends State<_DragBackDetector> {
 
 mixin _DragBackRecognizer on GestureRecognizer {
   double towardEnd = 1;
-
-  Axis? get axis;
 }
 
 class _DragBackGestureRecognizer extends HorizontalDragGestureRecognizer
@@ -114,9 +108,6 @@ class _DragBackGestureRecognizer extends HorizontalDragGestureRecognizer
   }
 
   final DragBackRouteMixin<dynamic> route;
-
-  @override
-  Axis get axis => Axis.horizontal;
 
   @override
   bool hasSufficientGlobalDistanceToAccept(
@@ -137,7 +128,6 @@ class _DismissGestureRecognizer extends PanGestureRecognizer
   static const _lockSlope = 0.4;
 
   final DragBackRouteMixin<dynamic> route;
-  @override
   Axis? axis;
   Offset? _down;
 

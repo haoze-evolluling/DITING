@@ -33,7 +33,6 @@ class RuntimeLogStatus {
   final int eventBytes;
 
   bool get hasLogs => fileCount > 0 || eventFiles > 0;
-  bool get hasEvents => eventFiles > 0;
 
   String get sizeLabel => _label(sizeBytes);
 

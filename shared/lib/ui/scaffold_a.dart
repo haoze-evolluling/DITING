@@ -241,12 +241,6 @@ class CommonScaffoldState extends State<CommonScaffold>
     super.dispose();
   }
 
-  void addKeyword(String keyword) {
-    final isContains = _keywordsNotifier.value.contains(keyword);
-    if (isContains) return;
-    _setKeywords(List<String>.from(_keywordsNotifier.value)..add(keyword));
-  }
-
   void _deleteKeyword(String keyword) {
     final isContains = _keywordsNotifier.value.contains(keyword);
     if (!isContains) return;

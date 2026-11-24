@@ -19,8 +19,6 @@ object NotificationSettings {
     fun persistent(context: Context): Boolean =
         prefs(context).getBoolean(KEY_PERSISTENT, true)
 
-    fun showSpeed(context: Context): Boolean = "speed" in statsItems(context)
-
     fun statsItems(context: Context): List<String> {
         val prefs = prefs(context)
         val raw = prefs.getString(KEY_STATS_ITEMS, null)

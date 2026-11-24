@@ -259,23 +259,11 @@ extension LegacySettingsParity on LegacySettings {
   void setAgentApiEnabled(bool value) =>
       _store.putBool(_ui, 'agent_api_enabled', value);
 
-  String get agentApiKey => _string(_ui, 'agent_api_key') ?? '';
-
   void setAgentApiKey(String value) =>
       _store.putString(_ui, 'agent_api_key', value.trim());
 
-  String get agentApiBaseUrl =>
-      _string(_ui, 'agent_api_base_url')?.trim().isNotEmpty == true
-      ? _string(_ui, 'agent_api_base_url')!.trim()
-      : 'https://api.deepseek.com/v1';
-
   void setAgentApiBaseUrl(String value) =>
       _store.putString(_ui, 'agent_api_base_url', value.trim());
-
-  String get agentApiModel {
-    final model = _string(_ui, 'agent_api_model')?.trim();
-    return model == null || model.isEmpty ? 'deepseek-flash' : model;
-  }
 
   void setAgentApiModel(String value) =>
       _store.putString(_ui, 'agent_api_model', value.trim());

@@ -39,8 +39,6 @@ enum AppPalette {
 
   Color get effectiveSeed => seed ?? defaultPrimaryColor;
 
-  Color get swatch => seed ?? defaultPrimaryColor;
-
   static AppPalette fromSeed(Color color) {
     for (final palette in values) {
       if (palette.seed == color) {

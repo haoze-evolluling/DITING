@@ -37,30 +37,12 @@ const Animation<Offset> _noSlide = AlwaysStoppedAnimation(Offset.zero);
 
 mixin DragBackRouteMixin<T> on ModalRoute<T> {
   bool _dragBackActive = false;
-  bool _dragBackHeld = false;
-  Offset _dragBackOrigin = Offset.zero;
   Size _dragBackExtent = Size.zero;
-  Axis _dragBackAxis = Axis.horizontal;
   Offset _dragBackTranslation = Offset.zero;
   _DragFollower? _follower;
   FocusNode? _focusBeforeDragBack;
 
   bool get isDragBackActive => _dragBackActive;
-
-  @protected
-  bool get isDragBackHeld => _dragBackHeld;
-
-  @protected
-  Offset get dragBackOrigin => _dragBackOrigin;
-
-  @protected
-  Size get dragBackExtent => _dragBackExtent;
-
-  @protected
-  Axis get dragBackAxis => _dragBackAxis;
-
-  @protected
-  Offset get dragBackFollowVelocity => _follower?.velocity ?? Offset.zero;
 
   @protected
   AnimationController get dragBackController => controller!;
@@ -232,12 +214,9 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
       secondaryAnimation!.isDismissed &&
       !popGestureInProgress;
 
-  void _startDragBack(Offset origin, Size extent, Axis axis) {
+  void _startDragBack(Size extent) {
     _dragBackActive = true;
-    _dragBackHeld = true;
-    _dragBackOrigin = origin;
     _dragBackExtent = extent;
-    _dragBackAxis = axis;
     _dragBackTranslation = Offset.zero;
     (_follower ??= _DragFollower(navigator!, _handleFollow)).reset();
     _focusBeforeDragBack = (_focusScope?.hasFocus ?? false)
@@ -261,7 +240,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
 
   void _endDragBack(Offset velocity) {
     final navigator = this.navigator!;
-    _dragBackHeld = false;
     _follower!.stop();
     final pops = isCurrent
         ? dragBackPops(_dragBackTranslation, velocity)
@@ -307,7 +285,6 @@ mixin DragBackRouteMixin<T> on ModalRoute<T> {
     }
     _follower?.stop();
     _dragBackActive = false;
-    _dragBackHeld = false;
     _dragBackOverdrag.value = 0;
     _focusBeforeDragBack = null;
     didEndDragBack();

@@ -45,12 +45,6 @@ class RustOutboundProxyCore {
       value as String,
   ];
 
-  String normalizeProtocol(String value) =>
-      call({'op': 'normalizeProtocol', 'value': value})['value'] as String;
-
-  String normalizeScope(String value) =>
-      call({'op': 'normalizeScope', 'value': value})['value'] as String;
-
   Map<String, Object?> call(Map<String, Object?> request) =>
       _core.call(request);
 }

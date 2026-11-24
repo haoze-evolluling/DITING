@@ -46,9 +46,6 @@ abstract final class DashboardShadows {
   static List<BoxShadow> e1(BuildContext context) =>
       context.colorScheme.brightness == Brightness.dark ? _e1Dark : _e1Light;
 
-  static List<BoxShadow> e2(BuildContext context) =>
-      context.colorScheme.brightness == Brightness.dark ? _e2Dark : _e2Light;
-
   static BoxShadow _shadow(
     int alpha,
     double y,
@@ -71,14 +68,6 @@ abstract final class DashboardShadows {
   ];
 
   static final _e1Dark = [_shadow(0x80, 1, 2), _shadow(0x8C, 10, 28, -6)];
-
-  static final _e2Light = [
-    _shadow(0x0F, 1, 3),
-    _shadow(0x14, 10, 24),
-    _shadow(0x38, 32, 64, -12),
-  ];
-
-  static final _e2Dark = [_shadow(0x80, 2, 6), _shadow(0xB3, 32, 64, -12)];
 }
 
 abstract final class DashboardText {

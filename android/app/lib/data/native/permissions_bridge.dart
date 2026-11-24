@@ -39,9 +39,6 @@ class PermissionState {
   final bool? granted;
 
   final bool openSettingsOnly;
-
-  bool get isGranted => granted == true;
-  bool get isKnown => granted != null;
 }
 
 class PermissionSnapshot {

@@ -53,13 +53,6 @@ object RuntimeEventLog {
 
     fun minLevelTag(): Int = synchronized(lock) { minLevelTag }
 
-    fun setMinLevelTag(tag: Int) {
-        synchronized(lock) {
-            minLevelTag = tag
-            if (gate != 0L) runCatching { LogNative.runtimeEventSetLevel(gate, tag) }
-        }
-    }
-
     fun debug(module: String, event: String, vararg fields: Pair<String, String>) =
         log(LEVEL_DEBUG, module, event, fields)
 

@@ -73,8 +73,6 @@ class LegacySettings {
   static const subscriptionAutoUpdateSinceKey =
       'subscription_auto_update_schedule_since';
 
-  LegacyPrefsStore get rawStore => _store;
-
   bool get defaultWhitelistInitialized =>
       _bool(dnsContainer, 'default_whitelist_initialized', false);
 
@@ -175,9 +173,6 @@ class LegacySettings {
       );
     }
   }
-
-  String? get storageV2Report =>
-      _string(workModeContainer, StorageContract.reportKey);
 
   void setStorageV2Report(String? report) {
     if (report == null || report.isEmpty) {

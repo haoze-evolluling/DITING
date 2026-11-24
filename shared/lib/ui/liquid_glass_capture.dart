@@ -46,9 +46,6 @@ class LiquidGlassHost extends StatelessWidget {
   @visibleForTesting
   static bool? debugCarryBandsOverride;
 
-  @visibleForTesting
-  static int get debugHeldCaptures => _LiquidGlassLayer._capturesHeld;
-
   @override
   Widget build(BuildContext context) {
     return _LiquidGlassHostBox(

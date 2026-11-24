@@ -194,27 +194,6 @@ class SubscriptionRepository {
     _changed();
   }
 
-  Future<void> setDetails(
-    int id, {
-    required String name,
-    required String url,
-    required int ruleCount,
-    required int lastUpdated,
-  }) async {
-    await _db.update(
-      'subscription',
-      {
-        'name': name,
-        'url': url,
-        'ruleCount': ruleCount,
-        'lastUpdated': lastUpdated,
-      },
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    _changed();
-  }
-
   Future<void> setImportState(
     int id,
     SubscriptionImportState state, {
