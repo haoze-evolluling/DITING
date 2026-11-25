@@ -447,7 +447,3 @@ RuleLineParseResult parseRuleLines(
     rejected: rejected,
   );
 }
-
-final ruleSnapshotSyncProvider = Provider<void>((ref) {
-  ref.watch(initialRulesProvider);
-});

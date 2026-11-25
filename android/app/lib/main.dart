@@ -22,6 +22,7 @@ import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_shared/ui/scroll_activity.dart';
 import 'package:diting_android/overlay/floating_log_main.dart';
 import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
@@ -127,12 +128,22 @@ Future<void> _startApp(LegacyPrefsStore store, AppVersion version) async {
   );
   WidgetsBinding.instance.addPostFrameCallback((_) {
     RuntimeEvents.startup('first_frame', _startupWatch.elapsedMilliseconds);
-    unawaited(_cleanupOldStorage(store));
+    unawaited(_scheduleStorageCleanup(store));
   });
   runApp(
     UncontrolledProviderScope(container: container, child: const DitingApp()),
   );
   _stage('runApp');
+}
+
+/// 存储清理是一次性的后台维护，没必要和首屏渲染 / 首次滑动抢夺资源，
+/// 等启动稳定且用户停下滑动后再执行。
+Future<void> _scheduleStorageCleanup(LegacyPrefsStore store) async {
+  await Future<void>.delayed(const Duration(seconds: 4));
+  final idle = Completer<void>();
+  ScrollActivityGate.whenIdle(idle.complete);
+  await idle.future;
+  await _cleanupOldStorage(store);
 }
 
 Future<void> _cleanupOldStorage(LegacyPrefsStore store) async {

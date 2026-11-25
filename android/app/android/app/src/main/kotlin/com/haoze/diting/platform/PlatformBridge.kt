@@ -12,6 +12,7 @@ import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.OutputStream
 import java.security.MessageDigest
+import java.util.concurrent.Executors
 
 class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallHandler {
 
@@ -36,6 +37,11 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         private const val HIDE_FROM_RECENTS_KEY = "hide_from_recents_enabled"
 
         private const val UI_PREFS = "dns_vpn_prefs"
+
+        // 内存信息需要读取 /proc，放到后台线程，避免周期性轮询时卡主线程。
+        private val workers = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "diting-platform-worker").apply { isDaemon = true }
+        }
     }
 
     private val context: Context get() = activity
@@ -68,7 +74,9 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             "readCrashLogs" -> result.success(storage.readCrashLogs())
             "clearCrashLogs" -> result.success(storage.clearCrashLogs())
             "exportText" -> exportText(call, result)
-            "memoryInfo" -> result.success(memoryInfo())
+            "memoryInfo" -> workers.execute {
+                ChannelResults.ship(result, runCatching { memoryInfo() }, "memory_info_failed")
+            }
             "currentSsid" -> result.success(wifi.currentSsid())
             "clearUpdateCache" -> result.success(storage.clearUpdateCache(call.argument<Boolean>("includeTemp") ?: true))
             "clearCustomBackgroundCache" -> result.success(storage.clearCustomBackgroundCache())

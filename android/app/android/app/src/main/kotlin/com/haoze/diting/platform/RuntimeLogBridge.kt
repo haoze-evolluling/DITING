@@ -13,6 +13,7 @@ import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.util.concurrent.Executors
 
 class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallHandler {
 
@@ -20,6 +21,11 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
         const val CHANNEL = "com.haoze.diting/runtime_log"
         private const val PREFS = "diting_runtime_log"
         private const val KEY_DETAILED = "detailed"
+
+        // 事件日志最终会落盘；写到独立线程，避免 Dart 侧上报时阻塞平台主线程。
+        private val eventWriter = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "diting-runtime-events").apply { isDaemon = true }
+        }
 
         fun restore(context: Context) {
             if (!RuntimeLogStore.isCapturing(context)) return
@@ -80,7 +86,7 @@ class RuntimeLogBridge(private val context: Context) : MethodChannel.MethodCallH
             ?.map { it.key to (it.value?.toString() ?: "") }
             ?.toTypedArray()
             ?: emptyArray()
-        RuntimeEventLog.log(level, module, event, fields)
+        eventWriter.execute { RuntimeEventLog.log(level, module, event, fields) }
     }
 
     private fun status(): Map<String, Any> = runCatching {

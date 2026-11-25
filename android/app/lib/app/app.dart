@@ -17,7 +17,6 @@ import 'package:diting_android/state/auto_update_runner.dart';
 import 'package:diting_android/state/db_health_providers.dart';
 import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/on_demand_runner.dart';
-import 'package:diting_android/state/rules_providers.dart';
 import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
@@ -52,9 +51,15 @@ class _DitingAppState extends ConsumerState<DitingApp> {
 
   static const _autoUpdateBusyRetry = Duration(minutes: 1);
 
+  /// 冷启动首帧后仍有一些可延后的探活/状态同步任务，统一放到这段时间之后再跑，
+  /// 避免与用户第一次滑动争抢主线程。
+  static const _deferredStartupDelay = Duration(milliseconds: 1500);
+
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   bool _dbHealthReported = false;
+
+  Timer? _deferredStartupTimer;
 
   String? _deferredImportUrl;
 
@@ -66,17 +71,36 @@ class _DitingAppState extends ConsumerState<DitingApp> {
       onPause: _cancelAutoUpdateDue,
     );
     ref.read(deepLinkBridgeProvider).listen(_handleDeepLink);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _runStartupChecks());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _runStartupChecks(immediate: true);
+      _deferredStartupTimer = Timer(
+        _deferredStartupDelay,
+        _runDeferredStartupChecks,
+      );
+    });
   }
 
   void _onResume() => _runStartupChecks();
 
-  void _runStartupChecks() {
+  void _runStartupChecks({bool immediate = false}) {
+    // 用户主动触发的入口（桌面磁贴、深链）必须第一时间处理。
     _maybeApplyTileStart();
     _maybeApplyDeepLink();
     _maybeRunAutoUpdate();
+    if (immediate) return;
     _maybeApplyOnDemand();
     _maybeReportDbHealth();
+  }
+
+  /// 冷启动时把非关键任务推迟到首帧渲染完成、且用户没有在滑动时再执行，
+  /// 避免启动初期的主线程被状态同步和数据库探活占满。
+  void _runDeferredStartupChecks() {
+    if (!mounted) return;
+    ScrollActivityGate.whenIdle(() {
+      if (!mounted) return;
+      _maybeApplyOnDemand();
+      _maybeReportDbHealth();
+    });
   }
 
   bool get _agreementAccepted => ref.read(initialAgreementProvider);
@@ -130,9 +154,9 @@ class _DitingAppState extends ConsumerState<DitingApp> {
 
   Future<void> _maybeReportDbHealth() async {
     if (_dbHealthReported || !mounted || !_agreementAccepted) return;
+    _dbHealthReported = true;
     final health = await ref.read(dbWriteHealthProvider.notifier).refresh();
     if (!mounted || health.healthy) return;
-    _dbHealthReported = true;
     _messengerKey.currentState?.showSnackBar(
       SnackBar(
         content: Text(
@@ -147,6 +171,7 @@ class _DitingAppState extends ConsumerState<DitingApp> {
   void dispose() {
     _autoUpdateDelayTimer?.cancel();
     _autoUpdateDueTimer?.cancel();
+    _deferredStartupTimer?.cancel();
     _lifecycle?.dispose();
     super.dispose();
   }
@@ -221,7 +246,6 @@ class _DitingAppState extends ConsumerState<DitingApp> {
     final pureBlack = ref.watch(pureBlackProvider);
     final textScale = ref.watch(textScaleProvider);
     final haptic = ref.watch(hapticProvider);
-    ref.watch(ruleSnapshotSyncProvider);
     final fontFamily = ref.watch(selectedFontFamilyProvider);
     final background = ref.watch(customBackgroundProvider);
     final backgroundUri = background.enabled ? background.currentUri : null;

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/site_latency_targets.dart';
@@ -29,6 +31,8 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
 
   var _autoRan = false;
 
+  Timer? _autoProbeTimer;
+
   @override
   void initState() {
     super.initState();
@@ -36,8 +40,21 @@ class _SiteLatencyCardState extends ConsumerState<SiteLatencyCard> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _autoRan) return;
       _autoRan = true;
-      _probe();
+      // 冷启动首帧后立即并发探测会和用户第一次滑动争抢资源，
+      // 稍作延迟并在滑动结束后再自动测速。
+      _autoProbeTimer = Timer(
+        const Duration(milliseconds: 1500),
+        () => ScrollActivityGate.whenIdle(() {
+          if (mounted) unawaited(_probe());
+        }),
+      );
     });
+  }
+
+  @override
+  void dispose() {
+    _autoProbeTimer?.cancel();
+    super.dispose();
   }
 
   @override

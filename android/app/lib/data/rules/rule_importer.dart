@@ -2,6 +2,7 @@ library;
 
 import 'package:diting_android/data/db/rust_rule_store_core.dart';
 import 'package:diting_android/data/rules/rule_models.dart';
+import 'package:diting_shared/ui/scroll_activity.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RuleImportSummary {
@@ -96,6 +97,8 @@ class RuleImporter {
       bool Function(P)? keep,
     }) async {
       for (var start = 0; start < rules.length; start += chunkSize) {
+        // 分片导入仍会在主 isolate 上做 FFI 解析与写库，逐片让出给滑动帧。
+        await ScrollActivityGate.whenIdleAsync();
         final end = start + chunkSize < rules.length ? start + chunkSize : rules.length;
         final chunk = <Map<String, Object?>>[
           for (var i = start; i < end; i++)

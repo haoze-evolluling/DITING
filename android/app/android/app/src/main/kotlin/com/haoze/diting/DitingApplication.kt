@@ -20,11 +20,12 @@ class DitingApplication : Application() {
         if (!isMainProcess()) return
         ServerModeRetirement.purge(this)
         RootDnsService.reconcileStaleRules(this)
-        runCatching { ScheduleController.install(this) }
-            .onFailure { Log.w(TAG, "安装定时心跳任务失败", it) }
         runCatching { AutomationNetworkObserver.start(this) }
             .onFailure { Log.w(TAG, "启动网络自动化监听失败", it) }
+        // WorkManager 初始化与任务安排会读数据库，放到后台线程，避免拖慢冷启动首帧。
         Thread({
+            runCatching { ScheduleController.install(this) }
+                .onFailure { Log.w(TAG, "安装定时心跳任务失败", it) }
             runCatching { ScheduleController.syncNext(this) }
                 .onFailure { Log.w(TAG, "初始化定时任务失败", it) }
         }, "diting-schedule-init").apply { isDaemon = true }.start()

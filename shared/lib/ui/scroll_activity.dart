@@ -21,6 +21,17 @@ class ScrollActivityGate {
     _idle.add(callback);
   }
 
+  /// 等待用户结束当前滑动；未在滑动时立即完成。
+  ///
+  /// 供分批执行的后台任务（规则导入、批量写入等）在每批开始前调用，
+  /// 避免分片计算和滑动抢同一帧。
+  static Future<void> whenIdleAsync() {
+    if (_active == 0) return Future<void>.value();
+    final completer = Completer<void>();
+    _idle.add(completer.complete);
+    return completer.future;
+  }
+
   static void _begin() => _active++;
 
   static void _end() {

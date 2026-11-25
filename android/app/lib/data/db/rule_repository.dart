@@ -2,6 +2,7 @@ library;
 
 import 'package:diting_android/data/db/rust_rule_store_core.dart';
 import 'package:diting_android/data/mock_data.dart';
+import 'package:diting_shared/ui/scroll_activity.dart';
 import 'package:sqflite/sqflite.dart';
 
 part 'rule_repository_app_scope.dart';
@@ -79,6 +80,9 @@ class RuleRepository {
     for (final kind in RuleKind.values) {
       int? beforeId;
       while (true) {
+        // 大规则集分页加载时，每页都可能在主 isolate 上做 FFI 转换，
+        // 逐页等待滑动结束后再继续，避免滚动掉帧。
+        await ScrollActivityGate.whenIdleAsync();
         final page = await _loadKindPage(
           kind,
           subscriptions,

@@ -59,9 +59,8 @@ class DiagnosticsBridge(private val context: Context) :
                     }
                 }
             }
-            "networkInfo" -> {
-                val value = runCatching { NetInfoProbe.snapshot(context) }
-                ChannelResults.ship(result, value, "network_info_failed")
+            "networkInfo" -> runProbe(result, "network_info_failed") {
+                NetInfoProbe.snapshot(context)
             }
             else -> result.notImplemented()
         }
