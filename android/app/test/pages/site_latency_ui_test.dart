@@ -42,6 +42,10 @@ void _siteLatencyCard() {
     );
     await tester.pumpAndSettle();
 
+    // 自动测速会延迟到首帧稳定后的空闲时刻触发。
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
     expect(runner.pingCalls, [
       'www.baidu.com',
       'www.douyin.com',
