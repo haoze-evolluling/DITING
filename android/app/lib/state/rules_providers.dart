@@ -29,6 +29,9 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
   Future<void> _awaitSnapshot() =>
       ref.read(initialRulesProvider.notifier).ensureLoaded();
 
+  /// 其它页面读取规则时调用，确保被规则列表页暂停的加载继续执行。
+  Future<void> ensureLoaded() => _awaitSnapshot();
+
   void _refreshIndexes() {
     refreshRuleIndexesForCurrentMode(ref);
   }

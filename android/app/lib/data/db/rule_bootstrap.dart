@@ -65,10 +65,15 @@ Future<void> loadInitialRulesPaged(
   RuleRepository? repository,
   void Function(RuleKind kind, List<MockRule> page) onPage, {
   int pageSize = RuleRepository.loadPageSize,
+  Future<void> Function()? beforePage,
 }) async {
   if (repository == null) return;
   try {
-    await repository.loadAllPaged(onPage, pageSize: pageSize);
+    await repository.loadAllPaged(
+      onPage,
+      pageSize: pageSize,
+      beforePage: beforePage,
+    );
   } on DatabaseException catch (error) {
     debugPrint('rule load failed: $error');
   }

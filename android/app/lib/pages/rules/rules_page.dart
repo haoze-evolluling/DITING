@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/state/rules_providers.dart';
@@ -28,12 +29,21 @@ class RulesPage extends ConsumerStatefulWidget {
   ConsumerState<RulesPage> createState() => _RulesPageState();
 }
 
-class _RulesPageState extends ConsumerState<RulesPage> {
+class _RulesPageState extends ConsumerState<RulesPage>
+    with PageVisibilityMixin<RulesPage>, WidgetsBindingObserver {
   late final _search = TextEditingController();
   Timer? _debounce;
 
   var _query = '';
   RuleSourceFilter _sourceFilter;
+
+  Animation<double>? _routeAnimation;
+
+  bool _routeLeaving = false;
+
+  bool _visible = false;
+
+  bool _appActive = true;
 
   RuleKind get _kind => switch (widget.kind) {
     'allow' => RuleKind.allow,
@@ -42,7 +52,59 @@ class _RulesPageState extends ConsumerState<RulesPage> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _appActive =
+        WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bindRouteMotion());
+  }
+
+  /// 规则集可能很大，分页加载期间每页都会触发全量计数与筛选。
+  /// 页面被覆盖、返回上一级或应用退到后台时暂停，回到页面后再继续。
+  void _syncRuleLoading() {
+    if (!mounted) return;
+    final notifier = ref.read(initialRulesProvider.notifier);
+    if (_visible && _appActive && !_routeLeaving) {
+      notifier.resume();
+    } else {
+      notifier.pause();
+    }
+  }
+
+  void _bindRouteMotion() {
+    if (!mounted) return;
+    _routeAnimation = ModalRoute.of(context)?.animation;
+    _routeAnimation?.addStatusListener(_onRouteStatus);
+    _syncRuleLoading();
+  }
+
+  void _onRouteStatus(AnimationStatus status) {
+    if (status != AnimationStatus.reverse &&
+        status != AnimationStatus.completed) {
+      return;
+    }
+    _routeLeaving = status == AnimationStatus.reverse;
+    _syncRuleLoading();
+  }
+
+  @override
+  void onPageVisibilityChanged(bool visible) {
+    _visible = visible;
+    _syncRuleLoading();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appActive = state == AppLifecycleState.resumed;
+    _syncRuleLoading();
+  }
+
+  @override
   void dispose() {
+    _routeAnimation?.removeStatusListener(_onRouteStatus);
+    WidgetsBinding.instance.removeObserver(this);
     _debounce?.cancel();
     _search.dispose();
     super.dispose();

@@ -132,6 +132,9 @@ class DomainActionRow extends ConsumerWidget {
     final colorScheme = context.colorScheme;
     final host = this.host;
     final domain = host == null ? null : normalizeDomain(host);
+    // 规则加载可能因离开规则列表页而暂停，这里读取规则前恢复加载，
+    // 避免命中状态停留在不完整的数据上。
+    ref.read(rulesProvider.notifier).ensureLoaded();
     bool listed(RuleKind kind) =>
         domain != null &&
         ref

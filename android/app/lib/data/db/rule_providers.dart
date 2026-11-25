@@ -67,6 +67,10 @@ class InitialRulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
 
   Future<void> _loaded = Future<void>.value();
 
+  bool _paused = false;
+
+  final List<Completer<void>> _resumeWaiters = [];
+
   @override
   Map<RuleKind, List<MockRule>> build() {
     final repository = ref.watch(ruleRepositoryProvider);
@@ -75,14 +79,44 @@ class InitialRulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
       _loaded = Future<void>.value();
       return _emptyRules();
     }
-    _loaded = loadInitialRulesPaged(repository, (kind, page) {
-      if (generation != _generation) return;
-      append(kind, page);
-    });
+    _loaded = loadInitialRulesPaged(
+      repository,
+      (kind, page) {
+        if (generation != _generation) return;
+        append(kind, page);
+      },
+      beforePage: _whenResumed,
+    );
     return _emptyRules();
   }
 
-  Future<void> ensureLoaded() => _loaded;
+  /// 暂停分页加载。规则列表页不可见时调用，避免在其它页面继续做
+  /// 全量计数、筛选和搜索索引计算。
+  void pause() => _paused = true;
+
+  /// 恢复分页加载；未处于暂停状态时为空操作。
+  void resume() {
+    if (!_paused) return;
+    _paused = false;
+    if (_resumeWaiters.isEmpty) return;
+    final waiters = List<Completer<void>>.of(_resumeWaiters);
+    _resumeWaiters.clear();
+    for (final waiter in waiters) {
+      if (!waiter.isCompleted) waiter.complete();
+    }
+  }
+
+  Future<void> _whenResumed() {
+    if (!_paused) return Future<void>.value();
+    final waiter = Completer<void>();
+    _resumeWaiters.add(waiter);
+    return waiter.future;
+  }
+
+  Future<void> ensureLoaded() {
+    resume();
+    return _loaded;
+  }
 
   void append(RuleKind kind, List<MockRule> page) {
     if (page.isEmpty) return;

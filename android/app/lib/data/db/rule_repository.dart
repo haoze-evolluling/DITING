@@ -75,14 +75,16 @@ class RuleRepository {
   Future<void> loadAllPaged(
     void Function(RuleKind kind, List<MockRule> page) onPage, {
     int pageSize = loadPageSize,
+    Future<void> Function()? beforePage,
   }) async {
     final subscriptions = await _subscriptionNames();
     for (final kind in RuleKind.values) {
       int? beforeId;
       while (true) {
         // 大规则集分页加载时，每页都可能在主 isolate 上做 FFI 转换，
-        // 逐页等待滑动结束后再继续，避免滚动掉帧。
+        // 逐页等待滑动结束（或页面重新可见）后再继续，避免滚动掉帧。
         await ScrollActivityGate.whenIdleAsync();
+        if (beforePage != null) await beforePage();
         final page = await _loadKindPage(
           kind,
           subscriptions,
