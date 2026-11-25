@@ -5,7 +5,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.PowerManager
 import android.provider.Settings
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -450,11 +449,8 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
         true
     }.getOrDefault(false)
 
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        val power = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
-            ?: return false
-        return power.isIgnoringBatteryOptimizations(context.packageName)
-    }
+    private fun isIgnoringBatteryOptimizations(): Boolean =
+        BatteryOptimizationProbe.isIgnoring(context)
 
     private fun requestIgnoreBatteryOptimizations(result: MethodChannel.Result) {
         if (pendingBatteryResult != null) {
@@ -480,7 +476,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     private fun finishIgnoreBatteryOptimizations(): Boolean {
         val pending = pendingBatteryResult ?: return false
         pendingBatteryResult = null
-        pending.success(isIgnoringBatteryOptimizations())
+        BatteryOptimizationProbe.awaitSettled(activity) { pending.success(it) }
         return true
     }
 

@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -31,6 +30,8 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
     }
 
     private var pending: MethodChannel.Result? = null
+
+    private var pendingPermission: String? = null
 
     fun register(messenger: BinaryMessenger) {
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
@@ -77,10 +78,8 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
         }.getOrDefault(false)
     }
 
-    private fun isIgnoringBatteryOptimizations(): Boolean {
-        val power = activity.getSystemService(PowerManager::class.java) ?: return false
-        return power.isIgnoringBatteryOptimizations(activity.packageName)
-    }
+    private fun isIgnoringBatteryOptimizations(): Boolean =
+        BatteryOptimizationProbe.isIgnoring(activity)
 
     private fun hasPermission(permission: String): Boolean =
         ContextCompat.checkSelfPermission(activity, permission) ==
@@ -91,6 +90,7 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
             result.error("request_busy", "另一个权限请求仍在等待", null)
             return
         }
+        pendingPermission = name
         when (name) {
             "vpn" -> requestVpn(result)
             "notification" -> requestNotification(result)
@@ -214,7 +214,15 @@ class PermissionsBridge(private val activity: Activity) : MethodChannel.MethodCa
 
     private fun finish(resultCode: Int) {
         val result = pending ?: return
+        val permission = pendingPermission
         pending = null
+        pendingPermission = null
+        if (permission == "batteryOptimization") {
+            BatteryOptimizationProbe.awaitSettled(activity) {
+                result.success(states() + mapOf("result" to resultCode))
+            }
+            return
+        }
         result.success(states() + mapOf("result" to resultCode))
     }
 
