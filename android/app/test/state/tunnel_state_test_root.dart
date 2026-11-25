@@ -4,10 +4,11 @@ void _rootTakeover() {
   ProviderContainer container({
     required FakeVpnController normal,
     required FakeVpnController root,
+    String workMode = 'express',
     Map<String, Object?> prefs = const {},
   }) {
     final store = MemoryLegacyPrefsStore({
-      'diting_settings': {'app_work_mode': 'normal'},
+      'diting_settings': {'app_work_mode': workMode},
       'dns_vpn_prefs': {'root_dns_takeover_enabled': true, ...prefs},
     });
     final c = ProviderContainer(
@@ -63,6 +64,24 @@ void _rootTakeover() {
       expect(c.read(powerProvider), PowerState.running);
       expect(root.startCalls, 0);
       expect(normal.startCalls, 0);
+    });
+
+    test('普通模式忽略 Root 接管开关，固定走全隧道', () async {
+      final normal = FakeVpnController();
+      final root = FakeVpnController();
+      final c = container(
+        normal: normal,
+        root: root,
+        workMode: 'normal',
+      );
+
+      await c.read(powerProvider.notifier).toggle();
+
+      expect(root.startCalls, 0);
+      expect(normal.startCalls, 1);
+      expect(c.read(powerProvider), PowerState.running);
+      expect(c.read(legacySettingsProvider).vpnRunning, isTrue);
+      expect(c.read(legacySettingsProvider).rootDnsRunning, isFalse);
     });
 
     test('关闭接管开关时先停止正在运行的 Root 服务', () async {

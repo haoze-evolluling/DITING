@@ -20,7 +20,7 @@ class PowerNotifier extends Notifier<PowerState> {
 
   bool get _isExpress => ref.read(workModeProvider) == AppWorkMode.express;
 
-  /// Root 免 VPN 接管优先于 VPN 数据面：普通与简洁模式都可用。
+  /// Root 免 VPN 接管优先于 VPN 数据面：仅简洁模式支持。
   bool get _isRoot =>
       ref.read(workModeProvider).supportsRootDns &&
       ref.read(rootDnsTakeoverProvider) &&

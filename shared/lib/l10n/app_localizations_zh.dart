@@ -2672,14 +2672,11 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get rootTakeoverSubtitle =>
-      '通过 Root 重定向本机 DNS，无需 VPN；未 Root 时简洁模式自动回退到仅 DNS 的 VPN';
-
-  @override
-  String get rootTakeoverTunnelModesOnly => '仅普通与简洁模式可用';
+      '通过 Root 重定向本机 DNS，无需 VPN；未 Root 时自动回退到仅 DNS 的 VPN';
 
   @override
   String get rootTakeoverFooter =>
-      '开启后，当前工作模式会通过 Root 将本机 53 端口查询重定向到本地 DNS，读取的是该模式自己的规则库、日志库与偏好。Root 不可用时，简洁模式会自动改用仅接管 DNS 的 VPN；普通模式缺少隧道能力时仍会提示失败。';
+      '开启后，简洁模式会通过 Root 将本机 53 端口查询重定向到本地 DNS，读取简洁模式自己的规则库、日志库与偏好。Root 不可用时自动改用仅接管 DNS 的 VPN。';
 
   @override
   String get rootTakeoverProbeTitle => '检测 Root 权限';

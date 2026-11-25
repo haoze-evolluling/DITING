@@ -56,8 +56,8 @@ enum AppWorkMode {
   /// 因此这些功能的可用性判断一律用它。
   bool get hasTunnelFeatures => this == AppWorkMode.normal;
 
-  /// 是否支持 Root 免 VPN DNS 接管。普通与简洁模式都可用。
-  bool get supportsRootDns => this != AppWorkMode.server;
+  /// 是否支持 Root 免 VPN DNS 接管。只有简洁模式支持；普通模式固定走全隧道。
+  bool get supportsRootDns => this == AppWorkMode.express;
 
   /// 是否只做 DNS 过滤（简洁模式）。
   bool get isDnsOnly => this == AppWorkMode.express;

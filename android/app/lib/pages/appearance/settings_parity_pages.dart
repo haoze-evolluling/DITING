@@ -468,30 +468,25 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ),
             ],
           ),
-          generateSection(
-            title: context.l10n.rootTakeoverSection,
-            footer: context.l10n.rootTakeoverFooter,
-            items: [
-              ListItem.toggle(
-                title: Text(context.l10n.rootTakeoverTitle),
-                subtitle: Text(
-                  rootTakeoverSupported
-                      ? context.l10n.rootTakeoverSubtitle
-                      : context.l10n.rootTakeoverTunnelModesOnly,
+          if (rootTakeoverSupported)
+            generateSection(
+              title: context.l10n.rootTakeoverSection,
+              footer: context.l10n.rootTakeoverFooter,
+              items: [
+                ListItem.toggle(
+                  title: Text(context.l10n.rootTakeoverTitle),
+                  subtitle: Text(context.l10n.rootTakeoverSubtitle),
+                  leading: const Icon(TablerIcons.shield),
+                  value: rootTakeover,
+                  onChanged: (value) =>
+                      ref.read(rootDnsTakeoverProvider.notifier).set(value),
                 ),
-                leading: const Icon(TablerIcons.shield),
-                value: rootTakeover,
-                onChanged: rootTakeoverSupported
-                    ? (value) =>
-                          ref.read(rootDnsTakeoverProvider.notifier).set(value)
-                    : null,
-              ),
-              if (rootTakeoverSupported && rootTakeover)
-                _RootTakeoverProbeRow(
-                  onRefresh: () => ref.invalidate(rootDnsProbeProvider),
-                ),
-            ],
-          ),
+                if (rootTakeover)
+                  _RootTakeoverProbeRow(
+                    onRefresh: () => ref.invalidate(rootDnsProbeProvider),
+                  ),
+              ],
+            ),
         ],
       ),
     );

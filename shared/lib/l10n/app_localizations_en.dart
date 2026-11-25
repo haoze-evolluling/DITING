@@ -2833,15 +2833,11 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get rootTakeoverSubtitle =>
-      'Redirect device DNS through root without VPN; simple mode falls back to a DNS-only VPN when root is unavailable';
-
-  @override
-  String get rootTakeoverTunnelModesOnly =>
-      'Available in normal and simple modes';
+      'Redirect device DNS through root without VPN; falls back to a DNS-only VPN when root is unavailable';
 
   @override
   String get rootTakeoverFooter =>
-      'When on, the current work mode uses root to redirect device port-53 queries to the local DNS engine, reading that mode\'s own rules, logs and preferences. If root is unavailable, simple mode automatically falls back to a DNS-only VPN; normal mode still reports a failure because it needs the full tunnel.';
+      'When on, simple mode uses root to redirect device port-53 queries to the local DNS engine, reading simple mode\'s own rules, logs and preferences. If root is unavailable, it automatically switches to a DNS-only VPN.';
 
   @override
   String get rootTakeoverProbeTitle => 'Check root permission';

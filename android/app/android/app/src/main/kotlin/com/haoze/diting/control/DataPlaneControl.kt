@@ -48,11 +48,11 @@ object DataPlaneControl {
     /**
      * Root 免 VPN 接管是否生效。
      *
-     * 普通与简洁模式都走本地 DNS 接管，因此两者都可以打开它；服务器模式另有
-     * 自己的数据面，不参与这里。
+     * 只有简洁模式支持它；普通模式固定走全隧道，服务器模式另有自己的数据面，
+     * 两者都不参与这里。
      */
     fun usesRootTakeover(context: Context): Boolean =
-        workMode(context).let { it == WORK_MODE_NORMAL || it == WORK_MODE_EXPRESS } &&
+        workMode(context) == WORK_MODE_EXPRESS &&
             context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
                 .getBoolean(KEY_ROOT_TAKEOVER, false)
 

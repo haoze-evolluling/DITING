@@ -46,8 +46,8 @@ class RootDnsService : Service() {
     private var lastError: String? = null
 
     /**
-     * 本次接管使用的数据集：普通模式与简洁模式的规则、日志、偏好各自独立，
-     * Root 接管跟随当前工作模式，避免简洁模式读到普通模式的数据。
+     * 本次接管使用的数据集：Root 接管仅用于简洁模式，读取的是简洁模式的
+     * 规则、日志与偏好，不会碰到普通模式的数据。
      */
     @Volatile
     private var dataset: RuleDataset = RuleDataset.NORMAL
