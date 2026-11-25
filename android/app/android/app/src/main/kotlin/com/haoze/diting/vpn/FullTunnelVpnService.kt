@@ -131,7 +131,14 @@ internal abstract class FullTunnelVpnService : VpnService() {
             ),
         )
         profile.startConfig.remember(this, args)
-        startTunnel(args)
+        try {
+            startTunnel(args)
+        } catch (t: Throwable) {
+            // onStartCommand 抛出的任何异常都会被 ActivityThread 升级成
+            // “Unable to start service” 并直接杀进程，这里降级为受控的失败清理。
+            Log.e(profile.logTag, "tunnel start failed", t)
+            fail(tunnelGeneration, "隧道启动失败：${t.message ?: t.javaClass.simpleName}")
+        }
         return START_NOT_STICKY
     }
 
@@ -141,7 +148,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
             Log.i(profile.logTag, "tunnel already running; ignoring duplicate start")
             return
         }
-        tunnelGeneration++
+        val generation = ++tunnelGeneration
         stopping = false
         runtime.lastError = null
 
@@ -165,10 +172,18 @@ internal abstract class FullTunnelVpnService : VpnService() {
         )
         val pfd = established.fd
         if (pfd == null) {
-            fail("无法建立 VPN 接口")
+            fail(generation, "无法建立 VPN 接口")
             return
         }
         tun = pfd
+        // 尽早固定 fd：之后任何并发清理（拓扑变化重建、旧会话异常退出）都可能关闭这个
+        // PFD，那时再读 pfd.fd 会抛 IllegalStateException("Already closed") 并杀死进程。
+        val tunFd = try {
+            pfd.fd
+        } catch (t: IllegalStateException) {
+            fail(generation, "无法获取隧道文件描述符：${t.message ?: t.javaClass.simpleName}")
+            return
+        }
         val blockIpv6 = ipv6.blockIpv6 && !established.clatOnly
 
         val rustEngine = try {
@@ -181,7 +196,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
                 "error" to (t.message ?: t.javaClass.simpleName),
             )
             releaseResources()
-            fail("引擎加载失败：${t.message ?: t.javaClass.simpleName}")
+            fail(generation, "引擎加载失败：${t.message ?: t.javaClass.simpleName}")
             return
         }
         engine = rustEngine
@@ -216,7 +231,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
                 "error" to (t.message ?: t.javaClass.simpleName),
             )
             releaseResources()
-            fail("隧道配置失败：${t.message ?: t.javaClass.simpleName}")
+            fail(generation, "隧道配置失败：${t.message ?: t.javaClass.simpleName}")
             return
         }
 
@@ -242,10 +257,10 @@ internal abstract class FullTunnelVpnService : VpnService() {
             eventDomain = profile.eventDomain,
             threadName = profile.tunnelThreadName,
             logTag = profile.logTag,
-            tunFd = pfd.fd,
+            tunFd = tunFd,
             protect = { fd -> this.protect(fd) },
             isStopping = { stopping },
-            onFatal = { fail(it) },
+            onFatal = { fail(generation, it) },
         )
     }
 
@@ -335,7 +350,18 @@ internal abstract class FullTunnelVpnService : VpnService() {
         LogRetention.stop()
     }
 
-    private fun fail(message: String) {
+    /**
+     * 失败清理只对发起失败的那一代会话生效。
+     *
+     * 旧会话的隧道线程可能在新的 startTunnel 已经换上新 fd 之后才报错回调；
+     * 若不加代际校验，这里会关掉新会话的 PFD，让启动流程读到已关闭的描述符。
+     */
+    @Synchronized
+    private fun fail(generation: Int, message: String) {
+        if (generation != tunnelGeneration) {
+            Log.i(profile.logTag, "ignoring failure from a stale tunnel generation")
+            return
+        }
         RuntimeEventLog.error(profile.eventDomain, "tunnel.fail", "message" to message)
         runtime.lastError = message
         runtime.isRunning = false
