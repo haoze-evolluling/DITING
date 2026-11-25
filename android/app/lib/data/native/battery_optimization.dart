@@ -25,12 +25,18 @@ Future<BatteryOptimizationState> readBatteryOptimization() async {
 
 Future<BatteryOptimizationState> requestBatteryOptimization() async {
   try {
-    await const MethodChannel(platformChannelName)
+    // 平台侧会等待用户从系统设置页返回后再回传授权状态。
+    final granted = await const MethodChannel(platformChannelName)
         .invokeMethod<bool>('requestIgnoreBatteryOptimizations');
+    if (granted == null) {
+      return BatteryOptimizationState.unavailable;
+    }
+    return granted
+        ? BatteryOptimizationState.ignored
+        : BatteryOptimizationState.notIgnored;
   } on MissingPluginException {
     return BatteryOptimizationState.unavailable;
   } on PlatformException {
     return BatteryOptimizationState.unavailable;
   }
-  return readBatteryOptimization();
 }

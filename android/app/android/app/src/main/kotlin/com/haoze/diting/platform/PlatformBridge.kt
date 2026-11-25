@@ -26,6 +26,8 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
 
         private const val REQUEST_PICK_FONT_FILE = 0x5704
 
+        private const val REQUEST_IGNORE_BATTERY = 0x5706
+
         private const val FONT_DIR = "fonts"
 
         private const val MIN_FONT_BYTES = 1024
@@ -190,6 +192,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
             REQUEST_PICK_FONT_FILE -> finishPickFontFile(resultCode, data)
             REQUEST_EXPORT_DOCUMENT -> finishExportDocument(resultCode, data)
             REQUEST_IMPORT_DOCUMENT -> finishImportDocument(resultCode, data)
+            REQUEST_IGNORE_BATTERY -> finishIgnoreBatteryOptimizations()
             else -> false
         }
 
@@ -424,6 +427,7 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
 
     private var pendingExportResult: MethodChannel.Result? = null
     private var pendingImportResult: MethodChannel.Result? = null
+    private var pendingBatteryResult: MethodChannel.Result? = null
     private var pendingTextResult: MethodChannel.Result? = null
     private var pendingFontResult: MethodChannel.Result? = null
 
@@ -453,12 +457,31 @@ class PlatformBridge(private val activity: Activity) : MethodChannel.MethodCallH
     }
 
     private fun requestIgnoreBatteryOptimizations(result: MethodChannel.Result) {
+        if (pendingBatteryResult != null) {
+            result.error("request_busy", "另一个电池优化请求仍在等待", null)
+            return
+        }
+        if (isIgnoringBatteryOptimizations()) {
+            result.success(true)
+            return
+        }
         val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
             .setData(Uri.parse("package:${context.packageName}"))
         val fallback = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
         val intent = if (direct.resolveActivity(context.packageManager) != null) direct else fallback
-        val ok = runCatching { activity.startActivity(intent) }.isSuccess
-        result.success(ok)
+        pendingBatteryResult = result
+        runCatching { activity.startActivityForResult(intent, REQUEST_IGNORE_BATTERY) }
+            .onFailure {
+                pendingBatteryResult = null
+                result.success(false)
+            }
+    }
+
+    private fun finishIgnoreBatteryOptimizations(): Boolean {
+        val pending = pendingBatteryResult ?: return false
+        pendingBatteryResult = null
+        pending.success(isIgnoringBatteryOptimizations())
+        return true
     }
 
     private fun memoryInfo(): Map<String, Any> {
