@@ -68,22 +68,29 @@ pub fn route_plan(
     route_exclude_address: &[String],
     bypass_private: bool,
     clat: bool,
+    dns_only: bool,
     excluded: &[String],
     self_package: &str,
     proxy_package: &str,
 ) -> Value {
     let enable_ipv6 = clat || tunnel_ipv6;
 
-    let mut excludes = route_exclude_address.to_vec();
-    if bypass_private {
-        excludes.extend(PRIVATE_ROUTE_ADDRESS.iter().map(|item| (*item).to_owned()));
-    }
-    let mut blocks = cidr::subtract_cidrs(route_address, &excludes, true);
-    blocks.retain(|block| match block.bits {
-        32 => !clat,
-        128 => enable_ipv6,
-        _ => false,
-    });
+    // 纯 DNS 模式只把虚拟 DNS 地址放进隧道，其余流量继续走物理网络。
+    let mut blocks = if dns_only {
+        Vec::new()
+    } else {
+        let mut excludes = route_exclude_address.to_vec();
+        if bypass_private {
+            excludes.extend(PRIVATE_ROUTE_ADDRESS.iter().map(|item| (*item).to_owned()));
+        }
+        let mut blocks = cidr::subtract_cidrs(route_address, &excludes, true);
+        blocks.retain(|block| match block.bits {
+            32 => !clat,
+            128 => enable_ipv6,
+            _ => false,
+        });
+        blocks
+    };
     force_dns_hosts(&mut blocks, enable_ipv6, clat);
     blocks.sort_by_key(|block| (block.bits, block.start));
 

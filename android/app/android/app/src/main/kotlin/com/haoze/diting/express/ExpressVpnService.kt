@@ -10,9 +10,9 @@ import com.haoze.diting.vpn.VpnServiceApi
 import com.haoze.diting.vpn.VpnStartConfigStore
 
 /**
- * 简洁模式（全隧道），与普通模式共用 [FullTunnelVpnService]。
+ * 简洁模式（纯 DNS），与普通模式共用 [FullTunnelVpnService]。
  *
- * 与普通模式的差别只在数据：规则库、日志库与偏好容器独立存放。
+ * 只把 DNS 查询路由进 TUN，其余流量直连；规则库、日志库与偏好容器独立存放。
  */
 internal class ExpressVpnService : FullTunnelVpnService() {
     override fun modeProfile(): VpnModeProfile = VpnModeProfile.EXPRESS

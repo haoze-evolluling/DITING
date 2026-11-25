@@ -49,11 +49,18 @@ enum AppWorkMode {
 
   final String storageValue;
 
-  /// 是否走本地全隧道数据面（普通模式与简洁模式一致，只有服务器模式例外）。
+  /// 是否走本地全隧道数据面。
   ///
+  /// 只有普通模式会接管全部流量；简洁模式只接管 DNS，服务器模式使用独立进程。
   /// 流量统计、HTTP 记录、分应用管控、HTTPS 检查等能力都依赖全隧道，
-  /// 因此这些功能的可用性判断一律用它，而不是逐个比较 `AppWorkMode.normal`。
-  bool get hasTunnelFeatures => this != AppWorkMode.server;
+  /// 因此这些功能的可用性判断一律用它。
+  bool get hasTunnelFeatures => this == AppWorkMode.normal;
+
+  /// 是否支持 Root 免 VPN DNS 接管。普通与简洁模式都可用。
+  bool get supportsRootDns => this != AppWorkMode.server;
+
+  /// 是否只做 DNS 过滤（简洁模式）。
+  bool get isDnsOnly => this == AppWorkMode.express;
 
   static AppWorkMode fromStorageValue(String? value) => values.firstWhere(
     (mode) => mode.storageValue == value,
@@ -107,7 +114,7 @@ class RootDnsTakeoverNotifier extends Notifier<bool> {
 
   Future<void> set(bool value) async {
     if (value == state) return;
-    if (ref.read(workModeProvider).hasTunnelFeatures) {
+    if (ref.read(workModeProvider).supportsRootDns) {
       final power = ref.read(powerProvider);
       if (power.isRunning || power.isBusy) {
         await ref.read(powerProvider.notifier).stop();

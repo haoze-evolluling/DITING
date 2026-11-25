@@ -208,11 +208,14 @@ void _expressMode() {
     ProviderContainer container({
       required FakeVpnController normal,
       required FakeVpnController express,
+      FakeVpnController? root,
+      bool rootTakeover = false,
       Map<String, Object?> dnsPrefs = const {},
       Map<String, Object?> expressRunning = const {},
     }) {
       final store = MemoryLegacyPrefsStore({
         'diting_settings': {'app_work_mode': 'express'},
+        'dns_vpn_prefs': {'root_dns_takeover_enabled': rootTakeover},
         'diting_express_prefs': {
           'selected_provider_id': 'preset_dnspod_dns',
           ...dnsPrefs,
@@ -224,6 +227,7 @@ void _expressMode() {
           legacyPrefsStoreProvider.overrideWithValue(store),
           vpnControllerProvider.overrideWithValue(normal),
           expressVpnControllerProvider.overrideWithValue(express),
+          rootDnsControllerProvider.overrideWithValue(root ?? FakeVpnController()),
         ],
       );
       addTearDown(c.dispose);
@@ -243,16 +247,15 @@ void _expressMode() {
 
       final request = express.lastRequest!;
       final settings = c.read(legacySettingsProvider);
-      // 简洁模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
-      expect(request.bypassLan, settings.bypassLanEnabled);
+      // 简洁模式只接管 DNS：不携带分流、代理、检查与应用管控参数。
+      expect(request.bypassLan, isTrue);
       expect(request.ipv6Mode, Ipv6Mode.ipv4.storageValue);
       expect(request.routeAddress, isEmpty);
       expect(request.routeExcludeAddress, isEmpty);
-      expect(request.blockedPackages, settings.blockedAppPackages.toList());
-      expect(
-        request.inspectionPackages,
-        settings.httpInspectionPackages.toList(),
-      );
+      expect(request.outboundProxy, isEmpty);
+      expect(request.blockedPackages, isEmpty);
+      expect(request.inspectionPackages, isEmpty);
+      expect(request.inspectionEnabled, isFalse);
       final json = jsonDecode(request.dnsConfig) as Map;
       final providers = json['providers'] as List;
       expect((providers.first as Map)['id'], 'preset_dnspod_dns');
@@ -320,6 +323,25 @@ void _expressMode() {
       expect(c.read(powerProvider), PowerState.error);
       expect(c.read(powerProvider.notifier).lastError, 'no tun');
       expect(c.read(legacySettingsProvider).expressVpnRunning, isFalse);
+    });
+
+    test('Root 接管失败时自动回退到仅 DNS 的 VPN', () async {
+      final express = FakeVpnController();
+      final root = FakeVpnController(started: false, error: 'no su');
+      final c = container(
+        normal: FakeVpnController(),
+        express: express,
+        root: root,
+        rootTakeover: true,
+      );
+
+      await c.read(powerProvider.notifier).toggle();
+
+      expect(root.startCalls, 1);
+      expect(express.startCalls, 1);
+      expect(c.read(powerProvider), PowerState.running);
+      expect(c.read(legacySettingsProvider).expressVpnRunning, isTrue);
+      expect(c.read(legacySettingsProvider).rootDnsRunning, isFalse);
     });
   });
 }

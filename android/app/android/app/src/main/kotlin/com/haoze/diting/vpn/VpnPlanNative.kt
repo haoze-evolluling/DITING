@@ -43,6 +43,7 @@ internal class VpnPlanNative private constructor() {
         excluded: String,
         selfPackage: String,
         proxyPackage: String,
+        dnsOnly: Boolean,
     ): String?
 
     external fun startDefaults(): String?
@@ -70,6 +71,7 @@ internal class VpnPlanNative private constructor() {
             excludedPackages: Collection<String>,
             selfPackage: String,
             proxyPackage: String,
+            dnsOnly: Boolean = false,
         ): VpnPlan {
             val raw = requireNotNull(
                 instance.routePlan(
@@ -81,6 +83,7 @@ internal class VpnPlanNative private constructor() {
                     excluded = excludedPackages.joinToString("\n"),
                     selfPackage = selfPackage,
                     proxyPackage = proxyPackage,
+                    dnsOnly = dnsOnly,
                 ),
             ) { "native VPN route plan rejected the request" }
             return parsePlan(raw)

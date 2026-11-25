@@ -19,6 +19,7 @@ fn plan(
         &owned(exclude),
         bypass_private,
         clat,
+        false,
         &[],
         "com.self",
         "",
@@ -155,6 +156,7 @@ fn excluded_packages_drop_blanks_and_duplicates() {
         &[],
         false,
         false,
+        false,
         &owned(&["com.a", " ", "com.self", "com.a"]),
         "com.self",
         "com.proxy",
@@ -169,5 +171,55 @@ fn excluded_packages_drop_blanks_and_duplicates() {
 fn clat_wins_over_a_disabled_tunnel_switch() {
     let plan = plan(false, &[], &["::/0"], false, true);
     assert_eq!(plan["enableIpv6"], true);
+    assert_eq!(routes(&plan), vec![(DNS_SERVER_V6.to_owned(), 128)]);
+}
+
+fn dns_only_plan(tunnel_ipv6: bool, clat: bool) -> Value {
+    route_plan(
+        tunnel_ipv6,
+        &owned(&["0.0.0.0/0"]),
+        &owned(&["10.0.0.0/8"]),
+        true,
+        clat,
+        true,
+        &[],
+        "com.self",
+        "",
+    )
+}
+
+#[test]
+fn dns_only_routes_the_dns_host_and_nothing_else() {
+    let plan = dns_only_plan(false, false);
+    assert_eq!(plan["enableIpv6"], false);
+    assert_eq!(addresses(&plan), vec![(VPN_ADDRESS_V4.to_owned(), 30)]);
+    assert_eq!(plan["dnsServers"], serde_json::json!([DNS_SERVER_V4]));
+    assert_eq!(
+        routes(&plan),
+        vec![(DNS_SERVER_V4.to_owned(), 32)],
+        "自定义路由与直连排除都不应把普通流量拉进隧道"
+    );
+}
+
+#[test]
+fn dns_only_ipv6_adds_the_v6_dns_host() {
+    let plan = dns_only_plan(true, false);
+    assert_eq!(plan["enableIpv6"], true);
+    assert_eq!(
+        plan["dnsServers"],
+        serde_json::json!([DNS_SERVER_V4, DNS_SERVER_V6])
+    );
+    let routes = routes(&plan);
+    assert_eq!(routes.len(), 2);
+    assert!(has(&routes, DNS_SERVER_V4, 32));
+    assert!(has(&routes, DNS_SERVER_V6, 128));
+}
+
+#[test]
+fn dns_only_clat_uses_only_the_v6_dns_host() {
+    let plan = dns_only_plan(false, true);
+    assert_eq!(plan["enableIpv6"], true);
+    assert_eq!(addresses(&plan), vec![(VPN_ADDRESS_V6.to_owned(), 64)]);
+    assert_eq!(plan["dnsServers"], serde_json::json!([DNS_SERVER_V6]));
     assert_eq!(routes(&plan), vec![(DNS_SERVER_V6.to_owned(), 128)]);
 }

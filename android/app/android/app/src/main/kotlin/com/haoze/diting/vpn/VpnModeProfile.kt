@@ -6,10 +6,10 @@ import com.haoze.diting.normal.DitingVpnService
 import com.haoze.diting.platform.NotificationMode
 
 /**
- * 一种工作模式与「全隧道数据面」之间的全部差异。
+ * 一种工作模式与「VPN 数据面」之间的全部差异。
  *
- * 除这里的字段外，普通模式与简洁模式的行为完全一致：同一套路由、同一套引擎配置、
- * 同一套通知与同一套启停流程；数据通过 [dataset] 与偏好容器名保持隔离。
+ * 普通模式走全隧道；简洁模式通过 [dnsOnly] 只接管 DNS 查询，其余流量直连。
+ * 数据通过 [dataset] 与偏好容器名保持隔离。
  *
  * 必须用 class 而不是 data class：其中的 [runtime] 是有状态引用。
  */
@@ -42,6 +42,12 @@ internal class VpnModeProfile(
     val reloadThreadName: String,
     val showSpeedLine: Boolean = true,
     val pauseAction: Boolean = true,
+    /**
+     * 纯 DNS 数据面：只把虚拟 DNS 地址路由进 TUN，其余流量走物理网络。
+     *
+     * 简洁模式恒为 true；此模式下不启用流量统计、HTTP 记录、分应用管控与 HTTPS 检查。
+     */
+    val dnsOnly: Boolean = false,
 ) {
     val startConfig = VpnStartConfigStore(statePrefs)
 
@@ -77,7 +83,7 @@ internal class VpnModeProfile(
             runtime = VpnRuntime.EXPRESS,
             channelId = "channel_express",
             channelName = "简洁模式",
-            channelDescription = "保持 VPN 隧道运行",
+            channelDescription = "仅接管 DNS 查询，其余流量直连",
             notificationId = 2003,
             modeTitle = "简洁模式",
             notificationMode = NotificationMode.EXPRESS,
@@ -90,6 +96,8 @@ internal class VpnModeProfile(
             tunnelThreadName = "diting-express-tunnel",
             teardownThreadName = "diting-express-teardown",
             reloadThreadName = "diting-express-rule-reload",
+            showSpeedLine = false,
+            dnsOnly = true,
         )
     }
 }

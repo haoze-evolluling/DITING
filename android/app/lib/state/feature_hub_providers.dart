@@ -107,7 +107,12 @@ final hiddenFeatureKeysProvider =
 final visibleFeatureCategoriesProvider =
     Provider.family<List<MockFeatureCategory>, AppL10n>((ref, l10n) {
       final hidden = ref.watch(hiddenFeatureKeysProvider);
-      return visibleFeatureCategories(hiddenKeys: hidden, l10n: l10n);
+      final withTunnel = ref.watch(workModeProvider).hasTunnelFeatures;
+      return visibleFeatureCategories(
+        hiddenKeys: hidden,
+        l10n: l10n,
+        excludedKeys: withTunnel ? const {} : tunnelOnlyFeatureKeys,
+      );
     });
 
 class LogLongPressHintNotifier extends Notifier<bool> {

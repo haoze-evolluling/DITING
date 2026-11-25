@@ -474,7 +474,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get agreementMessage =>
-      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、简洁模式与服务器模式；普通与简洁模式都通过全隧道接管全部流量，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与简洁模式依赖 Android 本地 VPN 接口接管流量，不连接任何远程 VPN 服务器。两种模式功能相同，各自保存独立的规则、缓存与日志；简洁模式的功能中心默认少显示几个分类，随时可以恢复。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
+      '软件说明\n谛听是一款专注于本地 DNS 解析优化与网络规则过滤的开源工具。提供三种工作模式：普通模式、简洁模式与服务器模式；普通模式通过全隧道接管全部流量，简洁模式只接管 DNS 查询、其余流量直连，服务器模式则为局域网提供 DNS 服务。本软件完全在设备本地闭环运行，无任何远程数据上传与隐私追踪。\n\n运行机制与注意事项\n普通与简洁模式依赖 Android 本地 VPN 接口（简洁模式也可选择 Root 接管），不连接任何远程 VPN 服务器。两种模式各自保存独立的规则、缓存与日志；简洁模式只提供 DNS 过滤相关能力，其功能中心默认少显示几个分类，随时可以恢复。规则与日志完整保存在本机，启用高级扩展功能前请了解其具体影响。\n\n免责条款\n本软件按现状提供。使用者须遵守相关法律法规，自行确认规则与上游解析来源的合法性及安全性。严禁将本软件用于任何违法用途；使用者因自行配置或使用本软件所产生的后果由使用者自行承担。';
 
   @override
   String get homeProviderSingleLabel => '解析服务商';
@@ -1406,8 +1406,7 @@ class AppL10nZh extends AppL10n {
   String get workModeNormalBadge => '推荐';
 
   @override
-  String get workModeNormalSummary =>
-      '全隧道接管全部流量，规则、HTTPS 检查与流量统计齐全；功能与简洁模式完全一致';
+  String get workModeNormalSummary => '全隧道接管全部流量，规则、HTTPS 检查、分应用管控与流量统计齐全';
 
   @override
   String get workModeServerTitle => '服务器模式';
@@ -1425,7 +1424,7 @@ class AppL10nZh extends AppL10n {
   String get workModeExpressBadge => '简洁';
 
   @override
-  String get workModeExpressSummary => '功能与普通模式完全相同，只是数据独立存放，功能中心默认更精简';
+  String get workModeExpressSummary => '只过滤 DNS 查询，其余流量直连；规则与日志独立存放，功能中心默认更精简';
 
   @override
   String get workModeSettingTitle => '运行模式';
@@ -2672,14 +2671,15 @@ class AppL10nZh extends AppL10n {
   String get rootTakeoverTitle => 'Root DNS 接管';
 
   @override
-  String get rootTakeoverSubtitle => '通过 Root 重定向本机 DNS，无需 VPN 权限';
+  String get rootTakeoverSubtitle =>
+      '通过 Root 重定向本机 DNS，无需 VPN；未 Root 时简洁模式自动回退到仅 DNS 的 VPN';
 
   @override
   String get rootTakeoverTunnelModesOnly => '仅普通与简洁模式可用';
 
   @override
   String get rootTakeoverFooter =>
-      '开启后，当前工作模式会通过 Root 将本机 53 端口查询重定向到本地 DNS，读取的是该模式自己的规则库、日志库与偏好。应用分流、HTTPS 检查与出站代理依赖 VPN 隧道，此模式下不可用。';
+      '开启后，当前工作模式会通过 Root 将本机 53 端口查询重定向到本地 DNS，读取的是该模式自己的规则库、日志库与偏好。Root 不可用时，简洁模式会自动改用仅接管 DNS 的 VPN；普通模式缺少隧道能力时仍会提示失败。';
 
   @override
   String get rootTakeoverProbeTitle => '检测 Root 权限';
@@ -4745,7 +4745,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      '两种模式功能完全相同，区别只有两点：数据互不相通——各自的规则、缓存与日志独立保存；简洁模式的功能中心默认少显示几个分类，随时可以在「隐藏功能」里恢复。';
+      '普通模式全隧道接管全部流量，简洁模式只过滤 DNS、其余流量直连。两者的数据互不相通：规则、缓存与日志独立保存；简洁模式的功能中心默认少显示几个分类，随时可以在「隐藏功能」里恢复。';
 
   @override
   String get modeNormalFeature1 => '全隧道接管';
@@ -4772,10 +4772,10 @@ class AppL10nZh extends AppL10n {
   String get modeNormalFeature4Body => '按应用记录上下行与查询数';
 
   @override
-  String get modeExpressFeature1 => '功能与普通模式完全一致';
+  String get modeExpressFeature1 => '纯 DNS 过滤';
 
   @override
-  String get modeExpressFeature1Body => '全隧道接管、规则、HTTPS 检查与流量统计全部相同';
+  String get modeExpressFeature1Body => '只接管 DNS 查询，其余流量直连，不做全隧道转发';
 
   @override
   String get modeExpressFeature2 => '独立数据存储';
@@ -4787,13 +4787,13 @@ class AppL10nZh extends AppL10n {
   String get modeExpressFeature3 => '默认更精简的功能中心';
 
   @override
-  String get modeExpressFeature3Body => '「应用与网络」「高级与诊断」「数据与维护」默认收起';
+  String get modeExpressFeature3Body => '流量、连接、HTTPS 检查与出站代理等依赖隧道的入口直接移除';
 
   @override
-  String get modeExpressFeature4 => '随时可恢复';
+  String get modeExpressFeature4 => '有 Root 更彻底';
 
   @override
-  String get modeExpressFeature4Body => '在功能中心「隐藏功能」里一键恢复全部卡片';
+  String get modeExpressFeature4Body => '已 Root 时可用 Root 接管，完全不建立 VPN';
 
   @override
   String get onboardingTitle => '引导';
@@ -4864,7 +4864,7 @@ class AppL10nZh extends AppL10n {
   String get permBatteryBody => '避免后台被杀；拒绝则长时间待机可能断开';
 
   @override
-  String get permVpnExpressBody => '建立本地隧道接管流量；拒绝则无法启动';
+  String get permVpnExpressBody => '建立仅接管 DNS 的本地通道；拒绝则无法启动';
 
   @override
   String get permNeeded => '需要这些权限';
@@ -4887,7 +4887,7 @@ class AppL10nZh extends AppL10n {
   String get onboardingTipNormal3 => '首页句子和透明度都能在设置里改。';
 
   @override
-  String get onboardingTipExpress1 => '简洁模式与普通模式功能完全一致，只是数据各存一份、功能中心默认少显示几类卡片。';
+  String get onboardingTipExpress1 => '简洁模式只过滤 DNS 查询，其余流量直接连接；规则与日志单独保存。';
 
   @override
   String get onboardingTipExpress2 => '多路竞速至少要选 2 家服务商。';

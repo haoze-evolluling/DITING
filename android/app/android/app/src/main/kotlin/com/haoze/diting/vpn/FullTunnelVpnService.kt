@@ -17,10 +17,10 @@ import com.haoze.diting.tile.QuickSettingsTileUpdater
 import com.haoze.diting.watchdog.VpnReclaimer
 
 /**
- * 普通模式与简洁模式共用的全隧道 VpnService。
+ * 普通模式与简洁模式共用的 VpnService。
  *
- * 子类只提供 [modeProfile]；两种模式的规则库、日志库与偏好容器由 profile 注入，
- * 其余行为（建隧道、装数据面、通知、回收、诊断）完全一致。
+ * 子类只提供 [modeProfile]；普通模式建全隧道，简洁模式只把 DNS 查询路由进 TUN。
+ * 规则库、日志库与偏好容器由 profile 注入，通知、回收与启停流程保持一致。
  */
 internal abstract class FullTunnelVpnService : VpnService() {
     protected abstract fun modeProfile(): VpnModeProfile
@@ -160,6 +160,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
             clat = clat,
             routeAddress = args.routeAddress,
             routeExcludeAddress = args.routeExcludeAddress,
+            dnsOnly = profile.dnsOnly,
             logTag = profile.logTag,
         )
         val pfd = established.fd
@@ -204,6 +205,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
                 preferIpv6 = ipv6.preferIpv6,
                 logMode = logMode,
                 httpsBypassRules = httpsBypassRules,
+                dnsOnly = profile.dnsOnly,
                 logTag = profile.logTag,
             )
         } catch (t: Throwable) {
@@ -225,13 +227,13 @@ internal abstract class FullTunnelVpnService : VpnService() {
         runtime.isRunning = true
         runtime.startedAt = System.currentTimeMillis()
         runtime.setPersistedRunning(this, true)
-        speedTicker.start()
+        if (!profile.dnsOnly) speedTicker.start()
         FloatingLogOverlay.setVpnRunning(this, true)
         LogRetention.start(
             context = this,
             databaseName = profile.dataset.logsDatabase(),
             prefsName = profile.settingsPrefs,
-            includeHttpAndTraffic = true,
+            includeHttpAndTraffic = !profile.dnsOnly,
         )
         worker = TunnelRunner.start(
             context = this,

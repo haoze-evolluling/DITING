@@ -21,6 +21,7 @@ internal object VpnRouteConfig {
         clat: Boolean,
         routeAddress: Collection<String>,
         routeExcludeAddress: Collection<String>,
+        dnsOnly: Boolean = false,
         logTag: String = "VpnRouteConfig",
     ): VpnEstablishResult {
         val plan = VpnPlanNative.routePlan(
@@ -32,11 +33,12 @@ internal object VpnRouteConfig {
             excludedPackages = excludedPackages,
             selfPackage = service.packageName,
             proxyPackage = proxyPackage.orEmpty(),
+            dnsOnly = dnsOnly,
         )
         Log.i(
             logTag,
             "establish: tunnelIpv6=$tunnelIpv6, enableIpv6=${plan.enableIpv6}, " +
-                "clat=$clat, bypassPrivate=$bypassPrivate",
+                "clat=$clat, bypassPrivate=$bypassPrivate, dnsOnly=$dnsOnly",
         )
 
         val builder = service.Builder()

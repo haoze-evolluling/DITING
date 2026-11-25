@@ -15,10 +15,10 @@ import com.haoze.diting.proxy.OutboundProxyScope
 import java.io.File
 
 /**
- * 普通模式与简洁模式共用的全隧道数据面配置。
+ * 普通模式与简洁模式共用的数据面配置。
  *
- * 两种模式唯一的差别是 [RuleDataset]（规则库 / 日志库 / 偏好容器），
- * 其余能力——DNS 过滤、流量统计、HTTP 记录、分应用管控、HTTPS 检查——完全一致。
+ * 普通模式启用全隧道能力——流量统计、HTTP 记录、分应用管控、HTTPS 检查；
+ * 简洁模式 [dnsOnly] 只保留 DNS 过滤、日志、缓存与解析相关回调。
  */
 internal object FullTunnelEngineConfig {
     private const val MITM_DIR = "go-mitm"
@@ -32,30 +32,35 @@ internal object FullTunnelEngineConfig {
         preferIpv6: Boolean,
         logMode: String,
         httpsBypassRules: Set<String>,
+        dnsOnly: Boolean,
         logTag: String,
     ): EngineDataPlane {
-        val proxyError = engine.configureOutboundProxy(
-            OutboundProxyScope.resolve(
-                context,
-                args.proxyJson.ifBlank { VpnPlanNative.startDefaults.outboundProxy },
-            ),
-        )
-        if (proxyError.isNotBlank()) {
-            OutboundProxyBridge.publishStatus(context, "error", proxyError)
-        }
-        require(proxyError.isBlank()) { proxyError }
-        engine.setOutboundProxyStatusCallback(object : OutboundProxyStatusCallback {
-            override fun onOutboundProxyStatus(state: String, message: String) {
-                OutboundProxyBridge.publishStatus(context, state, message)
+        if (!dnsOnly) {
+            val proxyError = engine.configureOutboundProxy(
+                OutboundProxyScope.resolve(
+                    context,
+                    args.proxyJson.ifBlank { VpnPlanNative.startDefaults.outboundProxy },
+                ),
+            )
+            if (proxyError.isNotBlank()) {
+                OutboundProxyBridge.publishStatus(context, "error", proxyError)
             }
-        })
+            require(proxyError.isBlank()) { proxyError }
+            engine.setOutboundProxyStatusCallback(object : OutboundProxyStatusCallback {
+                override fun onOutboundProxyStatus(state: String, message: String) {
+                    OutboundProxyBridge.publishStatus(context, state, message)
+                }
+            })
+        }
         engine.applyDNSConfig(args.dnsConfig)
         RequestStats.reset()
         val logDatabase = dataset.logsDatabase()
         EngineLogCallbacks.attach(engine, context, logDatabase, logMode)
         engine.setFilterDNS(true)
-        engine.setBlockIpv6(blockIpv6)
-        engine.setPreferIpv6(preferIpv6)
+        if (!dnsOnly) {
+            engine.setBlockIpv6(blockIpv6)
+            engine.setPreferIpv6(preferIpv6)
+        }
         BlockPauseLink.applyTo(context, engine)
 
         val plane = EngineDataPlane(context, logMode, logDatabase)
@@ -63,15 +68,17 @@ internal object FullTunnelEngineConfig {
             plane.attachResolvers(engine)
             plane.attachBootstrap(engine)
             plane.attachCacheMirror(engine)
-            plane.attachTraffic(engine)
-            plane.attachHttp(engine)
-            configurePerApp(
-                context = context,
-                engine = engine,
-                args = args,
-                httpsBypassRules = httpsBypassRules,
-                logTag = logTag,
-            )
+            if (!dnsOnly) {
+                plane.attachTraffic(engine)
+                plane.attachHttp(engine)
+                configurePerApp(
+                    context = context,
+                    engine = engine,
+                    args = args,
+                    httpsBypassRules = httpsBypassRules,
+                    logTag = logTag,
+                )
+            }
         } catch (t: Throwable) {
             runCatching { plane.close() }
             throw t

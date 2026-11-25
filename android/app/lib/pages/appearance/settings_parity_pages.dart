@@ -376,7 +376,9 @@ class SettingsBackgroundPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(foregroundBackgroundProvider);
     final notifier = ref.read(foregroundBackgroundProvider.notifier);
-    final tunnelMode = ref.watch(workModeProvider).hasTunnelFeatures;
+    final mode = ref.watch(workModeProvider);
+    final tunnelMode = mode.hasTunnelFeatures;
+    final rootTakeoverSupported = mode.supportsRootDns;
     final rootTakeover = ref.watch(rootDnsTakeoverProvider);
     return CommonScaffold(
       title: context.l10n.foregroundTitle,
@@ -408,17 +410,17 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ),
             ],
           ),
-          generateSection(
-            title: context.l10n.foregroundRouting,
-            items: [
-              ListItem.toggle(
-                title: Text(context.l10n.foregroundBypassLan),
-                subtitle: Text(context.l10n.foregroundBypassLanSubtitle),
-                leading: const Icon(TablerIcons.devices),
-                value: state.bypassLan,
-                onChanged: notifier.setBypassLan,
-              ),
-              if (tunnelMode) ...[
+          if (tunnelMode)
+            generateSection(
+              title: context.l10n.foregroundRouting,
+              items: [
+                ListItem.toggle(
+                  title: Text(context.l10n.foregroundBypassLan),
+                  subtitle: Text(context.l10n.foregroundBypassLanSubtitle),
+                  leading: const Icon(TablerIcons.devices),
+                  value: state.bypassLan,
+                  onChanged: notifier.setBypassLan,
+                ),
                 NavEntryRow(
                   glyph: TablerIcons.link,
                   title: context.l10n.ipv6ModeTitle,
@@ -444,8 +446,7 @@ class SettingsBackgroundPage extends ConsumerWidget {
                   onPressed: () => context.push(SystemPaths.routeExclude),
                 ),
               ],
-            ],
-          ),
+            ),
           generateSection(
             title: context.l10n.foregroundBackgroundPermissions,
             footer: context.l10n.foregroundBatteryFooter,
@@ -474,18 +475,18 @@ class SettingsBackgroundPage extends ConsumerWidget {
               ListItem.toggle(
                 title: Text(context.l10n.rootTakeoverTitle),
                 subtitle: Text(
-                  tunnelMode
+                  rootTakeoverSupported
                       ? context.l10n.rootTakeoverSubtitle
                       : context.l10n.rootTakeoverTunnelModesOnly,
                 ),
                 leading: const Icon(TablerIcons.shield),
                 value: rootTakeover,
-                onChanged: tunnelMode
+                onChanged: rootTakeoverSupported
                     ? (value) =>
                           ref.read(rootDnsTakeoverProvider.notifier).set(value)
                     : null,
               ),
-              if (tunnelMode && rootTakeover)
+              if (rootTakeoverSupported && rootTakeover)
                 _RootTakeoverProbeRow(
                   onRefresh: () => ref.invalidate(rootDnsProbeProvider),
                 ),

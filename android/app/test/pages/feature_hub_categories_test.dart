@@ -79,7 +79,7 @@ void main() {
     }
   });
 
-  test('简洁模式与普通模式提供同样的功能卡片', () {
+  test('普通模式显示全部卡片，简洁模式移除依赖隧道的入口', () {
     final visible = visibleFeatureCategories(hiddenKeys: const {}, l10n: l10n);
     expect(visible.map((category) => category.title), [
       for (final category in categories) category.title,
@@ -98,6 +98,20 @@ void main() {
         'outbound_proxy',
       ]),
     );
+
+    final express = visibleFeatureCategories(
+      hiddenKeys: const {},
+      l10n: l10n,
+      excludedKeys: tunnelOnlyFeatureKeys,
+    );
+    final expressKeys = [
+      for (final category in express)
+        for (final card in category.cards) ?card.featureKey,
+    ];
+    expect(expressKeys.toSet().intersection(tunnelOnlyFeatureKeys), isEmpty);
+    expect(expressKeys, isNot(contains('app_rules')));
+    expect(expressKeys, contains('rule_control'));
+    expect(expressKeys, contains('logs'));
   });
 
   test('卡片路由与隐藏键都不重复', () {

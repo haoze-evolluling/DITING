@@ -14,9 +14,15 @@ export 'package:diting_android/state/dashboard_layout_providers.dart';
 
 bool debugDisableDashboardLiveUpdates = false;
 
-final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>(
-  (ref) => ref.watch(dashboardWidgetsProvider),
-);
+final visibleDashboardWidgetsProvider = Provider<List<DashboardWidget>>((ref) {
+  final widgets = ref.watch(dashboardWidgetsProvider);
+  // 网速卡片依赖全隧道流量统计；简洁模式只接管 DNS，不显示它。
+  if (ref.watch(workModeProvider).hasTunnelFeatures) return widgets;
+  return [
+    for (final widget in widgets)
+      if (widget != DashboardWidget.networkSpeed) widget,
+  ];
+});
 
 enum SpeedSource { available, noNativeChannel }
 
@@ -122,7 +128,7 @@ class SpeedSeriesNotifier extends Notifier<SpeedSeries> {
 
   VpnController _controller() {
     final mode = ref.read(workModeProvider);
-    if (mode.hasTunnelFeatures && ref.read(rootDnsTakeoverProvider)) {
+    if (mode.supportsRootDns && ref.read(rootDnsTakeoverProvider)) {
       return ref.read(rootDnsControllerProvider);
     }
     if (mode == AppWorkMode.express) {

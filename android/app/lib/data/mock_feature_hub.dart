@@ -279,25 +279,46 @@ class MockHiddenFeature {
   final String route;
 }
 
-List<MockHiddenFeature> mockHiddenFeatures(AppL10n l10n) => [
+/// 依赖全隧道的功能卡片。
+///
+/// 简洁模式只接管 DNS，这些入口既不会产生数据也无法生效，因此直接从功能中心
+/// 与「隐藏功能」里移除，而不是留一个打不开或永远为空的入口。
+const tunnelOnlyFeatureKeys = <String>{
+  'app_rules',
+  'flow_view',
+  'traffic_stats',
+  'connection_rate_limit',
+  'https_inspection',
+  'outbound_proxy',
+};
+
+List<MockHiddenFeature> mockHiddenFeatures(
+  AppL10n l10n, {
+  Set<String> excludedKeys = const {},
+}) => [
   for (final category in mockFeatureCategories(l10n))
     for (final card in category.cards)
       if (card.featureKey case final key?)
-        MockHiddenFeature(
-          key: key,
-          title: card.title,
-          description: card.description,
-          glyphName: card.glyphName,
-          category: category.title,
-          route: card.route,
-        ),
+        if (!excludedKeys.contains(key))
+          MockHiddenFeature(
+            key: key,
+            title: card.title,
+            description: card.description,
+            glyphName: card.glyphName,
+            category: category.title,
+            route: card.route,
+          ),
 ];
 
 Map<String, List<MockHiddenFeature>> hiddenFeaturesByCategory({
   required AppL10n l10n,
+  Set<String> excludedKeys = const {},
 }) {
   final result = <String, List<MockHiddenFeature>>{};
-  for (final feature in mockHiddenFeatures(l10n)) {
+  for (final feature in mockHiddenFeatures(
+    l10n,
+    excludedKeys: excludedKeys,
+  )) {
     result.putIfAbsent(feature.category, () => []).add(feature);
   }
   return result;
@@ -306,12 +327,16 @@ Map<String, List<MockHiddenFeature>> hiddenFeaturesByCategory({
 List<MockFeatureCategory> visibleFeatureCategories({
   required Set<String> hiddenKeys,
   required AppL10n l10n,
+  Set<String> excludedKeys = const {},
 }) {
   final result = <MockFeatureCategory>[];
   for (final category in mockFeatureCategories(l10n)) {
     final cards = [
       for (final card in category.cards)
-        if (card.isFixed || !hiddenKeys.contains(card.featureKey)) card,
+        if (card.isFixed ||
+            !hiddenKeys.contains(card.featureKey) &&
+                !excludedKeys.contains(card.featureKey))
+          card,
     ];
     if (cards.isNotEmpty) {
       result.add(

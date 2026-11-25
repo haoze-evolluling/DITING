@@ -1,6 +1,7 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/state/feature_hub_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
@@ -13,7 +14,11 @@ class HiddenFeaturesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hidden = ref.watch(hiddenFeatureKeysProvider);
-    final groups = hiddenFeaturesByCategory(l10n: context.l10n);
+    final withTunnel = ref.watch(workModeProvider).hasTunnelFeatures;
+    final groups = hiddenFeaturesByCategory(
+      l10n: context.l10n,
+      excludedKeys: withTunnel ? const {} : tunnelOnlyFeatureKeys,
+    );
     return CommonScaffold(
       title: context.l10n.hiddenFeaturesTitle,
       iconActions: [

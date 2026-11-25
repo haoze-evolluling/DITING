@@ -69,9 +69,9 @@ void main() {
     expect(find.text('隐私套件'), findsNothing);
   });
 
-  testWidgets('简洁模式与普通模式一样提供 URL 规则与内容过滤入口', (tester) async {
+  testWidgets('简洁模式保留域名规则，但隐藏依赖全隧道的 URL 规则入口', (tester) async {
     await pump(tester, AppWorkMode.express.storageValue);
     expect(find.text('启用域名规则'), findsOneWidget);
-    expect(find.text('URL 规则与内容过滤'), findsOneWidget);
+    expect(find.text('URL 规则与内容过滤'), findsNothing);
   });
 }

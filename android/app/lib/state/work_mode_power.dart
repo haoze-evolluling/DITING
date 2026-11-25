@@ -15,12 +15,16 @@ class PowerNotifier extends Notifier<PowerState> {
 
   String? lastError;
 
+  /// 本次运行中 Root 接管不可用（未 Root、授权失败等），简洁模式已回退到仅 DNS 的 VPN。
+  bool _rootUnavailable = false;
+
   bool get _isExpress => ref.read(workModeProvider) == AppWorkMode.express;
 
-  /// Root 免 VPN 接管优先于 VPN 隧道：普通与简洁模式都可用。
+  /// Root 免 VPN 接管优先于 VPN 数据面：普通与简洁模式都可用。
   bool get _isRoot =>
-      ref.read(workModeProvider).hasTunnelFeatures &&
-      ref.read(rootDnsTakeoverProvider);
+      ref.read(workModeProvider).supportsRootDns &&
+      ref.read(rootDnsTakeoverProvider) &&
+      !_rootUnavailable;
 
   VpnController get _controller => _isRoot
       ? ref.read(rootDnsControllerProvider)
@@ -57,7 +61,9 @@ class PowerNotifier extends Notifier<PowerState> {
 
   Future<void> syncStatus() async {
     final mode = ref.read(workModeProvider);
-    final root = mode.hasTunnelFeatures && ref.read(rootDnsTakeoverProvider);
+    final root = mode.supportsRootDns &&
+        ref.read(rootDnsTakeoverProvider) &&
+        !_rootUnavailable;
     final express = mode == AppWorkMode.express && !root;
     final controller = root
         ? ref.read(rootDnsControllerProvider)
@@ -194,7 +200,9 @@ class PowerNotifier extends Notifier<PowerState> {
       state = PowerState.stopped;
       return;
     }
-    final root = mode.hasTunnelFeatures && ref.read(rootDnsTakeoverProvider);
+    final root = mode.supportsRootDns &&
+        ref.read(rootDnsTakeoverProvider) &&
+        !_rootUnavailable;
     final express = mode == AppWorkMode.express;
     final settings = ref.read(legacySettingsProvider);
 
@@ -216,6 +224,21 @@ class PowerNotifier extends Notifier<PowerState> {
       );
       if (_disposed) return;
       if (!result.started) {
+        // 简洁模式要求「有 Root 用 Root，没 Root 自动退化」：Root 接管失败时
+        // 本次运行改用仅 DNS 的 VPN，不把用户卡在错误状态。
+        if (express) {
+          _rootUnavailable = true;
+          settings.setRootDnsRunning(false);
+          final prepared = await ref.read(expressVpnControllerProvider).prepare();
+          if (_disposed) return;
+          if (!prepared) {
+            _pendingPermissionStart = true;
+            _armGuard(_consentTimeout);
+            return;
+          }
+          await _launch(mode);
+          return;
+        }
         _fail(result.error ?? currentL10n.workModeVpnStartFailed);
         return;
       }
@@ -225,24 +248,12 @@ class PowerNotifier extends Notifier<PowerState> {
       Timer(const Duration(milliseconds: 700), syncStatus);
       return;
     }
-    final proxy = await ref.read(outboundProxyStoreProvider).read();
+    // 简洁模式只接管 DNS：不携带分流、代理、检查与应用管控参数。
+    final request = express
+        ? VpnStartRequest(dnsConfig: config.encode(settings))
+        : await _fullTunnelRequest(settings, config);
     if (_disposed) return;
-    final proxyUsable = proxy.enabled && proxy.validationError() == null;
-    final result = await controller.start(
-      VpnStartRequest(
-        dnsConfig: config.encode(settings),
-        outboundProxy: proxyUsable ? proxy.toEngineJson() : '',
-        proxyAppPackage: proxyUsable ? proxy.proxyAppPackage : '',
-        bypassLan: settings.bypassLanEnabled,
-        ipv6Mode: settings.ipv6Mode.storageValue,
-        routeAddress: settings.vpnRouteAddress,
-        routeExcludeAddress: settings.vpnRouteExcludeAddress,
-        excludedPackages: settings.excludedPackages.toList(),
-        blockedPackages: settings.blockedAppPackages.toList(),
-        inspectionPackages: settings.httpInspectionPackages.toList(),
-        inspectionEnabled: settings.httpsInspectionOperational,
-      ),
-    );
+    final result = await controller.start(request);
     if (_disposed) return;
     if (!result.started) {
       _fail(result.error ?? currentL10n.workModeVpnStartFailed);
@@ -258,6 +269,27 @@ class PowerNotifier extends Notifier<PowerState> {
     _guardTimer?.cancel();
     _ensureStatsPolling();
     Timer(const Duration(milliseconds: 700), syncStatus);
+  }
+
+  Future<VpnStartRequest> _fullTunnelRequest(
+    LegacySettings settings,
+    DnsConfig config,
+  ) async {
+    final proxy = await ref.read(outboundProxyStoreProvider).read();
+    final proxyUsable = proxy.enabled && proxy.validationError() == null;
+    return VpnStartRequest(
+      dnsConfig: config.encode(settings),
+      outboundProxy: proxyUsable ? proxy.toEngineJson() : '',
+      proxyAppPackage: proxyUsable ? proxy.proxyAppPackage : '',
+      bypassLan: settings.bypassLanEnabled,
+      ipv6Mode: settings.ipv6Mode.storageValue,
+      routeAddress: settings.vpnRouteAddress,
+      routeExcludeAddress: settings.vpnRouteExcludeAddress,
+      excludedPackages: settings.excludedPackages.toList(),
+      blockedPackages: settings.blockedAppPackages.toList(),
+      inspectionPackages: settings.httpInspectionPackages.toList(),
+      inspectionEnabled: settings.httpsInspectionOperational,
+    );
   }
 
   void _ensureStatsPolling() {
@@ -281,6 +313,7 @@ class PowerNotifier extends Notifier<PowerState> {
   Future<void> stop() async {
     final express = _isExpress;
     final root = _isRoot;
+    _rootUnavailable = false;
     _restoreOnLaunch = false;
     _cancelStatsPolling();
     _pendingPermissionStart = false;
@@ -306,6 +339,7 @@ class PowerNotifier extends Notifier<PowerState> {
 
   void _fail(Object error) {
     _pendingPermissionStart = false;
+    _rootUnavailable = false;
     _guardTimer?.cancel();
     lastError = error is String ? error : _messageOf(error);
     final settings = ref.read(legacySettingsProvider);
@@ -340,7 +374,10 @@ class PowerNotifier extends Notifier<PowerState> {
     }
   }
 
-  void reset() => state = PowerState.stopped;
+  void reset() {
+    _rootUnavailable = false;
+    state = PowerState.stopped;
+  }
 }
 
 final powerProvider = NotifierProvider<PowerNotifier, PowerState>(

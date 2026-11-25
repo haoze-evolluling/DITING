@@ -40,6 +40,7 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>
     excluded: JString<'local>,
     self_package: JString<'local>,
     proxy_package: JString<'local>,
+    dns_only: jboolean,
 ) -> JObject<'local> {
     resolve(&mut env, |env| {
         let (
@@ -64,6 +65,7 @@ pub extern "system" fn Java_com_haoze_diting_vpn_VpnPlanNative_routePlan<'local>
             &split_list(&route_exclude_address),
             bypass_private,
             clat,
+            dns_only,
             &split_list(&excluded),
             &self_package,
             &proxy_package,
@@ -89,7 +91,7 @@ mod tests {
 
     #[test]
     fn route_plan_returns_the_planner_output() {
-        let plan = route_plan(false, &[], &[], false, false, &[], "a", "b");
+        let plan = route_plan(false, &[], &[], false, false, false, &[], "a", "b");
         assert_eq!(plan["enableIpv6"], false);
     }
 

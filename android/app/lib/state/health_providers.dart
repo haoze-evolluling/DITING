@@ -24,7 +24,7 @@ final healthReportProvider = FutureProvider<HealthReport>((ref) async {
       );
 
   final rootTakeover =
-      ref.watch(workModeProvider).hasTunnelFeatures &&
+      ref.watch(workModeProvider).supportsRootDns &&
       ref.watch(rootDnsTakeoverProvider);
   final critical = rootTakeover
       ? const [AppPermission.notification]

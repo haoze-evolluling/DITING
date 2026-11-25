@@ -496,7 +496,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agreementMessage =>
-      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, simple and server. Normal and simple both take over all traffic through a full tunnel, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and simple modes take over traffic through the Android local VPN interface and never connect to a remote VPN server. The two modes are functionally identical and each keeps its own rules, cache and logs; simple mode\'s feature hub shows fewer categories by default and they can be restored at any time. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
+      'About the app\nDITING is an open-source tool focused on local DNS resolution optimisation and network rule filtering. It offers three work modes: normal, simple and server. Normal mode takes over all traffic through a full tunnel, simple mode takes over DNS queries only and lets other traffic go direct, while server mode serves DNS to the LAN. Everything runs locally on the device: no remote data upload and no privacy tracking.\n\nHow it works\nNormal and simple modes use the Android local VPN interface (simple mode can also use root takeover) and never connect to a remote VPN server. Each mode keeps its own rules, cache and logs; simple mode offers DNS filtering only and shows fewer categories in its feature hub by default, which can be restored at any time. Rules and logs stay on the device. Please understand the impact before enabling advanced extensions.\n\nDisclaimer\nThis software is provided as is. Users must comply with applicable laws and verify the legality and safety of the rules and upstream resolvers they configure. Any illegal use is strictly forbidden, and users bear all consequences of their own configuration or use of this software.';
 
   @override
   String get homeProviderSingleLabel => 'Resolver';
@@ -1466,7 +1466,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get workModeNormalSummary =>
-      'Takes over all traffic in a full tunnel, with rules, HTTPS inspection and traffic stats; functionally identical to simple mode';
+      'Takes over all traffic in a full tunnel, with rules, HTTPS inspection, per-app control and traffic stats';
 
   @override
   String get workModeServerTitle => 'Server mode';
@@ -1486,7 +1486,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get workModeExpressSummary =>
-      'Exactly the same features as normal mode; only its data is separate and its feature hub starts out leaner';
+      'Filters DNS queries only and lets other traffic go direct; rules and logs are separate, and the feature hub starts out leaner';
 
   @override
   String get workModeSettingTitle => 'Work mode';
@@ -2833,7 +2833,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get rootTakeoverSubtitle =>
-      'Redirect device DNS through root without VPN permission';
+      'Redirect device DNS through root without VPN; simple mode falls back to a DNS-only VPN when root is unavailable';
 
   @override
   String get rootTakeoverTunnelModesOnly =>
@@ -2841,7 +2841,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get rootTakeoverFooter =>
-      'When on, the current work mode uses root to redirect device port-53 queries to the local DNS engine, reading that mode\'s own rules, logs and preferences. App routing, HTTPS inspection and the outbound proxy need the VPN tunnel and are unavailable in this mode.';
+      'When on, the current work mode uses root to redirect device port-53 queries to the local DNS engine, reading that mode\'s own rules, logs and preferences. If root is unavailable, simple mode automatically falls back to a DNS-only VPN; normal mode still reports a failure because it needs the full tunnel.';
 
   @override
   String get rootTakeoverProbeTitle => 'Check root permission';
@@ -4988,7 +4988,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get modeSharedNote =>
-      'Both modes are functionally identical, with only two differences: their data is separate (each keeps its own rules, cache and logs), and the feature hub in simple mode shows fewer categories by default — restore them any time under Hidden features.';
+      'Normal mode takes over all traffic in a full tunnel; simple mode filters DNS only and lets other traffic go direct. Their data is separate — each keeps its own rules, cache and logs. Simple mode\'s feature hub shows fewer categories by default — restore them any time under Hidden features.';
 
   @override
   String get modeNormalFeature1 => 'Full tunnel';
@@ -5019,11 +5019,11 @@ class AppL10nEn extends AppL10n {
       'Records upload, download and query counts per app';
 
   @override
-  String get modeExpressFeature1 => 'Same features as normal mode';
+  String get modeExpressFeature1 => 'DNS-only filtering';
 
   @override
   String get modeExpressFeature1Body =>
-      'Full tunnel, rules, HTTPS inspection and traffic stats are all identical';
+      'Handles DNS queries only and lets all other traffic go direct';
 
   @override
   String get modeExpressFeature2 => 'Separate data';
@@ -5033,18 +5033,18 @@ class AppL10nEn extends AppL10n {
       'Rules, cache, logs and preferences are stored separately from normal mode';
 
   @override
-  String get modeExpressFeature3 => 'Leaner feature hub by default';
+  String get modeExpressFeature3 => 'Leaner feature hub';
 
   @override
   String get modeExpressFeature3Body =>
-      'Network, Advanced & diagnostics and Data & maintenance start hidden';
+      'Tunnel-only entries such as traffic, connections, HTTPS inspection and the outbound proxy are removed';
 
   @override
-  String get modeExpressFeature4 => 'Restore any time';
+  String get modeExpressFeature4 => 'Even better with root';
 
   @override
   String get modeExpressFeature4Body =>
-      'Bring every card back from Feature hub → Hidden features';
+      'On rooted devices, root takeover needs no VPN at all';
 
   @override
   String get onboardingTitle => 'Setup';
@@ -5123,7 +5123,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get permVpnExpressBody =>
-      'Creates the local tunnel that handles traffic; denying it prevents startup';
+      'Creates a local channel that handles DNS only; denying it prevents startup';
 
   @override
   String get permNeeded => 'These permissions are needed';
@@ -5151,7 +5151,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get onboardingTipExpress1 =>
-      'Simple mode has exactly the same features as normal mode; only its data is separate and its feature hub starts out leaner.';
+      'Simple mode filters DNS queries only and lets other traffic connect directly; rules and logs are stored separately.';
 
   @override
   String get onboardingTipExpress2 => 'Racing needs at least two providers.';

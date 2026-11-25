@@ -53,18 +53,18 @@ void main() {
     expect(find.text('引导'), findsOneWidget);
   });
 
-  test('两种模式的介绍只强调数据独立与功能中心默认精简', () {
+  test('两种模式的介绍说清数据面差异、数据独立与功能中心精简', () {
     final l10n = lookupAppL10n(const Locale('zh'));
 
-    // 两个摘要都说清「功能一致」，避免读成两套不同能力。
-    expect(l10n.workModeNormalSummary, contains('功能与简洁模式完全一致'));
-    expect(l10n.workModeExpressSummary, contains('功能与普通模式完全相同'));
+    // 普通模式全隧道，简洁模式只过滤 DNS。
+    expect(l10n.workModeNormalSummary, contains('全隧道'));
+    expect(l10n.workModeExpressSummary, contains('只过滤 DNS'));
+    expect(l10n.workModeExpressSummary, contains('直连'));
 
-    // 选择模式页只列这两处真实差异。
-    expect(l10n.modeSharedNote, contains('数据互不相通'));
+    expect(l10n.modeSharedNote, contains('数据'));
+    expect(l10n.modeSharedNote, contains('互不相通'));
     expect(l10n.modeSharedNote, contains('功能中心默认少显示'));
 
-    // 简洁模式的四张卡片不再与普通模式重复罗列同一套功能。
     expect(
       [
         l10n.modeExpressFeature1,
@@ -73,15 +73,15 @@ void main() {
         l10n.modeExpressFeature4,
       ],
       [
-        '功能与普通模式完全一致',
+        '纯 DNS 过滤',
         '独立数据存储',
         '默认更精简的功能中心',
-        '随时可恢复',
+        '有 Root 更彻底',
       ],
     );
 
-    expect(l10n.onboardingTipExpress1, contains('功能完全一致'));
-    // 悬浮日志窗由两种模式共用的全隧道服务提供，旧文案的模式限制已移除。
+    expect(l10n.onboardingTipExpress1, contains('只过滤 DNS'));
+    // 悬浮日志窗由两种模式共用的服务提供，旧文案的模式限制已移除。
     expect(l10n.logRetentionOverlayNote, isNot(contains('模式')));
   });
 }

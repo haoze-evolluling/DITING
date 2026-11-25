@@ -86,7 +86,7 @@ class _PermissionStep extends ConsumerWidget {
     final l10n = context.l10n;
     final mode = ref.watch(workModeProvider);
     final rootTakeover =
-        mode.hasTunnelFeatures && ref.watch(rootDnsTakeoverProvider);
+        mode.supportsRootDns && ref.watch(rootDnsTakeoverProvider);
     final permissions = switch (mode) {
       AppWorkMode.normal => [
         if (!rootTakeover) _vpnPermission(l10n, l10n.permVpnNormalBody),

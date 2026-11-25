@@ -29,13 +29,16 @@ void main() {
     );
   });
 
-  test('简洁模式与普通模式显示同一套卡片', () {
+  test('简洁模式隐藏网速卡片，其余与普通模式一致', () {
     final normal = container().read(visibleDashboardWidgetsProvider);
     final instance = container(mode: AppWorkMode.express);
     expect(instance.read(dashboardWidgetsProvider), defaultDashboardWidgets);
     final express = instance.read(visibleDashboardWidgetsProvider);
-    expect(express, normal);
-    expect(express, contains(DashboardWidget.networkSpeed));
+    expect(express, isNot(contains(DashboardWidget.networkSpeed)));
+    expect(express, [
+      for (final widget in normal)
+        if (widget != DashboardWidget.networkSpeed) widget,
+    ]);
   });
 
   test('简洁模式下重排卡片', () {
@@ -47,7 +50,8 @@ void main() {
     notifier.moveVisible(visible, visible.length - 1, 0);
 
     final next = instance.read(dashboardWidgetsProvider);
-    expect(next, hasLength(visible.length));
+    expect(next, hasLength(defaultDashboardWidgets.length));
+    expect(next, contains(DashboardWidget.networkSpeed));
     expect(next.first, last);
     expect(instance.read(visibleDashboardWidgetsProvider).first, last);
   });
