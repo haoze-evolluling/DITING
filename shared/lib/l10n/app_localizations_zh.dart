@@ -3098,6 +3098,74 @@ class AppL10nZh extends AppL10n {
   String get subsSourceRemoteDownload => '从网络地址下载规则正文';
 
   @override
+  String get subsMethodRemote => '网络订阅';
+
+  @override
+  String get subsMethodLocal => '本地文件';
+
+  @override
+  String get subsMethodOtherMode => '其他模式';
+
+  @override
+  String get subsSourceOtherModePick => '从另一个模式已导入的订阅复制一份';
+
+  @override
+  String subsOtherModeFromMode(String mode) {
+    return '从「$mode」导入';
+  }
+
+  @override
+  String subsOtherModeExplain(String mode) {
+    return '普通模式与简洁模式各自保存订阅。这里列出「$mode」已有的订阅，导入后会重新下载规则正文并写入当前模式的规则库。';
+  }
+
+  @override
+  String subsOtherModeReady(int count) {
+    return '可导入 $count 条订阅';
+  }
+
+  @override
+  String subsOtherModeSelected(int count) {
+    return '已选择 $count 条';
+  }
+
+  @override
+  String get subsOtherModeSelectAll => '全选';
+
+  @override
+  String get subsOtherModeClearAll => '取消全选';
+
+  @override
+  String get subsOtherModeList => '订阅列表';
+
+  @override
+  String get subsOtherModeAlready => '已存在';
+
+  @override
+  String get subsOtherModeAllImported => '所有订阅都已导入当前模式';
+
+  @override
+  String subsOtherModeEmptyTitle(String mode) {
+    return '「$mode」还没有订阅';
+  }
+
+  @override
+  String subsOtherModeEmptyBody(String mode) {
+    return '请先在「$mode」中添加订阅，再回来这里导入。';
+  }
+
+  @override
+  String get subsOtherModeLoadFailed => '读取其他模式的订阅失败';
+
+  @override
+  String get subsOtherModeNoneSelected => '请先勾选要导入的订阅';
+
+  @override
+  String subsOtherModeImported(int count) {
+    return '已导入 $count 条订阅，正在更新规则';
+  }
+
+  @override
   String get subsLocalRuleFile => '本地规则文件';
 
   @override

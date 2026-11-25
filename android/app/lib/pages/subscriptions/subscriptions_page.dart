@@ -1,7 +1,6 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_android/data/db/mirror_template_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
-import 'package:diting_android/data/subscriptions/subscription_url.dart';
+import 'package:diting_android/pages/subscriptions/subscription_common.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/deep_link_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
@@ -9,7 +8,6 @@ import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/empty_state.dart';
-import 'package:diting_android/widgets/notice.dart';
 import 'package:diting_android/widgets/section_slivers.dart';
 import 'package:diting_shared/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,42 +16,6 @@ import 'package:material_ui/material_ui.dart';
 
 part 'subscriptions_cards.dart';
 part 'subscriptions_groups_sheet.dart';
-part 'subscriptions_sheet.dart';
-part 'subscriptions_sheet_widgets.dart';
-
-Future<bool> _confirmLargeSubscription(
-  BuildContext? context,
-  int byteLength,
-) async {
-  final ctx = context ?? rootNavigatorKey.currentState?.overlay?.context;
-  if (ctx == null || !ctx.mounted) {
-    return false;
-  }
-  final l10n = ctx.l10n;
-  const megabyte = 1024 * 1024;
-  final confirmed = await showFloatingDialog<bool>(
-    context: ctx,
-    child: CommonDialog(
-      title: l10n.subsLargeConfirmTitle,
-      actions: [
-        TextButton(
-          onPressed: () => popFloatingDialog(ctx, false),
-          child: Text(l10n.commonCancel),
-        ),
-        TextButton(
-          onPressed: () => popFloatingDialog(ctx, true),
-          child: Text(l10n.subsLargeConfirmAction),
-        ),
-      ],
-      child: Text(
-        l10n.subsLargeConfirmMessage(
-          (byteLength / megabyte).toStringAsFixed(1),
-        ),
-      ),
-    ),
-  );
-  return confirmed ?? false;
-}
 
 Future<bool> _confirm(
   BuildContext context, {
@@ -83,23 +45,6 @@ Future<bool> _confirm(
   return confirmed ?? false;
 }
 
-Future<String?> _askGroupName(
-  BuildContext context, {
-  required String title,
-  String value = '',
-}) {
-  return showFloatingDialog<String>(
-    context: context,
-    child: InputDialog(
-      title: title,
-      value: value,
-      validator: (value) => (value ?? '').trim().isEmpty
-          ? context.l10n.subsGroupNameRequired
-          : null,
-    ),
-  );
-}
-
 class SubscriptionsPage extends ConsumerStatefulWidget {
   const SubscriptionsPage({super.key});
 
@@ -120,10 +65,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
   Future<void> _openPendingImport(String url) async {
     if (!mounted) return;
     ref.read(pendingSubscriptionImportProvider.notifier).clear();
-    await showSheet<void>(
-      context: context,
-      builder: (_) => _AddSubscriptionSheet(prefillUrl: url),
-    );
+    await context.push(SubscriptionFormPaths.addPrefilled(url));
   }
 
   Future<void> _updateAll() async {
@@ -145,7 +87,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
         .updateAll(
           targets,
           confirmLarge: (_, byteLength) =>
-              _confirmLargeSubscription(context, byteLength),
+              confirmLargeSubscription(context, byteLength),
         );
     if (!mounted) {
       return;
@@ -224,10 +166,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
         IconButtonData(
           glyph: TablerIcons.plus,
           tooltip: context.l10n.subsAdd,
-          onPressed: () => showSheet<void>(
-            context: context,
-            builder: (_) => const _AddSubscriptionSheet(),
-          ),
+          onPressed: () => context.push(SubscriptionFormPaths.add),
         ),
         IconButtonData(
           glyph: TablerIcons.clock,
@@ -347,10 +286,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                   description: context.l10n.subsEmptyDescription,
                   illustration: NullStatusIllustration.rules,
                   action: FilledButton(
-                    onPressed: () => showSheet<void>(
-                      context: context,
-                      builder: (_) => const _AddSubscriptionSheet(),
-                    ),
+                    onPressed: () => context.push(SubscriptionFormPaths.add),
                     child: Text(context.l10n.subsAdd),
                   ),
                 ),
@@ -381,14 +317,12 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
                           .updateOne(
                             entry.id,
                             confirmLarge: (_, byteLength) =>
-                                _confirmLargeSubscription(context, byteLength),
+                                confirmLargeSubscription(context, byteLength),
                           ),
                       onDelete: () => _delete(entry),
                       onEdit: () => _rename(entry),
-                      onConfigure: () => showSheet<void>(
-                        context: context,
-                        builder: (_) => _AddSubscriptionSheet(initial: entry),
-                      ),
+                      onConfigure: () =>
+                          context.push(SubscriptionFormPaths.editOf(entry.id)),
                     ),
                   );
                 },
@@ -431,7 +365,7 @@ class _SubscriptionsPageState extends ConsumerState<SubscriptionsPage> {
   }
 
   Future<void> _createGroup() async {
-    final name = await _askGroupName(
+    final name = await askSubscriptionGroupName(
       context,
       title: context.l10n.subsNewGroupTitle,
     );

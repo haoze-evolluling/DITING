@@ -4,7 +4,7 @@ class _GroupManageSheet extends ConsumerWidget {
   const _GroupManageSheet();
 
   Future<void> _create(BuildContext context, WidgetRef ref) async {
-    final name = await _askGroupName(
+    final name = await askSubscriptionGroupName(
       context,
       title: context.l10n.subsNewGroupTitle,
     );
@@ -19,7 +19,7 @@ class _GroupManageSheet extends ConsumerWidget {
     WidgetRef ref,
     SubscriptionGroupRecord group,
   ) async {
-    final name = await _askGroupName(
+    final name = await askSubscriptionGroupName(
       context,
       title: context.l10n.subsGroupRenameTitle,
       value: group.name,

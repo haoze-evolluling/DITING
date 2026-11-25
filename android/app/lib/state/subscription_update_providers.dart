@@ -119,6 +119,28 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
   }
 
+  /// 按 id 批量更新，供从其他模式导入后拉取规则正文使用。
+  Future<void> updateIds(
+    Iterable<int> ids, {
+    LargeSubscriptionConfirmer? confirmLarge,
+  }) async {
+    // 导入发生在页面退出之后，若此时正在批量更新，等当前批次结束再接手。
+    while (state.isBusy) {
+      if (!ref.mounted) {
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
+    final entries = <SubscriptionEntry>[];
+    for (final id in ids) {
+      final entry = await _loadEntry(id);
+      if (entry != null) {
+        entries.add(entry);
+      }
+    }
+    await updateAll(entries, confirmLarge: confirmLarge);
+  }
+
   void _invalidateEntries() {
     if (!ref.mounted) {
       return;

@@ -1,4 +1,45 @@
-part of 'subscriptions_page.dart';
+part of 'subscription_edit_page.dart';
+
+String _modeLabel(DataSet dataSet, AppL10n l10n) => switch (dataSet) {
+  DataSet.normal => l10n.workModeNormalTitle,
+  DataSet.express => l10n.workModeExpressTitle,
+};
+
+class _MethodPicker extends StatelessWidget {
+  const _MethodPicker({required this.value, required this.onChanged});
+
+  final SubscriptionAddMethod value;
+  final ValueChanged<SubscriptionAddMethod> onChanged;
+
+  String _hint(AppL10n l10n) => switch (value) {
+    SubscriptionAddMethod.remote => l10n.subsSourceRemoteDownload,
+    SubscriptionAddMethod.local => l10n.subsSourceLocalPick,
+    SubscriptionAddMethod.otherMode => l10n.subsSourceOtherModePick,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 8,
+      children: [
+        SegmentedControl<SubscriptionAddMethod>(
+          segments: [
+            (SubscriptionAddMethod.remote, context.l10n.subsMethodRemote),
+            (SubscriptionAddMethod.local, context.l10n.subsMethodLocal),
+            (SubscriptionAddMethod.otherMode, context.l10n.subsMethodOtherMode),
+          ],
+          value: value,
+          onChanged: onChanged,
+        ),
+        Text(
+          _hint(context.l10n),
+          style: AppTextRole.supportingText.of(context),
+        ),
+      ],
+    );
+  }
+}
 
 class _SheetCard extends StatelessWidget {
   const _SheetCard({required this.title, required this.children, this.footer});

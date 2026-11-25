@@ -1954,6 +1954,42 @@ abstract class AppL10n {
 
   String get subsSourceRemoteDownload;
 
+  String get subsMethodRemote;
+
+  String get subsMethodLocal;
+
+  String get subsMethodOtherMode;
+
+  String get subsSourceOtherModePick;
+
+  String subsOtherModeFromMode(String mode);
+
+  String subsOtherModeExplain(String mode);
+
+  String subsOtherModeReady(int count);
+
+  String subsOtherModeSelected(int count);
+
+  String get subsOtherModeSelectAll;
+
+  String get subsOtherModeClearAll;
+
+  String get subsOtherModeList;
+
+  String get subsOtherModeAlready;
+
+  String get subsOtherModeAllImported;
+
+  String subsOtherModeEmptyTitle(String mode);
+
+  String subsOtherModeEmptyBody(String mode);
+
+  String get subsOtherModeLoadFailed;
+
+  String get subsOtherModeNoneSelected;
+
+  String subsOtherModeImported(int count);
+
   String get subsLocalRuleFile;
 
   String get subsLocalFileSubscription;

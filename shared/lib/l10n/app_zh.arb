@@ -1701,6 +1701,73 @@
   "subsSourceType": "订阅方式",
   "subsSourceLocalPick": "从存储中选择一个 .txt 文件",
   "subsSourceRemoteDownload": "从网络地址下载规则正文",
+  "subsMethodRemote": "网络订阅",
+  "subsMethodLocal": "本地文件",
+  "subsMethodOtherMode": "其他模式",
+  "subsSourceOtherModePick": "从另一个模式已导入的订阅复制一份",
+  "subsOtherModeFromMode": "从「{mode}」导入",
+  "@subsOtherModeFromMode": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "subsOtherModeExplain": "普通模式与简洁模式各自保存订阅。这里列出「{mode}」已有的订阅，导入后会重新下载规则正文并写入当前模式的规则库。",
+  "@subsOtherModeExplain": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "subsOtherModeReady": "可导入 {count} 条订阅",
+  "@subsOtherModeReady": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subsOtherModeSelected": "已选择 {count} 条",
+  "@subsOtherModeSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subsOtherModeSelectAll": "全选",
+  "subsOtherModeClearAll": "取消全选",
+  "subsOtherModeList": "订阅列表",
+  "subsOtherModeAlready": "已存在",
+  "subsOtherModeAllImported": "所有订阅都已导入当前模式",
+  "subsOtherModeEmptyTitle": "「{mode}」还没有订阅",
+  "@subsOtherModeEmptyTitle": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "subsOtherModeEmptyBody": "请先在「{mode}」中添加订阅，再回来这里导入。",
+  "@subsOtherModeEmptyBody": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "subsOtherModeLoadFailed": "读取其他模式的订阅失败",
+  "subsOtherModeNoneSelected": "请先勾选要导入的订阅",
+  "subsOtherModeImported": "已导入 {count} 条订阅，正在更新规则",
+  "@subsOtherModeImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "subsLocalRuleFile": "本地规则文件",
   "subsLocalFileSubscription": "本地文件订阅",
   "subsPickFile": "选择规则文件",

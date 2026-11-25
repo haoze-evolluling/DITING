@@ -3271,6 +3271,77 @@ class AppL10nEn extends AppL10n {
   String get subsSourceRemoteDownload => 'Download the rule body from a URL';
 
   @override
+  String get subsMethodRemote => 'Remote';
+
+  @override
+  String get subsMethodLocal => 'Local file';
+
+  @override
+  String get subsMethodOtherMode => 'Other mode';
+
+  @override
+  String get subsSourceOtherModePick =>
+      'Copy subscriptions already added in another mode';
+
+  @override
+  String subsOtherModeFromMode(String mode) {
+    return 'Import from $mode';
+  }
+
+  @override
+  String subsOtherModeExplain(String mode) {
+    return 'Normal and Simple modes keep separate subscriptions. This lists the subscriptions already added in $mode; importing them downloads the rule body again into the current mode\'s rule database.';
+  }
+
+  @override
+  String subsOtherModeReady(int count) {
+    return '$count available';
+  }
+
+  @override
+  String subsOtherModeSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get subsOtherModeSelectAll => 'Select all';
+
+  @override
+  String get subsOtherModeClearAll => 'Clear all';
+
+  @override
+  String get subsOtherModeList => 'Subscriptions';
+
+  @override
+  String get subsOtherModeAlready => 'Added';
+
+  @override
+  String get subsOtherModeAllImported =>
+      'All subscriptions are already in this mode';
+
+  @override
+  String subsOtherModeEmptyTitle(String mode) {
+    return 'No subscriptions in $mode yet';
+  }
+
+  @override
+  String subsOtherModeEmptyBody(String mode) {
+    return 'Add subscriptions in $mode first, then come back to import them.';
+  }
+
+  @override
+  String get subsOtherModeLoadFailed =>
+      'Could not read subscriptions from the other mode';
+
+  @override
+  String get subsOtherModeNoneSelected => 'Select at least one subscription';
+
+  @override
+  String subsOtherModeImported(int count) {
+    return 'Imported $count subscriptions; updating rules';
+  }
+
+  @override
   String get subsLocalRuleFile => 'Local rule file';
 
   @override

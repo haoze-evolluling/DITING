@@ -5,6 +5,8 @@ import 'package:diting_shared/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_shared/data/db/app_database.dart';
+import 'package:diting_shared/data/db/datasets.dart';
+import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_shared/data/native/platform_bridge.dart';
 import 'package:diting_android/data/db/mirror_template_repository.dart';
@@ -24,6 +26,7 @@ import 'package:sqflite/sqflite.dart';
 
 part 'subscription_edit_actions.dart';
 part 'subscription_mirror_providers.dart';
+part 'subscription_mode_import.dart';
 part 'subscription_update_providers.dart';
 
 final subscriptionDatabaseFileProvider = Provider<String>(
