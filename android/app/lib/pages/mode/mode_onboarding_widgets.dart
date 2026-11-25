@@ -130,6 +130,17 @@ class _PermissionRow extends ConsumerWidget {
     if (snapshot.of(permission) == true) {
       return;
     }
+    // 电池优化与 VPN 的请求页本身就是系统页面，用户按返回即回到应用；
+    // 若此时再自动打开系统设置，会出现“需要连按两次返回”的体验问题。
+    if (permission == AppPermission.batteryOptimization ||
+        permission == AppPermission.vpn) {
+      showAppSnack(
+        context,
+        context.l10n.permStillDenied(name),
+        duration: const Duration(milliseconds: 2600),
+      );
+      return;
+    }
     final opened = await notifier.openSystemSettings(permission);
     if (!context.mounted || !opened) {
       return;
