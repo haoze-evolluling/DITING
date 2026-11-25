@@ -1543,13 +1543,13 @@ class AppL10nEn extends AppL10n {
       'Applies to both the VPN interface and DNS; Auto enables IPv6 only when the network supports it';
 
   @override
-  @override
   String get ipv6ModeSectionTitle => 'IPv6 mode';
 
   @override
   String get ipv6ModeFooter =>
       'Auto enables IPv6 only when the physical network supports it; Prefer IPv6 also suppresses A answers for names that have AAAA records.';
 
+  @override
   String get ipv6ModeIpv4 => 'IPv4 only';
 
   @override
@@ -9560,6 +9560,21 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get automationSettingsSection => 'Scenario settings';
+
+  @override
+  String get automationExternalTitle => 'Allow external automation';
+
+  @override
+  String get automationExternalBody =>
+      'Allow adb, Tasker and other apps to send control broadcasts. When off, external apps cannot control the app; internal schedule and network rules still run.';
+
+  @override
+  String get automationRunNow => 'Run now';
+
+  @override
+  String automationRunResult(int count) {
+    return 'Applied $count rules';
+  }
 
   @override
   String get automationRulesSection => 'Rules';

@@ -13,6 +13,7 @@ import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_shared/data/fonts/font_repository.dart';
 import 'package:diting_android/data/native/app_version.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
+import 'package:diting_android/data/native/automation_bridge.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/data_plane_status.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
@@ -57,10 +58,7 @@ Future<void> main() async {
   _stage('prefs');
   final settings = LegacySettings(store);
   unawaited(
-    reconcileLauncherIcon(
-      LauncherIconBridge(),
-      settings.launcherIconStyleRaw,
-    ),
+    reconcileLauncherIcon(LauncherIconBridge(), settings.launcherIconStyleRaw),
   );
   final version = await versionTask;
   _stage('version');
@@ -85,10 +83,7 @@ Future<void> main() async {
   _stage('storage-check');
   if (!ready) {
     runApp(
-      StorageV2GateApp(
-        store: store,
-        onReady: () => _startApp(store, version),
-      ),
+      StorageV2GateApp(store: store, onReady: () => _startApp(store, version)),
     );
     return;
   }
@@ -104,6 +99,8 @@ Future<void> _startApp(LegacyPrefsStore store, AppVersion version) async {
     versionCode: version.code,
   );
   _stage('rules');
+  // 存储就绪后再按数据库规则重排一次定时，覆盖 Application 启动时迁移尚未完成的情况。
+  unawaited(AutomationBridge().reschedule());
   await FontRepository(settings: settings).registerAll();
   _stage('fonts');
   final container = ProviderContainer(
@@ -143,10 +140,7 @@ Future<void> _cleanupOldStorage(LegacyPrefsStore store) async {
     final running = await anyDataPlaneRunning();
     if (running) return;
     if (LegacySettings(store).storageV2State == StorageContract.stateVerified) {
-      final result = await cleanupStorageV2(
-        store,
-        dataPlaneRunning: false,
-      );
+      final result = await cleanupStorageV2(store, dataPlaneRunning: false);
       if (!result.ready) return;
       RuntimeEvents.report('db', 'storage.v2.cleaned');
     }

@@ -1,11 +1,14 @@
 package com.haoze.diting
 
+import android.content.Context
 import com.haoze.diting.net.EngineAccess
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-class FlowViewBridge(messenger: BinaryMessenger) : MethodChannel.MethodCallHandler {
+class FlowViewBridge(context: Context, messenger: BinaryMessenger) :
+    MethodChannel.MethodCallHandler {
+    private val appContext: Context = context.applicationContext
     private val channel = MethodChannel(messenger, CHANNEL)
 
     init {
@@ -17,7 +20,9 @@ class FlowViewBridge(messenger: BinaryMessenger) : MethodChannel.MethodCallHandl
             "snapshot" -> {
                 val since = (call.argument<Any>("sinceSeq") as? Number)?.toLong() ?: 0L
                 val limit = (call.argument<Any>("limit") as? Number)?.toLong() ?: 0L
-                result.success(EngineAccess.current()?.flowSnapshot(since, limit) ?: EMPTY)
+                result.success(
+                    EngineAccess.current(appContext)?.flowSnapshot(since, limit) ?: EMPTY
+                )
             }
             else -> result.notImplemented()
         }

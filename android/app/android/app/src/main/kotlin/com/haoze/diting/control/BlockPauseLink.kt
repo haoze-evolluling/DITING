@@ -12,7 +12,7 @@ internal object BlockPauseLink {
         context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
 
     fun apply(context: Context) {
-        val engine = EngineAccess.current() ?: return
+        val engine = EngineAccess.current(context) ?: return
         applyTo(context, engine)
     }
 

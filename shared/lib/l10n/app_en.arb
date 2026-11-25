@@ -2808,6 +2808,17 @@
   },
   "automationOverviewHint": "Scenarios run automatically on their triggers.",
   "automationSettingsSection": "Scenario settings",
+  "automationExternalTitle": "Allow external automation",
+  "automationExternalBody": "Allow adb, Tasker and other apps to send control broadcasts. When off, external apps cannot control the app; internal schedule and network rules still run.",
+  "automationRunNow": "Run now",
+  "automationRunResult": "Applied {count} rules",
+  "@automationRunResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "automationRulesSection": "Rules",
   "automationHistory": "Audit timeline",
   "automationHistoryEmpty": "No automation events yet.",

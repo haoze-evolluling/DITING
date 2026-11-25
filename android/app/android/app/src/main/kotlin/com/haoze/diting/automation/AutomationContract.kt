@@ -1,10 +1,9 @@
 package com.haoze.diting.automation
 
+import android.content.Context
+import android.content.SharedPreferences
+
 object AutomationContract {
-    const val PERMISSION_CONTROL: String = "com.haoze.diting.permission.CONTROL"
-
-    const val PERMISSION_RECEIVE_EVENTS: String = "com.haoze.diting.permission.RECEIVE_EVENTS"
-
     const val ACTION_START: String = "com.haoze.diting.automation.START"
     const val ACTION_STOP: String = "com.haoze.diting.automation.STOP"
     const val ACTION_TOGGLE: String = "com.haoze.diting.automation.TOGGLE"
@@ -35,11 +34,17 @@ object AutomationContract {
     const val KEY_NEXT_DUE_AT_MS: String = "next_due_at_ms"
     const val KEY_LAST_TICK_AT_MS: String = "last_tick_at_ms"
 
-    const val KEY_ACTIVE_PROFILE: String = "active_profile_id"
-    const val KEY_ACTIVE_UPSTREAM: String = "active_upstream"
-    const val KEY_ACTIVE_RULE_GROUP: String = "active_rule_group"
-    const val KEY_BLOCKED_SERVICES: String = "blocked_services"
-
     const val ACTION_RUN_RULES: String = "com.haoze.diting.automation.RUN_RULES"
     const val EXTRA_EVENT_TYPE: String = "event_type"
+
+    /** 外部自动化开关与其它 UI 设置同容器，默认关闭。 */
+    private const val UI_PREFS: String = "dns_vpn_prefs"
+    private const val KEY_EXTERNAL_ENABLED: String = "external_automation_enabled"
+
+    fun prefs(context: Context): SharedPreferences =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    fun externalAutomationEnabled(context: Context): Boolean =
+        context.getSharedPreferences(UI_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_EXTERNAL_ENABLED, false)
 }

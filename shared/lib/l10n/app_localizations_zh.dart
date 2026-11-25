@@ -1479,13 +1479,13 @@ class AppL10nZh extends AppL10n {
   String get ipv6ModeSubtitle => '同时作用于 VPN 接口与 DNS；自动模式仅在网络支持时启用';
 
   @override
-  @override
   String get ipv6ModeSectionTitle => 'IPv6 模式';
 
   @override
   String get ipv6ModeFooter =>
       '自动模式仅在物理网络支持 IPv6 时启用；IPv6 优先会在域名存在 AAAA 记录时抑制 A 查询。';
 
+  @override
   String get ipv6ModeIpv4 => '仅 IPv4';
 
   @override
@@ -8968,6 +8968,21 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get automationSettingsSection => '场景设置';
+
+  @override
+  String get automationExternalTitle => '允许外部自动化控制';
+
+  @override
+  String get automationExternalBody =>
+      '开启后 adb、Tasker 等外部应用可发送控制广播；关闭后外部应用无法控制，应用内定时/网络规则不受影响。';
+
+  @override
+  String get automationRunNow => '立即执行';
+
+  @override
+  String automationRunResult(int count) {
+    return '已执行 $count 条规则';
+  }
 
   @override
   String get automationRulesSection => '规则';

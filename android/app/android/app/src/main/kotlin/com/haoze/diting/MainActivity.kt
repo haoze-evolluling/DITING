@@ -2,6 +2,7 @@ package com.haoze.diting
 
 import android.content.Intent
 import com.haoze.diting.apps.AppsBridge
+import com.haoze.diting.automation.AutomationBridge
 import com.haoze.diting.cert.CaInspectionBridge
 import com.haoze.diting.deeplink.DeepLinkBridge
 import com.haoze.diting.net.DiagnosticsBridge
@@ -45,7 +46,8 @@ class MainActivity : FlutterActivity() {
         RuleIndexBridge(applicationContext, messenger)
         RuleTestBridge(applicationContext, messenger)
         BlockPauseBridge(applicationContext, messenger)
-        FlowViewBridge(messenger)
+        AutomationBridge(applicationContext, messenger)
+        FlowViewBridge(applicationContext, messenger)
         NetworkProfileBridge(applicationContext, messenger)
 
         AppsBridge(applicationContext).register(messenger)

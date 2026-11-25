@@ -5216,6 +5216,17 @@
   },
   "automationOverviewHint": "场景会按触发条件自动执行。",
   "automationSettingsSection": "场景设置",
+  "automationExternalTitle": "允许外部自动化控制",
+  "automationExternalBody": "开启后 adb、Tasker 等外部应用可发送控制广播；关闭后外部应用无法控制，应用内定时/网络规则不受影响。",
+  "automationRunNow": "立即执行",
+  "automationRunResult": "已执行 {count} 条规则",
+  "@automationRunResult": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "automationRulesSection": "规则",
   "automationHistory": "审计时间线",
   "automationHistoryEmpty": "暂无自动化事件。",

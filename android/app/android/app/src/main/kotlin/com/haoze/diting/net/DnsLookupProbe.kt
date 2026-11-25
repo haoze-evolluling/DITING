@@ -1,5 +1,6 @@
 package com.haoze.diting.net
 
+import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.Inet4Address
@@ -8,10 +9,15 @@ import java.net.InetAddress
 
 internal object DnsLookupProbe {
 
-    fun lookup(domain: String, viaTunnel: Boolean, ipv4: Boolean): Map<String, Any?> {
+    fun lookup(
+        context: Context,
+        domain: String,
+        viaTunnel: Boolean,
+        ipv4: Boolean,
+    ): Map<String, Any?> {
         val host = NetHost.sanitize(domain)
         if (host.isEmpty()) return error("", "请输入要查询的域名")
-        return if (viaTunnel) tunnelLookup(host, ipv4) else systemLookup(host, ipv4)
+        return if (viaTunnel) tunnelLookup(context, host, ipv4) else systemLookup(host, ipv4)
     }
 
     fun customServerLookup(domain: String, server: String, ipv4: Boolean): Map<String, Any?> {
@@ -39,8 +45,8 @@ internal object DnsLookupProbe {
 
     private fun isIpLiteral(value: String): Boolean = ProbeNative.isIpLiteral(value)
 
-    private fun tunnelLookup(host: String, ipv4: Boolean): Map<String, Any?> {
-        val engine = EngineAccess.current()
+    private fun tunnelLookup(context: Context, host: String, ipv4: Boolean): Map<String, Any?> {
+        val engine = EngineAccess.current(context)
             ?: return error(host, "隧道未运行，无法经内核解析（可用系统解析）")
 
         val startedAt = System.nanoTime()

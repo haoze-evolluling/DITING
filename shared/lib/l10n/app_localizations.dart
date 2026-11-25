@@ -5513,6 +5513,14 @@ abstract class AppL10n {
 
   String get automationSettingsSection;
 
+  String get automationExternalTitle;
+
+  String get automationExternalBody;
+
+  String get automationRunNow;
+
+  String automationRunResult(int count);
+
   String get automationRulesSection;
 
   String get automationHistory;

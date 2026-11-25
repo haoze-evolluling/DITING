@@ -22,11 +22,23 @@ class AutomationPage extends ConsumerWidget {
     final rules = ref.watch(automationRulesProvider);
     final events = ref.watch(automationEventsProvider);
     final resources = ref.watch(configResourcesProvider);
+    final externalAutomation = ref.watch(externalAutomationEnabledProvider);
     final list = rules.asData?.value;
     final l10n = context.l10n;
     return CommonScaffold(
       title: l10n.automationTitle,
       actions: [
+        if (list != null &&
+            list.any(
+              (rule) =>
+                  rule.enabled &&
+                  rule.triggerType == AutomationSpec.triggerManual,
+            ))
+          IconButton(
+            tooltip: l10n.automationRunNow,
+            onPressed: () => _runNow(context, ref),
+            icon: const Icon(TablerIcons.player_play),
+          ),
         IconButton(
           tooltip: l10n.automationAdd,
           onPressed: () => context.push(AutomationPaths.edit('new')),
@@ -88,6 +100,15 @@ class AutomationPage extends ConsumerWidget {
                 subtitle: l10n.netProfileSubtitle,
                 onTap: () => context.push(NetworkProfilePaths.root),
               ),
+              ListItem.toggle(
+                leading: const Icon(TablerIcons.shield_lock),
+                title: Text(l10n.automationExternalTitle),
+                subtitle: Text(l10n.automationExternalBody),
+                value: externalAutomation,
+                onChanged: (value) => ref
+                    .read(externalAutomationEnabledProvider.notifier)
+                    .setEnabled(value),
+              ),
             ],
           ),
           events.when(
@@ -108,6 +129,15 @@ class AutomationPage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _runNow(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final count = await ref.read(automationControllerProvider).runNow();
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.automationRunResult(count))),
     );
   }
 }

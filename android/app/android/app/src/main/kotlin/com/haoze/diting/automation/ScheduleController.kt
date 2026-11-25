@@ -24,6 +24,7 @@ object ScheduleController {
 
     private const val HEARTBEAT_INTERVAL_MINUTES = 15L
 
+    @Synchronized
     fun sync(context: Context, nextDueAtMs: Long) {
         val appContext: Context = context.applicationContext
         prefs(appContext).edit().putLong(AutomationContract.KEY_NEXT_DUE_AT_MS, nextDueAtMs).apply()
@@ -32,6 +33,7 @@ object ScheduleController {
         scheduleWork(appContext, nextDueAtMs)
     }
 
+    @Synchronized
     fun cancel(context: Context) {
         val appContext: Context = context.applicationContext
         runCatching { alarmManager(appContext)?.cancel(alarmPendingIntent(appContext)) }
@@ -41,11 +43,22 @@ object ScheduleController {
         prefs(appContext).edit().remove(AutomationContract.KEY_NEXT_DUE_AT_MS).apply()
     }
 
-    fun reschedule(context: Context) {
+    /** 按数据库中的规则重新计算并安排下一次定时。 */
+    @Synchronized
+    fun syncNext(context: Context) {
         val appContext: Context = context.applicationContext
-        val nextDueAtMs: Long = prefs(appContext).getLong(AutomationContract.KEY_NEXT_DUE_AT_MS, 0L)
-        if (nextDueAtMs > System.currentTimeMillis()) sync(appContext, nextDueAtMs)
+        val now: Long = System.currentTimeMillis()
+        val next: AutomationSchedule.NextDue = AutomationSchedule.nextDue(appContext, now)
+        if (!next.available) return
+        val atMs: Long? = next.atMs
+        if (atMs == null) {
+            cancel(appContext)
+        } else {
+            sync(appContext, maxOf(now, atMs))
+        }
     }
+
+    fun reschedule(context: Context) = syncNext(context)
 
     fun install(context: Context) {
         val appContext: Context = context.applicationContext

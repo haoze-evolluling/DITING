@@ -15,6 +15,7 @@ object StateBroadcaster {
 
     fun broadcast(context: Context) {
         val appContext: Context = context.applicationContext
+        if (!AutomationContract.externalAutomationEnabled(appContext)) return
         runCatching { broadcastInternal(appContext) }
             .onFailure { Log.w(TAG, "构建或发送状态广播失败", it) }
     }
@@ -46,9 +47,8 @@ object StateBroadcaster {
         val intent: Intent = Intent(AutomationContract.ACTION_STATE_CHANGED)
             .putExtra(AutomationContract.EXTRA_EVENT_JSON, json)
             .putExtra(AutomationContract.EXTRA_SCHEMA, AutomationContract.SCHEMA_VERSION)
-        context.sendBroadcast(intent, AutomationContract.PERMISSION_RECEIVE_EVENTS)
+        context.sendBroadcast(intent)
     }
 
-    private fun prefs(context: Context): SharedPreferences =
-        context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
+    private fun prefs(context: Context): SharedPreferences = AutomationContract.prefs(context)
 }

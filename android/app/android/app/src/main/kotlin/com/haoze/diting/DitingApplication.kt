@@ -2,6 +2,7 @@ package com.haoze.diting
 
 import android.app.Application
 import android.util.Log
+import com.haoze.diting.automation.AutomationNetworkObserver
 import com.haoze.diting.automation.ScheduleController
 import com.haoze.diting.log.CrashLogWriter
 import com.haoze.diting.log.RuntimeEventLog
@@ -21,6 +22,12 @@ class DitingApplication : Application() {
         RootDnsService.reconcileStaleRules(this)
         runCatching { ScheduleController.install(this) }
             .onFailure { Log.w(TAG, "安装定时心跳任务失败", it) }
+        runCatching { AutomationNetworkObserver.start(this) }
+            .onFailure { Log.w(TAG, "启动网络自动化监听失败", it) }
+        Thread({
+            runCatching { ScheduleController.syncNext(this) }
+                .onFailure { Log.w(TAG, "初始化定时任务失败", it) }
+        }, "diting-schedule-init").apply { isDaemon = true }.start()
     }
 
     companion object {

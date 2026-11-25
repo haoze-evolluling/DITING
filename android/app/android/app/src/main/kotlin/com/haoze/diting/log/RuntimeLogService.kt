@@ -237,7 +237,8 @@ class RuntimeLogService : Service() {
     companion object {
         private const val TAG = "RuntimeLogService"
         private const val CHANNEL_ID = "channel_runtime_log"
-        private const val NOTIFICATION_ID = 2003
+        // 2003 已被简洁模式 VPN 常驻通知占用，这里改用 2004 避免跨进程覆盖。
+        private const val NOTIFICATION_ID = 2004
         private const val ACTION_STOP = "com.haoze.diting.action.STOP_RUNTIME_LOG"
         private const val EXTRA_TARGET_PID = "target_pid"
         private const val EXTRA_DETAILED = "detailed"

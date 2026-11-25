@@ -9,7 +9,7 @@ import androidx.core.app.NotificationCompat
 import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 import com.haoze.diting.automation.AutomationContract
-import com.haoze.diting.automation.AutomationReceiver
+import com.haoze.diting.automation.AutomationPauseReceiver
 import com.haoze.diting.platform.NotificationSettings
 import com.haoze.diting.platform.NotificationStatsLine
 
@@ -33,7 +33,7 @@ internal object VpnModeNotification {
         val pauseIntent = PendingIntent.getBroadcast(
             context,
             2,
-            Intent(context, AutomationReceiver::class.java).apply {
+            Intent(context, AutomationPauseReceiver::class.java).apply {
                 action = AutomationContract.ACTION_PAUSE
                 putExtra(
                     AutomationContract.EXTRA_PAUSE_MINUTES,

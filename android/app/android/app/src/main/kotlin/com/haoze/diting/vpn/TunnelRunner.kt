@@ -39,6 +39,8 @@ internal object TunnelRunner {
                     return@Thread
                 }
             }
+            // 规则装载可能较慢；期间用户已停止隧道时不要再把引擎拉起来。
+            if (isStopping()) return@Thread
             engine.startFull(tunFd.toLong(), object : SocketProtector {
                 override fun protect(fd: Long): Boolean = protect(fd.toInt())
             })
@@ -66,9 +68,12 @@ internal object TunnelRunner {
         eventDomain: String,
         threadName: String,
         logTag: String,
+        isStopping: () -> Boolean,
     ): Thread = Thread({
         try {
+            if (isStopping()) return@Thread
             EngineRuleLoader.apply(context, engine, dataset, logTag)
+            if (isStopping()) return@Thread
             Log.i(logTag, "rule snapshot hot-reloaded")
         } catch (t: Throwable) {
             Log.e(logTag, "rule hot-reload failed; keeping previous rules", t)

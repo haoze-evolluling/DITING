@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import com.haoze.diting.automation.AutomationContract
 import com.haoze.diting.control.DataPlaneControl
 
 class QuickActionActivity : Activity() {
@@ -29,6 +30,10 @@ class QuickActionActivity : Activity() {
     private fun handle(intent: Intent?) {
         val action = intent?.action ?: return
         if (action != ACTION_START && action != ACTION_STOP && action != ACTION_TOGGLE) return
+        if (!AutomationContract.externalAutomationEnabled(this)) {
+            Log.i(TAG, "外部自动化未开启，忽略：$action")
+            return
+        }
         if (!DataPlaneControl.isAgreementAccepted(this)) {
             openApp(requestStart = false)
             return

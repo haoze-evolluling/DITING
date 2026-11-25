@@ -1,7 +1,6 @@
 library;
 
 import 'package:diting_android/data/db/automation_models.dart';
-import 'package:diting_android/data/db/rust_services_core.dart';
 import 'package:diting_android/state/automation_providers.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
@@ -31,14 +30,7 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
   String _match = 'all';
   final Set<String> _networkTypes = {'wifi'};
   bool _pause = false;
-  bool _blockServices = false;
-  final Set<String> _services = {};
-  String? _switchProfile;
-
-  List<Map<String, Object?>> _catalog = const [];
-  List<AutomationProfile> _profiles = const [];
   bool _loaded = false;
-  bool _servicesUnavailable = false;
 
   bool get _isNew => widget.ruleId == 'new';
 
@@ -59,23 +51,6 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
   }
 
   Future<void> _load() async {
-    try {
-      final answer = RustServicesCore.instance.catalog();
-      final raw = answer['services'];
-      if (raw is List) {
-        _catalog = [
-          for (final item in raw)
-            if (item is Map) Map<String, Object?>.from(item),
-        ];
-      }
-    } catch (_) {
-      _servicesUnavailable = true;
-    }
-    try {
-      _profiles = await ref.read(automationProfilesProvider.future);
-    } catch (_) {
-      _profiles = const [];
-    }
     if (!_isNew) {
       final rule = await ref.read(automationRuleProvider(widget.ruleId).future);
       if (rule != null) _apply(rule);
@@ -87,7 +62,12 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     _name.text = rule.name;
     _priority.text = '${rule.priority}';
     _match = rule.match;
-    _trigger = rule.triggerType;
+    // 旧版本的 state 触发没有原生实现，编辑时归入手动触发。
+    _trigger =
+        rule.triggerType == AutomationSpec.triggerSchedule ||
+            rule.triggerType == AutomationSpec.triggerNetwork
+        ? rule.triggerType
+        : AutomationSpec.triggerManual;
     final trigger = rule.spec['trigger'];
     if (trigger is Map && trigger['window'] is Map) {
       final window = Map<String, Object?>.from(trigger['window'] as Map);
@@ -107,20 +87,9 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
       }
     }
     for (final action in rule.actions) {
-      switch (action['type']) {
-        case AutomationSpec.actionPause:
-          _pause = true;
-          _minutes.text = '${(action['minutes'] as num?)?.toInt() ?? 60}';
-        case AutomationSpec.actionBlockServices:
-          _blockServices = true;
-          if (action['services'] is List) {
-            _services.addAll([
-              for (final item in action['services'] as List)
-                if (item is String) item,
-            ]);
-          }
-        case AutomationSpec.actionSwitchProfile:
-          _switchProfile = action['profileId'] as String?;
+      if (action['type'] == AutomationSpec.actionPause) {
+        _pause = true;
+        _minutes.text = '${(action['minutes'] as num?)?.toInt() ?? 60}';
       }
     }
   }
@@ -131,16 +100,6 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
         {
           'type': AutomationSpec.actionPause,
           'minutes': _parseMinutes(_minutes.text),
-        },
-      if (_blockServices && _services.isNotEmpty)
-        {
-          'type': AutomationSpec.actionBlockServices,
-          'services': _services.toList(),
-        },
-      if (_switchProfile != null)
-        {
-          'type': AutomationSpec.actionSwitchProfile,
-          'profileId': _switchProfile,
         },
     ];
     final trigger = <String, Object?>{'type': _trigger};
@@ -309,53 +268,6 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
               keyboardType: TextInputType.number,
             ),
           ),
-        ListItem.toggle(
-          padding: EdgeInsets.zero,
-          title: Text(context.l10n.automationActionBlockServices),
-          subtitle: _servicesUnavailable
-              ? Text(context.l10n.automationServicesUnavailable)
-              : null,
-          value: _blockServices,
-          onChanged: _servicesUnavailable
-              ? null
-              : (value) => setState(() => _blockServices = value),
-        ),
-        if (_blockServices)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: ChipRow(
-              children: [
-                for (final service in _catalog)
-                  FilterPill(
-                    label: '${service['name']}',
-                    selected: _services.contains(service['id']),
-                    onPressed: () => setState(
-                      () => _toggleValue(_services, '${service['id']}'),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.automationSwitchProfile,
-                style: AppTextRole.rowTitle.of(context),
-              ),
-            ),
-            PopupSelectButton<String?>(
-              value: _switchProfile,
-              semanticLabel: context.l10n.automationSwitchProfile,
-              items: [
-                (null, context.l10n.automationSwitchProfileNone),
-                for (final profile in _profiles) (profile.id, profile.name),
-              ],
-              onChanged: (value) => setState(() => _switchProfile = value),
-            ),
-          ],
-        ),
       ],
     );
   }
@@ -371,7 +283,6 @@ class _AutomationEditPageState extends ConsumerState<AutomationEditPage> {
     (AutomationSpec.triggerManual, context.l10n.automationTriggerManual),
     (AutomationSpec.triggerSchedule, context.l10n.automationTriggerSchedule),
     (AutomationSpec.triggerNetwork, context.l10n.automationTriggerNetwork),
-    (AutomationSpec.triggerState, context.l10n.automationTriggerState),
   ];
 
   static void _toggleValue(Set<String> values, String value) {

@@ -106,6 +106,15 @@ extension LegacyHubSettings on LegacySettings {
     value,
   );
 
+  bool get externalAutomationEnabled =>
+      _bool(LegacySettings.uiContainer, 'external_automation_enabled', false);
+
+  void setExternalAutomationEnabled(bool value) => _store.putBool(
+    LegacySettings.uiContainer,
+    'external_automation_enabled',
+    value,
+  );
+
   bool get rootDnsRunning =>
       _bool(LegacySettings.uiContainer, 'root_dns_running', false);
 

@@ -27,13 +27,8 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <!-- Floating log window shown over other apps while the tunnel runs in the background. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- 自动化平台层（A5/A9）：签名级 CONTROL 保护控制广播，签名级 RECEIVE_EVENTS 保护状态/定时事件广播。 -->
-    <permission android:name="com.haoze.diting.permission.CONTROL"
-        android:protectionLevel="signature" />
-    <permission android:name="com.haoze.diting.permission.RECEIVE_EVENTS"
-        android:protectionLevel="signature" />
-    <uses-permission android:name="com.haoze.diting.permission.CONTROL" />
-    <uses-permission android:name="com.haoze.diting.permission.RECEIVE_EVENTS" />
+    <!-- 外部自动化（A5/A9）不再使用签名权限：adb/Tasker 无法持有签名权限，
+         改由应用内的“允许外部自动化控制”开关（默认关闭）统一约束。 -->
     <!-- 定时自动化需要精确闹钟；显式不加 USE_EXACT_ALARM（商店政策），运行时可退回非精确。 -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <application
@@ -73,7 +68,9 @@
                 <data android:scheme="diting" android:host="install-sub"/>
             </intent-filter>
         </activity>
-        <!-- Headless automation entry: adb / Tasker send START, STOP or TOGGLE. -->
+        <!-- Headless automation entry: adb / Tasker send START, STOP or TOGGLE.
+             Exported so external tools can reach it; the activity itself refuses to act
+             unless “允许外部自动化控制” is enabled in-app. -->
         <activity
             android:name=".QuickActionActivity"
             android:exported="true"
@@ -232,11 +229,10 @@
                 android:name="android.service.quicksettings.TOGGLEABLE_TILE"
                 android:value="true" />
         </service>
-        <!-- 自动化控制入口（A9）：签名权限 CONTROL 保护的导出广播，adb/Tasker/通知动作可启动/停止/切换/暂停。 -->
+        <!-- 外部自动化入口（A9）：导出供 adb/Tasker 使用，实际是否执行由应用内开关决定。 -->
         <receiver
             android:name=".automation.AutomationReceiver"
-            android:exported="true"
-            android:permission="com.haoze.diting.permission.CONTROL">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.haoze.diting.automation.START" />
                 <action android:name="com.haoze.diting.automation.STOP" />
@@ -246,6 +242,10 @@
                 <action android:name="com.haoze.diting.automation.RUN_RULES" />
             </intent-filter>
         </receiver>
+        <!-- 通知栏暂停/恢复专用：不导出，避免外部应用伪造通知动作。 -->
+        <receiver
+            android:name=".automation.AutomationPauseReceiver"
+            android:exported="false" />
         <!-- 定时到点，仅应用内 alarm 触发。 -->
         <receiver
             android:name=".automation.ScheduleAlarmReceiver"

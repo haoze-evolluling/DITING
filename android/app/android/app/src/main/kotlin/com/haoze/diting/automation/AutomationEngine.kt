@@ -9,7 +9,6 @@ import com.haoze.diting.core.rule.StorageContract
 import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.AppDatabase
 import com.haoze.diting.net.NetworkContextProbe
-import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
 
@@ -54,7 +53,7 @@ object AutomationEngine {
     }
 
     private fun prefs(context: Context): SharedPreferences =
-        context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
+        AutomationContract.prefs(context)
 
     private fun loadRules(context: Context): List<Rule> {
         if (StorageGate.blocksDataPlane(context)) return emptyList()
@@ -148,11 +147,6 @@ object AutomationEngine {
         val actions = spec.optJSONArray("actions") ?: return "none"
         val editor = prefs.edit()
         val applied = ArrayList<String>()
-        fun setString(key: String, value: String, label: String) {
-            if (value.isEmpty()) return
-            editor.putString(key, value)
-            applied.add("$label=$value")
-        }
         for (index in 0 until actions.length()) {
             val action = actions.optJSONObject(index) ?: continue
             when (action.optString("type")) {
@@ -164,26 +158,7 @@ object AutomationEngine {
                     )
                     applied.add("paused_${minutes}m")
                 }
-                AutomationSpecKeys.ACTION_SWITCH_PROFILE -> setString(
-                    AutomationContract.KEY_ACTIVE_PROFILE,
-                    action.optString("profileId"),
-                    "profile",
-                )
-                AutomationSpecKeys.ACTION_SWITCH_UPSTREAM -> setString(
-                    AutomationContract.KEY_ACTIVE_UPSTREAM,
-                    action.optString("upstreamTag"),
-                    "upstream",
-                )
-                AutomationSpecKeys.ACTION_TOGGLE_RULE_GROUP -> setString(
-                    AutomationContract.KEY_ACTIVE_RULE_GROUP,
-                    action.optString("group"),
-                    "group",
-                )
-                AutomationSpecKeys.ACTION_BLOCK_SERVICES -> {
-                    val services = action.optJSONArray("services") ?: JSONArray()
-                    editor.putString(AutomationContract.KEY_BLOCKED_SERVICES, services.toString())
-                    applied.add("services=${services.length()}")
-                }
+                else -> applied.add("unsupported_${action.optString("type")}")
             }
         }
         editor.apply()
@@ -220,11 +195,7 @@ object AutomationEngine {
     }
 }
 
-private object AutomationSpecKeys {
+internal object AutomationSpecKeys {
     const val TRIGGER_SCHEDULE = "schedule"
     const val ACTION_PAUSE = "pause"
-    const val ACTION_SWITCH_PROFILE = "switch_profile"
-    const val ACTION_SWITCH_UPSTREAM = "switch_upstream"
-    const val ACTION_TOGGLE_RULE_GROUP = "toggle_rule_group"
-    const val ACTION_BLOCK_SERVICES = "block_services"
 }

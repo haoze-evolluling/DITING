@@ -55,7 +55,7 @@ class DiagnosticsBridge(private val context: Context) :
                     if (!viaTunnel && server.isNotEmpty()) {
                         DnsLookupProbe.customServerLookup(domain, server, ipv4)
                     } else {
-                        DnsLookupProbe.lookup(domain, viaTunnel, ipv4)
+                        DnsLookupProbe.lookup(context, domain, viaTunnel, ipv4)
                     }
                 }
             }

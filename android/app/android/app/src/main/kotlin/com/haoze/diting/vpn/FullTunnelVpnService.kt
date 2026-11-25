@@ -196,7 +196,9 @@ internal abstract class FullTunnelVpnService : VpnService() {
             val logMode = getSharedPreferences(profile.settingsPrefs, MODE_PRIVATE)
                 .getString(KEY_LOG_MODE, DnsLogWriter.MODE_ALL)
                 ?: DnsLogWriter.MODE_ALL
-            val httpsBypassRules = getSharedPreferences(profile.settingsPrefs, MODE_PRIVATE)
+            // https_bypass_rules 是全局 UI 设置，两种模式共用 dns_vpn_prefs；
+            // 只有 dns_log_mode 等模式级设置走 profile.settingsPrefs。
+            val httpsBypassRules = getSharedPreferences(VpnRuntime.NORMAL_PREFS, MODE_PRIVATE)
                 .getStringSet(KEY_HTTPS_BYPASS_RULES, null)
                 .orEmpty()
             dataPlane = FullTunnelEngineConfig.configure(
@@ -264,6 +266,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
             eventDomain = profile.eventDomain,
             threadName = profile.reloadThreadName,
             logTag = profile.logTag,
+            isStopping = { stopping },
         )
     }
 

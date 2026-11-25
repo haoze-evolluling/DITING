@@ -3,16 +3,19 @@ package com.haoze.diting.automation
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.util.Log
-import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.control.DataPlaneControl
 
+/** 外部自动化入口（adb / Tasker 等），受“允许外部自动化控制”开关约束。 */
 class AutomationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action: String = intent.action ?: return
         if (action !in SUPPORTED_ACTIONS) return
         val appContext: Context = context.applicationContext
+        if (!AutomationContract.externalAutomationEnabled(appContext)) {
+            Log.i(TAG, "外部自动化未开启，忽略：$action")
+            return
+        }
         val pendingResult: BroadcastReceiver.PendingResult = goAsync()
         Thread {
             try {
@@ -49,19 +52,13 @@ class AutomationReceiver : BroadcastReceiver() {
         val minutes: Int = intent
             .getIntExtra(AutomationContract.EXTRA_PAUSE_MINUTES, AutomationContract.DEFAULT_PAUSE_MINUTES)
             .coerceAtLeast(0)
-        val untilMs: Long = System.currentTimeMillis() + minutes.toLong() * 60_000L
-        setPausedUntil(context, untilMs)
+        val untilMs: Long = AutomationPause.pause(context, minutes)
         return HandleResult(true, "paused_until=$untilMs")
     }
 
     private fun cancelPause(context: Context): HandleResult {
-        setPausedUntil(context, 0L)
+        AutomationPause.resume(context)
         return HandleResult(true, "resumed")
-    }
-
-    private fun setPausedUntil(context: Context, untilMs: Long) {
-        prefs(context).edit().putLong(AutomationContract.KEY_PAUSED_UNTIL_MS, untilMs).apply()
-        BlockPauseLink.apply(context)
     }
 
     private fun runRules(context: Context, intent: Intent): HandleResult {
@@ -72,16 +69,14 @@ class AutomationReceiver : BroadcastReceiver() {
     }
 
     private fun broadcastResult(context: Context, action: String, result: HandleResult) {
+        if (!AutomationContract.externalAutomationEnabled(context)) return
         val intent: Intent = Intent(AutomationContract.ACTION_RESULT)
             .putExtra(AutomationContract.EXTRA_OK, result.ok)
             .putExtra(AutomationContract.EXTRA_MESSAGE, result.message)
             .putExtra(AutomationContract.EXTRA_REQUEST_ACTION, action)
-        runCatching { context.sendBroadcast(intent, AutomationContract.PERMISSION_RECEIVE_EVENTS) }
+        runCatching { context.sendBroadcast(intent) }
             .onFailure { Log.w(TAG, "发送控制结果广播失败", it) }
     }
-
-    private fun prefs(context: Context): SharedPreferences =
-        context.getSharedPreferences(AutomationContract.PREFS_NAME, Context.MODE_PRIVATE)
 
     private data class HandleResult(val ok: Boolean, val message: String)
 
