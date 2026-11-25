@@ -7,7 +7,6 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.haoze.diting.engine.Engine
-import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.LogRetention
@@ -87,11 +86,6 @@ internal abstract class FullTunnelVpnService : VpnService() {
         }
         if (intent?.action == profile.stopAction) {
             stopTunnel()
-            return START_NOT_STICKY
-        }
-        if (StorageGate.blocksDataPlane(this)) {
-            Log.w(profile.logTag, "storage upgrade in progress; refusing to start")
-            stopSelf(startId)
             return START_NOT_STICKY
         }
         reclaimer.cancel()

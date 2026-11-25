@@ -58,52 +58,26 @@ void _legacySettings() {
       expect(settings.resolutionModeRaw, 'parallel_race');
     });
 
-    test('旧 ipv6_mode=prefer 按新默认视为仅 IPv4', () {
-      final settings = LegacySettings(
-        MemoryLegacyPrefsStore({
-          'dns_vpn_prefs': {'ipv6_mode': 'prefer'},
-        }),
-      );
-      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
-    });
-
-    test('旧 ipv6_mode 的其他值与缺省值都采用仅 IPv4', () {
-      for (final raw in ['auto', 'disable', 'enabled', 'disabled', '']) {
-        final settings = LegacySettings(
-          MemoryLegacyPrefsStore({
-            'dns_vpn_prefs': {'ipv6_mode': raw},
-          }),
-        );
-        expect(settings.ipv6Mode, Ipv6Mode.ipv4, reason: raw);
-      }
+    test('读取当前三态键，缺省为仅 IPv4', () {
       final empty = LegacySettings(MemoryLegacyPrefsStore());
       expect(empty.ipv6Mode, Ipv6Mode.ipv4);
-    });
 
-    test('新键优先于旧 ipv6_mode 与旧布尔值', () {
       final settings = LegacySettings(
         MemoryLegacyPrefsStore({
-          'dns_vpn_prefs': {
-            'ipv6_mode': 'prefer',
-            'vpn_ipv6_enabled': false,
-            'dns_aaaa_enabled': true,
-            'vpn_ipv6_mode': 'ipv6',
-          },
+          'dns_vpn_prefs': {'vpn_ipv6_mode': 'ipv6'},
         }),
       );
       expect(settings.ipv6Mode, Ipv6Mode.ipv6);
     });
 
-    test('写入三态同时回写旧布尔值', () {
+    test('写入三态只落当前键', () {
       final store = MemoryLegacyPrefsStore();
       final settings = LegacySettings(store);
-      settings.setIpv6Mode(Ipv6Mode.ipv4);
-      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
-      expect(store.read('dns_vpn_prefs', 'vpn_ipv6_enabled'), isFalse);
-      expect(store.read('dns_vpn_prefs', 'dns_aaaa_enabled'), isFalse);
       settings.setIpv6Mode(Ipv6Mode.ipv6);
-      expect(store.read('dns_vpn_prefs', 'vpn_ipv6_enabled'), isTrue);
-      expect(store.read('dns_vpn_prefs', 'dns_aaaa_enabled'), isTrue);
+      expect(settings.ipv6Mode, Ipv6Mode.ipv6);
+      expect(store.read('dns_vpn_prefs', 'vpn_ipv6_mode'), 'ipv6');
+      expect(store.read('dns_vpn_prefs', 'vpn_ipv6_enabled'), isNull);
+      expect(store.read('dns_vpn_prefs', 'dns_aaaa_enabled'), isNull);
     });
 
     test('路由列表读写去重并排序', () {

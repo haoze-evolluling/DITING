@@ -1,6 +1,5 @@
 part of 'backup_importer.dart';
 
-
 extension _BackupImportApply on BackupImporter {
   Future<void> _applyPlan(
     Map<String, Object?> answer,
@@ -156,10 +155,6 @@ extension _BackupImportApply on BackupImporter {
       case 'system.ipv6Mode':
         final mode = Ipv6Mode.fromStorage('$value');
         if (mode != null) settings.setIpv6Mode(mode);
-      case 'system.tunnelIpv6':
-      case 'system.dnsAaaa':
-        // 兼容旧导入计划：任一开关关闭即视为仅 IPv4。
-        if (value != true) settings.setIpv6Mode(Ipv6Mode.ipv4);
       case 'system.routeAddress':
         settings.setVpnRouteAddress(_strings(value));
       case 'system.routeExcludeAddress':

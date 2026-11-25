@@ -7,7 +7,6 @@ import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_shared/data/db/app_database.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
@@ -301,9 +300,6 @@ class _StorageCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(legacySettingsProvider);
-    final state = settings.storageV2State;
-    final error = settings.storageV2Error;
     final colorScheme = context.colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -329,26 +325,6 @@ class _StorageCard extends ConsumerWidget {
                 ),
               ],
             ),
-            Text(
-              state >= StorageContract.stateVerified
-                  ? context.l10n.devStorageV2Ready
-                  : context.l10n.devStorageV2Pending,
-              style: AppTextRole.supportingText.of(context),
-            ),
-            Text(
-              context.l10n.devStorageV2Detail(
-                '$state',
-                _formatDate(settings.storageV2CompletedAt),
-              ),
-              style: AppTextRole.supportingText.of(context),
-            ),
-            if (error != null && state < StorageContract.stateVerified)
-              Text(
-                context.l10n.devStorageV2Error(error),
-                style: AppTextRole.supportingText
-                    .of(context)
-                    .copyWith(color: colorScheme.error),
-              ),
             FutureBuilder<int>(
               key: ValueKey(revision),
               future: _databaseBytes(),
@@ -356,7 +332,10 @@ class _StorageCard extends ConsumerWidget {
                 final bytes = snapshot.data ?? 0;
                 if (bytes <= 0) return const SizedBox.shrink();
                 return Text(
-                  context.l10n.devStorageV2Files((bytes / 1024).round()),
+                  context.l10n.devStorageFiles(
+                    StorageContract.allDatabases.length,
+                    (bytes / 1024).round(),
+                  ),
                   style: AppTextRole.supportingText.of(context),
                 );
               },
@@ -378,14 +357,6 @@ class _StorageCard extends ConsumerWidget {
     }
     return total;
   }
-}
-
-String _formatDate(DateTime? value) {
-  if (value == null) return '—';
-  final local = value.toLocal();
-  final month = local.month.toString().padLeft(2, '0');
-  final day = local.day.toString().padLeft(2, '0');
-  return '${local.year}-$month-$day';
 }
 
 class _ActionRow extends StatelessWidget {

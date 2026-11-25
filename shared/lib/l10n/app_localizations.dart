@@ -1058,7 +1058,7 @@ abstract class AppL10n {
 
   String get agentNoExtraInfo;
 
-  String get agentNoLegacyDatabase;
+  String get agentNoLogDatabase;
 
   String get autoUpdateDisabled;
 
@@ -1182,7 +1182,7 @@ abstract class AppL10n {
 
   String get subscriptionPickTxtFile;
 
-  String get subscriptionLegacyDatabaseMissing;
+  String get subscriptionDatabaseMissing;
 
   String get subscriptionThisFile;
 
@@ -2757,37 +2757,7 @@ abstract class AppL10n {
 
   String get devStorageTitle;
 
-  String get devStorageV2Ready;
-
-  String get devStorageV2Pending;
-
-  String devStorageV2Detail(String state, String date);
-
-  String devStorageV2Error(String error);
-
-  String devStorageV2Files(int kb);
-
-  String get storageV2Title;
-
-  String get storageV2Preparing;
-
-  String storageV2Progress(String database, int current, int total);
-
-  String get storageV2Verifying;
-
-  String get storageV2NeedStop;
-
-  String get storageV2StopAndRetry;
-
-  String get storageV2Retry;
-
-  String get storageV2Discard;
-
-  String storageV2Failed(String error);
-
-  String get storageV2DiscardTitle;
-
-  String get storageV2DiscardConfirm;
+  String devStorageFiles(int count, int kb);
 
   String get devCancel;
 

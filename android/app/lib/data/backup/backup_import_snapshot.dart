@@ -1,6 +1,5 @@
 part of 'backup_importer.dart';
 
-
 extension _BackupImportSnapshot on BackupImporter {
   Future<Map<String, Object?>> _current(BackupImportTarget target) async {
     final settings = target.settings;
@@ -89,8 +88,6 @@ extension _BackupImportSnapshot on BackupImporter {
       'system': {
         'bypassLan': settings.bypassLanEnabled,
         'ipv6Mode': settings.ipv6Mode.storageValue,
-        'tunnelIpv6': settings.ipv6Mode.storageValue != 'ipv4',
-        'dnsAaaa': settings.ipv6Mode.storageValue != 'ipv4',
         'routeAddress': settings.vpnRouteAddress,
         'routeExcludeAddress': settings.vpnRouteExcludeAddress,
         'logRetentionDays': settings.logRetentionDays,

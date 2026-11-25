@@ -249,8 +249,6 @@ fn system_keeps_traffic_defaults_and_the_nested_dynamic_block() {
         &json!({
             "bypassLan": true,
             "ipv6Mode": "ipv6",
-            "tunnelIpv6": true,
-            "dnsAaaa": true,
             "routeAddress": ["::/0", "10.0.0.0/8", "10.0.0.0/8"],
             "routeExcludeAddress": ["fe80::/10"],
             "dynamicBlockResponse": {
@@ -264,8 +262,6 @@ fn system_keeps_traffic_defaults_and_the_nested_dynamic_block() {
     .unwrap();
     assert_eq!(value["bypassLan"], json!(true));
     assert_eq!(value["ipv6Mode"], json!("ipv6"));
-    assert_eq!(value["tunnelIpv6"], json!(true));
-    assert_eq!(value["dnsAaaa"], json!(true));
     assert_eq!(value["routeAddress"], json!(["10.0.0.0/8", "::/0"]));
     assert_eq!(value["routeExcludeAddress"], json!(["fe80::/10"]));
     assert_eq!(value["appTrafficStatsEnabled"], json!(true));

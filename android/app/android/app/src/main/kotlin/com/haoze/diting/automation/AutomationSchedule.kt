@@ -3,7 +3,6 @@ package com.haoze.diting.automation
 import android.content.Context
 import android.util.Log
 import com.haoze.diting.core.rule.StorageContract
-import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.AppDatabase
 import org.json.JSONArray
 import org.json.JSONObject
@@ -22,7 +21,6 @@ object AutomationSchedule {
     data class NextDue(val available: Boolean, val atMs: Long?)
 
     fun nextDue(context: Context, now: Long): NextDue {
-        if (StorageGate.blocksDataPlane(context)) return NextDue(false, null)
         val open = AppDatabase.open(context, StorageContract.GLOBAL)
         val db = (open as? AppDatabase.Open.Ready)?.db ?: return NextDue(false, null)
         var earliest: Long? = null

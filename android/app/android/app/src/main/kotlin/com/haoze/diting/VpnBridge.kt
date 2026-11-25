@@ -6,7 +6,7 @@ import android.content.Intent
 import android.net.VpnService
 import androidx.core.content.ContextCompat
 import com.haoze.diting.normal.DitingVpnService
-import com.haoze.diting.vpn.Ipv6Mode
+import com.haoze.diting.vpn.VpnPlanNative
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -65,10 +65,7 @@ class VpnBridge(
             proxyAppPackage = call.argument<String>("proxyAppPackage").orEmpty(),
             bypassLan = call.argument<Boolean>("bypassLan") ?: true,
             ipv6Mode = call.argument<String>("ipv6Mode")
-                ?: Ipv6Mode.fromLegacy(
-                    tunnelIpv6 = call.argument<Boolean>("tunnelIpv6") ?: false,
-                    dnsAaaa = call.argument<Boolean>("dnsAaaa") ?: false,
-                ).wire,
+                ?: VpnPlanNative.startDefaults.ipv6Mode,
             routeAddress = call.argument<List<String>>("routeAddress").orEmpty(),
             routeExcludeAddress = call.argument<List<String>>("routeExcludeAddress").orEmpty(),
             excludedPackages = excluded,

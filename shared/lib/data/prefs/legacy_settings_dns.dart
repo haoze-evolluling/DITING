@@ -166,17 +166,6 @@ extension LegacyDnsSettings on LegacySettings {
 
   bool get cacheEnabled => _bool(dnsContainer, 'dns_cache_enabled_v2', true);
 
-  String get cacheModeRaw =>
-      _string(dnsContainer, 'dns_cache_mode_v2') ?? 'limit_max_ttl';
-
-  bool get cacheMinTtlEnabled =>
-      _bool(dnsContainer, 'dns_cache_min_ttl_enabled_v2', false);
-
-  bool get cacheStaleFallbackEnabled =>
-      _bool(dnsContainer, 'dns_cache_stale_fallback_enabled_v2', false);
-
-  String? get cachePresetRaw => _string(dnsContainer, 'dns_cache_preset_v3');
-
   String? get cachePresetV4 => _string(dnsContainer, 'dns_cache_preset_v4');
 
   int? get cacheScalePercentV4 {
@@ -305,14 +294,20 @@ extension LegacyDnsSettings on LegacySettings {
   bool get blockHttpsSvcbRecordTypes =>
       _bool(LegacySettings.uiContainer, 'block_https_svcb_record_types', false);
 
-  void setBlockHttpsSvcbRecordTypes(bool value) =>
-      _store.putBool(LegacySettings.uiContainer, 'block_https_svcb_record_types', value);
+  void setBlockHttpsSvcbRecordTypes(bool value) => _store.putBool(
+    LegacySettings.uiContainer,
+    'block_https_svcb_record_types',
+    value,
+  );
 
   bool get dnsRebindingProtection =>
       _bool(LegacySettings.uiContainer, 'dns_rebinding_protection', false);
 
-  void setDnsRebindingProtection(bool value) =>
-      _store.putBool(LegacySettings.uiContainer, 'dns_rebinding_protection', value);
+  void setDnsRebindingProtection(bool value) => _store.putBool(
+    LegacySettings.uiContainer,
+    'dns_rebinding_protection',
+    value,
+  );
 
   bool get dns64Enabled =>
       _bool(LegacySettings.uiContainer, 'dns64_enabled', false);

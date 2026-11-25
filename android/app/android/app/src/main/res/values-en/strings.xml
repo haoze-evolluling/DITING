@@ -37,7 +37,6 @@
     <string name="root_dns_start_failed">Root DNS takeover failed to start</string>
     <string name="root_dns_bind_failed">Unable to bind the local DNS port</string>
     <string name="root_dns_vpn_running">Stop the VPN tunnel before enabling root DNS takeover</string>
-    <string name="root_dns_storage_busy">The storage upgrade is still running; try again later</string>
     <string name="widget_value_unknown">—</string>
     <string name="widget_toggle_desc">Turn protection on or off</string>
     <string name="widget_description">Protection status and today\'s blocked count in small, medium and large sizes, with a one-tap toggle</string>

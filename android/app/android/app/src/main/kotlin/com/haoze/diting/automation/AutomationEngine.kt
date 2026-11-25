@@ -6,7 +6,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.core.rule.StorageContract
-import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.AppDatabase
 import com.haoze.diting.net.NetworkContextProbe
 import org.json.JSONObject
@@ -56,7 +55,6 @@ object AutomationEngine {
         AutomationContract.prefs(context)
 
     private fun loadRules(context: Context): List<Rule> {
-        if (StorageGate.blocksDataPlane(context)) return emptyList()
         val open = AppDatabase.open(context, StorageContract.GLOBAL)
         val db = (open as? AppDatabase.Open.Ready)?.db ?: return emptyList()
         val rules = ArrayList<Rule>()

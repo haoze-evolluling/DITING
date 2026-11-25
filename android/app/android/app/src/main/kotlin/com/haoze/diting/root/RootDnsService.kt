@@ -15,7 +15,6 @@ import com.haoze.diting.R
 import com.haoze.diting.control.BlockPauseLink
 import com.haoze.diting.core.rule.EngineRuleLoader
 import com.haoze.diting.core.rule.RuleDataset
-import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.engine.Engine
 import com.haoze.diting.express.ExpressVpnService
 import com.haoze.diting.log.DnsLogWriter
@@ -81,11 +80,6 @@ class RootDnsService : Service() {
         }
         if (RootDnsRuntime.running || RootDnsRuntime.starting) {
             return START_STICKY
-        }
-        if (StorageGate.blocksDataPlane(this)) {
-            Log.w(TAG, "storage upgrade in progress; refusing to start")
-            fail(getString(R.string.root_dns_storage_busy))
-            return START_NOT_STICKY
         }
         val dnsConfig = intent?.getStringExtra(EXTRA_DNS_CONFIG)
             ?.takeIf { it.isNotBlank() }

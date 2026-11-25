@@ -287,28 +287,8 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
       jsonEncode([for (final provider in providers) provider.toJson()]),
     );
     settings.setAgentAiActiveProviderId(activeId);
-    _syncActiveToFlatKeys(providers, activeId);
     state = state.copyWith(providers: providers, activeProviderId: activeId);
     _bump();
-  }
-
-  void _syncActiveToFlatKeys(
-    List<AiProviderConfig> providers,
-    String activeId,
-  ) {
-    final settings = _settings;
-    AiProviderConfig? active;
-    for (final provider in providers) {
-      if (provider.id == activeId) {
-        active = provider;
-        break;
-      }
-    }
-    active ??= providers.isEmpty ? null : providers.first;
-    if (active == null) return;
-    settings.setAgentApiBaseUrl(active.baseUrl);
-    settings.setAgentApiKey(active.apiKey);
-    settings.setAgentApiModel(active.model);
   }
 
   void update(AgentApiState Function(AgentApiState state) fn) =>
@@ -364,11 +344,8 @@ class AgentApiNotifier extends Notifier<AgentApiState> {
     final settings = _settings;
     final store = ref.read(legacyPrefsStoreProvider);
     for (final key in const [
-      'agent_api_key',
       'agent_api_system_prompt',
       'agent_api_temperature',
-      'agent_api_model',
-      'agent_api_base_url',
       'agent_ai_providers_json',
       'agent_ai_active_provider_id',
     ]) {

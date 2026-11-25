@@ -1652,7 +1652,7 @@ class AppL10nZh extends AppL10n {
   String get agentNoExtraInfo => '（无附加信息）';
 
   @override
-  String get agentNoLegacyDatabase => '未找到旧版数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。';
+  String get agentNoLogDatabase => '未找到运行日志数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。';
 
   @override
   String get autoUpdateDisabled => '自动更新已关闭';
@@ -1838,7 +1838,7 @@ class AppL10nZh extends AppL10n {
   String get subscriptionPickTxtFile => '请选择扩展名为 .txt 的规则文件';
 
   @override
-  String get subscriptionLegacyDatabaseMissing => '订阅数据库不可用（未找到 1.4.3 数据库）';
+  String get subscriptionDatabaseMissing => '订阅数据库不可用（未找到本地数据库）';
 
   @override
   String get subscriptionThisFile => '该文件';
@@ -4447,62 +4447,9 @@ class AppL10nZh extends AppL10n {
   String get devStorageTitle => '存储状态';
 
   @override
-  String get devStorageV2Ready => 'V2 存储已就绪：每个模式独立规则库与日志库';
-
-  @override
-  String get devStorageV2Pending => 'V2 存储尚未完成';
-
-  @override
-  String devStorageV2Detail(String state, String date) {
-    return '状态 $state · 完成于 $date';
+  String devStorageFiles(int count, int kb) {
+    return '$count 个数据库共 $kb KB';
   }
-
-  @override
-  String devStorageV2Error(String error) {
-    return '迁移错误：$error';
-  }
-
-  @override
-  String devStorageV2Files(int kb) {
-    return '7 个数据库共 $kb KB';
-  }
-
-  @override
-  String get storageV2Title => '正在升级本地数据';
-
-  @override
-  String get storageV2Preparing => '正在准备数据库…';
-
-  @override
-  String storageV2Progress(String database, int current, int total) {
-    return '正在迁移 $database（$current/$total）';
-  }
-
-  @override
-  String get storageV2Verifying => '正在校验数据…';
-
-  @override
-  String get storageV2NeedStop => '网络连接正在使用旧数据库。请先停止当前连接，再继续升级。';
-
-  @override
-  String get storageV2StopAndRetry => '停止连接并继续';
-
-  @override
-  String get storageV2Retry => '重试';
-
-  @override
-  String get storageV2Discard => '放弃旧数据并继续';
-
-  @override
-  String storageV2Failed(String error) {
-    return '本地数据升级失败：$error';
-  }
-
-  @override
-  String get storageV2DiscardTitle => '放弃旧数据？';
-
-  @override
-  String get storageV2DiscardConfirm => '无法读取的旧数据将被丢弃，应用会以空数据库启动。此操作无法撤销。';
 
   @override
   String get devCancel => '取消';
@@ -7343,8 +7290,7 @@ class AppL10nZh extends AppL10n {
   String get agentProvidersKeyMissing => '缺少密钥';
 
   @override
-  String get agentProvidersFooter =>
-      '点一行可切换当前生效厂商；切换会把接口地址、密钥与模型同步到旧版的四个平铺键，避免新版界面与旧版读取来源不一致。';
+  String get agentProvidersFooter => '点一行可切换当前生效厂商；接口地址、密钥与模型随厂商配置一起保存。';
 
   @override
   String get agentProvidersAdded => '已添加';
@@ -7382,7 +7328,7 @@ class AppL10nZh extends AppL10n {
   String get agentEditorKeyKeep => '留空则保留原密钥';
 
   @override
-  String get agentEditorKeyLocal => '仅保存在本机（旧版同一套掩码）';
+  String get agentEditorKeyLocal => '仅保存在本机（加密掩码）';
 
   @override
   String get agentEditorFetching => '请求中…';

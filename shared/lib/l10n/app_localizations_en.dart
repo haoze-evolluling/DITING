@@ -1721,8 +1721,8 @@ class AppL10nEn extends AppL10n {
   String get agentNoExtraInfo => '(no extra information)';
 
   @override
-  String get agentNoLegacyDatabase =>
-      'The legacy database was not found, so DNS and HTTPS logs cannot be read. Start the service once first.';
+  String get agentNoLogDatabase =>
+      'The log database was not found, so DNS and HTTPS logs cannot be read. Start the service once first.';
 
   @override
   String get autoUpdateDisabled => 'Automatic updates are off';
@@ -1929,8 +1929,8 @@ class AppL10nEn extends AppL10n {
       'Pick a rule file with the .txt extension';
 
   @override
-  String get subscriptionLegacyDatabaseMissing =>
-      'The subscription database is unavailable (the 1.4.3 database was not found)';
+  String get subscriptionDatabaseMissing =>
+      'The subscription database is unavailable (the local database was not found)';
 
   @override
   String get subscriptionThisFile => 'This file';
@@ -4675,65 +4675,9 @@ class AppL10nEn extends AppL10n {
   String get devStorageTitle => 'Storage status';
 
   @override
-  String get devStorageV2Ready =>
-      'V2 storage is ready: every mode has its own rules and logs database';
-
-  @override
-  String get devStorageV2Pending => 'V2 storage is not complete';
-
-  @override
-  String devStorageV2Detail(String state, String date) {
-    return 'State $state · completed $date';
+  String devStorageFiles(int count, int kb) {
+    return '$count databases, $kb KB';
   }
-
-  @override
-  String devStorageV2Error(String error) {
-    return 'Migration error: $error';
-  }
-
-  @override
-  String devStorageV2Files(int kb) {
-    return '7 databases, $kb KB';
-  }
-
-  @override
-  String get storageV2Title => 'Upgrading local data';
-
-  @override
-  String get storageV2Preparing => 'Preparing databases…';
-
-  @override
-  String storageV2Progress(String database, int current, int total) {
-    return 'Migrating $database ($current/$total)';
-  }
-
-  @override
-  String get storageV2Verifying => 'Verifying data…';
-
-  @override
-  String get storageV2NeedStop =>
-      'A network connection is using the old databases. Stop it before upgrading.';
-
-  @override
-  String get storageV2StopAndRetry => 'Stop connection and continue';
-
-  @override
-  String get storageV2Retry => 'Retry';
-
-  @override
-  String get storageV2Discard => 'Discard old data and continue';
-
-  @override
-  String storageV2Failed(String error) {
-    return 'Local data upgrade failed: $error';
-  }
-
-  @override
-  String get storageV2DiscardTitle => 'Discard old data?';
-
-  @override
-  String get storageV2DiscardConfirm =>
-      'Unreadable old data will be dropped and the app will start with empty databases. This cannot be undone.';
 
   @override
   String get devCancel => 'Cancel';
@@ -7794,7 +7738,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agentProvidersFooter =>
-      'Tap a row to make that provider active; switching also syncs the endpoint, key and model into the four legacy flat keys so the new and old screens never disagree.';
+      'Tap a row to make that provider active; its endpoint, key and model are saved with the provider configuration.';
 
   @override
   String get agentProvidersAdded => 'Added';
@@ -7834,7 +7778,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get agentEditorKeyLocal =>
-      'Stored on this device only (same obfuscation as before)';
+      'Stored on this device only (encrypted mask)';
 
   @override
   String get agentEditorFetching => 'Requesting…';

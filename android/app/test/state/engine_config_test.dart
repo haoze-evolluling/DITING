@@ -185,47 +185,10 @@ void _providerCatalog() {
       expect(cache.containsKey('mode'), isFalse);
     });
 
-    test('旧 preset 与旧策略都能迁移到新档位', () {
-      LegacySettings settingsWith(Map<String, Object?> values) =>
-          LegacySettings(MemoryLegacyPrefsStore({'dns_vpn_prefs': values}));
-
-      expect(
-        DnsCachePolicy.read(
-          settingsWith({'dns_cache_preset_v3': 'conservative'}),
-        ),
-        isA<DnsCachePolicy>()
-            .having((p) => p.tier, 'tier', DnsCacheTier.conservative)
-            .having((p) => p.scalePercent, 'scale', 50),
-      );
-      expect(
-        DnsCachePolicy.read(settingsWith({'dns_cache_preset_v3': 'balanced'}))
-            .tier,
-        DnsCacheTier.standard,
-      );
-      expect(
-        DnsCachePolicy.read(
-          settingsWith({'dns_cache_preset_v3': 'high_hit_rate'}),
-        ).scalePercent,
-        200,
-      );
-      expect(
-        DnsCachePolicy.read(settingsWith({'dns_cache_preset_v3': 'custom'}))
-            .scalePercent,
-        100,
-      );
-
-      final conservative = settingsWith({
-        'dns_cache_mode_v2': 'follow_dns_ttl',
-        'dns_cache_min_ttl_enabled_v2': false,
-        'dns_cache_stale_fallback_enabled_v2': false,
-      });
-      expect(DnsCachePolicy.read(conservative).tier, DnsCacheTier.conservative);
-
-      final standard = settingsWith({
-        'dns_cache_mode_v2': 'limit_max_ttl',
-        'dns_cache_min_ttl_enabled_v2': true,
-      });
-      expect(DnsCachePolicy.read(standard).tier, DnsCacheTier.standard);
+    test('缺省缓存策略为标准档', () {
+      final settings = LegacySettings(MemoryLegacyPrefsStore());
+      expect(DnsCachePolicy.read(settings).tier, DnsCacheTier.standard);
+      expect(DnsCachePolicy.read(settings).scalePercent, 100);
     });
 
     test('自定义档只保留倍率，并做步进与边界归一', () {

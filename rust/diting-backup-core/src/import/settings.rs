@@ -46,22 +46,6 @@ fn apply_bool(
     }
 }
 
-fn apply_bool_value(
-    outcome: &mut Outcome,
-    plan: &mut Plan,
-    field: &str,
-    key: &str,
-    incoming: bool,
-    current: &Value,
-) {
-    if boolean(current, key).unwrap_or(false) == incoming {
-        outcome.skipped += 1;
-    } else {
-        plan.write(field, json!(incoming));
-        outcome.added += 1;
-    }
-}
-
 fn apply_strings(
     outcome: &mut Outcome,
     plan: &mut Plan,
@@ -279,10 +263,12 @@ pub fn system(
     ] {
         apply_text(&mut outcome, plan, field, value, key, current);
     }
-    let raw_mode = text(value, "ipv6Mode").map(|mode| mode.trim().to_ascii_lowercase());
-    let ipv6_mode = match raw_mode.as_deref() {
+    let ipv6_mode = match text(value, "ipv6Mode")
+        .map(|mode| mode.trim().to_ascii_lowercase())
+        .as_deref()
+    {
         Some("ipv4") => Some("ipv4"),
-        Some("auto") | Some("prefer") => Some("auto"),
+        Some("auto") => Some("auto"),
         Some("ipv6") => Some("ipv6"),
         _ => None,
     };
@@ -292,18 +278,6 @@ pub fn system(
         } else {
             plan.write("system.ipv6Mode", json!(mode));
             outcome.added += 1;
-        }
-    }
-    // 只有旧备份（没有新的三态字段）才回落到两个布尔值。
-    if ipv6_mode.is_none() {
-        let legacy_prefer = raw_mode.map(|mode| mode == "prefer");
-        for (key, field) in [
-            ("tunnelIpv6", "system.tunnelIpv6"),
-            ("dnsAaaa", "system.dnsAaaa"),
-        ] {
-            if let Some(incoming) = boolean(value, key).or(legacy_prefer) {
-                apply_bool_value(&mut outcome, plan, field, key, incoming, current);
-            }
         }
     }
     for (key, field) in [

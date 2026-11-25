@@ -1,7 +1,5 @@
 library;
 
-import 'dart:io';
-
 import 'package:diting_shared/data/db/database_schema.dart';
 import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:flutter/foundation.dart';
@@ -42,7 +40,9 @@ class AppDatabase {
       );
       final applicationId = await _applicationId(db);
       if (applicationId == kind.applicationId) return db;
-      debugPrint('database application id mismatch: $fileName ($applicationId)');
+      debugPrint(
+        'database application id mismatch: $fileName ($applicationId)',
+      );
       await db.close();
       if (!create) return null;
       await deleteDatabase(path);
@@ -51,51 +51,6 @@ class AppDatabase {
       return null;
     }
     return _create(path, kind);
-  }
-
-  static Future<Database?> openSource(String fileName) async {
-    final String path;
-    try {
-      path = p.join(await getDatabasesPath(), fileName);
-    } on StateError {
-      return null;
-    }
-    if (!await databaseExists(path)) return null;
-    try {
-      return await openDatabase(
-        path,
-        readOnly: true,
-        singleInstance: false,
-      );
-    } on DatabaseException catch (error) {
-      debugPrint('source database open failed: $fileName ($error)');
-      return null;
-    }
-  }
-
-  static Future<void> delete(String fileName) async {
-    final String path;
-    try {
-      path = p.join(await getDatabasesPath(), fileName);
-    } on StateError {
-      return;
-    }
-    if (await databaseExists(path)) await deleteDatabase(path);
-  }
-
-  static Future<bool> exists(String fileName) async {
-    try {
-      return await databaseExists(p.join(await getDatabasesPath(), fileName));
-    } on StateError {
-      return false;
-    }
-  }
-
-  static Future<void> deleteWithSidecars(String directory, String fileName) async {
-    for (final suffix in const ['', '-wal', '-shm']) {
-      final file = File(p.join(directory, '$fileName$suffix'));
-      if (await file.exists()) await file.delete();
-    }
   }
 
   static Future<Database?> _create(String path, DatabaseKind kind) async {

@@ -21,20 +21,16 @@ void main() {
     return container;
   }
 
-  group('IPv6 旧三态迁移', () {
+  group('IPv6 三态读取', () {
     LegacySettings settingsWith(Object? value) => LegacySettings(
       MemoryLegacyPrefsStore({
         'dns_vpn_prefs': {'ipv6_mode': ?value},
       }),
     );
 
-    test('prefer 按新默认视为仅 IPv4', () {
-      final settings = settingsWith('prefer');
-      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
-    });
-
-    test('其他旧值与空值都视为仅 IPv4', () {
+    test('只读取当前键，旧 ipv6_mode 与空值都回落仅 IPv4', () {
       for (final value in <Object?>[
+        'prefer',
         'auto',
         'disable',
         'enabled',

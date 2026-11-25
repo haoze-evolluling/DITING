@@ -2,7 +2,6 @@ package com.haoze.diting.widget
 
 import android.content.Context
 import com.haoze.diting.core.rule.RuleDataset
-import com.haoze.diting.core.rule.StorageGate
 import com.haoze.diting.log.AppDatabase
 import java.util.Calendar
 import java.util.Locale
@@ -14,7 +13,6 @@ internal object WidgetStats {
     data class Snapshot(val blockedToday: Int?, val totalToday: Int?)
 
     fun snapshot(context: Context): Snapshot {
-        if (StorageGate.blocksDataPlane(context)) return Snapshot(null, null)
         val databaseName = RuleDataset.active(context).logsDatabase()
         val db = AppDatabase.writable(context, databaseName) ?: return Snapshot(null, null)
         if (!AppDatabase.hasTable(db, TABLE)) return Snapshot(null, null)

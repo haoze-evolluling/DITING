@@ -25,8 +25,6 @@ abstract class LegacyPrefsStore {
   void putStringSet(String container, String key, Set<String> value);
 
   void remove(String container, String key);
-
-  Future<void> putIntAwaiting(String container, String key, int value);
 }
 
 class MemoryLegacyPrefsStore implements LegacyPrefsStore {
@@ -60,10 +58,6 @@ class MemoryLegacyPrefsStore implements LegacyPrefsStore {
   @override
   void putInt(String container, String key, int value) =>
       _write(container, key, value);
-
-  @override
-  Future<void> putIntAwaiting(String container, String key, int value) async =>
-      putInt(container, key, value);
 
   @override
   void putLong(String container, String key, int value) =>
@@ -138,17 +132,6 @@ class MethodChannelLegacyPrefsStore implements LegacyPrefsStore {
   @override
   void putStringSet(String container, String key, Set<String> value) =>
       _write(container, key, 'string_set', value.toList());
-
-  @override
-  Future<void> putIntAwaiting(String container, String key, int value) async {
-    await channel.invokeMethod<void>('put', {
-      'container': container,
-      'key': key,
-      'type': 'int',
-      'value': value,
-    });
-    (_snapshot[container] ??= {})[key] = value;
-  }
 
   @override
   void remove(String container, String key) {

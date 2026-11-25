@@ -194,7 +194,7 @@ class DataCleanupService {
           preset.isNotEmpty &&
           _databases.isMain(db)) {
         await RuleRepository(db).resetPresetWhitelist(preset);
-        _settings.markDefaultWhitelistSeeded(_versionCodeOrFallback);
+        _settings.markDefaultWhitelistSeeded(_appVersionCode);
       }
     }
     return _result(CleanupAction.domainRules, removed);
@@ -377,10 +377,5 @@ class DataCleanupService {
     final existed = _prefs.read(container, key) != null;
     if (existed) _prefs.remove(container, key);
     return existed;
-  }
-
-  int get _versionCodeOrFallback {
-    final raw = _prefs.read(LegacySettings.uiContainer, 'app_version_code');
-    return raw is int && raw > 0 ? raw : _appVersionCode;
   }
 }

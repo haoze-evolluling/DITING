@@ -311,8 +311,6 @@ fn system(source: &Value) -> Value {
     json!({
         "bypassLan": boolean(source, "bypassLan").unwrap_or(false),
         "ipv6Mode": text(source, "ipv6Mode"),
-        "tunnelIpv6": boolean(source, "tunnelIpv6").unwrap_or(false),
-        "dnsAaaa": boolean(source, "dnsAaaa").unwrap_or(false),
         "routeAddress": sorted_strings(
             &get(source, "routeAddress").cloned().unwrap_or(Value::Null),
         ),

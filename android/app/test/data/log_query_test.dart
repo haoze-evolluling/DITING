@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../support/legacy_schema.dart';
+import '../support/test_schema.dart';
 
 void main() {
   setUpAll(() {
@@ -21,7 +21,7 @@ void main() {
 
   setUp(() async {
     db = await databaseFactory.openDatabase(inMemoryDatabasePath);
-    await createLegacySchema(db);
+    await createTestSchema(db);
     await db.execute(
       'CREATE TABLE dns_race_log ('
       'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '

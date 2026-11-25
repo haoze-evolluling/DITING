@@ -14,7 +14,7 @@ import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../support/legacy_schema.dart';
+import '../support/test_schema.dart';
 
 void main() {
   group('分析与提示词', _agentAnalysis);
@@ -235,7 +235,7 @@ void _agentAnalysis() {
 
     setUp(() async {
       db = await databaseFactory.openDatabase(inMemoryDatabasePath);
-      await createLegacySchema(db);
+      await createTestSchema(db);
     });
 
     tearDown(() => db.close());
@@ -314,30 +314,22 @@ void _agentAnalysis() {
       settings = LegacySettings(store);
     });
 
-    test('九个键落在全局容器，键名与 1.4.3 一致', () {
-      settings.setAgentApiBaseUrl('https://api.moonshot.cn/v1');
-      settings.setAgentApiKey('  sk-1  ');
-      settings.setAgentApiModel('kimi-k3');
+    test('设置落在全局容器，不再写旧版平铺键', () {
       settings.setAgentApiTemperature(0.4);
       settings.setAgentApiSystemPrompt('prompt');
       settings.setAgentAiActiveProviderId('p1');
-      expect(
-        store.read('dns_vpn_prefs', 'agent_api_base_url'),
-        'https://api.moonshot.cn/v1',
-      );
-      expect(store.read('dns_vpn_prefs', 'agent_api_key'), 'sk-1');
-      expect(store.read('dns_vpn_prefs', 'agent_api_model'), 'kimi-k3');
       expect(store.read('dns_vpn_prefs', 'agent_api_temperature'), '0.4');
       expect(store.read('dns_vpn_prefs', 'agent_api_system_prompt'), 'prompt');
       expect(store.read('dns_vpn_prefs', 'agent_ai_active_provider_id'), 'p1');
+      expect(store.read('dns_vpn_prefs', 'agent_api_key'), isNull);
+      expect(store.read('dns_vpn_prefs', 'agent_api_base_url'), isNull);
+      expect(store.read('dns_vpn_prefs', 'agent_api_model'), isNull);
     });
 
-    test('温度按字符串存，读的时候两种类型都认', () {
+    test('温度按字符串往返，缺失时回落默认', () {
       expect(settings.agentApiTemperature, 0.7);
-      store.putFloat('dns_vpn_prefs', 'agent_api_temperature', 1.2);
+      settings.setAgentApiTemperature(1.2);
       expect(settings.agentApiTemperature, 1.2);
-      store.putString('dns_vpn_prefs', 'agent_api_temperature', '0.3');
-      expect(settings.agentApiTemperature, 0.3);
     });
 
     test('厂商 JSON 往返保留混淆后的密钥', () {

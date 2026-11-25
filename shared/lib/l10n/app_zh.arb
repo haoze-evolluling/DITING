@@ -894,7 +894,7 @@
   "rulesDbUnavailable": "当前环境无法读写规则库",
   "agentApiKeyMissing": "尚未配置可用的 API Key，请先在「AI 厂商管理」里填写并选中该厂商。",
   "agentNoExtraInfo": "（无附加信息）",
-  "agentNoLegacyDatabase": "未找到旧版数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。",
+  "agentNoLogDatabase": "未找到运行日志数据库，无法读取 DNS 与 HTTPS 日志；请先启动一次服务。",
   "autoUpdateDisabled": "自动更新已关闭",
   "autoUpdateNoSubscriptions": "没有可自动更新的订阅",
   "autoUpdateNotDue": "未到更新时间",
@@ -956,7 +956,7 @@
   "subscriptionNothingToUpdate": "没有可更新的订阅",
   "subscriptionPickRuleFile": "请选择一个规则文件",
   "subscriptionPickTxtFile": "请选择扩展名为 .txt 的规则文件",
-  "subscriptionLegacyDatabaseMissing": "订阅数据库不可用（未找到 1.4.3 数据库）",
+  "subscriptionDatabaseMissing": "订阅数据库不可用（未找到本地数据库）",
   "subscriptionThisFile": "该文件",
   "subscriptionThisLink": "该订阅链接",
   "subscriptionLocalRuleFile": "本地规则文件",
@@ -2604,50 +2604,13 @@
   "devVacuum": "压缩数据库",
   "devVacuumBody": "对七个本地库执行 VACUUM，回收已删除记录占用的空间",
   "devStorageTitle": "存储状态",
-  "devStorageV2Ready": "V2 存储已就绪：每个模式独立规则库与日志库",
-  "devStorageV2Pending": "V2 存储尚未完成",
-  "devStorageV2Detail": "状态 {state} · 完成于 {date}",
-  "@devStorageV2Detail": {
+  "devStorageFiles": "{count} 个数据库共 {kb} KB",
+  "@devStorageFiles": {
     "placeholders": {
-      "state": { "type": "String" },
-      "date": { "type": "String" }
-    }
-  },
-  "devStorageV2Error": "迁移错误：{error}",
-  "@devStorageV2Error": {
-    "placeholders": {
-      "error": { "type": "String" }
-    }
-  },
-  "devStorageV2Files": "7 个数据库共 {kb} KB",
-  "@devStorageV2Files": {
-    "placeholders": {
+      "count": { "type": "int" },
       "kb": { "type": "int" }
     }
   },
-  "storageV2Title": "正在升级本地数据",
-  "storageV2Preparing": "正在准备数据库…",
-  "storageV2Progress": "正在迁移 {database}（{current}/{total}）",
-  "@storageV2Progress": {
-    "placeholders": {
-      "database": { "type": "String" },
-      "current": { "type": "int" },
-      "total": { "type": "int" }
-    }
-  },
-  "storageV2Verifying": "正在校验数据…",
-  "storageV2NeedStop": "网络连接正在使用旧数据库。请先停止当前连接，再继续升级。",
-  "storageV2StopAndRetry": "停止连接并继续",
-  "storageV2Retry": "重试",
-  "storageV2Discard": "放弃旧数据并继续",
-  "storageV2Failed": "本地数据升级失败：{error}",
-  "@storageV2Failed": {
-    "placeholders": {
-      "error": { "type": "String" }
-    }
-  },
-  "storageV2DiscardTitle": "放弃旧数据？",
-  "storageV2DiscardConfirm": "无法读取的旧数据将被丢弃，应用会以空数据库启动。此操作无法撤销。",
   "devCancel": "取消",
   "devRun": "执行",
   "devConfirmBody": "{action}\n\n该操作会真正改写本机数据，无法撤销。",
@@ -4268,7 +4231,7 @@
     }
   },
   "agentProvidersKeyMissing": "缺少密钥",
-  "agentProvidersFooter": "点一行可切换当前生效厂商；切换会把接口地址、密钥与模型同步到旧版的四个平铺键，避免新版界面与旧版读取来源不一致。",
+  "agentProvidersFooter": "点一行可切换当前生效厂商；接口地址、密钥与模型随厂商配置一起保存。",
   "agentProvidersAdded": "已添加",
   "agentProvidersDeleteTitle": "删除厂商",
   "agentProvidersDeleteBody": "确定要删除「{name}」吗？相关 API Key 也会从本机移除。",
@@ -4287,7 +4250,7 @@
   "agentEditorModel": "模型名称",
   "agentEditorModelHint": "点「拉取模型」从厂商返回的列表里选",
   "agentEditorKeyKeep": "留空则保留原密钥",
-  "agentEditorKeyLocal": "仅保存在本机（旧版同一套掩码）",
+  "agentEditorKeyLocal": "仅保存在本机（加密掩码）",
   "agentEditorFetching": "请求中…",
   "agentEditorFetch": "拉取模型",
   "agentEditorTest": "测试连接",

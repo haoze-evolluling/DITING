@@ -32,26 +32,6 @@ abstract final class StorageContract {
   /// 使简洁模式与普通模式具备相同的 HTTP 记录与按应用流量统计能力。
   static const schemaVersion = 2;
 
-  static const settingsContainer = 'diting_settings';
-
-  static const stateKey = 'storage_v2_state';
-
-  static const completedAtKey = 'storage_v2_completed_at';
-
-  static const errorKey = 'storage_v2_error';
-
-  static const reportKey = 'storage_v2_report';
-
-  static const stateIdle = 0;
-
-  static const stateCopying = 1;
-
-  static const stateVerified = 2;
-
-  static const stateCleaned = 3;
-
-  static const migrationLockName = '.storage_v2_migrating';
-
   static const allDatabases = <String>[
     normalRulesDatabase,
     normalLogsDatabase,
@@ -59,8 +39,4 @@ abstract final class StorageContract {
     expressLogsDatabase,
     globalDatabase,
   ];
-
-  static Iterable<DatabaseKind> get kinds => DatabaseKind.values;
-
-  static bool isReadyState(int state) => state >= stateVerified;
 }

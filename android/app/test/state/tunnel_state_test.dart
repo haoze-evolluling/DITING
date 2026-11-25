@@ -177,11 +177,7 @@ void _expressMode() {
           'theme_color_style': 'moss',
           'excluded_app_packages': ['com.example.skip'],
         },
-        'diting_express_prefs': {
-          'selected_provider_id': 'preset_dnspod_dns',
-          'vpn_ipv6_enabled': true,
-          'dns_aaaa_enabled': true,
-        },
+        'diting_express_prefs': {'selected_provider_id': 'preset_dnspod_dns'},
         'express_vpn_prefs': {'express_vpn_running': true},
       });
       final normal = LegacySettings(store);
@@ -219,8 +215,6 @@ void _expressMode() {
         'diting_settings': {'app_work_mode': 'express'},
         'diting_express_prefs': {
           'selected_provider_id': 'preset_dnspod_dns',
-          'vpn_ipv6_enabled': true,
-          'dns_aaaa_enabled': true,
           ...dnsPrefs,
         },
         'express_vpn_prefs': expressRunning,

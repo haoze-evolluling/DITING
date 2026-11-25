@@ -1,6 +1,6 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-Future<void> createLegacySchema(Database db) async {
+Future<void> createTestSchema(Database db) async {
   await db.execute(
     'CREATE TABLE http_request_log ('
     'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '

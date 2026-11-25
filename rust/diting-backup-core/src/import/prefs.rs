@@ -300,32 +300,18 @@ fn cache_policy_of(value: &Value) -> Option<(&'static str, i64)> {
     let builtin = |storage: &'static str, percent: i64| Some((storage, percent));
     match preset.as_str() {
         "conservative" => builtin("conservative", 50),
-        "balanced" | "standard" => builtin("standard", 100),
-        "high_hit_rate" | "aggressive" => builtin("aggressive", 200),
+        "standard" => builtin("standard", 100),
+        "aggressive" => builtin("aggressive", 200),
         "custom" => Some(("custom", cache_clamp_percent(percent.unwrap_or(100)))),
-        _ => {
-            if let Some(percent) = percent {
-                let percent = cache_clamp_percent(percent);
-                return Some(match percent {
-                    50 => ("conservative", 50),
-                    100 => ("standard", 100),
-                    200 => ("aggressive", 200),
-                    _ => ("custom", percent),
-                });
+        _ => percent.map(|percent| {
+            let percent = cache_clamp_percent(percent);
+            match percent {
+                50 => ("conservative", 50),
+                100 => ("standard", 100),
+                200 => ("aggressive", 200),
+                _ => ("custom", percent),
             }
-            let mode = text(value, "mode")?;
-            let min_enabled = get(value, "minTtlEnabled")
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            let stale_enabled = get(value, "staleFallbackEnabled")
-                .and_then(Value::as_bool)
-                .unwrap_or(false);
-            if mode == "follow_dns_ttl" && !min_enabled && !stale_enabled {
-                Some(("conservative", 50))
-            } else {
-                Some(("standard", 100))
-            }
-        }
+        }),
     }
 }
 

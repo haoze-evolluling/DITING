@@ -411,41 +411,6 @@ fn cache_is_written_as_one_policy() {
 }
 
 #[test]
-fn cache_migrates_the_old_shape() {
-    let content = json!({
-        "format": "diting-backup",
-        "version": 2,
-        "exportedAt": 0,
-        "data": {"cache": {
-            "enabled": true, "mode": "limit_max_ttl", "maxTtlSeconds": 21600,
-            "fixedTtlSeconds": 3600, "minTtlEnabled": true, "minTtlSeconds": 120,
-            "staleFallbackEnabled": true, "staleFallbackSeconds": 900,
-            "preset": "high_hit_rate",
-        }},
-    })
-    .to_string();
-    let plan = run_import(&content, json!({"cache": {"enabled": false}}), false);
-    let config = write_of(&plan, "cache.config").expect("cache policy");
-    assert_eq!(config["preset"], json!("aggressive"));
-    assert_eq!(config["ttlScalePercent"], json!(200));
-
-    let follow = json!({
-        "format": "diting-backup",
-        "version": 2,
-        "exportedAt": 0,
-        "data": {"cache": {
-            "enabled": true, "mode": "follow_dns_ttl",
-            "minTtlEnabled": false, "staleFallbackEnabled": false,
-        }},
-    })
-    .to_string();
-    let plan = run_import(&follow, json!({"cache": {"enabled": false}}), false);
-    let config = write_of(&plan, "cache.config").expect("cache policy");
-    assert_eq!(config["preset"], json!("conservative"));
-    assert_eq!(config["ttlScalePercent"], json!(50));
-}
-
-#[test]
 fn outbound_never_touches_credentials_or_the_switch() {
     let content = document(
         &["outbound"],
@@ -550,13 +515,13 @@ fn system_clamps_the_dynamic_block_policy_and_keeps_raw_defaults() {
 }
 
 #[test]
-fn system_migrates_legacy_ipv6_and_imports_route_lists() {
+fn system_imports_ipv6_mode_and_route_lists() {
     let content = json!({
         "format": "diting-backup",
         "version": 2,
         "data": {
             "system": {
-                "ipv6Mode": "prefer",
+                "ipv6Mode": "auto",
                 "routeAddress": ["2001:db8::/32", "10.0.0.0/8", "10.0.0.0/8"],
                 "routeExcludeAddress": ["192.168.0.0/16"],
             },
@@ -566,16 +531,13 @@ fn system_migrates_legacy_ipv6_and_imports_route_lists() {
     let plan = run_import(
         &content,
         json!({"system": {
-            "tunnelIpv6": false,
-            "dnsAaaa": false,
+            "ipv6Mode": "ipv4",
             "routeAddress": [],
             "routeExcludeAddress": [],
         }}),
         false,
     );
     assert_eq!(write_of(&plan, "system.ipv6Mode"), Some(&json!("auto")));
-    assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
-    assert_eq!(write_of(&plan, "system.dnsAaaa"), None);
     assert_eq!(
         write_of(&plan, "system.routeAddress"),
         Some(&json!(["10.0.0.0/8", "2001:db8::/32"]))
@@ -587,7 +549,7 @@ fn system_migrates_legacy_ipv6_and_imports_route_lists() {
 }
 
 #[test]
-fn the_ipv6_mode_wins_over_legacy_booleans() {
+fn legacy_ipv6_values_and_booleans_are_ignored() {
     let content = json!({
         "format": "diting-backup",
         "version": 2,
@@ -600,18 +562,14 @@ fn the_ipv6_mode_wins_over_legacy_booleans() {
         },
     })
     .to_string();
-    let plan = run_import(
-        &content,
-        json!({"system": {"tunnelIpv6": false, "dnsAaaa": false}}),
-        false,
-    );
-    assert_eq!(write_of(&plan, "system.ipv6Mode"), Some(&json!("auto")));
+    let plan = run_import(&content, json!({"system": {}}), false);
+    assert_eq!(write_of(&plan, "system.ipv6Mode"), None);
     assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
     assert_eq!(write_of(&plan, "system.dnsAaaa"), None);
 }
 
 #[test]
-fn explicit_ipv6_modes_round_trip_without_the_legacy_pair() {
+fn explicit_ipv6_modes_round_trip() {
     for mode in ["ipv4", "auto", "ipv6"] {
         let content = json!({
             "format": "diting-backup",
@@ -621,8 +579,6 @@ fn explicit_ipv6_modes_round_trip_without_the_legacy_pair() {
         .to_string();
         let plan = run_import(&content, json!({"system": {}}), false);
         assert_eq!(write_of(&plan, "system.ipv6Mode"), Some(&json!(mode)));
-        assert_eq!(write_of(&plan, "system.tunnelIpv6"), None);
-        assert_eq!(write_of(&plan, "system.dnsAaaa"), None);
     }
 }
 

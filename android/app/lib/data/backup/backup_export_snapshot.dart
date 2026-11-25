@@ -1,6 +1,5 @@
 part of 'backup_exporter.dart';
 
-
 extension _BackupExportSnapshot on BackupExporter {
   Future<Map<String, Object?>> _snapshot(
     BackupExportSource source,
@@ -231,8 +230,6 @@ extension _BackupExportSnapshot on BackupExporter {
     return {
       'bypassLan': settings.bypassLanEnabled,
       'ipv6Mode': settings.ipv6Mode.storageValue,
-      'tunnelIpv6': settings.ipv6Mode.storageValue != 'ipv4',
-      'dnsAaaa': settings.ipv6Mode.storageValue != 'ipv4',
       'routeAddress': settings.vpnRouteAddress,
       'routeExcludeAddress': settings.vpnRouteExcludeAddress,
       'logRetentionDays': settings.logRetentionDays,

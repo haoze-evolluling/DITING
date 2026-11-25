@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import '../support/legacy_schema.dart';
+import '../support/test_schema.dart';
 
 void main() {
   group('概览聚合', _realDataWiring);
@@ -26,7 +26,7 @@ void _realDataWiring() {
 
   setUp(() async {
     db = await databaseFactory.openDatabase(inMemoryDatabasePath);
-    await createLegacySchema(db);
+    await createTestSchema(db);
     await db.execute(
       'CREATE TABLE dns_cache ('
       'id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '

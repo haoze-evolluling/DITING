@@ -64,10 +64,6 @@ extension LegacySettingsParity on LegacySettings {
       LegacySettings.ipv6ModeKey,
       mode.storageValue,
     );
-    // 同时写回旧键，回滚到旧版本时行为仍然连续。
-    final dual = mode != Ipv6Mode.ipv4;
-    _store.putBool(dnsContainer, 'vpn_ipv6_enabled', dual);
-    _store.putBool(dnsContainer, 'dns_aaaa_enabled', dual);
   }
 
   void setVpnRouteAddress(Iterable<String> values) =>
@@ -265,18 +261,8 @@ extension LegacySettingsParity on LegacySettings {
   void setAgentApiEnabled(bool value) =>
       _store.putBool(_ui, 'agent_api_enabled', value);
 
-  void setAgentApiKey(String value) =>
-      _store.putString(_ui, 'agent_api_key', value.trim());
-
-  void setAgentApiBaseUrl(String value) =>
-      _store.putString(_ui, 'agent_api_base_url', value.trim());
-
-  void setAgentApiModel(String value) =>
-      _store.putString(_ui, 'agent_api_model', value.trim());
-
   double get agentApiTemperature {
     final raw = _store.read(_ui, 'agent_api_temperature');
-    if (raw is num) return raw.toDouble();
     if (raw is String) {
       final parsed = double.tryParse(raw.trim());
       if (parsed != null) return parsed;

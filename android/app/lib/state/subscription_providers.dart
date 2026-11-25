@@ -214,9 +214,7 @@ class SubscriptionActions {
     final record = SubscriptionRecord.fromRow(fields);
     final repository = await _ref.read(subscriptionRepositoryProvider.future);
     if (repository == null) {
-      return AddSubscriptionFailure(
-        currentL10n.subscriptionLegacyDatabaseMissing,
-      );
+      return AddSubscriptionFailure(currentL10n.subscriptionDatabaseMissing);
     }
     final existing = await repository.byUrlAndKind(record.url, record.kind);
     if (existing != null) {

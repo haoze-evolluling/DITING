@@ -32,8 +32,8 @@ enum DnsCacheTier {
 
   static DnsCacheTier? fromStorage(String? value) => switch (value) {
     'conservative' => DnsCacheTier.conservative,
-    'standard' || 'balanced' => DnsCacheTier.standard,
-    'aggressive' || 'high_hit_rate' => DnsCacheTier.aggressive,
+    'standard' => DnsCacheTier.standard,
+    'aggressive' => DnsCacheTier.aggressive,
     'custom' => DnsCacheTier.custom,
     _ => null,
   };
@@ -64,40 +64,22 @@ class DnsCachePolicy {
 
   static DnsCachePolicy read(LegacySettings settings) {
     final stored = DnsCacheTier.fromStorage(settings.cachePresetV4);
-    if (stored != null) {
-      if (!stored.isCustom) {
-        return DnsCachePolicy(
-          tier: stored,
-          scalePercent: stored.defaultScalePercent,
-        );
-      }
-      return DnsCachePolicy(
-        tier: DnsCacheTier.custom,
-        scalePercent: clampScale(settings.cacheScalePercentV4 ?? 100),
+    if (stored == null) {
+      return const DnsCachePolicy(
+        tier: DnsCacheTier.standard,
+        scalePercent: 100,
       );
     }
-
-    final legacy = DnsCacheTier.fromStorage(settings.cachePresetRaw);
-    if (legacy != null) {
-      if (!legacy.isCustom) {
-        return DnsCachePolicy(
-          tier: legacy,
-          scalePercent: legacy.defaultScalePercent,
-        );
-      }
-      return const DnsCachePolicy(tier: DnsCacheTier.custom, scalePercent: 100);
+    if (!stored.isCustom) {
+      return DnsCachePolicy(
+        tier: stored,
+        scalePercent: stored.defaultScalePercent,
+      );
     }
-
-    final conservative =
-        settings.cacheModeRaw == 'follow_dns_ttl' &&
-        !settings.cacheMinTtlEnabled &&
-        !settings.cacheStaleFallbackEnabled;
-    return conservative
-        ? const DnsCachePolicy(
-            tier: DnsCacheTier.conservative,
-            scalePercent: 50,
-          )
-        : const DnsCachePolicy(tier: DnsCacheTier.standard, scalePercent: 100);
+    return DnsCachePolicy(
+      tier: DnsCacheTier.custom,
+      scalePercent: clampScale(settings.cacheScalePercentV4 ?? 100),
+    );
   }
 
   void write(LegacySettings settings, {required bool enabled}) {

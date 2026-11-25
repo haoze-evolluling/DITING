@@ -179,7 +179,7 @@ class AgentAnalysisNotifier extends Notifier<AgentAnalysisState> {
         );
       case AgentTrafficTarget():
         if (db == null) {
-          throw AgentApiException(currentL10n.agentNoLegacyDatabase);
+          throw AgentApiException(currentL10n.agentNoLogDatabase);
         }
         final summary = await summarizeRecentTraffic(
           dnsRepository: DnsLogRepository(db),

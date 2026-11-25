@@ -2,10 +2,8 @@ library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
 
-import 'dart:async';
 import 'dart:convert';
 
-import 'package:diting_shared/data/db/storage_contract.dart';
 import 'package:diting_shared/data/prefs/ipv6_mode.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 
@@ -133,60 +131,6 @@ class LegacySettings {
     );
   }
 
-  int get storageV2State =>
-      _int(workModeContainer, StorageContract.stateKey, StorageContract.stateIdle);
-
-  void setStorageV2State(int state) => _store.putInt(
-    workModeContainer,
-    StorageContract.stateKey,
-    state,
-  );
-
-  Future<void> commitStorageV2State(int state) => _store.putIntAwaiting(
-    workModeContainer,
-    StorageContract.stateKey,
-    state,
-  );
-
-  DateTime? get storageV2CompletedAt {
-    final millis =
-        _int(workModeContainer, StorageContract.completedAtKey, 0);
-    return millis > 0 ? DateTime.fromMillisecondsSinceEpoch(millis) : null;
-  }
-
-  void setStorageV2CompletedAt(DateTime time) => _store.putLong(
-    workModeContainer,
-    StorageContract.completedAtKey,
-    time.millisecondsSinceEpoch,
-  );
-
-  String? get storageV2Error =>
-      _string(workModeContainer, StorageContract.errorKey);
-
-  void setStorageV2Error(String? message) {
-    if (message == null || message.isEmpty) {
-      _store.remove(workModeContainer, StorageContract.errorKey);
-    } else {
-      _store.putString(
-        workModeContainer,
-        StorageContract.errorKey,
-        message,
-      );
-    }
-  }
-
-  void setStorageV2Report(String? report) {
-    if (report == null || report.isEmpty) {
-      _store.remove(workModeContainer, StorageContract.reportKey);
-    } else {
-      _store.putString(
-        workModeContainer,
-        StorageContract.reportKey,
-        report,
-      );
-    }
-  }
-
   String get workModeRaw =>
       _string(workModeContainer, 'app_work_mode') ?? 'normal';
 
@@ -222,16 +166,8 @@ class LegacySettings {
 
   static const ipv6ModeKey = 'vpn_ipv6_mode';
 
-  /// 默认值从“自动”改为“仅 IPv4”的一次性迁移标记。
-  static const ipv6DefaultIpv4MigratedKey = 'vpn_ipv6_default_ipv4_migrated';
-
-  Ipv6Mode get ipv6Mode {
-    final stored = Ipv6Mode.fromStorage(_string(dnsContainer, ipv6ModeKey));
-    if (stored != null) return stored;
-    // 旧版的“自动”（ipv6_mode=prefer 或两个布尔开关同时开启）随新默认一起
-    // 视为仅 IPv4；缺省值同样是仅 IPv4。
-    return Ipv6Mode.ipv4;
-  }
+  Ipv6Mode get ipv6Mode =>
+      Ipv6Mode.fromStorage(_string(dnsContainer, ipv6ModeKey)) ?? Ipv6Mode.ipv4;
 
   List<String> get vpnRouteAddress => _routeAddress('vpn_route_address');
 
@@ -418,5 +354,4 @@ class LegacySettings {
       jsonEncode(values.toList()..sort());
 
   static double _clampedOpacity(double value) => value.clamp(0.1, 1.0);
-
 }
