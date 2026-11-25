@@ -188,7 +188,7 @@ void _expressMode() {
       final express = normal.forExpress();
 
       expect(express.selectedProviderId, 'preset_dnspod_dns');
-      expect(express.ipv6Mode, Ipv6Mode.auto);
+      expect(express.ipv6Mode, Ipv6Mode.ipv4);
       expect(express.excludedPackages, {'com.example.skip'});
       expect(express.expressVpnRunning, isTrue);
       expect(express.paletteRaw, 'moss');
@@ -203,7 +203,7 @@ void _expressMode() {
       expect(express.resolutionModeRaw, 'single');
       expect(express.cacheEnabled, isTrue);
       expect(express.bootstrapEnabled, isTrue);
-      expect(express.ipv6Mode, Ipv6Mode.auto);
+      expect(express.ipv6Mode, Ipv6Mode.ipv4);
       expect(express.expressVpnRunning, isFalse);
     });
   });
@@ -251,7 +251,7 @@ void _expressMode() {
       final settings = c.read(legacySettingsProvider);
       // 简洁模式与普通模式发送同一套启动参数，全部取自当前数据集的设置。
       expect(request.bypassLan, settings.bypassLanEnabled);
-      expect(request.ipv6Mode, Ipv6Mode.auto.storageValue);
+      expect(request.ipv6Mode, Ipv6Mode.ipv4.storageValue);
       expect(request.routeAddress, isEmpty);
       expect(request.routeExcludeAddress, isEmpty);
       expect(request.blockedPackages, settings.blockedAppPackages.toList());

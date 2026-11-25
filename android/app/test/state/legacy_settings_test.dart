@@ -58,16 +58,16 @@ void _legacySettings() {
       expect(settings.resolutionModeRaw, 'parallel_race');
     });
 
-    test('旧 ipv6_mode=prefer 迁移为自动', () {
+    test('旧 ipv6_mode=prefer 按新默认视为仅 IPv4', () {
       final settings = LegacySettings(
         MemoryLegacyPrefsStore({
           'dns_vpn_prefs': {'ipv6_mode': 'prefer'},
         }),
       );
-      expect(settings.ipv6Mode, Ipv6Mode.auto);
+      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
     });
 
-    test('旧 ipv6_mode 的其他值迁移为仅 IPv4，缺省采用自动', () {
+    test('旧 ipv6_mode 的其他值与缺省值都采用仅 IPv4', () {
       for (final raw in ['auto', 'disable', 'enabled', 'disabled', '']) {
         final settings = LegacySettings(
           MemoryLegacyPrefsStore({
@@ -77,7 +77,7 @@ void _legacySettings() {
         expect(settings.ipv6Mode, Ipv6Mode.ipv4, reason: raw);
       }
       final empty = LegacySettings(MemoryLegacyPrefsStore());
-      expect(empty.ipv6Mode, Ipv6Mode.auto);
+      expect(empty.ipv6Mode, Ipv6Mode.ipv4);
     });
 
     test('新键优先于旧 ipv6_mode 与旧布尔值', () {
@@ -420,10 +420,10 @@ void _settingsCatalog() {
       expect(c.read(logModeProvider), LegacyLogMode.off);
     });
 
-    test('IPv6 三态默认自动且可切换', () {
+    test('IPv6 三态默认仅 IPv4 且可切换', () {
       final c = container();
       final notifier = c.read(foregroundBackgroundProvider.notifier);
-      expect(c.read(foregroundBackgroundProvider).ipv6Mode, Ipv6Mode.auto);
+      expect(c.read(foregroundBackgroundProvider).ipv6Mode, Ipv6Mode.ipv4);
 
       notifier.setIpv6Mode(Ipv6Mode.ipv4);
       expect(c.read(foregroundBackgroundProvider).ipv6Mode, Ipv6Mode.ipv4);

@@ -222,19 +222,15 @@ class LegacySettings {
 
   static const ipv6ModeKey = 'vpn_ipv6_mode';
 
+  /// 默认值从“自动”改为“仅 IPv4”的一次性迁移标记。
+  static const ipv6DefaultIpv4MigratedKey = 'vpn_ipv6_default_ipv4_migrated';
+
   Ipv6Mode get ipv6Mode {
     final stored = Ipv6Mode.fromStorage(_string(dnsContainer, ipv6ModeKey));
     if (stored != null) return stored;
-    final legacyRaw = _string(dnsContainer, 'ipv6_mode');
-    if (legacyRaw != null) {
-      return legacyRaw.trim().toLowerCase() == 'prefer'
-          ? Ipv6Mode.auto
-          : Ipv6Mode.ipv4;
-    }
-    final tunnel = _store.read(dnsContainer, 'vpn_ipv6_enabled');
-    final aaaa = _store.read(dnsContainer, 'dns_aaaa_enabled');
-    if (tunnel == null && aaaa == null) return Ipv6Mode.auto;
-    return tunnel == true && aaaa == true ? Ipv6Mode.auto : Ipv6Mode.ipv4;
+    // 旧版的“自动”（ipv6_mode=prefer 或两个布尔开关同时开启）随新默认一起
+    // 视为仅 IPv4；缺省值同样是仅 IPv4。
+    return Ipv6Mode.ipv4;
   }
 
   List<String> get vpnRouteAddress => _routeAddress('vpn_route_address');

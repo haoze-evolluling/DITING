@@ -96,9 +96,9 @@ mod tests {
     #[test]
     fn defaults_have_the_restore_fields() {
         let defaults = start_defaults();
-        assert_eq!(defaults["ipv6Mode"], "auto");
-        assert_eq!(defaults["tunnelIpv6"], true);
-        assert_eq!(defaults["dnsAaaa"], true);
+        assert_eq!(defaults["ipv6Mode"], "ipv4");
+        assert_eq!(defaults["tunnelIpv6"], false);
+        assert_eq!(defaults["dnsAaaa"], false);
         assert!(defaults["outboundProxy"]
             .as_str()
             .unwrap()

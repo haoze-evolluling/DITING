@@ -11,7 +11,7 @@ internal enum class Ipv6Mode(val wire: String) {
 
     companion object {
         fun fromWire(raw: String?): Ipv6Mode =
-            entries.firstOrNull { it.wire == raw?.trim()?.lowercase() } ?: AUTO
+            entries.firstOrNull { it.wire == raw?.trim()?.lowercase() } ?: IPV4
 
         /** 旧版两个布尔开关：只有同时开启才等价于“自动”。 */
         fun fromLegacy(tunnelIpv6: Boolean, dnsAaaa: Boolean): Ipv6Mode =

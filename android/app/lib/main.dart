@@ -20,6 +20,7 @@ import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
+import 'package:diting_shared/data/prefs/ipv6_default_migration.dart';
 import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_shared/ui/scroll_activity.dart';
@@ -57,6 +58,7 @@ Future<void> main() async {
   final versionTask = loadAppVersion();
   final store = await storeTask;
   _stage('prefs');
+  migrateIpv6DefaultToIpv4(store);
   final settings = LegacySettings(store);
   unawaited(
     reconcileLauncherIcon(LauncherIconBridge(), settings.launcherIconStyleRaw),

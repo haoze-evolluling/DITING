@@ -28,12 +28,12 @@ void main() {
       }),
     );
 
-    test('prefer 映射为自动', () {
+    test('prefer 按新默认视为仅 IPv4', () {
       final settings = settingsWith('prefer');
-      expect(settings.ipv6Mode, Ipv6Mode.auto);
+      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
     });
 
-    test('其他旧值映射为仅 IPv4，空值采用自动', () {
+    test('其他旧值与空值都视为仅 IPv4', () {
       for (final value in <Object?>[
         'auto',
         'disable',
@@ -45,7 +45,7 @@ void main() {
         expect(settings.ipv6Mode, Ipv6Mode.ipv4, reason: '$value');
       }
       final settings = settingsWith(null);
-      expect(settings.ipv6Mode, Ipv6Mode.auto);
+      expect(settings.ipv6Mode, Ipv6Mode.ipv4);
     });
   });
 

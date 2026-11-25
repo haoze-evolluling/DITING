@@ -81,7 +81,7 @@ internal class VpnStartConfigStore(private val prefsName: String) {
 
     companion object {
         /**
-         * 新键优先；没有新键时按旧布尔值迁移，两个键都不存在则采用新的默认“自动”。
+         * 新键优先；没有新键时按旧布尔值迁移，两个键都不存在则采用默认“仅 IPv4”。
          */
         private fun restoreIpv6Mode(prefs: SharedPreferences): String {
             val raw = prefs.getString(KEY_LAST_IPV6_MODE, null)?.trim()?.lowercase()
@@ -94,7 +94,7 @@ internal class VpnStartConfigStore(private val prefsName: String) {
             }
             val hasTunnel = prefs.contains(KEY_LAST_TUNNEL_IPV6)
             val hasAaaa = prefs.contains(KEY_LAST_DNS_AAAA)
-            if (!hasTunnel && !hasAaaa) return Ipv6Mode.AUTO.wire
+            if (!hasTunnel && !hasAaaa) return Ipv6Mode.IPV4.wire
             val tunnel = prefs.getBoolean(KEY_LAST_TUNNEL_IPV6, false)
             val aaaa = prefs.getBoolean(KEY_LAST_DNS_AAAA, false)
             return Ipv6Mode.fromLegacy(tunnel, aaaa).wire

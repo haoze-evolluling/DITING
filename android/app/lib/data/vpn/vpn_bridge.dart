@@ -26,7 +26,7 @@ class VpnStartRequest {
     this.outboundProxy = '',
     this.proxyAppPackage = '',
     this.bypassLan = true,
-    this.ipv6Mode = 'auto',
+    this.ipv6Mode = 'ipv4',
     this.routeAddress = const [],
     this.routeExcludeAddress = const [],
     this.excludedPackages = const [],
