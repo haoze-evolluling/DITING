@@ -20,6 +20,10 @@ dependencies:
   path_parsing: ^1.1.0                   # Parses the few brand SVGs Tabler does not ship
   collection: ^1.19.1
   flutter_tabler_icons: ^1.43.0            # The one icon set used across the app
+  # material_ui depends on cupertino_ui, whose IconData constants declare
+  # `fontPackage: cupertino_icons`; without this dependency `flutter build`
+  # warns that the font is missing.
+  cupertino_icons: ^1.0.8
 
   # Lazily-built list that keeps a far jump (scrollbar drag) at O(1) per row by
   # estimating unlaid rows, as FlClash's vendored prism_ui list does.
