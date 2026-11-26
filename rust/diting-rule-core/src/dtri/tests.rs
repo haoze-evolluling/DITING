@@ -265,3 +265,73 @@ fn only_plain_rules_are_plain() {
         ..plain.clone()
     }));
 }
+
+fn pack(rules: &[Rule<'_>]) -> Vec<u8> {
+    let mut writer = crate::payload::Writer::new();
+    writer.u32(rules.len() as u32);
+    for rule in rules {
+        writer.string(rule.pattern);
+        writer.string(rule.source);
+        let mut flags = 0u8;
+        if rule.is_wildcard {
+            flags |= 1;
+        }
+        if rule.app_inverted {
+            flags |= 2;
+        }
+        if rule.is_regex {
+            flags |= 4;
+        }
+        writer.u8(flags);
+        for value in [rule.app_scope, rule.denyallow, rule.dns_type] {
+            match value {
+                Some(text) => writer.string(text),
+                None => writer.u32(u32::MAX),
+            }
+        }
+    }
+    writer.into_vec()
+}
+
+#[test]
+fn hierarchy_dedup_drops_subdomains_covered_by_a_plain_parent() {
+    let parent = [rule("qq.com", "sub_1")];
+    let packed = pack(&[
+        rule("QQ.com.", "sub_1"),
+        rule("wechat.qq.com", "sub_2"),
+        rule("mail.wechat.qq.com", "sub_3"),
+    ]);
+    let deduped = compile_packed_deduped(&packed).expect("deduped image");
+    assert_eq!(
+        deduped,
+        compile_packed(&pack(&parent)).expect("parent image"),
+    );
+    assert!(
+        compile_packed(&packed).expect("plain image").len() > deduped.len(),
+        "the plain image keeps the redundant entries",
+    );
+}
+
+#[test]
+fn hierarchy_dedup_keeps_rules_with_other_semantics() {
+    let packed = pack(&[
+        rule("qq.com", "sub_1"),
+        Rule {
+            is_regex: true,
+            ..rule("wechat.qq.com", "sub_2")
+        },
+        Rule {
+            app_scope: Some("com.tencent.mm"),
+            ..rule("mail.qq.com", "sub_3")
+        },
+        Rule {
+            is_wildcard: true,
+            ..rule("*.qq.com", "sub_4")
+        },
+        rule("notqq.com", "sub_5"),
+    ]);
+    assert_eq!(
+        compile_packed_deduped(&packed).expect("deduped image"),
+        compile_packed(&packed).expect("plain image"),
+    );
+}

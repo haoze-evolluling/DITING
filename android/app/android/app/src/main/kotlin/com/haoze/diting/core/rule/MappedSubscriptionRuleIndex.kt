@@ -15,13 +15,16 @@ internal class MappedSubscriptionRuleIndex private constructor(
 
         fun compileAndLoad(
             target: File,
+            dedupeHierarchy: Boolean,
             forEachRule: ((EnabledRule) -> Unit) -> Unit
         ): MappedSubscriptionRuleIndex {
             target.parentFile?.mkdirs()
             val temp = File(target.parentFile, "${target.name}.${System.nanoTime()}.tmp")
             temp.delete()
             try {
-                temp.outputStream().use { it.write(RustRuleIndexCompiler.compileDocument(forEachRule)) }
+                temp.outputStream().use {
+                    it.write(RustRuleIndexCompiler.compileDocument(dedupeHierarchy, forEachRule))
+                }
                 if (target.exists() && !target.delete()) {
                     Log.w("MappedRuleIndex", "Unable to delete existing ${target.name} before replacement")
                 }

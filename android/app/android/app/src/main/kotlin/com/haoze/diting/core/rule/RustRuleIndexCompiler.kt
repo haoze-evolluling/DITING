@@ -4,7 +4,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 
 internal class RustRuleIndexCompiler private constructor() {
-    external fun compile(packed: ByteArray): ByteArray?
+    external fun compile(packed: ByteArray, dedupeHierarchy: Boolean): ByteArray?
 
     companion object {
         private val instance: RustRuleIndexCompiler by lazy {
@@ -20,8 +20,11 @@ internal class RustRuleIndexCompiler private constructor() {
             }
         }
 
-        fun compileDocument(forEachRule: ((EnabledRule) -> Unit) -> Unit): ByteArray {
-            val image = instance.compile(pack(forEachRule))
+        fun compileDocument(
+            dedupeHierarchy: Boolean,
+            forEachRule: ((EnabledRule) -> Unit) -> Unit,
+        ): ByteArray {
+            val image = instance.compile(pack(forEachRule), dedupeHierarchy)
             checkNotNull(image) { "native rule index writer returned no image" }
             check(image.isNotEmpty()) { "native rule index writer returned an empty image" }
             return image

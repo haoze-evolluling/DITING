@@ -130,14 +130,14 @@ fn corpus_classification_is_pinned() {
 ",
     ));
     assert_eq!(parsed.total_lines, CORPUS.len() as u32);
-    assert_eq!(parsed.block_rules.len(), 29);
+    assert_eq!(parsed.block_rules.len(), 23);
     assert_eq!(parsed.allow_rules.len(), 2);
     assert_eq!(parsed.rewrite_rules.len(), 10);
     assert_eq!(parsed.url_block_rules.len(), 5);
     assert_eq!(parsed.url_allow_rules.len(), 0);
     assert_eq!(parsed.cosmetic_rules.len(), 8);
     assert_eq!(parsed.badfiltered_count, 2);
-    assert_eq!(parsed.duplicate_count, 22);
+    assert_eq!(parsed.duplicate_count, 28);
     assert_eq!(parsed.invalid_count, 23);
     assert_eq!(parsed.unsupported_count, 9);
     assert_eq!(parsed.ignored_count, 7);
@@ -159,13 +159,15 @@ fn corpus_keeps_the_awkward_patterns() {
 ",
     ));
     let block = patterns(&parsed.block_rules);
-    assert!(block.contains(&"ads.example.com"));
-    assert!(block.contains(&"tracker.example.com"));
+    // `||example.com^` 已覆盖这些普通子域名，层级去重后只剩父域名。
+    assert!(block.contains(&"example.com"));
+    assert!(!block.contains(&"ads.example.com"));
+    assert!(!block.contains(&"tracker.example.com"));
+    assert!(!block.contains(&"bom.example.com"));
     assert!(block.contains(&"upper.case.com"));
     assert!(block.contains(&r"^ad[0-9]+\.example\.com$"));
     assert!(block.contains(&"*.wild.com"));
     assert!(block.contains(&"a{2,4}"));
-    assert!(block.contains(&"bom.example.com"));
     assert!(!block.contains(&"中文.cn"));
     assert!(!block.contains(&"a_b.com"));
 

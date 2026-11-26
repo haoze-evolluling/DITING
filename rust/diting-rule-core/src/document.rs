@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::fast_hash::FxBuildHasher;
 
+use crate::hierarchy::drop_covered_block_rules;
 use crate::hosts::{parse_dnsmasq_line, parse_hosts_line_detailed};
 use crate::keys::{allow_key_of, block_key_of, rewrite_key_of, url_key};
 use crate::line::{is_cosmetic_rule_line, parse_line_without_state};
@@ -131,8 +132,12 @@ pub fn parse_document(text: &str) -> CategorizedRules {
         badfiltered += rewrite_rules.remove_keys(&badfilter_keys);
     }
 
+    // badfilter 处理完再按域名层级去重，避免被 badfilter 移除的父域名误伤子域名。
+    let (block_rules, hierarchy_duplicates) = drop_covered_block_rules(block_rules.into_values());
+    duplicates += hierarchy_duplicates;
+
     CategorizedRules {
-        block_rules: block_rules.into_values(),
+        block_rules,
         allow_rules: allow_rules.into_values(),
         rewrite_rules: rewrite_rules.into_values(),
         url_block_rules: url_block_rules.into_values(),

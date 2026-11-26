@@ -1,6 +1,6 @@
 use jni::errors::{Error, LogErrorAndDefault};
 use jni::objects::{JByteArray, JObject};
-use jni::sys::jint;
+use jni::sys::{jboolean, jint};
 use jni::{Env, EnvUnowned};
 
 fn resolve<'local, T: Default>(
@@ -34,9 +34,16 @@ pub extern "system" fn Java_com_haoze_diting_core_rule_RustRuleIndexCompiler_com
     mut env: EnvUnowned<'local>,
     _this: JObject<'local>,
     packed: JByteArray<'local>,
+    dedupe_hierarchy: jboolean,
 ) -> JObject<'local> {
     resolve(&mut env, |env| {
-        run_payload(env, &packed, crate::dtri::compile_packed)
+        run_payload(env, &packed, |payload| {
+            if dedupe_hierarchy {
+                crate::dtri::compile_packed_deduped(payload)
+            } else {
+                crate::dtri::compile_packed(payload)
+            }
+        })
     })
 }
 

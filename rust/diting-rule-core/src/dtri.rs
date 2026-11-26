@@ -1,6 +1,8 @@
 use std::borrow::Cow;
 use std::cmp::Ordering;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+
+use crate::hierarchy::has_strict_ancestor;
 
 pub const MAGIC: u32 = 0x4454_5249;
 pub const VERSION: u32 = 1;
@@ -252,6 +254,16 @@ fn intern(
 }
 
 pub fn compile_packed(payload: &[u8]) -> Option<Vec<u8>> {
+    compile_packed_with(payload, false)
+}
+
+/// 编译前先丢弃被普通父域名规则覆盖的子域名条目。只影响索引体积与
+/// 命中来源，匹配语义不变：父节点本身就会向后代域名继承。
+pub fn compile_packed_deduped(payload: &[u8]) -> Option<Vec<u8>> {
+    compile_packed_with(payload, true)
+}
+
+fn compile_packed_with(payload: &[u8], dedupe_hierarchy: bool) -> Option<Vec<u8>> {
     let mut reader = Reader::new(payload);
     let count = reader.u32()? as usize;
     if count > payload.len() {
@@ -290,7 +302,40 @@ pub fn compile_packed(payload: &[u8]) -> Option<Vec<u8>> {
             dns_type: rule.dns_type.as_deref(),
         })
         .collect();
-    Some(compile(&rules))
+    if !dedupe_hierarchy {
+        return Some(compile(&rules));
+    }
+    let keep = plain_keep_mask(&rules);
+    let filtered: Vec<Rule<'_>> = rules
+        .iter()
+        .zip(keep)
+        .filter_map(|(rule, keep)| keep.then_some(rule.clone()))
+        .collect();
+    Some(compile(&filtered))
+}
+
+/// 标记需要保留的普通规则：父域名已在同一索引里时，子域名条目冗余。
+fn plain_keep_mask(rules: &[Rule<'_>]) -> Vec<bool> {
+    let mut patterns: HashSet<String> = HashSet::new();
+    for rule in rules {
+        if is_plain(rule) {
+            patterns.insert(normalized_pattern(rule.pattern));
+        }
+    }
+    rules
+        .iter()
+        .map(|rule| {
+            if !is_plain(rule) {
+                return true;
+            }
+            let pattern = normalized_pattern(rule.pattern);
+            !has_strict_ancestor(&pattern, |candidate| patterns.contains(candidate))
+        })
+        .collect()
+}
+
+fn normalized_pattern(pattern: &str) -> String {
+    lowercase(pattern).trim_end_matches('.').to_string()
 }
 
 #[derive(Default)]

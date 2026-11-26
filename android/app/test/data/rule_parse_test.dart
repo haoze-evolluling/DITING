@@ -148,6 +148,25 @@ void _ruleParser() {
       expect(parsed.blockRules, hasLength(1));
       expect(parsed.duplicateCount, 2);
     });
+
+    test('父域名已屏蔽时子域名屏蔽规则按层级去重', () {
+      const text = '||qq.com^\n||wechat.qq.com^\n||mail.qq.com^';
+      final parsed = parseCategorized(text);
+      expect(parsed.blockRules.map((rule) => rule.pattern), ['qq.com']);
+      expect(parsed.duplicateCount, 2);
+    });
+
+    test('层级去重不影响带修饰符的子域名规则', () {
+      const text =
+          '||qq.com^\n||wechat.qq.com^\$app=com.tencent.mm\n'
+          '||*.qq.com^\n||mail.qq.com^\$dnstype=A';
+      final parsed = parseCategorized(text);
+      expect(
+        parsed.blockRules.map((rule) => rule.pattern),
+        ['qq.com', 'wechat.qq.com', '*.qq.com', 'mail.qq.com'],
+      );
+      expect(parsed.duplicateCount, 0);
+    });
   });
 
   group('元素隐藏分隔符', () {

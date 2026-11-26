@@ -3,6 +3,7 @@ pub mod domain;
 pub mod dtri;
 pub mod fast_hash;
 pub mod ffi;
+pub mod hierarchy;
 pub mod hosts;
 pub mod index_layout;
 pub mod jni_bridge;

@@ -3,6 +3,7 @@ use std::ptr;
 
 use crate::document::parse_categorized_line;
 use crate::ffi::{encode, into_buffer};
+use crate::hierarchy::{is_plain_domain_rule, PlainAncestors};
 use crate::keys::{allow_key_of, block_key_of, rewrite_key_of, url_key};
 use crate::models::CategorizedRules;
 
@@ -11,17 +12,19 @@ pub struct StreamParse {
     cursor: usize,
     chunk_lines: usize,
     badfilter_keys: HashSet<String>,
+    plain_ancestors: PlainAncestors,
     done: bool,
 }
 
 impl StreamParse {
     pub fn new(text: String, chunk_lines: usize) -> Self {
-        let badfilter_keys = scan_badfilter_keys(&text);
+        let (badfilter_keys, plain_ancestors) = scan_plain_blocks(&text);
         Self {
             text,
             cursor: 0,
             chunk_lines: chunk_lines.max(1),
             badfilter_keys,
+            plain_ancestors,
             done: false,
         }
     }
@@ -73,6 +76,10 @@ impl StreamParse {
                     continue;
                 }
                 if !seen_block.insert(key) {
+                    duplicate_count += 1;
+                    continue;
+                }
+                if self.plain_ancestors.covers(&rule) {
                     duplicate_count += 1;
                     continue;
                 }
@@ -177,22 +184,27 @@ impl StreamParse {
     }
 }
 
-fn contains_ignore_ascii_case(haystack: &str, needle: &[u8]) -> bool {
-    let bytes = haystack.as_bytes();
-    needle.len() <= bytes.len()
-        && bytes
-            .windows(needle.len())
-            .any(|window| window.eq_ignore_ascii_case(needle))
-}
-
-fn scan_badfilter_keys(text: &str) -> HashSet<String> {
+/// 一次预扫描收集 badfilter 键与普通屏蔽规则的父域名集合。
+/// 分块解析无法回看后续分块，所以层级去重必须依赖整篇文档的预扫描。
+fn scan_plain_blocks(text: &str) -> (HashSet<String>, PlainAncestors) {
     let mut keys = HashSet::new();
+    let mut plain_rules: Vec<(bool, String, String)> = Vec::new();
     for line in text.split('\n') {
-        if contains_ignore_ascii_case(line, b"badfilter") {
-            keys.extend(parse_categorized_line(line).badfilter_keys);
+        let classified = parse_categorized_line(line);
+        keys.extend(classified.badfilter_keys);
+        for rule in &classified.block_rules {
+            if is_plain_domain_rule(rule) {
+                plain_rules.push((rule.important, rule.pattern.clone(), block_key_of(rule)));
+            }
         }
     }
-    keys
+    let mut ancestors = PlainAncestors::default();
+    for (important, pattern, key) in plain_rules {
+        if !keys.contains(&key) {
+            ancestors.insert_pattern(important, &pattern);
+        }
+    }
+    (keys, ancestors)
 }
 
 #[no_mangle]
@@ -300,6 +312,30 @@ mod tests {
         assert_eq!(streamed.unsupported_count, whole.unsupported_count);
         assert_eq!(streamed.ignored_count, whole.ignored_count);
         assert_eq!(streamed.total_lines, whole.total_lines);
+    }
+
+    #[test]
+    fn hierarchy_dedup_matches_the_document_across_chunks() {
+        let text = "||wechat.qq.com^\n||qq.com^\n||mail.wechat.qq.com^\n||other.com^\n";
+        let whole = parse_document(text);
+        let streamed = stream_all(text, 1);
+        assert_eq!(
+            sorted_patterns(&streamed.block_rules),
+            sorted_patterns(&whole.block_rules)
+        );
+        assert_eq!(streamed.duplicate_count, whole.duplicate_count);
+    }
+
+    #[test]
+    fn a_badfiltered_parent_does_not_cover_later_chunks() {
+        let text = "||qq.com^\n||qq.com^$badfilter\n||wechat.qq.com^\n";
+        let streamed = stream_all(text, 1);
+        assert_eq!(
+            sorted_patterns(&streamed.block_rules),
+            vec!["wechat.qq.com"]
+        );
+        assert_eq!(streamed.badfiltered_count, 1);
+        assert_eq!(streamed.duplicate_count, 0);
     }
 
     #[test]

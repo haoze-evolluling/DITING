@@ -118,13 +118,14 @@ object RuleSnapshotStore {
         } else {
             RuleIndexLayout.allowImportantIndex(indexDirectory)
         }
-        val normal = ensureIndex(normalFile, triesFresh) { consume ->
+        // 屏蔽规则按域名后缀匹配，父域名已存在时子域名条目冗余；允许规则保持原样。
+        val normal = ensureIndex(normalFile, triesFresh, isBlock) { consume ->
             val importantFilter = if (isBlock) false else null
             dao.forEachSubscriptionRulePage(kind, importantFilter) { rule ->
                 if (!rule.important) consume(rule)
             }
         }
-        val important = ensureIndex(importantFile, triesFresh) { consume ->
+        val important = ensureIndex(importantFile, triesFresh, isBlock) { consume ->
             dao.forEachSubscriptionRulePage(kind, important = true) { rule ->
                 if (rule.important) consume(rule)
             }
@@ -154,6 +155,7 @@ object RuleSnapshotStore {
     private fun ensureIndex(
         file: File,
         triesFresh: Boolean,
+        dedupeHierarchy: Boolean,
         compile: ((EnabledRule) -> Unit) -> Unit,
     ): IndexOutcome {
         if (triesFresh && file.exists() && file.length() > 0) {
@@ -165,7 +167,9 @@ object RuleSnapshotStore {
                 return IndexOutcome.LOADED
             }
         }
-        val compiled = runCatching { MappedSubscriptionRuleIndex.compileAndLoad(file, compile) }
+        val compiled = runCatching {
+            MappedSubscriptionRuleIndex.compileAndLoad(file, dedupeHierarchy, compile)
+        }
             .onFailure { error -> Log.e(TAG, "Failed to compile subscription index (${file.name})", error) }
             .getOrNull()
         compiled?.close()
