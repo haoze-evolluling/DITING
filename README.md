@@ -165,7 +165,7 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 
 | 组件 | 要求 |
 | --- | --- |
-| Flutter / Dart | Flutter 3.50（beta 频道）与 Dart 3.14；工作区通过 `pubspec.yaml` 的 `workspace` 统一解析依赖 |
+| Flutter / Dart | Flutter 3.50.1（stable 频道）与 Dart 3.14；工作区通过 `pubspec.yaml` 的 `workspace` 统一解析依赖 |
 | Rust | 稳定版工具链与 Cargo，edition 2021 |
 | Node.js | 20 或更高，用于桌面管理端 Web 界面构建 |
 | Python | 3.10 或更高，用于构建与验证脚本 |

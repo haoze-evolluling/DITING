@@ -6,7 +6,7 @@ Android 客户端（`android/app`）的 Gradle 工具链版本、必须的参数
 
 | 组件 | 版本 | 位置 |
 | --- | --- | --- |
-| Flutter | `3.50.0-0.3.pre`（beta 频道，Dart 3.14.0） | 本机 SDK |
+| Flutter | `3.50.1`（stable 频道，Dart 3.14.0） | 本机 SDK |
 | Gradle | `9.5.0` | `android/app/android/gradle/wrapper/gradle-wrapper.properties` |
 | AGP（`com.android.application`） | `9.3.3` | `android/app/android/settings.gradle.kts` |
 | Kotlin（内置 Kotlin） | `2.4.21` | 同上，`org.jetbrains.kotlin.android ... apply false` |
