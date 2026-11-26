@@ -14,6 +14,7 @@ import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
 import 'package:diting_android/data/rules/rule_importer.dart';
+import 'package:diting_android/data/rules/rule_models.dart';
 import 'package:diting_android/data/rules/rule_parser.dart';
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 import 'package:diting_android/data/subscriptions/subscription_fetcher.dart';
@@ -255,8 +256,10 @@ class SubscriptionActions {
   Future<void> remove(int id) async {
     final repository = await _ref.read(subscriptionRepositoryProvider.future);
     final record = await repository?.byId(id);
-    await (await _ref.read(ruleImporterProvider.future))
-        ?.removeRulesBySource(subscriptionSourceTag(id));
+    final importer = await _ref.read(ruleImporterProvider.future);
+    // 导入被中断时可能留下暂存来源，删除订阅时一并清理。
+    await importer?.removeRulesBySource(subscriptionStagingTag(id));
+    await importer?.removeRulesBySource(subscriptionSourceTag(id));
     await repository?.deleteById(id);
     refreshRuleIndexesForCurrentMode(_ref);
     if (record != null && !record.isRemote) {

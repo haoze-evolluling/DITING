@@ -176,7 +176,12 @@ class SubscriptionRepository {
         'groupId': groupId,
         'mirrorTemplate': mirrorTemplate,
         'mirrorFallback': mirrorFallback ? 1 : 0,
-        if (resetValidators) ...{'httpEtag': null, 'httpLastModified': null},
+        if (resetValidators) ...{
+          'httpEtag': null,
+          'httpLastModified': null,
+          // 规则集合可能随 URL / kind 变化，旧哈希不再可信。
+          'ruleSetHash': null,
+        },
       },
       where: 'id = ?',
       whereArgs: [id],

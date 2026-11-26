@@ -9,6 +9,9 @@ import 'package:diting_android/data/rules/rule_models.dart';
 
 const _abiVersion = 2;
 
+/// 流式解析每批的行数；导入分片与之对齐，避免产生零碎尾批。
+const ruleStreamChunkLines = 2048;
+
 const _searchAbiVersion = 1;
 
 const _payloadMagic = 0x31435244;
@@ -192,7 +195,7 @@ class RustRuleCore {
     _searchFree(handle);
   }
 
-  static const int _streamChunkLines = 2048;
+  static const int _streamChunkLines = ruleStreamChunkLines;
 
   RuleStreamParse streamParse(String text) => streamParseBytes(utf8.encode(text));
 

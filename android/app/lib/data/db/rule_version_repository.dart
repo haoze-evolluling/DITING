@@ -14,6 +14,20 @@ List<String> canonicalRules(CategorizedRules parsed) => [
   for (final rule in parsed.urlAllowRules) rule.rawLine,
 ];
 
+class _VersionMeta {
+  const _VersionMeta({
+    required this.id,
+    required this.hash,
+    required this.ruleCount,
+    required this.createdAt,
+  });
+
+  final int id;
+  final String hash;
+  final int ruleCount;
+  final int createdAt;
+}
+
 class StoredRuleVersion {
   const StoredRuleVersion({
     required this.id,
@@ -74,7 +88,10 @@ class RuleVersionRepository {
     );
   }
 
-  Future<List<StoredRuleVersion>> history(String groupId, {int limit = 10}) async {
+  Future<List<StoredRuleVersion>> history(
+    String groupId, {
+    int limit = 10,
+  }) async {
     await ensureTable();
     final rows = await _db.query(
       'rule_version',
@@ -91,6 +108,29 @@ class RuleVersionRepository {
     return rows.isEmpty ? null : rows.first;
   }
 
+  /// 只读取版本元数据。保留策略的判断不需要 `rules_json`，
+  /// 避免每次导入都把历史版本的完整规则正文反序列化一遍。
+  Future<List<_VersionMeta>> _metadata(String groupId, {int limit = 50}) async {
+    await ensureTable();
+    final rows = await _db.query(
+      'rule_version',
+      columns: ['id', 'hash', 'rule_count', 'created_at'],
+      where: 'group_id = ?',
+      whereArgs: [groupId],
+      orderBy: 'created_at DESC, id DESC',
+      limit: limit,
+    );
+    return [
+      for (final row in rows)
+        _VersionMeta(
+          id: (row['id'] as num?)?.toInt() ?? 0,
+          hash: row['hash'] as String? ?? '',
+          ruleCount: (row['rule_count'] as num?)?.toInt() ?? 0,
+          createdAt: (row['created_at'] as num?)?.toInt() ?? 0,
+        ),
+    ];
+  }
+
   Future<void> recordVersion({
     required String groupId,
     required String hash,
@@ -99,7 +139,7 @@ class RuleVersionRepository {
     int? max,
   }) async {
     await ensureTable();
-    final existing = await history(groupId, limit: 50);
+    final existing = await _metadata(groupId);
     final entries = [
       for (final version in existing)
         RuleVersionEntry(
@@ -115,12 +155,15 @@ class RuleVersionRepository {
       createdAt: DateTime.now().millisecondsSinceEpoch,
       max: max,
     );
-    if (existing.isNotEmpty && next.isNotEmpty && next.first.hash == existing.first.hash) {
+    if (existing.isNotEmpty &&
+        next.isNotEmpty &&
+        next.first.hash == existing.first.hash) {
       return;
     }
     final head = next.first;
     final alreadyStored = existing.any(
-      (version) => version.hash == head.hash && version.createdAt == head.createdAt,
+      (version) =>
+          version.hash == head.hash && version.createdAt == head.createdAt,
     );
     if (!alreadyStored) {
       await _db.insert('rule_version', {
@@ -134,16 +177,23 @@ class RuleVersionRepository {
     final kept = {for (final entry in next) '${entry.hash}@${entry.createdAt}'};
     final all = await _db.query(
       'rule_version',
+      columns: ['id', 'hash', 'created_at'],
       where: 'group_id = ?',
       whereArgs: [groupId],
       orderBy: 'created_at DESC, id DESC',
     );
-    for (final row in all) {
-      final key = '${row['hash']}@${row['created_at']}';
-      if (!kept.contains(key)) {
-        await _db.delete('rule_version', where: 'id = ?', whereArgs: [row['id']]);
-      }
-    }
+    final removeIds = [
+      for (final row in all)
+        if (!kept.contains('${row['hash']}@${row['created_at']}'))
+          row['id'] as int,
+    ];
+    if (removeIds.isEmpty) return;
+    final placeholders = List.filled(removeIds.length, '?').join(',');
+    await _db.delete(
+      'rule_version',
+      where: 'id IN ($placeholders)',
+      whereArgs: removeIds,
+    );
   }
 
   StoredRuleVersion _fromRow(Map<String, Object?> row) => StoredRuleVersion(
@@ -158,6 +208,9 @@ class RuleVersionRepository {
     if (raw is! String || raw.isEmpty) return const [];
     final decoded = jsonDecode(raw);
     if (decoded is! List) return const [];
-    return [for (final item in decoded) if (item is String) item];
+    return [
+      for (final item in decoded)
+        if (item is String) item,
+    ];
   }
 }

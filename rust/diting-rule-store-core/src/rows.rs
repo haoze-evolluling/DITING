@@ -4,11 +4,21 @@ use serde_json::{json, Value};
 
 use crate::probe::{flag, get, text};
 
+fn subscription_id_of(source: &str) -> Option<i64> {
+    source
+        .strip_prefix("sub_")
+        .or_else(|| source.strip_prefix("staging_sub_"))
+        .and_then(|id| id.parse::<i64>().ok())
+}
+
 fn origin_of(sources: &[(String, bool)]) -> &'static str {
     if sources.iter().any(|(source, _)| source == "preset") {
         return "preset";
     }
-    if sources.iter().any(|(source, _)| source.starts_with("sub_")) {
+    if sources
+        .iter()
+        .any(|(source, _)| subscription_id_of(source).is_some())
+    {
         return "subscription";
     }
     "user"
@@ -19,13 +29,11 @@ fn subscription_name_of(
     subscriptions: &BTreeMap<i64, String>,
 ) -> Option<String> {
     for (source, _) in sources {
-        let Some(id) = source.strip_prefix("sub_") else {
+        let Some(id) = subscription_id_of(source) else {
             continue;
         };
-        if let Ok(id) = id.parse::<i64>() {
-            if let Some(name) = subscriptions.get(&id) {
-                return Some(name.clone());
-            }
+        if let Some(name) = subscriptions.get(&id) {
+            return Some(name.clone());
         }
     }
     None

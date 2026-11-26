@@ -2,7 +2,8 @@ use serde_json::{json, Value};
 
 use crate::identity::{identity, parse_flavor, predicate, rewrite_target_type};
 use crate::import::{
-    import_plan, page_query, remove_source_plan, set_source_enabled_plan, summary, tables_plan,
+    commit_source_plan, import_plan, page_query, remove_source_plan, set_source_enabled_plan,
+    summary, tables_plan,
 };
 use crate::probe::{flag, integer, list, text};
 use crate::rows::{rule_from_joined, rule_from_sources, subscriptions};
@@ -143,6 +144,11 @@ fn plan(request: &Value) -> Option<Value> {
             json!({"batches": plan.batches, "summary": summary(&plan, parsed)})
         }
         "removeSource" => remove_source_plan(&text(request, "source").unwrap_or_default()),
+        "commitSource" => commit_source_plan(
+            &text(request, "staging").unwrap_or_default(),
+            &text(request, "source").unwrap_or_default(),
+            flag(request, "enabled").unwrap_or(true),
+        ),
         "setSourceEnabled" => set_source_enabled_plan(
             &text(request, "source").unwrap_or_default(),
             flag(request, "enabled").unwrap_or(false),

@@ -161,10 +161,12 @@ void _ruleParser() {
           '||qq.com^\n||wechat.qq.com^\$app=com.tencent.mm\n'
           '||*.qq.com^\n||mail.qq.com^\$dnstype=A';
       final parsed = parseCategorized(text);
-      expect(
-        parsed.blockRules.map((rule) => rule.pattern),
-        ['qq.com', 'wechat.qq.com', '*.qq.com', 'mail.qq.com'],
-      );
+      expect(parsed.blockRules.map((rule) => rule.pattern), [
+        'qq.com',
+        'wechat.qq.com',
+        '*.qq.com',
+        'mail.qq.com',
+      ]);
       expect(parsed.duplicateCount, 0);
     });
   });
@@ -265,6 +267,16 @@ void _ruleImporter() {
       Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $table')) ??
       0;
 
+  Future<int> countWhere(
+    String table,
+    String where,
+    List<Object?> args,
+  ) async =>
+      Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM $table WHERE $where', args),
+      ) ??
+      0;
+
   test('block / allow / rewrite / url 四族分别落到对应表', () async {
     const text =
         '||ads.example.com^\n'
@@ -331,6 +343,73 @@ void _ruleImporter() {
     expect(other.blockCount, 1);
     expect(await count('block_rule'), 1);
     expect(await count('block_rule_source'), 2);
+  });
+
+  test('denyallow 不同的同名规则不会被去重', () async {
+    final parsed = parseCategorized(
+      '||ads.example.com^\$denyallow=safe.example.com\n'
+      '||ads.example.com^\$denyallow=other.example.com\n',
+    );
+    final importer = RuleImporter(db);
+
+    final summary = await importer.import(
+      parsed,
+      source: subscriptionSourceTag(3),
+      kind: 'domain',
+      enabled: true,
+    );
+
+    expect(summary.blockCount, 2);
+    expect(await count('block_rule'), 2);
+    final rows = await db.query('block_rule', orderBy: 'id');
+    expect(rows.map((row) => row['denyallow']), [
+      'safe.example.com',
+      'other.example.com',
+    ]);
+  });
+
+  test('暂存导入在提交前不关联正式来源，提交后原子切换', () async {
+    final importer = RuleImporter(db);
+    const staging = 'staging_sub_4';
+    const source = 'sub_4';
+
+    await importer.import(
+      parseCategorized('||old.example.com^'),
+      source: source,
+      kind: 'domain',
+      enabled: true,
+    );
+    await importer.import(
+      parseCategorized('||new.example.com^'),
+      source: staging,
+      kind: 'domain',
+      enabled: true,
+    );
+
+    expect(await countWhere('block_rule_source', 'source = ?', [source]), 1);
+    final before = await db.query(
+      'block_rule_source',
+      where: 'source = ?',
+      whereArgs: [source],
+    );
+    expect(before.single['enabled'], 1);
+
+    await importer.commitStaging(staging, source, enabled: true);
+
+    expect(await countWhere('block_rule_source', 'source = ?', [source]), 1);
+    expect(await countWhere('block_rule_source', 'source = ?', [staging]), 0);
+    final links = await db.query(
+      'block_rule_source',
+      where: 'source = ?',
+      whereArgs: [source],
+    );
+    final rule = await db.query(
+      'block_rule',
+      where: 'id = ?',
+      whereArgs: [links.single['ruleId']],
+    );
+    expect(rule.single['pattern'], 'new.example.com');
+    expect(await count('block_rule'), 1, reason: '旧规则在提交后成为孤儿并被清理');
   });
 
   test('删除来源后规则行被清掉，不留孤儿', () async {

@@ -1,8 +1,8 @@
 use serde_json::json;
 
 use super::{
-    import_plan, page_query, remove_source_plan, set_source_enabled_plan, summary, tables_plan,
-    ORPHAN_PAGE_SIZE,
+    commit_source_plan, import_plan, page_query, remove_source_plan, set_source_enabled_plan,
+    summary, tables_plan, ORPHAN_PAGE_SIZE,
 };
 
 fn parsed() -> serde_json::Value {
@@ -44,23 +44,41 @@ fn an_import_queues_one_batch_per_family_and_chunk() {
     );
 
     let block = plan.batches[0]["steps"].as_array().unwrap();
-    assert_eq!(block.len(), 2);
-    assert_eq!(block[0]["changes"], json!(false));
-    assert_eq!(block[1]["changes"], json!(true));
+    assert_eq!(
+        block.len(),
+        6,
+        "temp setup + bulk insert + dedupe + link + cleanup"
+    );
     assert!(block[0]["sql"]
         .as_str()
         .unwrap()
-        .contains("WHERE NOT EXISTS (SELECT 1 FROM block_rule WHERE pattern = ?"));
-    let args = block[0]["args"].as_array().unwrap();
-    assert_eq!(args[1], json!("@@a.test"));
-    assert_eq!(args[4], json!("com.a"));
-    assert_eq!(args[10], json!("a.test"), "key args come last");
+        .starts_with("CREATE TEMP TABLE IF NOT EXISTS diting_import_domain"));
+    assert!(block[2]["sql"]
+        .as_str()
+        .unwrap()
+        .starts_with("INSERT INTO diting_import_domain"));
+    assert!(block[3]["sql"]
+        .as_str()
+        .unwrap()
+        .contains("FROM diting_import_domain t"));
+    assert!(block[3]["sql"]
+        .as_str()
+        .unwrap()
+        .contains("r.denyallow IS t.denyallow"));
+    assert_eq!(block[3]["changes"], json!(false));
+    assert_eq!(block[4]["changes"], json!(true));
+    assert_eq!(block[4]["args"][0], json!("sub_4"));
+    assert_eq!(block[4]["args"][1], json!(1));
+    assert_eq!(block[5]["sql"], json!("DELETE FROM diting_import_domain"));
 
     let url_block = plan.batches[3]["steps"].as_array().unwrap();
-    assert_eq!(url_block.len(), 2);
-    assert_eq!(url_block[1]["args"][0], json!("sub_4"));
+    assert!(url_block[2]["sql"]
+        .as_str()
+        .unwrap()
+        .contains("INSERT INTO diting_import_url"));
+    assert_eq!(url_block[4]["args"][0], json!("sub_4"));
     assert_eq!(
-        url_block[1]["args"][1],
+        url_block[4]["args"][1],
         json!(1),
         "enabled follows the subscription"
     );
@@ -83,13 +101,40 @@ fn chunks_split_a_family_without_changing_its_order() {
     });
     let plan = import_plan(&many, "useradd", "domain", false, 2, 1);
     assert_eq!(plan.batches.len(), 2);
-    assert_eq!(plan.batches[0]["steps"].as_array().unwrap().len(), 4);
-    assert_eq!(plan.batches[1]["steps"].as_array().unwrap().len(), 2);
+    assert_eq!(plan.batches[0]["steps"].as_array().unwrap().len(), 6);
+    assert_eq!(plan.batches[1]["steps"].as_array().unwrap().len(), 6);
+    let first = plan.batches[0]["steps"][2]["sql"].as_str().unwrap();
+    let second = plan.batches[1]["steps"][2]["sql"].as_str().unwrap();
+    assert_eq!(first.matches('?').count(), 20, "two rows of ten columns");
+    assert_eq!(second.matches('?').count(), 10, "one row of ten columns");
     assert_eq!(
-        plan.batches[0]["steps"][1]["args"][1],
+        plan.batches[0]["steps"][4]["args"][1],
         json!(0),
         "source enabled flag"
     );
+}
+
+#[test]
+fn a_staging_commit_swaps_every_source_table_atomically() {
+    let plan = commit_source_plan("staging_sub_4", "sub_4", true);
+    let steps = plan["steps"].as_array().unwrap();
+    assert_eq!(
+        steps.len(),
+        12,
+        "delete + copy + drop for each source table"
+    );
+    assert_eq!(
+        steps[0]["sql"],
+        json!("DELETE FROM block_rule_source WHERE source = ?")
+    );
+    assert_eq!(steps[0]["args"], json!(["sub_4"]));
+    assert!(steps[1]["sql"]
+        .as_str()
+        .unwrap()
+        .contains("SELECT ruleId, ?, ? FROM block_rule_source WHERE source = ?"));
+    assert_eq!(steps[1]["args"], json!(["sub_4", 1, "staging_sub_4"]));
+    assert_eq!(steps[2]["args"], json!(["staging_sub_4"]));
+    assert_eq!(plan["orphans"].as_array().unwrap().len(), 4);
 }
 
 #[test]

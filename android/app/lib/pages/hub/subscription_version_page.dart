@@ -1,6 +1,8 @@
 library;
 
 import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/rules/rule_importer.dart';
 import 'package:diting_android/data/rules/rule_parser.dart';
@@ -184,14 +186,29 @@ class _SubscriptionVersionPageState
         throw StateError(l10n.ruleVersionsUnavailable);
       }
       final source = subscriptionSourceTag(entry.id);
-      final parsed = parseCategorized(version.rules.join('\n'));
-      await importer.removeRulesBySource(source);
-      await importer.import(
-        parsed,
-        source: source,
-        kind: entry.kind.storageValue,
-        enabled: entry.enabled,
-      );
+      final staging = subscriptionStagingTag(entry.id);
+      // 与更新流程一致：流式分片导入暂存来源，再原子切换。
+      final stream = streamParseCategorized(version.rules.join('\n'));
+      await importer.removeRulesBySource(staging);
+      try {
+        for (var chunk = stream.next(); chunk != null; chunk = stream.next()) {
+          if (chunk.isEmpty) continue;
+          await importer.import(
+            chunk,
+            source: staging,
+            kind: entry.kind.storageValue,
+            enabled: entry.enabled,
+          );
+        }
+        await importer.commitStaging(staging, source, enabled: entry.enabled);
+      } catch (_) {
+        try {
+          await importer.removeRulesBySource(staging);
+        } catch (_) {}
+        rethrow;
+      } finally {
+        stream.dispose();
+      }
       final repository = await ref.read(ruleVersionRepositoryProvider.future);
       await repository?.recordVersion(
         groupId: source,
@@ -199,6 +216,20 @@ class _SubscriptionVersionPageState
         ruleCount: version.ruleCount,
         rules: version.rules,
       );
+      // 回滚后订阅内容已不同于服务器缓存版本；同步哈希并清掉校验器，
+      // 否则下次更新会因哈希相同而跳过导入。
+      final subscriptions = await ref.read(
+        subscriptionRepositoryProvider.future,
+      );
+      await subscriptions?.markImported(
+        entry.id,
+        ruleCount: version.ruleCount,
+        lastUpdated: DateTime.now().millisecondsSinceEpoch,
+        etag: null,
+        lastModified: null,
+        ruleSetHash: version.hash,
+      );
+      scheduleRuleIndexRefresh(ref.read(activeDataSetProvider).ruleIndex);
       ref.read(subscriptionRevisionProvider.notifier).bump();
       _snack(l10n.ruleVersionsRollbackDone);
     } catch (error) {

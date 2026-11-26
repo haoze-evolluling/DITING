@@ -1,7 +1,9 @@
 part of 'subscription_providers.dart';
 
-typedef LargeSubscriptionConfirmer =
-    Future<bool> Function(SubscriptionEntry entry, int byteLength);
+typedef LargeSubscriptionConfirmer = Future<bool> Function(
+  SubscriptionEntry entry,
+  int byteLength,
+);
 
 class SubscriptionUpdateState {
   const SubscriptionUpdateState({
@@ -169,7 +171,9 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
   ) async {
     final repository = await ref.read(subscriptionRepositoryProvider.future);
     if (repository == null) {
-      return SubscriptionFetchResult.failed(currentL10n.subscriptionDatabaseUnavailable);
+      return SubscriptionFetchResult.failed(
+        currentL10n.subscriptionDatabaseUnavailable,
+      );
     }
     if (!entry.isRemote) {
       return _runLocal(entry, repository, confirmLarge);
@@ -191,7 +195,12 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
           lastModified: result.lastModified ?? entry.record.httpLastModified,
         );
       case SubscriptionFetchOutcome.content:
-        if (await _skipLargeImport(entry, result.byteLength, confirmLarge, repository)) {
+        if (await _skipLargeImport(
+          entry,
+          result.byteLength,
+          confirmLarge,
+          repository,
+        )) {
           return SubscriptionFetchResult.skipped(
             requestedUrl: entry.url,
             usedMirror: result.usedMirror,
@@ -209,7 +218,23 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
             error: currentL10n.subscriptionRuleDbUnavailable,
             attemptedAt: now,
           );
-          return SubscriptionFetchResult.failed(currentL10n.subscriptionRuleDbUnavailable);
+          return SubscriptionFetchResult.failed(
+            currentL10n.subscriptionRuleDbUnavailable,
+          );
+        }
+        if (imported.unchanged) {
+          await repository.markNotModified(
+            entry.id,
+            attemptedAt: now,
+            etag: result.etag,
+            lastModified: result.lastModified,
+          );
+          return SubscriptionFetchResult.notModified(
+            etag: result.etag,
+            lastModified: result.lastModified,
+            requestedUrl: entry.url,
+            usedMirror: result.usedMirror,
+          );
         }
         await repository.markImported(
           entry.id,
@@ -244,7 +269,8 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     if (allowed) {
       return false;
     }
-    final restore = entry.record.importState == SubscriptionImportState.importing
+    final restore =
+        entry.record.importState == SubscriptionImportState.importing
         ? SubscriptionImportState.ready
         : entry.record.importState;
     await repository.setImportState(entry.id, restore);
@@ -270,7 +296,12 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       return SubscriptionFetchResult.failed(reason, requestedUrl: entry.url);
     }
     final content = read.text!;
-    if (await _skipLargeImport(entry, content.length, confirmLarge, repository)) {
+    if (await _skipLargeImport(
+      entry,
+      content.length,
+      confirmLarge,
+      repository,
+    )) {
       return SubscriptionFetchResult.skipped(
         requestedUrl: entry.url,
         byteLength: content.length,
@@ -285,6 +316,10 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         attemptedAt: now,
       );
       return SubscriptionFetchResult.failed(reason);
+    }
+    if (imported.unchanged) {
+      await repository.markNotModified(entry.id, attemptedAt: now);
+      return SubscriptionFetchResult.notModified(requestedUrl: entry.url);
     }
     await repository.markImported(
       entry.id,
@@ -302,7 +337,8 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     );
   }
 
-  Future<({RuleImportSummary summary, String hash})?> _importContent(
+  Future<({RuleImportSummary summary, String hash, bool unchanged})?>
+  _importContent(
     SubscriptionEntry entry, {
     Uint8List? bytes,
     String? text,
@@ -312,17 +348,53 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       return null;
     }
     final source = subscriptionSourceTag(entry.id);
+    final staging = subscriptionStagingTag(entry.id);
     final kind = entry.kind.storageValue;
     final enabled = entry.enabled;
     final stream = bytes != null
         ? streamParseCategorizedBytes(bytes)
         : streamParseCategorized(text ?? '');
-    await importer.removeRulesBySource(source);
     var hashState = ruleSetHashSeed();
     var summary = const RuleImportSummary();
     final versionRules = <String>[];
     var collectVersion = true;
     var totalRules = 0;
+
+    // 先把规则导入暂存来源，解析/入库全部成功后再原子切换；
+    // 中途失败不会清空订阅现有规则。
+    var initialCleanDone = false;
+    Future<void> ensureInitialClean() async {
+      if (initialCleanDone) return;
+      initialCleanDone = true;
+      await importer.removeRulesBySource(staging);
+    }
+
+    var stagingHasRows = false;
+    Future<void> discardStaging() async {
+      if (!stagingHasRows) return;
+      stagingHasRows = false;
+      await importer.removeRulesBySource(staging);
+    }
+
+    Future<RuleImportSummary> importChunk(CategorizedRules chunk) async {
+      if (chunk.isEmpty) return const RuleImportSummary();
+      await ensureInitialClean();
+      // 分片批量提交，任一 family 失败时前面的批次可能已写入，
+      // 因此先标记为脏，确保异常路径一定会清掉暂存关联。
+      stagingHasRows = true;
+      return importer.import(
+        chunk,
+        source: staging,
+        kind: kind,
+        enabled: enabled,
+      );
+    }
+
+    // 在缓冲上限内先解析完整份文档，用规范化规则哈希判断内容是否变化；
+    // 未变化时完全跳过写库与索引重建。
+    var buffering = true;
+    var bufferedRules = 0;
+    final pending = <CategorizedRules>[];
     try {
       for (var chunk = stream.next(); chunk != null; chunk = stream.next()) {
         final lines = canonicalRules(chunk);
@@ -336,22 +408,57 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
             versionRules.addAll(lines);
           }
         }
-        if (!chunk.isEmpty) {
-          summary = summary.merge(
-            await importer.import(
-              chunk,
-              source: source,
-              kind: kind,
-              enabled: enabled,
-            ),
-          );
+        if (chunk.isEmpty) continue;
+        if (buffering) {
+          pending.add(chunk);
+          bufferedRules += chunk.size;
+          if (bufferedRules <= maxVersionSnapshotRules) continue;
+          // 超大订阅不再缓冲，退回边解析边导入。
+          buffering = false;
+          for (final buffered in pending) {
+            summary = summary.merge(await importChunk(buffered));
+          }
+          pending.clear();
+        } else {
+          summary = summary.merge(await importChunk(chunk));
         }
       }
+    } catch (error) {
+      await discardStaging();
+      rethrow;
     } finally {
       stream.dispose();
-      refreshRuleIndexesForCurrentMode(ref);
     }
+
     final hash = ruleSetHashHex(hashState);
+    if (buffering) {
+      if (entry.record.ruleSetHash == hash) {
+        return (
+          summary: const RuleImportSummary(),
+          hash: hash,
+          unchanged: true,
+        );
+      }
+      for (final buffered in pending) {
+        summary = summary.merge(await importChunk(buffered));
+      }
+      pending.clear();
+    }
+
+    final subscriptions = await ref.read(subscriptionRepositoryProvider.future);
+    final current = await subscriptions?.byId(entry.id);
+    if (current == null) {
+      // 订阅在导入期间被删除：丢弃暂存结果，避免留下无主规则。
+      await discardStaging();
+      return null;
+    }
+    try {
+      await importer.commitStaging(staging, source, enabled: current.enabled);
+    } catch (error) {
+      await discardStaging();
+      rethrow;
+    }
+
     if (collectVersion) {
       await _recordVersion(entry, versionRules, hash, summary.insertedCount);
     } else {
@@ -360,7 +467,8 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
         '$maxVersionSnapshotRules',
       );
     }
-    return (summary: summary, hash: hash);
+    refreshRuleIndexesForCurrentMode(ref);
+    return (summary: summary, hash: hash, unchanged: false);
   }
 
   static const int maxVersionSnapshotRules = 60000;
@@ -405,7 +513,9 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
       if (skipped > 0) currentL10n.subscriptionSkippedCount(skipped),
       if (failed > 0) currentL10n.subscriptionFailedCount(failed),
     ];
-    return parts.isEmpty ? currentL10n.subscriptionNothingToUpdate : parts.join('，');
+    return parts.isEmpty
+        ? currentL10n.subscriptionNothingToUpdate
+        : parts.join('，');
   }
 }
 
