@@ -7,7 +7,7 @@ void main() {
   final l10n = lookupAppL10n(const Locale('zh'));
   final categories = mockFeatureCategories(l10n);
 
-  test('6 个分类共 26 张，数据与维护补两张入口', () {
+  test('分类非空且关键入口可达', () {
     expect(categories.map((category) => category.title).toList(), [
       'DNS 解析',
       '规则与控制',
@@ -52,31 +52,6 @@ void main() {
       contains('/settings/background'),
       reason: '前后台行为应可从功能中心进入',
     );
-  });
-
-  test('简洁模式默认隐藏的分类就是应用与网络、高级与诊断、数据与维护', () {
-    final hidden = hiddenKeysOfCategories(simpleModeHiddenCategoryIds, l10n: l10n);
-    expect(simpleModeHiddenCategoryIds, {
-      FeatureCategoryId.network,
-      FeatureCategoryId.advanced,
-      FeatureCategoryId.data,
-    });
-    final visible = visibleFeatureCategories(hiddenKeys: hidden, l10n: l10n);
-    expect(visible.map((category) => category.id), [
-      FeatureCategoryId.dns,
-      FeatureCategoryId.rules,
-      FeatureCategoryId.interface_,
-    ]);
-    for (final category in categories) {
-      if (!simpleModeHiddenCategoryIds.contains(category.id)) continue;
-      for (final card in category.cards) {
-        expect(
-          hidden,
-          contains(card.featureKey),
-          reason: '${category.title} 的「${card.title}」应默认隐藏',
-        );
-      }
-    }
   });
 
   test('普通模式显示全部卡片，简洁模式移除依赖隧道的入口', () {

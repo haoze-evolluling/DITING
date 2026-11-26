@@ -38,6 +38,10 @@ void main() {
 
     expect(find.byType(InitialAgreementDialog), findsNothing);
     expect(find.byType(ModeSelectPage), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ModeSelectPage)),
+    );
+    expect(container.read(initialAgreementProvider), isTrue);
   });
 
   testWidgets('已选模式但未完成引导时直接展示引导页', (tester) async {

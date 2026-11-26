@@ -1,9 +1,7 @@
 import 'package:diting_shared/app/l10n/l10n.dart';
 import 'package:diting_android/app/app.dart';
-import 'package:diting_android/app/initial_agreement.dart';
 import 'package:diting_android/pages/system/unknown_route_page.dart';
 import 'package:diting_android/router.dart';
-import 'package:diting_shared/state/settings_providers.dart';
 import 'package:diting_shared/ui/ui.dart';
 import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,7 +111,7 @@ void _segmentedLabels() {
 void _layoutRegression() {
   installGlobalTestHooks();
 
-  final routes = <String>[
+  final routes = <String>{
     Routes.hub,
     Routes.logs,
     Routes.traffic,
@@ -129,7 +127,7 @@ void _layoutRegression() {
     Routes.serverLogs,
     ...topLevelRoutes.values,
     ...idRoutes.values,
-  ];
+  };
 
   const sizes = <(String, Size)>[
     ('se', Size(320, 568)),
@@ -188,45 +186,6 @@ void expectNoLayoutFailure(WidgetTester tester, String context) {
 }
 
 void _initialAgreement() {
-  installGlobalTestHooks(skipInitialAgreement: false);
-
-  Future<void> pumpApp(WidgetTester tester, {required bool accepted}) async {
-    tester.view.physicalSize = const Size(1170, 2532);
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          if (accepted)
-            initialAgreementProvider.overrideWith(InitialAgreementAccepted.new),
-        ],
-        child: DitingApp(initialLocation: '/'),
-      ),
-    );
-    await tester.pump();
-    await tester.pumpAndSettle();
-  }
-
-  testWidgets('未确认时弹出使用须知', (tester) async {
-    await pumpApp(tester, accepted: false);
-    expect(find.byType(InitialAgreementDialog), findsOneWidget);
-    expect(find.text('使用须知与免责声明'), findsOneWidget);
-    expect(find.text('同意并继续'), findsOneWidget);
-    expect(find.text('不同意并退出'), findsOneWidget);
-  });
-
-  testWidgets('点「同意并继续」后弹窗消失且写盘', (tester) async {
-    await pumpApp(tester, accepted: false);
-    await tester.tap(find.text('同意并继续'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(InitialAgreementDialog), findsNothing);
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(InitialAgreementGate)),
-    );
-    expect(container.read(initialAgreementProvider), isTrue);
-  });
-
   test('条款正文含旧版三段结构与关键句', () {
     final message = lookupAppL10n(const Locale('zh')).agreementMessage;
     expect(message, contains('软件说明'));

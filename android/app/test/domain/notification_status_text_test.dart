@@ -13,12 +13,10 @@ void main() {
   );
 
   group('运行中的通知正文', () {
-    test('单一服务显示状态与上游名', () {
+    test('按解析模式与自定义服务商生成正文', () {
       expect(defaultRunningNotificationText(settings()), '运行中 · 阿里云');
-    });
 
-    test('竞速模式显示解析模式与服务商数量', () {
-      final text = defaultRunningNotificationText(
+      final race = defaultRunningNotificationText(
         settings(
           dns: const {
             'dns_resolution_mode': 'parallel_race',
@@ -27,11 +25,9 @@ void main() {
           },
         ),
       );
-      expect(text, '运行中 · [最快响应] 2 个服务商');
-    });
+      expect(race, '运行中 · [最快响应] 2 个服务商');
 
-    test('自定义服务商使用其名称', () {
-      final text = defaultRunningNotificationText(
+      final custom = defaultRunningNotificationText(
         settings(
           dns: const {
             'selected_provider_id': 'user_1',
@@ -41,7 +37,7 @@ void main() {
           },
         ),
       );
-      expect(text, '运行中 · 自建 DoH');
+      expect(custom, '运行中 · 自建 DoH');
     });
   });
 }

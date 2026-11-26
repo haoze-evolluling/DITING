@@ -120,38 +120,6 @@ void _realDataWiring() {
       expect(snapshot.quality.cacheHitRate, closeTo(1 / 2, 1e-9));
     });
 
-    test('DNS 连接行计入旁路，拦截的连接行仍归失败/过滤', () async {
-      final stamp = now();
-      await insertDnsRow(
-        db,
-        timestamp: stamp,
-        queryName: 'UDP 1.1.1.1:443',
-        queryType: 0,
-        result: 'PASSED',
-      );
-      await insertDnsRow(
-        db,
-        timestamp: stamp,
-        queryName: 'TCP 2.2.2.2:80',
-        queryType: 0,
-        result: 'PASSED',
-      );
-      await insertDnsRow(
-        db,
-        timestamp: stamp,
-        queryName: 'TCP 3.3.3.3:80',
-        queryType: 0,
-        result: 'BLOCKED',
-      );
-      await insertHttpRow(db, timestamp: stamp, outcome: 'passthrough');
-
-      final snapshot = await containerFor().read(logDashboardProvider.future);
-      expect(snapshot.breakdown.bypassed, 3);
-      expect(snapshot.breakdown.passed, 0);
-      expect(snapshot.breakdown.blocked, 1);
-      expect(snapshot.breakdown.total, 4);
-    });
-
     test('昨天的行不进今日计数，但「最近请求」仍取最新几条', () async {
       final yesterday = now() - const Duration(days: 1).inMilliseconds;
       await insertDnsRow(

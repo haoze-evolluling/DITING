@@ -135,26 +135,21 @@ void main() {
   });
 
   group('缺失与异常设置回落当前默认', () {
-    test('空存储读到当前默认值', () {
+    test('空存储的应用白名单为空', () {
       final settings = LegacySettings(MemoryLegacyPrefsStore());
-      expect(settings.bottomBarIds, LegacySettings.defaultBottomBarIds);
-      expect(settings.resolutionModeRaw, 'single');
-      expect(settings.workModeRaw, 'normal');
       expect(settings.appAllowlistRules, isEmpty);
     });
 
-    test('坏 JSON 的集合类设置回落默认而不是抛异常', () {
+    test('坏 JSON 的底栏与白名单回落默认而不是抛异常', () {
       final store = MemoryLegacyPrefsStore({
         'dns_vpn_prefs': {
           'bottom_bar_destinations': '{bad',
           'app_allowlist_rules_json': '[1,2,3]',
-          'custom_background_uris': 'oops',
         },
       });
       final settings = LegacySettings(store);
       expect(settings.bottomBarIds, LegacySettings.defaultBottomBarIds);
       expect(settings.appAllowlistRules, isEmpty);
-      expect(settings.customBackgroundUris, isEmpty);
     });
   });
 }

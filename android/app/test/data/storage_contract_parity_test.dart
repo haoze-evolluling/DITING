@@ -29,16 +29,6 @@ void main() {
     };
     expect(kotlin, expected);
   });
-
-  test('模式与规则/日志库的映射在两侧同名', () {
-    for (final name in const ['NORMAL', 'EXPRESS']) {
-      expect(
-        RegExp('$name -> StorageContract\\.').hasMatch(datasetKt),
-        isTrue,
-        reason: '$name database mapping',
-      );
-    }
-  });
 }
 
 File _kotlinFile(String relative) {

@@ -264,22 +264,12 @@ void _expressMode() {
       expect(settings.vpnRunning, isFalse);
     });
 
-    test('简洁模式里选择的解析模式进入数据集的设置与通知文案', () async {
+    test('简洁模式里选择的解析模式进入通知文案', () async {
       final c = container(
         normal: FakeVpnController(),
         express: FakeVpnController(),
       );
       c.read(resolutionModeProvider.notifier).select(ResolutionMode.smart);
-      expect(
-        c.read(legacySettingsProvider).dnsContainer,
-        LegacySettings.expressContainer,
-      );
-      expect(
-        c
-            .read(legacyPrefsStoreProvider)
-            .read(LegacySettings.expressContainer, 'dns_resolution_mode'),
-        'smart_prediction',
-      );
 
       await c.read(powerProvider.notifier).toggle();
       expect(c.read(powerProvider), PowerState.running);

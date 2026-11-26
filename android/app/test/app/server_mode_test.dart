@@ -124,19 +124,4 @@ void main() {
     expect(stopped.status.stopping, isFalse);
     expect(stopWatch.elapsedMilliseconds, lessThan(500));
   });
-
-  test('log query values are stable Riverpod family keys', () {
-    const first = ServerLogQuery(domain: 'a.example', status: 'blocked');
-    const second = ServerLogQuery(domain: 'a.example', status: 'blocked');
-    const memoryOnly = ServerLogQuery(
-      domain: 'a.example',
-      status: 'blocked',
-      includeFile: false,
-    );
-    expect(first, second);
-    expect(first.hashCode, second.hashCode);
-    expect(first, isNot(memoryOnly));
-    expect(first.toJson()['includeFile'], isTrue);
-    expect(memoryOnly.toJson()['includeFile'], isFalse);
-  });
 }

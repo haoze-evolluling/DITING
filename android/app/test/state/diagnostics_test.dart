@@ -49,9 +49,8 @@ void _diagnostics() {
   });
 
   group('fromMap 缺字段容错', () {
-    test('PingSummary 空 map 得到失败形态', () {
+    test('PingSummary / TraceResult / DnsLookupResult 空 map 安全回落', () {
       final summary = PingSummary.fromMap(const {});
-
       expect(summary.target, '');
       expect(summary.transmitted, 0);
       expect(summary.received, 0);
@@ -60,9 +59,7 @@ void _diagnostics() {
       expect(summary.replies, isEmpty);
       expect(summary.measuredWithFallback, isFalse);
       expect(summary.minMs, isNull);
-    });
 
-    test('TraceResult / DnsLookupResult 空 map 不抛', () {
       final trace = TraceResult.fromMap(const {});
       expect(trace.hops, isEmpty);
       expect(trace.success, isFalse);

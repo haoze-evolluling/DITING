@@ -26,47 +26,30 @@ void main() {
 
 void _appLayer() {
   group('buildAppTheme 装配顺序', () {
-    test('纯黑主题的 surface 是纯黑', () {
-      final theme = buildAppTheme(
+    test('纯黑、深色扩展与形状排版按规格装配', () {
+      final pureDark = buildAppTheme(
         const AppThemeSpec(
           seedColor: Color(0xFF007AFF),
           brightness: Brightness.dark,
           pureBlack: true,
         ),
       );
-      expect(theme.colorScheme.surface, const Color(0xFF000000));
-      expect(theme.brightness, Brightness.dark);
-    });
+      expect(pureDark.colorScheme.surface, const Color(0xFF000000));
+      expect(pureDark.brightness, Brightness.dark);
+      expect(pureDark.extension<ElevatedColorScheme>(), isNotNull);
 
-    test('深色主题带 ElevatedColorScheme 扩展，浅色不带', () {
-      final dark = buildAppTheme(
-        const AppThemeSpec(
-          seedColor: Color(0xFF007AFF),
-          brightness: Brightness.dark,
-        ),
-      );
       final light = buildAppTheme(
         const AppThemeSpec(
           seedColor: Color(0xFF007AFF),
           brightness: Brightness.light,
         ),
       );
-      expect(dark.extension<ElevatedColorScheme>(), isNotNull);
       expect(light.extension<ElevatedColorScheme>(), isNull);
-    });
-
-    test('形状与排版被装配进去', () {
-      final theme = buildAppTheme(
-        const AppThemeSpec(
-          seedColor: Color(0xFF007AFF),
-          brightness: Brightness.light,
-        ),
-      );
-      expect(theme.cardTheme.shape, isNotNull);
-      expect(theme.timePickerTheme.shape, isNotNull);
-      expect(theme.datePickerTheme.shape, isNotNull);
-      expect(theme.datePickerTheme.rangePickerShape, isNotNull);
-      expect(theme.textTheme.bodyMedium?.fontFamilyFallback, isNotNull);
+      expect(light.cardTheme.shape, isNotNull);
+      expect(light.timePickerTheme.shape, isNotNull);
+      expect(light.datePickerTheme.shape, isNotNull);
+      expect(light.datePickerTheme.rangePickerShape, isNotNull);
+      expect(light.textTheme.bodyMedium?.fontFamilyFallback, isNotNull);
     });
   });
 
