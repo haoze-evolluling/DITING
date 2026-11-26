@@ -7,21 +7,28 @@ Android 客户端（`android/app`）的 Gradle 工具链版本、必须的参数
 | 组件 | 版本 | 位置 |
 | --- | --- | --- |
 | Flutter | `3.50.1`（stable 频道，Dart 3.14.0） | 本机 SDK |
-| Gradle | `9.5.0` | `android/app/android/gradle/wrapper/gradle-wrapper.properties` |
-| AGP（`com.android.application`） | `9.3.3` | `android/app/android/settings.gradle.kts` |
+| Gradle | `9.9.2` | `android/app/android/gradle/wrapper/gradle-wrapper.properties` |
+| AGP（`com.android.application`） | `9.5.2` | `android/app/android/settings.gradle.kts` |
 | Kotlin（内置 Kotlin） | `2.4.21` | 同上，`org.jetbrains.kotlin.android ... apply false` |
 | JDK | 17+（AGP 9 要求） | `flutter config --jdk-dir` 或 Android Studio 自带 JBR |
 
-Flutter 3.50 的工具链白名单写死在 SDK 的 `gradle_utils.dart`（`packages/flutter_tools/lib/src/android/`）：
-Gradle `9.5.0`、KGP `2.4.20`（更高版本按“已知范围内”放行）、AGP `9.4`。
+Flutter 3.50.1 的工具链白名单写死在 SDK 的 `gradle_utils.dart`（`packages/flutter_tools/lib/src/android/`）：
+模板默认 Gradle `9.5.0`、AGP `9.3.1`、KGP `2.4.20`；已知支持上限为 Gradle `9.5.0`、AGP `9.4`、
+KGP `2.4.20`。
 
-- **Gradle 9.5.0 是上限**：AGP 9.3.x 要求 Gradle 恰为 `[9.5.0, 9.5.0]`，9.6/9.8.2 会被
-  `flutter analyze --suggestions` 判为不兼容。
-- **AGP 只能到 9.3.x**：9.4.1 起要求 Gradle ≥ 9.6.0，与上一条冲突；9.3.3 是 9.3 线最后补丁。
-- **Kotlin 可以更新**：高于 2.4.20 的 KGP 被放行，故取 `2.4.21`。
+本工程使用 Gradle `9.9.2` + AGP `9.5.2`，两者都高于 Flutter 3.50.1 的已知上限，但校验仍通过：
 
-升级 Flutter 时三处一起看：下限在 `DependencyVersionChecker.kt`（`packages/flutter_tools/gradle/`，
-低于下限直接构建失败），默认值与上限在 `gradle_utils.dart`。
+- **超出已知范围的 AGP 按“假定有效”放行**：`validateGradleAndAgp` 对 AGP 高于 `9.4` 只要求
+  Gradle ≥ `9.5.0`、不设上限，所以 Gradle `9.9.2` 可用。`flutter analyze --suggestions` 实测
+  报告 `Java/Gradle/KGP/Android Gradle Plugin: compatible`（2026-11）。
+- **Gradle 的上限取决于 AGP**：AGP 9.3.x 要求 Gradle 恰为 `[9.5.0, 9.5.0]`。若把 AGP 退回
+  9.3.x，必须同时把 Gradle 降到 `9.5.0`；当前 AGP 9.5.2 + Gradle 9.9.2 不受这条约束。
+- **Kotlin 版本检查被跳过**：启用 `android.builtInKotlin=true` 后，`DependencyVersionChecker`
+  不再校验 KGP 版本，故 `org.jetbrains.kotlin.android` 取 `2.4.21`。`flutter analyze --suggestions`
+  输出中的 `Could not parse kotlin version ... KGP Version: null` 即由此产生，可忽略。
+
+升级 Flutter 时三处一起看：低于下限的版本在 `DependencyVersionChecker.kt`（`packages/flutter_tools/gradle/`，
+直接构建失败），默认值与已知上限在 `gradle_utils.dart`。
 
 ## gradle.properties 的两个开关
 
@@ -65,7 +72,7 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 
 ## 应用侧依赖
 
-- `material_ui ^1.11.0`、`qr ^4.0.1`（其余依赖均使用 caret 范围，见 `android/app/pubspec.yaml`）。
+- `material_ui ^1.11.0`（其余依赖均使用 caret 范围，见 `android/app/pubspec.yaml`）。
 - Flutter SDK 把 `material_color_utilities`（`0.13.0`，上游 flutter/flutter#185017）与 `test_api`
   （`0.7.14`）钉在旧版；本项目不再用 `dependency_overrides` 强行提升，直接跟随 SDK 的锁定版本。
 - `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验；一旦 SDK
