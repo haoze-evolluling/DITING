@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/server/server_common.dart';
@@ -25,7 +27,6 @@ class ServerStatusOverview extends StatelessWidget {
     final scheme = context.colorScheme;
     final l10n = context.l10n;
     final running = status.running;
-    final uptime = _uptimeOf(status);
     final address = status.addresses.isEmpty
         ? '0.0.0.0:${status.port}'
         : status.addresses.join('  ·  ');
@@ -124,16 +125,7 @@ class ServerStatusOverview extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 spacing: 2,
                 children: [
-                  Text(
-                    uptime == null ? '—' : _uptimeLabel(uptime, l10n),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: AppTextRole.metricSmall
-                        .of(context)
-                        .toTabular
-                        .copyWith(color: scheme.onSurface),
-                  ),
+                  _LiveUptime(status: status),
                   Text(
                     l10n.serverUptime,
                     style: AppTextRole.caption
@@ -192,6 +184,66 @@ class ServerStatusOverview extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LiveUptime extends StatefulWidget {
+  const _LiveUptime({required this.status});
+
+  final ServerStatus status;
+
+  @override
+  State<_LiveUptime> createState() => _LiveUptimeState();
+}
+
+class _LiveUptimeState extends State<_LiveUptime>
+    with PageVisibilityMixin<_LiveUptime> {
+  Timer? _ticker;
+  bool _visible = false;
+
+  @override
+  void onPageVisibilityChanged(bool visible) {
+    _visible = visible;
+    _syncTicker();
+  }
+
+  @override
+  void didUpdateWidget(_LiveUptime oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncTicker();
+  }
+
+  void _syncTicker() {
+    final counting = widget.status.running && widget.status.startedAt != null;
+    if (_visible && counting) {
+      _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } else {
+      _ticker?.cancel();
+      _ticker = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final uptime = _uptimeOf(widget.status);
+    return Text(
+      uptime == null ? '—' : _uptimeLabel(uptime, context.l10n),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.end,
+      style: AppTextRole.metricSmall
+          .of(context)
+          .toTabular
+          .copyWith(color: context.colorScheme.onSurface),
     );
   }
 }

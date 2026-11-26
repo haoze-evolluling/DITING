@@ -118,12 +118,6 @@ class ServerUpstreamPage extends ConsumerWidget {
                     );
                   },
                 ),
-              ],
-            ],
-          ),
-          if (cache.enabled)
-            generateSection(
-              items: [
                 ListItem(
                   leading: const Icon(TablerIcons.adjustments, size: 20),
                   title: Text(context.l10n.serverCacheAdvanced),
@@ -132,8 +126,9 @@ class ServerUpstreamPage extends ConsumerWidget {
                   onTap: () => context.push(ServerRoutes.upstreamAdvanced),
                 ),
               ],
-              footer: context.l10n.serverCacheFooter,
-            ),
+            ],
+            footer: cache.enabled ? context.l10n.serverCacheFooter : null,
+          ),
           const SizedBox(height: 24),
         ],
       ),
