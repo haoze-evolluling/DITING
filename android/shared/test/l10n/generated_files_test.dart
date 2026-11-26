@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('生成文件只保留 // ignore 指令', () {
-    final l10n = Directory('${_repoRoot().path}/shared/lib/l10n');
+    final l10n = Directory('${_repoRoot().path}/android/shared/lib/l10n');
     final generated = l10n
         .listSync()
         .whereType<File>()

@@ -104,7 +104,8 @@ Root 免 VPN DNS 接管仅在简洁模式可启用：在已获取 Root 权限的
 
 | 目录 | 内容 |
 | --- | --- |
-| `shared/` | `diting_shared`：Flutter 设计系统、主题、双语本地化、路由分支，以及共用的偏好与数据库封装 |
+| `android/` | Flutter pub 工作区根（`pubspec.yaml` / `pubspec.lock` / `analysis_options.yaml`），统一解析 `app` 与 `shared` 的依赖 |
+| `android/shared/` | `diting_shared`：Flutter 设计系统、主题、双语本地化、路由分支，以及共用的偏好与数据库封装 |
 | `android/app/` | `diting_android`：Android Flutter 界面、Kotlin 系统集成、Gradle 工程与 APK 构建脚本 |
 | `desktop/service/` | 桌面服务构建与打包资产、版本真源 `VERSION` 与 Linux 打包脚本 |
 | `desktop/ui/` | React Web 管理端；Vite 构建产物由服务嵌入并托管为 Web 管理页 |
@@ -165,7 +166,7 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 
 | 组件 | 要求 |
 | --- | --- |
-| Flutter / Dart | Flutter 3.50.1（stable 频道）与 Dart 3.14；工作区通过 `pubspec.yaml` 的 `workspace` 统一解析依赖 |
+| Flutter / Dart | Flutter 3.50.1（stable 频道）与 Dart 3.14；工作区通过 `android/pubspec.yaml` 的 `workspace` 统一解析依赖 |
 | Rust | 稳定版工具链与 Cargo，edition 2021 |
 | Node.js | 20 或更高，用于桌面管理端 Web 界面构建 |
 | Python | 3.10 或更高，用于构建与验证脚本 |
@@ -180,9 +181,10 @@ Android 的 Gradle、AGP、Kotlin 版本与镜像配置见 `docs/development/and
 
 ### 解析依赖与静态检查
 
-在仓库根目录执行：
+在 Flutter 工作区根目录（`android/`）执行：
 
 ```bash
+cd android
 flutter pub get
 flutter analyze
 ```
@@ -300,7 +302,7 @@ python rust/verify.py --all
 测试按包运行：
 
 ```bash
-cd shared && flutter test
+cd android/shared && flutter test
 cd android/app && flutter test
 ```
 
@@ -310,7 +312,7 @@ cd android/app && flutter test
 flutter config --enable-native-assets
 ```
 
-项目使用 Flutter 原生资源（native assets）加载 sqlite3；不开启时测试会直接退出。工作区根目录不要直接运行 `flutter test android/app`，否则原生依赖与测试资源包无法按子包解析。
+项目使用 Flutter 原生资源（native assets）加载 sqlite3；不开启时测试会直接退出。工作区根目录不要直接运行 `flutter test app`，否则原生依赖与测试资源包无法按子包解析。
 
 ## 数据与隐私
 

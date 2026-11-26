@@ -4,7 +4,7 @@
 """谛听 (DITING) 项目路径单一真源。
 
 工具箱的每个模块都从仓库根推导路径。历史上的实现散落在各文件里，仓库目录
-（android/desktop/shared）调整后容易漂移，因此统一收敛到本模块。
+（android/desktop/rust）调整后容易漂移，因此统一收敛到本模块。
 """
 
 import os
@@ -16,10 +16,10 @@ DESKTOP_DIR = os.path.dirname(TOOLBOX_DIR)
 
 
 def _detect_root(start: str) -> str:
-    """向上查找同时包含 android/desktop/shared 的仓库根。"""
+    """向上查找同时包含 android/desktop 的仓库根。"""
     current = os.path.abspath(start)
     while True:
-        if all(os.path.isdir(os.path.join(current, name)) for name in ("android", "desktop", "shared")):
+        if all(os.path.isdir(os.path.join(current, name)) for name in ("android", "desktop")):
             return current
         parent = os.path.dirname(current)
         if parent == current:
@@ -32,7 +32,7 @@ ROOT_DIR = _detect_root(DESKTOP_DIR)
 SERVICE_DIR = os.path.join(DESKTOP_DIR, "service")
 DESKTOP_VERSION_FILE = os.path.join(SERVICE_DIR, "VERSION")
 ANDROID_APP_DIR = os.path.join(ROOT_DIR, "android", "app")
-SHARED_DIR = os.path.join(ROOT_DIR, "shared")
+SHARED_DIR = os.path.join(ROOT_DIR, "android", "shared")
 
 WEB_DIR = os.path.join(TOOLBOX_DIR, "web")
 BRAND_DIR = os.path.join(TOOLBOX_DIR, "assets", "brand")

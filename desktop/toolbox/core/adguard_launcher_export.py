@@ -12,7 +12,7 @@ those aliases need:
   * `drawable/ic_launcher_adguard_foreground.xml`            adaptive-icon foreground vector
   * `mipmap-anydpi-v26/ic_launcher_adguard*.xml`             adaptive icons (API 26+)
   * `mipmap-anydpi/ic_launcher_adguard.xml`                  pre-26 layer-list fallback
-  * `shared/assets/images/icon_adguard.png`                  in-app preview thumbnail
+  * `android/shared/assets/images/icon_adguard.png`          in-app preview thumbnail
 
 The brand SVG has only flat paths and no gradients/filters, so `core.vector_raster` (Pillow only)
 reproduces it exactly.

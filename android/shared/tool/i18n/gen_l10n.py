@@ -12,7 +12,7 @@ instead of `flutter gen-l10n`: it generates, drops the generated comments
 
 `flutter gen-l10n` refuses to run unless the project's pubspec turns on
 `flutter: generate: true`, but that same flag makes every `flutter pub get`
-rerun gen-l10n and write those comments back. shared/pubspec.yaml therefore
+rerun gen-l10n and write those comments back. android/shared/pubspec.yaml therefore
 keeps the flag off, and this script runs gen-l10n against a throwaway project
 under .dart_tool/l10n_gen whose l10n.yaml points back at lib/l10n.
 """

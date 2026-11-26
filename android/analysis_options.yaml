@@ -1,0 +1,8 @@
+# Workspace-root analysis scope (android/). Each member package carries its own
+# analysis_options.yaml; this file only covers files in the workspace root. The
+# repository-root reference material (`../LearningObjects`, `.tmp*`) is outside
+# this analysis root and is therefore never visited.
+analyzer:
+  exclude:
+    - build/**
+    - .dart_tool/**

@@ -55,7 +55,7 @@ void main() {
 
   test('page source uses only typography roles', () {
     final violations = <String>[];
-    for (final root in ['shared/lib', 'android/app/lib']) {
+    for (final root in ['android/shared/lib', 'android/app/lib']) {
       final directory = Directory('${_repoRoot().path}/$root');
       for (final entity in directory.listSync(recursive: true)) {
         if (entity is! File || !entity.path.endsWith('.dart')) continue;

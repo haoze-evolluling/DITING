@@ -25,8 +25,9 @@ from toolbox.core.version_manager import get_current_version, inspect_versions
 
 class PathsTest(unittest.TestCase):
     def test_root_markers(self):
-        for name in ("android", "desktop", "shared"):
+        for name in ("android", "desktop"):
             self.assertTrue(os.path.isdir(os.path.join(paths.ROOT_DIR, name)), name)
+        self.assertTrue(os.path.isdir(paths.SHARED_DIR))
         self.assertTrue(os.path.isfile(paths.BRAND_XML))
         self.assertEqual(paths.resolve("desktop/service"), os.path.join(paths.ROOT_DIR, "desktop", "service"))
         self.assertEqual(paths.resolve(""), paths.ROOT_DIR)

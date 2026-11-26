@@ -69,7 +69,7 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 - Flutter SDK 把 `material_color_utilities`（`0.13.0`，上游 flutter/flutter#185017）与 `test_api`
   （`0.7.14`）钉在旧版；本工作区不再用 `dependency_overrides` 强行提升，直接跟随 SDK 的锁定版本。
 - `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验；一旦 SDK
-  放宽了对这两个包的约束，再按需提升 `shared/pubspec.yaml` 中的 `material_color_utilities` 约束。
+  放宽了对这两个包的约束，再按需提升 `android/shared/pubspec.yaml` 中的 `material_color_utilities` 约束。
 
 ## Android 原生产物
 
@@ -100,7 +100,7 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 cd android/app && flutter test     # Android 全量（含 sqflite 用例）
 ```
 
-从工作区根目录跑 `flutter test android/app` 会踩两个坑，都是 `flutter_tools` 按“当前包的依赖图”
+从工作区根目录（`android/`）跑 `flutter test app` 会踩两个坑，都是 `flutter_tools` 按“当前包的依赖图”
 解析造成的，不是本项目配置写错：
 
 1. **原生依赖不编译**：hook 只为当前包（根包 `diting_workspace`，自身没有依赖）的传递依赖编译，
@@ -118,7 +118,7 @@ flutter config --enable-native-assets
 ```
 
 没开时 `flutter test` 会直接退出并提示 `Package(s) sqlite3 require the dart assets feature to be
-enabled`。开关打开后，第一次跑测试时 hook 会按根 `pubspec.yaml` 的 `hooks.user_defines`
+enabled`。开关打开后，第一次跑测试时 hook 会按工作区根 `android/pubspec.yaml` 的 `hooks.user_defines`
 （GitHub release 走 `gh-proxy.com` 镜像）下载 `sqlite3.dll` / `libsqlite3.so` 到
 `.dart_tool/hooks_runner/shared/sqlite3/build/`，之后复用；删掉 `.dart_tool/` 会重新下载。
 

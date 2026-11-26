@@ -11,7 +11,7 @@
     <color name="ic_launcher_adguard_background">#FFFFFFFF</color>
 
     <!-- Home screen widget palette, taken from the app's default (Apple blue) seeded scheme in
-         `shared/lib/ui/color.dart`. Cards use the same surfaces as the in-app dashboard cards, so
+         `android/shared/lib/ui/color.dart`. Cards use the same surfaces as the in-app dashboard cards, so
          the widget reads as part of the same product rather than a separate generic tile. -->
     <!-- surfaceBright: the dashboard card colour in light mode. -->
     <color name="widget_card">#FCF8F9</color>

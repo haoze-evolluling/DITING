@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Native (RemoteViews) dimens that must mirror the Flutter design tokens. The AppWidget is
      drawn by the launcher in a different process, so it cannot read AppCorner.standard at
-     runtime; keep this value in sync with shared/lib/ui/shape.dart when the standard changes. -->
+     runtime; keep this value in sync with android/shared/lib/ui/shape.dart when the standard changes. -->
 <resources>
     <dimen name="app_corner_standard">24dp</dimen>
 </resources>

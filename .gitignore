@@ -36,8 +36,9 @@ android/app/android/app/src/main/jniLibs/
 .pub/
 **/doc/api/
 **/ios/Flutter/.last_build_id
+android/build/
 android/app/build/
-shared/build/
+android/shared/build/
 coverage/
 app.*.symbols
 app.*.map.json
@@ -51,10 +52,11 @@ node_modules/
 # 桌面管理端：Vite 构建产物不入库（服务编译时嵌入为 Web 管理页）。
 desktop/ui/dist/
 
-# Flutter tool generates this registrant for the workspace root's `android/`
-# container when a root-level `flutter analyze` runs. The real Android registrant
-# lives in android/app/android/app/src/main/java/io/flutter/plugins/.
+# Flutter tool may generate this registrant for the pub-workspace root's own
+# `android/` container (now android/android/) when `flutter analyze` runs. The
+# real Android registrant lives in android/app/android/app/src/main/java/io/flutter/plugins/.
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+android/android/
 
 # ====================================================================
 # Local Configuration & SDK

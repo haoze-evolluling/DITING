@@ -15,7 +15,7 @@ dependencies:
     sdk: flutter
 
   diting_shared:
-    path: ../../shared
+    path: ../shared
 
   material_ui: ^1.11.0
   material_new_shapes: ^1.0.0
@@ -36,7 +36,8 @@ dev_dependencies:
   fake_async: ^1.3.3
 
 # The sqlite3 hook mirror is configured once in the workspace root pubspec.yaml
-# (`hooks.user_defines`), because pub reads it from the workspace root.
+# (android/pubspec.yaml, `hooks.user_defines`), because pub reads it from the
+# workspace root.
 
 flutter:
   uses-material-design: true
