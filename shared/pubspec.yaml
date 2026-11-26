@@ -44,9 +44,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  # Regenerates lib/l10n/app_localizations*.dart from lib/l10n/*.arb.
-  # Run `cd shared && flutter gen-l10n` after editing an ARB file.
-  generate: true
+  # Localizations are checked in under lib/l10n and regenerated only with
+  # `python tool/i18n/gen_l10n.py` (see l10n.yaml). Keep `generate` off: with it
+  # on, every `flutter pub get` reruns gen-l10n and rewrites those files with
+  # the doc comments the script strips.
   assets:
     - assets/https_passthrough.txt
     # Brand icon drawn on the about page hero and the login gate.
