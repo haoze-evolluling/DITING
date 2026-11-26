@@ -58,7 +58,7 @@ Android 应用 ID 为 `com.haoze.diting`，最低支持 Android 9（API 28）。
 - 日志保留策略与数据清理。
 - 配置导入导出、备份与 WebDAV 传输。
 - 故障排查：崩溃日志与运行日志的抓取、导出。
-- 数据库健康检查与 Android 三模式存储 V2 迁移。
+- 数据库健康检查与数据清理。
 - 应用内检查更新并调起系统安装器（Android）。
 
 ### 桌面端
@@ -109,7 +109,7 @@ Root 免 VPN DNS 接管仅在简洁模式可启用：在已获取 Root 权限的
 | `desktop/ui/` | React Web 管理端；Vite 构建产物由服务嵌入并托管为 Web 管理页 |
 | `desktop/toolbox/` | Python 开发者工具箱（DNS 调试、代码扫描、Logo 工坊、Android 版本维护）与安装包构建引擎 |
 | `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎、桌面服务与服务器进程 |
-| `docs/development/` | 构建环境、Root 接管、服务器模式、桌面迁移与存储迁移说明 |
+| `docs/development/` | 构建环境、Root 接管、服务器模式、桌面端与云控名单说明 |
 | `avatars/`、`recognition_members.json` | 云控赞助者名单与头像 |
 | `LearningObjects/` | 第三方项目的本地参考副本，不参与本项目的构建 |
 
@@ -120,7 +120,7 @@ Root 免 VPN DNS 接管仅在简洁模式可启用：在已获取 Root 权限的
 - Flutter 通过 MethodChannel 与 Kotlin 通信，覆盖 VPN、Root DNS、服务器、自动化、通知、存储与诊断等通道。
 - Kotlin 用 `FullTunnelVpnService` 承载普通模式的全隧道与简洁模式仅 DNS 的路由逻辑，`DitingVpnService` / `ExpressVpnService` 只注入各自的模式参数与数据存储；另有 `RootDnsService`、`ServerDnsService`，以及前台服务、唤起广播、快捷磁贴、桌面小组件与悬浮日志窗。
 - `libditing_native.so` 是单一 cdylib，链接隧道引擎、全部 Flutter/Kotlin 侧内核和服务器运行时；`libditing_server.so` 是服务器模式的极小启动器，加载同一份原生库后调用 `diting_server_main`。
-- 数据存储使用 SQLite：三种模式各自的规则库与日志库，加上一个全局自动化库，共 7 个 V2 数据库。服务器模式另有独立的 `files/server/` 目录与 JSONL 查询日志。
+- 数据存储使用 SQLite：普通模式与简洁模式各自的规则库与日志库，加上一个全局自动化库，共 5 个 V2 数据库。服务器模式使用独立的 `files/server/` 目录与 JSONL 查询日志。
 
 Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策略与规则匹配、Bootstrap、HTTPS 检查（证书与 MITM）、出站代理、TUN 网络栈、嗅探、日志与流量统计、自动化、订阅、备份、诊断探测、IP 质量与更新检查等模块。
 
