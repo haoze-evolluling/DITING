@@ -3,6 +3,8 @@ package com.haoze.diting.core.rule
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import com.haoze.diting.log.AppDatabase
+import java.util.Collections
+import java.util.WeakHashMap
 
 data class EnabledRule(
     val pattern: String,
@@ -47,7 +49,7 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
                     "r.appScope AS appScope, r.appInverted AS appInverted, r.isWildcard AS isWildcard, " +
                     "r.denyallow AS denyallow, r.isRegex AS isRegex, r.dnsType AS dnsType FROM $ruleTable r " +
                     "JOIN $sourceTable s ON s.ruleId = r.id " +
-                    "WHERE r.id > ? AND r.enabled = 1 AND s.enabled = 1 AND s.source LIKE 'sub_%'$importantClause " +
+                    "WHERE r.id > ? AND r.enabled = 1 AND s.enabled = 1 AND s.source GLOB 'sub_*'$importantClause " +
                     "GROUP BY r.id, r.pattern, r.important, r.appScope, r.appInverted, r.isWildcard, r.denyallow, r.isRegex, r.dnsType " +
                     "ORDER BY r.id LIMIT $PAGE_SIZE",
                 arrayOf(lastId.toString()),
@@ -77,7 +79,7 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         queryRules(
             RULE_COLUMNS + "${kind.ruleTable} r " +
                 "JOIN ${kind.sourceTable} s ON s.ruleId = r.id " +
-                "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source NOT LIKE 'sub_%' AND s.source NOT LIKE 'staging_sub_%'" +
+                "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source NOT GLOB 'sub_*' AND s.source NOT GLOB 'staging_sub_*'" +
                 GROUP_BY_RULE
         )
 
@@ -85,7 +87,7 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         queryRules(
             RULE_COLUMNS + "${kind.ruleTable} r " +
                 "JOIN ${kind.sourceTable} s ON s.ruleId = r.id " +
-                "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source LIKE 'sub_%' " +
+                "WHERE r.enabled = 1 AND s.enabled = 1 AND s.source GLOB 'sub_*' " +
                 "AND (r.isWildcard = 1 OR r.pattern LIKE '%*%' OR r.appScope IS NOT NULL OR r.appInverted = 1 OR r.isRegex = 1 OR r.denyallow IS NOT NULL OR r.dnsType IS NOT NULL)" +
                 GROUP_BY_RULE
         )
@@ -110,7 +112,8 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
 
     fun rewriteRules(): List<Pair<String, String>> = db.rawQuery(
         "SELECT pattern, targetValue FROM rewrite_rule " +
-            "WHERE enabled = 1 AND EXISTS (SELECT 1 FROM rewrite_rule_source s WHERE s.ruleId = rewrite_rule.id AND s.enabled = 1) " +
+            "WHERE enabled = 1 AND EXISTS (SELECT 1 FROM rewrite_rule_source s " +
+            "WHERE s.ruleId = rewrite_rule.id AND s.enabled = 1 AND s.source NOT GLOB 'staging_sub_*') " +
             "ORDER BY id",
         null,
     ).use { cursor ->
@@ -125,7 +128,26 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
 
     fun close() = Unit
 
+    /**
+     * 规则库指纹。写入全部来自 Dart 侧的另一个连接，因此用
+     * `PRAGMA data_version` 判断库是否被其他连接修改：
+     * 未变化时直接复用上次结果，避免每次热重载都扫描 6 张表。
+     */
     fun ruleFingerprint(): String {
+        val dataVersion = pragmaLong("PRAGMA data_version")
+        synchronized(fingerprintCache) {
+            fingerprintCache[db]?.let { cached ->
+                if (cached.dataVersion == dataVersion) return cached.value
+            }
+        }
+        val value = computeFingerprint()
+        synchronized(fingerprintCache) {
+            fingerprintCache[db] = CachedFingerprint(dataVersion, value)
+        }
+        return value
+    }
+
+    private fun computeFingerprint(): String {
         val parts = ArrayList<Pair<String, Triple<Long, Long, Long>?>>(8)
         for (kind in RuleKind.entries) {
             parts += kind.ruleTable to countFingerprint(kind.ruleTable)
@@ -135,6 +157,10 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         parts += "rewrite_rule_source" to countFingerprint("rewrite_rule_source")
         return RuleIndexNative.ruleFingerprint(parts)
     }
+
+    private fun pragmaLong(sql: String): Long = runCatching {
+        db.rawQuery(sql, null).use { if (it.moveToFirst()) it.getLong(0) else -1L }
+    }.getOrDefault(-1L)
 
     private fun countFingerprint(table: String): Triple<Long, Long, Long>? {
         if (!AppDatabase.hasTable(db, table)) return null
@@ -150,8 +176,13 @@ class RuleSnapshotDao private constructor(private val db: SQLiteDatabase) {
         ALLOW("allow_rule", "allow_rule_source"),
     }
 
+    private data class CachedFingerprint(val dataVersion: Long, val value: String)
+
     companion object {
         private const val PAGE_SIZE = 2000
+
+        private val fingerprintCache =
+            Collections.synchronizedMap(WeakHashMap<SQLiteDatabase, CachedFingerprint>())
 
         private const val RULE_COLUMNS =
             "SELECT r.pattern, MIN(s.source) AS source, r.important AS important, " +

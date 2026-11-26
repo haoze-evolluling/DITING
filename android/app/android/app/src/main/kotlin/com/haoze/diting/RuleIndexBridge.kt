@@ -1,6 +1,8 @@
 package com.haoze.diting
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.haoze.diting.core.rule.RuleDataset
 import com.haoze.diting.core.rule.RuleSnapshotStore
@@ -18,6 +20,7 @@ class RuleIndexBridge(
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "diting-rule-index").apply { isDaemon = true }
     }
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     init {
         channel.setMethodCallHandler(this)
@@ -33,8 +36,10 @@ class RuleIndexBridge(
                 executor.execute {
                     runCatching { RuleSnapshotStore.refreshIndexes(context.applicationContext, dataset) }
                         .onFailure { Log.w("RuleIndexBridge", "refresh failed", it) }
+                    // 编译结束后再回复，让 Dart 侧可以先刷新索引再通知引擎重载，
+                    // 避免两条线程同时重建同一份索引。
+                    mainHandler.post { runCatching { result.success(true) } }
                 }
-                result.success(true)
             }
             else -> result.notImplemented()
         }

@@ -8,6 +8,9 @@ import java.io.File
 object RuleSnapshotStore {
     private const val TAG = "RuleSnapshotStore"
     private const val STAMP_FILE = "stamp"
+
+    // 旧版本可能写入过“编译期间被新写入污染”的指纹，升级时强制重建一次。
+    private const val STAMP_VERSION = "2"
     private const val KEY_DOMAIN_RULES_ENABLED = "domain_rules_enabled"
     private const val APP_ALLOWLIST_PREFS = "dns_vpn_prefs"
     private const val KEY_APP_ALLOWLIST_RULES = "app_allowlist_rules_json"
@@ -27,12 +30,15 @@ object RuleSnapshotStore {
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
 
         return try {
-            val triesFresh = isStampCurrent(indexDirectory, dao)
+            // 指纹只取一次：编译结束后再比对，避免编译期间有新写入时
+            // 用“更新后的指纹”给“旧索引”盖章导致索引被误判为最新。
+            val fingerprint = dao.ruleFingerprint()
+            val triesFresh = isStampCurrent(indexDirectory, fingerprint)
             val block = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.BLOCK)
             val allow = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.ALLOW)
             val plan = RuleIndexNative.plan(block, allow)
-            if (plan.settled) {
-                writeStamp(indexDirectory, dao)
+            if (plan.settled && dao.ruleFingerprint() == fingerprint) {
+                writeStamp(indexDirectory, fingerprint)
             }
             val document = RuleSnapshotNative.buildSnapshotBytes(
                 RuleSnapshotPayload.encode(
@@ -90,11 +96,14 @@ object RuleSnapshotStore {
         val indexDirectory = RuleIndexLayout.rootDirectory(context.filesDir, dataset)
         val dao = RuleSnapshotDao.open(context, dataset.rulesDatabase()) ?: return
         try {
-            val triesFresh = isStampCurrent(indexDirectory, dao)
+            val fingerprint = dao.ruleFingerprint()
+            val triesFresh = isStampCurrent(indexDirectory, fingerprint)
             val block = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.BLOCK)
             val allow = loadIndexes(dao, indexDirectory, triesFresh, RuleSnapshotDao.RuleKind.ALLOW)
-            if (RuleIndexNative.plan(block, allow).settled) {
-                writeStamp(indexDirectory, dao)
+            if (RuleIndexNative.plan(block, allow).settled &&
+                dao.ruleFingerprint() == fingerprint
+            ) {
+                writeStamp(indexDirectory, fingerprint)
             }
         } finally {
             dao.close()
@@ -212,15 +221,17 @@ object RuleSnapshotStore {
 
     private fun stampFile(indexDirectory: File) = File(indexDirectory, STAMP_FILE)
 
-    private fun isStampCurrent(indexDirectory: File, dao: RuleSnapshotDao): Boolean {
+    private fun isStampCurrent(indexDirectory: File, fingerprint: String): Boolean {
         val stamp = runCatching { stampFile(indexDirectory).readText().trim() }.getOrNull() ?: return false
-        return stamp == dao.ruleFingerprint()
+        return stamp == stampValue(fingerprint)
     }
 
-    private fun writeStamp(indexDirectory: File, dao: RuleSnapshotDao) {
+    private fun writeStamp(indexDirectory: File, fingerprint: String) {
         runCatching {
             indexDirectory.mkdirs()
-            stampFile(indexDirectory).writeText(dao.ruleFingerprint())
+            stampFile(indexDirectory).writeText(stampValue(fingerprint))
         }.onFailure { Log.w(TAG, "Unable to write rule index stamp", it) }
     }
+
+    private fun stampValue(fingerprint: String) = "$STAMP_VERSION:$fingerprint"
 }
