@@ -10563,7 +10563,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverCacheFooter =>
-      'Changes apply immediately; cached entries are cleared when the process restarts.';
+      'Changes apply immediately; cached entries are persisted to the database and restored on restart.';
 
   @override
   String get serverCacheSaved => 'Cache settings saved';

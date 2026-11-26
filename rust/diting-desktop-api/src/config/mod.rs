@@ -58,7 +58,7 @@ pub struct Config {
     pub encrypted: EncryptedDNSConfig,
     pub client: ClientConfig,
     pub ecs: ECSConfig,
-    #[serde(rename = "querylog")]
+    #[serde(rename = "querylog", alias = "queryLog")]
     pub query_log: QueryLogConfig,
     pub web: WebConfig,
     #[serde(default)]

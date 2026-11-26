@@ -5,6 +5,7 @@ pub mod paths;
 pub mod protocol;
 mod runner;
 pub mod runtime;
+mod storage;
 
 pub use config::ServerConfig;
 pub use paths::ServerPaths;

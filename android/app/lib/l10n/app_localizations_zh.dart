@@ -9938,7 +9938,7 @@ class AppL10nZh extends AppL10n {
   String get serverCachePrefetch => '预取';
 
   @override
-  String get serverCacheFooter => '修改会立即应用；缓存内容在进程重启后清空。';
+  String get serverCacheFooter => '修改会立即应用；缓存会写入数据库，重启后自动恢复。';
 
   @override
   String get serverCacheSaved => '缓存设置已保存';

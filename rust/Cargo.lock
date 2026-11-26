@@ -1177,6 +1177,7 @@ dependencies = [
  "diting-desktop-app",
  "diting-desktop-core",
  "diting-desktop-dns",
+ "diting-desktop-sqlite",
  "diting-dns-wire",
  "libc",
  "serde",

@@ -3239,7 +3239,7 @@
   "serverCacheNegative": "Cache negative answers",
   "serverCacheOptimistic": "Optimistic cache",
   "serverCachePrefetch": "Prefetch",
-  "serverCacheFooter": "Changes apply immediately; cached entries are cleared when the process restarts.",
+  "serverCacheFooter": "Changes apply immediately; cached entries are persisted to the database and restored on restart.",
   "serverCacheSaved": "Cache settings saved",
   "serverCacheAdvanced": "Advanced options",
   "serverCacheAdvancedSummary": "Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch",

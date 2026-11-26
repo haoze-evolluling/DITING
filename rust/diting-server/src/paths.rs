@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 pub struct ServerPaths {
     pub data_dir: PathBuf,
     pub config_path: PathBuf,
+    pub db_path: PathBuf,
     pub socket_path: PathBuf,
     pub log_path: PathBuf,
     pub rules_dir: PathBuf,
@@ -15,6 +16,7 @@ impl ServerPaths {
         let data_dir = data_dir.into();
         Self {
             config_path: data_dir.join("config.json"),
+            db_path: data_dir.join("server.db"),
             socket_path: data_dir.join("control.sock"),
             log_path: data_dir.join("server.log"),
             rules_dir: data_dir.join("rules"),

@@ -10,6 +10,7 @@ diting-desktop-api = { path = "../diting-desktop-api" }
 diting-desktop-app = { path = "../diting-desktop-app" }
 diting-desktop-core = { path = "../diting-desktop-core" }
 diting-desktop-dns = { path = "../diting-desktop-dns" }
+diting-desktop-sqlite = { path = "../diting-desktop-sqlite" }
 diting-dns-wire = { path = "../diting-dns-wire" }
 
 serde = { version = "1", features = ["derive"] }

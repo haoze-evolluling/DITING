@@ -3,12 +3,14 @@ use std::sync::Arc;
 
 use diting_desktop_app::dns_server_config;
 use diting_desktop_dns::server::BoundDnsSockets;
+use diting_desktop_sqlite::MigrationReport;
 use tokio::sync::watch;
 
 use crate::config::ServerConfig;
 use crate::control::{bind_socket, run_control_socket, BoundControlSocket};
 use crate::paths::ServerPaths;
 use crate::runtime::ServerRuntime;
+use crate::storage::ServerStorage;
 
 #[derive(Debug, Clone)]
 struct Cli {
@@ -37,12 +39,13 @@ pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
 
     let paths = ServerPaths::new(&cli.data_dir)
         .with_overrides(cli.config_path.as_deref(), cli.socket_path.as_deref());
-    let config = ServerConfig::load(&paths, cli.port, root, &cli.bind_address)?;
     paths
         .ensure_dirs()
         .map_err(|error| format!("创建服务器目录失败: {error}"))?;
 
-    let dns_config = dns_server_config(&config.desktop_config());
+    // Root 降权前只能用命令行给出的监听身份绑定套接字；完整配置在降权后从数据库读取。
+    let listener = ServerConfig::listener_config(cli.port, &cli.bind_address);
+    let dns_config = dns_server_config(&listener);
     let dns_sockets = BoundDnsSockets::bind(&dns_config).map_err(|error| {
         if root && cli.port == 53 {
             format!("{error}；53 端口绑定失败，请改用非 Root 的 1053 端口重试")
@@ -56,26 +59,62 @@ pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
         chown_tree(&paths.data_dir, uid, gid)?;
         let control = bind_socket(&paths.socket_path, Some(uid), Some(gid))?;
         drop_privileges(uid, gid)?;
-        return serve(config, paths, dns_sockets, control);
+        return serve(
+            paths,
+            dns_sockets,
+            control,
+            cli.port,
+            root,
+            cli.bind_address,
+        );
     }
     let control = bind_socket(&paths.socket_path, None, None)?;
-    serve(config, paths, dns_sockets, control)
+    serve(
+        paths,
+        dns_sockets,
+        control,
+        cli.port,
+        root,
+        cli.bind_address,
+    )
 }
 
 fn serve(
-    config: ServerConfig,
     paths: ServerPaths,
     dns_sockets: BoundDnsSockets,
     control: BoundControlSocket,
+    port: u16,
+    root: bool,
+    bind_address: String,
 ) -> Result<(), String> {
-    config.save(&paths.config_path)?;
+    // 迁移会删除旧的 config.json，所以先保留一份，迁移后作为配置种子。
+    let legacy_config = std::fs::read(&paths.config_path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<ServerConfig>(&bytes).ok());
+    let storage = Arc::new(ServerStorage::open(&paths)?);
+    let migrated = storage.migrate_legacy(&paths)?;
+    if let Some(report) = &migrated {
+        log_migration(report);
+    }
+    let config = storage.load_config(
+        &paths,
+        port,
+        root,
+        &bind_address,
+        if migrated.is_some() {
+            legacy_config
+        } else {
+            None
+        },
+    )?;
+    let stores = storage.runtime_stores(&config);
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .map_err(|error| format!("创建服务器运行时失败: {error}"))?;
     runtime.block_on(async move {
         let mut signals = SignalWaiter::install()?;
-        let server = Arc::new(ServerRuntime::new(paths, config)?);
+        let server = Arc::new(ServerRuntime::new(paths, config, stores, storage)?);
         server.start(dns_sockets).await?;
         let (shutdown_tx, mut shutdown_rx) = watch::channel(false);
         let control_server = Arc::clone(&server);
@@ -119,6 +158,21 @@ fn serve(
         println!("[退出] 服务器模式已停止");
         Ok(())
     })
+}
+
+fn log_migration(report: &MigrationReport) {
+    println!(
+        "[迁移] 配置={} 缓存={} 规则={} 日志={} 跳过={} 删除文件={}",
+        report.imported_config,
+        report.imported_cache,
+        report.imported_lists,
+        report.imported_logs,
+        report.skipped_logs,
+        report.deleted_files,
+    );
+    for error in &report.errors {
+        eprintln!("[迁移] {error}");
+    }
 }
 
 #[cfg(unix)]

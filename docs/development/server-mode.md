@@ -39,18 +39,29 @@ Android 没有 `rustls-native-certs` 期望的 `/etc/ssl/certs` 汇总文件，�
 `UpstreamTrust::platform()`：读取 `/system/etc/security/cacerts` 与 Conscrypt APEX 目录，再附加
 内置 ISRG 根。否则 DoT/DoH 上游会以 `UnknownIssuer` 失败。
 
-## 数据目录
+## 数据目录与存储
 
-所有文件位于 `filesDir/server/`，与普通/简洁模式的数据库和偏好完全分离：
+服务器模式使用独立数据库 `filesDir/server/server.db`，与普通/简洁模式的数据库和偏好完全分离。
+数据库复用桌面端 `diting-desktop-sqlite` 的 schema：`query_log`、`filter_contents`、`dns_cache`、
+`config_sections` 与 `meta`。
 
 ```text
 filesDir/server/
-├── config.json       # 服务器独立配置
+├── server.db         # 配置、查询日志、规则正文、DNS 缓存（WAL）
+├── config.json       # 未运行时的兼容镜像，运行时以数据库为准
 ├── control.sock      # 0600 控制 Socket
 ├── server.log        # 前台服务捕获的进程输出
-├── rules/            # 规则订阅缓存
-└── querylog/         # 按日 JSONL 查询日志
+├── rules/            # 旧版规则缓存，首次升级后导入并删除
+└── querylog/         # 旧版 JSONL 日志，首次升级后导入并删除
 ```
+
+- 配置：完整 `ServerConfig` 以 JSON 写入 `meta.server_config`，同时写入 `config_sections`；启动时
+  优先使用数据库，若 `config.json` 比数据库更新（例如未运行时由管理端修改）则导入该文件。
+- 查询日志：内存环（`maxEntries` 只约束内存）+ SQLite 异步写入；数据库按 `retentionDays` 清理，
+  重启后自动回填最近 24 小时的统计。
+- 规则正文：订阅清单缓存写入 `filter_contents`；DNS 缓存随进程退出写入 `dns_cache`，启动时恢复。
+- 首次升级：启动时自动把旧的 `config.json`、`querylog/*.jsonl`、`rules/*.txt`、`cache.json`
+  导入新库，成功后删除这些旧文件并写入 `meta.server_legacy_migration` 标记。
 
 旧 `dns` 模式的数据库、偏好和日志不会迁移；`ServerModeRetirement` 继续清理旧数据。
 

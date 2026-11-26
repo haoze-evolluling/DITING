@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 
 use crate::schema;
 
@@ -93,6 +93,31 @@ impl SqliteDb {
         self.write(|connection| connection.execute_batch("PRAGMA incremental_vacuum;"))
             .map(|_| ())
     }
+
+    /// 读取 `meta` 表中的键值；键不存在时返回 `None`。
+    pub fn meta_get(&self, key: &str) -> Option<String> {
+        self.read(|connection| {
+            connection
+                .query_row("SELECT value FROM meta WHERE key = ?1", [key], |row| {
+                    row.get::<_, String>(0)
+                })
+                .optional()
+        })
+        .ok()
+        .flatten()
+    }
+
+    /// 写入或覆盖 `meta` 表中的键值。
+    pub fn meta_set(&self, key: &str, value: &str) -> Result<(), String> {
+        self.write(|connection| {
+            connection.execute(
+                "INSERT INTO meta(key, value) VALUES (?1, ?2)
+                 ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                [key, value],
+            )
+        })
+        .map(|_| ())
+    }
 }
 
 fn configure_writer(connection: &Connection) -> Result<(), String> {
@@ -180,21 +205,11 @@ mod tests {
     fn opens_schema_and_round_trips_meta() {
         let path = temp_db("open");
         let db = SqliteDb::open(&path).unwrap();
-        db.write(|connection| {
-            connection.execute(
-                "INSERT OR REPLACE INTO meta(key, value) VALUES ('test', 'ok')",
-                [],
-            )
-        })
-        .unwrap();
-        let value: String = db
-            .read(|connection| {
-                connection.query_row("SELECT value FROM meta WHERE key='test'", [], |row| {
-                    row.get(0)
-                })
-            })
-            .unwrap();
-        assert_eq!(value, "ok");
+        assert_eq!(db.meta_get("test"), None);
+        db.meta_set("test", "ok").unwrap();
+        assert_eq!(db.meta_get("test").as_deref(), Some("ok"));
+        db.meta_set("test", "next").unwrap();
+        assert_eq!(db.meta_get("test").as_deref(), Some("next"));
         db.checkpoint().unwrap();
         let _ = std::fs::remove_dir_all(path.parent().unwrap());
     }

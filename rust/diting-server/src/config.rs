@@ -135,6 +135,10 @@ impl ServerConfig {
         std::fs::write(&temporary, bytes)
             .map_err(|error| format!("写入服务器配置失败: {error}"))?;
         set_private_mode(&temporary);
+        // Unix 上直接覆盖重命名；Windows 不允许覆盖时再删除旧文件后重试。
+        if std::fs::rename(&temporary, path).is_ok() {
+            return Ok(());
+        }
         if path.exists() {
             std::fs::remove_file(path).map_err(|error| format!("替换服务器配置失败: {error}"))?;
         }
@@ -180,6 +184,34 @@ impl ServerConfig {
         Ok(())
     }
 
+    /// 用桌面配置的四个数据面分节组装服务器配置；监听身份由进程实际身份决定。
+    pub fn from_desktop(listen: ListenConfig, desktop: DesktopConfig) -> Self {
+        Self {
+            listen,
+            upstream: desktop.upstream,
+            filter: desktop.filter,
+            cache: desktop.cache,
+            query_log: desktop.query_log,
+        }
+    }
+
+    /// 只构造 DNS 监听所需的桌面配置，供 Root 降权前绑定 53 端口使用。
+    pub fn listener_config(port: u16, bind_address: &str) -> DesktopConfig {
+        let bind_address = if bind_address.trim().is_empty() {
+            "0.0.0.0"
+        } else {
+            bind_address.trim()
+        };
+        let mut config = DesktopConfig::default();
+        let v4 = format!("{bind_address}:{port}");
+        let v6 = format!("[::]:{port}");
+        config.dns.udp_addresses = vec![v4.clone(), v6.clone()];
+        config.dns.tcp_addresses = vec![v4, v6];
+        config.dns.allow_lan = true;
+        config.dns.block_private_ptr = false;
+        config
+    }
+
     pub fn replace_editable(&mut self, next: Self, paths: &ServerPaths) -> Result<(), String> {
         let listen = self.listen.clone();
         *self = next;
@@ -193,14 +225,8 @@ impl ServerConfig {
     }
 
     pub fn desktop_config(&self) -> DesktopConfig {
-        let mut config = DesktopConfig::default();
-        let port = self.listen.port;
-        let v4 = format!("{}:{port}", self.listen.bind_address);
-        let v6 = format!("[::]:{port}");
-        config.dns.udp_addresses = vec![v4.clone(), v6.clone()];
-        config.dns.tcp_addresses = vec![v4, v6];
+        let mut config = Self::listener_config(self.listen.port, &self.listen.bind_address);
         config.dns.allow_lan = self.listen.lan;
-        config.dns.block_private_ptr = false;
         config.upstream = self.upstream.clone();
         config.filter = self.filter.clone();
         config.cache = self.cache.clone();

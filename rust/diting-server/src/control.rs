@@ -100,15 +100,21 @@ pub async fn run_control_socket(
 mod tests {
     use super::*;
     use crate::paths::ServerPaths;
+    use crate::storage::ServerStorage;
 
     fn runtime(tag: &str) -> Arc<ServerRuntime> {
-        let paths = ServerPaths::new(std::env::temp_dir().join(format!(
+        let root = std::env::temp_dir().join(format!(
             "diting-server-control-{tag}-{}",
             std::process::id()
-        )));
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        let paths = ServerPaths::new(root);
+        paths.ensure_dirs().unwrap();
         let mut config = ServerConfig::default();
         config.normalize(&paths, 1053, false, "0.0.0.0").unwrap();
-        Arc::new(ServerRuntime::new(paths, config).unwrap())
+        let storage = Arc::new(ServerStorage::open(&paths).unwrap());
+        let stores = storage.runtime_stores(&config);
+        Arc::new(ServerRuntime::new(paths, config, stores, storage).unwrap())
     }
 
     #[tokio::test]
@@ -157,17 +163,23 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn query_log_respects_explicit_include_file_flag() {
+    async fn query_log_reads_migrated_jsonl_from_the_database() {
         let root =
             std::env::temp_dir().join(format!("diting-server-control-qlog-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let paths = ServerPaths::new(&root);
+        paths.ensure_dirs().unwrap();
         let mut config = ServerConfig::default();
         config.normalize(&paths, 1053, false, "0.0.0.0").unwrap();
+        config.save(&paths.config_path).unwrap();
         let log_dir = std::path::PathBuf::from(&config.query_log.data_dir);
         std::fs::create_dir_all(&log_dir).unwrap();
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as i64;
         let line = serde_json::to_string(&diting_desktop_core::querylog::Record {
-            timestamp: 1_700_000_000_000,
+            timestamp: now_ms,
             domain: "from-file.example".to_string(),
             status: "allowed".to_string(),
             ..Default::default()
@@ -175,7 +187,13 @@ mod tests {
         .unwrap();
         std::fs::write(log_dir.join("querylog-20261122.jsonl"), format!("{line}\n")).unwrap();
 
-        let runtime = Arc::new(ServerRuntime::new(paths, config).unwrap());
+        let storage = Arc::new(ServerStorage::open(&paths).unwrap());
+        let report = storage.migrate_legacy(&paths).unwrap().unwrap();
+        assert_eq!(report.imported_logs, 1);
+        assert!(!log_dir.join("querylog-20261122.jsonl").exists());
+        let stores = storage.runtime_stores(&config);
+        let runtime = Arc::new(ServerRuntime::new(paths, config, stores, storage).unwrap());
+
         let (default_res, _) = handle_request(
             &runtime,
             Request {
@@ -198,7 +216,7 @@ mod tests {
         )
         .await;
         assert!(mem_only_res.ok);
-        assert_eq!(mem_only_res.result.unwrap()["total"], 0);
+        assert_eq!(mem_only_res.result.unwrap()["total"], 1);
 
         runtime.shutdown().await;
         let _ = std::fs::remove_dir_all(&root);

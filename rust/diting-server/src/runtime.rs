@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use diting_desktop_app::{dns_server_config, AppRuntime, PlatformHandles};
+use diting_desktop_app::{dns_server_config, AppRuntime, PlatformHandles, RuntimeStores};
 use diting_desktop_core::querylog::{NameCount, SearchQuery, Summary};
 use diting_desktop_dns::server::{BoundDnsSockets, DnsServer};
 use serde::Serialize;
@@ -12,6 +12,7 @@ use tokio::sync::Mutex;
 use crate::config::ServerConfig;
 use crate::observer::ServerQueryObserver;
 use crate::paths::ServerPaths;
+use crate::storage::ServerStorage;
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -54,10 +55,16 @@ pub struct ServerRuntime {
     desktop: Arc<AppRuntime>,
     dns: Mutex<Option<Arc<DnsServer>>>,
     started_at_ms: i64,
+    storage: Arc<ServerStorage>,
 }
 
 impl ServerRuntime {
-    pub fn new(paths: ServerPaths, config: ServerConfig) -> Result<Self, String> {
+    pub fn new(
+        paths: ServerPaths,
+        config: ServerConfig,
+        stores: RuntimeStores,
+        storage: Arc<ServerStorage>,
+    ) -> Result<Self, String> {
         paths.ensure_dirs().map_err(|error| {
             format!(
                 "创建服务器数据目录失败 ({}): {error}",
@@ -65,11 +72,15 @@ impl ServerRuntime {
             )
         })?;
         let desktop_config = config.desktop_config();
-        let desktop = Arc::new(AppRuntime::with_platform(
+        let desktop = Arc::new(AppRuntime::with_stores(
             desktop_config,
-            paths.config_path.clone(),
-            PlatformHandles::default(),
+            stores,
+            paths.data_dir.clone(),
+            Some(PlatformHandles::default()),
         ));
+        if let Err(error) = desktop.load_cache_from_store() {
+            eprintln!("[缓存] 恢复缓存失败，将以空缓存启动: {error}");
+        }
         desktop.set_observer(Arc::new(ServerQueryObserver::new(Arc::clone(
             &desktop.querylog,
         ))));
@@ -80,6 +91,7 @@ impl ServerRuntime {
             desktop,
             dns: Mutex::new(None),
             started_at_ms: now_ms(),
+            storage,
         })
     }
 
@@ -131,8 +143,9 @@ impl ServerRuntime {
         if let Some(server) = server {
             server.shutdown().await;
         }
-        let _ = self.desktop.save_cache();
+        let _ = self.desktop.dump_cache_to_store();
         let _ = self.desktop.querylog.close();
+        let _ = self.storage.checkpoint();
     }
 
     pub fn status(&self, running: bool) -> Status {
@@ -169,7 +182,7 @@ impl ServerRuntime {
     pub fn replace_config(&self, next: ServerConfig) -> Result<ServerConfig, String> {
         let mut merged = self.config();
         merged.replace_editable(next, &self.paths)?;
-        merged.save(&self.paths.config_path)?;
+        self.storage.save_config(&self.paths, &merged)?;
         self.desktop.apply_config(merged.desktop_config());
         *self
             .config
@@ -217,7 +230,7 @@ impl ServerRuntime {
             .map_err(|error| error.to_string())?;
         let mut next = self.config();
         next.filter = self.desktop.filter.config();
-        next.save(&self.paths.config_path)?;
+        self.storage.save_config(&self.paths, &next)?;
         *self
             .config
             .write()
@@ -237,7 +250,7 @@ impl ServerRuntime {
     }
 
     pub fn save_initial_config(&self) -> Result<(), String> {
-        self.config().save(&self.paths.config_path)
+        self.storage.save_config(&self.paths, &self.config())
     }
 
     pub fn log_path(&self) -> &Path {
@@ -274,18 +287,29 @@ mod tests {
     use diting_desktop_dns::server::{BoundDnsSockets, ServerConfig as ListenerConfig};
 
     fn paths(tag: &str) -> ServerPaths {
-        ServerPaths::new(std::env::temp_dir().join(format!(
+        let root = std::env::temp_dir().join(format!(
             "diting-server-runtime-{tag}-{}",
             std::process::id()
-        )))
+        ));
+        let _ = std::fs::remove_dir_all(&root);
+        ServerPaths::new(root)
+    }
+
+    fn runtime(tag: &str, config: ServerConfig) -> ServerRuntime {
+        let paths = paths(tag);
+        paths.ensure_dirs().unwrap();
+        let storage = Arc::new(ServerStorage::open(&paths).unwrap());
+        let stores = storage.runtime_stores(&config);
+        ServerRuntime::new(paths, config, stores, storage).unwrap()
     }
 
     #[test]
     fn runtime_starts_with_defaults_and_rejects_an_empty_provider_list() {
-        let paths = paths("defaults");
         let mut config = ServerConfig::default();
-        config.normalize(&paths, 1053, false, "0.0.0.0").unwrap();
-        let runtime = ServerRuntime::new(paths, config).unwrap();
+        config
+            .normalize(&paths("defaults"), 1053, false, "0.0.0.0")
+            .unwrap();
+        let runtime = runtime("defaults", config);
         let status = runtime.status(false);
         assert_eq!(status.port, 1053);
         assert!(!status.running);
@@ -305,9 +329,8 @@ mod tests {
         let mut config = ServerConfig::default();
         config.filter.custom_rules = vec!["||ads.example.com^".to_string()];
         config.cache.enabled = false;
-        config.query_log.file_enabled = false;
         config.normalize(&paths, port, false, "127.0.0.1").unwrap();
-        let runtime = ServerRuntime::new(paths, config).unwrap();
+        let runtime = runtime("udp", config);
         let bound = BoundDnsSockets::bind(&ListenerConfig {
             udp_addresses: vec![format!("127.0.0.1:{port}")],
             tcp_addresses: Vec::new(),

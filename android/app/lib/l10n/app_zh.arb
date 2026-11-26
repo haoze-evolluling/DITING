@@ -5717,7 +5717,7 @@
   "serverCacheNegative": "缓存否定响应",
   "serverCacheOptimistic": "乐观缓存",
   "serverCachePrefetch": "预取",
-  "serverCacheFooter": "修改会立即应用；缓存内容在进程重启后清空。",
+  "serverCacheFooter": "修改会立即应用；缓存会写入数据库，重启后自动恢复。",
   "serverCacheSaved": "缓存设置已保存",
   "serverCacheAdvanced": "高级选项",
   "serverCacheAdvancedSummary": "最小 TTL、过期回退、否定缓存、乐观缓存与预取",
