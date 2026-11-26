@@ -304,26 +304,41 @@ extension _BackupImportApply on BackupImporter {
     }
   }
 
+  /// 先按完整身份查找已有规则：唯一索引对 NULL 不生效且
+  /// `INSERT OR IGNORE` 在 NULL 列上不会去重，直接插入会留下重复行。
   Future<void> _insertDomainRule(
     Database db,
     String table,
     Map<String, Object?> row,
   ) async {
-    await db.insert(table, row, conflictAlgorithm: ConflictAlgorithm.ignore);
-    final pattern = row['pattern'];
-    final important = row['important'];
-    final appScope = row['appScope'];
-    final rows = await db.query(
+    const where =
+        'pattern = ? AND important = ? AND appScope IS ? AND appInverted = ? '
+        'AND denyallow IS ? AND dnsType IS ? AND isRegex = ?';
+    final args = <Object?>[
+      row['pattern'],
+      row['important'] ?? 0,
+      row['appScope'],
+      row['appInverted'] ?? 0,
+      row['denyallow'],
+      row['dnsType'],
+      row['isRegex'] ?? 0,
+    ];
+    final existing = await db.query(
       table,
       columns: ['id'],
-      where: appScope == null
-          ? 'pattern = ? AND important = ? AND appScope IS NULL'
-          : 'pattern = ? AND important = ? AND appScope = ?',
-      whereArgs: [pattern, important, ?appScope],
+      where: where,
+      whereArgs: args,
       limit: 1,
     );
-    if (rows.isEmpty) return;
-    await _insertRuleSource(db, '${table}_source', rows.first['id']);
+    final id = existing.isNotEmpty
+        ? existing.first['id'] as int
+        : await db.insert(
+            table,
+            row,
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
+    if (id == 0) return;
+    await _insertRuleSource(db, '${table}_source', id);
   }
 
   Future<void> _insertRule(
@@ -332,11 +347,31 @@ extension _BackupImportApply on BackupImporter {
     required String sourceTable,
     required Map<String, Object?> row,
   }) async {
-    final id = await db.insert(
+    final (where, args) = switch (table) {
+      'rewrite_rule' => (
+        'pattern = ? AND targetType = ? AND targetValue = ?',
+        <Object?>[row['pattern'], row['targetType'], row['targetValue']],
+      ),
+      'go_url_rule' => (
+        'pattern = ? AND kind = ?',
+        <Object?>[row['pattern'], row['kind']],
+      ),
+      _ => ('0', const <Object?>[]),
+    };
+    final existing = await db.query(
       table,
-      row,
-      conflictAlgorithm: ConflictAlgorithm.ignore,
+      columns: ['id'],
+      where: where,
+      whereArgs: args,
+      limit: 1,
     );
+    final id = existing.isNotEmpty
+        ? existing.first['id'] as int
+        : await db.insert(
+            table,
+            row,
+            conflictAlgorithm: ConflictAlgorithm.ignore,
+          );
     if (id == 0) return;
     await _insertRuleSource(db, sourceTable, id);
   }

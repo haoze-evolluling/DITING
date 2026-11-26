@@ -181,10 +181,10 @@ CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT 
 
   static const _ruleIndexes = <String>[
     'CREATE INDEX `index_block_rule_appScope` ON `block_rule` (`appScope`)',
-    'CREATE UNIQUE INDEX `index_block_rule_pattern_important_appScope_appInverted_dnsType_isRegex` ON `block_rule` (`pattern`, `important`, `appScope`, `appInverted`, `dnsType`, `isRegex`)',
+    'CREATE UNIQUE INDEX `index_block_rule_pattern_important_appScope_appInverted_denyallow_dnsType_isRegex` ON `block_rule` (`pattern`, `important`, `appScope`, `appInverted`, `denyallow`, `dnsType`, `isRegex`)',
     'CREATE INDEX `index_block_rule_source_source` ON `block_rule_source` (`source`)',
     'CREATE INDEX `index_allow_rule_appScope` ON `allow_rule` (`appScope`)',
-    'CREATE UNIQUE INDEX `index_allow_rule_pattern_important_appScope_appInverted_dnsType_isRegex` ON `allow_rule` (`pattern`, `important`, `appScope`, `appInverted`, `dnsType`, `isRegex`)',
+    'CREATE UNIQUE INDEX `index_allow_rule_pattern_important_appScope_appInverted_denyallow_dnsType_isRegex` ON `allow_rule` (`pattern`, `important`, `appScope`, `appInverted`, `denyallow`, `dnsType`, `isRegex`)',
     'CREATE INDEX `index_allow_rule_source_source` ON `allow_rule_source` (`source`)',
     'CREATE UNIQUE INDEX `index_rewrite_rule_pattern_targetType_targetValue` ON `rewrite_rule` (`pattern`, `targetType`, `targetValue`)',
     'CREATE INDEX `index_rewrite_rule_source_source` ON `rewrite_rule_source` (`source`)',

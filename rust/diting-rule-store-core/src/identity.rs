@@ -4,6 +4,12 @@ use serde_json::{json, Value};
 
 use crate::probe::text;
 
+/// 修饰符里空串与缺省语义相同，统一折叠为 `None`，
+/// 让身份键与引擎 `is_set` 的判断保持一致。
+pub(crate) fn non_empty(value: Option<String>) -> Option<String> {
+    value.filter(|value| !value.is_empty())
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum TargetType {
     Ipv4,
@@ -80,6 +86,34 @@ pub fn predicate(name: &str, package: &str) -> (String, Vec<Value>) {
         }
         _ => (scope, scope_values),
     }
+}
+
+/// 全局域名规则的身份列。`true` 表示可空列，比较时必须使用 `IS`，
+/// 让 NULL 与 NULL 也视为相等（与唯一索引的语义保持一致）。
+pub const DOMAIN_IDENTITY_COLUMNS: [(&str, bool); 7] = [
+    ("pattern", false),
+    ("important", false),
+    ("appScope", true),
+    ("appInverted", false),
+    ("denyallow", true),
+    ("dnsType", true),
+    ("isRegex", false),
+];
+
+/// 生成带表别名、可放入集合 SQL 的身份比较子句。
+/// 与 [`identity`] 使用同一组列，避免批量导入与逐条写入的去重键漂移。
+pub fn domain_identity_sql(left: &str, right: &str) -> String {
+    DOMAIN_IDENTITY_COLUMNS
+        .iter()
+        .map(|(column, nullable)| {
+            if *nullable {
+                format!("{left}.{column} IS {right}.{column}")
+            } else {
+                format!("{left}.{column} = {right}.{column}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" AND ")
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -166,6 +200,15 @@ pub fn identity(
     if flavor == Flavor::Global {
         where_parts.push(String::from("appInverted = ?"));
         args.push(json!(i32::from(app_inverted)));
+        // denyallow 会改变匹配语义，必须参与去重键，否则
+        // `||a.com^$denyallow=x` 与 `||a.com^$denyallow=y` 会被合并。
+        match non_empty(text(rule, "denyallow")) {
+            Some(denyallow) => {
+                where_parts.push(String::from("denyallow = ?"));
+                args.push(json!(denyallow));
+            }
+            None => where_parts.push(String::from("denyallow IS NULL")),
+        }
         match text(rule, "dnsType") {
             Some(dns_type) => {
                 where_parts.push(String::from("dnsType = ?"));
@@ -259,7 +302,7 @@ fn domain_row(
     );
     row.insert(
         String::from("denyallow"),
-        text(rule, "denyallow")
+        non_empty(text(rule, "denyallow"))
             .map(Value::String)
             .unwrap_or(Value::Null),
     );

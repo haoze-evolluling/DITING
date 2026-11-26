@@ -32,7 +32,7 @@ fn the_global_identity_covers_every_unique_key_column() {
     assert_eq!(
         built.where_sql,
         "pattern = ? AND important = ? AND appScope IS NULL AND appInverted = ? \
-         AND dnsType IS NULL AND isRegex = ?"
+         AND denyallow IS NULL AND dnsType IS NULL AND isRegex = ?"
     );
     assert_eq!(
         built.args,
@@ -42,6 +42,39 @@ fn the_global_identity_covers_every_unique_key_column() {
     assert_eq!(built.row["appScope"], json!(null));
     assert_eq!(built.row["isWildcard"], json!(0));
     assert_eq!(built.row["addedAt"], json!(1000));
+}
+
+#[test]
+fn denyallow_is_part_of_the_identity() {
+    let first = identity(
+        "block",
+        Flavor::Global,
+        &json!({"pattern": "a.test", "denyallow": "safe.a.test"}),
+        None,
+        1000,
+    );
+    let second = identity(
+        "block",
+        Flavor::Global,
+        &json!({"pattern": "a.test", "denyallow": "other.a.test"}),
+        None,
+        1000,
+    );
+    assert_eq!(first.where_sql, second.where_sql);
+    assert_ne!(first.args, second.args);
+    assert_eq!(first.args[3], json!("safe.a.test"));
+    assert_eq!(second.args[3], json!("other.a.test"));
+    assert_eq!(first.row["denyallow"], json!("safe.a.test"));
+
+    let empty = identity(
+        "block",
+        Flavor::Global,
+        &json!({"pattern": "a.test", "denyallow": ""}),
+        None,
+        1000,
+    );
+    assert!(empty.where_sql.contains("denyallow IS NULL"));
+    assert_eq!(empty.row["denyallow"], json!(null));
 }
 
 #[test]

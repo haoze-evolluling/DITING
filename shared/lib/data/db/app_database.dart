@@ -35,6 +35,7 @@ class AppDatabase {
         onConfigure: _configure,
         singleInstance: singleInstance,
         onUpgrade: (db, from, to) async {
+          await _migrate(db, kind, from);
           await _createIfMissing(db, DatabaseSchema.statementsFor(kind));
         },
       );
@@ -67,6 +68,7 @@ class AppDatabase {
           await db.execute('PRAGMA application_id = ${kind.applicationId}');
         },
         onUpgrade: (db, from, to) async {
+          await _migrate(db, kind, from);
           await _createIfMissing(db, statements);
         },
       );
@@ -89,6 +91,28 @@ class AppDatabase {
   static Future<int> _applicationId(Database db) async {
     final rows = await db.rawQuery('PRAGMA application_id');
     return (rows.firstOrNull?.values.firstOrNull as num?)?.toInt() ?? 0;
+  }
+
+  /// 逐版本迁移。`CREATE INDEX IF NOT EXISTS` 不会覆盖同名旧索引，
+  /// 因此索引定义变化必须显式 drop 后由 [DatabaseSchema] 重建。
+  static Future<void> _migrate(
+    Database db,
+    DatabaseKind kind,
+    int from,
+  ) async {
+    if (from >= 3) return;
+    if (kind == DatabaseKind.normalRules || kind == DatabaseKind.expressRules) {
+      for (final name in const [
+        'index_block_rule_pattern_important_appScope_appInverted_dnsType_isRegex',
+        'index_allow_rule_pattern_important_appScope_appInverted_dnsType_isRegex',
+      ]) {
+        try {
+          await db.execute('DROP INDEX IF EXISTS `$name`');
+        } on DatabaseException catch (error) {
+          debugPrint('schema migration skipped $name: $error');
+        }
+      }
+    }
   }
 
   static Future<void> _createIfMissing(

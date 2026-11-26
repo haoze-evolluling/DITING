@@ -31,7 +31,16 @@ void main() {
     );
   });
 
-  test('存储 schema 版本已升级到 2（简洁日志库补表）', () {
-    expect(StorageContract.schemaVersion, 2);
+  test('存储 schema 版本已升级到 3（规则唯一索引纳入 denyallow）', () {
+    expect(StorageContract.schemaVersion, 3);
+    final rules = DatabaseSchema.statementsFor(DatabaseKind.normalRules)
+        .join('\n');
+    expect(
+      rules,
+      contains(
+        '(`pattern`, `important`, `appScope`, `appInverted`, `denyallow`, '
+        '`dnsType`, `isRegex`)',
+      ),
+    );
   });
 }

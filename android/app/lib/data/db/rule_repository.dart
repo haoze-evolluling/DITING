@@ -330,14 +330,23 @@ class RuleRepository {
       );
       final now = DateTime.now().millisecondsSinceEpoch;
       for (final entry in entries) {
-        final row = _row(
-          _identity(
-            RuleKind.allow,
-            rule: {'pattern': entry.domain, 'group': entry.group},
-            now: now,
-          ),
+        final identity = _identity(
+          RuleKind.allow,
+          rule: {'pattern': entry.domain, 'group': entry.group},
+          now: now,
         );
-        final id = await txn.insert(tables.table, row);
+        // 订阅规则与预设可能指向同一域名；唯一索引对 NULL appScope 不生效，
+        // 因此必须先按身份查询，避免每次重置都插入一条重复规则。
+        final existing = await txn.query(
+          tables.table,
+          columns: ['id'],
+          where: _where(identity),
+          whereArgs: _args(identity),
+          limit: 1,
+        );
+        final id = existing.isEmpty
+            ? await txn.insert(tables.table, _row(identity))
+            : existing.first['id'] as int;
         await txn.insert(tables.sourceTable, {
           'ruleId': id,
           'source': 'preset',
