@@ -1,12 +1,8 @@
 # ====================================================================
 # Android & Gradle Build Outputs
 # ====================================================================
-/build/
 .gradle/
 .kotlin/
-.cxx/
-.externalNativeBuild/
-captures/
 *.apk
 *.ap_
 *.aab
@@ -52,11 +48,10 @@ node_modules/
 # 桌面管理端：Vite 构建产物不入库（服务编译时嵌入为 Web 管理页）。
 desktop/ui/dist/
 
-# Flutter tool may generate this registrant for the pub-workspace root's own
-# `android/` container (now android/android/) when `flutter analyze` runs. The
-# real Android registrant lives in android/app/android/app/src/main/java/io/flutter/plugins/.
+# Flutter tool may generate this registrant under the pub-workspace root when
+# `flutter analyze` runs. The real Android registrant lives in
+# android/app/android/app/src/main/java/io/flutter/plugins/.
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
-android/android/
 
 # ====================================================================
 # Local Configuration & SDK
@@ -71,7 +66,7 @@ local.properties
 *.p12
 # 唯一例外：证书导入单测的 PKCS#12 素材（口令公开，非真实凭据）。
 # 它需保持由真实 OpenSSL 3.x 默认参数导出，才能持续覆盖解析兼容性。
-!desktop/service/internal/core/testdata/dns-lan.p12
+!rust/diting-desktop-core/tests/data/dns-lan.p12
 keystore/
 DITING-keystore/
 secrets/
@@ -126,6 +121,3 @@ screenshots/
 # 本地排障用的临时抓取（截图、拉取的数据库/备份样本）
 .tmp-test/
 .tmp_verify/
-
-# 真机 UI 取证产物（截图与几何 dump），不入库
-shared/tool/uiprobe/
