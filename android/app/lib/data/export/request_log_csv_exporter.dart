@@ -5,7 +5,7 @@ import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/data/export/request_log_export_options.dart';
 import 'package:diting_android/state/observability_providers.dart'
     show ObservedRequest;
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RequestLogExportSource {

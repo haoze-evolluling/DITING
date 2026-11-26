@@ -1,18 +1,18 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/app/theme/colors.dart';
-import 'package:diting_shared/widgets/appearance/mini_screen.dart';
-import 'package:diting_shared/widgets/appearance/theme_preview.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/app/theme/colors.dart';
+import 'package:diting_android/widgets/appearance/mini_screen.dart';
+import 'package:diting_android/widgets/appearance/theme_preview.dart';
 import 'package:diting_android/routes/system_routes.dart';
-import 'package:diting_shared/state/appearance_extra_providers.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
+import 'package:diting_android/state/appearance_extra_providers.dart';
+import 'package:diting_android/state/appearance_providers.dart';
 import 'package:diting_android/state/font_providers.dart';
 import 'package:diting_android/state/launcher_icon_providers.dart';
-import 'package:diting_shared/state/settings_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/state/settings_providers.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';

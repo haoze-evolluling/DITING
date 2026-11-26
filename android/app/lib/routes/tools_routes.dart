@@ -1,7 +1,7 @@
 import 'package:diting_android/pages/tools/tools_page.dart';
 import 'package:diting_android/routes/tools_paths.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
 List<RouteBase> toolsRoutes() => [

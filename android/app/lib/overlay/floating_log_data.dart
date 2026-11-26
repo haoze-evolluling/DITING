@@ -2,9 +2,9 @@ library;
 
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
-import 'package:diting_shared/data/db/app_database.dart';
+import 'package:diting_android/data/db/app_database.dart';
 import 'package:diting_android/state/observability_providers.dart';
-import 'package:diting_shared/data/errors.dart';
+import 'package:diting_android/data/errors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 

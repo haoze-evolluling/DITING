@@ -11,21 +11,21 @@ import 'package:diting_android/pages/subscriptions/subscriptions_page.dart';
 import 'package:diting_android/pages/system/unknown_route_page.dart';
 import 'package:diting_android/pages/tools/tools_page.dart';
 import 'package:diting_android/pages/traffic/traffic_page.dart';
-import 'package:diting_shared/routes/branches.dart';
-import 'package:diting_shared/shell/branch_transition_shell.dart';
+import 'package:diting_android/routes/branches.dart';
+import 'package:diting_android/shell/branch_transition_shell.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/routes/tools_routes.dart';
 import 'package:diting_android/routes/server_routes.dart';
-import 'package:diting_shared/shell/dock_shell.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/shell/dock_shell.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-export 'package:diting_shared/routes/branches.dart';
+export 'package:diting_android/routes/branches.dart';
 
 String? startupOnboardingRedirect(BuildContext context, GoRouterState state) {
   final container = ProviderScope.containerOf(context, listen: false);

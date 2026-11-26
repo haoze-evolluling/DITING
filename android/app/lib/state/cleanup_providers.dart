@@ -3,10 +3,10 @@ library;
 import 'dart:async';
 
 import 'package:diting_android/data/cleanup/data_cleanup_service.dart';
-import 'package:diting_shared/data/db/app_database.dart';
-import 'package:diting_shared/data/db/rule_index_bridge.dart';
-import 'package:diting_shared/data/native/platform_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/db/app_database.dart';
+import 'package:diting_android/data/db/rule_index_bridge.dart';
+import 'package:diting_android/data/native/platform_bridge.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_android/state/automation_providers.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';

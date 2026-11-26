@@ -1,10 +1,10 @@
 // ignore_for_file: sort_child_properties_last
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

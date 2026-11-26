@@ -1,16 +1,16 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/dns_log_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_android/data/dns_type_name.dart';
 import 'package:diting_android/data/log_dashboard_models.dart';
 import 'package:diting_android/data/log_dashboard_rows.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';

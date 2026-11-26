@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/server/server_home_style.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 String serverHourLabel(DateTime hour) =>

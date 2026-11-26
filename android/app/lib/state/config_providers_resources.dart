@@ -3,7 +3,7 @@ library;
 import 'package:diting_android/data/http/request_user_agent.dart';
 import 'package:diting_android/data/mock_config_resources.dart';
 import 'package:diting_android/data/prefs/config_resource_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ConfigResources {

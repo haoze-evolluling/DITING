@@ -5,9 +5,9 @@ import 'package:diting_android/pages/hub/provider_editor.dart';
 import 'package:diting_android/pages/server/server_upstream_provider_picker.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/ui/ui.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

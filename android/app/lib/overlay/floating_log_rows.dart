@@ -1,13 +1,13 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/dns_query_repository.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/pages/observability/observability_common.dart';
 import 'package:diting_android/pages/observability/requests_page.dart'
     show requestHandlingOf, requestHostOf, requestRuleOf, requestStatusStyle;
 import 'package:diting_android/state/observability_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 String floatingLogTime(int timestamp, {bool withDate = false}) {
@@ -54,8 +54,8 @@ class FloatingLogBall extends StatelessWidget {
                     padding: const EdgeInsets.all(6),
                     child: Image.asset(
                       dark
-                          ? 'packages/diting_shared/assets/images/icon_dark.webp'
-                          : 'packages/diting_shared/assets/images/icon.webp',
+                          ? 'assets/images/icon_dark.webp'
+                          : 'assets/images/icon.webp',
                       filterQuality: FilterQuality.medium,
                     ),
                   ),

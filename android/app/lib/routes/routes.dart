@@ -18,6 +18,6 @@ export 'search_routes.dart';
 export 'subscription_form_routes.dart';
 export 'subscription_version_routes.dart';
 
-export 'package:diting_shared/routes/page.dart';
+export 'package:diting_android/routes/page.dart';
 
 export 'system_routes.dart';

@@ -1,16 +1,16 @@
 import 'dart:async';
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/state/rules_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_list_view.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/empty_state.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';

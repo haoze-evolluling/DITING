@@ -2,8 +2,8 @@ library;
 
 import 'dart:async';
 
-import 'package:diting_shared/data/db/rule_index_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/db/rule_index_bridge.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../vpn/vpn_bridge.dart';

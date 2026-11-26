@@ -1,8 +1,8 @@
 import 'package:diting_android/data/vpn/power_state.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_android/pages/home/widgets/home_power_button.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/state/appearance_providers.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

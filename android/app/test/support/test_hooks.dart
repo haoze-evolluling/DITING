@@ -1,7 +1,7 @@
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/data/server/server_client.dart';
 import 'package:diting_android/state/server_providers.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 
 import 'fake_server_client.dart';

@@ -1,7 +1,7 @@
 library;
 
 import 'package:diting_android/data/site_latency_categories.dart';
-import 'package:diting_shared/ui/icons/icons.dart';
+import 'package:diting_android/ui/icons/icons.dart';
 
 class SiteLatencyTarget {
   const SiteLatencyTarget({

@@ -1,11 +1,11 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/pages/hub/feature_hub_grid.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/state/feature_hub_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/ui/ui.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';

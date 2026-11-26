@@ -32,7 +32,7 @@ ROOT_DIR = _detect_root(DESKTOP_DIR)
 SERVICE_DIR = os.path.join(DESKTOP_DIR, "service")
 DESKTOP_VERSION_FILE = os.path.join(SERVICE_DIR, "VERSION")
 ANDROID_APP_DIR = os.path.join(ROOT_DIR, "android", "app")
-SHARED_DIR = os.path.join(ROOT_DIR, "android", "shared")
+APP_ASSETS_DIR = os.path.join(ANDROID_APP_DIR, "assets")
 
 WEB_DIR = os.path.join(TOOLBOX_DIR, "web")
 BRAND_DIR = os.path.join(TOOLBOX_DIR, "assets", "brand")

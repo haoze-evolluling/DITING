@@ -4,7 +4,7 @@ import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/home/home_page.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

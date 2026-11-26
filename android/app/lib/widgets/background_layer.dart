@@ -2,8 +2,8 @@ library;
 
 import 'dart:io';
 
-import 'package:diting_shared/state/settings_providers.dart';
-import 'package:diting_shared/ui/page_background.dart';
+import 'package:diting_android/state/settings_providers.dart';
+import 'package:diting_android/ui/page_background.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

@@ -1,7 +1,7 @@
 import 'package:diting_android/app/app.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/state/appearance_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

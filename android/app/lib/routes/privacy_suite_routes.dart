@@ -1,6 +1,6 @@
 import 'package:diting_android/pages/network/privacy_suite_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
 abstract final class PrivacySuitePaths {

@@ -11,8 +11,8 @@ import 'package:diting_android/pages/appearance/theme_page.dart';
 import 'package:diting_android/pages/system/developer_page.dart';
 import 'package:diting_android/pages/system/ip_quality_page.dart';
 import 'package:diting_android/pages/system/sponsor_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/navigator.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/navigator.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 

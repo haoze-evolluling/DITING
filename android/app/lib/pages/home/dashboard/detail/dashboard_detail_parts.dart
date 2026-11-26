@@ -1,8 +1,8 @@
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/routes/routes.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';

@@ -1,14 +1,14 @@
 // ignore_for_file: sort_child_properties_last
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/db/bootstrap_log_repository.dart';
-import 'package:diting_shared/data/db/app_database.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/db/app_database.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/pages/hub/bootstrap_entry_editor.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/ui/ui.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:sqflite/sqflite.dart';

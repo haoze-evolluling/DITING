@@ -2,10 +2,10 @@ library;
 
 import 'dart:async';
 
-import 'package:diting_shared/data/native/process_memory.dart';
+import 'package:diting_android/data/native/process_memory.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
-import 'package:diting_shared/ui/scroll_activity.dart';
+import 'package:diting_android/ui/scroll_activity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const memoryPollInterval = Duration(seconds: 2);

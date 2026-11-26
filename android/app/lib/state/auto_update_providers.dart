@@ -1,7 +1,7 @@
 library;
 
 import 'package:diting_android/data/db/subscription_models.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/auto_update_schedule.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,9 +1,9 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/pages/system/unknown_route_page.dart';
 import 'package:diting_android/router.dart';
-import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
+import 'package:diting_android/ui/ui.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

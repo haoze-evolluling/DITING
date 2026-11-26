@@ -1,11 +1,11 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/pages/logs/logs_overview_card.dart';
 import 'package:diting_android/pages/logs/logs_row_marks.dart';
 import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/state/log_dashboard_providers.dart';
 import 'package:diting_android/state/log_race_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:diting_android/widgets/section_slivers.dart';

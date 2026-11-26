@@ -5,7 +5,7 @@ import 'dart:convert';
 
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
-import 'package:diting_shared/data/errors.dart';
+import 'package:diting_android/data/errors.dart';
 import 'package:flutter/services.dart';
 
 const serverChannelName = 'com.haoze.diting/server';

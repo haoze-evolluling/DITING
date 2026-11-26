@@ -1,4 +1,4 @@
-import 'package:diting_shared/ui/l10n.dart';
+import 'package:diting_android/ui/l10n.dart';
 import 'package:material_ui/material_ui.dart';
 
 class StubUiLocalizations extends UiLocalizations {

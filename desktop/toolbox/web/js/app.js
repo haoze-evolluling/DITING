@@ -181,7 +181,7 @@ window.App = {
 
     document.getElementById('btn-logo-export').addEventListener('click', () => LogoModule.exportAssets());
     document.getElementById('btn-logo-open-res').addEventListener('click', () => {
-      App.openPath('android/shared/assets/images');
+      App.openPath('android/app/assets/images');
     });
     const openBrandBtn = document.getElementById('btn-logo-open-brand');
     if (openBrandBtn) {

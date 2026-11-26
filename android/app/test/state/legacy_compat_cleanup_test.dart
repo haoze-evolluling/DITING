@@ -3,10 +3,10 @@ import 'package:diting_android/data/log_dashboard_widgets.dart';
 import 'package:diting_android/state/dashboard_layout_providers.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_android/state/log_dashboard_layout_providers.dart';
-import 'package:diting_shared/data/prefs/ipv6_mode.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/data/prefs/ipv6_mode.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

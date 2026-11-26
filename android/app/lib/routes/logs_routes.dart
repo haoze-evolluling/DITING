@@ -3,8 +3,8 @@ import 'package:diting_android/pages/logs/logs_cache_page.dart';
 import 'package:diting_android/pages/logs/logs_race_page.dart';
 import 'package:diting_android/pages/logs/logs_subscription_stats_page.dart';
 import 'package:diting_android/pages/logs/hit_ranking_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
 abstract final class LogPaths {

@@ -1,4 +1,4 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/dashboard_models.dart';
 import 'package:diting_android/pages/home/dashboard/cards/intranet_ip_card.dart';
 import 'package:diting_android/pages/home/dashboard/cards/memory_card.dart';
@@ -7,13 +7,13 @@ import 'package:diting_android/pages/home/dashboard/cards/provider_card.dart';
 import 'package:diting_android/pages/home/dashboard/cards/resolution_card.dart';
 import 'package:diting_android/pages/home/dashboard/cards/site_latency_card.dart';
 import 'package:diting_android/pages/home/dashboard/cards/status_card.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_card.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_density.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/home/dashboard/edit/dashboard_edit_sheet.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/widgets/notice.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

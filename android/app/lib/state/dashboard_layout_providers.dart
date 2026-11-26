@@ -1,7 +1,7 @@
 library;
 
 import 'package:diting_android/data/dashboard_models.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 LegacySettings _settings(Ref ref) => ref.read(legacySettingsProvider);

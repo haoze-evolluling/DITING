@@ -12,9 +12,9 @@ import 'package:diting_android/pages/server/server_upstream_advanced_page.dart';
 import 'package:diting_android/pages/server/server_upstream_providers_page.dart';
 import 'package:diting_android/pages/server/server_upstream_page.dart';
 import 'package:diting_android/pages/server/server_upstream_bootstrap_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/shell/branch_transition_shell.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/shell/branch_transition_shell.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 

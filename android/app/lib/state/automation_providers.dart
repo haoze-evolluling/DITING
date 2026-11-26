@@ -5,9 +5,9 @@ import 'dart:async';
 import 'package:diting_android/data/db/automation_models.dart';
 import 'package:diting_android/data/db/automation_repository.dart';
 import 'package:diting_android/data/native/automation_bridge.dart';
-import 'package:diting_shared/data/db/app_database.dart';
-import 'package:diting_shared/data/db/storage_contract.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/db/app_database.dart';
+import 'package:diting_android/data/db/storage_contract.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 

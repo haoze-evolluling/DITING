@@ -1,7 +1,7 @@
 library;
 
-import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_android/data/db/datasets.dart';
+import 'package:diting_android/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/preset_whitelist.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -104,7 +104,7 @@ Future<List<({String domain, String group})>> loadPresetEntries({
   final asset =
       load ??
       (() => rootBundle.loadString(
-        'packages/diting_shared/assets/https_passthrough.txt',
+        'assets/https_passthrough.txt',
       ));
   try {
     return parsePresetWhitelist(await asset());

@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_shared/ui/scroll_activity.dart';
+import 'package:diting_android/ui/scroll_activity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const logLiveRefreshInterval = Duration(seconds: 10);

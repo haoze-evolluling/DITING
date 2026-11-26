@@ -3,8 +3,8 @@ import 'package:diting_android/pages/automation/automation_page.dart';
 import 'package:diting_android/pages/automation/profiles_page.dart';
 import 'package:diting_android/pages/automation/timetable_page.dart';
 import 'package:diting_android/pages/config/on_demand_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
 abstract final class AutomationPaths {

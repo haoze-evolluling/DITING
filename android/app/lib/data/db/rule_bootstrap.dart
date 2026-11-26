@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/app_database.dart';
+import 'package:diting_android/data/db/datasets.dart';
+import 'package:diting_android/data/db/app_database.dart';
 import 'package:diting_android/data/db/preset_whitelist.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/native/runtime_events.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
@@ -90,7 +90,7 @@ Future<void> seedPresetWhitelistIfNeeded(
     return;
   }
   try {
-    final content = await rootBundle.loadString('packages/diting_shared/assets/https_passthrough.txt');
+    final content = await rootBundle.loadString('assets/https_passthrough.txt');
     final entries = parsePresetWhitelist(content);
     if (entries.isEmpty) {
       debugPrint('preset whitelist asset produced no entries');

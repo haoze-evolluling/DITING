@@ -9,7 +9,7 @@ import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/http/request_user_agent.dart';
 import 'package:diting_android/data/subscriptions/rust_subscription_core.dart';
 import 'package:diting_android/data/subscriptions/subscription_url.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 
 const int maxSubscriptionBytes = 2 * 1024 * 1024;
 

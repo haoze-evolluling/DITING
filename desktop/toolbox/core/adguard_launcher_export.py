@@ -12,7 +12,7 @@ those aliases need:
   * `drawable/ic_launcher_adguard_foreground.xml`            adaptive-icon foreground vector
   * `mipmap-anydpi-v26/ic_launcher_adguard*.xml`             adaptive icons (API 26+)
   * `mipmap-anydpi/ic_launcher_adguard.xml`                  pre-26 layer-list fallback
-  * `android/shared/assets/images/icon_adguard.png`          in-app preview thumbnail
+  * `android/app/assets/images/icon_adguard.png`             in-app preview thumbnail
 
 The brand SVG has only flat paths and no gradients/filters, so `core.vector_raster` (Pillow only)
 reproduces it exactly.
@@ -30,11 +30,11 @@ from PIL import Image, ImageDraw
 
 try:
     from . import vector_raster as vr
-    from .paths import ANDROID_RES_DIR, BRAND_DIR, SHARED_DIR
+    from .paths import ANDROID_RES_DIR, APP_ASSETS_DIR, BRAND_DIR
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from core import vector_raster as vr  # type: ignore[no-redef]
-    from core.paths import ANDROID_RES_DIR, BRAND_DIR, SHARED_DIR
+    from core.paths import ANDROID_RES_DIR, APP_ASSETS_DIR, BRAND_DIR
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -230,7 +230,7 @@ def export_all(log=print) -> list:
         log,
     ))
 
-    preview = os.path.join(SHARED_DIR, "assets", "images", "icon_adguard.png")
+    preview = os.path.join(APP_ASSETS_DIR, "images", "icon_adguard.png")
     os.makedirs(os.path.dirname(preview), exist_ok=True)
     compose_preview(512).save(preview, "PNG", optimize=True)
     files.append(preview)

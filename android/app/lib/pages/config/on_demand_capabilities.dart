@@ -1,6 +1,6 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_config_resources.dart';
 import 'package:diting_android/data/native/battery_optimization.dart'
     show

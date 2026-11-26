@@ -1,4 +1,4 @@
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 
 IconData glyphByName(String name) => switch (name) {
   'account' => TablerIcons.user,

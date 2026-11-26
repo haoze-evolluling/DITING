@@ -1,7 +1,7 @@
 library;
 
 import 'package:diting_android/data/global_search_index.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GlobalSearchQueryNotifier extends Notifier<String> {

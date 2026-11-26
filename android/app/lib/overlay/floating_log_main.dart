@@ -2,20 +2,20 @@ library;
 
 import 'dart:async';
 
-import 'package:diting_shared/app/bootstrap.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/app/l10n/ui_strings.dart';
-import 'package:diting_shared/app/theme/colors.dart';
-import 'package:diting_shared/app/theme/manager.dart';
-import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/errors.dart';
-import 'package:diting_shared/data/fonts/font_repository.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/app/bootstrap.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/ui_strings.dart';
+import 'package:diting_android/app/theme/colors.dart';
+import 'package:diting_android/app/theme/manager.dart';
+import 'package:diting_android/data/db/datasets.dart';
+import 'package:diting_android/data/errors.dart';
+import 'package:diting_android/data/fonts/font_repository.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 import 'package:diting_android/overlay/floating_log_data.dart';
 import 'package:diting_android/overlay/floating_log_panel.dart';
 import 'package:diting_android/overlay/floating_log_rows.dart';
-import 'package:diting_shared/state/settings_providers.dart'
+import 'package:diting_android/state/settings_providers.dart'
     show AppLanguageMode;
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';

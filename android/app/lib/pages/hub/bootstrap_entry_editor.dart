@@ -1,5 +1,5 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 typedef BootstrapEntryDraft = ({String name, String ip});

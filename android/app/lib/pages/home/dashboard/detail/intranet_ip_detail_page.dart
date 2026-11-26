@@ -1,12 +1,12 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/home/dashboard/detail/dashboard_detail_parts.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';

@@ -1,6 +1,6 @@
 import 'package:diting_android/data/notifications/notification_status_text.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

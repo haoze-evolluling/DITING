@@ -5,8 +5,8 @@ import 'dart:convert';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/vpn/cache_presets.dart';
 import 'package:diting_android/data/vpn/rust_dns_config_core.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 
 enum DnsProtocol {
   dns('DNS'),

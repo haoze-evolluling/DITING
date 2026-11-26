@@ -7,7 +7,7 @@ import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/state/dashboard_layout_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/ui/scroll_activity.dart';
+import 'package:diting_android/ui/scroll_activity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 export 'package:diting_android/state/dashboard_layout_providers.dart';

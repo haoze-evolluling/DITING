@@ -1,7 +1,7 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/site_latency_categories.dart';
 import 'package:diting_android/data/site_latency_targets.dart';
 import 'package:diting_android/pages/home/dashboard/cards/site_latency_card.dart';

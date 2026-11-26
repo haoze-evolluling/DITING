@@ -2,7 +2,7 @@ library;
 
 import 'dart:async';
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/http_request_repository.dart';
 import 'package:diting_android/overlay/floating_log_data.dart';
 import 'package:diting_android/overlay/floating_log_main.dart';
@@ -10,7 +10,7 @@ import 'package:diting_android/overlay/floating_log_rows.dart';
 import 'package:diting_android/pages/observability/requests_page.dart'
     show requestStatusStyle;
 import 'package:diting_android/state/observability_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 

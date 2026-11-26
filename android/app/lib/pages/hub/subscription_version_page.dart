@@ -1,7 +1,7 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/rules/rule_importer.dart';
@@ -9,8 +9,8 @@ import 'package:diting_android/data/rules/rule_parser.dart';
 import 'package:diting_android/data/rules/rust_rule_version_core.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_android/widgets/notice.dart';
-import 'package:diting_shared/ui/ui.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/ui/ui.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

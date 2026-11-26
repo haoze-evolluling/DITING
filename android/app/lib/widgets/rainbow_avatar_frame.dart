@@ -2,7 +2,7 @@ library;
 
 import 'dart:math' as math;
 
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 const rainbowAvatarPadding = 4.0;

@@ -1,18 +1,18 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/pages/system/app_info.dart';
 import 'package:diting_android/pages/system/disclaimer_page.dart';
 import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/routes/system_routes.dart';
 import 'package:diting_android/state/app_version_provider.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:diting_android/state/system_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
 import 'package:diting_android/widgets/note_card.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/status_pill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -162,8 +162,8 @@ class _AboutHero extends StatelessWidget {
     final colorScheme = context.colorScheme;
     final stage = update.stage;
     final logoAsset = colorScheme.brightness == Brightness.dark
-        ? 'packages/diting_shared/assets/images/icon_dark.webp'
-        : 'packages/diting_shared/assets/images/icon.webp';
+        ? 'assets/images/icon_dark.webp'
+        : 'assets/images/icon.webp';
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       child: Column(

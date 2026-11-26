@@ -3,7 +3,7 @@
 > 状态：实施中
 > 适用范围：Android 客户端（Flutter + Kotlin）
 > 目标版本：2.4.10 之后的下一个正式版本
-> 关联模块：`android/shared/lib/data/db`、`android/app/lib/data/db`、`android/app/android/app/src/main/kotlin/com/haoze/diting`
+> 关联模块：`android/app/lib/data/db`、`android/app/android/app/src/main/kotlin/com/haoze/diting`
 
 > 服务器模式已重建为独立 Rust 进程 + JSONL 查询日志，不再使用下文中的 `dns` 模式 SQLite
 > 库与偏好容器。本文保留当时的三模式迁移记录，相关服务器库仅作为 `ServerModeRetirement`

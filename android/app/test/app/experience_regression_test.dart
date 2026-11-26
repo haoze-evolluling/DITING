@@ -1,6 +1,6 @@
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/pages/system/unknown_route_page.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

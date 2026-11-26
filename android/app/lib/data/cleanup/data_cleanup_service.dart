@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_initializing_formals
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/cleanup/cleanup_models.dart';
 import 'package:diting_android/data/cleanup/cleanup_plan.dart';
 import 'package:diting_android/data/cleanup/cleanup_sql.dart';
@@ -10,10 +10,10 @@ import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
 import 'package:diting_android/data/native/recognition_avatar_bridge.dart';
 import 'package:diting_android/data/native/runtime_log_bridge.dart';
-import 'package:diting_shared/data/db/database_schema.dart';
-import 'package:diting_shared/data/native/platform_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/data/db/database_schema.dart';
+import 'package:diting_android/data/native/platform_bridge.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 

@@ -3,8 +3,8 @@ import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/state/network_tools_providers.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

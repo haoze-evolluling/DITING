@@ -5,8 +5,8 @@ import 'package:diting_android/pages/server/server_home_style.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/status_pill.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 

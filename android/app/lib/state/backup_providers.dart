@@ -1,12 +1,12 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 
 import 'package:diting_android/data/backup/backup_exporter.dart';
 import 'package:diting_android/data/backup/backup_importer.dart';
 import 'package:diting_android/data/backup/backup_models.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';

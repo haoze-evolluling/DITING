@@ -28,8 +28,8 @@ import 'package:diting_android/pages/hub/troubleshooting_events_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_log_content_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_logs_page.dart';
 import 'package:diting_android/pages/hub/troubleshooting_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 

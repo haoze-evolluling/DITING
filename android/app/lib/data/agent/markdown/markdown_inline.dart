@@ -1,6 +1,6 @@
 library;
 
-import 'package:diting_shared/ui/font.dart';
+import 'package:diting_android/ui/font.dart';
 import 'package:material_ui/material_ui.dart';
 
 class MarkdownColors {

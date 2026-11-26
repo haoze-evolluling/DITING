@@ -2,7 +2,7 @@ import 'package:diting_android/data/export/request_log_csv_exporter.dart';
 import 'package:diting_android/pages/observability/request_export_page.dart';
 import 'package:diting_android/state/request_export_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

@@ -30,11 +30,11 @@ from PIL import Image
 
 try:
     from . import vector_raster as vr
-    from .paths import ANDROID_RES_DIR, BRAND_XML, SERVICE_DIR, SHARED_DIR
+    from .paths import ANDROID_RES_DIR, APP_ASSETS_DIR, BRAND_XML, SERVICE_DIR
 except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from core import vector_raster as vr  # type: ignore[no-redef]
-    from core.paths import ANDROID_RES_DIR, BRAND_XML, SERVICE_DIR, SHARED_DIR
+    from core.paths import ANDROID_RES_DIR, APP_ASSETS_DIR, BRAND_XML, SERVICE_DIR
 
 AND = "{http://schemas.android.com/apk/res/android}"
 
@@ -205,7 +205,7 @@ def export_desktop(log: Callable[[str, str], None]) -> List[str]:
 
 def export_flutter_assets(log: Callable[[str, str], None]) -> List[str]:
     """Flutter 应用内展示用图标（关于页），浅色与深色各一份。"""
-    images = os.path.join(SHARED_DIR, "assets", "images")
+    images = os.path.join(APP_ASSETS_DIR, "images")
     files = [
         _save_png(render_icon(LIGHT, 512), os.path.join(images, "icon.png"), log),
         _save_png(render_icon(DARK, 512), os.path.join(images, "icon_dark.png"), log),

@@ -1,10 +1,10 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/pages/system/app_info.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:material_ui/material_ui.dart';
 
 class SponsorPage extends StatelessWidget {
@@ -146,14 +146,14 @@ class _PaymentSection extends StatelessWidget {
             children: [
               Expanded(
                 child: _PaymentCard(
-                  asset: 'packages/diting_shared/assets/pay/alipay_code.webp',
+                  asset: 'assets/pay/alipay_code.webp',
                   label: context.l10n.sponsorAlipay,
                 ),
               ),
               Expanded(
                 child: _PaymentCard(
                   asset:
-                      'packages/diting_shared/assets/pay/wechatpay_code.webp',
+                      'assets/pay/wechatpay_code.webp',
                   label: context.l10n.sponsorWechat,
                 ),
               ),

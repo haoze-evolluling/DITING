@@ -3,7 +3,7 @@ library;
 import 'package:diting_android/data/db/rust_rule_store_core.dart';
 import 'package:diting_android/data/rules/rule_models.dart';
 import 'package:diting_android/data/rules/rust_rule_core.dart';
-import 'package:diting_shared/ui/scroll_activity.dart';
+import 'package:diting_android/ui/scroll_activity.dart';
 import 'package:sqflite/sqflite.dart';
 
 class RuleImportSummary {

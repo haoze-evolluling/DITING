@@ -1,7 +1,7 @@
 library;
 
 import 'package:diting_android/data/db/rust_outbound_proxy_core.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:flutter/services.dart';
 
 enum OutboundProxyProtocol {

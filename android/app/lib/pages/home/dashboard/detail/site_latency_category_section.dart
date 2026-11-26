@@ -1,13 +1,13 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/site_latency_categories.dart';
 import 'package:diting_android/data/site_latency_targets.dart';
 import 'package:diting_android/pages/home/dashboard/cards/site_latency_sheet.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/home/dashboard/detail/dashboard_detail_parts.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 class SiteLatencyCategorySection extends StatelessWidget {

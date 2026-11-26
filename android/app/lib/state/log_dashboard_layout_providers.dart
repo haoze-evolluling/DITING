@@ -1,9 +1,9 @@
 library;
 
 import 'package:diting_android/data/log_dashboard_widgets.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 List<LogDashboardWidget> logDashboardCatalogOf(LegacyLogMode mode) =>

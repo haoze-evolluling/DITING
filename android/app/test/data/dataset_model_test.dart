@@ -1,10 +1,10 @@
-import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_android/data/db/datasets.dart';
+import 'package:diting_android/data/db/storage_contract.dart';
 import 'package:diting_android/data/db/rule_dataset_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/state/appearance_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

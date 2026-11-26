@@ -1,8 +1,8 @@
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/native/diagnostics_bridge.dart';
 import 'package:diting_android/data/native/dns_latency_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/tools/tools_page.dart';
 import 'package:diting_android/state/diagnostics_providers.dart';
 import 'package:diting_android/state/network_tools_providers.dart';

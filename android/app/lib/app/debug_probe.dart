@@ -3,8 +3,8 @@ library;
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:diting_shared/ui/inherited.dart';
-import 'package:diting_shared/ui/navigator.dart';
+import 'package:diting_android/ui/inherited.dart';
+import 'package:diting_android/ui/navigator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';

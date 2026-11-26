@@ -32,9 +32,7 @@ android/app/android/app/src/main/jniLibs/
 .pub/
 **/doc/api/
 **/ios/Flutter/.last_build_id
-android/build/
 android/app/build/
-android/shared/build/
 coverage/
 app.*.symbols
 app.*.map.json

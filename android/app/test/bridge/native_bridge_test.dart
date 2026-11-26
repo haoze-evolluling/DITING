@@ -1,13 +1,13 @@
-import 'package:diting_shared/data/fonts/font_repository.dart';
+import 'package:diting_android/data/fonts/font_repository.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/ca_bridge.dart';
 import 'package:diting_android/data/native/db_health_bridge.dart';
 import 'package:diting_android/data/native/deep_link_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
-import 'package:diting_shared/data/native/platform_bridge.dart';
+import 'package:diting_android/data/native/platform_bridge.dart';
 import 'package:diting_android/data/native/tile_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:diting_shared/data/db/datasets.dart';
+import 'package:diting_android/data/db/datasets.dart';
 import 'package:diting_android/data/db/rule_bootstrap.dart';
 import 'package:diting_android/data/db/rule_repository.dart';
 import 'package:diting_android/data/mock_data.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/state/app_version_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -7,8 +7,8 @@ import 'package:diting_android/pages/home/dashboard/detail/network_speed_detail_
 import 'package:diting_android/pages/home/dashboard/detail/site_latency_detail_page.dart';
 import 'package:diting_android/pages/home/dashboard/detail/site_latency_sites_page.dart';
 import 'package:diting_android/pages/home/dashboard/detail/status_detail_page.dart';
-import 'package:diting_shared/routes/page.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/routes/page.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:go_router/go_router.dart';
 
 abstract final class HomeDetailPaths {

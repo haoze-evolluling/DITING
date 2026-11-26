@@ -8,24 +8,37 @@ version: 2.7.5+20705
 environment:
   sdk: ^3.14.0
 
-resolution: workspace
-
 dependencies:
   flutter:
     sdk: flutter
 
-  diting_shared:
-    path: ../shared
+  # Design system dependencies.
+  material_ui: ^1.11.0                   # Material3 widgets (superellipse, Easing)
+  material_color_utilities: ^0.13.0      # HCT / DynamicColor (Flutter SDK pins 0.13.0)
+  material_new_shapes: ^1.0.0            # Morph / toPath (material_ui 1.8 does not export them)
+  animations: ^3.0.0                     # FadeThrough / OpenContainer
+  path_parsing: ^1.1.0                   # Parses the few brand SVGs Tabler does not ship
+  collection: ^1.19.1
+  flutter_tabler_icons: ^1.43.0            # The one icon set used across the app
 
-  material_ui: ^1.11.0
-  material_new_shapes: ^1.0.0
+  # Lazily-built list that keeps a far jump (scrollbar drag) at O(1) per row by
+  # estimating unlaid rows, as FlClash's vendored prism_ui list does.
+  super_sliver_list: ^0.4.1
+
   flutter_riverpod: ^3.5.0
   go_router: ^18.1.1
+
+  # The legacy database reader.
   sqflite: ^2.4.5
   # Imported from lib/ (developer_page joins database paths), so it cannot live under
   # dev_dependencies.
   path: ^1.9.1
   url_launcher: ^6.3.3
+
+  # Localization: gen-l10n reads lib/l10n/*.arb (see tool/i18n/l10n.yaml).
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
 dev_dependencies:
   flutter_test:
@@ -35,10 +48,26 @@ dev_dependencies:
   # Drives the timers behind the power-key timeout in power_guard_test.
   fake_async: ^1.3.3
 
-# The sqlite3 hook mirror is configured once in the workspace root pubspec.yaml
-# (android/pubspec.yaml, `hooks.user_defines`), because pub reads it from the
-# workspace root.
+# Native-asset hook configuration: pub reads `user_defines` from the root package.
+# The sqlite3 hook downloads precompiled binaries from GitHub releases, which is
+# unreachable from this network, so route it through the mirror.
+hooks:
+  user_defines:
+    sqlite3:
+      url_pattern: "https://gh-proxy.com/https://github.com/simolus3/sqlite3.dart/releases/download/$RELEASE_TAG/$FILENAME"
 
 flutter:
   uses-material-design: true
-  # The shared package owns the ARB files and the generated localizations.
+  # Localizations are checked in under lib/l10n and regenerated only with
+  # `python tool/i18n/gen_l10n.py` (see tool/i18n/l10n.yaml). Keep `generate` off: with it
+  # on, every `flutter pub get` reruns gen-l10n and rewrites those files with
+  # the doc comments the script strips.
+  assets:
+    - assets/https_passthrough.txt
+    # Brand icon drawn on the about page hero and the login gate.
+    - assets/images/
+    # Payment QR codes for the sponsor page. The member list and avatars are not
+    # bundled; they are fetched as recognition_members.json plus avatars/.
+    - assets/pay/
+  shaders:
+    - shaders/liquid_glass.frag

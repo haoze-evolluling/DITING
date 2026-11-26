@@ -1,16 +1,16 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/log_dashboard_widgets.dart';
 import 'package:diting_android/pages/home/dashboard/cards/log_list_cards.dart';
 import 'package:diting_android/pages/home/dashboard/cards/traffic_monitor_card.dart';
 import 'package:diting_android/pages/home/dashboard/cards/traffic_structure_card.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_card.dart';
 import 'package:diting_android/pages/logs/ai_insight_card.dart';
 import 'package:diting_android/pages/logs/log_stats_card.dart';
 import 'package:diting_android/pages/logs/logs_shared.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
-import 'package:diting_shared/state/settings_providers.dart';
+import 'package:diting_android/state/settings_providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 

@@ -1,14 +1,14 @@
 // ignore_for_file: sort_child_properties_last
 import 'dart:async';
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/mock_data.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/hub/app_rules_store.dart';
 import 'package:diting_android/state/app_rules_providers.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_list_error_state.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/app_list_view.dart';

@@ -3,7 +3,7 @@ library;
 import 'dart:convert';
 
 import 'package:diting_android/data/mock_config_resources.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
 import 'package:flutter/foundation.dart';
 
 class ConfigResourceStore {

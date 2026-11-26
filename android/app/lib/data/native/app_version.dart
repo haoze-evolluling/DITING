@@ -2,8 +2,8 @@ library;
 
 import 'dart:io';
 
-import 'package:diting_shared/data/errors.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/errors.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 

@@ -1,8 +1,8 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_card.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_density.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:material_ui/material_ui.dart';
 
 typedef DonutSegment = ({int value, Color color});

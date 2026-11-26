@@ -4,7 +4,7 @@ import 'package:diting_android/data/db/rust_recognition_core.dart';
 import 'package:diting_android/data/recognition/recognition_members.dart';
 import 'package:diting_android/data/recognition/recognition_plan.dart';
 import 'package:diting_android/data/recognition/recognition_repository.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

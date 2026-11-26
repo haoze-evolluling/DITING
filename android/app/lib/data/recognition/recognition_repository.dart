@@ -10,8 +10,8 @@ import 'package:diting_android/data/http/request_user_agent.dart';
 import 'package:diting_android/data/native/recognition_avatar_bridge.dart';
 import 'package:diting_android/data/recognition/recognition_members.dart';
 import 'package:diting_android/data/recognition/recognition_plan.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
 import 'package:flutter/foundation.dart';
 
 class RecognitionMembersRepository {

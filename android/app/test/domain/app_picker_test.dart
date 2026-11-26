@@ -1,8 +1,8 @@
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/native/apps_bridge.dart';
 import 'package:diting_android/data/native/permissions_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/permission_providers.dart';

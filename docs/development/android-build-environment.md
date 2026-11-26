@@ -65,11 +65,11 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 
 ## 应用侧依赖
 
-- `material_ui ^1.11.0`、`qr ^4.0.1`（其余依赖均使用 caret 范围，见各包 `pubspec.yaml`）。
+- `material_ui ^1.11.0`、`qr ^4.0.1`（其余依赖均使用 caret 范围，见 `android/app/pubspec.yaml`）。
 - Flutter SDK 把 `material_color_utilities`（`0.13.0`，上游 flutter/flutter#185017）与 `test_api`
-  （`0.7.14`）钉在旧版；本工作区不再用 `dependency_overrides` 强行提升，直接跟随 SDK 的锁定版本。
+  （`0.7.14`）钉在旧版；本项目不再用 `dependency_overrides` 强行提升，直接跟随 SDK 的锁定版本。
 - `test_api` 是 `flutter_test` 的紧邻内部依赖：升级 Flutter 后先用 `flutter test` 复验；一旦 SDK
-  放宽了对这两个包的约束，再按需提升 `android/shared/pubspec.yaml` 中的 `material_color_utilities` 约束。
+  放宽了对这两个包的约束，再按需提升 `android/app/pubspec.yaml` 中的 `material_color_utilities` 约束。
 
 ## Android 原生产物
 
@@ -94,22 +94,11 @@ copy android\app\android\gradle\maven-mirror.init.gradle.kts %USERPROFILE%\.grad
 
 ## 跑测试（native assets 与资源包）
 
-`flutter test` 要在 app 目录里跑：
+`flutter test` 在 `android/app` 目录里跑：
 
 ```bash
 cd android/app && flutter test     # Android 全量（含 sqflite 用例）
 ```
-
-从工作区根目录（`android/`）跑 `flutter test app` 会踩两个坑，都是 `flutter_tools` 按“当前包的依赖图”
-解析造成的，不是本项目配置写错：
-
-1. **原生依赖不编译**：hook 只为当前包（根包 `diting_workspace`，自身没有依赖）的传递依赖编译，
-   于是日志里是 `No packages with native assets. Skipping native assets compilation.`，
-   `build/native_assets/windows/native_assets.json` 写成空表，所有 sqflite 用例在
-   `Couldn't resolve native function 'sqlite3_initialize'` 上失败。
-2. **资源包不同**：测试资源包（`build/unit_test_assets`）也只装当前包声明的资源，从根跑时
-   `packages/diting_shared/assets/https_passthrough.txt` 加载不到，`bootstrapRules` 的种子白名单
-   用例会失败（日志：`preset whitelist asset missing`）。
 
 sqlite3 的原生库由它自己的 build hook 下载，需要先开一次开关（机器本地设置，不在仓库里）：
 
@@ -118,8 +107,8 @@ flutter config --enable-native-assets
 ```
 
 没开时 `flutter test` 会直接退出并提示 `Package(s) sqlite3 require the dart assets feature to be
-enabled`。开关打开后，第一次跑测试时 hook 会按工作区根 `android/pubspec.yaml` 的 `hooks.user_defines`
+enabled`。开关打开后，第一次跑测试时 hook 会按 `android/app/pubspec.yaml` 的 `hooks.user_defines`
 （GitHub release 走 `gh-proxy.com` 镜像）下载 `sqlite3.dll` / `libsqlite3.so` 到
 `.dart_tool/hooks_runner/shared/sqlite3/build/`，之后复用；删掉 `.dart_tool/` 会重新下载。
 
-本机验收（2026-11，`cd android/app && flutter test`）：514 通过、3 跳过。
+本机验收（2026-11，`cd android/app && flutter test`）：682 通过、4 跳过。

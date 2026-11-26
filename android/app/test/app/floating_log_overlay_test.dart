@@ -1,6 +1,6 @@
 import 'package:diting_android/data/db/http_request_repository.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 import 'package:diting_android/overlay/floating_log_data.dart';
 import 'package:diting_android/overlay/floating_log_main.dart';
 import 'package:diting_android/state/observability_providers.dart';

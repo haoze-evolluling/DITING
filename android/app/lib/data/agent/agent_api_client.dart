@@ -6,7 +6,7 @@ import 'dart:io';
 
 import 'package:diting_android/data/agent/rust_agent_core.dart';
 import 'package:diting_android/data/http/request_user_agent.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 
 class AgentChatMessage {
   const AgentChatMessage({required this.role, required this.content});

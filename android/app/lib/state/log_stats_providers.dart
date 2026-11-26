@@ -7,7 +7,7 @@ import 'package:diting_android/data/db/rust_log_query_core.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/data/errors.dart';
+import 'package:diting_android/data/errors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
 

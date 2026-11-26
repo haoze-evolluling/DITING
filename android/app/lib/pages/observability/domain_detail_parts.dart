@@ -1,6 +1,6 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/agent/agent_analysis_target.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/rules/rule_domain_utils.dart';
@@ -8,9 +8,9 @@ import 'package:diting_android/pages/hub/agent_analysis_sheet.dart';
 import 'package:diting_android/pages/observability/observability_common.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_android/state/rules_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';

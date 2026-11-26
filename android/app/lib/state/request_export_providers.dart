@@ -6,7 +6,7 @@ import 'package:diting_android/state/cleanup_providers.dart';
 import 'package:diting_android/state/installed_apps_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final requestLogExporterProvider = Provider<RequestLogCsvExporter>(

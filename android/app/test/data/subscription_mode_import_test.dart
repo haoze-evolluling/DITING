@@ -1,8 +1,8 @@
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/db/subscription_repository.dart';
 import 'package:diting_android/state/subscription_providers.dart';
-import 'package:diting_shared/data/db/database_schema.dart';
-import 'package:diting_shared/data/db/storage_contract.dart';
+import 'package:diting_android/data/db/database_schema.dart';
+import 'package:diting_android/data/db/storage_contract.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';

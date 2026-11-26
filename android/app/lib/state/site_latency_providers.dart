@@ -1,6 +1,6 @@
 library;
 
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/site_latency_categories.dart';
 import 'package:diting_android/data/site_latency_targets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

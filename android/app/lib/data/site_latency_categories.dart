@@ -1,7 +1,7 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/ui/icons/icons.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/ui/icons/icons.dart';
 
 const dashboardSiteCount = 4;
 

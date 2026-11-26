@@ -1,6 +1,6 @@
 library;
 
-import 'package:diting_shared/data/errors.dart';
+import 'package:diting_android/data/errors.dart';
 import 'package:flutter/services.dart';
 
 const runtimeLogChannelName = 'com.haoze.diting/runtime_log';

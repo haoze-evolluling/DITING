@@ -1,9 +1,9 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/routes/routes.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
+import 'package:diting_android/state/appearance_providers.dart';
 import 'package:diting_android/state/provider_catalog_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/leading_slot.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

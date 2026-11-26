@@ -7,8 +7,8 @@ import 'package:diting_android/state/global_search_providers.dart';
 import 'package:diting_android/widgets/empty_state.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
 import 'package:diting_android/widgets/nav_entry_row.dart';
-import 'package:diting_shared/app/l10n/l10n.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

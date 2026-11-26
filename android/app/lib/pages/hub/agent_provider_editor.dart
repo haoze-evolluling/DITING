@@ -1,10 +1,10 @@
 // ignore_for_file: sort_child_properties_last
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/agent/agent_api_client.dart';
 import 'package:diting_android/data/agent/agent_api_text_parser.dart';
 import 'package:diting_android/state/agent_providers.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';

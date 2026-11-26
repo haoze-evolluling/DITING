@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:diting_android/state/installed_apps_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

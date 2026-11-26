@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:diting_android/data/db/rule_providers.dart';
 import 'package:diting_android/data/mock_config_resources.dart';
-import 'package:diting_shared/data/prefs/ipv6_mode.dart';
-import 'package:diting_shared/data/prefs/legacy_prefs_store.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/ipv6_mode.dart';
+import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:diting_android/pages/config/on_demand_capabilities.dart';
-import 'package:diting_shared/state/appearance_providers.dart';
+import 'package:diting_android/state/appearance_providers.dart';
 import 'package:diting_android/state/on_demand_runner.dart';
 import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:fake_async/fake_async.dart';

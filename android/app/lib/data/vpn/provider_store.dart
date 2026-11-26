@@ -2,7 +2,7 @@ library;
 
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/data/vpn/rust_dns_config_core.dart';
-import 'package:diting_shared/data/prefs/legacy_settings.dart';
+import 'package:diting_android/data/prefs/legacy_settings.dart';
 
 List<DnsProviderEntry> readUserProviders(LegacySettings settings) =>
     parseUserProviders(settings.userProvidersJson);

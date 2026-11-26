@@ -4,3 +4,5 @@ analyzer:
   exclude:
     - build/**
     - android/**
+    # One-off codegen scripts; app-side lints do not apply.
+    - tool/**

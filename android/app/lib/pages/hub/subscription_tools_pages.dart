@@ -1,16 +1,16 @@
 // ignore_for_file: sort_child_properties_last
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/mirror_template_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/pages/hub/mirror_global_section.dart';
 import 'package:diting_android/state/auto_update_providers.dart';
 import 'package:diting_android/state/auto_update_runner.dart';
 import 'package:diting_android/state/global_mirror_providers.dart';
 import 'package:diting_android/state/subscription_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

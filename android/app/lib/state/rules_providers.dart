@@ -178,7 +178,7 @@ class RulesNotifier extends Notifier<Map<RuleKind, List<MockRule>>> {
     final repo = _repo;
     if (repo != null && kind == RuleKind.allow) {
       final content = await rootBundle.loadString(
-        'packages/diting_shared/assets/https_passthrough.txt',
+        'assets/https_passthrough.txt',
       );
       final entries = parsePresetWhitelist(content);
       if (entries.isEmpty) {

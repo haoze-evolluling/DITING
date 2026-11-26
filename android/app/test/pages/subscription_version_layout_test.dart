@@ -2,7 +2,7 @@ import 'package:diting_android/data/db/rule_version_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/pages/hub/subscription_version_page.dart';
 import 'package:diting_android/state/subscription_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

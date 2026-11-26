@@ -1,14 +1,14 @@
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/log_dashboard_widgets.dart';
 import 'package:diting_android/pages/home/dashboard/dashboard_board.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_card.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_density.dart';
-import 'package:diting_shared/widgets/dashboard/dashboard_style.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_card.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_density.dart';
+import 'package:diting_android/widgets/dashboard/dashboard_style.dart';
 import 'package:diting_android/pages/logs/log_dashboard_cards.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_android/state/log_dashboard_layout_providers.dart';
-import 'package:diting_shared/state/settings_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/state/settings_providers.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 

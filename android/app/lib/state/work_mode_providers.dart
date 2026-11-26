@@ -1,12 +1,12 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 
 import 'dart:async';
 
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/notifications/notification_status_text.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/vpn/dns_config_builder.dart';
 import 'package:diting_android/data/vpn/power_state.dart';
 import 'package:diting_android/data/vpn/root_dns_bridge.dart';

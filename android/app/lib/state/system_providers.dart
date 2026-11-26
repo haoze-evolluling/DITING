@@ -1,11 +1,11 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'dart:async';
 
 import 'package:diting_android/data/backup/dav_client.dart';
 import 'package:diting_android/data/native/update_bridge.dart';
-import 'package:diting_shared/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
 import 'package:diting_android/data/tools/ip_quality_checker.dart';
 import 'package:diting_android/data/update/app_update_checker.dart';
 import 'package:diting_android/state/app_version_provider.dart';

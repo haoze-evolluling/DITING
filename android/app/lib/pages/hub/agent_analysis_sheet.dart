@@ -1,6 +1,6 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/agent/agent_analysis_target.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/pages/hub/agent_markdown_view.dart';
@@ -8,7 +8,7 @@ import 'package:diting_android/routes/hub_routes.dart';
 import 'package:diting_android/state/agent_providers.dart';
 import 'package:diting_android/state/hub_settings_providers.dart';
 import 'package:diting_android/state/rules_providers.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/widgets/notice.dart';
 import 'package:flutter/services.dart';

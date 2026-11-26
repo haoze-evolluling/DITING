@@ -1,18 +1,18 @@
 library;
 
-import 'package:diting_shared/app/l10n/l10n.dart';
+import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/db/mirror_template_repository.dart';
 import 'package:diting_android/data/db/subscription_models.dart';
 import 'package:diting_android/data/subscriptions/subscription_url.dart';
 import 'package:diting_android/pages/subscriptions/subscription_common.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/subscription_providers.dart';
-import 'package:diting_shared/data/db/datasets.dart';
-import 'package:diting_shared/ui/ui.dart';
+import 'package:diting_android/data/db/datasets.dart';
+import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/app_snack.dart';
 import 'package:diting_android/widgets/chip_row.dart';
 import 'package:diting_android/widgets/notice.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';

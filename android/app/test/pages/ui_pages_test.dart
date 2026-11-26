@@ -11,7 +11,7 @@ import 'package:diting_android/state/dashboard_providers.dart';
 import 'package:diting_android/state/observability_providers.dart';
 import 'package:diting_android/state/rules_providers.dart';
 import 'package:diting_android/state/traffic_providers.dart';
-import 'package:diting_shared/widgets/stat_strip.dart';
+import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
