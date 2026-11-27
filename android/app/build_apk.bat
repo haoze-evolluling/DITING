@@ -214,8 +214,8 @@ goto ERROR_EXIT
 :ERR_NO_KEYSTORE
 echo.
 echo [ERROR] Release signing is not configured: android\key.properties
-echo         is missing. Create it (see android\SIGNING.md) or use
-echo         option [1] instead.
+echo         is missing. Create it with storeFile/storePassword/keyAlias/
+echo         keyPassword entries, or use option [1] instead.
 goto ERROR_EXIT
 
 :ERR_NO_PYTHON
