@@ -1,6 +1,6 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::sync::Once;
+use std::sync::{Once, OnceLock};
 use std::time::Duration;
 
 use reqwest::header::{ETAG, IF_MODIFIED_SINCE, IF_NONE_MATCH, LAST_MODIFIED};
@@ -11,9 +11,9 @@ pub(crate) const MAX_LIST_BYTES: usize = 50 * 1024 * 1024;
 const USER_AGENT: &str = "DITING-DNS-Engine/1.0";
 const TIMEOUT: Duration = Duration::from_secs(15);
 
-/// reqwest 以 `rustls-no-provider` 编译，未安装默认 provider 时
-/// `Client::builder()` 会直接 panic。这里与 workspace 其余 rustls 用法保持一致，
-/// 进程内只安装一次 ring provider。
+/// reqwest 以 `rustls-no-provider` 编译，默认构造的 `Client::builder()` 依赖
+/// 进程级 provider。订阅请求已改用预配置 TLS，这里仍只安装一次 ring provider，
+/// 供其它默认构造与测试使用。
 fn ensure_crypto_provider() {
     static INSTALL: Once = Once::new();
     INSTALL.call_once(|| {
@@ -21,17 +21,35 @@ fn ensure_crypto_provider() {
     });
 }
 
-fn bundled_fallback_certs() -> Vec<reqwest::Certificate> {
-    if !rustls_native_certs::load_native_certs().certs.is_empty() {
-        return Vec::new();
+/// 订阅拉取与引擎的出站连接共用同一套平台信任库。
+///
+/// 不能用 `add_root_certificate` 追加根证书：reqwest 的 rustls 后端在 Android
+/// 上不支持「平台校验器 + 额外根证书」，`Client::build()` 会直接返回 builder
+/// error。这里改为预配置一份与引擎一致的 rustls `ClientConfig`：Android 读取
+/// 系统 CA 目录，桌面端读取原生证书，并补充内置 ISRG 根，绕开
+/// `rustls-platform-verifier` 在 Android 上的限制。
+fn tls_config() -> rustls::ClientConfig {
+    static CONFIG: OnceLock<rustls::ClientConfig> = OnceLock::new();
+    CONFIG
+        .get_or_init(|| {
+            let trust = crate::resolver::os_trust();
+            // 未启用 HTTP/2，只声明 HTTP/1.1。
+            (*trust.client_config(&[b"http/1.1"])).clone()
+        })
+        .clone()
+}
+
+/// reqwest 的 `Display` 只输出错误大类（例如 `builder error`），
+/// 这里把 `source()` 链一并拼上，避免底层原因被吞掉。
+fn transport_message(error: &reqwest::Error) -> String {
+    let mut message = error.to_string();
+    let mut source = std::error::Error::source(error);
+    while let Some(inner) = source {
+        message.push_str(": ");
+        message.push_str(&inner.to_string());
+        source = inner.source();
     }
-    let mut certs = Vec::new();
-    for pem in diting_engine::resolver::trust::BUNDLED_ROOTS {
-        if let Ok(parsed) = reqwest::Certificate::from_pem_bundle(pem.as_bytes()) {
-            certs.extend(parsed);
-        }
-    }
-    certs
+    message
 }
 
 pub(crate) struct FetchOutcome {
@@ -100,17 +118,16 @@ pub(crate) async fn fetch_conditional(
 
     ensure_crypto_provider();
 
-    let mut builder = reqwest::Client::builder()
+    let client = reqwest::Client::builder()
         .timeout(TIMEOUT)
         .gzip(true)
-        .user_agent(USER_AGENT);
-    for cert in bundled_fallback_certs() {
-        builder = builder.add_root_certificate(cert);
-    }
-    let client = builder.build().map_err(|error| FetchError::Transport {
-        url: url.to_string(),
-        message: error.to_string(),
-    })?;
+        .user_agent(USER_AGENT)
+        .tls_backend_preconfigured(tls_config())
+        .build()
+        .map_err(|error| FetchError::Transport {
+            url: url.to_string(),
+            message: transport_message(&error),
+        })?;
 
     let mut request = client.get(url);
     if !etag.is_empty() {
@@ -125,7 +142,7 @@ pub(crate) async fn fetch_conditional(
         .await
         .map_err(|error| FetchError::Transport {
             url: url.to_string(),
-            message: error.to_string(),
+            message: transport_message(&error),
         })?;
     let status = response.status().as_u16();
 
@@ -159,7 +176,7 @@ pub(crate) async fn fetch_conditional(
         .await
         .map_err(|error| FetchError::Transport {
             url: url.to_string(),
-            message: error.to_string(),
+            message: transport_message(&error),
         })?
         .to_vec();
     if data.len() > MAX_LIST_BYTES {
@@ -244,6 +261,17 @@ mod tests {
     fn reqwest_client_builds_after_installing_crypto_provider() {
         ensure_crypto_provider();
         assert!(reqwest::Client::builder().build().is_ok());
+    }
+
+    #[test]
+    fn subscription_client_uses_the_engine_trust_config() {
+        ensure_crypto_provider();
+        let config = tls_config();
+        assert_eq!(config.alpn_protocols, vec![b"http/1.1".to_vec()]);
+        assert!(reqwest::Client::builder()
+            .tls_backend_preconfigured(config)
+            .build()
+            .is_ok());
     }
 
     #[test]
