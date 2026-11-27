@@ -5847,7 +5847,23 @@ abstract class AppL10n {
 
   String get serverHubDataPlane;
 
+  String get serverHubRules;
+
   String get serverHubSystem;
+
+  String serverHubUpstreamSummary(String mode, String cache);
+
+  String get serverHubSubscriptions;
+
+  String get serverHubSubscriptionsEmpty;
+
+  String serverHubSubscriptionsSummary(int count, int failed);
+
+  String get serverServiceStopped;
+
+  String get serverServiceStoppedHint;
+
+  String get serverServiceGoStart;
 
   String serverHubFilterSummary(String state, int count);
 
@@ -6162,6 +6178,8 @@ abstract class AppL10n {
   String get serverSettingsRootBody;
 
   String get serverSettingsRootNote;
+
+  String get serverSettingsRootRestartHint;
 
   String get serverSettingsLaunch;
 

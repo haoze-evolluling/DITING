@@ -30,6 +30,7 @@ class ServerBridge(
         }
     }
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val offlineLock = Any()
 
     fun register() {
         MethodChannel(messenger, CHANNEL).setMethodCallHandler(this)
@@ -136,10 +137,66 @@ class ServerBridge(
             return
         }
         io.execute {
-            runCatching { ServerControlSocket.transact(context, payload) }.fold(
+            // 服务未运行时改走一次性离线进程：配置、订阅、规则测试与历史日志
+            // 都不依赖监听端口。启动 / 停止的切换窗口内先拒绝，避免两个进程同时写库。
+            val transaction = when {
+                ServerProcessState.running ->
+                    runCatching { ServerControlSocket.transact(context, payload) }
+                ServerProcessState.starting || ServerProcessState.stopping ->
+                    Result.failure(
+                        IllegalStateException("DNS 服务正在启动或停止，请稍候再试")
+                    )
+                else -> runCatching { transactOffline(payload) }
+            }
+            transaction.fold(
                 onSuccess = { ChannelResults.success(result, it) },
                 onFailure = { ChannelResults.error(result, "control_failed", it) },
             )
+        }
+    }
+
+    /**
+     * 用一次性进程执行控制请求。
+     *
+     * 与常驻服务共享同一份数据库，但不绑定端口、不进入前台服务，因此服务停止时
+     * 也能刷新订阅、测试规则、读取或清空日志。请求串行执行，避免多个进程同时写库。
+     */
+    private fun transactOffline(payload: String): String {
+        synchronized(offlineLock) {
+            val binary = File(context.applicationInfo.nativeLibraryDir, SERVER_BINARY)
+            if (!binary.isFile) {
+                error(context.getString(R.string.server_binary_missing))
+            }
+            if (!binary.canExecute()) {
+                runCatching { binary.setExecutable(true, false) }
+            }
+            val dataDir = ServerPaths.dataDir(context)
+            dataDir.mkdirs()
+            val command = listOf(
+                binary.absolutePath,
+                "--data-dir", dataDir.absolutePath,
+                "--config", ServerPaths.configFile(context).absolutePath,
+                "--socket", ServerPaths.socketFile(context).absolutePath,
+                "--request", payload,
+            )
+            val process = try {
+                ProcessBuilder(command).redirectErrorStream(true).start()
+            } catch (error: Throwable) {
+                error(
+                    error.message ?: context.getString(R.string.server_start_failed)
+                )
+            }
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            process.waitFor()
+            val marker = output.lineSequence()
+                .firstOrNull { it.startsWith(OFFLINE_RESULT_PREFIX) }
+            if (marker == null) {
+                error(
+                    output.lineSequence().lastOrNull { it.isNotBlank() }
+                        ?: context.getString(R.string.server_start_failed)
+                )
+            }
+            return marker.removePrefix(OFFLINE_RESULT_PREFIX).trim()
         }
     }
 
@@ -164,5 +221,7 @@ class ServerBridge(
     companion object {
         const val CHANNEL = "com.haoze.diting/server"
         const val STATUS_CHANNEL = "com.haoze.diting/server_status"
+        private const val SERVER_BINARY = "libditing_server.so"
+        private const val OFFLINE_RESULT_PREFIX = "SERVER_RESULT "
     }
 }

@@ -79,12 +79,6 @@ class _ServerFilterSubscriptionsPageState
   }
 
   Future<void> _refreshOne(String id) async {
-    final running =
-        ref.read(serverControllerProvider).value?.status.running == true;
-    if (!running) {
-      if (mounted) showAppSnack(context, context.l10n.serverSubsNeedsRunning);
-      return;
-    }
     setState(() => _updating.add(id));
     try {
       await _controller.refreshFilter(id);
@@ -101,12 +95,6 @@ class _ServerFilterSubscriptionsPageState
 
   Future<void> _refreshAll() async {
     if (_refreshing) return;
-    final running =
-        ref.read(serverControllerProvider).value?.status.running == true;
-    if (!running) {
-      showAppSnack(context, context.l10n.serverSubsNeedsRunning);
-      return;
-    }
     setState(() => _refreshing = true);
     try {
       await _controller.refreshFilter();
@@ -121,10 +109,7 @@ class _ServerFilterSubscriptionsPageState
     }
   }
 
-  Future<void> _rename(
-    ServerConfig config,
-    ServerFilterList target,
-  ) async {
+  Future<void> _rename(ServerConfig config, ServerFilterList target) async {
     final name = await showFloatingDialog<String>(
       context: context,
       child: InputDialog(
@@ -141,10 +126,7 @@ class _ServerFilterSubscriptionsPageState
     ]);
   }
 
-  Future<void> _delete(
-    ServerConfig config,
-    ServerFilterList target,
-  ) async {
+  Future<void> _delete(ServerConfig config, ServerFilterList target) async {
     final confirmed = await showFloatingDialog<bool>(
       context: context,
       child: CommonDialog(
@@ -204,10 +186,8 @@ class _ServerFilterSubscriptionsPageState
   Future<void> _manageGroups() async {
     await showSheet<void>(
       context: context,
-      builder: (_) => _ServerGroupSheet(
-        onRename: _renameGroup,
-        onDelete: _deleteGroup,
-      ),
+      builder: (_) =>
+          _ServerGroupSheet(onRename: _renameGroup, onDelete: _deleteGroup),
     );
   }
 
@@ -280,8 +260,7 @@ class _ServerFilterSubscriptionsPageState
         IconButtonData(
           glyph: TablerIcons.file_import,
           tooltip: context.l10n.subsMethodOtherMode,
-          onPressed: () =>
-              context.push(ServerRoutes.filterSubscriptionImport),
+          onPressed: () => context.push(ServerRoutes.filterSubscriptionImport),
         ),
         IconButtonData(
           glyph: TablerIcons.refresh,
@@ -409,8 +388,7 @@ class _ServerFilterSubscriptionsPageState
                 title: Text(context.l10n.autoUpdateRulesSwitch),
                 subtitle: Text(context.l10n.serverSubsAutoUpdateBody),
                 value: filter.autoUpdate,
-                onChanged: (value) =>
-                    _editAutoUpdate(config, enabled: value),
+                onChanged: (value) => _editAutoUpdate(config, enabled: value),
               ),
               if (filter.autoUpdate)
                 ListItem(
@@ -444,5 +422,3 @@ class _ServerFilterSubscriptionsPageState
     );
   }
 }
-
-

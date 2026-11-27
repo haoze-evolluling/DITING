@@ -9433,13 +9433,13 @@ class AppL10nZh extends AppL10n {
   String get serverRetryPort1053 => '改用 1053 重试';
 
   @override
-  String get serverStart => '启动服务器';
+  String get serverStart => '开启 DNS 服务';
 
   @override
   String get serverStarting => '正在启动';
 
   @override
-  String get serverStop => '停止服务器';
+  String get serverStop => '关闭 DNS 服务';
 
   @override
   String get serverListening => '正在监听';
@@ -9507,7 +9507,35 @@ class AppL10nZh extends AppL10n {
   String get serverHubDataPlane => '解析服务';
 
   @override
+  String get serverHubRules => '规则与订阅';
+
+  @override
   String get serverHubSystem => '系统';
+
+  @override
+  String serverHubUpstreamSummary(String mode, String cache) {
+    return '$mode · 缓存$cache';
+  }
+
+  @override
+  String get serverHubSubscriptions => '订阅管理';
+
+  @override
+  String get serverHubSubscriptionsEmpty => '尚未添加订阅';
+
+  @override
+  String serverHubSubscriptionsSummary(int count, int failed) {
+    return '$count 个订阅 · $failed 个异常';
+  }
+
+  @override
+  String get serverServiceStopped => 'DNS 服务未运行';
+
+  @override
+  String get serverServiceStoppedHint => '配置、订阅与规则测试仍可使用，启动后对外提供 DNS 服务';
+
+  @override
+  String get serverServiceGoStart => '去开启';
 
   @override
   String serverHubFilterSummary(String state, int count) {
@@ -10006,6 +10034,9 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverSettingsRootNote => 'Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。';
+
+  @override
+  String get serverSettingsRootRestartHint => '已保存，重启 DNS 服务后生效';
 
   @override
   String get serverSettingsLaunch => '启动与保活';

@@ -28,8 +28,7 @@ class _ServerSubscriptionImportPageState
   final _selected = <String>{};
   var _importing = false;
 
-  ServerConfig? get _config =>
-      ref.read(serverControllerProvider).value?.config;
+  ServerConfig? get _config => ref.read(serverControllerProvider).value?.config;
 
   Set<String> get _existingKeys {
     final config = _config;
@@ -61,7 +60,8 @@ class _ServerSubscriptionImportPageState
     try {
       for (final entry in targets) {
         final record = entry.record;
-        final id = 'list-${DateTime.now().microsecondsSinceEpoch}-'
+        final id =
+            'list-${DateTime.now().microsecondsSinceEpoch}-'
             '${created.length}';
         var url = record.url;
         if (!record.isRemote) {
@@ -105,19 +105,13 @@ class _ServerSubscriptionImportPageState
                 ),
               ),
             );
-        final running =
-            ref.read(serverControllerProvider).value?.status.running == true;
-        if (running) {
-          for (final list in created) {
-            try {
-              await ref
-                  .read(serverControllerProvider.notifier)
-                  .refreshFilter(list.id);
-            } catch (_) {
-              await ref
-                  .read(serverControllerProvider.notifier)
-                  .refreshConfig();
-            }
+        for (final list in created) {
+          try {
+            await ref
+                .read(serverControllerProvider.notifier)
+                .refreshFilter(list.id);
+          } catch (_) {
+            await ref.read(serverControllerProvider.notifier).refreshConfig();
           }
         }
       }
@@ -139,7 +133,9 @@ class _ServerSubscriptionImportPageState
 
   @override
   Widget build(BuildContext context) {
-    final asyncEntries = ref.watch(serverOtherModeSubscriptionsProvider(_source));
+    final asyncEntries = ref.watch(
+      serverOtherModeSubscriptionsProvider(_source),
+    );
     final entries = asyncEntries.value ?? const <ServerImportEntry>[];
     final existing = _existingKeys;
     final importable = [
@@ -160,7 +156,10 @@ class _ServerSubscriptionImportPageState
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: SegmentedControl<DataSet>(
               segments: [
-                (DataSet.normal, serverDataSourceLabel(DataSet.normal, context.l10n)),
+                (
+                  DataSet.normal,
+                  serverDataSourceLabel(DataSet.normal, context.l10n),
+                ),
                 (
                   DataSet.express,
                   serverDataSourceLabel(DataSet.express, context.l10n),

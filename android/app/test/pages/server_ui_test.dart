@@ -1,5 +1,6 @@
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/server/server_client.dart';
+import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/home/home_page.dart';
 import 'package:diting_android/routes/server_routes.dart';
@@ -41,18 +42,23 @@ void main() {
       .ancestor(of: find.text(title), matching: find.byType(AnimatedScale))
       .first;
 
-  testWidgets('配置中心按解析服务与系统分组并保持双列卡片宽度', (tester) async {
+  testWidgets('配置中心按解析服务、规则与订阅、系统分组并保持双列卡片宽度', (tester) async {
     await pumpServer(tester, ServerRoutes.hub);
 
     expect(find.text('配置中心'), findsOneWidget);
     expect(find.text('解析服务'), findsOneWidget);
+    expect(find.text('规则与订阅'), findsOneWidget);
+    expect(find.text('系统'), findsOneWidget);
+    expect(find.text('DNS 服务未运行'), findsOneWidget);
     for (final title in [
       '服务商',
       '调度与缓存',
       'Bootstrap 摘要',
-      '过滤规则',
-      '日志记录',
       '服务器设置',
+      '过滤规则',
+      '订阅管理',
+      '规则测试',
+      '日志记录',
       '外观',
       '关于',
     ]) {
@@ -63,21 +69,26 @@ void main() {
     expect(find.textContaining('保留 7 天'), findsOneWidget);
 
     final providers = tester.getTopLeft(card('服务商'));
-    final settings = tester.getTopLeft(card('服务器设置'));
     final upstream = tester.getTopLeft(card('调度与缓存'));
     final bootstrap = tester.getTopLeft(card('Bootstrap 摘要'));
+    final settings = tester.getTopLeft(card('服务器设置'));
+    expect(upstream.dx, greaterThan(providers.dx));
+    expect(upstream.dy, closeTo(providers.dy, 0.5));
+    expect(bootstrap.dx, closeTo(providers.dx, 0.5));
+    expect(bootstrap.dy, greaterThan(providers.dy));
+    expect(settings.dx, closeTo(upstream.dx, 0.5));
+    expect(settings.dy, closeTo(bootstrap.dy, 0.5));
+
     final filter = tester.getTopLeft(card('过滤规则'));
+    final subscriptions = tester.getTopLeft(card('订阅管理'));
+    final ruleTest = tester.getTopLeft(card('规则测试'));
     final log = tester.getTopLeft(card('日志记录'));
-    expect(settings.dx, greaterThan(providers.dx));
-    expect(settings.dy, closeTo(providers.dy, 0.5));
-    expect(upstream.dx, closeTo(providers.dx, 0.5));
-    expect(upstream.dy, greaterThan(providers.dy));
-    expect(bootstrap.dx, closeTo(settings.dx, 0.5));
-    expect(bootstrap.dy, closeTo(upstream.dy, 0.5));
-    expect(filter.dx, closeTo(providers.dx, 0.5));
-    expect(filter.dy, greaterThan(upstream.dy));
-    expect(log.dx, closeTo(settings.dx, 0.5));
-    expect(log.dy, closeTo(filter.dy, 0.5));
+    expect(subscriptions.dx, greaterThan(filter.dx));
+    expect(subscriptions.dy, closeTo(filter.dy, 0.5));
+    expect(ruleTest.dx, closeTo(filter.dx, 0.5));
+    expect(ruleTest.dy, greaterThan(filter.dy));
+    expect(log.dx, closeTo(subscriptions.dx, 0.5));
+    expect(log.dy, closeTo(ruleTest.dy, 0.5));
     expect(
       tester.getRect(card('日志记录')).width,
       closeTo(tester.getRect(card('服务商')).width, 0.5),
@@ -450,17 +461,62 @@ void main() {
 
     expect((await client.getConfig()).filter.autoUpdate, isFalse);
   });
+
+  testWidgets('服务停止时仍可刷新全部订阅', (tester) async {
+    final client = FakeServerClient(
+      config: ServerConfig.defaults().copyWith(
+        filter: const ServerFilterConfig(
+          lists: [
+            ServerFilterList(
+              id: 'list-1',
+              name: '示例规则',
+              url: 'https://example.com/rules.txt',
+              kind: 'domain',
+            ),
+          ],
+        ),
+      ),
+    );
+    await pumpServer(tester, ServerRoutes.filterSubscriptions, client: client);
+
+    expect(find.text('示例规则'), findsOneWidget);
+    await tester.tap(find.byTooltip('更新全部订阅'));
+    await tester.pumpAndSettle();
+
+    expect(client.refreshCalls, ['']);
+  });
+
+  testWidgets('服务停止时仍可查看历史日志', (tester) async {
+    final client = _LogFake(status: const ServerStatus());
+    await pumpServer(tester, ServerRoutes.logs, client: client);
+
+    expect(find.text('ads.example.com'), findsOneWidget);
+    expect(find.text('服务器未运行'), findsNothing);
+  });
+
+  testWidgets('服务停止时规则测试仍可使用', (tester) async {
+    final client = FakeServerClient();
+    await pumpServer(tester, ServerRoutes.filterTest, client: client);
+
+    await tester.enterText(find.byType(TextField), 'example.com');
+    await tester.tap(find.text('测试'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('将被放行'), findsOneWidget);
+  });
 }
 
 class _LogFake extends FakeServerClient {
-  _LogFake()
+  _LogFake({ServerStatus? status})
     : super(
-        status: const ServerStatus(
-          running: true,
-          root: false,
-          port: 1053,
-          addresses: ['0.0.0.0:1053'],
-        ),
+        status:
+            status ??
+            const ServerStatus(
+              running: true,
+              root: false,
+              port: 1053,
+              addresses: ['0.0.0.0:1053'],
+            ),
         stats: const ServerStats(
           queries: 3,
           blocked: 1,

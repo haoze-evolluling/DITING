@@ -50,8 +50,7 @@ class _ServerSubscriptionEditPageState
 
   bool get _isEdit => widget.listId != null;
 
-  ServerConfig? get _config =>
-      ref.read(serverControllerProvider).value?.config;
+  ServerConfig? get _config => ref.read(serverControllerProvider).value?.config;
 
   ServerFilterList? get _existing {
     final id = widget.listId;
@@ -84,7 +83,9 @@ class _ServerSubscriptionEditPageState
       _method = list.isRemote ? _SubMethod.remote : _SubMethod.local;
       _kind = list.kind;
       _group = list.group;
-      _mirrorTemplate = list.mirrorTemplate.isEmpty ? null : list.mirrorTemplate;
+      _mirrorTemplate = list.mirrorTemplate.isEmpty
+          ? null
+          : list.mirrorTemplate;
       _mirrorFallback = list.mirrorFallback;
       if (!list.isRemote) {
         _localPath = list.url;
@@ -148,8 +149,9 @@ class _ServerSubscriptionEditPageState
       child: InputDialog(
         title: context.l10n.subsNewGroupTitle,
         value: '',
-        validator: (value) =>
-            (value ?? '').trim().isEmpty ? context.l10n.subsGroupNameRequired : null,
+        validator: (value) => (value ?? '').trim().isEmpty
+            ? context.l10n.subsGroupNameRequired
+            : null,
       ),
     );
     if (name != null && mounted) {
@@ -160,10 +162,8 @@ class _ServerSubscriptionEditPageState
   Future<void> _editMirror(List<String> templates) async {
     final choice = await showSheet<_TemplateChoice>(
       context: context,
-      builder: (_) => _TemplateSheet(
-        templates: templates,
-        selected: _mirrorTemplate,
-      ),
+      builder: (_) =>
+          _TemplateSheet(templates: templates, selected: _mirrorTemplate),
     );
     if (choice == null || !mounted) return;
     if (choice.add) {
@@ -328,14 +328,11 @@ class _ServerSubscriptionEditPageState
           .saveConfig(
             config.copyWith(filter: config.filter.copyWith(lists: lists)),
           );
-      final running =
-          ref.read(serverControllerProvider).value?.status.running == true;
-      if (running) {
-        try {
-          await ref.read(serverControllerProvider.notifier).refreshFilter(id);
-        } catch (_) {
-          await ref.read(serverControllerProvider.notifier).refreshConfig();
-        }
+      // 保存后立即下载规则正文：服务未运行时走一次性离线进程，不要求先启动监听。
+      try {
+        await ref.read(serverControllerProvider.notifier).refreshFilter(id);
+      } catch (_) {
+        await ref.read(serverControllerProvider.notifier).refreshConfig();
       }
       if (mounted) {
         showAppSnack(context, context.l10n.serverSubsSaved);
@@ -421,9 +418,7 @@ class _ServerSubscriptionEditPageState
               if (!isRemote) ...[
                 ListItem(
                   leading: const Icon(TablerIcons.file_import, size: 20),
-                  title: Text(
-                    _localName ?? context.l10n.subsLocalRuleFile,
-                  ),
+                  title: Text(_localName ?? context.l10n.subsLocalRuleFile),
                   subtitle: Text(
                     _localName == null
                         ? context.l10n.subsLocalFileHint
@@ -579,5 +574,3 @@ class _ServerSubscriptionEditPageState
     );
   }
 }
-
-

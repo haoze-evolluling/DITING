@@ -5476,9 +5476,9 @@
   "onboardingTipServer3": "服务器配置、规则缓存与查询日志独立保存，不影响其他模式。",
   "serverRetry": "重试",
   "serverRetryPort1053": "改用 1053 重试",
-  "serverStart": "启动服务器",
+  "serverStart": "开启 DNS 服务",
   "serverStarting": "正在启动",
-  "serverStop": "停止服务器",
+  "serverStop": "关闭 DNS 服务",
   "serverListening": "正在监听",
   "serverStopped": "未运行",
   "serverRootMode": "Root · 53",
@@ -5507,7 +5507,35 @@
   "serverTabLogs": "日志",
   "serverHubTitle": "配置中心",
   "serverHubDataPlane": "解析服务",
+  "serverHubRules": "规则与订阅",
   "serverHubSystem": "系统",
+  "serverHubUpstreamSummary": "{mode} · 缓存{cache}",
+  "@serverHubUpstreamSummary": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "cache": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubSubscriptions": "订阅管理",
+  "serverHubSubscriptionsEmpty": "尚未添加订阅",
+  "serverHubSubscriptionsSummary": "{count} 个订阅 · {failed} 个异常",
+  "@serverHubSubscriptionsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "serverServiceStopped": "DNS 服务未运行",
+  "serverServiceStoppedHint": "配置、订阅与规则测试仍可使用，启动后对外提供 DNS 服务",
+  "serverServiceGoStart": "去开启",
   "serverHubFilterSummary": "{state} · {count} 个订阅",
   "@serverHubFilterSummary": {
     "placeholders": {
@@ -5758,6 +5786,7 @@
   "serverSettingsRootRunning": "运行中不能切换 Root 模式",
   "serverSettingsRootBody": "使用 su 绑定 53 端口后降权到应用 UID",
   "serverSettingsRootNote": "Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。",
+  "serverSettingsRootRestartHint": "已保存，重启 DNS 服务后生效",
   "serverSettingsLaunch": "启动与保活",
   "serverSettingsLaunchNote": "开机自启动需要已同意用户协议；异常重启最多尝试 5 次，仍失败会停止服务并保留错误信息。",
   "serverSettingsBootAutoStart": "开机自启动",

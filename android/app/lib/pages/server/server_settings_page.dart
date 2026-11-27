@@ -43,9 +43,14 @@ class ServerSettingsPage extends ConsumerWidget {
                       : context.l10n.serverSettingsRootBody,
                 ),
                 value: config.listen.root,
-                onChanged: status.active
-                    ? null
-                    : (value) => _saveRoot(context, ref, config, value),
+                // 监听身份属于配置：服务运行时也允许修改，重启后生效。
+                onChanged: (value) => _saveRoot(
+                  context,
+                  ref,
+                  config,
+                  value,
+                  active: status.active,
+                ),
               ),
               ListItem(
                 leading: const Icon(TablerIcons.activity, size: 20),
@@ -156,8 +161,9 @@ class ServerSettingsPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     ServerConfig config,
-    bool value,
-  ) async {
+    bool value, {
+    required bool active,
+  }) async {
     try {
       await ref
           .read(serverControllerProvider.notifier)
@@ -172,7 +178,12 @@ class ServerSettingsPage extends ConsumerWidget {
             ),
           );
       if (context.mounted) {
-        showAppSnack(context, context.l10n.commonSaved);
+        showAppSnack(
+          context,
+          active
+              ? context.l10n.serverSettingsRootRestartHint
+              : context.l10n.commonSaved,
+        );
       }
     } catch (error) {
       if (context.mounted) showAppSnack(context, error.toString());

@@ -18,6 +18,7 @@ class FakeServerClient implements ServerClient {
   ServerStatus _status;
   ServerConfig _config;
   final ServerStats _stats;
+  final refreshCalls = <String>[];
 
   void emitStatus(ServerStatus next) {
     _status = next;
@@ -98,8 +99,10 @@ class FakeServerClient implements ServerClient {
   Future<void> clearCache() async {}
 
   @override
-  Future<ServerFilterConfig> refreshFilter([String id = '']) async =>
-      _config.filter;
+  Future<ServerFilterConfig> refreshFilter([String id = '']) async {
+    refreshCalls.add(id);
+    return _config.filter;
+  }
 
   @override
   Future<ServerFilterCheck> filterCheck(

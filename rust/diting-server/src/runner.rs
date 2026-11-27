@@ -21,6 +21,8 @@ struct Cli {
     bind_address: String,
     drop_uid: Option<u32>,
     drop_gid: Option<u32>,
+    /// 服务未运行时执行一条控制请求，结果写入标准输出后退出。
+    request: Option<String>,
 }
 
 pub fn run_from_env() -> Result<(), String> {
@@ -29,6 +31,19 @@ pub fn run_from_env() -> Result<(), String> {
 
 pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
     let cli = parse_args(args)?;
+
+    let paths = ServerPaths::new(&cli.data_dir)
+        .with_overrides(cli.config_path.as_deref(), cli.socket_path.as_deref());
+    paths
+        .ensure_dirs()
+        .map_err(|error| format!("创建服务器目录失败: {error}"))?;
+
+    // 离线维护请求不绑定任何端口，也不需要 Root：它只是打开同一份数据，
+    // 让配置中心在 DNS 服务未运行时也能刷新订阅、测试规则或读取日志。
+    if let Some(request) = cli.request.as_deref() {
+        return run_offline_request(paths, request);
+    }
+
     let root = is_effective_root();
     if root && cli.drop_uid.is_none() {
         return Err("Root 启动必须通过 --drop-uid 指定应用 UID".to_string());
@@ -36,12 +51,6 @@ pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
     if cli.drop_uid == Some(0) {
         return Err("拒绝降权到 UID 0".to_string());
     }
-
-    let paths = ServerPaths::new(&cli.data_dir)
-        .with_overrides(cli.config_path.as_deref(), cli.socket_path.as_deref());
-    paths
-        .ensure_dirs()
-        .map_err(|error| format!("创建服务器目录失败: {error}"))?;
 
     // Root 降权前只能用命令行给出的监听身份绑定套接字；完整配置在降权后从数据库读取。
     let listener = ServerConfig::listener_config(cli.port, &cli.bind_address);
@@ -77,6 +86,42 @@ pub fn run_with_args(args: impl Iterator<Item = String>) -> Result<(), String> {
         root,
         cli.bind_address,
     )
+}
+
+/// 在独立进程里执行一条控制请求，不启动 DNS 监听。
+///
+/// 配置中心的大多数功能（订阅更新、规则测试、历史日志、缓存清理）只依赖数据库与
+/// 网络，与端口是否监听无关；这里复用运行时的控制协议，保证在线与离线行为一致。
+fn run_offline_request(paths: ServerPaths, payload: &str) -> Result<(), String> {
+    let encoded = offline_response(paths, payload)?;
+    println!("SERVER_RESULT {encoded}");
+    use std::io::Write;
+    let _ = std::io::stdout().flush();
+    Ok(())
+}
+
+fn offline_response(paths: ServerPaths, payload: &str) -> Result<String, String> {
+    let request = crate::protocol::parse_request(payload)
+        .map_err(|error| format!("无效的离线请求: {}", error.message))?;
+    let storage = Arc::new(ServerStorage::open(&paths)?);
+    let migrated = storage.migrate_legacy(&paths)?;
+    if let Some(report) = &migrated {
+        log_migration(report);
+    }
+    let config = storage.load_config_preserving_listen(&paths)?;
+    let stores = storage.runtime_stores(&config);
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .map_err(|error| format!("创建离线运行时失败: {error}"))?;
+    runtime.block_on(async move {
+        let server = Arc::new(ServerRuntime::new(paths, config, stores, storage)?);
+        let (response, _) = crate::control::handle_request(&server, request).await;
+        let encoded = serde_json::to_string(&response)
+            .map_err(|error| format!("序列化离线响应失败: {error}"))?;
+        server.shutdown().await;
+        Ok(encoded)
+    })
 }
 
 fn serve(
@@ -253,6 +298,7 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Cli, String> {
         bind_address: "0.0.0.0".to_string(),
         drop_uid: None,
         drop_gid: None,
+        request: None,
     };
     let values: Vec<String> = args.collect();
     let mut index = 0;
@@ -295,10 +341,15 @@ fn parse_args(args: impl Iterator<Item = String>) -> Result<Cli, String> {
                 cli.drop_gid = Some(parse_id(value(index)?)?);
                 index += 2;
             }
+            "--request" => {
+                cli.request = Some(value(index)?.to_string());
+                index += 2;
+            }
             "--help" | "-h" => {
                 println!(
                     "diting-server --data-dir DIR [--config FILE] [--socket FILE] \
-                     [--port 1053] [--bind 0.0.0.0] [--drop-uid UID] [--drop-gid GID]"
+                     [--port 1053] [--bind 0.0.0.0] [--drop-uid UID] [--drop-gid GID] \
+                     [--request JSON]"
                 );
                 std::process::exit(0);
             }
@@ -414,4 +465,49 @@ fn chown_tree(path: &std::path::Path, uid: u32, gid: u32) -> Result<(), String> 
 #[cfg(not(unix))]
 fn chown_tree(_path: &std::path::Path, _uid: u32, _gid: u32) -> Result<(), String> {
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_the_offline_request_flag() {
+        let cli = parse_args(
+            [
+                "--data-dir",
+                "/tmp/diting",
+                "--request",
+                r#"{"id":1,"method":"get_config","params":{}}"#,
+            ]
+            .into_iter()
+            .map(str::to_string),
+        )
+        .unwrap();
+        assert_eq!(
+            cli.request.as_deref(),
+            Some(r#"{"id":1,"method":"get_config","params":{}}"#)
+        );
+    }
+
+    #[test]
+    fn request_flag_requires_a_value() {
+        let error = parse_args(["--request"].into_iter().map(str::to_string)).unwrap_err();
+        assert!(error.contains("--request"));
+    }
+
+    #[test]
+    fn offline_request_reads_config_without_binding_ports() {
+        let root =
+            std::env::temp_dir().join(format!("diting-offline-request-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let paths = ServerPaths::new(&root);
+        paths.ensure_dirs().unwrap();
+
+        let response =
+            offline_response(paths, r#"{"id":1,"method":"get_config","params":{}}"#).unwrap();
+        assert!(response.contains("\"ok\":true"));
+        assert!(response.contains("\"listen\""));
+        let _ = std::fs::remove_dir_all(&root);
+    }
 }

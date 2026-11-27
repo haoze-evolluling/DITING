@@ -65,6 +65,27 @@ impl ServerStorage {
         Ok(config)
     }
 
+    /// 离线维护时沿用已保存的监听身份。
+    ///
+    /// 服务未运行时的一次性请求不绑定端口，不能拿命令行默认值改写用户保存的
+    /// `listen`（尤其是 Root / 53 端口），否则一次离线刷新就会把监听设置降级。
+    pub fn load_config_preserving_listen(
+        &self,
+        paths: &ServerPaths,
+    ) -> Result<ServerConfig, String> {
+        // `save_config` 总是先写兼容镜像再写库，所以只要 `config.json` 存在，它就
+        // 不会比数据库旧；离线请求直接以它为准，避免“停止时保存后 2 秒内再次刷新”
+        // 读到数据库里的旧配置并把新改动覆盖回去。
+        let mut config = std::fs::read(&paths.config_path)
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<ServerConfig>(&bytes).ok())
+            .unwrap_or_else(|| self.load_preferred(paths));
+        let listen = config.listen.clone();
+        config.normalize(paths, listen.port, listen.root, &listen.bind_address)?;
+        self.save_config(paths, &config)?;
+        Ok(config)
+    }
+
     /// 配置优先级：迁移前读取的 `config.json` > 数据库 `meta` > `config_sections` > 默认值。
     fn load_preferred(&self, paths: &ServerPaths) -> ServerConfig {
         let file_config = std::fs::read(&paths.config_path)
@@ -196,6 +217,30 @@ mod tests {
         ));
         let _ = std::fs::remove_dir_all(&root);
         ServerPaths::new(root)
+    }
+
+    #[test]
+    fn offline_load_keeps_the_saved_listen_identity() {
+        let paths = paths("offline-listen");
+        paths.ensure_dirs().unwrap();
+        let storage = ServerStorage::open(&paths).unwrap();
+        let mut config = ServerConfig::default();
+        config.normalize(&paths, 53, true, "127.0.0.1").unwrap();
+        storage.save_config(&paths, &config).unwrap();
+
+        let reloaded = storage.load_config_preserving_listen(&paths).unwrap();
+        assert_eq!(reloaded.listen.port, 53);
+        assert!(reloaded.listen.root);
+        assert_eq!(reloaded.listen.bind_address, "127.0.0.1");
+
+        // 服务停止时 Flutter 只写 config.json；离线请求必须以这份较新的镜像为准。
+        let mut edited = config.clone();
+        edited.filter.block_mode = "nxdomain".to_string();
+        edited.save(&paths.config_path).unwrap();
+        let reloaded = storage.load_config_preserving_listen(&paths).unwrap();
+        assert_eq!(reloaded.filter.block_mode, "nxdomain");
+
+        let _ = std::fs::remove_dir_all(&paths.data_dir);
     }
 
     #[test]

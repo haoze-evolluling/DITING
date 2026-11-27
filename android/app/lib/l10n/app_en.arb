@@ -2992,9 +2992,9 @@
   "onboardingTipServer3": "Server configuration, rule caches and query logs are stored separately from other modes.",
   "serverRetry": "Retry",
   "serverRetryPort1053": "Retry on 1053",
-  "serverStart": "Start server",
+  "serverStart": "Start DNS service",
   "serverStarting": "Starting",
-  "serverStop": "Stop server",
+  "serverStop": "Stop DNS service",
   "serverListening": "Listening",
   "serverStopped": "Not running",
   "serverRootMode": "Root · 53",
@@ -3023,7 +3023,35 @@
   "serverTabLogs": "Logs",
   "serverHubTitle": "Configuration",
   "serverHubDataPlane": "Resolution services",
+  "serverHubRules": "Rules & subscriptions",
   "serverHubSystem": "System",
+  "serverHubUpstreamSummary": "{mode} · cache {cache}",
+  "@serverHubUpstreamSummary": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      },
+      "cache": {
+        "type": "String"
+      }
+    }
+  },
+  "serverHubSubscriptions": "Subscriptions",
+  "serverHubSubscriptionsEmpty": "No subscriptions yet",
+  "serverHubSubscriptionsSummary": "{count} subscriptions · {failed} failing",
+  "@serverHubSubscriptionsSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "serverServiceStopped": "DNS service not running",
+  "serverServiceStoppedHint": "Configuration, subscriptions and rule tests stay available; start it to serve DNS on the network",
+  "serverServiceGoStart": "Start",
   "serverHubFilterSummary": "{state} · {count} subscriptions",
   "@serverHubFilterSummary": {
     "placeholders": {
@@ -3274,6 +3302,7 @@
   "serverSettingsRootRunning": "Stop the server to change root mode",
   "serverSettingsRootBody": "Bind port 53 through su, then drop to the app UID",
   "serverSettingsRootNote": "Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.",
+  "serverSettingsRootRestartHint": "Saved. Restart the DNS service to apply",
   "serverSettingsLaunch": "Startup and keep-alive",
   "serverSettingsLaunchNote": "Auto-start requires the user agreement to be accepted. A crash is retried up to 5 times, then the service stops and keeps the error message.",
   "serverSettingsBootAutoStart": "Start on boot",

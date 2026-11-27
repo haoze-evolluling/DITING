@@ -394,8 +394,9 @@ final serverQueryLogProvider = FutureProvider.autoDispose
     .family<ServerQueryResult, ServerLogQuery>((ref, query) async {
       ref.watch(serverLogRevisionProvider);
       final snapshot = ref.watch(serverControllerProvider).value;
-      if (snapshot == null || !snapshot.status.running) {
+      if (snapshot == null) {
         return const ServerQueryResult();
       }
+      // 历史日志保存在数据库里，服务未监听的时也能查询。
       return ref.read(serverClientProvider).queryLog(query);
     });

@@ -164,7 +164,6 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     final snapshot = ref.watch(serverControllerProvider).value;
     final query = _query;
     final result = ref.watch(serverQueryLogProvider(query));
-    final running = snapshot?.status.running == true;
     final filtered =
         _domainQuery.isNotEmpty ||
         _client.isNotEmpty ||
@@ -182,7 +181,9 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
       ],
       body: PageBody(
         children: [
-          if (snapshot != null) _StatsOverview(stats: snapshot.stats),
+          // 统计是服务运行期的实时指标；停止时只展示已持久化的历史日志。
+          if (snapshot != null && snapshot.status.running)
+            _StatsOverview(stats: snapshot.stats),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
             child: Row(
@@ -290,12 +291,6 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
           ),
           result.when(
             data: (data) {
-              if (!running) {
-                return _EmptyLogCard(
-                  title: context.l10n.serverLogStoppedTitle,
-                  body: context.l10n.serverLogStoppedBody,
-                );
-              }
               if (data.entries.isEmpty) {
                 return _EmptyLogCard(
                   title: filtered

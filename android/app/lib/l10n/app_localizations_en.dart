@@ -10041,13 +10041,13 @@ class AppL10nEn extends AppL10n {
   String get serverRetryPort1053 => 'Retry on 1053';
 
   @override
-  String get serverStart => 'Start server';
+  String get serverStart => 'Start DNS service';
 
   @override
   String get serverStarting => 'Starting';
 
   @override
-  String get serverStop => 'Stop server';
+  String get serverStop => 'Stop DNS service';
 
   @override
   String get serverListening => 'Listening';
@@ -10115,7 +10115,36 @@ class AppL10nEn extends AppL10n {
   String get serverHubDataPlane => 'Resolution services';
 
   @override
+  String get serverHubRules => 'Rules & subscriptions';
+
+  @override
   String get serverHubSystem => 'System';
+
+  @override
+  String serverHubUpstreamSummary(String mode, String cache) {
+    return '$mode · cache $cache';
+  }
+
+  @override
+  String get serverHubSubscriptions => 'Subscriptions';
+
+  @override
+  String get serverHubSubscriptionsEmpty => 'No subscriptions yet';
+
+  @override
+  String serverHubSubscriptionsSummary(int count, int failed) {
+    return '$count subscriptions · $failed failing';
+  }
+
+  @override
+  String get serverServiceStopped => 'DNS service not running';
+
+  @override
+  String get serverServiceStoppedHint =>
+      'Configuration, subscriptions and rule tests stay available; start it to serve DNS on the network';
+
+  @override
+  String get serverServiceGoStart => 'Start';
 
   @override
   String serverHubFilterSummary(String state, int count) {
@@ -10637,6 +10666,10 @@ class AppL10nEn extends AppL10n {
   @override
   String get serverSettingsRootNote =>
       'Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.';
+
+  @override
+  String get serverSettingsRootRestartHint =>
+      'Saved. Restart the DNS service to apply';
 
   @override
   String get serverSettingsLaunch => 'Startup and keep-alive';
