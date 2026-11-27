@@ -193,7 +193,11 @@ impl Inner {
             let rules = self
                 .list_cache
                 .read(&list.id)
-                .map(|data| parse_list_text(&String::from_utf8_lossy(&data), &list.id))
+                .map(|data| {
+                    let text = String::from_utf8_lossy(&data);
+                    let text = filter_text_by_kind(&text, &list.kind);
+                    parse_list_text(&text, &list.id)
+                })
                 .unwrap_or_default();
             counts.push((list.id.clone(), rules.len() as i32));
             rule_set.lists.extend(rules);
@@ -238,21 +242,52 @@ impl Inner {
     }
 
     pub(super) async fn refresh_list_inner(&self, id: &str) -> Result<bool, FilterError> {
-        let (url, etag, last_modified) = {
+        let (url, mirror_url, mirror_fallback, etag, last_modified, kind, is_local, old_checksum) = {
             let config = self.config.read().unwrap();
             let Some(list) = config.lists.iter().find(|list| list.id == id) else {
                 return Err(FilterError::ListNotFound(id.to_string()));
             };
             (
                 list.url.clone(),
+                list.mirror_url.clone(),
+                list.mirror_fallback,
                 list.etag.clone(),
                 list.last_modified.clone(),
+                list.kind.clone(),
+                list.source_type == diting_desktop_api::config::filter::LIST_SOURCE_LOCAL,
+                list.checksum.clone(),
             )
         };
 
-        let outcome = match fetch::fetch_conditional(&url, &etag, &last_modified).await {
-            Ok(outcome) => outcome,
-            Err(error) => {
+        // 本地文件直接读路径；远程订阅先试镜像，失败且允许回退时再请求原始地址。
+        let mut targets: Vec<(String, bool)> = Vec::new();
+        if !is_local && !mirror_url.is_empty() {
+            targets.push((mirror_url, false));
+        }
+        if is_local || targets.is_empty() || mirror_fallback {
+            targets.push((url, true));
+        }
+
+        let mut outcome = None;
+        let mut error = None;
+        for (target, validators) in targets {
+            let (target_etag, target_modified) = if validators {
+                (etag.as_str(), last_modified.as_str())
+            } else {
+                ("", "")
+            };
+            match fetch::fetch_conditional(&target, target_etag, target_modified).await {
+                Ok(result) => {
+                    outcome = Some(result);
+                    break;
+                }
+                Err(fetch_error) => error = Some(fetch_error),
+            }
+        }
+
+        let outcome = match (outcome, error) {
+            (Some(outcome), _) => outcome,
+            (None, Some(error)) => {
                 let cached = self.list_cache.read(id).is_some();
                 let transient = error.is_transient();
                 {
@@ -276,6 +311,7 @@ impl Inner {
                     transient,
                 });
             }
+            (None, None) => return Ok(false),
         };
 
         if outcome.not_modified {
@@ -305,19 +341,56 @@ impl Inner {
         }
 
         let text = String::from_utf8_lossy(&data);
+        let text = filter_text_by_kind(&text, &kind);
         let rules_count = parse_list_text(&text, id).len() as i32;
         let checksum = fetch::list_checksum(&data);
+        let changed = checksum != old_checksum;
         let mut config = self.config.write().unwrap();
         if let Some(list) = config.lists.iter_mut().find(|list| list.id == id) {
             list.rules_count = rules_count;
             list.last_updated = now_ms();
             list.checksum = checksum;
-            list.etag = outcome.etag;
-            list.last_modified = outcome.last_modified;
+            if !is_local {
+                list.etag = outcome.etag;
+                list.last_modified = outcome.last_modified;
+            }
             list.last_status = LIST_STATUS_OK.to_string();
             list.last_error.clear();
         }
-        Ok(true)
+        Ok(changed)
+    }
+}
+
+/// 按订阅「收录类型」筛选正文：hosts 只保留以 IP 开头的映射行，
+/// domain 只保留普通规则行，避免同一条订阅在两种类型间互相污染。
+fn filter_text_by_kind<'a>(text: &'a str, kind: &str) -> std::borrow::Cow<'a, str> {
+    if kind != "hosts" && kind != "domain" {
+        return std::borrow::Cow::Borrowed(text);
+    }
+    let want_hosts = kind == "hosts";
+    let mut out = String::with_capacity(text.len());
+    let mut changed = false;
+    for line in text.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.is_empty() || trimmed.starts_with('#') || trimmed.starts_with('!') {
+            changed = true;
+            continue;
+        }
+        let mut fields = trimmed.split_whitespace();
+        let first = fields.next().unwrap_or("");
+        let has_target = fields.next().is_some();
+        let is_hosts = has_target && first.parse::<std::net::IpAddr>().is_ok();
+        if is_hosts == want_hosts {
+            out.push_str(line);
+            out.push('\n');
+        } else {
+            changed = true;
+        }
+    }
+    if changed {
+        std::borrow::Cow::Owned(out)
+    } else {
+        std::borrow::Cow::Borrowed(text)
     }
 }
 

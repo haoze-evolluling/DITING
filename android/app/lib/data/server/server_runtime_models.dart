@@ -310,6 +310,10 @@ class ServerLogQuery {
     this.domain = '',
     this.client = '',
     this.status = '',
+    this.qtype = '',
+    this.rcode = '',
+    this.startMs = 0,
+    this.endMs = 0,
     this.limit = 50,
     this.offset = 0,
     this.includeFile = true,
@@ -318,6 +322,10 @@ class ServerLogQuery {
   final String domain;
   final String client;
   final String status;
+  final String qtype;
+  final String rcode;
+  final int startMs;
+  final int endMs;
   final int limit;
   final int offset;
   final bool includeFile;
@@ -326,6 +334,10 @@ class ServerLogQuery {
     'domain': domain,
     'client': client,
     'status': status,
+    'qtype': qtype,
+    'rcode': rcode,
+    'startMs': startMs,
+    'endMs': endMs,
     'limit': limit,
     'offset': offset,
     'includeFile': includeFile,
@@ -337,13 +349,27 @@ class ServerLogQuery {
       other.domain == domain &&
       other.client == client &&
       other.status == status &&
+      other.qtype == qtype &&
+      other.rcode == rcode &&
+      other.startMs == startMs &&
+      other.endMs == endMs &&
       other.limit == limit &&
       other.offset == offset &&
       other.includeFile == includeFile;
 
   @override
-  int get hashCode =>
-      Object.hash(domain, client, status, limit, offset, includeFile);
+  int get hashCode => Object.hash(
+    domain,
+    client,
+    status,
+    qtype,
+    rcode,
+    startMs,
+    endMs,
+    limit,
+    offset,
+    includeFile,
+  );
 }
 
 class ServerFilterCheck {

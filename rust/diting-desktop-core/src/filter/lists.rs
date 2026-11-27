@@ -71,26 +71,14 @@ impl RuleEngine {
     }
 
     pub async fn refresh_all_lists(&self) -> Result<(), FilterError> {
-        let ids: Vec<String> = self
-            .inner
-            .config
-            .read()
-            .unwrap()
-            .lists
-            .iter()
-            .filter(|list| list.enabled)
-            .map(|list| list.id.clone())
-            .collect();
-        let mut changed = false;
-        for id in ids {
-            if self.inner.refresh_list_inner(&id).await? {
-                changed = true;
-            }
-        }
+        let (changed, error) = self.refresh_many(self.enabled_ids()).await;
         if changed {
             self.rebuild_async().await?;
         }
-        Ok(())
+        match error {
+            Some(error) => Err(error),
+            None => Ok(()),
+        }
     }
 
     pub async fn refresh_due(&self) -> Result<bool, FilterError> {
@@ -106,16 +94,43 @@ impl RuleEngine {
                 .map(|list| list.id.clone())
                 .collect()
         };
-        let mut changed = false;
-        for id in ids {
-            if self.inner.refresh_list_inner(&id).await? {
-                changed = true;
-            }
-        }
+        let (changed, error) = self.refresh_many(ids).await;
         if changed {
             self.rebuild_async().await?;
         }
-        Ok(changed)
+        match error {
+            Some(error) => Err(error),
+            None => Ok(changed),
+        }
+    }
+
+    /// 单条订阅失败不影响其余订阅继续刷新；返回是否发生变化与第一个错误。
+    async fn refresh_many(&self, ids: Vec<String>) -> (bool, Option<FilterError>) {
+        let mut changed = false;
+        let mut first_error = None;
+        for id in ids {
+            match self.inner.refresh_list_inner(&id).await {
+                Ok(list_changed) => changed |= list_changed,
+                Err(error) => {
+                    if first_error.is_none() {
+                        first_error = Some(error);
+                    }
+                }
+            }
+        }
+        (changed, first_error)
+    }
+
+    fn enabled_ids(&self) -> Vec<String> {
+        self.inner
+            .config
+            .read()
+            .unwrap()
+            .lists
+            .iter()
+            .filter(|list| list.enabled)
+            .map(|list| list.id.clone())
+            .collect()
     }
 
     async fn rebuild_async(&self) -> Result<(), FilterError> {

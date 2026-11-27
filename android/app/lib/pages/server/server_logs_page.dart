@@ -11,6 +11,8 @@ import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+part 'server_logs_widgets.dart';
+
 class ServerLogsPage extends ConsumerStatefulWidget {
   const ServerLogsPage({super.key});
 
@@ -29,15 +31,46 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
   String _domainQuery = '';
   String _client = '';
   String _status = '';
+  String _qtype = '';
+  String _range = 'all';
+  int _rangeStartMs = 0;
   int _page = 0;
 
   ServerLogQuery get _query => ServerLogQuery(
     domain: _domainQuery,
     client: _client,
     status: _status,
+    qtype: _qtype,
+    startMs: _rangeStartMs,
     limit: _pageSize,
     offset: _page * _pageSize,
   );
+
+  void _setRange(String range) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    setState(() {
+      _range = range;
+      _rangeStartMs = switch (range) {
+        '24h' => now - const Duration(hours: 24).inMilliseconds,
+        '7d' => now - const Duration(days: 7).inMilliseconds,
+        _ => 0,
+      };
+      _page = 0;
+    });
+  }
+
+  Future<void> _openTypeFilter() async {
+    const types = ['', 'A', 'AAAA', 'CNAME', 'HTTPS', 'TXT', 'MX', 'NS'];
+    final selected = await showSheet<String>(
+      context: context,
+      builder: (_) => _TypeFilterSheet(selected: _qtype, types: types),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _qtype = selected;
+      _page = 0;
+    });
+  }
 
   @override
   void onPageVisibilityChanged(bool visible) {
@@ -132,7 +165,11 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     final result = ref.watch(serverQueryLogProvider(query));
     final running = snapshot?.status.running == true;
     final filtered =
-        _domainQuery.isNotEmpty || _client.isNotEmpty || _status.isNotEmpty;
+        _domainQuery.isNotEmpty ||
+        _client.isNotEmpty ||
+        _status.isNotEmpty ||
+        _qtype.isNotEmpty ||
+        _rangeStartMs > 0;
     return CommonScaffold(
       title: context.l10n.serverLogsTitle,
       actions: [
@@ -211,6 +248,43 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
                 _status = value;
                 _page = 0;
               }),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              spacing: 8,
+              children: [
+                Expanded(
+                  child: SegmentedControl<String>(
+                    segments: [
+                      ('all', context.l10n.serverLogAll),
+                      ('24h', context.l10n.serverLogRange24h),
+                      ('7d', context.l10n.serverLogRange7d),
+                    ],
+                    value: _range,
+                    onChanged: _setRange,
+                  ),
+                ),
+                IconButton(
+                  tooltip: _qtype.isEmpty
+                      ? context.l10n.serverLogType
+                      : '${context.l10n.serverLogType} · $_qtype',
+                  onPressed: _openTypeFilter,
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(48, 48),
+                    backgroundColor: _qtype.isEmpty
+                        ? context.raisedSurfaceLevel.colorOf(
+                            context.colorScheme,
+                          )
+                        : context.colorScheme.primaryContainer,
+                    foregroundColor: _qtype.isEmpty
+                        ? context.colorScheme.onSurfaceVariant
+                        : context.colorScheme.onPrimaryContainer,
+                  ),
+                  icon: const Icon(TablerIcons.filter),
+                ),
+              ],
             ),
           ),
           result.when(
@@ -333,245 +407,4 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
   }
 }
 
-String _formatTimestamp(DateTime value) {
-  String two(int part) => part.toString().padLeft(2, '0');
-  return '${value.year}-${two(value.month)}-${two(value.day)} '
-      '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
-}
 
-class _StatsOverview extends StatelessWidget {
-  const _StatsOverview({required this.stats});
-
-  final ServerStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          child: CommonCard(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: StatStrip(
-              stats: [
-                StatItem(
-                  label: context.l10n.serverQueries,
-                  value: serverCount(stats.queries),
-                ),
-                StatItem(
-                  label: context.l10n.serverBlocked,
-                  value: serverCount(stats.blocked),
-                ),
-                StatItem(
-                  label: context.l10n.serverBlockRate,
-                  value: serverPercent(stats.blockedRate),
-                ),
-                StatItem(
-                  label: context.l10n.serverAverageLatency,
-                  value: stats.averageResponseMs.toStringAsFixed(0),
-                  unit: 'ms',
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (stats.topBlockedDomains.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-            child: Row(
-              spacing: 8,
-              children: [
-                const Icon(TablerIcons.ban, size: 16),
-                Expanded(
-                  child: Text(
-                    stats.topBlockedDomains
-                        .take(3)
-                        .map((item) => '${item.name} (${item.count})')
-                        .join('  ·  '),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextRole.caption.of(context),
-                  ),
-                ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _EmptyLogCard extends StatelessWidget {
-  const _EmptyLogCard({required this.title, required this.body});
-
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = context.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: CommonCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 12,
-          children: [
-            IconBadge(
-              glyph: TablerIcons.logs,
-              size: 38,
-              glyphSize: 19,
-              color: context.raisedSurfaceLevel.colorOf(scheme),
-              foregroundColor: scheme.onSurfaceVariant,
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  Text(title, style: AppTextRole.rowTitle.of(context)),
-                  Text(body, style: AppTextRole.supportingText.of(context)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Rows extends StatelessWidget {
-  const _Rows({
-    required this.result,
-    required this.page,
-    required this.pageSize,
-    required this.onPage,
-    required this.onOpen,
-  });
-
-  final ServerQueryResult result;
-  final int page;
-  final int pageSize;
-  final ValueChanged<int> onPage;
-  final ValueChanged<ServerQueryRecord> onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    final pages = (result.total / pageSize).ceil();
-    final scheme = context.colorScheme;
-    return Column(
-      children: [
-        generateSection(
-          title: context.l10n.serverLogResults,
-          items: [
-            for (final record in result.entries)
-              ListItem(
-                leading: Icon(
-                  record.blocked
-                      ? TablerIcons.ban
-                      : record.cached
-                      ? TablerIcons.database
-                      : TablerIcons.circle_check,
-                  size: 18,
-                  color: record.blocked
-                      ? scheme.error
-                      : record.cached
-                      ? scheme.primary
-                      : scheme.success,
-                ),
-                title: Text(
-                  record.domain,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  '${record.qtype.isEmpty ? '—' : record.qtype}'
-                  ' · ${record.client.isEmpty ? '—' : record.client}'
-                  ' · ${record.upstreamProvider.isEmpty ? '—' : record.upstreamProvider}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Text(
-                  serverMs(record.durationMs),
-                  style: AppTextRole.caption
-                      .of(context)
-                      .copyWith(
-                        color: scheme.onSurfaceVariant,
-                        fontFeatures: appTabularFigures,
-                      ),
-                ),
-                onTap: () => onOpen(record),
-              ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.l10n.serverLogPage(page + 1, pages.clamp(1, 1 << 30)),
-                  style: AppTextRole.caption
-                      .of(context)
-                      .copyWith(color: scheme.onSurfaceVariant),
-                ),
-              ),
-              IconButton(
-                onPressed: page > 0 ? () => onPage(page - 1) : null,
-                icon: const Icon(TablerIcons.chevron_left, size: 18),
-              ),
-              IconButton(
-                onPressed: page + 1 < pages ? () => onPage(page + 1) : null,
-                icon: const Icon(TablerIcons.chevron_right, size: 18),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ClientFilterSheet extends StatelessWidget {
-  const _ClientFilterSheet({required this.clients, required this.selected});
-
-  final List<String> clients;
-  final String selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return CommonScaffold(
-      title: context.l10n.serverLogFilterClient,
-      body: ListView(
-        padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
-        children: [
-          generateSection(
-            title: context.l10n.serverLogClient,
-            items: [
-              ListItem(
-                leading: const Icon(TablerIcons.devices, size: 20),
-                title: Text(context.l10n.serverLogClientAll),
-                trailing: selected.isEmpty ? const SelectionCheck() : null,
-                onTap: () => Navigator.of(context).pop(''),
-              ),
-              for (final client in clients)
-                ListItem(
-                  leading: const Icon(TablerIcons.devices, size: 20),
-                  title: Text(
-                    client,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: selected == client ? const SelectionCheck() : null,
-                  onTap: () => Navigator.of(context).pop(client),
-                ),
-            ],
-            footer: clients.isEmpty ? context.l10n.serverLogClientEmpty : null,
-          ),
-        ],
-      ),
-    );
-  }
-}

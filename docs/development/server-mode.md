@@ -63,6 +63,20 @@ filesDir/server/
 - 首次升级：启动时自动把旧的 `config.json`、`querylog/*.jsonl`、`rules/*.txt`、`cache.json`
   导入新库，成功后删除这些旧文件并写入 `meta.server_legacy_migration` 标记。
 
+## 规则订阅
+
+服务器模式的订阅配置保存在 `ServerConfig.filter.lists`，界面与普通/简洁模式对齐，支持：
+
+- 分组：`group` 字段保存分组名，订阅页可按分组筛选，分组管理只改列表字段。
+- 收录类型：`kind` 为 `domain` 或 `hosts`，下载后只保留对应格式的正文。
+- 来源：`sourceType` 为 `remote` 或 `local`；本地文件由管理端复制到数据库目录下的
+  `server_local/`，再以文件路径交给 Rust 端读取。
+- 镜像加速：`mirrorTemplate` 仅用于展示，`mirrorUrl` 是管理端展开后的实际地址；下载时先请求
+  镜像，失败且 `mirrorFallback` 为真时再请求原始地址。
+- 自动更新：`autoUpdate` 与 `updateIntervalHours` 控制服务器进程内每分钟一次的到期检查；
+  手动刷新仍通过 `filter_refresh`。
+- 从其他模式导入：管理端只读打开普通/简洁模式的规则数据库，复制订阅配置后由服务器重新下载。
+
 旧 `dns` 模式的数据库、偏好和日志不会迁移；`ServerModeRetirement` 继续清理旧数据。
 
 ## 控制协议
@@ -81,7 +95,9 @@ JSON，服务端返回一行 JSON：
 - `get_config` / `update_config`：读取或替换可管理配置；监听身份由进程实际身份决定，不能被 UI 改写。
 - `stats`：24 小时汇总、每小时点、Top 域名、Top 拦截域名与 Top 客户端。
 - `query_log` / `clear_query_log`：分页筛选与清空内存及按日文件。
-- `filter_refresh` / `filter_check`：手动刷新订阅、测试单个域名。
+- `filter_refresh` / `filter_check`：手动刷新订阅、测试单个域名；刷新失败时仍会落库
+  `lastStatus` / `lastError`。
+- `cache_clear`：清空内存与数据库中的 DNS 缓存。
 - `shutdown`：写入响应后通知主循环优雅退出。
 
 错误响应统一为：
@@ -113,5 +129,6 @@ Socket 路径与 PID。启动器固定从自身目录加载 `libditing_native.so
 
 ## 首版边界
 
-不包含 DHCP、入站 DoH/DoT、按客户端分组策略、访问控制、Web 管理台、开机自启与自动订阅更新。
-应用退到后台后服务继续运行；切换工作模式或手动停止会结束进程。
+不包含 DHCP、入站 DoH/DoT、按客户端分组策略、访问控制、Web 管理台与开机自启。
+订阅自动更新只在服务器进程运行期间执行；应用退到后台后服务继续运行，切换工作模式或手动停止
+会结束进程。

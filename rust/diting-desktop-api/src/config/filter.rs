@@ -97,6 +97,79 @@ pub struct FilterList {
     pub last_status: String,
     #[serde(skip_serializing_if = "String::is_empty")]
     pub last_error: String,
+    /// 订阅分组名；空串表示未分组。服务器模式用它做订阅页筛选。
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub group: String,
+    /// 收录类型：`all`、`domain` 或 `hosts`，只影响下载正文的筛选。
+    /// 缺省为 `all`，保持旧订阅与桌面模式的原有行为。
+    #[serde(default = "default_list_kind", skip_serializing_if = "is_all_kind")]
+    pub kind: String,
+    /// 来源：`remote` 网络订阅或 `local` 本地文件。
+    #[serde(
+        default = "default_source_type",
+        skip_serializing_if = "is_remote_source"
+    )]
+    pub source_type: String,
+    /// 镜像模板原始值，仅用于界面展示。
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub mirror_template: String,
+    /// 已经按模板展开的镜像地址；下载时优先请求它。
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub mirror_url: String,
+    #[serde(default = "default_true")]
+    pub mirror_fallback: bool,
+}
+
+pub const LIST_KIND_ALL: &str = "all";
+pub const LIST_KIND_DOMAIN: &str = "domain";
+pub const LIST_KIND_HOSTS: &str = "hosts";
+pub const LIST_SOURCE_REMOTE: &str = "remote";
+pub const LIST_SOURCE_LOCAL: &str = "local";
+
+fn default_list_kind() -> String {
+    LIST_KIND_ALL.to_string()
+}
+
+fn default_source_type() -> String {
+    LIST_SOURCE_REMOTE.to_string()
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn is_all_kind(value: &str) -> bool {
+    value == LIST_KIND_ALL
+}
+
+fn is_remote_source(value: &str) -> bool {
+    value == LIST_SOURCE_REMOTE
+}
+
+impl FilterList {
+    pub fn normalize_metadata(&mut self) {
+        self.group = self.group.trim().to_string();
+        self.kind = match self.kind.trim().to_ascii_lowercase().as_str() {
+            LIST_KIND_HOSTS => LIST_KIND_HOSTS.to_string(),
+            LIST_KIND_DOMAIN => LIST_KIND_DOMAIN.to_string(),
+            _ => LIST_KIND_ALL.to_string(),
+        };
+        self.source_type = if self
+            .source_type
+            .trim()
+            .eq_ignore_ascii_case(LIST_SOURCE_LOCAL)
+        {
+            LIST_SOURCE_LOCAL.to_string()
+        } else {
+            LIST_SOURCE_REMOTE.to_string()
+        };
+        self.mirror_template = self.mirror_template.trim().to_string();
+        self.mirror_url = self.mirror_url.trim().to_string();
+        if self.source_type == LIST_SOURCE_LOCAL {
+            self.mirror_template.clear();
+            self.mirror_url.clear();
+        }
+    }
 }
 
 pub fn default_subscription_lists() -> Vec<FilterList> {
@@ -107,6 +180,8 @@ pub fn default_subscription_lists() -> Vec<FilterList> {
         enabled: true,
         rules_count: 0,
         last_updated: 0,
+        kind: default_list_kind(),
+        source_type: default_source_type(),
         ..FilterList::default()
     }]
 }
@@ -133,6 +208,9 @@ pub struct FilterConfig {
     #[serde(deserialize_with = "de_filter_lists")]
     pub lists: Vec<FilterList>,
     pub update_interval_hours: i32,
+    /// 是否按 `update_interval_hours` 自动刷新订阅；服务器进程定时读取。
+    #[serde(default = "default_true")]
+    pub auto_update: bool,
     pub data_dir: String,
     pub schedule_enabled: bool,
     #[serde(deserialize_with = "nullable_vec")]
@@ -172,6 +250,7 @@ impl Default for FilterConfig {
             custom_rules: Vec::new(),
             lists: default_subscription_lists(),
             update_interval_hours: DEFAULT_UPDATE_INTERVAL_HOURS,
+            auto_update: true,
             data_dir: default_filter_dir().to_string_lossy().into_owned(),
             schedule_enabled: false,
             schedules: Vec::new(),
@@ -202,6 +281,9 @@ impl FilterConfig {
         }
         if self.data_dir.is_empty() {
             self.data_dir = default_filter_dir().to_string_lossy().into_owned();
+        }
+        for list in &mut self.lists {
+            list.normalize_metadata();
         }
         retain_valid_schedules(&mut self.schedules);
 

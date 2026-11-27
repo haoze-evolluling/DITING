@@ -340,6 +340,63 @@ fn bogus_nxdomain_matches_ipv4_and_ipv6_sets() {
 }
 
 #[tokio::test]
+async fn list_kind_filters_domain_and_hosts_lines() {
+    let source_text = "||domain.test^\n0.0.0.0 hosts.test\n";
+
+    let domain_dir = TempDir::new("list-kind-domain");
+    let domain_source = domain_dir.path().join("source.txt");
+    std::fs::write(&domain_source, source_text).expect("source");
+    let mut domain_config = base_config(&domain_dir);
+    domain_config.lists = vec![FilterList {
+        id: "domains".into(),
+        name: "Domains".into(),
+        url: domain_source.to_string_lossy().into_owned(),
+        enabled: true,
+        kind: "domain".into(),
+        source_type: "local".into(),
+        ..FilterList::default()
+    }];
+    let domain_engine = RuleEngine::new(domain_config);
+    domain_engine.refresh_all_lists().await.expect("refresh domains");
+    assert!(
+        domain_engine
+            .check("domain.test", A, DEFAULT_CLIENT_GROUP_ID)
+            .blocked
+    );
+    assert!(
+        !domain_engine
+            .check("hosts.test", A, DEFAULT_CLIENT_GROUP_ID)
+            .blocked
+    );
+
+    let hosts_dir = TempDir::new("list-kind-hosts");
+    let hosts_source = hosts_dir.path().join("source.txt");
+    std::fs::write(&hosts_source, source_text).expect("source");
+    let mut hosts_config = base_config(&hosts_dir);
+    hosts_config.lists = vec![FilterList {
+        id: "hosts".into(),
+        name: "Hosts".into(),
+        url: hosts_source.to_string_lossy().into_owned(),
+        enabled: true,
+        kind: "hosts".into(),
+        source_type: "local".into(),
+        ..FilterList::default()
+    }];
+    let hosts_engine = RuleEngine::new(hosts_config);
+    hosts_engine.refresh_all_lists().await.expect("refresh hosts");
+    assert!(
+        hosts_engine
+            .check("hosts.test", A, DEFAULT_CLIENT_GROUP_ID)
+            .blocked
+    );
+    assert!(
+        !hosts_engine
+            .check("domain.test", A, DEFAULT_CLIENT_GROUP_ID)
+            .blocked
+    );
+}
+
+#[tokio::test]
 async fn local_list_fetch_populates_the_cache_and_index() {
     let dir = TempDir::new("fetch");
     let source = dir.path().join("source.txt");

@@ -9854,7 +9854,8 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get serverSubscriptionNote => '首版仅支持手动刷新；刷新间隔配置会保留但不自动执行。';
+  String get serverSubscriptionNote =>
+      '服务器运行时按设定的间隔自动刷新订阅，也可以随时手动刷新；未运行的订阅会在下次启动后补拉。';
 
   @override
   String get serverSubscriptionName => '名称';
@@ -10111,4 +10112,79 @@ class AppL10nZh extends AppL10n {
   String serverUpstreamShort(int count) {
     return '$count 个上游';
   }
+
+  @override
+  String get serverSubsAutoUpdateBody => '服务器进程每分钟检查一次，按间隔刷新到期订阅';
+
+  @override
+  String get serverSubsSaved => '订阅已保存';
+
+  @override
+  String get serverSubsNeedsRunning => '服务器运行后才能刷新订阅';
+
+  @override
+  String get serverSubsRunningHint => '服务器运行时保存后会立即下载规则正文';
+
+  @override
+  String get serverSubsMirrorOff => '不使用镜像';
+
+  @override
+  String get serverSubsImportTitle => '从其他模式导入订阅';
+
+  @override
+  String serverSubsImported(int count) {
+    return '已导入 $count 条订阅';
+  }
+
+  @override
+  String serverSubsImportedPartial(int count, int failed) {
+    return '已导入 $count 条，$failed 条无法读取';
+  }
+
+  @override
+  String get serverLogRange24h => '近 24 小时';
+
+  @override
+  String get serverLogRange7d => '近 7 天';
+
+  @override
+  String get serverCacheStaleSeconds => '过期后可用时长';
+
+  @override
+  String get serverCacheNegativeSeconds => '否定缓存 TTL';
+
+  @override
+  String get serverCachePrefetchThreshold => '并发请求阈值';
+
+  @override
+  String get serverCachePrefetchBefore => '到期前刷新';
+
+  @override
+  String get serverCacheActions => '缓存操作';
+
+  @override
+  String get serverCacheClear => '清空缓存';
+
+  @override
+  String get serverCacheClearBody => '删除当前内存与数据库中的全部 DNS 缓存条目。';
+
+  @override
+  String get serverCacheCleared => '缓存已清空';
+
+  @override
+  String get serverUpstreamWeight => '调度权重';
+
+  @override
+  String serverUpstreamWeightValue(int weight) {
+    return '权重 $weight';
+  }
+
+  @override
+  String get serverSubsImportAction => '导入';
+
+  @override
+  String get subscriptionKindAll => '全部规则';
+
+  @override
+  String get subscriptionKindAllHint => '同时保留域名规则与 hosts 映射';
 }

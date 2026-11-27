@@ -84,6 +84,9 @@ class FakeServerClient implements ServerClient {
   Future<void> clearQueryLog() async {}
 
   @override
+  Future<void> clearCache() async {}
+
+  @override
   Future<ServerFilterConfig> refreshFilter([String id = '']) async =>
       _config.filter;
 

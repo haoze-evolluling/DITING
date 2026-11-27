@@ -6228,6 +6228,52 @@ abstract class AppL10n {
   String serverCacheEntriesShort(int count);
 
   String serverUpstreamShort(int count);
+
+  String get serverSubsAutoUpdateBody;
+
+  String get serverSubsSaved;
+
+  String get serverSubsNeedsRunning;
+
+  String get serverSubsRunningHint;
+
+  String get serverSubsMirrorOff;
+
+  String get serverSubsImportTitle;
+
+  String serverSubsImported(int count);
+
+  String serverSubsImportedPartial(int count, int failed);
+
+  String get serverLogRange24h;
+
+  String get serverLogRange7d;
+
+  String get serverCacheStaleSeconds;
+
+  String get serverCacheNegativeSeconds;
+
+  String get serverCachePrefetchThreshold;
+
+  String get serverCachePrefetchBefore;
+
+  String get serverCacheActions;
+
+  String get serverCacheClear;
+
+  String get serverCacheClearBody;
+
+  String get serverCacheCleared;
+
+  String get serverUpstreamWeight;
+
+  String serverUpstreamWeightValue(int weight);
+
+  String get serverSubsImportAction;
+
+  String get subscriptionKindAll;
+
+  String get subscriptionKindAllHint;
 }
 
 class _AppL10nDelegate extends LocalizationsDelegate<AppL10n> {

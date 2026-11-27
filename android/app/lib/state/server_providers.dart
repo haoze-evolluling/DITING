@@ -330,6 +330,20 @@ class ServerController extends AsyncNotifier<ServerSnapshot> {
     ref.read(serverLogRevisionProvider.notifier).bump();
     await refreshLive();
   }
+
+  Future<void> clearCache() async {
+    await _client.clearCache();
+    await refreshLive();
+  }
+
+  /// 自动更新或外部修改后可单独重读配置，避免整页重建快照。
+  Future<void> refreshConfig() async {
+    final config = await _client.getConfig();
+    final current = state.value;
+    if (!_disposed && current != null) {
+      state = AsyncData(current.copyWith(config: config));
+    }
+  }
 }
 
 final serverControllerProvider =

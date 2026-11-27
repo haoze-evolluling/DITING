@@ -2,6 +2,7 @@ import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_presets.dart';
 import 'package:diting_android/pages/hub/provider_editor.dart';
+import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_upstream_provider_picker.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -50,17 +51,49 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
                   ),
                   title: Text(provider.id),
                   subtitle: Text(
-                    '${serverProtocolLabel(provider.protocol)} · '
-                    '${provider.address}',
+                    [
+                      serverProtocolLabel(provider.protocol),
+                      provider.address,
+                      if (provider.weight > 0)
+                        context.l10n.serverUpstreamWeightValue(
+                          provider.weight,
+                        ),
+                    ].join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  trailing: IconButton(
-                    tooltip: context.l10n.serverUpstreamDelete,
-                    onPressed: providers.length <= 1
-                        ? null
-                        : () => _delete(context, ref, config, provider.id),
-                    icon: const Icon(TablerIcons.trash, size: 18),
+                  trailing: CommonPopupBox(
+                    targetBuilder: (open) => IconButton(
+                      tooltip: UiLocalizations.of(context).more,
+                      onPressed: open,
+                      icon: const Icon(TablerIcons.dots),
+                    ),
+                    popupBuilder: (_) => CommonPopupMenu(
+                      items: [
+                        CommonPopupMenuItem(
+                          label: context.l10n.subsEdit,
+                          glyph: TablerIcons.pencil,
+                          onPressed: () =>
+                              _edit(context, ref, config, provider: provider),
+                        ),
+                        CommonPopupMenuItem(
+                          label: context.l10n.serverUpstreamWeight,
+                          subtitle: '${provider.weight}',
+                          glyph: TablerIcons.scale,
+                          onPressed: () =>
+                              _editWeight(context, ref, config, provider),
+                        ),
+                        CommonPopupMenuItem(
+                          label: context.l10n.serverUpstreamDelete,
+                          glyph: TablerIcons.trash,
+                          danger: true,
+                          onPressed: providers.length <= 1
+                              ? null
+                              : () =>
+                                    _delete(context, ref, config, provider.id),
+                        ),
+                      ],
+                    ),
                   ),
                   onTap: () => _edit(context, ref, config, provider: provider),
                 ),
@@ -133,6 +166,34 @@ class ServerUpstreamProvidersPage extends ConsumerWidget {
       return;
     }
     await _write(context, ref, config, providers);
+  }
+
+  Future<void> _editWeight(
+    BuildContext context,
+    WidgetRef ref,
+    ServerConfig config,
+    ServerProviderConfig provider,
+  ) async {
+    final value = await editServerNumber(
+      context,
+      title: context.l10n.serverUpstreamWeight,
+      initial: provider.weight,
+      min: 0,
+      max: 100,
+    );
+    if (value == null || !context.mounted) return;
+    final next = ServerProviderConfig(
+      id: provider.id,
+      protocol: provider.protocol,
+      server: provider.server,
+      url: provider.url,
+      weight: value,
+      pin: provider.pin,
+    );
+    await _write(context, ref, config, [
+      for (final item in config.upstream.providers)
+        if (item.id == provider.id) next else item,
+    ]);
   }
 
   Future<void> _delete(

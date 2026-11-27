@@ -2673,8 +2673,12 @@
   "devStorageFiles": "{count} 个数据库共 {kb} KB",
   "@devStorageFiles": {
     "placeholders": {
-      "count": { "type": "int" },
-      "kb": { "type": "int" }
+      "count": {
+        "type": "int"
+      },
+      "kb": {
+        "type": "int"
+      }
     }
   },
   "devCancel": "取消",
@@ -5359,9 +5363,15 @@
   "appInsightsStat": "{connections} 连接 · {blocked} 拦截 · {bytes}",
   "@appInsightsStat": {
     "placeholders": {
-      "connections": { "type": "int" },
-      "blocked": { "type": "int" },
-      "bytes": { "type": "String" }
+      "connections": {
+        "type": "int"
+      },
+      "blocked": {
+        "type": "int"
+      },
+      "bytes": {
+        "type": "String"
+      }
     }
   },
   "appInsightsNoDomains": "暂无域名",
@@ -5401,7 +5411,9 @@
   "ruleVersionsRuleCount": "{count} 条规则",
   "@ruleVersionsRuleCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "ruleVersionsCompare": "对比",
@@ -5410,8 +5422,12 @@
   "ruleVersionsDiffSummary": "新增 {added} 条，移除 {removed} 条",
   "@ruleVersionsDiffSummary": {
     "placeholders": {
-      "added": { "type": "int" },
-      "removed": { "type": "int" }
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      }
     }
   },
   "ruleVersionsAdded": "新增",
@@ -5421,7 +5437,9 @@
   "ruleVersionsRollbackFailed": "回滚失败：{message}",
   "@ruleVersionsRollbackFailed": {
     "placeholders": {
-      "message": { "type": "String" }
+      "message": {
+        "type": "String"
+      }
     }
   },
   "troubleshootLogsDownload": "下载",
@@ -5689,7 +5707,7 @@
       }
     }
   },
-  "serverSubscriptionNote": "首版仅支持手动刷新；刷新间隔配置会保留但不自动执行。",
+  "serverSubscriptionNote": "服务器运行时按设定的间隔自动刷新订阅，也可以随时手动刷新；未运行的订阅会在下次启动后补拉。",
   "serverSubscriptionName": "名称",
   "serverSubscriptionUrl": "订阅地址",
   "serverSubscriptionRequired": "名称和地址不能为空",
@@ -5793,5 +5811,52 @@
         "type": "int"
       }
     }
-  }
+  },
+  "serverSubsAutoUpdateBody": "服务器进程每分钟检查一次，按间隔刷新到期订阅",
+  "serverSubsSaved": "订阅已保存",
+  "serverSubsNeedsRunning": "服务器运行后才能刷新订阅",
+  "serverSubsRunningHint": "服务器运行时保存后会立即下载规则正文",
+  "serverSubsMirrorOff": "不使用镜像",
+  "serverSubsImportTitle": "从其他模式导入订阅",
+  "serverSubsImported": "已导入 {count} 条订阅",
+  "@serverSubsImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverSubsImportedPartial": "已导入 {count} 条，{failed} 条无法读取",
+  "@serverSubsImportedPartial": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "serverLogRange24h": "近 24 小时",
+  "serverLogRange7d": "近 7 天",
+  "serverCacheStaleSeconds": "过期后可用时长",
+  "serverCacheNegativeSeconds": "否定缓存 TTL",
+  "serverCachePrefetchThreshold": "并发请求阈值",
+  "serverCachePrefetchBefore": "到期前刷新",
+  "serverCacheActions": "缓存操作",
+  "serverCacheClear": "清空缓存",
+  "serverCacheClearBody": "删除当前内存与数据库中的全部 DNS 缓存条目。",
+  "serverCacheCleared": "缓存已清空",
+  "serverUpstreamWeight": "调度权重",
+  "serverUpstreamWeightValue": "权重 {weight}",
+  "@serverUpstreamWeightValue": {
+    "placeholders": {
+      "weight": {
+        "type": "int"
+      }
+    }
+  },
+  "serverSubsImportAction": "导入",
+  "subscriptionKindAll": "全部规则",
+  "subscriptionKindAllHint": "同时保留域名规则与 hosts 映射"
 }

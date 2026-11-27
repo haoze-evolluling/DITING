@@ -33,6 +33,7 @@ abstract class ServerClient {
   Future<ServerStats> stats();
   Future<ServerQueryResult> queryLog(ServerLogQuery query);
   Future<void> clearQueryLog();
+  Future<void> clearCache();
   Future<ServerFilterConfig> refreshFilter([String id = '']);
   Future<ServerFilterCheck> filterCheck(String domain, {String qtype = 'A'});
 }
@@ -159,6 +160,11 @@ class MethodChannelServerClient implements ServerClient {
   @override
   Future<void> clearQueryLog() async {
     await _request('clear_query_log');
+  }
+
+  @override
+  Future<void> clearCache() async {
+    await _request('cache_clear');
   }
 
   @override

@@ -223,11 +223,32 @@ impl ServerRuntime {
     }
 
     pub async fn refresh_filter(&self, id: &str) -> Result<ServerConfig, String> {
-        self.desktop
+        let result = self.desktop.filter.refresh_lists(id).await;
+        // 即使刷新失败，也要把 lastStatus / lastError 落库，界面才能显示失败原因。
+        let saved = self.persist_filter_state()?;
+        match result {
+            Ok(()) => Ok(saved),
+            Err(error) => Err(error.to_string()),
+        }
+    }
+
+    /// 定时检查到期订阅；无论是否刷新到新内容，都把 `lastUpdated` 等元数据落库。
+    pub async fn refresh_due_filter(&self) -> Result<bool, String> {
+        let before = self.desktop.filter.config();
+        let result = self
+            .desktop
             .filter
-            .refresh_lists(id)
+            .refresh_due()
             .await
-            .map_err(|error| error.to_string())?;
+            .map_err(|error| error.to_string());
+        let after = self.desktop.filter.config();
+        if after != before {
+            self.persist_filter_state()?;
+        }
+        result
+    }
+
+    fn persist_filter_state(&self) -> Result<ServerConfig, String> {
         let mut next = self.config();
         next.filter = self.desktop.filter.config();
         self.storage.save_config(&self.paths, &next)?;
@@ -236,6 +257,11 @@ impl ServerRuntime {
             .write()
             .unwrap_or_else(|error| error.into_inner()) = next.clone();
         Ok(next)
+    }
+
+    pub fn clear_cache(&self) -> Value {
+        self.desktop.cache.clear();
+        json!({"cleared": true})
     }
 
     pub fn filter_check(&self, domain: &str, qtype: u16) -> Value {

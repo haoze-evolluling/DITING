@@ -40,6 +40,9 @@ pub struct ServerConfig {
     pub cache: CacheConfig,
     #[serde(rename = "queryLog", alias = "querylog")]
     pub query_log: QueryLogConfig,
+    /// 服务器模式自己的镜像站模板，供订阅下载加速选择。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mirror_templates: Vec<String>,
 }
 
 impl Default for ServerConfig {
@@ -56,6 +59,7 @@ impl Default for ServerConfig {
             filter: default_filter_config(),
             cache: CacheConfig::default(),
             query_log: QueryLogConfig::default(),
+            mirror_templates: Vec::new(),
         }
     }
 }
@@ -171,6 +175,13 @@ impl ServerConfig {
             return Err(format!("未知的阻断模式: {}", self.filter.block_mode));
         }
         self.filter.data_dir = paths.rules_dir.to_string_lossy().into_owned();
+        self.mirror_templates = self
+            .mirror_templates
+            .iter()
+            .map(|item| item.trim().to_string())
+            .filter(|item| !item.is_empty())
+            .collect();
+        self.mirror_templates.dedup();
         self.cache.normalize();
         self.query_log.normalize();
         self.query_log.data_dir = paths.querylog_dir.to_string_lossy().into_owned();
@@ -192,6 +203,7 @@ impl ServerConfig {
             filter: desktop.filter,
             cache: desktop.cache,
             query_log: desktop.query_log,
+            mirror_templates: Vec::new(),
         }
     }
 

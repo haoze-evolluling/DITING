@@ -10476,7 +10476,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverSubscriptionNote =>
-      'The first release refreshes manually only; the interval setting is stored but not scheduled.';
+      'When the server is running, subscriptions refresh automatically at the configured interval and can also be refreshed manually; skipped subscriptions catch up on the next start.';
 
   @override
   String get serverSubscriptionName => 'Name';
@@ -10745,4 +10745,84 @@ class AppL10nEn extends AppL10n {
   String serverUpstreamShort(int count) {
     return '$count upstreams';
   }
+
+  @override
+  String get serverSubsAutoUpdateBody =>
+      'The server process checks once a minute and refreshes subscriptions that are due';
+
+  @override
+  String get serverSubsSaved => 'Subscription saved';
+
+  @override
+  String get serverSubsNeedsRunning =>
+      'Start the server before refreshing subscriptions';
+
+  @override
+  String get serverSubsRunningHint =>
+      'Saving while the server is running downloads the rules immediately';
+
+  @override
+  String get serverSubsMirrorOff => 'No mirror';
+
+  @override
+  String get serverSubsImportTitle => 'Import subscriptions from another mode';
+
+  @override
+  String serverSubsImported(int count) {
+    return 'Imported $count subscriptions';
+  }
+
+  @override
+  String serverSubsImportedPartial(int count, int failed) {
+    return 'Imported $count; $failed could not be read';
+  }
+
+  @override
+  String get serverLogRange24h => 'Last 24h';
+
+  @override
+  String get serverLogRange7d => 'Last 7d';
+
+  @override
+  String get serverCacheStaleSeconds => 'Serve stale for';
+
+  @override
+  String get serverCacheNegativeSeconds => 'Negative TTL';
+
+  @override
+  String get serverCachePrefetchThreshold => 'Concurrent query threshold';
+
+  @override
+  String get serverCachePrefetchBefore => 'Refresh before expiry';
+
+  @override
+  String get serverCacheActions => 'Cache actions';
+
+  @override
+  String get serverCacheClear => 'Clear cache';
+
+  @override
+  String get serverCacheClearBody =>
+      'Delete all DNS cache entries from memory and the database.';
+
+  @override
+  String get serverCacheCleared => 'Cache cleared';
+
+  @override
+  String get serverUpstreamWeight => 'Scheduler weight';
+
+  @override
+  String serverUpstreamWeightValue(int weight) {
+    return 'weight $weight';
+  }
+
+  @override
+  String get serverSubsImportAction => 'Import';
+
+  @override
+  String get subscriptionKindAll => 'All rules';
+
+  @override
+  String get subscriptionKindAllHint =>
+      'Keep both domain rules and hosts mappings';
 }

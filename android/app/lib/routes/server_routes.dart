@@ -2,6 +2,8 @@ import 'package:diting_android/pages/server/server_filter_page.dart';
 import 'package:diting_android/pages/server/server_filter_rules_page.dart';
 import 'package:diting_android/pages/server/server_filter_subscriptions_page.dart';
 import 'package:diting_android/pages/server/server_filter_test_page.dart';
+import 'package:diting_android/pages/server/server_subscription_edit_page.dart';
+import 'package:diting_android/pages/server/server_subscription_import_page.dart';
 import 'package:diting_android/pages/server/server_home_page.dart';
 import 'package:diting_android/pages/server/server_hub_page.dart';
 import 'package:diting_android/pages/server/server_logs_page.dart';
@@ -29,6 +31,10 @@ abstract final class ServerRoutes {
   static const filter = '/server/filter';
   static const filterRules = '/server/filter/rules';
   static const filterSubscriptions = '/server/filter/subscriptions';
+  static const filterSubscriptionAdd = '/server/filter/subscriptions/add';
+  static const filterSubscriptionEdit = '/server/filter/subscriptions/edit';
+  static const filterSubscriptionImport =
+      '/server/filter/subscriptions/import';
   static const filterTest = '/server/filter/test';
   static const queryLog = '/server/query-log';
   static const settings = '/server/settings';
@@ -88,6 +94,28 @@ List<RouteBase> serverRoutes() => [
   _leaf(
     ServerRoutes.filterSubscriptions,
     const ServerFilterSubscriptionsPage(),
+  ),
+  GoRoute(
+    path: ServerRoutes.filterSubscriptionAdd,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) => androidDefaultPage(
+      state,
+      const ServerSubscriptionEditPage(),
+    ),
+  ),
+  GoRoute(
+    path: ServerRoutes.filterSubscriptionEdit,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) => androidDefaultPage(
+      state,
+      ServerSubscriptionEditPage(listId: state.uri.queryParameters['id']),
+    ),
+  ),
+  GoRoute(
+    path: ServerRoutes.filterSubscriptionImport,
+    parentNavigatorKey: rootNavigatorKey,
+    pageBuilder: (context, state) =>
+        androidDefaultPage(state, const ServerSubscriptionImportPage()),
   ),
   _leaf(ServerRoutes.filterTest, const ServerFilterTestPage()),
   _leaf(ServerRoutes.queryLog, const ServerQueryLogPage()),

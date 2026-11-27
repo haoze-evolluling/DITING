@@ -32,6 +32,7 @@ pub async fn handle_request(runtime: &Arc<ServerRuntime>, request: Request) -> (
                 .map(|config| json!(config.filter))
         }
         "filter_check" => filter_check(runtime, request.params),
+        "cache_clear" => Ok(runtime.clear_cache()),
         "shutdown" => Ok(json!({"stopping": true})),
         other => Err(format!("未知的控制方法: {other}")),
     };

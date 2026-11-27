@@ -123,6 +123,7 @@ fn serve(
             tokio::spawn(
                 async move { run_control_socket(control, control_server, control_tx).await },
             );
+        let auto_task = spawn_auto_update(Arc::clone(&server), shutdown_tx.subscribe());
         let mut control_done = false;
         let status = server.status(true);
         println!(
@@ -153,6 +154,8 @@ fn serve(
             control_task.abort();
             let _ = control_task.await;
         }
+        auto_task.abort();
+        let _ = auto_task.await;
         server.shutdown().await;
         let _ = std::fs::remove_file(&server.paths().socket_path);
         println!("[退出] 服务器模式已停止");
@@ -173,6 +176,33 @@ fn log_migration(report: &MigrationReport) {
     for error in &report.errors {
         eprintln!("[迁移] {error}");
     }
+}
+
+/// 每分钟检查一次到期订阅；首次 tick 立即执行，启动后就能拉起未缓存的订阅。
+fn spawn_auto_update(
+    server: Arc<ServerRuntime>,
+    mut shutdown: watch::Receiver<bool>,
+) -> tokio::task::JoinHandle<()> {
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(60));
+        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop {
+            tokio::select! {
+                changed = shutdown.changed() => {
+                    let _ = changed;
+                    break;
+                }
+                _ = ticker.tick() => {
+                    if !server.config().filter.auto_update {
+                        continue;
+                    }
+                    if let Err(error) = server.refresh_due_filter().await {
+                        eprintln!("[订阅] 自动更新失败: {error}");
+                    }
+                }
+            }
+        }
+    })
 }
 
 #[cfg(unix)]

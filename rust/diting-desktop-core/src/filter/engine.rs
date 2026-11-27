@@ -386,6 +386,8 @@ fn matcher_inputs_equal(a: &FilterConfig, b: &FilterConfig) -> bool {
                 && left.url == right.url
                 && left.enabled == right.enabled
                 && left.name == right.name
+                && left.kind == right.kind
+                && left.source_type == right.source_type
         })
 }
 

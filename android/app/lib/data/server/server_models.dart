@@ -1,5 +1,7 @@
 library;
 
+part 'server_settings_models.dart';
+
 class ServerListenConfig {
   const ServerListenConfig({
     this.port = 1053,
@@ -161,6 +163,12 @@ class ServerFilterList {
     this.lastUpdated = 0,
     this.lastStatus = '',
     this.lastError = '',
+    this.group = '',
+    this.kind = 'all',
+    this.sourceType = 'remote',
+    this.mirrorTemplate = '',
+    this.mirrorUrl = '',
+    this.mirrorFallback = true,
   });
 
   final String id;
@@ -172,6 +180,26 @@ class ServerFilterList {
   final String lastStatus;
   final String lastError;
 
+  /// 分组名；空串表示未分组。
+  final String group;
+
+  /// `all`、`domain` 或 `hosts`；旧订阅缺失时为 `all`。
+  final String kind;
+
+  /// `remote` 或 `local`。
+  final String sourceType;
+  final String mirrorTemplate;
+
+  /// 已按模板展开的镜像地址，下载时由服务器优先请求。
+  final String mirrorUrl;
+  final bool mirrorFallback;
+
+  bool get isRemote => sourceType != 'local';
+  bool get isHosts => kind == 'hosts';
+  bool get isAllKinds => kind == 'all';
+  bool get hasError => lastError.isNotEmpty;
+  bool get isCached => lastStatus == 'cached';
+
   factory ServerFilterList.fromJson(Map<String, Object?> json) =>
       ServerFilterList(
         id: json['id'] as String? ?? '',
@@ -182,6 +210,12 @@ class ServerFilterList {
         lastUpdated: (json['lastUpdated'] as num?)?.toInt() ?? 0,
         lastStatus: json['lastStatus'] as String? ?? '',
         lastError: json['lastError'] as String? ?? '',
+        group: json['group'] as String? ?? '',
+        kind: json['kind'] as String? ?? 'all',
+        sourceType: json['sourceType'] as String? ?? 'remote',
+        mirrorTemplate: json['mirrorTemplate'] as String? ?? '',
+        mirrorUrl: json['mirrorUrl'] as String? ?? '',
+        mirrorFallback: json['mirrorFallback'] != false,
       );
 
   Map<String, Object?> toJson() => {
@@ -193,7 +227,45 @@ class ServerFilterList {
     'lastUpdated': lastUpdated,
     if (lastStatus.isNotEmpty) 'lastStatus': lastStatus,
     if (lastError.isNotEmpty) 'lastError': lastError,
+    if (group.isNotEmpty) 'group': group,
+    if (kind != 'all') 'kind': kind,
+    if (sourceType != 'remote') 'sourceType': sourceType,
+    if (mirrorTemplate.isNotEmpty) 'mirrorTemplate': mirrorTemplate,
+    if (mirrorUrl.isNotEmpty) 'mirrorUrl': mirrorUrl,
+    if (!mirrorFallback) 'mirrorFallback': false,
   };
+
+  ServerFilterList copyWith({
+    String? id,
+    String? name,
+    String? url,
+    bool? enabled,
+    int? rulesCount,
+    int? lastUpdated,
+    String? lastStatus,
+    String? lastError,
+    String? group,
+    String? kind,
+    String? sourceType,
+    String? mirrorTemplate,
+    String? mirrorUrl,
+    bool? mirrorFallback,
+  }) => ServerFilterList(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    url: url ?? this.url,
+    enabled: enabled ?? this.enabled,
+    rulesCount: rulesCount ?? this.rulesCount,
+    lastUpdated: lastUpdated ?? this.lastUpdated,
+    lastStatus: lastStatus ?? this.lastStatus,
+    lastError: lastError ?? this.lastError,
+    group: group ?? this.group,
+    kind: kind ?? this.kind,
+    sourceType: sourceType ?? this.sourceType,
+    mirrorTemplate: mirrorTemplate ?? this.mirrorTemplate,
+    mirrorUrl: mirrorUrl ?? this.mirrorUrl,
+    mirrorFallback: mirrorFallback ?? this.mirrorFallback,
+  );
 }
 
 class ServerFilterConfig {
@@ -205,6 +277,7 @@ class ServerFilterConfig {
     this.customRules = const [],
     this.lists = const [],
     this.updateIntervalHours = 24,
+    this.autoUpdate = true,
     this.filterResponse = false,
   });
 
@@ -215,6 +288,7 @@ class ServerFilterConfig {
   final List<String> customRules;
   final List<ServerFilterList> lists;
   final int updateIntervalHours;
+  final bool autoUpdate;
   final bool filterResponse;
 
   factory ServerFilterConfig.fromJson(Map<String, Object?> json) =>
@@ -234,6 +308,7 @@ class ServerFilterConfig {
         ],
         updateIntervalHours:
             (json['updateIntervalHours'] as num?)?.toInt() ?? 24,
+        autoUpdate: json['autoUpdate'] != false,
         filterResponse: json['filterResponse'] == true,
       );
 
@@ -245,6 +320,7 @@ class ServerFilterConfig {
     'customRules': customRules,
     'lists': [for (final list in lists) list.toJson()],
     'updateIntervalHours': updateIntervalHours,
+    'autoUpdate': autoUpdate,
     'filterResponse': filterResponse,
   };
 
@@ -256,6 +332,7 @@ class ServerFilterConfig {
     List<String>? customRules,
     List<ServerFilterList>? lists,
     int? updateIntervalHours,
+    bool? autoUpdate,
     bool? filterResponse,
   }) => ServerFilterConfig(
     enabled: enabled ?? this.enabled,
@@ -265,150 +342,8 @@ class ServerFilterConfig {
     customRules: customRules ?? this.customRules,
     lists: lists ?? this.lists,
     updateIntervalHours: updateIntervalHours ?? this.updateIntervalHours,
+    autoUpdate: autoUpdate ?? this.autoUpdate,
     filterResponse: filterResponse ?? this.filterResponse,
-  );
-}
-
-class ServerCacheConfig {
-  const ServerCacheConfig({
-    this.enabled = true,
-    this.maxEntries = 4096,
-    this.mode = 'limit_max_ttl',
-    this.maxTtlSeconds = 3600,
-    this.fixedTtlSeconds = 3600,
-    this.minTtlEnabled = true,
-    this.minTtlSeconds = 60,
-    this.staleFallbackEnabled = true,
-    this.staleFallbackSeconds = 300,
-    this.negativeTtlEnabled = true,
-    this.negativeTtlSeconds = 30,
-    this.optimistic = true,
-    this.prefetchEnabled = false,
-  });
-
-  final bool enabled;
-  final int maxEntries;
-  final String mode;
-  final int maxTtlSeconds;
-  final int fixedTtlSeconds;
-  final bool minTtlEnabled;
-  final int minTtlSeconds;
-  final bool staleFallbackEnabled;
-  final int staleFallbackSeconds;
-  final bool negativeTtlEnabled;
-  final int negativeTtlSeconds;
-  final bool optimistic;
-  final bool prefetchEnabled;
-
-  factory ServerCacheConfig.fromJson(Map<String, Object?> json) =>
-      ServerCacheConfig(
-        enabled: json['enabled'] != false,
-        maxEntries: (json['maxEntries'] as num?)?.toInt() ?? 4096,
-        mode: json['mode'] as String? ?? 'limit_max_ttl',
-        maxTtlSeconds: (json['maxTtlSeconds'] as num?)?.toInt() ?? 3600,
-        fixedTtlSeconds: (json['fixedTtlSeconds'] as num?)?.toInt() ?? 3600,
-        minTtlEnabled: json['minTtlEnabled'] != false,
-        minTtlSeconds: (json['minTtlSeconds'] as num?)?.toInt() ?? 60,
-        staleFallbackEnabled: json['staleFallbackEnabled'] != false,
-        staleFallbackSeconds:
-            (json['staleFallbackSeconds'] as num?)?.toInt() ?? 300,
-        negativeTtlEnabled: json['negativeTtlEnabled'] != false,
-        negativeTtlSeconds: (json['negativeTtlSeconds'] as num?)?.toInt() ?? 30,
-        optimistic: json['optimistic'] != false,
-        prefetchEnabled: json['prefetchEnabled'] == true,
-      );
-
-  Map<String, Object?> toJson() => {
-    'enabled': enabled,
-    'maxEntries': maxEntries,
-    'mode': mode,
-    'maxTtlSeconds': maxTtlSeconds,
-    'fixedTtlSeconds': fixedTtlSeconds,
-    'minTtlEnabled': minTtlEnabled,
-    'minTtlSeconds': minTtlSeconds,
-    'staleFallbackEnabled': staleFallbackEnabled,
-    'staleFallbackSeconds': staleFallbackSeconds,
-    'negativeTtlEnabled': negativeTtlEnabled,
-    'negativeTtlSeconds': negativeTtlSeconds,
-    'optimistic': optimistic,
-    'prefetchEnabled': prefetchEnabled,
-  };
-
-  ServerCacheConfig copyWith({
-    bool? enabled,
-    int? maxEntries,
-    String? mode,
-    int? maxTtlSeconds,
-    int? fixedTtlSeconds,
-    bool? minTtlEnabled,
-    int? minTtlSeconds,
-    bool? staleFallbackEnabled,
-    int? staleFallbackSeconds,
-    bool? negativeTtlEnabled,
-    int? negativeTtlSeconds,
-    bool? optimistic,
-    bool? prefetchEnabled,
-  }) => ServerCacheConfig(
-    enabled: enabled ?? this.enabled,
-    maxEntries: maxEntries ?? this.maxEntries,
-    mode: mode ?? this.mode,
-    maxTtlSeconds: maxTtlSeconds ?? this.maxTtlSeconds,
-    fixedTtlSeconds: fixedTtlSeconds ?? this.fixedTtlSeconds,
-    minTtlEnabled: minTtlEnabled ?? this.minTtlEnabled,
-    minTtlSeconds: minTtlSeconds ?? this.minTtlSeconds,
-    staleFallbackEnabled: staleFallbackEnabled ?? this.staleFallbackEnabled,
-    staleFallbackSeconds: staleFallbackSeconds ?? this.staleFallbackSeconds,
-    negativeTtlEnabled: negativeTtlEnabled ?? this.negativeTtlEnabled,
-    negativeTtlSeconds: negativeTtlSeconds ?? this.negativeTtlSeconds,
-    optimistic: optimistic ?? this.optimistic,
-    prefetchEnabled: prefetchEnabled ?? this.prefetchEnabled,
-  );
-}
-
-class ServerQueryLogConfig {
-  const ServerQueryLogConfig({
-    this.enabled = true,
-    this.maxEntries = 10000,
-    this.fileEnabled = true,
-    this.retentionDays = 7,
-    this.logClients = true,
-  });
-
-  final bool enabled;
-  final int maxEntries;
-  final bool fileEnabled;
-  final int retentionDays;
-  final bool logClients;
-
-  factory ServerQueryLogConfig.fromJson(Map<String, Object?> json) =>
-      ServerQueryLogConfig(
-        enabled: json['enabled'] != false,
-        maxEntries: (json['maxEntries'] as num?)?.toInt() ?? 10000,
-        fileEnabled: json['fileEnabled'] != false,
-        retentionDays: (json['retentionDays'] as num?)?.toInt() ?? 7,
-        logClients: json['logClients'] != false,
-      );
-
-  Map<String, Object?> toJson() => {
-    'enabled': enabled,
-    'maxEntries': maxEntries,
-    'fileEnabled': fileEnabled,
-    'retentionDays': retentionDays,
-    'logClients': logClients,
-  };
-
-  ServerQueryLogConfig copyWith({
-    bool? enabled,
-    int? maxEntries,
-    bool? fileEnabled,
-    int? retentionDays,
-    bool? logClients,
-  }) => ServerQueryLogConfig(
-    enabled: enabled ?? this.enabled,
-    maxEntries: maxEntries ?? this.maxEntries,
-    fileEnabled: fileEnabled ?? this.fileEnabled,
-    retentionDays: retentionDays ?? this.retentionDays,
-    logClients: logClients ?? this.logClients,
   );
 }
 
@@ -419,6 +354,7 @@ class ServerConfig {
     this.filter = const ServerFilterConfig(),
     this.cache = const ServerCacheConfig(),
     this.queryLog = const ServerQueryLogConfig(),
+    this.mirrorTemplates = const [],
   });
 
   final ServerListenConfig listen;
@@ -426,6 +362,9 @@ class ServerConfig {
   final ServerFilterConfig filter;
   final ServerCacheConfig cache;
   final ServerQueryLogConfig queryLog;
+
+  /// 服务器模式自己的镜像站模板，供订阅下载加速选择。
+  final List<String> mirrorTemplates;
 
   factory ServerConfig.defaults() => ServerConfig(
     upstream: const ServerUpstreamConfig(
@@ -479,6 +418,10 @@ class ServerConfig {
         (json['queryLog'] ?? json['querylog']) as Map? ?? const {},
       ),
     ),
+    mirrorTemplates: [
+      for (final item in (json['mirrorTemplates'] as List?) ?? const [])
+        if (item is String && item.trim().isNotEmpty) item,
+    ],
   );
 
   Map<String, Object?> toJson() => {
@@ -487,6 +430,7 @@ class ServerConfig {
     'filter': filter.toJson(),
     'cache': cache.toJson(),
     'queryLog': queryLog.toJson(),
+    if (mirrorTemplates.isNotEmpty) 'mirrorTemplates': mirrorTemplates,
   };
 
   ServerConfig copyWith({
@@ -495,11 +439,13 @@ class ServerConfig {
     ServerFilterConfig? filter,
     ServerCacheConfig? cache,
     ServerQueryLogConfig? queryLog,
+    List<String>? mirrorTemplates,
   }) => ServerConfig(
     listen: listen ?? this.listen,
     upstream: upstream ?? this.upstream,
     filter: filter ?? this.filter,
     cache: cache ?? this.cache,
     queryLog: queryLog ?? this.queryLog,
+    mirrorTemplates: mirrorTemplates ?? this.mirrorTemplates,
   );
 }

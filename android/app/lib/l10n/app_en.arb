@@ -1397,8 +1397,12 @@
   "devStorageFiles": "{count} databases, {kb} KB",
   "@devStorageFiles": {
     "placeholders": {
-      "count": { "type": "int" },
-      "kb": { "type": "int" }
+      "count": {
+        "type": "int"
+      },
+      "kb": {
+        "type": "int"
+      }
     }
   },
   "devCancel": "Cancel",
@@ -2937,7 +2941,9 @@
   "ruleVersionsRuleCount": "{count} rules",
   "@ruleVersionsRuleCount": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "ruleVersionsCompare": "Compare",
@@ -2946,8 +2952,12 @@
   "ruleVersionsDiffSummary": "{added} added, {removed} removed",
   "@ruleVersionsDiffSummary": {
     "placeholders": {
-      "added": { "type": "int" },
-      "removed": { "type": "int" }
+      "added": {
+        "type": "int"
+      },
+      "removed": {
+        "type": "int"
+      }
     }
   },
   "ruleVersionsAdded": "Added",
@@ -2957,7 +2967,9 @@
   "ruleVersionsRollbackFailed": "Rollback failed: {message}",
   "@ruleVersionsRollbackFailed": {
     "placeholders": {
-      "message": { "type": "String" }
+      "message": {
+        "type": "String"
+      }
     }
   },
   "troubleshootLogsDownload": "Download",
@@ -3211,7 +3223,7 @@
       }
     }
   },
-  "serverSubscriptionNote": "The first release refreshes manually only; the interval setting is stored but not scheduled.",
+  "serverSubscriptionNote": "When the server is running, subscriptions refresh automatically at the configured interval and can also be refreshed manually; skipped subscriptions catch up on the next start.",
   "serverSubscriptionName": "Name",
   "serverSubscriptionUrl": "Subscription URL",
   "serverSubscriptionRequired": "Name and URL are required",
@@ -3301,5 +3313,52 @@
   "serverTrafficStopped": "Start the server to see recent DNS traffic here.",
   "serverNoRanking": "No ranking data yet",
   "serverCacheEntriesShort": "{count} entries",
-  "serverUpstreamShort": "{count} upstreams"
+  "serverUpstreamShort": "{count} upstreams",
+  "serverSubsAutoUpdateBody": "The server process checks once a minute and refreshes subscriptions that are due",
+  "serverSubsSaved": "Subscription saved",
+  "serverSubsNeedsRunning": "Start the server before refreshing subscriptions",
+  "serverSubsRunningHint": "Saving while the server is running downloads the rules immediately",
+  "serverSubsMirrorOff": "No mirror",
+  "serverSubsImportTitle": "Import subscriptions from another mode",
+  "serverSubsImported": "Imported {count} subscriptions",
+  "@serverSubsImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "serverSubsImportedPartial": "Imported {count}; {failed} could not be read",
+  "@serverSubsImportedPartial": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "serverLogRange24h": "Last 24h",
+  "serverLogRange7d": "Last 7d",
+  "serverCacheStaleSeconds": "Serve stale for",
+  "serverCacheNegativeSeconds": "Negative TTL",
+  "serverCachePrefetchThreshold": "Concurrent query threshold",
+  "serverCachePrefetchBefore": "Refresh before expiry",
+  "serverCacheActions": "Cache actions",
+  "serverCacheClear": "Clear cache",
+  "serverCacheClearBody": "Delete all DNS cache entries from memory and the database.",
+  "serverCacheCleared": "Cache cleared",
+  "serverUpstreamWeight": "Scheduler weight",
+  "serverUpstreamWeightValue": "weight {weight}",
+  "@serverUpstreamWeightValue": {
+    "placeholders": {
+      "weight": {
+        "type": "int"
+      }
+    }
+  },
+  "serverSubsImportAction": "Import",
+  "subscriptionKindAll": "All rules",
+  "subscriptionKindAllHint": "Keep both domain rules and hosts mappings"
 }
