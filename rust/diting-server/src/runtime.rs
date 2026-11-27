@@ -56,6 +56,8 @@ pub struct ServerRuntime {
     dns: Mutex<Option<Arc<DnsServer>>>,
     started_at_ms: i64,
     storage: Arc<ServerStorage>,
+    /// 一次性离线进程：不加载也不回写 DNS 缓存，避免读取大缓存拖慢每个请求。
+    offline: bool,
 }
 
 impl ServerRuntime {
@@ -64,6 +66,26 @@ impl ServerRuntime {
         config: ServerConfig,
         stores: RuntimeStores,
         storage: Arc<ServerStorage>,
+    ) -> Result<Self, String> {
+        Self::build(paths, config, stores, storage, false)
+    }
+
+    /// 离线维护运行时：不加载缓存、退出时不回写缓存。
+    pub fn new_offline(
+        paths: ServerPaths,
+        config: ServerConfig,
+        stores: RuntimeStores,
+        storage: Arc<ServerStorage>,
+    ) -> Result<Self, String> {
+        Self::build(paths, config, stores, storage, true)
+    }
+
+    fn build(
+        paths: ServerPaths,
+        config: ServerConfig,
+        stores: RuntimeStores,
+        storage: Arc<ServerStorage>,
+        offline: bool,
     ) -> Result<Self, String> {
         paths.ensure_dirs().map_err(|error| {
             format!(
@@ -78,8 +100,10 @@ impl ServerRuntime {
             paths.data_dir.clone(),
             Some(PlatformHandles::default()),
         ));
-        if let Err(error) = desktop.load_cache_from_store() {
-            eprintln!("[缓存] 恢复缓存失败，将以空缓存启动: {error}");
+        if !offline {
+            if let Err(error) = desktop.load_cache_from_store() {
+                eprintln!("[缓存] 恢复缓存失败，将以空缓存启动: {error}");
+            }
         }
         desktop.set_observer(Arc::new(ServerQueryObserver::new(Arc::clone(
             &desktop.querylog,
@@ -92,6 +116,7 @@ impl ServerRuntime {
             dns: Mutex::new(None),
             started_at_ms: now_ms(),
             storage,
+            offline,
         })
     }
 
@@ -143,7 +168,9 @@ impl ServerRuntime {
         if let Some(server) = server {
             server.shutdown().await;
         }
-        let _ = self.desktop.dump_cache_to_store();
+        if !self.offline {
+            let _ = self.desktop.dump_cache_to_store();
+        }
         let _ = self.desktop.querylog.close();
         let _ = self.storage.checkpoint();
     }
@@ -261,6 +288,8 @@ impl ServerRuntime {
 
     pub fn clear_cache(&self) -> Value {
         self.desktop.cache.clear();
+        // 立即回写空缓存：离线进程不加载缓存，也不会在退出时回写。
+        let _ = self.desktop.dump_cache_to_store();
         json!({"cleared": true})
     }
 

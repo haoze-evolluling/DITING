@@ -115,7 +115,7 @@ fn offline_response(paths: ServerPaths, payload: &str) -> Result<String, String>
         .build()
         .map_err(|error| format!("创建离线运行时失败: {error}"))?;
     runtime.block_on(async move {
-        let server = Arc::new(ServerRuntime::new(paths, config, stores, storage)?);
+        let server = Arc::new(ServerRuntime::new_offline(paths, config, stores, storage)?);
         let (response, _) = crate::control::handle_request(&server, request).await;
         let encoded = serde_json::to_string(&response)
             .map_err(|error| format!("序列化离线响应失败: {error}"))?;
