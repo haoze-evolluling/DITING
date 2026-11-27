@@ -31,6 +31,7 @@ members = [
     "diting-dns-config-core",
     "diting-backup-core",
     "diting-rule-store-core",
+    "diting-rule-import-core",
     "diting-subscription-core",
     "diting-schedule-core",
     "diting-hit-core",

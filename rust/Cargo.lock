@@ -964,6 +964,7 @@ dependencies = [
  "diting-recognition-core",
  "diting-response-core",
  "diting-rule-core",
+ "diting-rule-import-core",
  "diting-rule-store-core",
  "diting-rule-version-core",
  "diting-schedule-core",
@@ -1136,6 +1137,16 @@ dependencies = [
  "diting-policy-core",
  "jni",
  "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "diting-rule-import-core"
+version = "0.1.0"
+dependencies = [
+ "diting-rule-core",
+ "diting-rule-store-core",
+ "rusqlite",
  "serde_json",
 ]
 

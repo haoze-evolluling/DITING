@@ -1,5 +1,8 @@
 library;
 
+import 'dart:isolate';
+
+import 'package:diting_android/data/db/rust_rule_import_core.dart';
 import 'package:diting_android/data/db/rust_rule_store_core.dart';
 import 'package:diting_android/data/rules/rule_models.dart';
 import 'package:diting_android/data/rules/rust_rule_core.dart';
@@ -53,6 +56,29 @@ class RuleImportSummary {
     typeSkippedCount: typeSkippedCount + other.typeSkippedCount,
     badfilteredCount: badfilteredCount + other.badfilteredCount,
   );
+}
+
+/// 订阅原文直通入库的结果。
+class RuleDocumentImport {
+  const RuleDocumentImport({
+    required this.summary,
+    required this.hash,
+    required this.unchanged,
+    required this.versionRules,
+    required this.versionSkipped,
+    this.deleted = false,
+  });
+
+  final RuleImportSummary summary;
+  final String hash;
+  final bool unchanged;
+
+  /// 导入期间订阅被删除，规则已随事务回滚。
+  final bool deleted;
+
+  /// 用于版本快照的规范化规则行；超过上限时为空。
+  final List<String> versionRules;
+  final bool versionSkipped;
 }
 
 String subscriptionSourceTag(int subscriptionId) => 'sub_$subscriptionId';
@@ -145,6 +171,89 @@ class RuleImporter {
                 parsed.urlBlockRules.length +
                 parsed.urlAllowRules.length,
       badfilteredCount: parsed.badfilteredCount,
+    );
+  }
+
+  /// 把订阅原文整个交给 Rust：解析、生成规则表语句、写入暂存并原子切换，
+  /// 全部在同一个事务里完成。Dart 只负责调用与结果映射。
+  ///
+  /// 解析与写库可能持续数百毫秒，因此放到后台 isolate 执行，避免阻塞界面。
+  Future<RuleDocumentImport> importDocument(
+    String document, {
+    required String source,
+    required String staging,
+    required String kind,
+    required bool enabled,
+    required int subscriptionId,
+    required String? knownHash,
+    required int now,
+    int maxVersionRules = 60000,
+  }) async {
+    final request = <String, Object?>{
+      'dbPath': _db.path,
+      'text': document,
+      'source': source,
+      'staging': staging,
+      'kind': kind,
+      'enabled': enabled,
+      'subscriptionId': subscriptionId,
+      'chunkLines': ruleStreamChunkLines,
+      'chunkSize': chunkSize,
+      'nowMs': now,
+      'knownHash': knownHash,
+      'maxVersionRules': maxVersionRules,
+    };
+    final answer = await Isolate.run(
+      () => RustRuleImportCore.instance.run(request),
+    );
+    if (answer['error'] case final error?) {
+      throw StateError(error.toString());
+    }
+    final hash = answer['hash'] as String? ?? '';
+    if (answer['deleted'] == true) {
+      return RuleDocumentImport(
+        summary: const RuleImportSummary(),
+        hash: hash,
+        unchanged: false,
+        deleted: true,
+        versionRules: const [],
+        versionSkipped: false,
+      );
+    }
+    if (answer['unchanged'] == true) {
+      return RuleDocumentImport(
+        summary: const RuleImportSummary(),
+        hash: hash,
+        unchanged: true,
+        versionRules: const [],
+        versionSkipped: false,
+      );
+    }
+    int read(Map<String, Object?> values, String key) =>
+        (values[key] as num?)?.toInt() ?? 0;
+    final counts =
+        (answer['counts'] as Map?)?.cast<String, Object?>() ?? const {};
+    final parsed =
+        (answer['parsed'] as Map?)?.cast<String, Object?>() ?? const {};
+    return RuleDocumentImport(
+      summary: RuleImportSummary(
+        blockCount: read(counts, 'block'),
+        allowCount: read(counts, 'allow'),
+        rewriteCount: read(counts, 'rewrite'),
+        urlBlockCount: read(counts, 'urlBlock'),
+        urlAllowCount: read(counts, 'urlAllow'),
+        cosmeticCount: read(parsed, 'cosmetic'),
+        duplicateCount: read(parsed, 'duplicate'),
+        invalidCount: read(parsed, 'invalid'),
+        unsupportedCount: read(parsed, 'unsupported'),
+        typeSkippedCount: read(parsed, 'typeSkipped'),
+        badfilteredCount: read(parsed, 'badfiltered'),
+      ),
+      hash: hash,
+      unchanged: false,
+      versionRules: (answer['versionRules'] as List? ?? const [])
+          .cast<String>(),
+      versionSkipped: answer['versionSkipped'] == true,
     );
   }
 

@@ -25,6 +25,7 @@ diting-outbound-proxy-core = { path = "../diting-outbound-proxy-core" }
 diting-probe-core = { path = "../diting-probe-core" }
 diting-recognition-core = { path = "../diting-recognition-core" }
 diting-rule-core = { path = "../diting-rule-core" }
+diting-rule-import-core = { path = "../diting-rule-import-core" }
 diting-schedule-core = { path = "../diting-schedule-core" }
 diting-rule-store-core = { path = "../diting-rule-store-core" }
 diting-subscription-core = { path = "../diting-subscription-core" }

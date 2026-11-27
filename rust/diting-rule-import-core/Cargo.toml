@@ -1,0 +1,16 @@
+[package]
+name = "diting-rule-import-core"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# 解析订阅原文并生成与 Dart 侧完全一致的规则表计划。
+diting-rule-core = { path = "../diting-rule-core" }
+diting-rule-store-core = { path = "../diting-rule-store-core" }
+# 原地执行计划：避免把 SQL 与数十万条绑定参数经 FFI 和 sqflite 通道送回 Dart。
+rusqlite = { version = "0.36", features = ["bundled"] }
+serde_json = "1"

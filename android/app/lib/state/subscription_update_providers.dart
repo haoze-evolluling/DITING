@@ -349,126 +349,41 @@ class SubscriptionUpdateNotifier extends Notifier<SubscriptionUpdateState> {
     }
     final source = subscriptionSourceTag(entry.id);
     final staging = subscriptionStagingTag(entry.id);
-    final kind = entry.kind.storageValue;
-    final enabled = entry.enabled;
-    final stream = bytes != null
-        ? streamParseCategorizedBytes(bytes)
-        : streamParseCategorized(text ?? '');
-    var hashState = ruleSetHashSeed();
-    var summary = const RuleImportSummary();
-    final versionRules = <String>[];
-    var collectVersion = true;
-    var totalRules = 0;
-
-    // 先把规则导入暂存来源，解析/入库全部成功后再原子切换；
-    // 中途失败不会清空订阅现有规则。
-    var initialCleanDone = false;
-    Future<void> ensureInitialClean() async {
-      if (initialCleanDone) return;
-      initialCleanDone = true;
-      await importer.removeRulesBySource(staging);
-    }
-
-    var stagingHasRows = false;
-    Future<void> discardStaging() async {
-      if (!stagingHasRows) return;
-      stagingHasRows = false;
-      await importer.removeRulesBySource(staging);
-    }
-
-    Future<RuleImportSummary> importChunk(CategorizedRules chunk) async {
-      if (chunk.isEmpty) return const RuleImportSummary();
-      await ensureInitialClean();
-      // 分片批量提交，任一 family 失败时前面的批次可能已写入，
-      // 因此先标记为脏，确保异常路径一定会清掉暂存关联。
-      stagingHasRows = true;
-      return importer.import(
-        chunk,
-        source: staging,
-        kind: kind,
-        enabled: enabled,
-      );
-    }
-
-    // 在缓冲上限内先解析完整份文档，用规范化规则哈希判断内容是否变化；
-    // 未变化时完全跳过写库与索引重建。
-    var buffering = true;
-    var bufferedRules = 0;
-    final pending = <CategorizedRules>[];
-    try {
-      for (var chunk = stream.next(); chunk != null; chunk = stream.next()) {
-        final lines = canonicalRules(chunk);
-        hashState = ruleSetHashUpdate(hashState, lines);
-        totalRules += lines.length;
-        if (collectVersion) {
-          if (totalRules > maxVersionSnapshotRules) {
-            collectVersion = false;
-            versionRules.clear();
-          } else {
-            versionRules.addAll(lines);
-          }
-        }
-        if (chunk.isEmpty) continue;
-        if (buffering) {
-          pending.add(chunk);
-          bufferedRules += chunk.size;
-          if (bufferedRules <= maxVersionSnapshotRules) continue;
-          // 超大订阅不再缓冲，退回边解析边导入。
-          buffering = false;
-          for (final buffered in pending) {
-            summary = summary.merge(await importChunk(buffered));
-          }
-          pending.clear();
-        } else {
-          summary = summary.merge(await importChunk(chunk));
-        }
-      }
-    } catch (error) {
-      await discardStaging();
-      rethrow;
-    } finally {
-      stream.dispose();
-    }
-
-    final hash = ruleSetHashHex(hashState);
-    if (buffering) {
-      if (entry.record.ruleSetHash == hash) {
-        return (
-          summary: const RuleImportSummary(),
-          hash: hash,
-          unchanged: true,
-        );
-      }
-      for (final buffered in pending) {
-        summary = summary.merge(await importChunk(buffered));
-      }
-      pending.clear();
-    }
-
-    final subscriptions = await ref.read(subscriptionRepositoryProvider.future);
-    final current = await subscriptions?.byId(entry.id);
-    if (current == null) {
-      // 订阅在导入期间被删除：丢弃暂存结果，避免留下无主规则。
-      await discardStaging();
+    // 解析、写库与原子切换都在 Rust 的同一个事务里完成。
+    final imported = await importer.importDocument(
+      text ?? utf8.decode(bytes ?? Uint8List(0)),
+      source: source,
+      staging: staging,
+      kind: entry.kind.storageValue,
+      enabled: entry.enabled,
+      subscriptionId: entry.id,
+      knownHash: entry.record.ruleSetHash,
+      now: DateTime.now().millisecondsSinceEpoch,
+      maxVersionRules: maxVersionSnapshotRules,
+    );
+    if (imported.deleted) {
+      // 订阅在导入期间被删除，Rust 已回滚本次写入。
       return null;
     }
-    try {
-      await importer.commitStaging(staging, source, enabled: current.enabled);
-    } catch (error) {
-      await discardStaging();
-      rethrow;
+    if (imported.unchanged) {
+      return (summary: imported.summary, hash: imported.hash, unchanged: true);
     }
 
-    if (collectVersion) {
-      await _recordVersion(entry, versionRules, hash, summary.insertedCount);
-    } else {
+    if (imported.versionSkipped) {
       debugPrint(
-        'rule version skipped for ${entry.url}: $totalRules rules over '
-        '$maxVersionSnapshotRules',
+        'rule version skipped for ${entry.url}: over '
+        '$maxVersionSnapshotRules rules',
+      );
+    } else {
+      await _recordVersion(
+        entry,
+        imported.versionRules,
+        imported.hash,
+        imported.summary.insertedCount,
       );
     }
     refreshRuleIndexesForCurrentMode(ref);
-    return (summary: summary, hash: hash, unchanged: false);
+    return (summary: imported.summary, hash: imported.hash, unchanged: false);
   }
 
   static const int maxVersionSnapshotRules = 60000;

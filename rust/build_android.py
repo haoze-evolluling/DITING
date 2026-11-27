@@ -46,6 +46,10 @@ C ABI / JNI entry points, and Dart/Kotlin load every one of them from that singl
 * `libditing_rule_store_core.so` - the rule-table kernel the Flutter app loads over `dart:ffi` (row
   to rule mapping, every unique-key predicate, the per-app scope comparisons, the import statement
   plan and the orphan sweep).
+* `libditing_rule_import_core.so` - the subscription-import kernel the Flutter app loads over
+  `dart:ffi` (parses the fetched document, builds the rule-store plan and executes it against the
+  rules database in one transaction, so rule rows never cross the FFI boundary as JSON; bundled
+  SQLite keeps the writer independent of the platform channel used by sqflite).
 * `libditing_subscription_core.so` - the subscription kernel the Flutter app loads over `dart:ffi`
   (URL/mirror rules with the Java `URLEncoder` spelling, row defaults and the two edit forms, the
   download attempt/fallback/response policy, and the auto-update schedule).
@@ -119,6 +123,7 @@ REQUIRED_NATIVE_EXPORTS = (
     "diting_agent_core_abi_version",
     "diting_dns_abi_version",
     "diting_kernels_abi_version",
+    "diting_rule_import_core_abi_version",
 )
 
 TARGETS = {

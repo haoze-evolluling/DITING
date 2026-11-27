@@ -19,6 +19,7 @@ pub use diting_probe_core;
 pub use diting_recognition_core;
 pub use diting_response_core;
 pub use diting_rule_core;
+pub use diting_rule_import_core;
 pub use diting_rule_store_core;
 pub use diting_rule_version_core;
 pub use diting_schedule_core;
