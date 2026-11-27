@@ -8,6 +8,7 @@ import 'package:diting_android/widgets/icon_badge.dart';
 import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/stat_strip.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -333,6 +334,20 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
       context: context,
       child: CommonDialog(
         title: record.domain,
+        actions: [
+          TextButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: record.domain));
+              Navigator.of(context).pop();
+              showAppSnack(context, context.l10n.serverLogDomainCopied);
+            },
+            child: Text(context.l10n.serverLogCopyDomain),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.uiClose),
+          ),
+        ],
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -406,5 +421,3 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     );
   }
 }
-
-

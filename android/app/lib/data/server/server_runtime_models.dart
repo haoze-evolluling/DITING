@@ -5,8 +5,10 @@ class ServerStatus {
     this.running = false,
     this.starting = false,
     this.stopping = false,
+    this.restarting = false,
     this.root = false,
     this.port = 1053,
+    this.pid = 0,
     this.addresses = const [],
     this.startedAt,
     this.error,
@@ -15,13 +17,17 @@ class ServerStatus {
   final bool running;
   final bool starting;
   final bool stopping;
+
+  /// 进程意外退出后正在按退避策略自动重启。
+  final bool restarting;
   final bool root;
   final int port;
+  final int pid;
   final List<String> addresses;
   final DateTime? startedAt;
   final String? error;
 
-  bool get active => running || starting;
+  bool get active => running || starting || restarting;
   bool get isBusy => starting || stopping;
 
   factory ServerStatus.fromMap(Object? raw) {
@@ -31,8 +37,10 @@ class ServerStatus {
       running: map['running'] == true,
       starting: map['starting'] == true,
       stopping: map['stopping'] == true,
+      restarting: map['restarting'] == true,
       root: map['root'] == true,
       port: (map['port'] as num?)?.toInt() ?? 1053,
+      pid: (map['pid'] as num?)?.toInt() ?? 0,
       addresses: [
         for (final address in (map['addresses'] as List?) ?? const [])
           if (address is String) address,
@@ -48,8 +56,10 @@ class ServerStatus {
     bool? running,
     bool? starting,
     bool? stopping,
+    bool? restarting,
     bool? root,
     int? port,
+    int? pid,
     List<String>? addresses,
     DateTime? startedAt,
     String? error,
@@ -58,8 +68,10 @@ class ServerStatus {
     running: running ?? this.running,
     starting: starting ?? this.starting,
     stopping: stopping ?? this.stopping,
+    restarting: restarting ?? this.restarting,
     root: root ?? this.root,
     port: port ?? this.port,
+    pid: pid ?? this.pid,
     addresses: addresses ?? this.addresses,
     startedAt: startedAt ?? this.startedAt,
     error: clearError ? null : error ?? this.error,
@@ -72,8 +84,10 @@ class ServerStatus {
     if (other.running != running ||
         other.starting != starting ||
         other.stopping != stopping ||
+        other.restarting != restarting ||
         other.root != root ||
         other.port != port ||
+        other.pid != pid ||
         other.startedAt != startedAt ||
         other.error != error ||
         other.addresses.length != addresses.length) {
@@ -90,8 +104,10 @@ class ServerStatus {
     running,
     starting,
     stopping,
+    restarting,
     root,
     port,
+    pid,
     startedAt,
     error,
     Object.hashAll(addresses),

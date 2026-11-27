@@ -261,12 +261,13 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
-        <!-- 开机后按「前后台行为 → 开机自启动」恢复上次使用的数据面。 -->
+        <!-- 开机或应用更新后按用户设置恢复上次使用的数据面；服务器模式使用自己的开关。 -->
         <receiver
             android:name=".control.BootAutoStartReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

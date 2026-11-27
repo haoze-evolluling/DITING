@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:diting_android/data/server/server_launch_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,5 +124,26 @@ void main() {
     expect(stopped.status.running, isFalse);
     expect(stopped.status.stopping, isFalse);
     expect(stopWatch.elapsedMilliseconds, lessThan(500));
+  });
+
+  test('restarting status stays active and keeps the last error', () {
+    final status = ServerStatus.fromMap({
+      'restarting': true,
+      'port': 1053,
+      'pid': 0,
+      'error': 'process exited with code 1',
+    });
+
+    expect(status.restarting, isTrue);
+    expect(status.running, isFalse);
+    expect(status.isBusy, isFalse);
+    expect(status.active, isTrue);
+    expect(status.error, 'process exited with code 1');
+  });
+
+  test('launch settings default to keep-alive on', () {
+    const settings = ServerLaunchSettings();
+    expect(settings.autoStart, isFalse);
+    expect(settings.autoRestart, isTrue);
   });
 }

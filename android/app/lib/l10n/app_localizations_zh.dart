@@ -10008,6 +10008,52 @@ class AppL10nZh extends AppL10n {
   String get serverSettingsRootNote => 'Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。';
 
   @override
+  String get serverSettingsLaunch => '启动与保活';
+
+  @override
+  String get serverSettingsLaunchNote =>
+      '开机自启动需要已同意用户协议；异常重启最多尝试 5 次，仍失败会停止服务并保留错误信息。';
+
+  @override
+  String get serverSettingsBootAutoStart => '开机自启动';
+
+  @override
+  String get serverSettingsBootAutoStartBody => '设备重启或应用更新后自动启动服务器';
+
+  @override
+  String get serverSettingsAutoRestart => '异常退出自动重启';
+
+  @override
+  String get serverSettingsAutoRestartBody => '服务器进程意外退出后按退避策略重新拉起';
+
+  @override
+  String get serverSettingsRuntime => '运行信息';
+
+  @override
+  String get serverSettingsPid => '进程 PID';
+
+  @override
+  String get serverSettingsPidBody => '用于排查异常或手动结束进程';
+
+  @override
+  String get serverSettingsAddresses => '监听地址';
+
+  @override
+  String get serverSettingsStartedAt => '启动时间';
+
+  @override
+  String get serverSettingsNotRunning => '服务器未运行';
+
+  @override
+  String get serverRestarting => '自动重启中';
+
+  @override
+  String get serverLogCopyDomain => '复制域名';
+
+  @override
+  String get serverLogDomainCopied => '已复制域名';
+
+  @override
   String get serverPort => '监听端口';
 
   @override

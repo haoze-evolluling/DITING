@@ -34,12 +34,14 @@ class ServerStatusOverview extends StatelessWidget {
         ? l10n.serverListening
         : status.stopping
         ? l10n.stateStopping
+        : status.restarting
+        ? l10n.serverRestarting
         : status.starting
         ? l10n.serverStarting
         : l10n.serverStopped;
     final dotColor = running
         ? scheme.success
-        : status.isBusy
+        : status.isBusy || status.restarting
         ? scheme.warning
         : status.error != null
         ? scheme.error
@@ -69,6 +71,8 @@ class ServerStatusOverview extends StatelessWidget {
                     ? l10n.serverRootMode
                     : l10n.serverNonRootMode,
               ),
+              if (running && status.pid > 0)
+                MetaChip(label: 'PID ${status.pid}'),
               const Icon(TablerIcons.chevron_right, size: 17),
             ],
           ),

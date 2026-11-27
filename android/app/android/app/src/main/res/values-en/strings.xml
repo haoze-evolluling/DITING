@@ -16,6 +16,7 @@
     <string name="server_channel_name">LAN DNS server</string>
     <string name="server_channel_description">Server-mode status and stop action</string>
     <string name="server_notification_title">Diting · Server mode</string>
+    <string name="server_notification_restarting">Server crashed, restarting…</string>
     <string name="server_notification_starting">Starting LAN DNS…</string>
     <string name="server_notification_running">LAN DNS · port %1$d</string>
     <string name="server_notification_running_root">Root listener · port %1$d</string>

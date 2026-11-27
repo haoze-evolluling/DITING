@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:diting_android/data/server/server_client.dart';
+import 'package:diting_android/data/server/server_launch_models.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 
@@ -57,6 +58,16 @@ class FakeServerClient implements ServerClient {
   @override
   Future<ServerRootStatus> probeRoot() async =>
       const ServerRootStatus(available: false, message: 'test');
+
+  ServerLaunchSettings _launchSettings = const ServerLaunchSettings();
+
+  @override
+  Future<ServerLaunchSettings> getLaunchSettings() async => _launchSettings;
+
+  @override
+  Future<void> saveLaunchSettings(ServerLaunchSettings settings) async {
+    _launchSettings = settings;
+  }
 
   @override
   Future<String?> readConfig() async => null;

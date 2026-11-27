@@ -19,6 +19,7 @@
     <string name="server_channel_name">局域网 DNS 服务器</string>
     <string name="server_channel_description">服务器模式的运行状态与停止入口</string>
     <string name="server_notification_title">谛听 · 服务器模式</string>
+    <string name="server_notification_restarting">服务器异常，正在自动重启…</string>
     <string name="server_notification_starting">正在启动局域网 DNS…</string>
     <string name="server_notification_running">局域网 DNS · 端口 %1$d</string>
     <string name="server_notification_running_root">Root 监听 · 端口 %1$d</string>

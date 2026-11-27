@@ -1,3 +1,4 @@
+import 'package:diting_android/data/server/server_launch_models.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/state/server_providers.dart';
 import 'package:diting_android/widgets/app_snack.dart';
@@ -21,6 +22,8 @@ class ServerSettingsPage extends ConsumerWidget {
     }
     final config = snapshot.config;
     final status = snapshot.status;
+    final launchAsync = ref.watch(serverLaunchSettingsProvider);
+    final launch = launchAsync.value ?? const ServerLaunchSettings();
     final effectivePort = status.running
         ? status.port
         : (config.listen.root ? 53 : 1053);
@@ -35,12 +38,12 @@ class ServerSettingsPage extends ConsumerWidget {
                 leading: const Icon(TablerIcons.lock, size: 20),
                 title: Text(context.l10n.serverSettingsRoot),
                 subtitle: Text(
-                  status.running
+                  status.active
                       ? context.l10n.serverSettingsRootRunning
                       : context.l10n.serverSettingsRootBody,
                 ),
                 value: config.listen.root,
-                onChanged: status.running
+                onChanged: status.active
                     ? null
                     : (value) => _saveRoot(context, ref, config, value),
               ),
@@ -67,6 +70,71 @@ class ServerSettingsPage extends ConsumerWidget {
               ),
             ],
             footer: context.l10n.serverSettingsRootNote,
+          ),
+          generateSection(
+            title: context.l10n.serverSettingsLaunch,
+            items: [
+              ListItem.toggle(
+                leading: const Icon(TablerIcons.power, size: 20),
+                title: Text(context.l10n.serverSettingsBootAutoStart),
+                subtitle: Text(context.l10n.serverSettingsBootAutoStartBody),
+                value: launch.autoStart,
+                onChanged: launchAsync.hasValue
+                    ? (value) => _saveLaunch(
+                        context,
+                        ref,
+                        launch.copyWith(autoStart: value),
+                      )
+                    : null,
+              ),
+              ListItem.toggle(
+                leading: const Icon(TablerIcons.rotate_clockwise, size: 20),
+                title: Text(context.l10n.serverSettingsAutoRestart),
+                subtitle: Text(context.l10n.serverSettingsAutoRestartBody),
+                value: launch.autoRestart,
+                onChanged: launchAsync.hasValue
+                    ? (value) => _saveLaunch(
+                        context,
+                        ref,
+                        launch.copyWith(autoRestart: value),
+                      )
+                    : null,
+              ),
+            ],
+            footer: context.l10n.serverSettingsLaunchNote,
+          ),
+          generateSection(
+            title: context.l10n.serverSettingsRuntime,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.cpu, size: 20),
+                title: Text(context.l10n.serverSettingsPid),
+                subtitle: Text(context.l10n.serverSettingsPidBody),
+                trailing: _RuntimeValue(
+                  label: status.running && status.pid > 0
+                      ? '${status.pid}'
+                      : '—',
+                ),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.network, size: 20),
+                title: Text(context.l10n.serverSettingsAddresses),
+                subtitle: Text(
+                  status.addresses.isEmpty
+                      ? context.l10n.serverSettingsNotRunning
+                      : status.addresses.join('  ·  '),
+                ),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.clock, size: 20),
+                title: Text(context.l10n.serverSettingsStartedAt),
+                trailing: _RuntimeValue(
+                  label: status.startedAt == null
+                      ? '—'
+                      : _formatTime(status.startedAt!),
+                ),
+              ),
+            ],
           ),
           generateSection(
             title: context.l10n.serverSettingsStorage,
@@ -111,6 +179,21 @@ class ServerSettingsPage extends ConsumerWidget {
     }
   }
 
+  Future<void> _saveLaunch(
+    BuildContext context,
+    WidgetRef ref,
+    ServerLaunchSettings next,
+  ) async {
+    try {
+      await ref.read(serverLaunchSettingsProvider.notifier).save(next);
+      if (context.mounted) {
+        showAppSnack(context, context.l10n.commonSaved);
+      }
+    } catch (error) {
+      if (context.mounted) showAppSnack(context, error.toString());
+    }
+  }
+
   Future<void> _probeRoot(BuildContext context, WidgetRef ref) async {
     try {
       final result = await ref.read(serverClientProvider).probeRoot();
@@ -128,5 +211,30 @@ class ServerSettingsPage extends ConsumerWidget {
     } catch (error) {
       if (context.mounted) showAppSnack(context, error.toString());
     }
+  }
+}
+
+String _formatTime(DateTime value) {
+  String two(int part) => part.toString().padLeft(2, '0');
+  return '${value.year}-${two(value.month)}-${two(value.day)} '
+      '${two(value.hour)}:${two(value.minute)}';
+}
+
+class _RuntimeValue extends StatelessWidget {
+  const _RuntimeValue({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: AppTextRole.supportingText
+          .of(context)
+          .copyWith(
+            color: context.colorScheme.onSurfaceVariant,
+            fontFeatures: appTabularFigures,
+          ),
+    );
   }
 }

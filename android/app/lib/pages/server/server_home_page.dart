@@ -115,7 +115,8 @@ class _ServerHomePageState extends ConsumerState<ServerHomePage>
               child: Center(child: CommonCircleLoading()),
             )
           else ...[
-            if (value.status.error case final error?)
+            if (value.status.error case final error?
+                when !value.status.restarting)
               ServerErrorCard(
                 message: error,
                 retryLabel: _canFallbackTo1053(value.status)

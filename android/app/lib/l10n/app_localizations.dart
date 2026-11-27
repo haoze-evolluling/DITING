@@ -6163,6 +6163,36 @@ abstract class AppL10n {
 
   String get serverSettingsRootNote;
 
+  String get serverSettingsLaunch;
+
+  String get serverSettingsLaunchNote;
+
+  String get serverSettingsBootAutoStart;
+
+  String get serverSettingsBootAutoStartBody;
+
+  String get serverSettingsAutoRestart;
+
+  String get serverSettingsAutoRestartBody;
+
+  String get serverSettingsRuntime;
+
+  String get serverSettingsPid;
+
+  String get serverSettingsPidBody;
+
+  String get serverSettingsAddresses;
+
+  String get serverSettingsStartedAt;
+
+  String get serverSettingsNotRunning;
+
+  String get serverRestarting;
+
+  String get serverLogCopyDomain;
+
+  String get serverLogDomainCopied;
+
   String get serverPort;
 
   String get serverPortFixed;

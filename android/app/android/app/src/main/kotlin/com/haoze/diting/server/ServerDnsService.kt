@@ -1,15 +1,11 @@
 package com.haoze.diting.server
 
-import android.app.Notification
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.haoze.diting.MainActivity
 import com.haoze.diting.R
 import com.haoze.diting.tile.QuickSettingsTileUpdater
 import com.haoze.diting.vpn.VpnServiceForeground
@@ -38,12 +34,14 @@ class ServerDnsService : Service() {
     @Volatile private var lastError: String? = null
     @Volatile private var activeReadyLatch: CountDownLatch? = null
     @Volatile private var activeExitLatch: CountDownLatch? = null
+    @Volatile private var restartAttempts = 0
+    @Volatile private var restartPending = false
 
     override fun onCreate() {
         super.onCreate()
         VpnServiceForeground.createChannel(
             this,
-            CHANNEL_ID,
+            ServerNotification.CHANNEL_ID,
             getString(R.string.server_channel_name),
             getString(R.string.server_channel_description),
         )
@@ -52,14 +50,17 @@ class ServerDnsService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             stopRequested = true
+            // 让排队中的自动重启失效，避免停止后又被重新拉起。
+            generation.incrementAndGet()
+            restartPending = false
             activeReadyLatch?.countDown()
-            if (process != null || launching || ServerProcessState.running || ServerProcessState.starting) {
+            if (process != null || launching || ServerProcessState.active) {
                 ServerProcessState.stopping()
             }
             stopWorker.execute { stopServer(stopSelf = true) }
             return START_NOT_STICKY
         }
-        if (process != null || launching) {
+        if (process != null || launching || restartPending) {
             return START_STICKY
         }
         if (ServerProcessState.stopping) {
@@ -70,6 +71,8 @@ class ServerDnsService : Service() {
             return START_NOT_STICKY
         }
         stopRequested = false
+        restartAttempts = 0
+        restartPending = false
         launching = true
         val gen = generation.incrementAndGet()
         if (!startForegroundNow(getString(R.string.server_notification_starting))) {
@@ -158,6 +161,7 @@ class ServerDnsService : Service() {
                 }
             }
         } finally {
+            restartPending = false
             launching = false
         }
     }
@@ -270,6 +274,7 @@ class ServerDnsService : Service() {
     ) {
         val log = ServerPaths.logFile(this)
         var reachedReady = false
+        var readyAtMs = 0L
         runCatching {
             child.inputStream.bufferedReader().forEachLine { line ->
                 appendLog(log, line)
@@ -277,6 +282,7 @@ class ServerDnsService : Service() {
                     val payload = line.removePrefix(READY_PREFIX).trim()
                     readyLine = payload
                     reachedReady = true
+                    readyAtMs = System.currentTimeMillis()
                     lastError = null
                     val json = runCatching { JSONObject(payload) }.getOrNull()
                     val addresses = json?.optJSONArray("addresses")?.let { array ->
@@ -312,14 +318,53 @@ class ServerDnsService : Service() {
         ready.countDown()
         if (reachedReady && !stopRequested && gen == generation.get()) {
             val message = lastError ?: getString(R.string.server_exited, exit)
-            ServerProcessState.failed(message, root, port)
-            publishState(notifyBar = false)
-            stopForeground(STOP_FOREGROUND_REMOVE)
-            stopSelf()
+            // 稳定运行过一段时间的进程再次崩溃时重新计数；短时间内反复崩溃仍受上限约束。
+            if (readyAtMs > 0 &&
+                System.currentTimeMillis() - readyAtMs >= RESTART_STABLE_MS
+            ) {
+                restartAttempts = 0
+            }
+            if (ServerPreference.autoRestart(this) && restartAttempts < MAX_AUTO_RESTARTS) {
+                scheduleRestart(root, port, message, gen)
+            } else {
+                ServerProcessState.failed(message, root, port)
+                publishState(notifyBar = false)
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+            }
+        }
+    }
+
+    /**
+     * 进程就绪后意外退出时按指数退避自动重启。
+     *
+     * [launching] 在退避期间保持为 true，既阻止重复的启动请求，也让
+     * [ServerProcessState.active] 继续把服务视为进行中；用户手动停止会递增
+     * generation，使排队中的重启直接失效。
+     */
+    private fun scheduleRestart(root: Boolean, port: Int, message: String, gen: Long) {
+        if (stopRequested || gen != generation.get() || restartPending) return
+        restartPending = true
+        launching = true
+        restartAttempts += 1
+        ServerProcessState.restarting(message, root, port)
+        publishState(notifyBar = true)
+        val delay = (RESTART_BASE_DELAY_MS shl (restartAttempts - 1))
+            .coerceAtMost(RESTART_MAX_DELAY_MS)
+        launchWorker.execute {
+            runCatching { Thread.sleep(delay) }
+            if (stopRequested || gen != generation.get()) {
+                restartPending = false
+                launching = false
+                return@execute
+            }
+            launch(root, gen)
         }
     }
 
     private fun stopServer(stopSelf: Boolean) {
+        stopRequested = true
+        restartPending = false
         val child: Process?
         val exited: CountDownLatch?
         val wasReady: Boolean
@@ -432,7 +477,11 @@ class ServerDnsService : Service() {
     }
 
     private fun startForegroundNow(text: String): Boolean {
-        val error = VpnServiceForeground.promote(this, NOTIFICATION_ID, buildNotification(text))
+        val error = VpnServiceForeground.promote(
+            this,
+            ServerNotification.NOTIFICATION_ID,
+            ServerNotification.build(this, text),
+        )
         if (error == null) return true
         Log.e(TAG, "Failed to promote server foreground notification", error)
         return false
@@ -441,57 +490,15 @@ class ServerDnsService : Service() {
     private fun updateNotification() {
         runCatching {
             val manager = getSystemService(android.app.NotificationManager::class.java)
-            manager.notify(NOTIFICATION_ID, buildNotification(notificationText()))
+            manager.notify(
+                ServerNotification.NOTIFICATION_ID,
+                ServerNotification.build(this, ServerNotification.text(this)),
+            )
         }.onFailure { Log.w(TAG, "Failed to update server notification", it) }
-    }
-
-    private fun notificationText(): String {
-        val state = ServerProcessState.snapshot()
-        if (state["starting"] == true) return getString(R.string.server_notification_starting)
-        if (state["running"] != true) {
-            val error = state["error"] as? String
-            return error ?: getString(R.string.server_notification_stopped)
-        }
-        val root = state["root"] as? Boolean == true
-        val port = (state["port"] as? Number)?.toInt() ?: 1053
-        return getString(
-            if (root) R.string.server_notification_running_root
-            else R.string.server_notification_running,
-            port,
-        )
-    }
-
-    private fun buildNotification(text: String): Notification {
-        val open = PendingIntent.getActivity(
-            this,
-            10,
-            Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        val stop = PendingIntent.getService(
-            this,
-            11,
-            Intent(this, ServerDnsService::class.java).setAction(ACTION_STOP),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(R.string.server_notification_title))
-            .setContentText(text)
-            .setContentIntent(open)
-            .addAction(0, getString(R.string.server_notification_stop), stop)
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setShowWhen(false)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
     }
 
     companion object {
         private const val TAG = "ServerDnsService"
-        private const val CHANNEL_ID = "channel_server"
-        private const val NOTIFICATION_ID = 5301
         private const val READY_PREFIX = "SERVER_READY "
         private const val SIGTERM = 15
         private const val ROOT_READY_TIMEOUT_SECONDS = 8L
@@ -500,6 +507,10 @@ class ServerDnsService : Service() {
         private const val GRACEFUL_EXIT_TIMEOUT_MS = 1_500L
         private const val TERM_WAIT_TIMEOUT_MS = 500L
         private const val KILL_WAIT_TIMEOUT_MS = 300L
+        private const val MAX_AUTO_RESTARTS = 5
+        private const val RESTART_BASE_DELAY_MS = 1_500L
+        private const val RESTART_MAX_DELAY_MS = 30_000L
+        private const val RESTART_STABLE_MS = 60_000L
         const val ACTION_START = "com.haoze.diting.server.START"
         const val ACTION_STOP = "com.haoze.diting.server.STOP"
         const val EXTRA_PREFER_ROOT = "prefer_root"
@@ -509,7 +520,10 @@ class ServerDnsService : Service() {
             if (ServerProcessState.stopping) {
                 return false
             }
-            if (!ServerProcessState.running && !ServerProcessState.starting) {
+            if (!ServerProcessState.running &&
+                !ServerProcessState.starting &&
+                !ServerProcessState.restarting
+            ) {
                 ServerProcessState.begin(preferRoot)
             }
             val intent = Intent(context, ServerDnsService::class.java).apply {
@@ -547,6 +561,9 @@ class ServerDnsService : Service() {
         }
 
         fun status(): Map<String, Any?> = ServerProcessState.snapshot()
-        fun isRunning(): Boolean = ServerProcessState.running || ServerProcessState.starting
+        fun isRunning(): Boolean =
+            ServerProcessState.running ||
+                ServerProcessState.starting ||
+                ServerProcessState.restarting
     }
 }

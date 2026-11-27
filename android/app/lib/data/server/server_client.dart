@@ -3,6 +3,7 @@ library;
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:diting_android/data/server/server_launch_models.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/data/errors.dart';
@@ -26,6 +27,8 @@ abstract class ServerClient {
   Future<bool> start({required bool preferRoot});
   Future<bool> stop();
   Future<ServerRootStatus> probeRoot();
+  Future<ServerLaunchSettings> getLaunchSettings();
+  Future<void> saveLaunchSettings(ServerLaunchSettings settings);
   Future<String?> readConfig();
   Future<void> writeConfig(ServerConfig config);
   Future<ServerConfig> getConfig();
@@ -102,6 +105,18 @@ class MethodChannelServerClient implements ServerClient {
   @override
   Future<ServerRootStatus> probeRoot() async =>
       ServerRootStatus.fromMap(await _invoke('probe_root'));
+
+  @override
+  Future<ServerLaunchSettings> getLaunchSettings() async =>
+      ServerLaunchSettings.fromMap(await _invoke('launch_settings'));
+
+  @override
+  Future<void> saveLaunchSettings(ServerLaunchSettings settings) async {
+    await _invoke('set_launch_settings', {
+      'autoStart': settings.autoStart,
+      'autoRestart': settings.autoRestart,
+    });
+  }
 
   @override
   Future<String?> readConfig() async => await _invoke('read_config') as String?;

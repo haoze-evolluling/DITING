@@ -3,6 +3,7 @@ library;
 import 'dart:async';
 
 import 'package:diting_android/data/server/server_client.dart';
+import 'package:diting_android/data/server/server_launch_models.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -228,6 +229,7 @@ class ServerController extends AsyncNotifier<ServerSnapshot> {
         status: current.status.copyWith(
           starting: true,
           stopping: false,
+          restarting: false,
           running: false,
           root: preferRoot,
           port: preferRoot ? 53 : 1053,
@@ -280,6 +282,7 @@ class ServerController extends AsyncNotifier<ServerSnapshot> {
             running: false,
             starting: false,
             stopping: true,
+            restarting: false,
           ),
         ),
       );
@@ -349,6 +352,31 @@ class ServerController extends AsyncNotifier<ServerSnapshot> {
 final serverControllerProvider =
     AsyncNotifierProvider<ServerController, ServerSnapshot>(
       ServerController.new,
+    );
+
+/// 开机自启与异常重启属于进程级偏好，不进入服务器配置数据库。
+class ServerLaunchController extends AsyncNotifier<ServerLaunchSettings> {
+  @override
+  Future<ServerLaunchSettings> build() =>
+      ref.read(serverClientProvider).getLaunchSettings();
+
+  Future<void> save(ServerLaunchSettings next) async {
+    final previous = state.value;
+    state = AsyncData(next);
+    try {
+      await ref.read(serverClientProvider).saveLaunchSettings(next);
+    } catch (error, stackTrace) {
+      state = previous == null
+          ? AsyncError(error, stackTrace)
+          : AsyncData(previous);
+      rethrow;
+    }
+  }
+}
+
+final serverLaunchSettingsProvider =
+    AsyncNotifierProvider<ServerLaunchController, ServerLaunchSettings>(
+      ServerLaunchController.new,
     );
 
 class ServerLogRevision extends Notifier<int> {

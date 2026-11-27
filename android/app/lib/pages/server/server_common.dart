@@ -8,7 +8,8 @@ import 'package:material_ui/material_ui.dart';
 
 PowerState serverPowerState(ServerStatus status) {
   if (status.stopping) return PowerState.stopping;
-  if (status.running) return PowerState.running;
+  // 自动重启期间保持可操作：再点一次就是停止，避免退避等待时按钮被禁用。
+  if (status.running || status.restarting) return PowerState.running;
   if (status.starting) return PowerState.starting;
   if (status.error != null) return PowerState.error;
   return PowerState.stopped;

@@ -42,6 +42,8 @@ class ServerBridge(
             "stop" -> result.success(ServerDnsService.stop(context))
             "status" -> result.success(ServerDnsService.status())
             "probe_root" -> probeRoot(result)
+            "launch_settings" -> result.success(launchSettings())
+            "set_launch_settings" -> setLaunchSettings(call, result)
             "read_config" -> readConfig(result)
             "write_config" -> writeConfig(call, result)
             "request" -> request(call, result)
@@ -52,6 +54,21 @@ class ServerBridge(
     private fun start(call: MethodCall, result: MethodChannel.Result) {
         val preferRoot = call.argument<Boolean>("preferRoot") ?: true
         result.success(ServerDnsService.start(context, preferRoot))
+    }
+
+    private fun launchSettings(): Map<String, Any?> = mapOf(
+        "autoStart" to ServerPreference.autoStart(context),
+        "autoRestart" to ServerPreference.autoRestart(context),
+    )
+
+    private fun setLaunchSettings(call: MethodCall, result: MethodChannel.Result) {
+        call.argument<Boolean>("autoStart")?.let {
+            ServerPreference.setAutoStart(context, it)
+        }
+        call.argument<Boolean>("autoRestart")?.let {
+            ServerPreference.setAutoRestart(context, it)
+        }
+        result.success(launchSettings())
     }
 
     private fun probeRoot(result: MethodChannel.Result) {

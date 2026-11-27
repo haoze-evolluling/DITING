@@ -10639,6 +10639,55 @@ class AppL10nEn extends AppL10n {
       'Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.';
 
   @override
+  String get serverSettingsLaunch => 'Startup and keep-alive';
+
+  @override
+  String get serverSettingsLaunchNote =>
+      'Auto-start requires the user agreement to be accepted. A crash is retried up to 5 times, then the service stops and keeps the error message.';
+
+  @override
+  String get serverSettingsBootAutoStart => 'Start on boot';
+
+  @override
+  String get serverSettingsBootAutoStartBody =>
+      'Start the server after a device reboot or an app update';
+
+  @override
+  String get serverSettingsAutoRestart => 'Restart after crash';
+
+  @override
+  String get serverSettingsAutoRestartBody =>
+      'Bring the server process back with exponential backoff after an unexpected exit';
+
+  @override
+  String get serverSettingsRuntime => 'Runtime';
+
+  @override
+  String get serverSettingsPid => 'Process PID';
+
+  @override
+  String get serverSettingsPidBody =>
+      'Useful for troubleshooting or ending the process manually';
+
+  @override
+  String get serverSettingsAddresses => 'Listen addresses';
+
+  @override
+  String get serverSettingsStartedAt => 'Started at';
+
+  @override
+  String get serverSettingsNotRunning => 'Server is not running';
+
+  @override
+  String get serverRestarting => 'Auto-restarting';
+
+  @override
+  String get serverLogCopyDomain => 'Copy domain';
+
+  @override
+  String get serverLogDomainCopied => 'Domain copied';
+
+  @override
   String get serverPort => 'Listening port';
 
   @override

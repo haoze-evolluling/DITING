@@ -79,6 +79,19 @@ filesDir/server/
 
 旧 `dns` 模式的数据库、偏好和日志不会迁移；`ServerModeRetirement` 继续清理旧数据。
 
+## 启动与保活
+
+服务器模式的启动偏好保存在原生 `server_mode_prefs`，与服务器配置数据库分离：
+
+- 开机自启动：`auto_start`。设备重启（`BOOT_COMPLETED`）或应用更新
+  （`MY_PACKAGE_REPLACED`）后，若当前工作模式仍为 `server`、已同意用户协议且开关开启，
+  `BootAutoStartReceiver` 会直接启动前台服务。其他模式继续沿用「前后台行为 → 开机自启动」。
+- 异常退出自动重启：`auto_restart`，默认开启。服务器进程就绪后意外退出时，前台服务按
+  1.5s / 3s / 6s / 12s / 24s 的退避重新拉起，最多 5 次；期间状态为 `restarting`，通知栏显示
+  “正在自动重启”。用户手动停止会让排队中的重启立即失效，连续失败达到上限后保留错误信息并停止。
+- 这两个开关通过 MethodChannel 的 `launch_settings` / `set_launch_settings` 读写，仅影响本机
+  进程行为，不写入 `ServerConfig`。
+
 ## 控制协议
 
 控制 Socket 只接受应用私有目录内的文件系统 Unix Socket 连接，权限为 `0600`。每次连接发送一行
@@ -129,6 +142,6 @@ Socket 路径与 PID。启动器固定从自身目录加载 `libditing_native.so
 
 ## 首版边界
 
-不包含 DHCP、入站 DoH/DoT、按客户端分组策略、访问控制、Web 管理台与开机自启。
+不包含 DHCP、入站 DoH/DoT、按客户端分组策略、访问控制与 Web 管理台。
 订阅自动更新只在服务器进程运行期间执行；应用退到后台后服务继续运行，切换工作模式或手动停止
-会结束进程。
+会结束进程。开机自启与异常重启见上一节。
