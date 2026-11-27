@@ -1,9 +1,9 @@
 //! 订阅原文 → 规则库的原地导入。
 //!
-//! 解析、去重与 SQL 生成沿用 `diting-rule-store-core` 的计划，但计划不再经过
+//! 解析、去重与 SQL 生成沿用 `diting-rule-store-core` 的强类型计划，计划不再经过
 //! JSON/FFI/sqflite 通道，而是由本模块在同一个事务里直接执行：
 //!
-//! * 解析结果不跨 FFI 传输，规则对象直接进入 SQL 执行；
+//! * 规则对象直接进入 SQL 绑定参数，没有中间 `serde_json::Value` 树；
 //! * 内容未变化时只做一次纯解析核对哈希，不打开写事务；
 //! * 所有写入在一个事务内完成，失败或被删除时整体回滚，不留半套规则；
 //! * 提交前重新读取订阅的启用状态，避免导入期间用户切换开关被旧值覆盖。
@@ -13,13 +13,14 @@ use std::time::Duration;
 use diting_rule_core::models::{ParsedRewriteRule, ParsedUrlRule};
 use diting_rule_core::{CategorizedRules, ParsedRule, StreamParse};
 use diting_rule_store_core::import::{
-    commit_source_plan, import_plan, remove_source_plan, summary,
+    build_import_plan, commit_source_plan, remove_source_plan, DomainRule, ImportCounts,
+    ImportRules, OrphanSpec, PlanStep, RewriteRule, SqlArg, UrlRule,
 };
 use rusqlite::types::{ToSqlOutput, Value as SqlValue, ValueRef};
 use rusqlite::{params_from_iter, Connection, OpenFlags, ToSql, Transaction};
 use serde_json::{json, Map, Value};
 
-use crate::probe::{flag, integer, list, text};
+use crate::probe::{flag, integer, text};
 
 /// 与 Dart `ruleSetHashSeed` / `ruleSetHashPrime` 一致（FNV-1a，32 位，
 /// 按 UTF-16 code unit 计算，非 BMP 字符会拆成代理对）。
@@ -72,8 +73,8 @@ pub fn run(request: &Value) -> Result<Value, String> {
 
     // 上次导入若中途退出，暂存来源可能仍有残留；先清掉再重新写入。
     let cleanup = remove_source_plan(&staging);
-    execute_steps(&transaction, list(&cleanup, "steps"))?;
-    sweep_orphans(&transaction, list(&cleanup, "orphans"))?;
+    execute_steps(&transaction, &cleanup.steps)?;
+    sweep_orphans(&transaction, &cleanup.orphans)?;
 
     let context = ImportContext {
         staging: &staging,
@@ -108,8 +109,8 @@ pub fn run(request: &Value) -> Result<Value, String> {
     };
 
     let commit = commit_source_plan(&staging, &source, current_enabled != 0);
-    execute_steps(&transaction, list(&commit, "steps"))?;
-    sweep_orphans(&transaction, list(&commit, "orphans"))?;
+    execute_steps(&transaction, &commit.steps)?;
+    sweep_orphans(&transaction, &commit.orphans)?;
     transaction.commit().map_err(|error| error.to_string())?;
 
     Ok(json!({
@@ -166,9 +167,9 @@ impl ImportRun {
         self.hash_state = hash_lines(self.hash_state, &lines);
         self.collect_version(&lines);
 
-        let parsed = chunk_value(chunk);
-        let plan = import_plan(
-            &parsed,
+        let plan = build_import_plan(
+            chunk_rules(chunk),
+            chunk_counts(chunk),
             context.staging,
             context.kind,
             context.enabled,
@@ -176,21 +177,29 @@ impl ImportRun {
             context.now,
         );
         for batch in &plan.batches {
-            let family = text(batch, "family").unwrap_or_default();
             let mut total = 0i64;
-            for step in list(batch, "steps") {
+            for step in &batch.steps {
                 if let Some(changed) = execute_step(transaction, step)? {
                     total += changed;
                 }
             }
-            let entry = self.counts.entry(family).or_insert_with(|| json!(0));
-            *entry = json!(entry.as_i64().unwrap_or(0) + total);
+            add_count(&mut self.counts, batch.family, total);
         }
-        for (key, value) in summary(&plan, &parsed) {
-            let entry = self.parsed.entry(key).or_insert_with(|| json!(0));
-            *entry = json!(entry.as_i64().unwrap_or(0) + value.as_i64().unwrap_or(0));
-        }
+        self.add_parsed(&plan.counts);
         Ok(())
+    }
+
+    fn add_parsed(&mut self, counts: &ImportCounts) {
+        for (key, value) in [
+            ("typeSkipped", counts.type_skipped),
+            ("cosmetic", counts.cosmetic),
+            ("duplicate", counts.duplicate),
+            ("invalid", counts.invalid),
+            ("unsupported", counts.unsupported),
+            ("badfiltered", counts.badfiltered),
+        ] {
+            add_count(&mut self.parsed, key, value);
+        }
     }
 
     fn collect_version(&mut self, lines: &[String]) {
@@ -204,6 +213,11 @@ impl ImportRun {
             self.version_rules.clear();
         }
     }
+}
+
+fn add_count(counts: &mut Map<String, Value>, key: &str, value: i64) {
+    let entry = counts.entry(key.to_string()).or_insert_with(|| json!(0));
+    *entry = json!(entry.as_i64().unwrap_or(0) + value);
 }
 
 /// 只做解析与哈希，不生成任何 SQL；用于在写库前判断内容是否变化。
@@ -249,92 +263,75 @@ fn canonical_lines(chunk: &CategorizedRules) -> Vec<String> {
     lines
 }
 
-/// 字段名与 Dart 侧 `_ruleJson` / `_rewriteJson` / `_urlJson` 保持一致。
-fn chunk_value(chunk: &CategorizedRules) -> Value {
-    json!({
-        "blockRules": chunk.block_rules.iter().map(rule_json).collect::<Vec<Value>>(),
-        "allowRules": chunk.allow_rules.iter().map(rule_json).collect::<Vec<Value>>(),
-        "rewriteRules": chunk
-            .rewrite_rules
-            .iter()
-            .map(rewrite_json)
-            .collect::<Vec<Value>>(),
-        "urlBlockRules": chunk
-            .url_block_rules
-            .iter()
-            .map(url_json)
-            .collect::<Vec<Value>>(),
-        "urlAllowRules": chunk
-            .url_allow_rules
-            .iter()
-            .map(url_json)
-            .collect::<Vec<Value>>(),
-        "cosmeticRules": chunk
-            .cosmetic_rules
-            .iter()
-            .map(|rule| json!({
-                "domain": rule.domain,
-                "selector": rule.selector,
-                "rawLine": rule.raw_line,
-                "isException": rule.is_exception,
-            }))
-            .collect::<Vec<Value>>(),
-        "duplicateCount": chunk.duplicate_count,
-        "invalidCount": chunk.invalid_count,
-        "unsupportedCount": chunk.unsupported_count,
-        "badfilteredCount": chunk.badfiltered_count,
-    })
+fn chunk_rules(chunk: &CategorizedRules) -> ImportRules<'_> {
+    ImportRules {
+        block: chunk.block_rules.iter().map(domain_rule).collect(),
+        allow: chunk.allow_rules.iter().map(domain_rule).collect(),
+        rewrite: chunk.rewrite_rules.iter().map(rewrite_rule).collect(),
+        url_block: chunk.url_block_rules.iter().map(url_rule).collect(),
+        url_allow: chunk.url_allow_rules.iter().map(url_rule).collect(),
+        cosmetic: chunk.cosmetic_rules.len(),
+    }
 }
 
-fn rule_json(rule: &ParsedRule) -> Value {
-    json!({
-        "pattern": rule.pattern,
-        "rawLine": rule.raw_line,
-        "important": rule.important,
-        "appScope": rule.app_scope,
-        "appInverted": rule.app_inverted,
-        "isWildcard": rule.is_wildcard,
-        "denyallow": rule.denyallow,
-        "isRegex": rule.is_regex,
-        "dnsType": rule.dns_type,
-    })
+fn chunk_counts(chunk: &CategorizedRules) -> ImportCounts {
+    ImportCounts {
+        duplicate: i64::from(chunk.duplicate_count),
+        invalid: i64::from(chunk.invalid_count),
+        unsupported: i64::from(chunk.unsupported_count),
+        badfiltered: i64::from(chunk.badfiltered_count),
+        ..ImportCounts::default()
+    }
 }
 
-fn rewrite_json(rule: &ParsedRewriteRule) -> Value {
-    json!({
-        "pattern": rule.pattern,
-        "targetType": rule.target_type,
-        "targetValue": rule.target_value,
-        "rawLine": rule.raw_line,
-    })
+fn domain_rule(rule: &ParsedRule) -> DomainRule<'_> {
+    DomainRule {
+        pattern: &rule.pattern,
+        raw_line: &rule.raw_line,
+        important: rule.important,
+        app_scope: rule.app_scope.as_deref(),
+        app_inverted: rule.app_inverted,
+        is_wildcard: rule.is_wildcard,
+        denyallow: rule.denyallow.as_deref().filter(|value| !value.is_empty()),
+        is_regex: rule.is_regex,
+        dns_type: rule.dns_type.as_deref(),
+        group: None,
+    }
 }
 
-fn url_json(rule: &ParsedUrlRule) -> Value {
-    json!({
-        "pattern": rule.pattern,
-        "rawLine": rule.raw_line,
-        "isAllow": rule.is_allow,
-        "appScope": rule.app_scope,
-    })
+fn rewrite_rule(rule: &ParsedRewriteRule) -> RewriteRule<'_> {
+    RewriteRule {
+        pattern: &rule.pattern,
+        target_type: &rule.target_type,
+        target_value: &rule.target_value,
+        raw_line: &rule.raw_line,
+    }
 }
 
-fn execute_steps(transaction: &Transaction, steps: &[Value]) -> Result<(), String> {
+fn url_rule(rule: &ParsedUrlRule) -> UrlRule<'_> {
+    UrlRule {
+        pattern: &rule.pattern,
+        raw_line: &rule.raw_line,
+        is_allow: rule.is_allow,
+        app_scope: rule.app_scope.as_deref(),
+    }
+}
+
+fn execute_steps(transaction: &Transaction, steps: &[PlanStep<'_>]) -> Result<(), String> {
     for step in steps {
         execute_step(transaction, step)?;
     }
     Ok(())
 }
 
-fn execute_step(transaction: &Transaction, step: &Value) -> Result<Option<i64>, String> {
-    let sql = text(step, "sql").ok_or_else(|| "step without sql".to_string())?;
-    let args = list(step, "args");
+fn execute_step(transaction: &Transaction, step: &PlanStep<'_>) -> Result<Option<i64>, String> {
     let mut statement = transaction
-        .prepare(&sql)
-        .map_err(|error| format!("{sql}: {error}"))?;
+        .prepare(&step.sql)
+        .map_err(|error| format!("{}: {error}", step.sql))?;
     let affected = statement
-        .execute(params_from_iter(args.iter().map(SqlArg)))
-        .map_err(|error| format!("{sql}: {error}"))?;
-    if flag(step, "changes") == Some(true) {
+        .execute(params_from_iter(step.args.iter().map(|arg| Bind(*arg))))
+        .map_err(|error| format!("{}: {error}", step.sql))?;
+    if step.changes {
         Ok(Some(affected as i64))
     } else {
         Ok(None)
@@ -342,22 +339,15 @@ fn execute_step(transaction: &Transaction, step: &Value) -> Result<Option<i64>, 
 }
 
 /// 分页删除没有来源关联的孤儿规则，直到整表扫不到为止。
-fn sweep_orphans(transaction: &Transaction, specs: &[Value]) -> Result<(), String> {
+fn sweep_orphans(transaction: &Transaction, specs: &[OrphanSpec]) -> Result<(), String> {
     for spec in specs {
-        let select =
-            text(spec, "selectSql").ok_or_else(|| "orphan without selectSql".to_string())?;
-        let delete_prefix =
-            text(spec, "deletePrefix").ok_or_else(|| "orphan without prefix".to_string())?;
-        let select_args = list(spec, "selectArgs");
         loop {
             let ids: Vec<i64> = {
                 let mut statement = transaction
-                    .prepare(&select)
+                    .prepare(&spec.select_sql)
                     .map_err(|error| error.to_string())?;
                 let rows = statement
-                    .query_map(params_from_iter(select_args.iter().map(SqlArg)), |row| {
-                        row.get(0)
-                    })
+                    .query_map([spec.select_limit], |row| row.get(0))
                     .map_err(|error| error.to_string())?;
                 rows.collect::<rusqlite::Result<Vec<i64>>>()
                     .map_err(|error| error.to_string())?
@@ -366,7 +356,7 @@ fn sweep_orphans(transaction: &Transaction, specs: &[Value]) -> Result<(), Strin
                 break;
             }
             let placeholders = vec!["?"; ids.len()].join(",");
-            let sql = format!("{delete_prefix}{placeholders})");
+            let sql = format!("{}{placeholders})", spec.delete_prefix);
             transaction
                 .execute(&sql, params_from_iter(ids.iter()))
                 .map_err(|error| error.to_string())?;
@@ -375,22 +365,14 @@ fn sweep_orphans(transaction: &Transaction, specs: &[Value]) -> Result<(), Strin
     Ok(())
 }
 
-struct SqlArg<'a>(&'a Value);
+struct Bind<'a>(SqlArg<'a>);
 
-impl ToSql for SqlArg<'_> {
+impl ToSql for Bind<'_> {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(match self.0 {
-            Value::Null => ToSqlOutput::Owned(SqlValue::Null),
-            Value::Bool(value) => ToSqlOutput::Owned(SqlValue::Integer(i64::from(*value))),
-            Value::Number(number) => {
-                if let Some(value) = number.as_i64() {
-                    ToSqlOutput::Owned(SqlValue::Integer(value))
-                } else {
-                    ToSqlOutput::Owned(SqlValue::Real(number.as_f64().unwrap_or(0.0)))
-                }
-            }
-            Value::String(value) => ToSqlOutput::Borrowed(ValueRef::Text(value.as_bytes())),
-            _ => ToSqlOutput::Owned(SqlValue::Null),
+            SqlArg::Null => ToSqlOutput::Owned(SqlValue::Null),
+            SqlArg::Int(value) => ToSqlOutput::Owned(SqlValue::Integer(value)),
+            SqlArg::Text(value) => ToSqlOutput::Borrowed(ValueRef::Text(value.as_bytes())),
         })
     }
 }

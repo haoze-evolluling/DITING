@@ -1,8 +1,8 @@
 use serde_json::json;
 
 use super::{
-    commit_source_plan, import_plan, page_query, remove_source_plan, set_source_enabled_plan,
-    summary, tables_plan, ORPHAN_PAGE_SIZE,
+    batches_json, commit_source_plan, import_plan, page_query, plan_json, remove_source_plan,
+    set_source_enabled_plan, summary, tables_plan, ORPHAN_PAGE_SIZE,
 };
 
 fn parsed() -> serde_json::Value {
@@ -32,9 +32,10 @@ fn parsed() -> serde_json::Value {
 
 #[test]
 fn an_import_queues_one_batch_per_family_and_chunk() {
-    let plan = import_plan(&parsed(), "sub_4", "domain", true, 1000, 7000);
-    let families: Vec<&str> = plan
-        .batches
+    let parsed = parsed();
+    let plan = import_plan(&parsed, "sub_4", "domain", true, 1000, 7000);
+    let batches = batches_json(&plan.batches);
+    let families: Vec<&str> = batches
         .iter()
         .map(|batch| batch["family"].as_str().unwrap())
         .collect();
@@ -43,7 +44,7 @@ fn an_import_queues_one_batch_per_family_and_chunk() {
         vec!["block", "allow", "rewrite", "urlBlock", "urlAllow"]
     );
 
-    let block = plan.batches[0]["steps"].as_array().unwrap();
+    let block = batches[0]["steps"].as_array().unwrap();
     assert_eq!(
         block.len(),
         6,
@@ -71,7 +72,7 @@ fn an_import_queues_one_batch_per_family_and_chunk() {
     assert_eq!(block[4]["args"][1], json!(1));
     assert_eq!(block[5]["sql"], json!("DELETE FROM diting_import_domain"));
 
-    let url_block = plan.batches[3]["steps"].as_array().unwrap();
+    let url_block = batches[3]["steps"].as_array().unwrap();
     assert!(url_block[2]["sql"]
         .as_str()
         .unwrap()
@@ -83,9 +84,9 @@ fn an_import_queues_one_batch_per_family_and_chunk() {
         "enabled follows the subscription"
     );
 
-    assert_eq!(plan.type_skipped, 0);
-    assert_eq!(plan.cosmetic, 1);
-    let counters = summary(&plan, &parsed());
+    assert_eq!(plan.counts.type_skipped, 0);
+    assert_eq!(plan.counts.cosmetic, 1);
+    let counters = summary(&plan);
     assert_eq!(counters["duplicate"], json!(2));
     assert_eq!(counters["badfiltered"], json!(4));
 }
@@ -100,15 +101,16 @@ fn chunks_split_a_family_without_changing_its_order() {
         ],
     });
     let plan = import_plan(&many, "useradd", "domain", false, 2, 1);
-    assert_eq!(plan.batches.len(), 2);
-    assert_eq!(plan.batches[0]["steps"].as_array().unwrap().len(), 6);
-    assert_eq!(plan.batches[1]["steps"].as_array().unwrap().len(), 6);
-    let first = plan.batches[0]["steps"][2]["sql"].as_str().unwrap();
-    let second = plan.batches[1]["steps"][2]["sql"].as_str().unwrap();
+    let batches = batches_json(&plan.batches);
+    assert_eq!(batches.len(), 2);
+    assert_eq!(batches[0]["steps"].as_array().unwrap().len(), 6);
+    assert_eq!(batches[1]["steps"].as_array().unwrap().len(), 6);
+    let first = batches[0]["steps"][2]["sql"].as_str().unwrap();
+    let second = batches[1]["steps"][2]["sql"].as_str().unwrap();
     assert_eq!(first.matches('?').count(), 20, "two rows of ten columns");
     assert_eq!(second.matches('?').count(), 10, "one row of ten columns");
     assert_eq!(
-        plan.batches[0]["steps"][4]["args"][1],
+        batches[0]["steps"][4]["args"][1],
         json!(0),
         "source enabled flag"
     );
@@ -116,7 +118,7 @@ fn chunks_split_a_family_without_changing_its_order() {
 
 #[test]
 fn a_staging_commit_swaps_every_source_table_atomically() {
-    let plan = commit_source_plan("staging_sub_4", "sub_4", true);
+    let plan = plan_json(&commit_source_plan("staging_sub_4", "sub_4", true));
     let steps = plan["steps"].as_array().unwrap();
     assert_eq!(
         steps.len(),
@@ -139,23 +141,25 @@ fn a_staging_commit_swaps_every_source_table_atomically() {
 
 #[test]
 fn a_hosts_dataset_drops_the_families_its_table_cannot_hold() {
-    let plan = import_plan(&parsed(), "sub_4", "hosts", true, 1000, 1);
-    let families: Vec<&str> = plan
-        .batches
+    let parsed = parsed();
+    let plan = import_plan(&parsed, "sub_4", "hosts", true, 1000, 1);
+    let batches = batches_json(&plan.batches);
+    let families: Vec<&str> = batches
         .iter()
         .map(|batch| batch["family"].as_str().unwrap())
         .collect();
     assert_eq!(families, vec!["block", "rewrite"]);
-    assert_eq!(plan.type_skipped, 4);
-    assert_eq!(plan.cosmetic, 0);
+    assert_eq!(plan.counts.type_skipped, 4);
+    assert_eq!(plan.counts.cosmetic, 0);
 }
 
 #[test]
 fn a_rule_without_spaces_still_produces_an_empty_plan() {
-    let plan = import_plan(&json!({}), "sub_4", "domain", true, 1000, 1);
+    let empty = json!({});
+    let plan = import_plan(&empty, "sub_4", "domain", true, 1000, 1);
     assert!(plan.batches.is_empty());
-    assert_eq!(plan.cosmetic, 0);
-    assert_eq!(plan.type_skipped, 0);
+    assert_eq!(plan.counts.cosmetic, 0);
+    assert_eq!(plan.counts.type_skipped, 0);
 }
 
 #[test]
@@ -174,7 +178,7 @@ fn table_names_come_from_one_place() {
 
 #[test]
 fn a_source_sweep_deletes_source_rows_then_sweeps_orphans_in_pages() {
-    let plan = remove_source_plan("sub_4");
+    let plan = plan_json(&remove_source_plan("sub_4"));
     let steps = plan["steps"].as_array().unwrap();
     assert_eq!(steps.len(), 4, "one delete per source table");
     assert_eq!(
@@ -198,7 +202,7 @@ fn a_source_sweep_deletes_source_rows_then_sweeps_orphans_in_pages() {
 
 #[test]
 fn toggling_a_source_updates_every_source_table() {
-    let plan = set_source_enabled_plan("sub_4", false);
+    let plan = plan_json(&set_source_enabled_plan("sub_4", false));
     let steps = plan["steps"].as_array().unwrap();
     assert_eq!(steps.len(), 4);
     assert_eq!(

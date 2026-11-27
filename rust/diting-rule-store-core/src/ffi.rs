@@ -2,8 +2,8 @@ use serde_json::{json, Value};
 
 use crate::identity::{identity, parse_flavor, predicate, rewrite_target_type};
 use crate::import::{
-    commit_source_plan, import_plan, page_query, remove_source_plan, set_source_enabled_plan,
-    summary, tables_plan,
+    batches_json, commit_source_plan, import_plan, page_query, plan_json, remove_source_plan,
+    set_source_enabled_plan, summary, tables_plan,
 };
 use crate::probe::{flag, integer, list, text};
 use crate::rows::{rule_from_joined, rule_from_sources, subscriptions};
@@ -133,26 +133,38 @@ fn plan(request: &Value) -> Option<Value> {
     Some(match operation.as_str() {
         "import" => {
             let parsed = crate::probe::get(request, "parsed")?;
+            let source = text(request, "source").unwrap_or_default();
+            let kind = text(request, "kind").unwrap_or_else(|| String::from("domain"));
             let plan = import_plan(
                 parsed,
-                &text(request, "source").unwrap_or_default(),
-                &text(request, "kind").unwrap_or_else(|| String::from("domain")),
+                &source,
+                &kind,
                 flag(request, "enabled").unwrap_or(true),
                 integer(request, "chunkSize").unwrap_or(1000).max(1) as usize,
                 integer(request, "nowMs").unwrap_or_default(),
             );
-            json!({"batches": plan.batches, "summary": summary(&plan, parsed)})
+            json!({"batches": batches_json(&plan.batches), "summary": summary(&plan)})
         }
-        "removeSource" => remove_source_plan(&text(request, "source").unwrap_or_default()),
-        "commitSource" => commit_source_plan(
-            &text(request, "staging").unwrap_or_default(),
-            &text(request, "source").unwrap_or_default(),
-            flag(request, "enabled").unwrap_or(true),
-        ),
-        "setSourceEnabled" => set_source_enabled_plan(
-            &text(request, "source").unwrap_or_default(),
-            flag(request, "enabled").unwrap_or(false),
-        ),
+        "removeSource" => {
+            let source = text(request, "source").unwrap_or_default();
+            plan_json(&remove_source_plan(&source))
+        }
+        "commitSource" => {
+            let staging = text(request, "staging").unwrap_or_default();
+            let source = text(request, "source").unwrap_or_default();
+            plan_json(&commit_source_plan(
+                &staging,
+                &source,
+                flag(request, "enabled").unwrap_or(true),
+            ))
+        }
+        "setSourceEnabled" => {
+            let source = text(request, "source").unwrap_or_default();
+            plan_json(&set_source_enabled_plan(
+                &source,
+                flag(request, "enabled").unwrap_or(false),
+            ))
+        }
         "identity" => {
             let rule = crate::probe::get(request, "rule")?;
             let package = text(request, "package");

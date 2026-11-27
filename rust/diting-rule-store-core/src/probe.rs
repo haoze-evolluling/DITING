@@ -5,7 +5,12 @@ pub fn get<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
 }
 
 pub fn text(value: &Value, key: &str) -> Option<String> {
-    get(value, key).and_then(Value::as_str).map(str::to_string)
+    text_ref(value, key).map(str::to_string)
+}
+
+/// 借用 JSON 里的字符串，供强类型导入计划直接绑定，避免复制。
+pub fn text_ref<'a>(value: &'a Value, key: &str) -> Option<&'a str> {
+    get(value, key).and_then(Value::as_str)
 }
 
 pub fn flag(value: &Value, key: &str) -> Option<bool> {
