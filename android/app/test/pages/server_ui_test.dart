@@ -219,6 +219,12 @@ void main() {
 
     expect(find.text('缓存容量'), findsOneWidget);
     expect(find.text('最小 TTL'), findsOneWidget);
+    expect(find.text('最小 TTL 值'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('最小 TTL 值')).dx,
+      tester.getTopLeft(find.text('最小 TTL')).dx,
+      reason: '从属数值行应与父行标题左对齐',
+    );
     await tester.scrollUntilVisible(
       find.text('乐观缓存'),
       280,

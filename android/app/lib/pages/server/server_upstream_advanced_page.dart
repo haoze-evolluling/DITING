@@ -134,7 +134,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.minTtlEnabled)
                 ListItem(
-                  padding: serverCacheNestedPadding,
+                  leading: serverCacheNestedLeading,
                   title: Text(context.l10n.serverCacheMinTtlValue),
                   trailing: ServerCacheValue(label: '${cache.minTtlSeconds}s'),
                   onTap: () async {
@@ -164,7 +164,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.staleFallbackEnabled)
                 ListItem(
-                  padding: serverCacheNestedPadding,
+                  leading: serverCacheNestedLeading,
                   title: Text(context.l10n.serverCacheStaleSeconds),
                   trailing: ServerCacheValue(
                     label: '${cache.staleFallbackSeconds}s',
@@ -193,7 +193,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.negativeTtlEnabled)
                 ListItem(
-                  padding: serverCacheNestedPadding,
+                  leading: serverCacheNestedLeading,
                   title: Text(context.l10n.serverCacheNegativeSeconds),
                   trailing: ServerCacheValue(
                     label: '${cache.negativeTtlSeconds}s',
@@ -234,7 +234,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.prefetchEnabled) ...[
                 ListItem(
-                  padding: serverCacheNestedPadding,
+                  leading: serverCacheNestedLeading,
                   title: Text(context.l10n.serverCachePrefetchThreshold),
                   trailing: ServerCacheValue(
                     label: '${cache.prefetchThreshold}',
@@ -252,7 +252,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
                   },
                 ),
                 ListItem(
-                  padding: serverCacheNestedPadding,
+                  leading: serverCacheNestedLeading,
                   title: Text(context.l10n.serverCachePrefetchBefore),
                   trailing: ServerCacheValue(
                     label: '${cache.prefetchBeforeExpiryMs}ms',
