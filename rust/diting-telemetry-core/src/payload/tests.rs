@@ -16,6 +16,7 @@ fn sample() -> LogItem {
         cached: true,
         timestamp_ms: 1_700_000_000_000,
         ttl: 0,
+        ..LogItem::default()
     }
 }
 
@@ -76,6 +77,9 @@ fn invalid_utf8_is_replaced_not_rejected() {
     }
     payload.extend_from_slice(&1u32.to_le_bytes());
     payload.extend_from_slice(&[0xFF]);
+    for _ in 0..6 {
+        payload.extend_from_slice(&0u32.to_le_bytes());
+    }
     let item = decode_log_push(&payload).expect("lossy decode");
     assert_eq!(item.domain, "a\u{FFFD}");
     assert_eq!(item.error_message, "\u{FFFD}");

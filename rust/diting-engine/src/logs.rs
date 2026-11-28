@@ -273,9 +273,15 @@ pub fn batch_payload(rows: &[LogItem]) -> Vec<u8> {
                 + row.error_message.len()
                 + row.app_name.len()
                 + row.resolved_ips.len()
+                + row.client_ip.len()
+                + row.client_name.len()
+                + row.protocol.len()
+                + row.upstream_provider.len()
+                + row.rcode.len()
+                + row.cache_hit.len()
         })
         .sum();
-    let mut out = Vec::with_capacity(4 + rows.len() * 32 + strings + rows.len() * 5 * 4);
+    let mut out = Vec::with_capacity(4 + rows.len() * 32 + strings + rows.len() * 11 * 4);
     push_u32(&mut out, rows.len() as u32);
     for row in rows {
         push_i64(&mut out, row.timestamp_ms);
@@ -288,6 +294,13 @@ pub fn batch_payload(rows: &[LogItem]) -> Vec<u8> {
         push_str(&mut out, &row.app_name);
         push_str(&mut out, &row.resolved_ips);
         push_i64(&mut out, row.response_time_ms);
+        push_i64(&mut out, row.ttl);
+        push_str(&mut out, &row.client_ip);
+        push_str(&mut out, &row.client_name);
+        push_str(&mut out, &row.protocol);
+        push_str(&mut out, &row.upstream_provider);
+        push_str(&mut out, &row.rcode);
+        push_str(&mut out, &row.cache_hit);
     }
     out
 }
@@ -377,6 +390,12 @@ mod tests {
                 offset += 4 + length;
             }
             offset += 8;
+            offset += 8;
+            for _ in 0..6 {
+                let length =
+                    u32::from_be_bytes(payload[offset..offset + 4].try_into().unwrap()) as usize;
+                offset += 4 + length;
+            }
             rows.push(payload[start..offset].to_vec());
         }
         assert_eq!(offset, payload.len(), "the batch has trailing bytes");
@@ -396,6 +415,7 @@ mod tests {
             cached: false,
             timestamp_ms: 1_700_000_000_000,
             ttl: 60,
+            ..LogItem::default()
         }
     }
 

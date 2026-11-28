@@ -2,7 +2,7 @@ use crate::logagg::LogItem;
 use crate::traffic::Delta;
 use crate::uidcache::{Addr, FlowKey};
 
-pub const LAYOUT_VERSION: u8 = 1;
+pub const LAYOUT_VERSION: u8 = 2;
 
 struct Reader<'a> {
     payload: &'a [u8],
@@ -71,6 +71,12 @@ impl<'a> Reader<'a> {
         let resolved_ips = self.text()?;
         let blocked_by = self.text()?;
         let error_message = self.text()?;
+        let client_ip = self.text()?;
+        let client_name = self.text()?;
+        let protocol = self.text()?;
+        let upstream_provider = self.text()?;
+        let rcode = self.text()?;
+        let cache_hit = self.text()?;
         Some(LogItem {
             domain,
             blocked,
@@ -83,6 +89,12 @@ impl<'a> Reader<'a> {
             cached,
             timestamp_ms,
             ttl,
+            client_ip,
+            client_name,
+            protocol,
+            upstream_provider,
+            rcode,
+            cache_hit,
         })
     }
 }
@@ -104,6 +116,12 @@ fn put_item(out: &mut Vec<u8>, item: &LogItem) {
     put_text(out, &item.resolved_ips);
     put_text(out, &item.blocked_by);
     put_text(out, &item.error_message);
+    put_text(out, &item.client_ip);
+    put_text(out, &item.client_name);
+    put_text(out, &item.protocol);
+    put_text(out, &item.upstream_provider);
+    put_text(out, &item.rcode);
+    put_text(out, &item.cache_hit);
 }
 
 pub fn decode_log_push(payload: &[u8]) -> Option<LogItem> {

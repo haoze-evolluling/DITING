@@ -35,7 +35,7 @@ abstract final class StorageContract {
   /// v2：简洁模式日志库补齐 http_request_log / app_traffic_daily 两张表，
   /// 使简洁模式与普通模式具备相同的 HTTP 记录与按应用流量统计能力。
   /// v3：规则唯一索引纳入 denyallow，避免不同 denyallow 的规则被误合并。
-  static const schemaVersion = 3;
+  static const schemaVersion = 4;
 
   static const allDatabases = <String>[
     normalRulesDatabase,

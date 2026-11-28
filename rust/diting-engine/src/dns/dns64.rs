@@ -22,7 +22,8 @@ pub async fn maybe_synthesize(
     }
 
     let a_query = crate::resolver::build_query(domain, TYPE_A);
-    let (a_response, _shared) = crate::dns::flight::resolve(engine, &a_query).await.ok()?;
+    let (a_response, _shared, _provider) =
+        crate::dns::flight::resolve(engine, &a_query).await.ok()?;
     let a_extract = extract(&a_response)?;
     let v4 = first_ipv4(&a_extract.ips)?;
     let synthesized = Ipv6Addr::from(dns64.map(v4)).to_string();

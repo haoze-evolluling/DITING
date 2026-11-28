@@ -153,7 +153,7 @@ CREATE TABLE `rule_version` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `group_id` 
 CREATE TABLE `dns_cache` (`key` TEXT NOT NULL, `queryName` TEXT NOT NULL, `queryType` INTEGER NOT NULL, `queryClass` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `expiresAt` INTEGER NOT NULL, `lastHitAt` INTEGER, `hitCount` INTEGER NOT NULL DEFAULT 0, `originalTtlSeconds` INTEGER NOT NULL, `ttlOffsets` TEXT NOT NULL, `response` BLOB NOT NULL, `responseSize` INTEGER NOT NULL, PRIMARY KEY(`key`))''';
 
   static const _dnsLog = '''
-CREATE TABLE `dns_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `queryName` TEXT NOT NULL, `queryType` INTEGER NOT NULL, `result` TEXT NOT NULL, `message` TEXT, `cached` INTEGER NOT NULL, `blockSubscriptionId` INTEGER, `packageName` TEXT)''';
+CREATE TABLE `dns_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `queryName` TEXT NOT NULL, `queryType` INTEGER NOT NULL, `result` TEXT NOT NULL, `message` TEXT, `cached` INTEGER NOT NULL, `blockSubscriptionId` INTEGER, `packageName` TEXT, `clientIp` TEXT NOT NULL DEFAULT '', `clientName` TEXT NOT NULL DEFAULT '', `protocol` TEXT NOT NULL DEFAULT '', `upstreamProvider` TEXT NOT NULL DEFAULT '', `rcode` TEXT NOT NULL DEFAULT '', `cacheHit` TEXT NOT NULL DEFAULT '', `durationMs` INTEGER NOT NULL DEFAULT 0, `ttl` INTEGER)''';
 
   static const _raceLog = '''
 CREATE TABLE `dns_race_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `queryName` TEXT NOT NULL, `queryType` INTEGER NOT NULL, `strategy` TEXT NOT NULL, `providerCount` INTEGER NOT NULL, `success` INTEGER NOT NULL, `elapsedMs` INTEGER NOT NULL, `selectedProviderId` TEXT, `selectedProviderName` TEXT, `selectedElapsedMs` INTEGER, `winnerProviderId` TEXT, `winnerProviderName` TEXT, `winnerElapsedMs` INTEGER, `fallbackUsed` INTEGER NOT NULL, `fallbackSuccess` INTEGER NOT NULL, `message` TEXT)''';
@@ -213,6 +213,8 @@ CREATE TABLE `app_traffic_daily` (`date` TEXT NOT NULL, `package_name` TEXT NOT 
     'CREATE INDEX `index_dns_log_result_timestamp` ON `dns_log` (`result`, `timestamp`)',
     'CREATE INDEX `index_dns_log_result_cached_timestamp` ON `dns_log` (`result`, `cached`, `timestamp`)',
     'CREATE INDEX `index_dns_log_block_subscription_timestamp` ON `dns_log` (`blockSubscriptionId`, `timestamp`)',
+    'CREATE INDEX `index_dns_log_clientIp_timestamp` ON `dns_log` (`clientIp`, `timestamp`)',
+    'CREATE INDEX `index_dns_log_upstream_provider_timestamp` ON `dns_log` (`upstreamProvider`, `timestamp`)',
     'CREATE INDEX `index_dns_race_log_timestamp` ON `dns_race_log` (`timestamp`)',
     'CREATE INDEX `index_dns_race_log_strategy_timestamp` ON `dns_race_log` (`strategy`, `timestamp`)',
     'CREATE INDEX `index_dns_race_log_selected_timestamp` ON `dns_race_log` (`selectedProviderId`, `timestamp`)',

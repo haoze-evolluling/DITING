@@ -17,11 +17,31 @@ pub const APP_NAME: &str = "RootProxy";
 const DDR_HOST: &str = "_dns.resolver.arpa";
 const DDR_SUFFIX: &str = ".dns.resolver.arpa";
 
-pub async fn serve(engine: &Arc<Engine>, query: &[u8]) -> Option<Vec<u8>> {
-    serve_for_app(engine, query, APP_NAME).await
+/// 独立 DNS 服务看到的客户端信息；隧道场景留空。
+#[derive(Debug, Clone, Default)]
+pub struct ClientMeta {
+    pub ip: String,
+    pub protocol: String,
+}
+
+pub async fn serve(
+    engine: &Arc<Engine>,
+    query: &[u8],
+    client: &ClientMeta,
+) -> Option<Vec<u8>> {
+    serve_for_client(engine, query, APP_NAME, client).await
 }
 
 pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -> Option<Vec<u8>> {
+    serve_for_client(engine, query, app_name, &ClientMeta::default()).await
+}
+
+pub async fn serve_for_client(
+    engine: &Arc<Engine>,
+    query: &[u8],
+    app_name: &str,
+    client: &ClientMeta,
+) -> Option<Vec<u8>> {
     let started = Instant::now();
     let info = query_info(query);
     if !info.valid {
@@ -39,7 +59,9 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
     if domain == DDR_HOST || domain.ends_with(DDR_SUFFIX) {
         let plan = reply::ddr(query)?;
         engine.note_query(true);
-        engine.log_row(|| row(&domain, true, qtype, started, app_name).blocked_by("ddr_blocked"));
+        engine.log_row(|| {
+            row(&domain, true, qtype, started, app_name, client).blocked_by("ddr_blocked")
+        });
         return reply::render(query, &plan);
     }
 
@@ -54,7 +76,7 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
                 if let Some(plan) = reply::rewrite_ip(query, &ip) {
                     engine.note_query(false);
                     engine.log_row(|| {
-                        row(&domain, false, qtype, started, app_name)
+                        row(&domain, false, qtype, started, app_name, client)
                             .resolved_ips(ip.clone())
                             .blocked_by(format!("rewrite={ip}"))
                     });
@@ -71,6 +93,7 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
                 qtype,
                 started,
                 app_name,
+                client,
             )
             .await
             {
@@ -83,7 +106,8 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
         engine.note_query(false);
         engine.log_row(|| {
-            row(&domain, false, qtype, started, app_name).blocked_by("ipv6_disabled".to_string())
+            row(&domain, false, qtype, started, app_name, client)
+                .blocked_by("ipv6_disabled".to_string())
         });
         return reply::render(query, &plan);
     }
@@ -92,7 +116,7 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
         engine.note_query(true);
         engine.log_row(|| {
-            row(&domain, true, qtype, started, app_name)
+            row(&domain, true, qtype, started, app_name, client)
                 .blocked_by("record_type_blocked".to_string())
         });
         return reply::render(query, &plan);
@@ -102,13 +126,14 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
         let plan = reply::block(query, reply::RESPONSE_NO_DATA)?;
         engine.note_query(false);
         engine.log_row(|| {
-            row(&domain, false, qtype, started, app_name).blocked_by("ipv6_preferred".to_string())
+            row(&domain, false, qtype, started, app_name, client)
+                .blocked_by("ipv6_preferred".to_string())
         });
         return reply::render(query, &plan);
     }
 
     if !engine.filter_dns() {
-        return forward::forward(engine, query, &domain, qtype, started, app_name).await;
+        return forward::forward(engine, query, &domain, qtype, started, app_name, client).await;
     }
 
     if engine.policy().is_active() && engine.policy().has_rules() {
@@ -119,12 +144,12 @@ pub async fn serve_for_app(engine: &Arc<Engine>, query: &[u8], app_name: &str) -
                 engine.block_paused(),
                 engine.allowlist_only(),
             ) {
-                return block(engine, query, &domain, qtype, &reason, started, app_name);
+                return block(engine, query, &domain, qtype, &reason, started, app_name, client);
             }
         }
     }
 
-    forward::forward(engine, query, &domain, qtype, started, app_name).await
+    forward::forward(engine, query, &domain, qtype, started, app_name, client).await
 }
 
 /// Resolves AAAA internally to decide whether suppressing A is safe.
@@ -138,7 +163,7 @@ async fn domain_has_aaaa(engine: &Arc<Engine>, domain: &str) -> bool {
             }
         }
     }
-    let Ok((response, _)) = flight::resolve(engine, &query).await else {
+    let Ok((response, _, _)) = flight::resolve(engine, &query).await else {
         return false;
     };
     let Some(extracted) = diting_dns_core::message::extract(&response) else {
@@ -167,6 +192,7 @@ async fn standalone_rewrite(
     qtype: u16,
     started: Instant,
     app_name: &str,
+    client: &ClientMeta,
 ) -> Option<Vec<u8>> {
     if qtype != TYPE_A && qtype != TYPE_AAAA {
         return None;
@@ -195,7 +221,7 @@ async fn standalone_rewrite(
     engine.note_query(false);
     let resolved = first_address_text(&plan, qtype);
     engine.log_row(|| {
-        row(domain, false, qtype, started, app_name)
+        row(domain, false, qtype, started, app_name, client)
             .resolved_ips(resolved)
             .blocked_by(format!("rewrite={target}"))
     });
@@ -210,13 +236,17 @@ pub fn block(
     blocked_by: &str,
     started: Instant,
     app_name: &str,
+    client: &ClientMeta,
 ) -> Option<Vec<u8>> {
     let mode = engine.effective_block_response(domain);
     let plan = reply::block(query, mode as u8)?;
     let wire = reply::render(query, &plan)?;
     engine.note_query(true);
-    engine
-        .log_row(|| row(domain, true, qtype, started, app_name).blocked_by(blocked_by.to_string()));
+    engine.log_row(|| {
+        row(domain, true, qtype, started, app_name, client)
+            .blocked_by(blocked_by.to_string())
+            .rcode(rcode_of_block(mode as u8))
+    });
     Some(wire)
 }
 
@@ -228,16 +258,50 @@ pub fn servfail(
     started: Instant,
     error: &str,
     app_name: &str,
+    client: &ClientMeta,
 ) -> Option<Vec<u8>> {
     let plan = reply::servfail(query)?;
     let wire = reply::render(query, &plan)?;
     engine.note_query(false);
-    engine
-        .log_row(|| row(domain, false, qtype, started, app_name).error_message(error.to_string()));
+    engine.log_row(|| {
+        row(domain, false, qtype, started, app_name, client)
+            .error_message(error.to_string())
+            .rcode("SERVFAIL")
+    });
     Some(wire)
 }
 
-fn row(domain: &str, blocked: bool, qtype: u16, started: Instant, app_name: &str) -> LogRow {
+pub fn rcode_text(code: u16) -> String {
+    match code {
+        0 => "NOERROR",
+        1 => "FORMERR",
+        2 => "SERVFAIL",
+        3 => "NXDOMAIN",
+        4 => "NOTIMP",
+        5 => "REFUSED",
+        _ => "RCODE",
+    }
+    .to_string()
+}
+
+/// 盾响应类型：0 自定义 IP、1 NXDOMAIN、2 REFUSED、3 NODATA。
+pub fn rcode_of_block(mode: u8) -> String {
+    match mode {
+        1 => "NXDOMAIN",
+        2 => "REFUSED",
+        _ => "NOERROR",
+    }
+    .to_string()
+}
+
+fn row(
+    domain: &str,
+    blocked: bool,
+    qtype: u16,
+    started: Instant,
+    app_name: &str,
+    client: &ClientMeta,
+) -> LogRow {
     LogRow {
         domain: domain.to_string(),
         blocked,
@@ -249,6 +313,12 @@ fn row(domain: &str, blocked: bool, qtype: u16, started: Instant, app_name: &str
         error_message: String::new(),
         cached: false,
         ttl: 0,
+        client_ip: client.ip.clone(),
+        client_name: String::new(),
+        protocol: client.protocol.clone(),
+        upstream_provider: String::new(),
+        rcode: String::new(),
+        cache_hit: String::new(),
     }
 }
 
@@ -263,6 +333,12 @@ pub struct LogRow {
     error_message: String,
     cached: bool,
     ttl: i64,
+    client_ip: String,
+    client_name: String,
+    protocol: String,
+    upstream_provider: String,
+    rcode: String,
+    cache_hit: String,
 }
 
 impl LogRow {
@@ -291,6 +367,21 @@ impl LogRow {
         self
     }
 
+    pub fn upstream(mut self, provider: impl Into<String>) -> Self {
+        self.upstream_provider = provider.into();
+        self
+    }
+
+    pub fn rcode(mut self, rcode: impl Into<String>) -> Self {
+        self.rcode = rcode.into();
+        self
+    }
+
+    pub fn cache_hit(mut self, hit: impl Into<String>) -> Self {
+        self.cache_hit = hit.into();
+        self
+    }
+
     pub fn error_row(message: &str, timestamp_ms: i64) -> LogItem {
         LogItem {
             domain: String::new(),
@@ -304,6 +395,12 @@ impl LogRow {
             cached: false,
             timestamp_ms,
             ttl: 0,
+            client_ip: String::new(),
+            client_name: String::new(),
+            protocol: String::new(),
+            upstream_provider: String::new(),
+            rcode: String::new(),
+            cache_hit: String::new(),
         }
     }
 
@@ -320,6 +417,12 @@ impl LogRow {
             cached: self.cached,
             timestamp_ms,
             ttl: self.ttl,
+            client_ip: self.client_ip,
+            client_name: self.client_name,
+            protocol: self.protocol,
+            upstream_provider: self.upstream_provider,
+            rcode: self.rcode,
+            cache_hit: self.cache_hit,
         }
     }
 }

@@ -207,5 +207,6 @@ fn connection_row(
         cached: false,
         timestamp_ms: now_ms(),
         ttl: 0,
+        ..LogItem::default()
     });
 }

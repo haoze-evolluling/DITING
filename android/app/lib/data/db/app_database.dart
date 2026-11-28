@@ -100,6 +100,28 @@ class AppDatabase {
     DatabaseKind kind,
     int from,
   ) async {
+    if (kind == DatabaseKind.normalLogs ||
+        kind == DatabaseKind.expressLogs ||
+        kind == DatabaseKind.serverLogs) {
+      if (from < 4) {
+        for (final column in const [
+          "clientIp TEXT NOT NULL DEFAULT ''",
+          "clientName TEXT NOT NULL DEFAULT ''",
+          "protocol TEXT NOT NULL DEFAULT ''",
+          "upstreamProvider TEXT NOT NULL DEFAULT ''",
+          "rcode TEXT NOT NULL DEFAULT ''",
+          "cacheHit TEXT NOT NULL DEFAULT ''",
+          'durationMs INTEGER NOT NULL DEFAULT 0',
+          'ttl INTEGER',
+        ]) {
+          try {
+            await db.execute('ALTER TABLE dns_log ADD COLUMN $column');
+          } on DatabaseException catch (error) {
+            debugPrint('dns_log migration skipped $column: $error');
+          }
+        }
+      }
+    }
     if (from >= 3) return;
     if (kind == DatabaseKind.normalRules ||
         kind == DatabaseKind.expressRules ||

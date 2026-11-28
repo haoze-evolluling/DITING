@@ -17,6 +17,13 @@ fn decode_dns_input(reader: &mut Reader<'_>) -> Option<DnsInput> {
         app: reader.string()?,
         resolved: reader.string()?,
         elapsed_ms: reader.i64()?,
+        ttl: reader.i64()?,
+        client_ip: reader.string()?,
+        client_name: reader.string()?,
+        protocol: reader.string()?,
+        upstream_provider: reader.string()?,
+        rcode: reader.string()?,
+        cache_hit: reader.string()?,
     })
 }
 
@@ -78,6 +85,14 @@ fn pack_dns_row(row: &DnsRow) -> Vec<u8> {
     writer.u8(if row.cached { 1 } else { 0 });
     write_optional_i64(&mut writer, row.block_subscription_id);
     write_optional(&mut writer, row.package_name.as_deref());
+    writer.string(&row.client_ip);
+    writer.string(&row.client_name);
+    writer.string(&row.protocol);
+    writer.string(&row.upstream_provider);
+    writer.string(&row.rcode);
+    writer.string(&row.cache_hit);
+    writer.i64(row.duration_ms);
+    writer.i64(row.ttl);
     writer.into_vec()
 }
 
@@ -118,6 +133,10 @@ mod tests {
         writer.string("com.app");
         writer.string("1.2.3.4");
         writer.i64(5);
+        writer.i64(30);
+        for _ in 0..6 {
+            writer.string("");
+        }
         writer.i64(100);
         writer.string("ads.example");
         writer.i32(1);
@@ -128,6 +147,10 @@ mod tests {
         writer.string("");
         writer.string("");
         writer.i64(0);
+        writer.i64(0);
+        for _ in 0..6 {
+            writer.string("");
+        }
         writer.into_vec()
     }
 
@@ -152,6 +175,11 @@ mod tests {
         assert_eq!(reader.u8(), Some(1));
         assert_eq!(read_optional_i(&mut reader), Some(None));
         assert_eq!(read_optional(&mut reader), Some(Some("com.app".into())));
+        for _ in 0..6 {
+            assert_eq!(reader.string().as_deref(), Some(""));
+        }
+        assert_eq!(reader.i64(), Some(5));
+        assert_eq!(reader.i64(), Some(30));
         assert!(reader.finish());
 
         let mut reader = Reader::new(&rows[1]);
@@ -166,6 +194,11 @@ mod tests {
         assert_eq!(reader.u8(), Some(0));
         assert_eq!(read_optional_i(&mut reader), Some(None));
         assert_eq!(read_optional(&mut reader), Some(None));
+        for _ in 0..6 {
+            assert_eq!(reader.string().as_deref(), Some(""));
+        }
+        assert_eq!(reader.i64(), Some(0));
+        assert_eq!(reader.i64(), Some(0));
         assert!(reader.finish());
 
         assert_eq!(stats.request_snapshot().total, 1);

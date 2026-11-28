@@ -6,7 +6,8 @@ use tokio::sync::Notify;
 
 use crate::engine::Engine;
 
-type FlightResult = Option<Result<Vec<u8>, String>>;
+/// 解析结果附带选中的上游；跟随同一个 flight 的请求也能拿到同一个上游。
+type FlightResult = Option<Result<(Vec<u8>, String), String>>;
 
 #[derive(Clone)]
 pub struct Flight {
@@ -22,14 +23,14 @@ impl Flight {
         }
     }
 
-    fn finish(&self, result: Result<Vec<u8>, String>) {
+    fn finish(&self, result: Result<(Vec<u8>, String), String>) {
         if let Ok(mut slot) = self.result.lock() {
             *slot = Some(result);
         }
         self.notify.notify_waiters();
     }
 
-    async fn wait(&self) -> Result<Vec<u8>, String> {
+    async fn wait(&self) -> Result<(Vec<u8>, String), String> {
         loop {
             let notified = self.notify.notified();
             tokio::pin!(notified);
@@ -45,18 +46,21 @@ impl Flight {
     }
 }
 
-pub async fn resolve(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, bool), String> {
+pub async fn resolve(
+    engine: &Arc<Engine>,
+    query: &[u8],
+) -> Result<(Vec<u8>, bool, String), String> {
     let Some(key) = question_key(query).map(|key| key.key) else {
         return run_resolver(engine, query)
             .await
-            .map(|response| (response, false));
+            .map(|(response, provider)| (response, false, provider));
     };
 
     let (flight, leader) = engine.flight(&key);
 
     if !leader {
         let result = flight.wait().await;
-        return result.map(|response| (response, true));
+        return result.map(|(response, provider)| (response, true, provider));
     }
 
     let mut leader = LeaderGuard {
@@ -66,13 +70,13 @@ pub async fn resolve(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, boo
         finished: false,
     };
     let result = run_resolver(engine, query).await;
-    if let Ok(response) = &result {
+    if let Ok((response, _)) = &result {
         engine.cache().put(query, response);
     }
     flight.finish(result.clone());
     engine.finish_flight(&key);
     leader.finished = true;
-    result.map(|response| (response, false))
+    result.map(|(response, provider)| (response, false, provider))
 }
 
 struct LeaderGuard {
@@ -92,16 +96,26 @@ impl Drop for LeaderGuard {
     }
 }
 
-async fn run_resolver(engine: &Arc<Engine>, query: &[u8]) -> Result<Vec<u8>, String> {
+async fn run_resolver(engine: &Arc<Engine>, query: &[u8]) -> Result<(Vec<u8>, String), String> {
     let resolver = engine.resolver();
     let (result, race) = resolver.resolve(query).await;
+    let provider = race
+        .as_ref()
+        .map(|event| {
+            if event.selected_provider_id.is_empty() {
+                event.winner_provider_id.clone()
+            } else {
+                event.selected_provider_id.clone()
+            }
+        })
+        .unwrap_or_default();
     if let Some(mut event) = race {
         let info = diting_dns_core::message::query_info(query);
         event.query_name = info.name;
         event.query_type = info.qtype;
         engine.logs().race(event);
     }
-    result
+    result.map(|response| (response, provider))
 }
 
 impl Engine {

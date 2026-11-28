@@ -11,8 +11,9 @@ object DnsLogWriter {
     private const val TABLE = "dns_log"
 
     private const val INSERT_SQL = "INSERT OR IGNORE INTO dns_log " +
-        "(timestamp, queryName, queryType, result, message, cached, blockSubscriptionId, packageName) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        "(timestamp, queryName, queryType, result, message, cached, blockSubscriptionId, packageName, " +
+        "clientIp, clientName, protocol, upstreamProvider, rcode, cacheHit, durationMs, ttl) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
     fun writeBatch(context: Context, databaseName: String, mode: String, packed: ByteArray) {
         if (packed.size <= Int.SIZE_BYTES) return
@@ -33,5 +34,13 @@ object DnsLogWriter {
         if (subscription == null) statement.bindNull(7) else statement.bindLong(7, subscription)
         val packageName = reader.optionalString()
         if (packageName == null) statement.bindNull(8) else statement.bindString(8, packageName)
+        statement.bindString(9, reader.string())
+        statement.bindString(10, reader.string())
+        statement.bindString(11, reader.string())
+        statement.bindString(12, reader.string())
+        statement.bindString(13, reader.string())
+        statement.bindString(14, reader.string())
+        statement.bindLong(15, reader.i64())
+        statement.bindLong(16, reader.i64())
     }
 }

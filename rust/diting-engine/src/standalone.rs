@@ -261,7 +261,11 @@ fn spawn_udp(
                     };
                     tokio::spawn(async move {
                         let _permit = permit;
-                        if let Some(response) = crate::dns::serve(&engine, &query).await {
+                        let client = crate::dns::ClientMeta {
+                            ip: peer.ip().to_string(),
+                            protocol: "udp".to_string(),
+                        };
+                        if let Some(response) = crate::dns::serve(&engine, &query, &client).await {
                             let _ = replies.send((response, peer)).await;
                         }
                     });
@@ -300,13 +304,21 @@ fn spawn_tcp(
             let engine = Arc::clone(&engine);
             tokio::spawn(async move {
                 let _permit = permit;
-                let _ = serve_tcp_connection(engine, stream).await;
+                let _ = serve_tcp_connection(engine, stream, peer).await;
             });
         }
     })
 }
 
-async fn serve_tcp_connection(engine: Arc<Engine>, mut stream: TcpStream) -> std::io::Result<()> {
+async fn serve_tcp_connection(
+    engine: Arc<Engine>,
+    mut stream: TcpStream,
+    peer: SocketAddr,
+) -> std::io::Result<()> {
+    let client = crate::dns::ClientMeta {
+        ip: peer.ip().to_string(),
+        protocol: "tcp".to_string(),
+    };
     let mut length = [0u8; 2];
     loop {
         let read =
@@ -328,7 +340,7 @@ async fn serve_tcp_connection(engine: Arc<Engine>, mut stream: TcpStream) -> std
         {
             return Ok(());
         }
-        let Some(response) = crate::dns::serve(&engine, &query).await else {
+        let Some(response) = crate::dns::serve(&engine, &query, &client).await else {
             continue;
         };
         stream

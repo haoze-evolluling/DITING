@@ -6,7 +6,7 @@ pub const BUFFER_SIZE: usize = 2048;
 pub const HIGH_WATER_MARK: usize = (BUFFER_SIZE * 3) / 4;
 pub const BATCH_SIZE: usize = 50;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LogItem {
     pub domain: String,
     pub blocked: bool,
@@ -19,6 +19,12 @@ pub struct LogItem {
     pub cached: bool,
     pub timestamp_ms: i64,
     pub ttl: i64,
+    pub client_ip: String,
+    pub client_name: String,
+    pub protocol: String,
+    pub upstream_provider: String,
+    pub rcode: String,
+    pub cache_hit: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

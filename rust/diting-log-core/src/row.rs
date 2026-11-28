@@ -36,6 +36,13 @@ pub struct DnsInput {
     pub app: String,
     pub resolved: String,
     pub elapsed_ms: i64,
+    pub ttl: i64,
+    pub client_ip: String,
+    pub client_name: String,
+    pub protocol: String,
+    pub upstream_provider: String,
+    pub rcode: String,
+    pub cache_hit: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -76,6 +83,14 @@ pub struct DnsRow {
     pub cached: bool,
     pub block_subscription_id: Option<i64>,
     pub package_name: Option<String>,
+    pub client_ip: String,
+    pub client_name: String,
+    pub protocol: String,
+    pub upstream_provider: String,
+    pub rcode: String,
+    pub cache_hit: String,
+    pub duration_ms: i64,
+    pub ttl: i64,
 }
 
 pub fn dns_result(input: &DnsInput) -> DnsResult {
@@ -138,6 +153,14 @@ pub fn dns_row(input: &DnsInput, mode: LogMode, now_ms: i64) -> Option<DnsRow> {
         } else {
             Some(input.app.clone())
         },
+        client_ip: input.client_ip.clone(),
+        client_name: input.client_name.clone(),
+        protocol: input.protocol.clone(),
+        upstream_provider: input.upstream_provider.clone(),
+        rcode: input.rcode.clone(),
+        cache_hit: input.cache_hit.clone(),
+        duration_ms: input.elapsed_ms.max(0),
+        ttl: input.ttl.max(0),
     })
 }
 
@@ -365,6 +388,7 @@ mod tests {
             app: "com.example.app".into(),
             resolved: "1.2.3.4".into(),
             elapsed_ms: 12,
+            ..DnsInput::default()
         };
         let row = dns_row(&input, LogMode::All, 5).unwrap();
         assert_eq!(row.timestamp, 1_700_000_000_123);

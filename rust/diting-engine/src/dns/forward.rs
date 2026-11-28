@@ -5,7 +5,7 @@ use diting_dns_core::message::{extract, TYPE_AAAA};
 use diting_dns_wire::build::ParsedMessage;
 use diting_dns_wire::ChainTarget;
 
-use super::{block, row, servfail};
+use super::{block, rcode_text, row, servfail, ClientMeta};
 use crate::engine::Engine;
 
 pub async fn forward(
@@ -15,6 +15,7 @@ pub async fn forward(
     qtype: u16,
     started: Instant,
     app_name: &str,
+    client: &ClientMeta,
 ) -> Option<Vec<u8>> {
     let cache = engine.cache();
 
@@ -24,7 +25,7 @@ pub async fn forward(
         if let Some(hit) = cache.get(query) {
             if !hit.stale {
                 if let Some(reason) = blocked_chain(engine, &hit.chain_targets, qtype, app_name) {
-                    return block(engine, query, domain, qtype, &reason, started, app_name);
+                    return block(engine, query, domain, qtype, &reason, started, app_name, client);
                 }
                 if engine.rebinding_protection()
                     && crate::privacy::any_private(hit.resolved_ips.split(',').map(str::trim))
@@ -37,26 +38,41 @@ pub async fn forward(
                         "rebinding_protected",
                         started,
                         app_name,
+                        client,
                     );
                 }
                 engine.note_query(false);
                 engine.log_row(|| {
-                    row(domain, false, qtype, started, app_name)
+                    row(domain, false, qtype, started, app_name, client)
                         .resolved_ips(hit.resolved_ips.clone())
                         .cached(true)
+                        .cache_hit("HIT")
+                        .upstream("cache")
+                        .rcode(rcode_text(
+                            diting_dns_core::message::extract(&hit.wire)
+                                .map(|extracted| extracted.rcode)
+                                .unwrap_or(0),
+                        ))
                 });
                 return Some(with_client_id(strip_ipv6_hints(engine, qtype, hit.wire), query));
             }
 
             if cache.stale_fallback_enabled() {
                 if let Some(reason) = blocked_chain(engine, &hit.chain_targets, qtype, app_name) {
-                    return block(engine, query, domain, qtype, &reason, started, app_name);
+                    return block(engine, query, domain, qtype, &reason, started, app_name, client);
                 }
                 engine.note_query(false);
                 engine.log_row(|| {
-                    row(domain, false, qtype, started, app_name)
+                    row(domain, false, qtype, started, app_name, client)
                         .resolved_ips(hit.resolved_ips.clone())
                         .cached(true)
+                        .cache_hit("STALE")
+                        .upstream("cache")
+                        .rcode(rcode_text(
+                            diting_dns_core::message::extract(&hit.wire)
+                                .map(|extracted| extracted.rcode)
+                                .unwrap_or(0),
+                        ))
                 });
                 if cache.begin_stale_refresh(query) {
                     let shared = Arc::clone(engine);
@@ -75,12 +91,12 @@ pub async fn forward(
         .negative_cache()
         .get(query, crate::resolver::now_ns())
     {
-        return servfail(engine, query, domain, qtype, started, &error, app_name);
+        return servfail(engine, query, domain, qtype, started, &error, app_name, client);
     }
 
     let resolved = super::flight::resolve(engine, query).await;
     match resolved {
-        Ok((response, shared)) => {
+        Ok((response, shared, provider)) => {
             engine.negative_cache().remove(query);
             let extracted = match extract(&response) {
                 Some(extracted) => extracted,
@@ -93,6 +109,7 @@ pub async fn forward(
                         started,
                         "DNS answer extract failed",
                         app_name,
+                        client,
                     )
                 }
             };
@@ -100,15 +117,17 @@ pub async fn forward(
             if extracted.blocked {
                 engine.note_query(true);
                 engine.log_row(|| {
-                    row(domain, true, qtype, started, app_name)
+                    row(domain, true, qtype, started, app_name, client)
                         .blocked_by("upstream_dns".to_string())
                         .cached(shared)
+                        .upstream(provider.clone())
+                        .rcode(rcode_text(extracted.rcode))
                 });
             } else {
                 if let Some(reason) =
                     blocked_chain(engine, &extracted.chain_targets, qtype, app_name)
                 {
-                    return block(engine, query, domain, qtype, &reason, started, app_name);
+                    return block(engine, query, domain, qtype, &reason, started, app_name, client);
                 }
                 if engine.rebinding_protection()
                     && crate::privacy::any_private(extracted.ips.iter().map(String::as_str))
@@ -121,6 +140,7 @@ pub async fn forward(
                         "rebinding_protected",
                         started,
                         app_name,
+                        client,
                     );
                 }
                 if let Some((wire, synthesized)) =
@@ -129,17 +149,22 @@ pub async fn forward(
                 {
                     engine.note_query(false);
                     engine.log_row(|| {
-                        row(domain, false, qtype, started, app_name)
+                        row(domain, false, qtype, started, app_name, client)
                             .resolved_ips(synthesized)
                             .cached(shared)
+                            .upstream(provider.clone())
+                            .rcode(rcode_text(extracted.rcode))
                     });
                     return Some(with_client_id(wire, query));
                 }
                 engine.note_query(false);
                 engine.log_row(|| {
-                    row(domain, false, qtype, started, app_name)
+                    row(domain, false, qtype, started, app_name, client)
                         .resolved_ips(extracted.resolved_ips.clone())
                         .cached(shared)
+                        .cache_hit(if shared { "SHARED" } else { "MISS" })
+                        .upstream(provider)
+                        .rcode(rcode_text(extracted.rcode))
                 });
             }
 
@@ -150,7 +175,7 @@ pub async fn forward(
             engine
                 .negative_cache()
                 .put(query, &error, crate::resolver::now_ns());
-            servfail(engine, query, domain, qtype, started, &error, app_name)
+            servfail(engine, query, domain, qtype, started, &error, app_name, client)
         }
     }
 }

@@ -77,6 +77,7 @@ fn log_conn_block(engine: &Engine, key: &TcpKey, uid: i32, host: &str, reason: &
         cached: false,
         timestamp_ms: now_ms(),
         ttl: 0,
+        ..LogItem::default()
     });
 }
 

@@ -20,6 +20,7 @@ fn item(domain: &str) -> LogItem {
         cached: false,
         timestamp_ms: 0,
         ttl: 0,
+        ..LogItem::default()
     }
 }
 

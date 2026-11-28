@@ -30,6 +30,7 @@ fn item(domain: &str, blocked: bool, blocked_by: &str) -> LogItem {
         cached: false,
         timestamp_ms: 0,
         ttl: 0,
+        ..LogItem::default()
     }
 }
 
