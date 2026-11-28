@@ -1,6 +1,9 @@
 part of 'subscription_providers.dart';
 
-/// 普通模式与简洁模式各自使用独立的规则库，这里取「另一个模式」的数据集。
+/// 每种模式各自使用独立的规则库，这里取「另一个模式」的数据集。
+///
+/// 服务器模式没有唯一的「另一个模式」，默认取普通模式；需要导入简洁模式时
+/// 由服务器订阅页单独选择数据源。
 final otherModeDataSetProvider = Provider<DataSet>((ref) {
   final current = ref.watch(activeDataSetProvider);
   return current == DataSet.express ? DataSet.normal : DataSet.express;

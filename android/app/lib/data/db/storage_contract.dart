@@ -5,6 +5,8 @@ enum DatabaseKind {
   normalLogs(StorageContract.normalLogsDatabase, 0x44495432),
   expressRules(StorageContract.expressRulesDatabase, 0x44495433),
   expressLogs(StorageContract.expressLogsDatabase, 0x44495434),
+  serverRules(StorageContract.serverRulesDatabase, 0x44495435),
+  serverLogs(StorageContract.serverLogsDatabase, 0x44495436),
   global(StorageContract.globalDatabase, 0x44495437);
 
   const DatabaseKind(this.fileName, this.applicationId);
@@ -26,6 +28,8 @@ abstract final class StorageContract {
   static const normalLogsDatabase = 'diting_normal_logs_v2';
   static const expressRulesDatabase = 'diting_express_rules_v2';
   static const expressLogsDatabase = 'diting_express_logs_v2';
+  static const serverRulesDatabase = 'diting_server_rules_v2';
+  static const serverLogsDatabase = 'diting_server_logs_v2';
   static const globalDatabase = 'diting_global_v2';
 
   /// v2：简洁模式日志库补齐 http_request_log / app_traffic_daily 两张表，
@@ -38,6 +42,8 @@ abstract final class StorageContract {
     normalLogsDatabase,
     expressRulesDatabase,
     expressLogsDatabase,
+    serverRulesDatabase,
+    serverLogsDatabase,
     globalDatabase,
   ];
 }

@@ -19,6 +19,18 @@ extension LegacyDnsSettings on LegacySettings {
     value,
   );
 
+  bool get serverRunning => _bool(
+    LegacySettings.serverRunningContainer,
+    'server_running',
+    false,
+  );
+
+  void setServerRunning(bool value) => _store.putBool(
+    LegacySettings.serverRunningContainer,
+    'server_running',
+    value,
+  );
+
   String get selectedProviderId =>
       _string(dnsContainer, 'selected_provider_id') ?? 'preset_alidns_dns';
 

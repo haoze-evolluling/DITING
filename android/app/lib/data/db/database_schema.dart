@@ -4,7 +4,9 @@ import 'package:diting_android/data/db/storage_contract.dart';
 
 abstract final class DatabaseSchema {
   static List<String> statementsFor(DatabaseKind kind) => switch (kind) {
-    DatabaseKind.normalRules || DatabaseKind.expressRules => [
+    DatabaseKind.normalRules ||
+    DatabaseKind.expressRules ||
+    DatabaseKind.serverRules => [
       ..._ruleTables,
       ..._subscriptionTables,
       _ruleVersion,
@@ -12,15 +14,9 @@ abstract final class DatabaseSchema {
       ..._subscriptionIndexes,
       _ruleVersionIndex,
     ],
-    DatabaseKind.normalLogs => [
-      ..._logTables,
-      _httpRequestLog,
-      ..._httpRequestLogIndexes,
-      _appTrafficDaily,
-      ..._appTrafficDailyIndexes,
-      ..._logIndexes,
-    ],
-    DatabaseKind.expressLogs => [
+    DatabaseKind.normalLogs ||
+    DatabaseKind.expressLogs ||
+    DatabaseKind.serverLogs => [
       ..._logTables,
       _httpRequestLog,
       ..._httpRequestLogIndexes,
@@ -32,16 +28,16 @@ abstract final class DatabaseSchema {
   };
 
   static Set<String> tableNamesFor(DatabaseKind kind) => switch (kind) {
-    DatabaseKind.normalRules || DatabaseKind.expressRules => {
+    DatabaseKind.normalRules ||
+    DatabaseKind.expressRules ||
+    DatabaseKind.serverRules => {
       ...ruleTableNames,
       ...subscriptionTableNames,
       ruleVersionTableName,
     },
-    DatabaseKind.normalLogs => {
-      ...logTableNames,
-      ...httpTrafficTableNames,
-    },
-    DatabaseKind.expressLogs => {
+    DatabaseKind.normalLogs ||
+    DatabaseKind.expressLogs ||
+    DatabaseKind.serverLogs => {
       ...logTableNames,
       ...httpTrafficTableNames,
     },

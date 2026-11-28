@@ -16,6 +16,12 @@ enum DataSet {
     ruleDatabase: StorageContract.expressRulesDatabase,
     logsDatabase: StorageContract.expressLogsDatabase,
     ruleIndex: RuleIndexDataset.express,
+  ),
+  server(
+    prefsContainer: LegacySettings.serverContainer,
+    ruleDatabase: StorageContract.serverRulesDatabase,
+    logsDatabase: StorageContract.serverLogsDatabase,
+    ruleIndex: RuleIndexDataset.server,
   );
 
   const DataSet({
@@ -35,6 +41,7 @@ enum DataSet {
 
   static DataSet fromWorkModeValue(String value) => switch (value) {
     'express' => DataSet.express,
+    'server' => DataSet.server,
     _ => DataSet.normal,
   };
 }

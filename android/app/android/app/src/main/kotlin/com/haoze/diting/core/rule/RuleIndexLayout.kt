@@ -5,10 +5,12 @@ import java.io.File
 internal object RuleIndexLayout {
     private val normalPaths: RuleIndexPaths by lazy { RuleIndexNative.paths(RuleDataset.NORMAL) }
     private val expressPaths: RuleIndexPaths by lazy { RuleIndexNative.paths(RuleDataset.EXPRESS) }
+    private val serverPaths: RuleIndexPaths by lazy { RuleIndexNative.paths(RuleDataset.SERVER) }
 
     private fun paths(dataset: RuleDataset): RuleIndexPaths = when (dataset) {
         RuleDataset.NORMAL -> normalPaths
         RuleDataset.EXPRESS -> expressPaths
+        RuleDataset.SERVER -> serverPaths
     }
 
     fun rootDirectory(filesDir: File, dataset: RuleDataset = RuleDataset.NORMAL): File =

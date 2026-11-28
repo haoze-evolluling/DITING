@@ -20,6 +20,7 @@ pub fn layout(dataset: u8) -> Option<Layout> {
     let root = match dataset {
         0 => "rule-index",
         1 => "rule-index/express",
+        2 => "rule-index/server",
         _ => return None,
     };
     Some(Layout {
@@ -41,6 +42,8 @@ mod tests {
     fn each_dataset_gets_its_own_root() {
         assert_eq!(layout(0).unwrap().root, "rule-index");
         assert_eq!(layout(1).unwrap().root, "rule-index/express");
+        assert_eq!(layout(2).unwrap().root, "rule-index/server");
+        assert_eq!(layout(3), None);
     }
 
     #[test]
@@ -75,7 +78,7 @@ mod tests {
 
     #[test]
     fn an_unknown_dataset_is_not_a_layout() {
-        assert_eq!(layout(2), None);
+        assert_eq!(layout(3), None);
         assert_eq!(layout(255), None);
     }
 }

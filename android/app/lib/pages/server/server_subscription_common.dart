@@ -46,6 +46,7 @@ String serverDataSourceLabel(DataSet dataSet, AppL10n l10n) =>
     switch (dataSet) {
       DataSet.normal => l10n.workModeNormalTitle,
       DataSet.express => l10n.workModeExpressTitle,
+      DataSet.server => l10n.workModeServerTitle,
     };
 
 String serverListKindLabel(ServerFilterList list, AppL10n l10n) {

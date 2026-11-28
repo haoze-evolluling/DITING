@@ -3,6 +3,7 @@ part of 'subscription_edit_page.dart';
 String _modeLabel(DataSet dataSet, AppL10n l10n) => switch (dataSet) {
   DataSet.normal => l10n.workModeNormalTitle,
   DataSet.express => l10n.workModeExpressTitle,
+  DataSet.server => l10n.workModeServerTitle,
 };
 
 class _MethodPicker extends StatelessWidget {

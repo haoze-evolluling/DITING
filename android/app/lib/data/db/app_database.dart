@@ -101,7 +101,9 @@ class AppDatabase {
     int from,
   ) async {
     if (from >= 3) return;
-    if (kind == DatabaseKind.normalRules || kind == DatabaseKind.expressRules) {
+    if (kind == DatabaseKind.normalRules ||
+        kind == DatabaseKind.expressRules ||
+        kind == DatabaseKind.serverRules) {
       for (final name in const [
         'index_block_rule_pattern_important_appScope_appInverted_dnsType_isRegex',
         'index_allow_rule_pattern_important_appScope_appInverted_dnsType_isRegex',

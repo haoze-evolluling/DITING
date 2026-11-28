@@ -5,5 +5,7 @@ object StorageContract {
     const val NORMAL_LOGS = "diting_normal_logs_v2"
     const val EXPRESS_RULES = "diting_express_rules_v2"
     const val EXPRESS_LOGS = "diting_express_logs_v2"
+    const val SERVER_RULES = "diting_server_rules_v2"
+    const val SERVER_LOGS = "diting_server_logs_v2"
     const val GLOBAL = "diting_global_v2"
 }

@@ -29,6 +29,10 @@ class LegacySettings {
 
   static const expressRunningContainer = 'express_vpn_prefs';
 
+  static const serverContainer = 'diting_server_prefs';
+
+  static const serverRunningContainer = 'server_running_prefs';
+
   static const notificationContainer = 'notification_settings_prefs';
 
   static String defaultRunningSentence(AppL10n l10n) => l10n.taglineRunning;
