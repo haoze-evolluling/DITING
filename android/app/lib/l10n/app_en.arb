@@ -3023,7 +3023,7 @@
   "serverTabLogs": "Logs",
   "serverHubTitle": "Configuration",
   "serverHubDataPlane": "Resolution services",
-  "serverHubRules": "Rules & subscriptions",
+  "serverHubRules": "Rules & logs",
   "serverHubSystem": "System",
   "serverHubUpstreamSummary": "{mode} · cache {cache}",
   "@serverHubUpstreamSummary": {
@@ -3033,19 +3033,6 @@
       },
       "cache": {
         "type": "String"
-      }
-    }
-  },
-  "serverHubSubscriptions": "Subscriptions",
-  "serverHubSubscriptionsEmpty": "No subscriptions yet",
-  "serverHubSubscriptionsSummary": "{count} subscriptions · {failed} failing",
-  "@serverHubSubscriptionsSummary": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "failed": {
-        "type": "int"
       }
     }
   },
@@ -3083,9 +3070,9 @@
   },
   "serverUpstream": "Scheduling and cache",
   "serverUpstreamTitle": "Scheduling and cache",
-  "serverFilterTitle": "Filtering rules",
+  "serverFilterTitle": "Blocking rules",
   "serverCacheTitle": "Cache",
-  "serverQueryLogTitle": "Query logging",
+  "serverQueryLogTitle": "Query log",
   "serverSettingsTitle": "Server settings",
   "serverAppearance": "Appearance",
   "serverAppearanceHint": "Theme, accent color and interface style",
@@ -3194,9 +3181,9 @@
   "serverFilterEnabledBody": "Apply subscriptions and custom rules to LAN DNS queries",
   "serverFilterResponse": "Filter responses",
   "serverFilterResponseBody": "Also inspect domains in upstream answers",
-  "serverFilterState": "Filter status",
+  "serverFilterState": "Blocking settings",
   "serverFilterBlockMode": "Blocking method",
-  "serverFilterSource": "Rule sources",
+  "serverFilterSource": "Rule management",
   "serverFilterCustomCount": "{count} custom rules",
   "@serverFilterCustomCount": {
     "placeholders": {
@@ -3225,7 +3212,7 @@
   "serverCustomRulesContent": "Rule content",
   "serverCustomRulesHint": "One AdGuard or hosts rule per line",
   "serverCustomRulesNote": "Rules live in server-specific configuration and do not read the normal-mode rule database.",
-  "serverSubscriptions": "Subscriptions",
+  "serverSubscriptions": "Subscription management",
   "serverSubscriptionList": "Subscription sources",
   "serverSubscriptionEmpty": "No subscriptions",
   "serverSubscriptionAdd": "Add subscription",
@@ -3284,7 +3271,7 @@
   "serverCacheAdvancedSummary": "Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch",
   "serverQueryLogEnabled": "Record queries",
   "serverQueryLogContent": "Recorded data",
-  "serverQueryLogEnabledBody": "Keep recent queries for the management UI",
+  "serverQueryLogEnabledBody": "Keep recent queries for the log page",
   "serverQueryLogFile": "Write to file",
   "serverQueryLogFileBody": "Write daily JSONL files",
   "serverQueryLogClients": "Log clients",

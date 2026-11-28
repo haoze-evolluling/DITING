@@ -10115,7 +10115,7 @@ class AppL10nEn extends AppL10n {
   String get serverHubDataPlane => 'Resolution services';
 
   @override
-  String get serverHubRules => 'Rules & subscriptions';
+  String get serverHubRules => 'Rules & logs';
 
   @override
   String get serverHubSystem => 'System';
@@ -10123,17 +10123,6 @@ class AppL10nEn extends AppL10n {
   @override
   String serverHubUpstreamSummary(String mode, String cache) {
     return '$mode · cache $cache';
-  }
-
-  @override
-  String get serverHubSubscriptions => 'Subscriptions';
-
-  @override
-  String get serverHubSubscriptionsEmpty => 'No subscriptions yet';
-
-  @override
-  String serverHubSubscriptionsSummary(int count, int failed) {
-    return '$count subscriptions · $failed failing';
   }
 
   @override
@@ -10164,13 +10153,13 @@ class AppL10nEn extends AppL10n {
   String get serverUpstreamTitle => 'Scheduling and cache';
 
   @override
-  String get serverFilterTitle => 'Filtering rules';
+  String get serverFilterTitle => 'Blocking rules';
 
   @override
   String get serverCacheTitle => 'Cache';
 
   @override
-  String get serverQueryLogTitle => 'Query logging';
+  String get serverQueryLogTitle => 'Query log';
 
   @override
   String get serverSettingsTitle => 'Server settings';
@@ -10405,13 +10394,13 @@ class AppL10nEn extends AppL10n {
       'Also inspect domains in upstream answers';
 
   @override
-  String get serverFilterState => 'Filter status';
+  String get serverFilterState => 'Blocking settings';
 
   @override
   String get serverFilterBlockMode => 'Blocking method';
 
   @override
-  String get serverFilterSource => 'Rule sources';
+  String get serverFilterSource => 'Rule management';
 
   @override
   String serverFilterCustomCount(int count) {
@@ -10462,7 +10451,7 @@ class AppL10nEn extends AppL10n {
       'Rules live in server-specific configuration and do not read the normal-mode rule database.';
 
   @override
-  String get serverSubscriptions => 'Subscriptions';
+  String get serverSubscriptions => 'Subscription management';
 
   @override
   String get serverSubscriptionList => 'Subscription sources';
@@ -10607,7 +10596,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverQueryLogEnabledBody =>
-      'Keep recent queries for the management UI';
+      'Keep recent queries for the log page';
 
   @override
   String get serverQueryLogFile => 'Write to file';

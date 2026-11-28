@@ -9507,7 +9507,7 @@ class AppL10nZh extends AppL10n {
   String get serverHubDataPlane => '解析服务';
 
   @override
-  String get serverHubRules => '规则与订阅';
+  String get serverHubRules => '规则与日志';
 
   @override
   String get serverHubSystem => '系统';
@@ -9515,17 +9515,6 @@ class AppL10nZh extends AppL10n {
   @override
   String serverHubUpstreamSummary(String mode, String cache) {
     return '$mode · 缓存$cache';
-  }
-
-  @override
-  String get serverHubSubscriptions => '订阅管理';
-
-  @override
-  String get serverHubSubscriptionsEmpty => '尚未添加订阅';
-
-  @override
-  String serverHubSubscriptionsSummary(int count, int failed) {
-    return '$count 个订阅 · $failed 个异常';
   }
 
   @override
@@ -9556,13 +9545,13 @@ class AppL10nZh extends AppL10n {
   String get serverUpstreamTitle => '调度与缓存';
 
   @override
-  String get serverFilterTitle => '过滤规则';
+  String get serverFilterTitle => '拦截规则';
 
   @override
   String get serverCacheTitle => '缓存';
 
   @override
-  String get serverQueryLogTitle => '日志记录';
+  String get serverQueryLogTitle => '查询日志';
 
   @override
   String get serverSettingsTitle => '服务器设置';
@@ -9787,13 +9776,13 @@ class AppL10nZh extends AppL10n {
   String get serverFilterResponseBody => '同时检查上游应答中的域名';
 
   @override
-  String get serverFilterState => '过滤状态';
+  String get serverFilterState => '拦截设置';
 
   @override
   String get serverFilterBlockMode => '拦截方式';
 
   @override
-  String get serverFilterSource => '规则来源';
+  String get serverFilterSource => '规则管理';
 
   @override
   String serverFilterCustomCount(int count) {
@@ -9842,7 +9831,7 @@ class AppL10nZh extends AppL10n {
   String get serverCustomRulesNote => '规则保存在服务器独立配置中，不读取普通模式规则库。';
 
   @override
-  String get serverSubscriptions => '订阅列表';
+  String get serverSubscriptions => '订阅管理';
 
   @override
   String get serverSubscriptionList => '订阅来源';
@@ -9982,7 +9971,7 @@ class AppL10nZh extends AppL10n {
   String get serverQueryLogContent => '记录内容';
 
   @override
-  String get serverQueryLogEnabledBody => '保存最近查询供管理端查看';
+  String get serverQueryLogEnabledBody => '保存最近查询供日志页查看';
 
   @override
   String get serverQueryLogFile => '写入文件';

@@ -5853,12 +5853,6 @@ abstract class AppL10n {
 
   String serverHubUpstreamSummary(String mode, String cache);
 
-  String get serverHubSubscriptions;
-
-  String get serverHubSubscriptionsEmpty;
-
-  String serverHubSubscriptionsSummary(int count, int failed);
-
   String serverHubFilterSummary(String state, int count);
 
   String serverHubLogSummary(int days, String file);

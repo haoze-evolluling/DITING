@@ -5507,7 +5507,7 @@
   "serverTabLogs": "日志",
   "serverHubTitle": "配置中心",
   "serverHubDataPlane": "解析服务",
-  "serverHubRules": "规则与订阅",
+  "serverHubRules": "规则与日志",
   "serverHubSystem": "系统",
   "serverHubUpstreamSummary": "{mode} · 缓存{cache}",
   "@serverHubUpstreamSummary": {
@@ -5517,19 +5517,6 @@
       },
       "cache": {
         "type": "String"
-      }
-    }
-  },
-  "serverHubSubscriptions": "订阅管理",
-  "serverHubSubscriptionsEmpty": "尚未添加订阅",
-  "serverHubSubscriptionsSummary": "{count} 个订阅 · {failed} 个异常",
-  "@serverHubSubscriptionsSummary": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "failed": {
-        "type": "int"
       }
     }
   },
@@ -5567,9 +5554,9 @@
   },
   "serverUpstream": "调度与缓存",
   "serverUpstreamTitle": "调度与缓存",
-  "serverFilterTitle": "过滤规则",
+  "serverFilterTitle": "拦截规则",
   "serverCacheTitle": "缓存",
-  "serverQueryLogTitle": "日志记录",
+  "serverQueryLogTitle": "查询日志",
   "serverSettingsTitle": "服务器设置",
   "serverAppearance": "外观",
   "serverAppearanceHint": "主题、强调色与界面样式",
@@ -5678,9 +5665,9 @@
   "serverFilterEnabledBody": "对内网 DNS 查询应用订阅与自定义规则",
   "serverFilterResponse": "过滤响应",
   "serverFilterResponseBody": "同时检查上游应答中的域名",
-  "serverFilterState": "过滤状态",
+  "serverFilterState": "拦截设置",
   "serverFilterBlockMode": "拦截方式",
-  "serverFilterSource": "规则来源",
+  "serverFilterSource": "规则管理",
   "serverFilterCustomCount": "{count} 条自定义规则",
   "@serverFilterCustomCount": {
     "placeholders": {
@@ -5709,7 +5696,7 @@
   "serverCustomRulesContent": "规则内容",
   "serverCustomRulesHint": "每行一条 AdGuard 或 hosts 规则",
   "serverCustomRulesNote": "规则保存在服务器独立配置中，不读取普通模式规则库。",
-  "serverSubscriptions": "订阅列表",
+  "serverSubscriptions": "订阅管理",
   "serverSubscriptionList": "订阅来源",
   "serverSubscriptionEmpty": "暂无订阅",
   "serverSubscriptionAdd": "添加订阅",
@@ -5768,7 +5755,7 @@
   "serverCacheAdvancedSummary": "最小 TTL、过期回退、否定缓存、乐观缓存与预取",
   "serverQueryLogEnabled": "记录查询",
   "serverQueryLogContent": "记录内容",
-  "serverQueryLogEnabledBody": "保存最近查询供管理端查看",
+  "serverQueryLogEnabledBody": "保存最近查询供日志页查看",
   "serverQueryLogFile": "写入文件",
   "serverQueryLogFileBody": "按日写入 JSONL 文件",
   "serverQueryLogClients": "记录客户端",

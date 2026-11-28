@@ -93,25 +93,8 @@ class ServerHubPage extends ConsumerWidget {
                         : context.l10n.commonDisabled,
                     filter.lists.length,
                   ),
-                  glyph: TablerIcons.list_details,
+                  glyph: TablerIcons.shield,
                   onTap: () => context.push(ServerRoutes.filter),
-                ),
-                FeatureHubCardData(
-                  title: context.l10n.serverHubSubscriptions,
-                  description: filter.lists.isEmpty
-                      ? context.l10n.serverHubSubscriptionsEmpty
-                      : context.l10n.serverHubSubscriptionsSummary(
-                          filter.lists.length,
-                          filter.lists.where((list) => list.hasError).length,
-                        ),
-                  glyph: TablerIcons.cloud_network,
-                  onTap: () => context.push(ServerRoutes.filterSubscriptions),
-                ),
-                FeatureHubCardData(
-                  title: context.l10n.serverFilterTestTitle,
-                  description: context.l10n.serverFilterTestEntryBody,
-                  glyph: TablerIcons.target,
-                  onTap: () => context.push(ServerRoutes.filterTest),
                 ),
                 FeatureHubCardData(
                   title: context.l10n.serverQueryLogTitle,

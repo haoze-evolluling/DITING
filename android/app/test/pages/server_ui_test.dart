@@ -41,27 +41,27 @@ void main() {
       .ancestor(of: find.text(title), matching: find.byType(AnimatedScale))
       .first;
 
-  testWidgets('配置中心按解析服务、规则与订阅、系统分组并保持双列卡片宽度', (tester) async {
+  testWidgets('配置中心按解析服务、规则与日志、系统分组并保持双列卡片宽度', (tester) async {
     await pumpServer(tester, ServerRoutes.hub);
 
     expect(find.text('配置中心'), findsOneWidget);
     expect(find.text('解析服务'), findsOneWidget);
-    expect(find.text('规则与订阅'), findsOneWidget);
+    expect(find.text('规则与日志'), findsOneWidget);
     expect(find.text('系统'), findsOneWidget);
     for (final title in [
       '服务商',
       '调度与缓存',
       'Bootstrap 摘要',
       '服务器设置',
-      '过滤规则',
-      '订阅管理',
-      '规则测试',
-      '日志记录',
+      '拦截规则',
+      '查询日志',
       '外观',
       '关于',
     ]) {
       expect(find.text(title), findsOneWidget, reason: '缺少配置入口 $title');
     }
+    expect(find.text('订阅管理'), findsNothing);
+    expect(find.text('规则测试'), findsNothing);
     expect(find.text('2 个上游'), findsOneWidget);
     expect(find.text('3 个服务器'), findsOneWidget);
     expect(find.textContaining('保留 7 天'), findsOneWidget);
@@ -77,18 +77,13 @@ void main() {
     expect(settings.dx, closeTo(upstream.dx, 0.5));
     expect(settings.dy, closeTo(bootstrap.dy, 0.5));
 
-    final filter = tester.getTopLeft(card('过滤规则'));
-    final subscriptions = tester.getTopLeft(card('订阅管理'));
-    final ruleTest = tester.getTopLeft(card('规则测试'));
-    final log = tester.getTopLeft(card('日志记录'));
-    expect(subscriptions.dx, greaterThan(filter.dx));
-    expect(subscriptions.dy, closeTo(filter.dy, 0.5));
-    expect(ruleTest.dx, closeTo(filter.dx, 0.5));
-    expect(ruleTest.dy, greaterThan(filter.dy));
-    expect(log.dx, closeTo(subscriptions.dx, 0.5));
-    expect(log.dy, closeTo(ruleTest.dy, 0.5));
+    final rules = tester.getRect(card('拦截规则'));
+    final log = tester.getRect(card('查询日志'));
+    expect(log.left, greaterThan(rules.left));
+    expect(log.top, closeTo(rules.top, 0.5));
+    expect(log.width, closeTo(rules.width, 0.5));
     expect(
-      tester.getRect(card('日志记录')).width,
+      rules.width,
       closeTo(tester.getRect(card('服务商')).width, 0.5),
     );
 
@@ -183,7 +178,7 @@ void main() {
     expect(find.text('保存更改？'), findsOneWidget);
     await tester.tap(find.text('不保存'));
     await tester.pumpAndSettle();
-    expect(find.text('过滤状态'), findsOneWidget);
+    expect(find.text('拦截设置'), findsOneWidget);
   });
 
   testWidgets('高级选项二级页面可切换预取', (tester) async {
