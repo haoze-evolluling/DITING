@@ -28,7 +28,11 @@ class BootAutoStartReceiver : BroadcastReceiver() {
             val pendingResult: BroadcastReceiver.PendingResult = goAsync()
             Thread {
                 try {
-                    ServerDnsService.start(appContext, ServerPreference.preferRoot(appContext))
+                    ServerDnsService.start(
+                        appContext,
+                        ServerPreference.preferRoot(appContext),
+                        ServerPreference.lastDnsConfig(appContext),
+                    )
                 } catch (error: Throwable) {
                     Log.w(TAG, "服务器模式开机自启动失败", error)
                 } finally {

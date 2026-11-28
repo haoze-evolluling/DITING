@@ -151,20 +151,23 @@ object ServerProcessState {
     }
 }
 
+/** 旧服务器模式的数据目录，仅用于一次性迁移。 */
 object ServerPaths {
     private const val DIR = "server"
 
     fun dataDir(context: Context): File = File(context.filesDir, DIR)
     fun configFile(context: Context): File = File(dataDir(context), "config.json")
-    fun socketFile(context: Context): File = File(dataDir(context), "control.sock")
     fun logFile(context: Context): File = File(dataDir(context), "server.log")
 }
 
 object ServerPreference {
     private const val PREFS = "server_mode_prefs"
+    private const val RUNNING_PREFS = "server_running_prefs"
     private const val KEY_PREFER_ROOT = "prefer_root"
     private const val KEY_AUTO_START = "auto_start"
     private const val KEY_AUTO_RESTART = "auto_restart"
+    private const val KEY_LAST_DNS_CONFIG = "last_dns_config"
+    private const val KEY_SERVER_RUNNING = "server_running"
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -190,5 +193,22 @@ object ServerPreference {
 
     fun setAutoRestart(context: Context, value: Boolean) {
         prefs(context).edit().putBoolean(KEY_AUTO_RESTART, value).apply()
+    }
+
+    /** 最近一次应用的 DNS 配置文档，供开机自启与进程内重启复用。 */
+    fun lastDnsConfig(context: Context): String? =
+        prefs(context).getString(KEY_LAST_DNS_CONFIG, null)
+
+    fun setLastDnsConfig(context: Context, value: String) {
+        prefs(context).edit().putString(KEY_LAST_DNS_CONFIG, value).apply()
+    }
+
+    fun serverRunning(context: Context): Boolean =
+        context.getSharedPreferences(RUNNING_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_SERVER_RUNNING, false)
+
+    fun setServerRunning(context: Context, value: Boolean) {
+        context.getSharedPreferences(RUNNING_PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_SERVER_RUNNING, value).apply()
     }
 }

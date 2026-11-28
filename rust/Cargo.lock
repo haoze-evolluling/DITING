@@ -1030,7 +1030,6 @@ version = "0.1.0"
 dependencies = [
  "diting-engine",
  "diting-kernels",
- "diting-server",
 ]
 
 [[package]]
@@ -1178,29 +1177,6 @@ name = "diting-schedule-core"
 version = "0.1.0"
 dependencies = [
  "serde_json",
-]
-
-[[package]]
-name = "diting-server"
-version = "0.1.0"
-dependencies = [
- "diting-desktop-api",
- "diting-desktop-app",
- "diting-desktop-core",
- "diting-desktop-dns",
- "diting-desktop-sqlite",
- "diting-dns-wire",
- "libc",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "diting-server-launcher"
-version = "0.1.0"
-dependencies = [
- "libc",
 ]
 
 [[package]]

@@ -72,7 +72,13 @@ object DataPlaneControl {
         val mode = workMode(context)
         if (mode == RETIRED_WORK_MODE_SERVER) return Result.NeedsApp
         if (mode == WORK_MODE_SERVER) {
-            return if (ServerDnsService.start(context, ServerPreference.preferRoot(context))) {
+            return if (
+                ServerDnsService.start(
+                    context,
+                    ServerPreference.preferRoot(context),
+                    null,
+                )
+            ) {
                 Result.Started
             } else {
                 Result.NeedsApp

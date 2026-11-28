@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 """Cross-compile the Rust artifacts for Android and drop them into the Flutter app's jniLibs.
 
-Two files are built per ABI:
+One library is built per ABI:
 
-* `libditing_native.so` — one fat cdylib containing the tunnel engine's JNI facade, every
-  Flutter/Kotlin UI kernel and the LAN server runtime. Sharing one LTO unit removes the duplicate
-  DNS/TLS/HTTP stack that was previously linked into the engine and server artifacts separately.
-* `libditing_server.so` — a tiny executable launcher, packaged with a `.so` suffix so Android
-  extracts it to `nativeLibraryDir`. It loads `libditing_native.so` and calls the exported
-  `diting_server_main`, keeping server mode in its own process for root bind and privilege drop.
+* `libditing_native.so` — one fat cdylib containing the tunnel engine's JNI facade and every
+  Flutter/Kotlin UI kernel. Sharing one LTO unit removes the duplicate DNS/TLS/HTTP stack that was
+  previously linked into separate artifacts.
 
 The merged library also carries the tunnel engine behind express and normal modes: lifecycle and
 JNI facade, the DNS pipeline with its four upstream transports, TUN + transparent netstack, the
@@ -112,12 +109,9 @@ RUST_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = RUST_DIR.parent
 JNI_LIBS_DIR = PROJECT_ROOT / "android" / "app" / "android" / "app" / "src" / "main" / "jniLibs"
 NATIVE_LIBRARY = "libditing_native.so"
-LAUNCHER_BINARY = "diting-server-launcher"
-SERVER_LIBRARY = "libditing_server.so"
 ANDROID_API = 28
 REQUIRED_NATIVE_EXPORTS = (
     "diting_native_abi_version",
-    "diting_server_main",
     "Java_com_haoze_diting_engine_Engine_nativeNew",
     "Java_com_haoze_diting_log_LogNative_bootstrapRow",
     "diting_agent_core_abi_version",
@@ -250,8 +244,6 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
         "build",
         "-p",
         "diting-native",
-        "-p",
-        "diting-server-launcher",
         "--manifest-path",
         str(RUST_DIR / "Cargo.toml"),
         "--target",
@@ -275,13 +267,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
     log(f"{native_artifact.name} -> {destination / NATIVE_LIBRARY}")
     if not verify_exports(destination / NATIVE_LIBRARY, ndk):
         return None
-    launcher_artifact = RUST_DIR / "target" / triple / profile / LAUNCHER_BINARY
-    if not launcher_artifact.is_file():
-        log(f"构建产物缺失: {launcher_artifact}")
-        return None
-    shutil.copy2(launcher_artifact, destination / SERVER_LIBRARY)
-    log(f"{launcher_artifact.name} -> {destination / SERVER_LIBRARY}")
-    for stale_name in ("libditing_engine.so", "libditing_kernels.so"):
+    for stale_name in ("libditing_engine.so", "libditing_kernels.so", "libditing_server.so"):
         stale = destination / stale_name
         if stale.exists():
             stale.unlink()
@@ -295,7 +281,7 @@ def build(abi: str, ndk: Path, profile: str) -> Path | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="为 Android 构建合并原生库与服务器模式启动器（2 个 .so）"
+        description="为 Android 构建合并原生库"
     )
     parser.add_argument(
         "--abi",

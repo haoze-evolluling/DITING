@@ -139,10 +139,7 @@ androidComponents {
 
         val capitalized = variant.name.replaceFirstChar { it.uppercase() }
         val expected = abisToShip - excludedJniAbis(variant.name).toSet()
-        val requiredLibs = listOf(
-            "libditing_native.so",
-            "libditing_server.so",
-        )
+        val requiredLibs = listOf("libditing_native.so")
         val checkNativeLibs = tasks.register("checkNativeLibs${capitalized}") {
             val libsDir = layout.projectDirectory.dir("src/main/jniLibs")
             val abis = expected

@@ -30,10 +30,17 @@ class Engine : TunnelEngine, AutoCloseable {
     override fun isRunning(): Boolean = nativeIsRunning(handle)
 
 
+    fun startStandalone(port: Int) {
+        val error = nativeStartStandalone(handle, port.toLong())
+        if (error != null) throw IllegalStateException(error)
+    }
+
     fun startStandaloneLoopback(port: Int) {
         val error = nativeStartStandaloneLoopback(handle, port.toLong())
         if (error != null) throw IllegalStateException(error)
     }
+
+    fun stopStandalone() = nativeStopStandalone(handle)
 
     override fun close() {
         if (released.compareAndSet(false, true)) {

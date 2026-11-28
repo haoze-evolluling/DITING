@@ -26,6 +26,8 @@
     <string name="server_start_timeout">Server startup timed out</string>
     <string name="server_start_failed">Server failed to start</string>
     <string name="server_exited">Server process exited unexpectedly (%1$d)</string>
+    <string name="server_engine_exited">DNS service stopped unexpectedly</string>
+    <string name="server_dns_config_missing">Missing DNS configuration; reopen server mode</string>
     <string name="root_dns_channel_name">Root DNS takeover</string>
     <string name="root_dns_channel_description">No-VPN root DNS takeover status for normal mode</string>
     <string name="root_dns_notification_title">Diting · Root DNS takeover</string>

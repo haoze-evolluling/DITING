@@ -2,7 +2,7 @@
 name = "diting-native"
 version = "0.1.0"
 edition = "2021"
-description = "One Android cdylib: tunnel engine, UI kernels and LAN server runtime in one LTO unit"
+description = "One Android cdylib: tunnel engine and UI kernels in one LTO unit"
 publish = false
 
 [lib]
@@ -12,4 +12,3 @@ crate-type = ["cdylib"]
 [dependencies]
 diting-engine = { path = "../diting-engine" }
 diting-kernels = { path = "../diting-kernels" }
-diting-server = { path = "../diting-server" }

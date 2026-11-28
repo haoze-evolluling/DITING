@@ -29,6 +29,8 @@
     <string name="server_start_timeout">服务器启动超时</string>
     <string name="server_start_failed">服务器启动失败</string>
     <string name="server_exited">服务器进程异常退出（%1$d）</string>
+    <string name="server_engine_exited">DNS 服务意外停止</string>
+    <string name="server_dns_config_missing">缺少 DNS 配置，请重新打开服务器模式</string>
     <string name="root_dns_channel_name">Root DNS 接管</string>
     <string name="root_dns_channel_description">普通模式的免 VPN Root DNS 接管状态</string>
     <string name="root_dns_notification_title">谛听 · Root DNS 接管</string>

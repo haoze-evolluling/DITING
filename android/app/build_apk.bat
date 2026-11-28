@@ -15,8 +15,7 @@ title DITING Flutter APK Build Tool
 ::   [5] Clean                  - remove build cache and outputs
 ::
 :: Rust artifact ABI per mode: all modes ship the merged libditing_native.so
-:: and the tiny libditing_server.so launcher built by
-:: python rust\build_android.py, which this script runs before every build:
+:: built by python rust\build_android.py, which this script runs before every build:
 :: [1]/[2] build both ABIs (ARM devices AND the x86_64 emulator), [3] arm64 only,
 :: [4] x86_64 only. Installing [3]/[4] on the wrong device fails with
 :: "app not installed / package incompatible".
@@ -177,7 +176,7 @@ echo [INFO] APK: %FOUND_APK%
 for %%F in ("%FOUND_APK%") do echo [INFO] Size: %%~zF bytes
 echo [INFO] Target scope: %DEVICE_SCOPE%
 echo [INFO] ABIs in package:
-python -c "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);L=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/')});N=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('libditing_native.so')});S=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('libditing_server.so')});print('       Native lib ABIs: '+', '.join(L));print('       Merged native ABI: '+(', '.join(N) if N else 'MISSING'));print('       Server launcher ABI: '+(', '.join(S) if S else 'MISSING'));print('       .so count: '+str(len([n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')])))" "%FOUND_APK%" 2>nul
+python -c "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);L=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/')});N=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('libditing_native.so')});print('       Native lib ABIs: '+', '.join(L));print('       Merged native ABI: '+(', '.join(N) if N else 'MISSING'));print('       .so count: '+str(len([n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')])))" "%FOUND_APK%" 2>nul
 rem Versioned archive from copy*ApkWithVersion in android/app/build.gradle.kts.
 set "VERSIONED_APK=%CD%\build\app\outputs\apk\versioned\%BUILD_TYPE%\DITING-%BUILD_TYPE%-v%APP_VERSION_NAME%.apk"
 if exist "!VERSIONED_APK!" echo [INFO] Versioned APK: !VERSIONED_APK!
