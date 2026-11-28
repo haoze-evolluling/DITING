@@ -139,12 +139,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(client.queries.last.domain, 'ads.example.com');
 
-    await tester.tap(find.byTooltip('筛选客户端'));
+    await tester.tap(find.byTooltip('筛选'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('tablet').last);
-    await tester.pumpAndSettle();
-    expect(client.queries.last.client, 'tablet');
-
+    final sheet = find.byType(CommonScaffold).last;
+    expect(
+      find.descendant(of: sheet, matching: find.text('筛选')),
+      findsOneWidget,
+      reason: '筛选弹层应已打开',
+    );
+    // 状态筛选在弹层顶部，先于滚动操作点击。
     await tester.tap(
       find.descendant(
         of: find.byType(SegmentedControl<String>),
@@ -153,6 +156,21 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(client.queries.last.status, 'blocked');
+
+    // 客户端分组在弹层下方，滚动后点击，验证两项筛选互不干扰。
+    final sheetScrollable = find
+        .descendant(of: sheet, matching: find.byType(Scrollable))
+        .first;
+    await tester.scrollUntilVisible(
+      find.text('tablet'),
+      200,
+      scrollable: sheetScrollable,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('tablet').last);
+    await tester.pumpAndSettle();
+    expect(client.queries.last.client, 'tablet');
+    expect(client.queries.last.status, 'blocked', reason: '客户端筛选不应清空状态筛选');
   });
 
   testWidgets('自定义规则保存到服务器配置', (tester) async {

@@ -112,4 +112,13 @@ enabled`。开关打开后，第一次跑测试时 hook 会按 `android/app/pubs
 （GitHub release 走 `gh-proxy.com` 镜像）下载 `sqlite3.dll` / `libsqlite3.so` 到
 `.dart_tool/hooks_runner/shared/sqlite3/build/`，之后复用；删掉 `.dart_tool/` 会重新下载。
 
-本机验收（2026-11，`cd android/app && flutter test`）：682 通过、4 跳过。
+Dart 用例还会通过 `dart:ffi` 直接加载宿主端 Rust 内核库（Windows 为 `rust/target/debug/*.dll`，
+Linux 为 `lib*.so`），未构建时大量用例报 `xxx core unavailable`。首次跑测试前先构建一次：
+
+```bash
+cd rust && cargo build
+```
+
+已有 `rust/target/` 产物时可跳过。
+
+本机验收（2026-11，`cd android/app && flutter test`）：694 通过、4 跳过。
