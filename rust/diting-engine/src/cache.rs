@@ -18,6 +18,12 @@ impl DnsCache {
         self.cache.update_policy(config);
     }
 
+    pub fn set_capacity(&self, max_entries: usize) {
+        if max_entries > 0 {
+            self.cache.set_capacity(max_entries);
+        }
+    }
+
     pub fn policy(&self) -> Config {
         self.cache.config()
     }

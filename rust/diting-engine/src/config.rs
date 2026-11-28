@@ -48,9 +48,17 @@ pub struct CacheJson {
     #[serde(default)]
     pub enabled: bool,
     #[serde(default)]
+    pub mode: String,
+    #[serde(default)]
     pub ttl_scale_percent: i64,
     #[serde(default)]
     pub max_ttl_seconds: i64,
+    #[serde(default)]
+    pub fixed_ttl_seconds: i64,
+    #[serde(default)]
+    pub min_ttl_enabled: bool,
+    #[serde(default)]
+    pub min_ttl_seconds: i64,
     #[serde(default)]
     pub stale_fallback_enabled: bool,
     #[serde(default)]
@@ -59,6 +67,8 @@ pub struct CacheJson {
     pub negative_ttl_enabled: bool,
     #[serde(default)]
     pub negative_ttl_seconds: i64,
+    #[serde(default)]
+    pub max_entries: i64,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -184,6 +194,7 @@ pub struct DnsConfig {
     pub block_response: u32,
     pub dynamic_response: BlockConfig,
     pub cache: CacheConfig,
+    pub cache_max_entries: usize,
     pub bootstrap: BootstrapJson,
     pub privacy: PrivacyPolicy,
     pub dns64: bool,
@@ -294,6 +305,7 @@ impl DnsConfig {
                     .saturating_mul(1_000_000_000),
             },
             cache: cache_config(&document.cache),
+            cache_max_entries: document.cache.max_entries.max(0) as usize,
             bootstrap: document.bootstrap.clone(),
             privacy: privacy_policy(&document.privacy),
             dns64: document.dns64.enabled,
@@ -363,14 +375,22 @@ fn cache_config(document: &CacheJson) -> CacheConfig {
     } else {
         MAX_TTL_SECONDS
     };
+    // 隧道配置（普通/简洁模式）不写 `mode`，历来按 TTL 缩放处理；服务器模式会显式给出。
+    let mode = match document.mode.trim().to_ascii_lowercase().as_str() {
+        "" => TtlMode::Scale,
+        "fixed" | "fixed_ttl" => TtlMode::FixedTtl,
+        "follow_dns_ttl" => TtlMode::FollowDnsTtl,
+        "scale" | "scale_ttl" => TtlMode::Scale,
+        _ => TtlMode::LimitMaxTtl,
+    };
     CacheConfig {
         enabled: document.enabled,
-        mode: TtlMode::Scale,
+        mode,
         ttl_scale_percent: percent,
         max_ttl_seconds,
-        fixed_ttl_seconds: 0,
-        min_ttl_enabled: false,
-        min_ttl_seconds: 0,
+        fixed_ttl_seconds: document.fixed_ttl_seconds,
+        min_ttl_enabled: document.min_ttl_enabled,
+        min_ttl_seconds: document.min_ttl_seconds,
         stale_fallback_enabled: document.stale_fallback_enabled,
         stale_fallback_seconds: document.stale_fallback_seconds,
         negative_ttl_enabled: document.negative_ttl_enabled,

@@ -13,6 +13,7 @@ impl Engine {
         let config = DnsConfig::from_json(payload)?;
 
         self.cache.apply_policy(config.cache.clone());
+        self.cache.set_capacity(config.cache_max_entries);
         self.publish_resolver(&config);
         self.block_response
             .store(config.block_response, Ordering::Release);
