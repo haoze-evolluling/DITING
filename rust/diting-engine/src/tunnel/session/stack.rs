@@ -178,6 +178,7 @@ fn handle_event(
             flows.remove(&key);
             writes.forget(&key);
         }
+        Event::AbortAll => abort_all_flows(flows, udp_relays, writes, net),
         Event::Datagram {
             local,
             peer,
@@ -197,4 +198,28 @@ fn handle_event(
         }
     }
     let _ = engine;
+}
+
+/// 网络切换：旧链路上的 socket 已必然失效，全部下线。
+///
+/// TCP 只调用 `abort()` 而不立刻移除 socket——下一次 `poll` 会按 smoltcp 的
+/// CLOSED 分支给客户端补一个 RST，应用能马上感知断线并重连；随后 `collect_tcp`
+/// 才会把 socket 摘掉。relay 任务通过 cancel 通道退出，旧的上游 socket 随即关闭。
+fn abort_all_flows(
+    flows: &mut HashMap<TcpKey, Flow>,
+    udp_relays: &mut UdpRelays,
+    writes: &mut WriteBacklog,
+    net: &mut Netstack,
+) {
+    for (_, flow) in flows.drain() {
+        if let Some(cancel) = flow.cancel {
+            let _ = cancel.send(true);
+        }
+        // `flow.tx` 随 `flow` 一起丢弃，接收端据此退出。
+    }
+    net.abort_all_tcp();
+    // 替换整个积压表，旧条目里的信用票据随 `Drop` 归还。
+    *writes = WriteBacklog::default();
+    // 清空 UDP 中继：丢弃发送端即让 relay 任务退出。
+    udp_relays.clear();
 }

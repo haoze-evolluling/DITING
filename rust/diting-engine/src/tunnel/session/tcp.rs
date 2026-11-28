@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use tokio::sync::{mpsc, Semaphore};
+use tokio::sync::{mpsc, watch, Semaphore};
 use tokio::task::JoinSet;
 
 use crate::attribution::PROTOCOL_TCP;
@@ -62,7 +62,14 @@ pub(super) fn open_tcp_flow(
                     task_context,
                 ),
             );
-            flows.insert(key, Flow { tx, context });
+            flows.insert(
+                key,
+                Flow {
+                    tx,
+                    context,
+                    cancel: None,
+                },
+            );
         }
         FlowAction::Intercept => {
             let (tx, rx) = mpsc::channel(FLOW_CHANNEL);
@@ -81,7 +88,14 @@ pub(super) fn open_tcp_flow(
                     rx,
                 ),
             );
-            flows.insert(key, Flow { tx, context });
+            flows.insert(
+                key,
+                Flow {
+                    tx,
+                    context,
+                    cancel: None,
+                },
+            );
         }
         FlowAction::Relay => {
             let (tx, rx) = mpsc::channel(FLOW_CHANNEL);
@@ -90,6 +104,8 @@ pub(super) fn open_tcp_flow(
             let credit = Arc::new(Semaphore::new(MAX_PENDING_WRITE));
             let upload = Arc::new(Semaphore::new(relay::UPLOAD_WINDOW));
             net.set_upload_gate(&key, Arc::clone(&upload));
+            // 网络切换时用这条通道让两个方向的转发立刻退出并关闭上游 socket。
+            let (cancel_tx, cancel_rx) = watch::channel(false);
             spawn_flow(
                 engine,
                 flow_tasks,
@@ -102,9 +118,17 @@ pub(super) fn open_tcp_flow(
                     rx,
                     Arc::clone(&credit),
                     Some(upload),
+                    cancel_rx,
                 ),
             );
-            flows.insert(key, Flow { tx, context });
+            flows.insert(
+                key,
+                Flow {
+                    tx,
+                    context,
+                    cancel: Some(cancel_tx),
+                },
+            );
         }
         FlowAction::Blocked => {
             counters.blocked_flows.fetch_add(1, Ordering::Relaxed);

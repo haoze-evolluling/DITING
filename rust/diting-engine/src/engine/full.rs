@@ -81,6 +81,17 @@ impl Engine {
         self.stop_traffic_ticker();
     }
 
+    /// 网络切换后立即下线旧链路上的所有数据面连接。
+    ///
+    /// 引擎持有的上游 socket 在切换后不会收到 RST，`write` 会一直挂起；这里主动
+    /// 中止所有 TCP/UDP 流，应用会收到 RST 并在新链路上重新建连。
+    pub fn reset_data_plane(&self) {
+        let slot = self.full.lock().unwrap_or_else(|error| error.into_inner());
+        if let Some(session) = slot.as_ref() {
+            session.abort_all();
+        }
+    }
+
     pub fn is_full_running(&self) -> bool {
         self.full
             .lock()

@@ -84,6 +84,19 @@ impl Netstack {
         }
     }
 
+    /// 中止所有 TCP 流（网络切换时旧链路上的连接已必然失效）。
+    ///
+    /// 这里只调用 `abort()` 而**不**立即 `remove`：下一次 `poll` 会走 smoltcp 的
+    /// CLOSED 分支给客户端发 RST，随后 `collect_tcp` 再摘掉 socket。
+    pub fn abort_all_tcp(&mut self) {
+        let sockets = &mut self.sockets;
+        for flow in self.tcp.values_mut() {
+            if !flow.closed {
+                sockets.get_mut::<tcp::Socket>(flow.handle).abort();
+            }
+        }
+    }
+
     /// Relay 流的上行信用窗口；由会话线程在流打开时挂上。
     pub(crate) fn set_upload_gate(
         &mut self,

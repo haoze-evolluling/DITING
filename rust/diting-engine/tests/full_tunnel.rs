@@ -2,7 +2,7 @@ mod support;
 
 use std::net::SocketAddr;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
 use std::time::{Duration, Instant};
 
 use diting_engine::attribution::{AppUidResolver, UidResolver};
@@ -10,7 +10,7 @@ use diting_engine::engine::TrafficSink;
 use diting_engine::outbound::StatusSink;
 use diting_engine::tunnel::{MemoryLink, PacketLink};
 use diting_engine::Engine;
-use smoltcp::wire::IpEndpoint;
+use smoltcp::wire::{IpEndpoint, TcpControl};
 
 use support::tunnel::{wait_tcp, wait_udp, Client, WAIT};
 use support::wire;
@@ -477,6 +477,79 @@ fn the_stats_document_gains_and_loses_the_tun_object() {
     assert!(stats.contains("\"tun\":"), "{stats}");
     engine.stop_full();
     assert!(!engine.stats_json().contains("\"tun\""));
+}
+
+/// 一个只在本地监听、读到数据后保持连接的 TCP 服务端。
+/// 返回地址、收到首段数据、连接被关闭三个信号。
+fn spawn_hold_server() -> (SocketAddr, mpsc::Receiver<()>, mpsc::Receiver<()>) {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind the server");
+    let address = listener.local_addr().expect("addr");
+    let (accepted_tx, accepted_rx) = mpsc::channel();
+    let (closed_tx, closed_rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        for stream in listener.incoming() {
+            let Ok(mut stream) = stream else { continue };
+            let accepted = accepted_tx.clone();
+            let closed = closed_tx.clone();
+            std::thread::spawn(move || {
+                let mut buffer = [0u8; 64];
+                if matches!(std::io::Read::read(&mut stream, &mut buffer), Ok(n) if n > 0) {
+                    let _ = accepted.send(());
+                }
+                loop {
+                    match std::io::Read::read(&mut stream, &mut buffer) {
+                        Ok(0) => break,
+                        Ok(_) => {}
+                        Err(_) => break,
+                    }
+                }
+                let _ = closed.send(());
+            });
+        }
+    });
+    (address, accepted_rx, closed_rx)
+}
+
+#[test]
+fn a_network_reset_tears_down_established_flows() {
+    let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
+    let (server_addr, accepted, closed) = spawn_hold_server();
+    let engine = engine_for(upstream);
+    let link = Arc::new(MemoryLink::new(1400));
+    engine
+        .start_full_with_link(link.clone())
+        .expect("the session starts");
+
+    let target = match server_addr {
+        SocketAddr::V4(v4) => wire::endpoint_v4(v4.ip().octets(), v4.port()),
+        SocketAddr::V6(_) => unreachable!("the test server binds a v4 address"),
+    };
+    let mut client = Client::new(app(41000), target);
+    client.connect(&link);
+    link.feed(client.data(b"hello"));
+    accepted
+        .recv_timeout(WAIT)
+        .expect("the relay reaches the upstream with the first payload");
+
+    engine.reset_data_plane();
+
+    // 客户端应很快收到 RST：abort 后的下一次 poll 会主动发一个，应用重发的数据
+    // 打到已移除的 socket 也会触发 RST。
+    let local = client.local;
+    link.feed(client.data(b"retry"));
+    let rst = wait_tcp(&link, |segment| {
+        segment.control == TcpControl::Rst && segment.dst == local
+    });
+    assert!(
+        rst.is_some(),
+        "network reset must reset the client: {:?}",
+        engine.tun_document()
+    );
+    closed
+        .recv_timeout(WAIT)
+        .expect("the relay closes the old upstream socket");
+
+    engine.stop_full();
 }
 
 #[test]

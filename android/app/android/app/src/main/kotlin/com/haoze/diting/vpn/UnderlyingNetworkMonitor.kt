@@ -19,9 +19,11 @@ import com.haoze.diting.engine.Engine
 internal class UnderlyingNetworkMonitor(
     context: Context,
     private val service: VpnService,
-    private val onChanged: (State) -> Unit,
+    /** 物理网络或下发的 DNS 变化时回调；第二个参数表示物理网络本身是否切换。 */
+    private val onChanged: (State, Boolean) -> Unit,
 ) {
     data class State(
+        val networkKey: Long,
         val dnsServers: List<String>,
     )
 
@@ -72,16 +74,19 @@ internal class UnderlyingNetworkMonitor(
     private fun refresh() {
         val manager = connectivity ?: return
         val physical = physicalNetwork(manager) ?: return
-        if (physical != lastNetwork) {
+        val networkChanged = physical != lastNetwork
+        if (networkChanged) {
             runCatching { service.setUnderlyingNetworks(arrayOf(physical)) }
                 .onFailure { Log.w(TAG, "setUnderlyingNetworks failed", it) }
-            lastNetwork = physical
         }
+        // 拿不到链路属性时先不推进 lastNetwork，等下一次回调仍按“网络已切换”处理。
         val link = manager.getLinkProperties(physical) ?: return
-        val state = State(dnsServers = dnsServersOf(link))
+        lastNetwork = physical
+        // networkKey 参与相等判断：即使新老网络下发的 DNS 相同，切换本身也要通知引擎。
+        val state = State(physical.networkHandle, dnsServersOf(link))
         if (state == lastState) return
         lastState = state
-        onChanged(state)
+        onChanged(state, networkChanged)
     }
 
     @Suppress("DEPRECATION")
@@ -124,9 +129,10 @@ internal class UnderlyingNetworkMonitor(
 
 /**
  * 把当前物理网络状态写入引擎；网络切换后重置上游健康度与加密连接池，
- * 避免继续复用旧链路上的 DoT/DoH 连接。
+ * 并下线旧链路上的所有数据面连接，避免继续复用已失效的 socket。
  */
-internal fun UnderlyingNetworkMonitor.State.applyTo(engine: Engine) {
+internal fun UnderlyingNetworkMonitor.State.applyTo(engine: Engine, networkChanged: Boolean) {
     engine.setSystemDns(dnsServers.joinToString("\n"))
     engine.resetResolverHealth()
+    if (networkChanged) engine.resetDataPlane()
 }

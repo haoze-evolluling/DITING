@@ -168,6 +168,14 @@ class Engine : TunnelEngine, AutoCloseable {
         nativeResetResolverHealth(handle)
     }
 
+    /**
+     * 网络切换后立即中止旧链路上的所有数据面连接。
+     * 旧 socket 不会收到 RST，若不主动下线，应用请求会一直挂到自身超时。
+     */
+    fun resetDataPlane() {
+        nativeResetDataPlane(handle)
+    }
+
     fun startStackMitm(certDir: String): String = nativeStartStackMitm(handle, certDir) ?: ""
 
     fun stopStackMitm() = nativeStopStackMitm(handle)
@@ -265,6 +273,8 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeSetSystemDns(handle: Long, serversCsv: String)
 
     private external fun nativeResetResolverHealth(handle: Long)
+
+    private external fun nativeResetDataPlane(handle: Long)
 
     private external fun nativeSetTickIntervalMs(handle: Long, millis: Long)
 

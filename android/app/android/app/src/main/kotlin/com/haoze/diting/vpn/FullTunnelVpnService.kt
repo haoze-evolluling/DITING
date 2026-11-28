@@ -235,8 +235,8 @@ internal abstract class FullTunnelVpnService : VpnService() {
             return
         }
 
-        networkMonitor = UnderlyingNetworkMonitor(this, this) { state ->
-            state.applyTo(rustEngine)
+        networkMonitor = UnderlyingNetworkMonitor(this, this) { state, networkChanged ->
+            state.applyTo(rustEngine, networkChanged)
         }.also { it.start() }
 
         runtime.isRunning = true

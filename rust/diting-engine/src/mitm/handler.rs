@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use tokio::net::TcpStream;
-use tokio::sync::{mpsc, Semaphore};
+use tokio::sync::{mpsc, watch, Semaphore};
 
 use crate::engine::Engine;
 use crate::mitm::filter;
@@ -30,6 +30,8 @@ pub async fn handle_tcp(
 ) {
     let Some(mitm) = engine.mitm_state().session() else {
         let credit = Arc::new(Semaphore::new(MAX_PENDING_WRITE));
+        // MITM 回退路径不受网络切换的取消信号驱动，保留一个永不触发的通道即可。
+        let (_cancel_tx, cancel_rx) = watch::channel(false);
         crate::tunnel::relay::relay_tcp(
             Arc::clone(&engine),
             events,
@@ -39,6 +41,7 @@ pub async fn handle_tcp(
             rx,
             credit,
             None,
+            cancel_rx,
         )
         .await;
         return;

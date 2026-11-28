@@ -17,6 +17,8 @@ pub enum Event {
     Write(TcpKey, Vec<u8>, Option<Arc<Semaphore>>),
     CloseWrite(TcpKey),
     Abort(TcpKey),
+    /// 网络切换：旧链路上的所有流已必然失效，全部中止，让应用在新链路上重建。
+    AbortAll,
     Datagram {
         local: IpEndpoint,
         peer: IpEndpoint,

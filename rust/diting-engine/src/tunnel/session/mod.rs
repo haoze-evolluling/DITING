@@ -14,7 +14,7 @@ use tokio::sync::{mpsc, Semaphore};
 use crate::engine::Engine;
 use crate::netstack::{Limits, Stats, TcpKey};
 use crate::tunnel::link::PacketLink;
-use crate::tunnel::queue::{Egress, Events};
+use crate::tunnel::queue::{Egress, Event, Events};
 use crate::tunnel::stats::TunnelCounters;
 
 pub const INGRESS_QUEUE: usize = 2048;
@@ -92,6 +92,11 @@ impl Session {
 
     pub fn is_running(&self) -> bool {
         !self.stop.load(Ordering::Acquire)
+    }
+
+    /// 网络切换后立即中止所有数据面连接（TCP/UDP），让应用在新链路上重建。
+    pub fn abort_all(&self) {
+        self.events.push_command(Event::AbortAll);
     }
 
     pub fn stop(mut self) {
