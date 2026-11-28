@@ -420,6 +420,29 @@ void main() {
     expect(find.text('MacBook Pro'), findsOneWidget);
   });
 
+  testWidgets('清空查询日志弹窗的取消与清空按钮关闭弹窗且停留在日志页', (tester) async {
+    final client = _LogFake();
+    await pumpServer(tester, ServerRoutes.logs, client: client);
+
+    await tester.tap(find.byTooltip('清空'));
+    await tester.pumpAndSettle();
+    expect(find.text('清空查询日志'), findsOneWidget);
+
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    expect(find.text('清空查询日志'), findsNothing);
+    expect(find.byType(SearchField), findsOneWidget);
+
+    await tester.tap(find.byTooltip('清空'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, '清空'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('清空查询日志'), findsNothing);
+    expect(find.byType(SearchField), findsOneWidget);
+    expect(client.clearCalls, 1);
+  });
+
   testWidgets('服务停止时仍可查看历史日志', (tester) async {
     final client = _LogFake(status: const ServerStatus());
     await pumpServer(tester, ServerRoutes.logs, client: client);
@@ -459,6 +482,12 @@ class _LogFake extends FakeServerClient {
       );
 
   final queries = <ServerLogQuery>[];
+  int clearCalls = 0;
+
+  @override
+  Future<void> clearQueryLog() async {
+    clearCalls++;
+  }
 
   @override
   Future<ServerQueryResult> queryLog(ServerLogQuery query) async {

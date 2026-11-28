@@ -139,11 +139,11 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
         title: context.l10n.serverLogClearTitle,
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => popFloatingDialog(context, false),
             child: Text(context.l10n.uiCancel),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => popFloatingDialog(context, true),
             child: Text(context.l10n.serverLogClear),
           ),
         ],
@@ -333,13 +333,13 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
           TextButton(
             onPressed: () {
               Clipboard.setData(ClipboardData(text: record.domain));
-              Navigator.of(context).pop();
+              popFloatingDialog(context);
               showAppSnack(context, context.l10n.serverLogDomainCopied);
             },
             child: Text(context.l10n.serverLogCopyDomain),
           ),
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => popFloatingDialog(context),
             child: Text(context.l10n.uiClose),
           ),
         ],
