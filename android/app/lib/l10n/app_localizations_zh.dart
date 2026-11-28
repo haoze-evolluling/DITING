@@ -9529,15 +9529,6 @@ class AppL10nZh extends AppL10n {
   }
 
   @override
-  String get serverServiceStopped => 'DNS 服务未运行';
-
-  @override
-  String get serverServiceStoppedHint => '配置、订阅与规则测试仍可使用，启动后对外提供 DNS 服务';
-
-  @override
-  String get serverServiceGoStart => '去开启';
-
-  @override
   String serverHubFilterSummary(String state, int count) {
     return '$state · $count 个订阅';
   }

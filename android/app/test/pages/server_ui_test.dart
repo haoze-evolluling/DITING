@@ -48,7 +48,6 @@ void main() {
     expect(find.text('解析服务'), findsOneWidget);
     expect(find.text('规则与订阅'), findsOneWidget);
     expect(find.text('系统'), findsOneWidget);
-    expect(find.text('DNS 服务未运行'), findsOneWidget);
     for (final title in [
       '服务商',
       '调度与缓存',

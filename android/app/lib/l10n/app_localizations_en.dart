@@ -10137,16 +10137,6 @@ class AppL10nEn extends AppL10n {
   }
 
   @override
-  String get serverServiceStopped => 'DNS service not running';
-
-  @override
-  String get serverServiceStoppedHint =>
-      'Configuration, subscriptions and rule tests stay available; start it to serve DNS on the network';
-
-  @override
-  String get serverServiceGoStart => 'Start';
-
-  @override
   String serverHubFilterSummary(String state, int count) {
     return '$state · $count subscriptions';
   }

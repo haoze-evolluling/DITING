@@ -3049,9 +3049,6 @@
       }
     }
   },
-  "serverServiceStopped": "DNS service not running",
-  "serverServiceStoppedHint": "Configuration, subscriptions and rule tests stay available; start it to serve DNS on the network",
-  "serverServiceGoStart": "Start",
   "serverHubFilterSummary": "{state} · {count} subscriptions",
   "@serverHubFilterSummary": {
     "placeholders": {

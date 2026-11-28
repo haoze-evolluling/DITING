@@ -5859,12 +5859,6 @@ abstract class AppL10n {
 
   String serverHubSubscriptionsSummary(int count, int failed);
 
-  String get serverServiceStopped;
-
-  String get serverServiceStoppedHint;
-
-  String get serverServiceGoStart;
-
   String serverHubFilterSummary(String state, int count);
 
   String serverHubLogSummary(int days, String file);

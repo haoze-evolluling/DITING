@@ -5533,9 +5533,6 @@
       }
     }
   },
-  "serverServiceStopped": "DNS 服务未运行",
-  "serverServiceStoppedHint": "配置、订阅与规则测试仍可使用，启动后对外提供 DNS 服务",
-  "serverServiceGoStart": "去开启",
   "serverHubFilterSummary": "{state} · {count} 个订阅",
   "@serverHubFilterSummary": {
     "placeholders": {
