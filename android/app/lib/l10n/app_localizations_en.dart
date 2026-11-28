@@ -10582,11 +10582,30 @@ class AppL10nEn extends AppL10n {
   String get serverCacheSaved => 'Cache settings saved';
 
   @override
-  String get serverCacheAdvanced => 'Advanced options';
+  String get serverCacheAdvanced => 'Cache settings';
 
   @override
-  String get serverCacheAdvancedSummary =>
-      'Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch';
+  String serverCachePolicySummary(int entries, String ttl) {
+    String _temp0 = intl.Intl.pluralLogic(
+      entries,
+      locale: localeName,
+      other: '$entries entries',
+      one: '1 entry',
+    );
+    return '$_temp0 · $ttl';
+  }
+
+  @override
+  String get serverCacheCapacity => 'Cache capacity';
+
+  @override
+  String get serverCacheTtlGroup => 'TTL tuning';
+
+  @override
+  String get serverCacheResilience => 'Fallback & errors';
+
+  @override
+  String get serverCacheOptimization => 'Optimization';
 
   @override
   String get serverQueryLogEnabled => 'Record queries';

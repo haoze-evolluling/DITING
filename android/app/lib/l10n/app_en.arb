@@ -3267,8 +3267,22 @@
   "serverCachePrefetch": "Prefetch",
   "serverCacheFooter": "Changes apply immediately; cached entries are persisted to the database and restored on restart.",
   "serverCacheSaved": "Cache settings saved",
-  "serverCacheAdvanced": "Advanced options",
-  "serverCacheAdvancedSummary": "Minimum TTL, stale fallback, negative cache, optimistic cache and prefetch",
+  "serverCacheAdvanced": "Cache settings",
+  "serverCachePolicySummary": "{entries, plural, =1{1 entry} other{{entries} entries}} · {ttl}",
+  "@serverCachePolicySummary": {
+    "placeholders": {
+      "entries": {
+        "type": "int"
+      },
+      "ttl": {
+        "type": "String"
+      }
+    }
+  },
+  "serverCacheCapacity": "Cache capacity",
+  "serverCacheTtlGroup": "TTL tuning",
+  "serverCacheResilience": "Fallback & errors",
+  "serverCacheOptimization": "Optimization",
   "serverQueryLogEnabled": "Record queries",
   "serverQueryLogContent": "Recorded data",
   "serverQueryLogEnabledBody": "Keep recent queries for the log page",

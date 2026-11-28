@@ -99,23 +99,30 @@ void main() {
 
     expect(find.text('调度方式'), findsOneWidget);
     expect(find.text('缓存'), findsOneWidget);
+    expect(find.text('缓存设置'), findsOneWidget);
+    expect(find.textContaining('4096 条 · 最大 TTL 3600s'), findsOneWidget);
+    expect(find.text('最大条目'), findsNothing);
+    expect(find.text('TTL 模式'), findsNothing);
+    expect(find.text('预取'), findsNothing);
+    expect(find.text('最小 TTL 值'), findsNothing);
+
     final scrollable = find.byType(Scrollable).first;
     await tester.scrollUntilVisible(
-      find.text('高级选项'),
+      find.text('缓存设置'),
       280,
       scrollable: scrollable,
     );
-    expect(find.textContaining('最小 TTL、过期回退'), findsOneWidget);
-    expect(find.text('预取'), findsNothing);
-    expect(find.text('最小 TTL 值'), findsNothing);
-    expect(find.text('缓存状态'), findsNothing);
-    expect(find.text('容量'), findsNothing);
-    expect(find.text('TTL 策略'), findsNothing);
-
-    await tester.tap(find.text('高级选项'));
+    await tester.tap(find.text('缓存设置'));
     await tester.pumpAndSettle();
-    expect(find.text('高级选项'), findsOneWidget);
+
+    expect(find.text('缓存设置'), findsOneWidget);
+    expect(find.text('缓存容量'), findsOneWidget);
     expect(find.text('最小 TTL 值'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('预取'),
+      280,
+      scrollable: scrollable,
+    );
     expect(find.text('预取'), findsOneWidget);
   });
 
@@ -181,10 +188,17 @@ void main() {
     expect(find.text('拦截设置'), findsOneWidget);
   });
 
-  testWidgets('高级选项二级页面可切换预取', (tester) async {
+  testWidgets('缓存设置二级页面可切换预取', (tester) async {
     final client = FakeServerClient();
     await pumpServer(tester, ServerRoutes.upstreamAdvanced, client: client);
 
+    await tester.scrollUntilVisible(
+      find.text('预取'),
+      280,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.ensureVisible(find.text('预取'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('预取'));
     await tester.pumpAndSettle();
 
@@ -192,24 +206,30 @@ void main() {
     expect(saved.cache.prefetchEnabled, isTrue);
   });
 
-  testWidgets('调度与缓存页面可进入高级选项二级页面', (tester) async {
+  testWidgets('调度与缓存页面可进入缓存设置二级页面', (tester) async {
     await pumpServer(tester, ServerRoutes.upstream);
 
     await tester.scrollUntilVisible(
-      find.text('高级选项'),
+      find.text('缓存设置'),
       280,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('高级选项'));
+    await tester.tap(find.text('缓存设置'));
     await tester.pumpAndSettle();
 
+    expect(find.text('缓存容量'), findsOneWidget);
     expect(find.text('最小 TTL'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('乐观缓存'),
+      280,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('乐观缓存'), findsOneWidget);
   });
 
   testWidgets('缓存 TTL 模式通过弹出菜单切换', (tester) async {
     final client = _LogFake();
-    await pumpServer(tester, ServerRoutes.upstream, client: client);
+    await pumpServer(tester, ServerRoutes.upstreamAdvanced, client: client);
 
     await tester.scrollUntilVisible(
       find.text('限制最大 TTL'),

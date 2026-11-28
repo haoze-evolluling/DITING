@@ -9959,10 +9959,24 @@ class AppL10nZh extends AppL10n {
   String get serverCacheSaved => '缓存设置已保存';
 
   @override
-  String get serverCacheAdvanced => '高级选项';
+  String get serverCacheAdvanced => '缓存设置';
 
   @override
-  String get serverCacheAdvancedSummary => '最小 TTL、过期回退、否定缓存、乐观缓存与预取';
+  String serverCachePolicySummary(int entries, String ttl) {
+    return '$entries 条 · $ttl';
+  }
+
+  @override
+  String get serverCacheCapacity => '缓存容量';
+
+  @override
+  String get serverCacheTtlGroup => 'TTL 调整';
+
+  @override
+  String get serverCacheResilience => '失效与容错';
+
+  @override
+  String get serverCacheOptimization => '性能优化';
 
   @override
   String get serverQueryLogEnabled => '记录查询';

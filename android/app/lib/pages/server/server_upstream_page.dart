@@ -1,5 +1,4 @@
 import 'package:diting_android/data/server/server_models.dart';
-import 'package:diting_android/pages/server/server_common.dart';
 import 'package:diting_android/pages/server/server_upstream_shared.dart';
 import 'package:diting_android/routes/server_routes.dart';
 import 'package:diting_android/state/server_providers.dart';
@@ -26,9 +25,6 @@ class ServerUpstreamPage extends ConsumerWidget {
     final config = snapshot.config;
     final upstream = config.upstream;
     final cache = config.cache;
-    final ttl = cache.mode == 'limit_max_ttl'
-        ? cache.maxTtlSeconds
-        : cache.fixedTtlSeconds;
 
     Future<void> saveCache(ServerCacheConfig next) =>
         saveServerCache(context, ref, config, next);
@@ -66,72 +62,32 @@ class ServerUpstreamPage extends ConsumerWidget {
                 value: cache.enabled,
                 onChanged: (value) => saveCache(cache.copyWith(enabled: value)),
               ),
-              if (cache.enabled) ...[
-                ListItem(
-                  leading: const Icon(TablerIcons.cpu_2, size: 20),
-                  title: Text(context.l10n.serverCacheEntries),
-                  trailing: ServerCacheValue(label: '${cache.maxEntries}'),
-                  onTap: () async {
-                    final value = await editServerNumber(
-                      context,
-                      title: context.l10n.serverCacheEntries,
-                      initial: cache.maxEntries,
-                      max: 200000,
-                    );
-                    if (value != null) {
-                      await saveCache(cache.copyWith(maxEntries: value));
-                    }
-                  },
-                ),
-                ListItem<String>.options(
-                  leading: const Icon(TablerIcons.adjustments, size: 20),
-                  title: Text(context.l10n.serverCacheMode),
-                  value: cache.mode,
-                  options: const ['limit_max_ttl', 'fixed'],
-                  textBuilder: (value) => value == 'fixed'
-                      ? context.l10n.serverCacheFixed
-                      : context.l10n.serverCacheLimit,
-                  onChanged: (value) => saveCache(cache.copyWith(mode: value)),
-                ),
-                ListItem(
-                  leading: const Icon(TablerIcons.clock, size: 20),
-                  title: Text(
-                    cache.mode == 'limit_max_ttl'
-                        ? context.l10n.serverCacheMaxTtl
-                        : context.l10n.serverCacheFixedTtl,
-                  ),
-                  trailing: ServerCacheValue(label: '${ttl}s'),
-                  onTap: () async {
-                    final value = await editServerNumber(
-                      context,
-                      title: cache.mode == 'limit_max_ttl'
-                          ? context.l10n.serverCacheMaxTtl
-                          : context.l10n.serverCacheFixedTtl,
-                      initial: ttl,
-                      suffix: 's',
-                    );
-                    if (value == null) return;
-                    await saveCache(
-                      cache.mode == 'limit_max_ttl'
-                          ? cache.copyWith(maxTtlSeconds: value)
-                          : cache.copyWith(fixedTtlSeconds: value),
-                    );
-                  },
-                ),
+              if (cache.enabled)
                 ListItem(
                   leading: const Icon(TablerIcons.adjustments, size: 20),
                   title: Text(context.l10n.serverCacheAdvanced),
-                  subtitle: Text(context.l10n.serverCacheAdvancedSummary),
+                  subtitle: Text(_cachePolicySummary(context, cache)),
                   trailing: const Icon(TablerIcons.chevron_right, size: 18),
                   onTap: () => context.push(ServerRoutes.upstreamAdvanced),
                 ),
-              ],
             ],
             footer: cache.enabled ? context.l10n.serverCacheFooter : null,
           ),
           const SizedBox(height: 24),
         ],
       ),
+    );
+  }
+
+  String _cachePolicySummary(BuildContext context, ServerCacheConfig cache) {
+    final limitMax = cache.mode == 'limit_max_ttl';
+    final ttl = limitMax ? cache.maxTtlSeconds : cache.fixedTtlSeconds;
+    final label = limitMax
+        ? context.l10n.serverCacheMaxTtl
+        : context.l10n.serverCacheFixedTtl;
+    return context.l10n.serverCachePolicySummary(
+      cache.maxEntries,
+      '$label ${ttl}s',
     );
   }
 

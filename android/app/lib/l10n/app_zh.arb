@@ -5751,8 +5751,22 @@
   "serverCachePrefetch": "预取",
   "serverCacheFooter": "修改会立即应用；缓存会写入数据库，重启后自动恢复。",
   "serverCacheSaved": "缓存设置已保存",
-  "serverCacheAdvanced": "高级选项",
-  "serverCacheAdvancedSummary": "最小 TTL、过期回退、否定缓存、乐观缓存与预取",
+  "serverCacheAdvanced": "缓存设置",
+  "serverCachePolicySummary": "{entries} 条 · {ttl}",
+  "@serverCachePolicySummary": {
+    "placeholders": {
+      "entries": {
+        "type": "int"
+      },
+      "ttl": {
+        "type": "String"
+      }
+    }
+  },
+  "serverCacheCapacity": "缓存容量",
+  "serverCacheTtlGroup": "TTL 调整",
+  "serverCacheResilience": "失效与容错",
+  "serverCacheOptimization": "性能优化",
   "serverQueryLogEnabled": "记录查询",
   "serverQueryLogContent": "记录内容",
   "serverQueryLogEnabledBody": "保存最近查询供日志页查看",

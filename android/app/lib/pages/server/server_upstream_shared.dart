@@ -13,6 +13,9 @@ const serverUpstreamModes = <String>[
   'smart_prediction',
 ];
 
+/// 从属于上一级开关的数值行：与父行标题对齐（16 内边距 + 20 图标 + 16 间距）。
+const serverCacheNestedPadding = EdgeInsets.only(left: 52, right: 16);
+
 IconData serverModeGlyph(String mode) => switch (mode) {
   'single' => TablerIcons.cloud_upload,
   'parallel_race' => TablerIcons.gauge,

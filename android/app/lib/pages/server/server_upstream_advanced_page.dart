@@ -53,6 +53,9 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
     }
     final config = snapshot.config;
     final cache = config.cache;
+    final ttl = cache.mode == 'limit_max_ttl'
+        ? cache.maxTtlSeconds
+        : cache.fixedTtlSeconds;
 
     Future<void> saveCache(ServerCacheConfig next) =>
         saveServerCache(context, ref, config, next);
@@ -62,6 +65,64 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
       body: PageBody(
         children: [
           generateSection(
+            title: context.l10n.serverCacheCapacity,
+            items: [
+              ListItem(
+                leading: const Icon(TablerIcons.cpu_2, size: 20),
+                title: Text(context.l10n.serverCacheEntries),
+                trailing: ServerCacheValue(label: '${cache.maxEntries}'),
+                onTap: () async {
+                  final value = await editServerNumber(
+                    context,
+                    title: context.l10n.serverCacheEntries,
+                    initial: cache.maxEntries,
+                    max: 200000,
+                  );
+                  if (value != null) {
+                    await saveCache(cache.copyWith(maxEntries: value));
+                  }
+                },
+              ),
+              ListItem<String>.options(
+                leading: const Icon(TablerIcons.adjustments, size: 20),
+                title: Text(context.l10n.serverCacheMode),
+                value: cache.mode,
+                options: const ['limit_max_ttl', 'fixed'],
+                textBuilder: (value) => value == 'fixed'
+                    ? context.l10n.serverCacheFixed
+                    : context.l10n.serverCacheLimit,
+                onChanged: (value) => saveCache(cache.copyWith(mode: value)),
+              ),
+              ListItem(
+                leading: const Icon(TablerIcons.clock, size: 20),
+                title: Text(
+                  cache.mode == 'limit_max_ttl'
+                      ? context.l10n.serverCacheMaxTtl
+                      : context.l10n.serverCacheFixedTtl,
+                ),
+                trailing: ServerCacheValue(label: '${ttl}s'),
+                onTap: () async {
+                  final value = await editServerNumber(
+                    context,
+                    title: cache.mode == 'limit_max_ttl'
+                        ? context.l10n.serverCacheMaxTtl
+                        : context.l10n.serverCacheFixedTtl,
+                    initial: ttl,
+                    suffix: 's',
+                  );
+                  if (value == null) return;
+                  await saveCache(
+                    cache.mode == 'limit_max_ttl'
+                        ? cache.copyWith(maxTtlSeconds: value)
+                        : cache.copyWith(fixedTtlSeconds: value),
+                  );
+                },
+              ),
+            ],
+            footer: context.l10n.serverCacheFooter,
+          ),
+          generateSection(
+            title: context.l10n.serverCacheTtlGroup,
             items: [
               ListItem.toggle(
                 leading: const Icon(TablerIcons.gauge, size: 20),
@@ -73,7 +134,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.minTtlEnabled)
                 ListItem(
-                  leading: const Icon(TablerIcons.arrow_up, size: 20),
+                  padding: serverCacheNestedPadding,
                   title: Text(context.l10n.serverCacheMinTtlValue),
                   trailing: ServerCacheValue(label: '${cache.minTtlSeconds}s'),
                   onTap: () async {
@@ -88,6 +149,11 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
                     }
                   },
                 ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.serverCacheResilience,
+            items: [
               ListItem.toggle(
                 leading: const Icon(TablerIcons.rotate_clockwise, size: 20),
                 title: Text(context.l10n.serverCacheStale),
@@ -98,7 +164,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.staleFallbackEnabled)
                 ListItem(
-                  leading: const Icon(TablerIcons.hourglass, size: 20),
+                  padding: serverCacheNestedPadding,
                   title: Text(context.l10n.serverCacheStaleSeconds),
                   trailing: ServerCacheValue(
                     label: '${cache.staleFallbackSeconds}s',
@@ -127,7 +193,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.negativeTtlEnabled)
                 ListItem(
-                  leading: const Icon(TablerIcons.clock, size: 20),
+                  padding: serverCacheNestedPadding,
                   title: Text(context.l10n.serverCacheNegativeSeconds),
                   trailing: ServerCacheValue(
                     label: '${cache.negativeTtlSeconds}s',
@@ -147,6 +213,11 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
                     }
                   },
                 ),
+            ],
+          ),
+          generateSection(
+            title: context.l10n.serverCacheOptimization,
+            items: [
               ListItem.toggle(
                 leading: const Icon(TablerIcons.sparkles, size: 20),
                 title: Text(context.l10n.serverCacheOptimistic),
@@ -163,7 +234,7 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
               ),
               if (cache.prefetchEnabled) ...[
                 ListItem(
-                  leading: const Icon(TablerIcons.stack_2, size: 20),
+                  padding: serverCacheNestedPadding,
                   title: Text(context.l10n.serverCachePrefetchThreshold),
                   trailing: ServerCacheValue(
                     label: '${cache.prefetchThreshold}',
@@ -176,14 +247,12 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
                       max: 100,
                     );
                     if (value != null) {
-                      await saveCache(
-                        cache.copyWith(prefetchThreshold: value),
-                      );
+                      await saveCache(cache.copyWith(prefetchThreshold: value));
                     }
                   },
                 ),
                 ListItem(
-                  leading: const Icon(TablerIcons.clock, size: 20),
+                  padding: serverCacheNestedPadding,
                   title: Text(context.l10n.serverCachePrefetchBefore),
                   trailing: ServerCacheValue(
                     label: '${cache.prefetchBeforeExpiryMs}ms',
@@ -206,7 +275,6 @@ class ServerUpstreamAdvancedPage extends ConsumerWidget {
                 ),
               ],
             ],
-            footer: context.l10n.serverCacheFooter,
           ),
           generateSection(
             title: context.l10n.serverCacheActions,

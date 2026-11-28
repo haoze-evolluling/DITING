@@ -43,7 +43,7 @@ final Map<String, String> topLevelRoutes = {
   '服务器查询日志': Routes.serverLogs,
   '服务器 Bootstrap': ServerRoutes.upstreamBootstrap,
   '服务器上游管理': ServerRoutes.upstream,
-  '服务器缓存高级选项': ServerRoutes.upstreamAdvanced,
+  '服务器缓存设置': ServerRoutes.upstreamAdvanced,
   '服务器服务商': ServerRoutes.upstreamProviders,
   '服务器拦截规则': ServerRoutes.filter,
   '服务器自定义规则': ServerRoutes.filterRules,

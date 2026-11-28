@@ -6131,7 +6131,15 @@ abstract class AppL10n {
 
   String get serverCacheAdvanced;
 
-  String get serverCacheAdvancedSummary;
+  String serverCachePolicySummary(int entries, String ttl);
+
+  String get serverCacheCapacity;
+
+  String get serverCacheTtlGroup;
+
+  String get serverCacheResilience;
+
+  String get serverCacheOptimization;
 
   String get serverQueryLogEnabled;
 
