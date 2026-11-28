@@ -5925,13 +5925,17 @@ abstract class AppL10n {
 
   String get serverLogResults;
 
-  String get serverLogFilterClient;
+  String get serverLogFilter;
+
+  String serverLogFilterActive(int count);
+
+  String get serverLogFilterReset;
+
+  String get serverLogRange;
 
   String get serverLogClientAll;
 
   String get serverLogClientEmpty;
-
-  String serverLogClientFiltered(String client);
 
   String get serverLogTime;
 

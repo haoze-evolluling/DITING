@@ -5599,21 +5599,23 @@
   "serverLogEmpty": "暂无查询记录",
   "serverLogEmptyBody": "服务器运行后，客户端查询会显示在这里。",
   "serverLogNoMatchTitle": "无匹配结果",
-  "serverLogNoMatchBody": "请调整域名搜索或客户端筛选。",
+  "serverLogNoMatchBody": "请调整域名搜索或筛选条件。",
   "serverLogStoppedTitle": "服务器未运行",
   "serverLogStoppedBody": "启动服务器后，查询记录会显示在这里。",
   "serverLogResults": "查询结果",
-  "serverLogFilterClient": "筛选客户端",
-  "serverLogClientAll": "全部客户端",
-  "serverLogClientEmpty": "暂无客户端记录",
-  "serverLogClientFiltered": "当前客户端：{client}",
-  "@serverLogClientFiltered": {
+  "serverLogFilter": "筛选",
+  "serverLogFilterActive": "筛选 · 已启用 {count} 项",
+  "@serverLogFilterActive": {
     "placeholders": {
-      "client": {
-        "type": "String"
+      "count": {
+        "type": "int"
       }
     }
   },
+  "serverLogFilterReset": "清空筛选",
+  "serverLogRange": "时间范围",
+  "serverLogClientAll": "全部客户端",
+  "serverLogClientEmpty": "暂无客户端记录",
   "serverLogTime": "时间",
   "serverLogStatus": "状态",
   "serverLogType": "类型",

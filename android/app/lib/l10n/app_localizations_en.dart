@@ -10234,8 +10234,7 @@ class AppL10nEn extends AppL10n {
   String get serverLogNoMatchTitle => 'No matching results';
 
   @override
-  String get serverLogNoMatchBody =>
-      'Adjust the domain search or client filter.';
+  String get serverLogNoMatchBody => 'Adjust the domain search or filters.';
 
   @override
   String get serverLogStoppedTitle => 'Server not running';
@@ -10248,18 +10247,24 @@ class AppL10nEn extends AppL10n {
   String get serverLogResults => 'Query results';
 
   @override
-  String get serverLogFilterClient => 'Filter by client';
+  String get serverLogFilter => 'Filter';
+
+  @override
+  String serverLogFilterActive(int count) {
+    return 'Filter · $count active';
+  }
+
+  @override
+  String get serverLogFilterReset => 'Clear filters';
+
+  @override
+  String get serverLogRange => 'Time range';
 
   @override
   String get serverLogClientAll => 'All clients';
 
   @override
   String get serverLogClientEmpty => 'No client records yet';
-
-  @override
-  String serverLogClientFiltered(String client) {
-    return 'Client: $client';
-  }
 
   @override
   String get serverLogTime => 'Time';

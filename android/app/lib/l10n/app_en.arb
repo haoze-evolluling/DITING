@@ -3115,21 +3115,23 @@
   "serverLogEmpty": "No queries yet",
   "serverLogEmptyBody": "Client queries will appear here once the server is running.",
   "serverLogNoMatchTitle": "No matching results",
-  "serverLogNoMatchBody": "Adjust the domain search or client filter.",
+  "serverLogNoMatchBody": "Adjust the domain search or filters.",
   "serverLogStoppedTitle": "Server not running",
   "serverLogStoppedBody": "Start the server to see query records here.",
   "serverLogResults": "Query results",
-  "serverLogFilterClient": "Filter by client",
-  "serverLogClientAll": "All clients",
-  "serverLogClientEmpty": "No client records yet",
-  "serverLogClientFiltered": "Client: {client}",
-  "@serverLogClientFiltered": {
+  "serverLogFilter": "Filter",
+  "serverLogFilterActive": "Filter · {count} active",
+  "@serverLogFilterActive": {
     "placeholders": {
-      "client": {
-        "type": "String"
+      "count": {
+        "type": "int"
       }
     }
   },
+  "serverLogFilterReset": "Clear filters",
+  "serverLogRange": "Time range",
+  "serverLogClientAll": "All clients",
+  "serverLogClientEmpty": "No client records yet",
   "serverLogTime": "Time",
   "serverLogStatus": "Status",
   "serverLogType": "Type",

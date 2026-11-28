@@ -47,28 +47,26 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     offset: _page * _pageSize,
   );
 
-  void _setRange(String range) {
+  _LogFilterSelection get _selection => _LogFilterSelection(
+    status: _status,
+    range: _range,
+    qtype: _qtype,
+    client: _client,
+  );
+
+  void _applyFilters(_LogFilterSelection selection) {
+    if (!mounted) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     setState(() {
-      _range = range;
-      _rangeStartMs = switch (range) {
+      _status = selection.status;
+      _range = selection.range;
+      _qtype = selection.qtype;
+      _client = selection.client;
+      _rangeStartMs = switch (selection.range) {
         '24h' => now - const Duration(hours: 24).inMilliseconds,
         '7d' => now - const Duration(days: 7).inMilliseconds,
         _ => 0,
       };
-      _page = 0;
-    });
-  }
-
-  Future<void> _openTypeFilter() async {
-    const types = ['', 'A', 'AAAA', 'CNAME', 'HTTPS', 'TXT', 'MX', 'NS'];
-    final selected = await showSheet<String>(
-      context: context,
-      builder: (_) => _TypeFilterSheet(selected: _qtype, types: types),
-    );
-    if (selected == null || !mounted) return;
-    setState(() {
-      _qtype = selected;
       _page = 0;
     });
   }
@@ -110,7 +108,7 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     });
   }
 
-  Future<void> _openClientFilter(
+  Future<void> _openFilters(
     ServerStats stats,
     ServerQueryResult? result,
   ) async {
@@ -121,15 +119,14 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
       for (final item in result?.entries ?? const <ServerQueryRecord>[])
         if (item.client.isNotEmpty) item.client,
     }.toList()..sort();
-    final selected = await showSheet<String>(
+    await showSheet<void>(
       context: context,
-      builder: (_) => _ClientFilterSheet(clients: clients, selected: _client),
+      builder: (_) => _LogFilterSheet(
+        initial: _selection,
+        clients: clients,
+        onChanged: _applyFilters,
+      ),
     );
-    if (selected == null || !mounted) return;
-    setState(() {
-      _client = selected;
-      _page = 0;
-    });
   }
 
   Future<void> _clear() async {
@@ -164,12 +161,8 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
     final snapshot = ref.watch(serverControllerProvider).value;
     final query = _query;
     final result = ref.watch(serverQueryLogProvider(query));
-    final filtered =
-        _domainQuery.isNotEmpty ||
-        _client.isNotEmpty ||
-        _status.isNotEmpty ||
-        _qtype.isNotEmpty ||
-        _rangeStartMs > 0;
+    final filterCount = _selection.activeCount;
+    final filtered = _domainQuery.isNotEmpty || filterCount > 0;
     return CommonScaffold(
       title: context.l10n.serverLogsTitle,
       actions: [
@@ -185,7 +178,7 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
           if (snapshot != null && snapshot.status.running)
             _StatsOverview(stats: snapshot.stats),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(
               spacing: 8,
               children: [
@@ -198,89 +191,21 @@ class _ServerLogsPageState extends ConsumerState<ServerLogsPage>
                   ),
                 ),
                 IconButton(
-                  tooltip: _client.isEmpty
-                      ? context.l10n.serverLogFilterClient
-                      : context.l10n.serverLogClientFiltered(_client),
-                  onPressed: () => _openClientFilter(
+                  tooltip: filterCount == 0
+                      ? context.l10n.serverLogFilter
+                      : context.l10n.serverLogFilterActive(filterCount),
+                  onPressed: () => _openFilters(
                     snapshot?.stats ?? const ServerStats(),
                     result.value,
                   ),
                   style: IconButton.styleFrom(
                     minimumSize: const Size(48, 48),
-                    backgroundColor: _client.isEmpty
+                    backgroundColor: filterCount == 0
                         ? context.raisedSurfaceLevel.colorOf(
                             context.colorScheme,
                           )
                         : context.colorScheme.primaryContainer,
-                    foregroundColor: _client.isEmpty
-                        ? context.colorScheme.onSurfaceVariant
-                        : context.colorScheme.onPrimaryContainer,
-                  ),
-                  icon: const Icon(TablerIcons.filter),
-                ),
-              ],
-            ),
-          ),
-          if (_client.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-              child: Row(
-                children: [
-                  CommonChip(
-                    label: _client,
-                    onDeleted: () => setState(() {
-                      _client = '';
-                      _page = 0;
-                    }),
-                  ),
-                ],
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-            child: SegmentedControl<String>(
-              segments: [
-                ('', context.l10n.serverLogAll),
-                ('blocked', context.l10n.serverLogBlocked),
-                ('cached', context.l10n.serverLogCached),
-                ('error', context.l10n.serverLogError),
-              ],
-              value: _status,
-              onChanged: (value) => setState(() {
-                _status = value;
-                _page = 0;
-              }),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: SegmentedControl<String>(
-                    segments: [
-                      ('all', context.l10n.serverLogAll),
-                      ('24h', context.l10n.serverLogRange24h),
-                      ('7d', context.l10n.serverLogRange7d),
-                    ],
-                    value: _range,
-                    onChanged: _setRange,
-                  ),
-                ),
-                IconButton(
-                  tooltip: _qtype.isEmpty
-                      ? context.l10n.serverLogType
-                      : '${context.l10n.serverLogType} · $_qtype',
-                  onPressed: _openTypeFilter,
-                  style: IconButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                    backgroundColor: _qtype.isEmpty
-                        ? context.raisedSurfaceLevel.colorOf(
-                            context.colorScheme,
-                          )
-                        : context.colorScheme.primaryContainer,
-                    foregroundColor: _qtype.isEmpty
+                    foregroundColor: filterCount == 0
                         ? context.colorScheme.onSurfaceVariant
                         : context.colorScheme.onPrimaryContainer,
                   ),

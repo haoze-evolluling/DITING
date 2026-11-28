@@ -9624,7 +9624,7 @@ class AppL10nZh extends AppL10n {
   String get serverLogNoMatchTitle => '无匹配结果';
 
   @override
-  String get serverLogNoMatchBody => '请调整域名搜索或客户端筛选。';
+  String get serverLogNoMatchBody => '请调整域名搜索或筛选条件。';
 
   @override
   String get serverLogStoppedTitle => '服务器未运行';
@@ -9636,18 +9636,24 @@ class AppL10nZh extends AppL10n {
   String get serverLogResults => '查询结果';
 
   @override
-  String get serverLogFilterClient => '筛选客户端';
+  String get serverLogFilter => '筛选';
+
+  @override
+  String serverLogFilterActive(int count) {
+    return '筛选 · 已启用 $count 项';
+  }
+
+  @override
+  String get serverLogFilterReset => '清空筛选';
+
+  @override
+  String get serverLogRange => '时间范围';
 
   @override
   String get serverLogClientAll => '全部客户端';
 
   @override
   String get serverLogClientEmpty => '暂无客户端记录';
-
-  @override
-  String serverLogClientFiltered(String client) {
-    return '当前客户端：$client';
-  }
 
   @override
   String get serverLogTime => '时间';

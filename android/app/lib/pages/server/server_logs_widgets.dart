@@ -201,62 +201,138 @@ class _Rows extends StatelessWidget {
   }
 }
 
-class _TypeFilterSheet extends StatelessWidget {
-  const _TypeFilterSheet({required this.selected, required this.types});
+class _LogFilterSelection {
+  const _LogFilterSelection({
+    required this.status,
+    required this.range,
+    required this.qtype,
+    required this.client,
+  });
 
-  final String selected;
-  final List<String> types;
+  static const empty = _LogFilterSelection(
+    status: '',
+    range: 'all',
+    qtype: '',
+    client: '',
+  );
+
+  final String status;
+  final String range;
+  final String qtype;
+  final String client;
+
+  int get activeCount =>
+      (status.isEmpty ? 0 : 1) +
+      (range == 'all' ? 0 : 1) +
+      (qtype.isEmpty ? 0 : 1) +
+      (client.isEmpty ? 0 : 1);
+
+  bool get isActive => activeCount > 0;
+
+  _LogFilterSelection copyWith({
+    String? status,
+    String? range,
+    String? qtype,
+    String? client,
+  }) {
+    return _LogFilterSelection(
+      status: status ?? this.status,
+      range: range ?? this.range,
+      qtype: qtype ?? this.qtype,
+      client: client ?? this.client,
+    );
+  }
+}
+
+class _LogFilterSheet extends StatefulWidget {
+  const _LogFilterSheet({
+    required this.initial,
+    required this.clients,
+    required this.onChanged,
+  });
+
+  static const _types = ['', 'A', 'AAAA', 'CNAME', 'HTTPS', 'TXT', 'MX', 'NS'];
+
+  final _LogFilterSelection initial;
+  final List<String> clients;
+  final ValueChanged<_LogFilterSelection> onChanged;
+
+  @override
+  State<_LogFilterSheet> createState() => _LogFilterSheetState();
+}
+
+class _LogFilterSheetState extends State<_LogFilterSheet> {
+  late _LogFilterSelection _selection = widget.initial;
+
+  void _select(_LogFilterSelection next) {
+    setState(() => _selection = next);
+    widget.onChanged(next);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return CommonScaffold(
-      title: context.l10n.serverLogType,
+      title: l10n.serverLogFilter,
       body: ListView(
         padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
         children: [
+          ListHeader(title: l10n.serverLogStatus),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SegmentedControl<String>(
+              segments: [
+                ('', l10n.serverLogAll),
+                ('blocked', l10n.serverLogBlocked),
+                ('cached', l10n.serverLogCached),
+                ('error', l10n.serverLogError),
+              ],
+              value: _selection.status,
+              onChanged: (value) => _select(_selection.copyWith(status: value)),
+            ),
+          ),
+          ListHeader(title: l10n.serverLogRange),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SegmentedControl<String>(
+              segments: [
+                ('all', l10n.serverLogAll),
+                ('24h', l10n.serverLogRange24h),
+                ('7d', l10n.serverLogRange7d),
+              ],
+              value: _selection.range,
+              onChanged: (value) => _select(_selection.copyWith(range: value)),
+            ),
+          ),
           generateSection(
+            title: l10n.serverLogType,
             items: [
-              for (final type in types)
+              for (final type in _LogFilterSheet._types)
                 ListItem(
                   leading: Icon(
                     type.isEmpty ? TablerIcons.list : TablerIcons.tag,
                     size: 20,
                   ),
-                  title: Text(type.isEmpty ? context.l10n.serverLogAll : type),
-                  trailing: selected == type ? const SelectionCheck() : null,
-                  onTap: () => Navigator.of(context).pop(type),
+                  title: Text(type.isEmpty ? l10n.serverLogAll : type),
+                  trailing: _selection.qtype == type
+                      ? const SelectionCheck()
+                      : null,
+                  onTap: () => _select(_selection.copyWith(qtype: type)),
                 ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ClientFilterSheet extends StatelessWidget {
-  const _ClientFilterSheet({required this.clients, required this.selected});
-
-  final List<String> clients;
-  final String selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return CommonScaffold(
-      title: context.l10n.serverLogFilterClient,
-      body: ListView(
-        padding: EdgeInsets.only(top: context.contentTopPadding, bottom: 24),
-        children: [
           generateSection(
-            title: context.l10n.serverLogClient,
+            title: l10n.serverLogClient,
             items: [
               ListItem(
                 leading: const Icon(TablerIcons.devices, size: 20),
-                title: Text(context.l10n.serverLogClientAll),
-                trailing: selected.isEmpty ? const SelectionCheck() : null,
-                onTap: () => Navigator.of(context).pop(''),
+                title: Text(l10n.serverLogClientAll),
+                trailing: _selection.client.isEmpty
+                    ? const SelectionCheck()
+                    : null,
+                onTap: () => _select(_selection.copyWith(client: '')),
               ),
-              for (final client in clients)
+              for (final client in widget.clients)
                 ListItem(
                   leading: const Icon(TablerIcons.devices, size: 20),
                   title: Text(
@@ -264,12 +340,23 @@ class _ClientFilterSheet extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  trailing: selected == client ? const SelectionCheck() : null,
-                  onTap: () => Navigator.of(context).pop(client),
+                  trailing: _selection.client == client
+                      ? const SelectionCheck()
+                      : null,
+                  onTap: () => _select(_selection.copyWith(client: client)),
                 ),
             ],
-            footer: clients.isEmpty ? context.l10n.serverLogClientEmpty : null,
+            footer: widget.clients.isEmpty ? l10n.serverLogClientEmpty : null,
           ),
+          if (_selection.isActive)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: TonalButton(
+                label: l10n.serverLogFilterReset,
+                glyph: TablerIcons.restore,
+                onPressed: () => _select(_LogFilterSelection.empty),
+              ),
+            ),
         ],
       ),
     );
