@@ -82,7 +82,7 @@ Android 客户端在首次启动时选择工作模式，之后可在设置中切
 | --- | --- | --- |
 | 普通模式 | `VpnService` + TUN 全隧道，Rust 引擎接管全部流量 | 规则、HTTPS 检查、按应用分流、流量统计 |
 | 简洁模式 | `VpnService` 仅路由 DNS 查询；已 Root 时可改用 Root 接管 | 只过滤 DNS，其余流量直连；规则与日志另存一套，功能中心默认精简 |
-| 服务器模式 | 独立 Rust 进程监听 53 或 1053 端口 | 为局域网设备提供 DNS 过滤、缓存与查询日志 |
+| 服务器模式 | 进程内内核监听 1053，Root 时把 53 重定向到该端口 | 为局域网设备提供 DNS 过滤、缓存与查询日志 |
 
 ### 普通模式
 
@@ -96,7 +96,7 @@ Root 免 VPN DNS 接管仅在简洁模式可启用：在已获取 Root 权限的
 
 ### 服务器模式（Android）
 
-服务器模式把数据面与控制面分离：`rust/diting-server` 作为独立长驻进程复用桌面 DNS 栈，Flutter 管理端通过 MethodChannel 启停进程，并通过应用私有 Unix Domain Socket 读写运行中配置。Root 设备监听 53 端口并降权到应用 UID，非 Root 设备监听 1053 端口。进程输出写入 `server.log`，查询日志按日保存为 JSONL。
+服务器模式与普通/简洁模式共用同一个 Rust 内核：DNS 解析、缓存、阻断与查询日志都由应用进程内的 `Engine` 完成，对局域网提供 DNS 由内核的 standalone 监听承担。它使用自己的偏好容器、规则库与日志库（与普通/简洁模式同一套表结构），界面完全并入普通 Shell，仅首页、配置中心与日志页展示服务器内容。Root 设备通过极小的 `su` + `iptables` 重定向监听 53 端口并保留客户端真实 IP，非 Root 设备监听 1053 端口；Root 不可用时自动回退。
 
 ## 技术架构
 
@@ -108,7 +108,7 @@ Root 免 VPN DNS 接管仅在简洁模式可启用：在已获取 Root 权限的
 | `desktop/service/` | 桌面服务构建与打包资产、版本真源 `VERSION` 与 Linux 打包脚本 |
 | `desktop/ui/` | React Web 管理端；Vite 构建产物由服务嵌入并托管为 Web 管理页 |
 | `desktop/toolbox/` | Python 开发者工具箱（DNS 调试、代码扫描、Logo 工坊、Android 版本维护）与安装包构建引擎 |
-| `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎、桌面服务与服务器进程 |
+| `rust/` | Rust 工作区：DNS/规则内核、Android 隧道引擎与桌面服务 |
 | `docs/development/` | 构建环境、Root 接管、服务器模式、桌面端与云控名单说明 |
 | `avatars/`、`recognition_members.json` | 云控赞助者名单与头像 |
 | `LearningObjects/` | 第三方项目的本地参考副本，不参与本项目的构建 |
@@ -119,8 +119,8 @@ Root 免 VPN DNS 接管仅在简洁模式可启用：在已获取 Root 权限的
 
 - Flutter 通过 MethodChannel 与 Kotlin 通信，覆盖 VPN、Root DNS、服务器、自动化、通知、存储与诊断等通道。
 - Kotlin 用 `FullTunnelVpnService` 承载普通模式的全隧道与简洁模式仅 DNS 的路由逻辑，`DitingVpnService` / `ExpressVpnService` 只注入各自的模式参数与数据存储；另有 `RootDnsService`、`ServerDnsService`，以及前台服务、唤起广播、快捷磁贴、桌面小组件与悬浮日志窗。
-- `libditing_native.so` 是单一 cdylib，链接隧道引擎、全部 Flutter/Kotlin 侧内核和服务器运行时；`libditing_server.so` 是服务器模式的极小启动器，加载同一份原生库后调用 `diting_server_main`。
-- 数据存储使用 SQLite：普通模式与简洁模式各自的规则库与日志库，加上一个全局自动化库，共 5 个 V2 数据库。服务器模式使用独立的 `files/server/` 目录与 JSONL 查询日志。
+- `libditing_native.so` 是单一 cdylib，链接隧道引擎与全部 Flutter/Kotlin 侧内核；服务器模式直接复用该内核，不再打包独立的服务器进程。
+- 数据存储使用 SQLite：普通、简洁、服务器三种模式各自的规则库与日志库，加上一个全局自动化库，共 7 个 V2 数据库。
 
 Rust 内核包括 DNS 线格式、解析器调度、上游传输、缓存、策略与规则匹配、Bootstrap、HTTPS 检查（证书与 MITM）、出站代理、TUN 网络栈、嗅探、日志与流量统计、自动化、订阅、备份、诊断探测、IP 质量与更新检查等模块。
 
@@ -156,7 +156,7 @@ Rust 工作区按职责分为三组，另有测试与兼容支持 crate：
 | 分组 | 主要 crate | 职责 |
 | --- | --- | --- |
 | 共用 DNS/规则内核 | `diting-dns-wire`、`diting-rule-core`、`diting-policy-core`、`diting-dns-cache-core`、`diting-filter-core`、`diting-rewrite-core`、`diting-upstream-core`、`diting-resolver-core`、`diting-mitm-core`、`diting-cert-core`、`diting-log-core` 等 | 解析、规则解析与匹配、缓存、上游传输、HTTPS 检查、日志与统计 |
-| Android 数据面与内核 | `diting-engine`、`diting-kernels`、`diting-native`、`diting-server`、`diting-server-launcher` | 隧道引擎、UI 侧内核、合并原生库与服务器进程 |
+| Android 数据面与内核 | `diting-engine`、`diting-kernels`、`diting-native` | 隧道引擎、UI 侧内核与合并原生库 |
 | 桌面服务 | `diting-desktop-api`、`diting-desktop-core`、`diting-desktop-dns`、`diting-desktop-platform`、`diting-desktop-app`、`diting-desktop-ipc`、`diting-desktop-sqlite`、`diting-desktop-service` | 配置模型、引擎门面、DNS 数据面、平台能力、运行时、SQLite 存储、管理 API 与服务二进制 |
 | 测试与兼容支持 | `diting-corpus`、`diting-mitm-spike`、`diting-netstack-spike`、`diting-tun-spike`、`diting-go-compat` | 基线语料、迁移阶段验证与 Go 标准库兼容辅助 |
 
@@ -207,8 +207,7 @@ flutter build apk --release
 
 `rust/build_android.py` 默认构建 arm64-v8a 与 x86_64，并输出：
 
-- `libditing_native.so`：隧道引擎、UI 内核与服务器运行时合并后的原生库。
-- `libditing_server.so`：服务器模式启动器。
+- `libditing_native.so`：隧道引擎与 UI 内核合并后的原生库。
 
 NDK 从 `ANDROID_NDK_HOME`、`ANDROID_NDK_ROOT` 或 `android/local.properties` 的 `sdk.dir` 下自动定位。
 

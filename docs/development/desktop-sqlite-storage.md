@@ -1,8 +1,7 @@
 # 桌面端 SQLite 存储
 
-桌面服务把结构化数据统一保存在数据目录下的 `diting.db`。Android 服务器模式
-（`rust/diting-server`）复用同一套 schema 与读写实现，数据库为 `filesDir/server/server.db`；
-文件后端仅保留给测试与显式回退使用。
+桌面服务把结构化数据统一保存在数据目录下的 `diting.db`；文件后端仅保留给测试与显式回退使用。
+Android 服务器模式已改为复用普通/简洁模式的 SQLite 数据集，见 `docs/development/server-mode.md`。
 
 ## 文件布局
 

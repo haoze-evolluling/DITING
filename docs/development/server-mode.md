@@ -1,147 +1,129 @@
 # Android 服务器模式
 
-服务器模式是第三种工作模式，数据面与控制面分离：
+服务器模式是第三种工作模式，和普通/简洁模式共用同一个 Rust 内核，不再有独立的 Rust 进程：
 
-- `rust/diting-server` 是独立的长驻 Rust 进程，复用桌面 DNS 栈完成解析、规则过滤、缓存与查询日志。
-- 服务器运行时与隧道引擎、UI 内核一起链接进 `libditing_native.so`；APK 里只有一个极小的
-  `libditing_server.so` 启动器，由它加载合并库并调用 `diting_server_main`，避免重复打包 DNS/TLS
-  栈。
-- Flutter 管理端通过 MethodChannel `com.haoze.diting/server` 启停进程，并通过应用私有 Unix
-  Domain Socket 读写运行中配置。
-- Android 前台服务 `ServerDnsService` 只负责 Root 探测、启动/监督/停止 Rust 进程，不参与 DNS
-  查询处理。
+- DNS 解析、上游调度、缓存、阻断与查询日志全部由进程内 `Engine` 完成。
+- 对局域网提供 DNS 由内核的 standalone 监听（`Engine.startStandalone`）承担，日志写进服务器模式
+  自己的日志库，和普通/简洁模式共用同一套表结构。
+- Android 前台服务 `ServerDnsService` 只负责内核生命周期、监听端口监督与 Root 端口重定向。
+- Flutter 侧通过 MethodChannel `com.haoze.diting/server` 启停服务；配置、订阅、统计和日志直接读写
+  服务器模式的数据集，不再有控制 Socket。
+
+## 数据集
+
+服务器模式的数据集（`DataSet.server`）与普通/简洁模式平级：
+
+| 项目 | 位置 |
+| --- | --- |
+| 偏好 | `diting_server_prefs` |
+| 规则与订阅 | `diting_server_rules_v2`（`StorageContract.serverRulesDatabase`） |
+| 日志与缓存镜像 | `diting_server_logs_v2`（`StorageContract.serverLogsDatabase`） |
+| 规则索引 | `files/rule-index/server` |
+
+规则表、订阅表、`dns_log`、`dns_race_log`、`bootstrap_log`、`dns_cache` 的结构与其他数据集完全
+一致，后续新增字段只需改一处 schema。`dns_log` 额外记录服务器模式需要的客户端与链路字段：
+`clientIp`、`clientName`、`protocol`、`upstreamProvider`、`rcode`、`cacheHit`、`durationMs`、`ttl`。
+
+## 配置
+
+- 运行配置以 `ServerConfig` JSON 的形式保存在 `diting_server_prefs/server_config_json`。
+- Flutter 通过 `encodeServerDnsConfig` 把它映射成内核的 `DnsConfig` 文档（上游、Bootstrap、缓存、
+  阻断响应），启动和修改配置时都走同一条 `apply_dns_config` 路径。
+- 上游、过滤、缓存的字段含义与旧服务器模式保持一致；服务器模式特有的 `filter.lists` 同时作为
+  订阅定义的来源。
 
 ## 监听与 Root
 
-| 启动方式 | 端口 | 行为 |
+内核始终以应用 UID 在 `0.0.0.0:1053`（含 IPv6）监听。Root 只用于把局域网的 53 端口转到该端口：
+
+| 启动方式 | 对外端口 | 行为 |
 | --- | --- | --- |
-| 非 Root | `1053` | 以应用 UID 直接启动，监听 `0.0.0.0` 与可用的 IPv6 地址 |
-| Root | `53` | 通过 `su -c` 启动，先绑定 UDP/TCP 53，再降权到应用 UID |
+| 非 Root | `1053` | 直接监听 1053，客户端需显式指定端口 |
+| Root | `53` | 通过 `su` 执行一段极小的 iptables 脚本，把入站 UDP/TCP 53 REDIRECT 到 1053 |
 
-Root 授权不是必需项。Root 探测使用带 6 秒超时的 `su -c id -u`；未授权、超时或 `su` 不存在时
-直接按非 Root 启动。Root 进程绑定 53 失败时不会静默改用 1053，而是把错误回报给管理端；用户可在
-服务器设置中关闭 Root 模式后重试。
-
-Root 启动顺序固定为：
-
-1. 启动器加载同目录的 `libditing_native.so`。
-2. 读取、校验并规范化 `config.json`。
-3. 同步绑定 DNS UDP/TCP 套接字。
-4. 创建控制 Socket，并把数据目录与控制 Socket 交给应用 UID。
-5. 清空 Root 附加组，仅保留 Android 应用联网所需的 `AID_INET (3003)`，再执行 `setgid` /
-   `setuid`。若连该组也清空，已绑定的 53 端口仍能接收请求，但降权后无法创建出站套接字，
-   Bootstrap 与上游 DoT 会全部失败并返回 `SERVFAIL`。
-6. 确认已不是 Root 后创建 Tokio 运行时并启动 DNS 与控制循环。
-
-降权失败时进程退出，不允许以 Root 身份继续服务。
-
-Android 没有 `rustls-native-certs` 期望的 `/etc/ssl/certs` 汇总文件，服务器复用引擎的
-`UpstreamTrust::platform()`：读取 `/system/etc/security/cacerts` 与 Conscrypt APEX 目录，再附加
-内置 ISRG 根。否则 DoT/DoH 上游会以 `UnknownIssuer` 失败。
-
-## 数据目录与存储
-
-服务器模式使用独立数据库 `filesDir/server/server.db`，与普通/简洁模式的数据库和偏好完全分离。
-数据库复用桌面端 `diting-desktop-sqlite` 的 schema：`query_log`、`filter_contents`、`dns_cache`、
-`config_sections` 与 `meta`。
+端口重定向由 `ServerPortRedirect` 完成，脚本来自应用私有目录：
 
 ```text
-filesDir/server/
-├── server.db         # 配置、查询日志、规则正文、DNS 缓存（WAL）
-├── config.json       # 未运行时的兼容镜像，运行时以数据库为准
-├── control.sock      # 0600 控制 Socket
-├── server.log        # 前台服务捕获的进程输出
-├── rules/            # 旧版规则缓存，首次升级后导入并删除
-└── querylog/         # 旧版 JSONL 日志，首次升级后导入并删除
+iptables  -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 1053
+iptables  -t nat -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 1053
+ip6tables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 1053
+ip6tables -t nat -I PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 1053
 ```
 
-- 配置：完整 `ServerConfig` 以 JSON 写入 `meta.server_config`，同时写入 `config_sections`；启动时
-  优先使用数据库，若 `config.json` 比数据库更新（例如未运行时由管理端修改）则导入该文件。
-- 查询日志：内存环（`maxEntries` 只约束内存）+ SQLite 异步写入；数据库按 `retentionDays` 清理，
-  重启后自动回填最近 24 小时的统计。
-- 规则正文：订阅清单缓存写入 `filter_contents`；DNS 缓存随进程退出写入 `dns_cache`，启动时恢复。
-- 首次升级：启动时自动把旧的 `config.json`、`querylog/*.jsonl`、`rules/*.txt`、`cache.json`
-  导入新库，成功后删除这些旧文件并写入 `meta.server_legacy_migration` 标记。
+REDIRECT 只改目的地址，源地址保持不变，所以内核日志里的客户端 IP 是真实值。脚本在 `su` 会话里
+阻塞读取 stdin；App 进程退出后 stdin 关闭，脚本的 EXIT trap 会删除规则，不会残留“把 DNS 指向
+死端口”的规则。Root 不可用、`iptables` 缺失或规则校验失败时自动回退到 1053，并在日志中说明。
+
+Root 探测仍是带 6 秒超时的 `su -c id -u`。启动偏好 `prefer_root` 保存在 `server_mode_prefs`。
+
+## 日志链路
+
+`Engine` 的 `LogItem` 增加客户端与链路字段后，经 `batch_payload` → `diting-log-core` →
+Kotlin `DnsLogWriter` 写入 `diting_server_logs_v2.dns_log`。`EngineLogCallbacks` 以 `all` 模式挂载，
+`LogRetention` 按 `queryLog.retentionDays` 清理；服务器模式不写 HTTP 流量表。
+
+统计与查询日志由 Flutter 直接读 `dns_log`，字段和普通模式的日志页一致，可按域名、客户端、类型、
+状态、rcode 与时间范围筛选。缓存命中来自内核返回的 `HIT` / `STALE` / `SHARED` / `MISS`。
 
 ## 规则订阅
 
-服务器模式的订阅配置保存在 `ServerConfig.filter.lists`，界面与普通/简洁模式对齐，支持：
+订阅定义保存在 `ServerConfig.filter.lists`，迁移后写入 `diting_server_rules_v2.subscription`，
+复用普通/简洁模式的订阅仓库、下载器、镜像模板与自动更新逻辑：
 
-- 分组：`group` 字段保存分组名，订阅页可按分组筛选，分组管理只改列表字段。
-- 收录类型：`kind` 为 `domain` 或 `hosts`，下载后只保留对应格式的正文。
-- 来源：`sourceType` 为 `remote` 或 `local`；本地文件由管理端复制到数据库目录下的
-  `server_local/`，再以文件路径交给 Rust 端读取。
-- 镜像加速：`mirrorTemplate` 仅用于展示，`mirrorUrl` 是管理端展开后的实际地址；下载时先请求
-  镜像，失败且 `mirrorFallback` 为真时再请求原始地址。
-- 自动更新：`autoUpdate` 与 `updateIntervalHours` 控制服务器进程内每分钟一次的到期检查；
-  手动刷新仍通过 `filter_refresh`。
-- 从其他模式导入：管理端只读打开普通/简洁模式的规则数据库，复制订阅配置后由服务器重新下载。
+- `group` 映射到 `subscription_group`；
+- `kind` 为 `domain` 或 `hosts`；
+- `sourceType` 为 `remote` 或 `local`；
+- `mirrorTemplate` / `mirrorFallback` 原样保留；
+- 规则正文由订阅更新重新导入到同一张 `block_rule` 表，内核通过 `EngineRuleLoader` 装载
+  `RuleDataset.SERVER` 快照。
 
-旧 `dns` 模式的数据库、偏好和日志不会迁移；`ServerModeRetirement` 继续清理旧数据。
+## 界面
+
+服务器模式完全并入普通 Shell，不再有独立的 `/server` 导航壳：
+
+- `/` → 服务器首页（`ServerHomePage`），`/hub` → 服务器配置中心，`/logs` → 服务器日志页。
+- 底部 Dock 隐藏“流量”入口；普通设置页、外观、关于等系统页面共用。
+- 服务器配置子页保留 `/server/upstream`、`/server/filter`、`/server/settings` 等路径，作为普通
+  Shell 之外的叶子路由。旧路径 `/server`、`/server/hub`、`/server/logs` 会重定向到新入口。
+
+## 升级迁移
+
+`migrateLegacyServerData` 在启动时、且当前工作模式为服务器模式时运行一次：
+
+1. 读取旧 `files/server/config.json`，不存在则读取旧 `files/server/server.db` 的
+   `meta.server_config`。
+2. 转成新的 `ServerConfig` JSON 写入 `diting_server_prefs/server_config_json`。
+3. 把 `filter.lists` 写入 `diting_server_rules_v2` 的订阅表（保留分组、镜像与启用状态）。
+4. 迁移成功后删除旧 `server.db`、`config.json`、`server.log`；旧查询日志按约定丢弃。
+5. 写入 `server_legacy_migrated=1`，之后不再扫描。
+
+规则正文不迁移（旧桌面格式已不再支持），订阅会在下次更新或自动更新时重新下载导入。
 
 ## 启动与保活
 
-服务器模式的启动偏好保存在原生 `server_mode_prefs`，与服务器配置数据库分离：
+启动偏好保存在原生 `server_mode_prefs`：
 
-- 开机自启动：`auto_start`。设备重启（`BOOT_COMPLETED`）或应用更新
-  （`MY_PACKAGE_REPLACED`）后，若当前工作模式仍为 `server`、已同意用户协议且开关开启，
-  `BootAutoStartReceiver` 会直接启动前台服务。其他模式继续沿用「前后台行为 → 开机自启动」。
-- 异常退出自动重启：`auto_restart`，默认开启。服务器进程就绪后意外退出时，前台服务按
-  1.5s / 3s / 6s / 12s / 24s 的退避重新拉起，最多 5 次；期间状态为 `restarting`，通知栏显示
-  “正在自动重启”。用户手动停止会让排队中的重启立即失效，连续失败达到上限后保留错误信息并停止。
-- 这两个开关通过 MethodChannel 的 `launch_settings` / `set_launch_settings` 读写，仅影响本机
-  进程行为，不写入 `ServerConfig`。
+- 开机自启动：`auto_start`。设备重启或应用更新后，若当前工作模式仍为 `server`、已同意用户协议
+  且开关开启，`BootAutoStartReceiver` 启动前台服务。
+- 异常退出自动重启：`auto_restart`，默认开启。监控每秒检查 `Engine.isRunning()`，按
+  1.5s / 3s / 6s / 12s / 24s 退避重启，最多 5 次；期间状态为 `restarting`。
+- 这两个开关通过 `launch_settings` / `set_launch_settings` 读写，不写入 `ServerConfig`。
 
-## 控制协议
-
-控制 Socket 只接受应用私有目录内的文件系统 Unix Socket 连接，权限为 `0600`。每次连接发送一行
-JSON，服务端返回一行 JSON：
-
-```json
-{"id":1,"method":"status","params":{}}
-{"id":1,"ok":true,"result":{"running":true,"port":1053}}
-```
-
-首版方法：
-
-- `status`：监听端口、实际绑定地址、Root 状态、启动时间与过滤规则数。
-- `get_config` / `update_config`：读取或替换可管理配置；监听身份由进程实际身份决定，不能被 UI 改写。
-- `stats`：24 小时汇总、每小时点、Top 域名、Top 拦截域名与 Top 客户端。
-- `query_log` / `clear_query_log`：分页筛选与清空内存及按日文件。
-- `filter_refresh` / `filter_check`：手动刷新订阅、测试单个域名；刷新失败时仍会落库
-  `lastStatus` / `lastError`。
-- `cache_clear`：清空内存与数据库中的 DNS 缓存。
-- `shutdown`：写入响应后通知主循环优雅退出。
-
-错误响应统一为：
-
-```json
-{"id":1,"ok":false,"error":{"code":"request_failed","message":"..."}}
-```
+服务启动顺序：创建前台通知 → 新建 `Engine` → 应用 DNS 配置 → 挂载日志、分辨率、Bootstrap 与缓存
+镜像 → 装载服务器规则 → `startStandalone(1053)` → 视 Root 情况启用 53 重定向 → 上报
+`ServerProcessState.ready`。失败时保留错误并停止。
 
 ## 调试
 
-在设备上可执行以下命令（需要可访问应用私有目录的调试环境）：
-
 ```bash
 adb shell run-as com.haoze.diting ls -l files/server
-adb logcat -s ServerDnsService DataPlaneControl
+adb shell run-as com.haoze.diting ls -l databases | grep server
+adb logcat -s ServerDnsService ServerPortRedirect DataPlaneControl
 ```
 
-手动启动独立进程（root 设备示例，UID/GID 按应用实际值替换）：
-
-```bash
-su -c '/data/app/.../lib/arm64/libditing_server.so \
-  --data-dir /data/user/0/com.haoze.diting/files/server \
-  --port 53 --bind 0.0.0.0 --drop-uid 10123 --drop-gid 10123'
-```
-
-进程就绪后 stdout 会输出一行 `SERVER_READY {...}`，其中包含端口、Root 状态、实际地址、控制
-Socket 路径与 PID。启动器固定从自身目录加载 `libditing_native.so`；手工部署时必须让两个文件
-位于同一目录。停止时可向控制 Socket 发送 `shutdown`，或向进程发送 `SIGTERM`。
+确认规则是否生效：`adb shell iptables -t nat -L PREROUTING -n -v`。停止服务后这些规则应自动消失。
 
 ## 首版边界
 
-不包含 DHCP、入站 DoH/DoT、按客户端分组策略、访问控制与 Web 管理台。
-订阅自动更新只在服务器进程运行期间执行；应用退到后台后服务继续运行，切换工作模式或手动停止
-会结束进程。开机自启与异常重启见上一节。
+不包含 DHCP、入站 DoH/DoT、按客户端分组策略、访问控制与 Web 管理台。服务运行期间订阅自动更新
+由 Flutter 侧的共享更新器负责；应用退到后台后前台服务继续监听，切换工作模式或手动停止会结束服务。

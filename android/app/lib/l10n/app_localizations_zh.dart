@@ -10033,7 +10033,8 @@ class AppL10nZh extends AppL10n {
   String get serverSettingsRootBody => '使用 su 绑定 53 端口后降权到应用 UID';
 
   @override
-  String get serverSettingsRootNote => 'Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。';
+  String get serverSettingsRootNote =>
+      'Root 不可用时自动回退到 1053；Root 模式通过 iptables 把 53 重定向到内核监听端口。';
 
   @override
   String get serverSettingsRootRestartHint => '已保存，重启 DNS 服务后生效';
@@ -10104,7 +10105,7 @@ class AppL10nZh extends AppL10n {
 
   @override
   String get serverSettingsDataDirBody =>
-      'filesDir/server/，包含配置、规则缓存、查询日志与运行日志';
+      '配置保存在 diting_server_prefs，规则与订阅在 diting_server_rules_v2，查询日志在 diting_server_logs_v2';
 
   @override
   String get serverRootAvailable => 'Root 可用';

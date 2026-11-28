@@ -5785,7 +5785,7 @@
   "serverSettingsRoot": "Root 模式",
   "serverSettingsRootRunning": "运行中不能切换 Root 模式",
   "serverSettingsRootBody": "使用 su 绑定 53 端口后降权到应用 UID",
-  "serverSettingsRootNote": "Root 不可用时自动使用 1053；53 绑定失败时不会静默降级。",
+  "serverSettingsRootNote": "Root 不可用时自动回退到 1053；Root 模式通过 iptables 把 53 重定向到内核监听端口。",
   "serverSettingsRootRestartHint": "已保存，重启 DNS 服务后生效",
   "serverSettingsLaunch": "启动与保活",
   "serverSettingsLaunchNote": "开机自启动需要已同意用户协议；异常重启最多尝试 5 次，仍失败会停止服务并保留错误信息。",
@@ -5808,7 +5808,7 @@
   "serverSettingsProbeRootBody": "通过 su 检测授权状态",
   "serverSettingsStorage": "数据与存储",
   "serverSettingsDataDir": "数据目录",
-  "serverSettingsDataDirBody": "filesDir/server/，包含配置、规则缓存、查询日志与运行日志",
+  "serverSettingsDataDirBody": "配置保存在 diting_server_prefs，规则与订阅在 diting_server_rules_v2，查询日志在 diting_server_logs_v2",
   "serverRootAvailable": "Root 可用",
   "serverRootUnavailable": "无法获取 Root：{message}",
   "@serverRootUnavailable": {

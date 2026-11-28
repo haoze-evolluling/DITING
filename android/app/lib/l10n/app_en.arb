@@ -3301,7 +3301,7 @@
   "serverSettingsRoot": "Root mode",
   "serverSettingsRootRunning": "Stop the server to change root mode",
   "serverSettingsRootBody": "Bind port 53 through su, then drop to the app UID",
-  "serverSettingsRootNote": "Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.",
+  "serverSettingsRootNote": "Falls back to port 1053 without root; root mode redirects port 53 to the kernel listener with iptables.",
   "serverSettingsRootRestartHint": "Saved. Restart the DNS service to apply",
   "serverSettingsLaunch": "Startup and keep-alive",
   "serverSettingsLaunchNote": "Auto-start requires the user agreement to be accepted. A crash is retried up to 5 times, then the service stops and keeps the error message.",
@@ -3324,7 +3324,7 @@
   "serverSettingsProbeRootBody": "Check authorization through su",
   "serverSettingsStorage": "Data and storage",
   "serverSettingsDataDir": "Data directory",
-  "serverSettingsDataDirBody": "filesDir/server/ with configuration, rule caches, query logs and runtime logs",
+  "serverSettingsDataDirBody": "Configuration in diting_server_prefs, rules and subscriptions in diting_server_rules_v2, query logs in diting_server_logs_v2",
   "serverRootAvailable": "Root available",
   "serverRootUnavailable": "Root unavailable: {message}",
   "@serverRootUnavailable": {

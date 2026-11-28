@@ -10665,7 +10665,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverSettingsRootNote =>
-      'Port 1053 is used when root is unavailable; a port 53 bind failure never downgrades silently.';
+      'Falls back to port 1053 without root; root mode redirects port 53 to the kernel listener with iptables.';
 
   @override
   String get serverSettingsRootRestartHint =>
@@ -10741,7 +10741,7 @@ class AppL10nEn extends AppL10n {
 
   @override
   String get serverSettingsDataDirBody =>
-      'filesDir/server/ with configuration, rule caches, query logs and runtime logs';
+      'Configuration in diting_server_prefs, rules and subscriptions in diting_server_rules_v2, query logs in diting_server_logs_v2';
 
   @override
   String get serverRootAvailable => 'Root available';
