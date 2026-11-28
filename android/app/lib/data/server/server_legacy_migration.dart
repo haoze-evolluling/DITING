@@ -158,8 +158,13 @@ void _discardLegacyData(Directory dir) {
     'server.db-journal',
     'config.json',
     'server.log',
+    'control.sock',
   ]) {
     final file = File(p.join(dir.path, name));
     if (file.existsSync()) file.deleteSync();
+  }
+  for (final name in const ['querylog', 'rules']) {
+    final directory = Directory(p.join(dir.path, name));
+    if (directory.existsSync()) directory.deleteSync(recursive: true);
   }
 }

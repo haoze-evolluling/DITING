@@ -94,7 +94,8 @@ Kotlin `DnsLogWriter` 写入 `diting_server_logs_v2.dns_log`。`EngineLogCallbac
    `meta.server_config`。
 2. 转成新的 `ServerConfig` JSON 写入 `diting_server_prefs/server_config_json`。
 3. 把 `filter.lists` 写入 `diting_server_rules_v2` 的订阅表（保留分组、镜像与启用状态）。
-4. 迁移成功后删除旧 `server.db`、`config.json`、`server.log`；旧查询日志按约定丢弃。
+4. 迁移成功后删除旧 `server.db`、`config.json`、`server.log`、`control.sock` 以及旧的
+   `querylog/`、`rules/` 目录；旧查询日志按约定丢弃。
 5. 写入 `server_legacy_migrated=1`，之后不再扫描。
 
 规则正文不迁移（旧桌面格式已不再支持），订阅会在下次更新或自动更新时重新下载导入。
