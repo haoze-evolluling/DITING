@@ -407,6 +407,22 @@ pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStartFull<'loca
 }
 
 #[no_mangle]
+pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeRestartFull<'local>(
+    mut env: EnvUnowned<'local>,
+    _class: JObject<'local>,
+    handle: jlong,
+    fd: jlong,
+) -> JObject<'local> {
+    resolve(&mut env, |env| {
+        let error = with_engine(env, handle, Some("engine released".to_string()), |engine| {
+            let fd = i32::try_from(fd).unwrap_or(-1);
+            engine.restart_full(fd).err().map(|error| error.to_string())
+        });
+        Ok(answer(env, error))
+    })
+}
+
+#[no_mangle]
 pub extern "system" fn Java_com_haoze_diting_engine_Engine_nativeStopFull<'local>(
     mut env: EnvUnowned<'local>,
     _class: JObject<'local>,

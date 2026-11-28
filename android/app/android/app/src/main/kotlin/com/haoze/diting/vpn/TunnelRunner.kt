@@ -44,20 +44,30 @@ internal object TunnelRunner {
             engine.startFull(tunFd.toLong(), object : SocketProtector {
                 override fun protect(fd: Long): Boolean = protect(fd.toInt())
             })
-            while (!isStopping() && engine.isFullRunning()) {
-                Thread.sleep(SESSION_POLL_MS)
-            }
-            Log.i(logTag, "tunnel exited")
+            awaitSession(engine, logTag, isStopping)
         } catch (t: Throwable) {
-            Log.e(logTag, "tunnel crashed", t)
-            RuntimeEventLog.error(
-                eventDomain,
-                "tunnel.crashed",
-                "error" to (t.message ?: t.javaClass.simpleName),
-            )
-            if (!isStopping()) {
-                onFatal("隧道运行异常：${t.message ?: t.javaClass.simpleName}")
-            }
+            crash(eventDomain, logTag, t, isStopping, onFatal)
+        }
+    }, threadName).also { it.start() }
+
+    /**
+     * 只为已经在运行的会话续挂监护线程。
+     *
+     * IPv6 策略热切换已由服务同步重建会话，这里不再装载规则或调用 startFull，
+     * 只负责会话异常退出时的收尾。
+     */
+    fun guard(
+        engine: Engine,
+        eventDomain: String,
+        threadName: String,
+        logTag: String,
+        isStopping: () -> Boolean,
+        onFatal: (String) -> Unit,
+    ): Thread = Thread({
+        try {
+            awaitSession(engine, logTag, isStopping)
+        } catch (t: Throwable) {
+            crash(eventDomain, logTag, t, isStopping, onFatal)
         }
     }, threadName).also { it.start() }
 
@@ -84,4 +94,29 @@ internal object TunnelRunner {
             )
         }
     }, threadName).also { it.start() }
+
+    private fun awaitSession(engine: Engine, logTag: String, isStopping: () -> Boolean) {
+        while (!isStopping() && engine.isFullRunning()) {
+            Thread.sleep(SESSION_POLL_MS)
+        }
+        Log.i(logTag, "tunnel exited")
+    }
+
+    private fun crash(
+        eventDomain: String,
+        logTag: String,
+        error: Throwable,
+        isStopping: () -> Boolean,
+        onFatal: (String) -> Unit,
+    ) {
+        Log.e(logTag, "tunnel crashed", error)
+        RuntimeEventLog.error(
+            eventDomain,
+            "tunnel.crashed",
+            "error" to (error.message ?: error.javaClass.simpleName),
+        )
+        if (!isStopping()) {
+            onFatal("隧道运行异常：${error.message ?: error.javaClass.simpleName}")
+        }
+    }
 }

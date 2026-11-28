@@ -47,6 +47,15 @@ internal object VpnServiceApi {
         runCatching { context.startService(reloadIntent(context, profile)) }
     }
 
+    /** 运行中切换 IPv6 模式；未运行时忽略，新值随下次启动参数下发。 */
+    fun requestIpv6Mode(context: Context, profile: VpnModeProfile, mode: String) {
+        if (!profile.runtime.isRunning || mode.isBlank()) return
+        val intent = Intent(context, profile.serviceClass)
+            .setAction(profile.ipv6ModeAction)
+            .putExtra(EXTRA_IPV6_MODE, mode)
+        runCatching { context.startService(intent) }
+    }
+
     fun restoreIntent(context: Context, profile: VpnModeProfile): Intent? =
         profile.startConfig.restoreIntent(context) { args -> startIntent(context, profile, args) }
 

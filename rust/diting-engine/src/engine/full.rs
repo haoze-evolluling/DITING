@@ -70,6 +70,41 @@ impl Engine {
         Ok(())
     }
 
+    /// 换用新的链路重建 TUN 会话，但保留连接日志、流表与查询计数。
+    ///
+    /// 与 [Self::start_full] 不同，热切换不会清零本次运行的统计：物理网络切换
+    /// 或 IPv6 策略在运行中改变时，用户看到的运行数据应当保持连续。
+    pub fn restart_full(self: &Arc<Self>, fd: i32) -> crate::error::EngineResult<()> {
+        let link = TunFd::open(fd, DEFAULT_TUN_MTU).map_err(|error| {
+            EngineError::state(format!("RestartFull: dup TUN fd {fd} failed: {error}"))
+        })?;
+        self.restart_full_with_link(Arc::new(link))
+    }
+
+    pub fn restart_full_with_link(
+        self: &Arc<Self>,
+        link: Arc<dyn PacketLink>,
+    ) -> crate::error::EngineResult<()> {
+        let mut slot = self.full.lock().unwrap_or_else(|error| error.into_inner());
+        // 旧会话必须先停：两个 Session 同时读 TUN 会争抢同一批报文。
+        // 整个换槽过程持锁，避免并发的 start_full 在中间插入后又被覆盖。
+        if let Some(session) = slot.take() {
+            session.stop();
+        }
+        let session = Session::start(Arc::clone(self), link).map_err(EngineError::state)?;
+        *slot = Some(session);
+        drop(slot);
+        let ticker_running = self
+            .ticker
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .is_some();
+        if !ticker_running {
+            self.start_traffic_ticker();
+        }
+        Ok(())
+    }
+
     pub fn stop_full(&self) {
         let session = {
             let mut slot = self.full.lock().unwrap_or_else(|error| error.into_inner());

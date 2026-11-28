@@ -122,6 +122,18 @@ class Engine : TunnelEngine, AutoCloseable {
         if (error != null) throw IllegalStateException(error)
     }
 
+    /**
+     * 换用新的 TUN fd 重建数据面会话，保留本次运行的统计。
+     *
+     * IPv6 策略热切换会更换接口地址与路由，必须重建 TUN；但与先 stop() 再
+     * startFull() 不同，这里不清零查询/拦截计数与流程表。
+     */
+    fun restartFull(fd: Long, protector: SocketProtector?) {
+        if (protector != null) setSocketProtector(protector)
+        val error = nativeRestartFull(handle, fd)
+        if (error != null) throw IllegalStateException(error)
+    }
+
     fun releaseTun() {
         nativeReleaseTun(handle)
     }
@@ -245,6 +257,8 @@ class Engine : TunnelEngine, AutoCloseable {
     private external fun nativeSetBootstrapLogCallback(handle: Long, callback: BootstrapLogCallback?)
 
     private external fun nativeStartFull(handle: Long, fd: Long): String?
+
+    private external fun nativeRestartFull(handle: Long, fd: Long): String?
 
     private external fun nativeStopFull(handle: Long)
 

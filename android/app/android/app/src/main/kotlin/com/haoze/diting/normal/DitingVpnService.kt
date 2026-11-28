@@ -75,6 +75,10 @@ internal class DitingVpnService : FullTunnelVpnService() {
 
         fun requestReload(context: Context) = VpnServiceApi.requestReload(context, PROFILE)
 
+        /** 运行中切换 IPv6 模式；未运行时由下一次启动参数生效。 */
+        fun requestIpv6ModeUpdate(context: Context, mode: String) =
+            VpnServiceApi.requestIpv6Mode(context, PROFILE, mode)
+
         fun restoreIntent(context: Context): Intent? = VpnServiceApi.restoreIntent(context, PROFILE)
     }
 }

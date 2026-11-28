@@ -32,6 +32,8 @@ internal class VpnModeProfile(
     val startAction: String,
     val stopAction: String,
     val reloadAction: String,
+    /** 运行中切换 IPv6 模式的指令；仅普通模式会下发。 */
+    val ipv6ModeAction: String,
     /** 运行标记与 last_* 起始配置的偏好容器。 */
     val statePrefs: String,
     /** dns_log_mode / https_bypass_rules 等设置项所在的偏好容器。 */
@@ -67,6 +69,7 @@ internal class VpnModeProfile(
             startAction = "com.haoze.diting.START_VPN",
             stopAction = "com.haoze.diting.STOP_VPN",
             reloadAction = "com.haoze.diting.RELOAD_RULES",
+            ipv6ModeAction = "com.haoze.diting.UPDATE_IPV6_MODE",
             statePrefs = VpnRuntime.NORMAL_PREFS,
             settingsPrefs = VpnRuntime.NORMAL_PREFS,
             logTag = "DitingVpnService",
@@ -90,6 +93,7 @@ internal class VpnModeProfile(
             startAction = "com.haoze.diting.express.START_VPN",
             stopAction = "com.haoze.diting.express.STOP_VPN",
             reloadAction = "com.haoze.diting.express.RELOAD_RULES",
+            ipv6ModeAction = "com.haoze.diting.express.UPDATE_IPV6_MODE",
             statePrefs = VpnRuntime.EXPRESS_PREFS,
             settingsPrefs = RuleDataset.EXPRESS.prefsName(),
             logTag = "ExpressVpnService",

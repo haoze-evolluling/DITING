@@ -15,8 +15,19 @@ Future<void> requestVpnRuleReload() async {
   for (final name in dataPlaneChannelNames) {
     try {
       await MethodChannel(name).invokeMethod<bool>('reloadRules');
-    } catch (_) {
-    }
+    } catch (_) {}
+  }
+}
+
+/// 运行中切换 IPv6 模式（全隧道模式）。
+///
+/// 未运行时原生侧直接忽略；新值会随下一次启动参数下发，因此这里不返回错误。
+Future<void> requestVpnIpv6ModeUpdate(String mode) async {
+  try {
+    await MethodChannel(vpnChannelName)
+        .invokeMethod<void>('updateIpv6Mode', {'ipv6Mode': mode});
+  } catch (_) {
+    // 服务未启动或平台不支持时静默忽略。
   }
 }
 

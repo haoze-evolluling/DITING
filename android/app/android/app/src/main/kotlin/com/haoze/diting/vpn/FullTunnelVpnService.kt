@@ -7,6 +7,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.haoze.diting.engine.Engine
+import com.haoze.diting.engine.SocketProtector
 import com.haoze.diting.log.DnsLogWriter
 import com.haoze.diting.log.EngineDataPlane
 import com.haoze.diting.log.LogRetention
@@ -35,6 +36,18 @@ internal abstract class FullTunnelVpnService : VpnService() {
     private var dataPlane: EngineDataPlane? = null
     private var networkMonitor: UnderlyingNetworkMonitor? = null
 
+    /** 本次会话的启动参数；运行中切换 IPv6 模式时同步更新。 */
+    private var startArgs: TunnelStartArgs? = null
+
+    /** 当前已生效的 IPv6 形态；null 表示会话尚未建立。 */
+    private var appliedIpv6: Ipv6Plan? = null
+
+    private var appliedClat = false
+
+    private val socketProtector = object : SocketProtector {
+        override fun protect(fd: Long): Boolean = this@FullTunnelVpnService.protect(fd.toInt())
+    }
+
     @Volatile
     private var worker: Thread? = null
 
@@ -43,6 +56,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
 
+    @Volatile
     private var tunnelGeneration = 0
 
     private val speedTicker by lazy {
@@ -86,6 +100,10 @@ internal abstract class FullTunnelVpnService : VpnService() {
         }
         if (intent?.action == profile.stopAction) {
             stopTunnel()
+            return START_NOT_STICKY
+        }
+        if (intent?.action == profile.ipv6ModeAction) {
+            updateIpv6Mode(intent.getStringExtra(VpnServiceApi.EXTRA_IPV6_MODE))
             return START_NOT_STICKY
         }
         reclaimer.cancel()
@@ -151,6 +169,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
         val generation = ++tunnelGeneration
         stopping = false
         runtime.lastError = null
+        startArgs = args
 
         val clat = VpnRouteConfig.clatDetected(this)
         val ipv6 = Ipv6Policy.resolve(
@@ -158,6 +177,8 @@ internal abstract class FullTunnelVpnService : VpnService() {
             hasRoutableIpv6 = Ipv6Policy.hasRoutableIpv6(this),
             clat = clat,
         )
+        appliedIpv6 = ipv6
+        appliedClat = clat
         val established = VpnRouteConfig.establish(
             service = this,
             excludedPackages = args.excludedPackages,
@@ -237,6 +258,8 @@ internal abstract class FullTunnelVpnService : VpnService() {
 
         networkMonitor = UnderlyingNetworkMonitor(this, this) { state, networkChanged ->
             state.applyTo(rustEngine, networkChanged)
+            // 链路属性（含 IPv6 可用性与 CLAT 形态）变化时按当前模式重算策略。
+            startArgs?.let { reapplyIpv6Policy(it, "network") }
         }.also { it.start() }
 
         runtime.isRunning = true
@@ -259,7 +282,7 @@ internal abstract class FullTunnelVpnService : VpnService() {
             logTag = profile.logTag,
             tunFd = tunFd,
             protect = { fd -> this.protect(fd) },
-            isStopping = { stopping },
+            isStopping = { stopping || generation != tunnelGeneration },
             onFatal = { fail(generation, it) },
         )
     }
@@ -281,6 +304,149 @@ internal abstract class FullTunnelVpnService : VpnService() {
         )
     }
 
+    /**
+     * 用户在运行中修改 IPv6 模式。
+     *
+     * 新值写入记忆参数（重连/冷启动沿用）并立即重算；未运行时只更新记忆参数，
+     * 下一次启动自然生效。
+     */
+    @Synchronized
+    private fun updateIpv6Mode(raw: String?) {
+        if (raw.isNullOrBlank()) return
+        val mode = Ipv6Mode.fromWire(raw)
+        val args = startArgs ?: return
+        if (args.ipv6Mode == mode.wire) return
+        val updated = args.copy(ipv6Mode = mode.wire)
+        startArgs = updated
+        profile.startConfig.remember(this, updated)
+        if (engine == null || !runtime.isRunning) return
+        applyIpv6Policy(updated, mode, "setting")
+    }
+
+    @Synchronized
+    private fun reapplyIpv6Policy(args: TunnelStartArgs, reason: String) {
+        applyIpv6Policy(args, Ipv6Mode.fromWire(args.ipv6Mode), reason)
+    }
+
+    /**
+     * 按当前物理网络重新求值 IPv6 策略。
+     *
+     * 只有接口形态（是否注入 IPv6、是否 CLAT）变化才重建 TUN；单纯 DNS 语义
+     * （block/prefer）切换直接下发引擎开关，不中断会话。
+     */
+    @Synchronized
+    private fun applyIpv6Policy(args: TunnelStartArgs, mode: Ipv6Mode, reason: String) {
+        val engine = engine ?: return
+        // 简洁模式只接管 DNS，其引擎从不设置 block/prefer，保持既有行为。
+        if (profile.dnsOnly || stopping || !runtime.isRunning) return
+        val clat = VpnRouteConfig.clatDetected(this)
+        val plan = Ipv6Policy.resolve(
+            mode = mode,
+            hasRoutableIpv6 = Ipv6Policy.hasRoutableIpv6(this),
+            clat = clat,
+        )
+        val previous = appliedIpv6
+        val interfaceChanged = previous == null ||
+            previous.tunnelIpv6 != plan.tunnelIpv6 ||
+            appliedClat != clat
+        if (!interfaceChanged) {
+            if (previous != plan) applyEngineIpv6(engine, plan)
+            appliedIpv6 = plan
+            return
+        }
+        switchTunnel(args, mode, plan, clat, reason)
+    }
+
+    /** 重建 TUN：先建新接口，再热切引擎会话；失败时回滚到旧接口。 */
+    @Synchronized
+    private fun switchTunnel(
+        args: TunnelStartArgs,
+        mode: Ipv6Mode,
+        plan: Ipv6Plan,
+        clat: Boolean,
+        reason: String,
+    ) {
+        val engine = engine ?: return
+        val swap = TunnelSwitcher.swap(
+            engine = engine,
+            protector = socketProtector,
+            previous = tun,
+            logTag = profile.logTag,
+        ) {
+            VpnRouteConfig.establish(
+                service = this,
+                excludedPackages = args.excludedPackages,
+                proxyPackage = args.proxyAppPackage.ifBlank { null },
+                bypassPrivate = args.bypassLan,
+                tunnelIpv6 = plan.tunnelIpv6,
+                clat = clat,
+                routeAddress = args.routeAddress,
+                routeExcludeAddress = args.routeExcludeAddress,
+                dnsOnly = profile.dnsOnly,
+                logTag = profile.logTag,
+            ).fd
+        }
+        when (swap) {
+            is TunnelSwap.Unchanged -> return
+            is TunnelSwap.Restored -> {
+                attachGuard(engine)
+                RuntimeEventLog.warn(
+                    profile.eventDomain,
+                    "ipv6.switch_fail",
+                    "error" to (swap.error.message ?: swap.error.javaClass.simpleName),
+                )
+                return
+            }
+            is TunnelSwap.Failed -> {
+                fail(
+                    ++tunnelGeneration,
+                    "IPv6 策略切换失败：${swap.error.message ?: swap.error.javaClass.simpleName}",
+                )
+                return
+            }
+            is TunnelSwap.Switched -> {
+                tun = swap.tun
+                runCatching { swap.previous?.close() }
+            }
+        }
+        appliedIpv6 = plan
+        appliedClat = clat
+        applyEngineIpv6(engine, plan)
+        attachGuard(engine)
+        Log.i(
+            profile.logTag,
+            "ipv6 switch: mode=${mode.wire}, tunnelIpv6=${plan.tunnelIpv6}, " +
+                "clat=$clat, reason=$reason",
+        )
+        RuntimeEventLog.info(
+            profile.eventDomain,
+            "ipv6.switch",
+            "mode" to mode.wire,
+            "tunnelIpv6" to plan.tunnelIpv6.toString(),
+            "clat" to clat.toString(),
+            "reason" to reason,
+        )
+    }
+
+    /** 会话换 fd 后旧监护线程会按代际退出，这里重新挂一个。 */
+    private fun attachGuard(engine: Engine) {
+        val generation = ++tunnelGeneration
+        worker = TunnelRunner.guard(
+            engine = engine,
+            eventDomain = profile.eventDomain,
+            threadName = profile.tunnelThreadName,
+            logTag = profile.logTag,
+            isStopping = { stopping || generation != tunnelGeneration },
+            onFatal = { fail(generation, it) },
+        )
+    }
+
+    private fun applyEngineIpv6(engine: Engine, plan: Ipv6Plan) {
+        if (profile.dnsOnly) return
+        engine.setBlockIpv6(plan.blockIpv6)
+        engine.setPreferIpv6(plan.preferIpv6)
+    }
+
     @Synchronized
     private fun stopTunnel() {
         reclaimer.cancel()
@@ -293,6 +459,9 @@ internal abstract class FullTunnelVpnService : VpnService() {
         runtime.engine = null
         dataPlane = null
         tun = null
+        startArgs = null
+        appliedIpv6 = null
+        appliedClat = false
         runtime.isRunning = false
         runtime.startedAt = 0L
         FloatingLogOverlay.setVpnRunning(this, false)
@@ -317,6 +486,9 @@ internal abstract class FullTunnelVpnService : VpnService() {
         engine = null
         runtime.engine = null
         dataPlane = null
+        startArgs = null
+        appliedIpv6 = null
+        appliedClat = false
         releaseTunnel(current, plane)
         releaseResources()
         runtime.isRunning = false

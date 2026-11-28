@@ -564,3 +564,32 @@ fn stopping_survives_a_link_closed_by_the_service() {
     engine.stop_full();
     assert!(!engine.is_full_running());
 }
+
+#[test]
+fn restarting_the_link_keeps_the_run_counters() {
+    let (upstream, _queries) = support::spawn_udp_upstream([1, 2, 3, 4], false);
+    let engine = engine_for(upstream);
+    let first = Arc::new(MemoryLink::new(1400));
+    engine
+        .start_full_with_link(first.clone())
+        .expect("the session starts");
+    engine.note_query(false);
+    engine.note_query(true);
+
+    let second = Arc::new(MemoryLink::new(1300));
+    engine
+        .restart_full_with_link(second.clone())
+        .expect("the session restarts on the new link");
+
+    assert!(engine.is_full_running());
+    assert_eq!(engine.total_queries(), 2);
+    assert_eq!(engine.blocked_queries(), 1);
+    assert!(first.is_closed(), "the old link must be closed");
+    assert!(!second.is_closed(), "the new link must stay open");
+    assert!(
+        engine.tun_document().is_some(),
+        "the new session is attached"
+    );
+
+    engine.stop_full();
+}

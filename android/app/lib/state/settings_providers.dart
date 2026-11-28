@@ -1,9 +1,12 @@
 library;
 
+import 'dart:async';
+
 import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/native/background_bridge.dart';
 import 'package:diting_android/data/prefs/ipv6_mode.dart';
 import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/vpn/vpn_bridge.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -151,6 +154,8 @@ class ForegroundBackgroundNotifier extends Notifier<ForegroundBackgroundState> {
     state = state.copyWith(ipv6Mode: mode);
     _settings(ref).setIpv6Mode(mode);
     _bump(ref);
+    // 隧道运行中立即热切换；未运行时新值随下一次启动下发。
+    unawaited(requestVpnIpv6ModeUpdate(mode.storageValue));
   }
 
   void setRouteAddress(Iterable<String> values) {

@@ -25,6 +25,10 @@ internal class UnderlyingNetworkMonitor(
     data class State(
         val networkKey: Long,
         val dnsServers: List<String>,
+        /** 当前链路是否具备可路由 IPv6；地址/路由变化时 IPv6 策略需要重算。 */
+        val routableIpv6: Boolean,
+        /** 当前链路是否只在 CLAT 上提供 IPv4；决定隧道是否必须保留 IPv6。 */
+        val clatOnly: Boolean,
     )
 
     private val handler = Handler(Looper.getMainLooper())
@@ -83,7 +87,14 @@ internal class UnderlyingNetworkMonitor(
         val link = manager.getLinkProperties(physical) ?: return
         lastNetwork = physical
         // networkKey 参与相等判断：即使新老网络下发的 DNS 相同，切换本身也要通知引擎。
-        val state = State(physical.networkHandle, dnsServersOf(link))
+        // IPv6 可用性与 CLAT 形态同样参与比较：同一网络原地获得/失去 IPv6 时，
+        // 也必须让上层重算策略，否则隧道与 DNS 会停在旧形态。
+        val state = State(
+            networkKey = physical.networkHandle,
+            dnsServers = dnsServersOf(link),
+            routableIpv6 = NetworkTopology.hasRoutableIpv6(link),
+            clatOnly = NetworkTopology.clatOnly(link),
+        )
         if (state == lastState) return
         lastState = state
         onChanged(state, networkChanged)

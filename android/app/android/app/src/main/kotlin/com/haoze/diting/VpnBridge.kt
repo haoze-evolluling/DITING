@@ -41,6 +41,13 @@ class VpnBridge(
                 DitingVpnService.requestReload(activity)
                 result.success(true)
             }
+            "updateIpv6Mode" -> {
+                DitingVpnService.requestIpv6ModeUpdate(
+                    activity,
+                    call.argument<String>("ipv6Mode").orEmpty(),
+                )
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }
