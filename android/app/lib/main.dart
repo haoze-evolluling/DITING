@@ -18,6 +18,7 @@ import 'package:diting_android/data/native/launcher_icon_bridge.dart';
 import 'package:diting_android/data/native/outbound_proxy_bridge.dart';
 import 'package:diting_android/data/prefs/legacy_prefs_store.dart';
 import 'package:diting_android/data/prefs/legacy_settings_provider.dart';
+import 'package:diting_android/data/server/server_legacy_migration.dart';
 import 'package:diting_android/overlay/floating_log_main.dart';
 import 'package:diting_android/state/app_version_provider.dart';
 import 'package:diting_android/state/ca_inspection_providers.dart';
@@ -64,6 +65,9 @@ Future<void> main() async {
 Future<void> _startApp(LegacyPrefsStore store, AppVersion version) async {
   final settings = LegacySettings(store);
   final dataSet = DataSet.fromWorkModeValue(settings.workModeRaw);
+  if (dataSet == DataSet.server) {
+    await migrateLegacyServerData(store);
+  }
   final rules = await bootstrapRules(
     dataSet,
     LegacySettings(store, dnsContainer: dataSet.prefsContainer),

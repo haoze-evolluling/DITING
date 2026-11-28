@@ -6,6 +6,7 @@ import 'package:diting_android/data/server/server_client.dart';
 import 'package:diting_android/data/server/server_launch_models.dart';
 import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
+import 'package:diting_android/data/server/shared_server_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ServerSnapshot {
@@ -31,7 +32,7 @@ class ServerSnapshot {
 }
 
 final serverClientProvider = Provider<ServerClient>(
-  (ref) => MethodChannelServerClient(),
+  (ref) => SharedServerClient(ref),
 );
 
 class ServerController extends AsyncNotifier<ServerSnapshot> {
