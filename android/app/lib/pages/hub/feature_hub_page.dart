@@ -1,9 +1,11 @@
 import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/data/mock_data.dart';
 import 'package:diting_android/pages/hub/feature_hub_grid.dart';
+import 'package:diting_android/pages/server/server_hub_page.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/standalone_routes.dart';
 import 'package:diting_android/state/feature_hub_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_android/ui/ui.dart';
 import 'package:diting_android/widgets/stat_strip.dart';
 import 'package:diting_android/widgets/glyph_lookup.dart';
@@ -16,6 +18,9 @@ class FeatureHubPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (ref.watch(workModeProvider) == AppWorkMode.server) {
+      return const ServerHubPage();
+    }
     final categories = ref.watch(
       visibleFeatureCategoriesProvider(context.l10n),
     );

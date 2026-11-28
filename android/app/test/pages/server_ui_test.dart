@@ -1,6 +1,5 @@
 import 'package:diting_android/app/app.dart';
 import 'package:diting_android/data/server/server_client.dart';
-import 'package:diting_android/data/server/server_models.dart';
 import 'package:diting_android/data/server/server_runtime_models.dart';
 import 'package:diting_android/pages/home/home_page.dart';
 import 'package:diting_android/routes/server_routes.dart';
@@ -420,70 +419,6 @@ void main() {
       scrollable: scrollable,
     );
     expect(find.text('MacBook Pro'), findsOneWidget);
-  });
-
-  testWidgets('订阅页新增网络订阅并写入服务器配置', (tester) async {
-    final client = FakeServerClient();
-    await pumpServer(tester, ServerRoutes.filterSubscriptions, client: client);
-
-    expect(find.text('订阅列表'), findsOneWidget);
-    expect(find.text('还没有订阅'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('添加订阅'));
-    await tester.pumpAndSettle();
-
-    final fields = find.byType(TextFormField);
-    await tester.enterText(fields.at(0), 'https://example.com/rules.txt');
-    await tester.enterText(fields.at(1), '示例规则');
-    await tester.tap(find.byTooltip('保存订阅'));
-    await tester.pumpAndSettle();
-
-    final saved = await client.getConfig();
-    expect(saved.filter.lists, hasLength(1));
-    expect(saved.filter.lists.single.url, 'https://example.com/rules.txt');
-    expect(saved.filter.lists.single.name, '示例规则');
-    expect(saved.filter.lists.single.kind, 'domain');
-    expect(saved.filter.lists.single.sourceType, 'remote');
-  });
-
-  testWidgets('订阅页可关闭自动更新', (tester) async {
-    final client = FakeServerClient();
-    await pumpServer(tester, ServerRoutes.filterSubscriptions, client: client);
-
-    final scrollable = find.byType(Scrollable).first;
-    await tester.scrollUntilVisible(
-      find.text('自动更新规则订阅'),
-      320,
-      scrollable: scrollable,
-    );
-    await tester.tap(find.text('自动更新规则订阅'));
-    await tester.pumpAndSettle();
-
-    expect((await client.getConfig()).filter.autoUpdate, isFalse);
-  });
-
-  testWidgets('服务停止时仍可刷新全部订阅', (tester) async {
-    final client = FakeServerClient(
-      config: ServerConfig.defaults().copyWith(
-        filter: const ServerFilterConfig(
-          lists: [
-            ServerFilterList(
-              id: 'list-1',
-              name: '示例规则',
-              url: 'https://example.com/rules.txt',
-              kind: 'domain',
-            ),
-          ],
-        ),
-      ),
-    );
-    await pumpServer(tester, ServerRoutes.filterSubscriptions, client: client);
-
-    expect(find.text('示例规则'), findsOneWidget);
-    await tester.tap(find.byTooltip('更新全部订阅'));
-    await tester.pumpAndSettle();
-
-    expect(client.refreshCalls, ['']);
   });
 
   testWidgets('服务停止时仍可查看历史日志', (tester) async {

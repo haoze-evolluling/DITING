@@ -39,23 +39,15 @@ String? startupOnboardingRedirect(BuildContext context, GoRouterState state) {
   if (!container.read(onboardingProvider)) {
     return location == Routes.modeOnboarding ? null : Routes.modeOnboarding;
   }
-  if (container.read(workModeProvider) == AppWorkMode.server) {
-    if (_mainShellRoots.contains(location)) return Routes.server;
-  } else if (location == Routes.server ||
-      location.startsWith('${Routes.server}/')) {
+  if (location == Routes.server) return Routes.home;
+  if (location == Routes.serverHub) return Routes.hub;
+  if (location == Routes.serverLogs) return Routes.logs;
+  if (container.read(workModeProvider) == AppWorkMode.server &&
+      (location == Routes.traffic || location.startsWith('${Routes.traffic}/'))) {
     return Routes.home;
   }
   return null;
 }
-
-const _mainShellRoots = {
-  Routes.home,
-  Routes.hub,
-  Routes.logs,
-  Routes.traffic,
-  Routes.tools,
-  Routes.settings,
-};
 
 GoRouter createRouter({String initialLocation = Routes.home}) {
   return GoRouter(

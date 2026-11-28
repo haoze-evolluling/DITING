@@ -1,6 +1,7 @@
 import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_android/pages/logs/log_dashboard_board.dart';
+import 'package:diting_android/pages/server/server_logs_page.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/log_dashboard_layout_providers.dart';
 import 'package:diting_android/state/log_providers.dart';
@@ -30,6 +31,7 @@ class _LogsPageState extends ConsumerState<LogsPage>
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (ref.read(workModeProvider) == AppWorkMode.server) return;
       ref.read(powerProvider.notifier).syncStatus();
     });
     _logRefresh = ref.read(logLiveRefreshProvider.notifier);
@@ -37,6 +39,7 @@ class _LogsPageState extends ConsumerState<LogsPage>
 
   @override
   void onPageVisibilityChanged(bool visible) {
+    if (ref.read(workModeProvider) == AppWorkMode.server) return;
     if (visible == _polling) return;
     _polling = visible;
     if (visible) {
@@ -54,6 +57,9 @@ class _LogsPageState extends ConsumerState<LogsPage>
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(workModeProvider) == AppWorkMode.server) {
+      return const ServerLogsPage();
+    }
     final mode = ref.watch(logModeProvider);
     final editing = ref.watch(logDashboardEditingProvider);
     return DashboardDensityScopeHost(

@@ -3,6 +3,7 @@ import 'package:diting_android/app/theme/layout.dart';
 import 'package:diting_android/routes/branches.dart';
 import 'package:diting_android/state/appearance_extra_providers.dart';
 import 'package:diting_android/state/appearance_providers.dart';
+import 'package:diting_android/state/work_mode_providers.dart';
 import 'package:diting_android/ui/ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,7 +16,13 @@ class DockShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final destinations = ref.watch(bottomBarProvider);
+    final mode = ref.watch(workModeProvider);
+    final destinations = [
+      for (final destination in ref.watch(bottomBarProvider))
+        if (mode != AppWorkMode.server ||
+            destination != BottomBarDestination.appTraffic)
+          destination,
+    ];
     final style = ref.watch(bottomBarStyleProvider);
     final selected = _selectedIndex(destinations, navigationShell.currentIndex);
 

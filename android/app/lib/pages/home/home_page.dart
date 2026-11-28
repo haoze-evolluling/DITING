@@ -2,6 +2,7 @@ import 'package:diting_android/app/l10n/l10n.dart';
 import 'package:diting_android/pages/home/dashboard/dashboard_board.dart';
 import 'package:diting_android/widgets/dashboard/dashboard_density.dart';
 import 'package:diting_android/pages/home/widgets/home_headline.dart';
+import 'package:diting_android/pages/server/server_home_page.dart';
 import 'package:diting_android/router.dart';
 import 'package:diting_android/routes/routes.dart';
 import 'package:diting_android/state/dashboard_providers.dart';
@@ -36,6 +37,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void onPageVisibilityChanged(bool visible) {
+    if (ref.read(workModeProvider) == AppWorkMode.server) return;
     if (visible == _polling) return;
     _polling = visible;
     if (visible) {
@@ -49,9 +51,9 @@ class _HomePageState extends ConsumerState<HomePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      ref.read(powerProvider.notifier).syncStatus();
-    }
+    if (state != AppLifecycleState.resumed) return;
+    if (ref.read(workModeProvider) == AppWorkMode.server) return;
+    ref.read(powerProvider.notifier).syncStatus();
   }
 
   @override
@@ -67,6 +69,7 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(workModeProvider);
+    if (mode == AppWorkMode.server) return const ServerHomePage();
     final power = ref.watch(powerProvider);
     final editing = ref.watch(dashboardEditingProvider);
     return DashboardDensityScopeHost(
